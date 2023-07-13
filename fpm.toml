@@ -1,9 +1,10 @@
 name = "LightKrylov"
 version = "0.1.0"
-license = "license"
+license = "BSD-3-Clause"
 author = "Jean-Christophe"
 maintainer = "loiseau.jc@gmail.com"
 copyright = "Copyright 2023, Jean-Christophe"
+description = "Lightweight fortran implementation of Krylov subspace techniques"
 [build]
 auto-executables = true
 auto-tests = true
