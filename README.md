@@ -29,4 +29,4 @@ More details about the *time-stepper* approach to stability analysis of large-sc
 
 ### References
 
-[1] R. S. Frantz, J.-Ch. Loiseau, and J.-Ch. Robinet. Krylov methods for large-scale dynamical systems: applications in fluid dynamics. *Appl. Mech. Rev.*, 2023. [arXiv](https://arxiv.org/abs/2301.12940)
+[1] R. S. Frantz, J.-Ch. Loiseau, and J.-Ch. Robinet. Krylov methods for large-scale dynamical systems: applications in fluid dynamics. *Appl. Mech. Rev.*, 2023. [[arXiv]](https://arxiv.org/abs/2301.12940)
