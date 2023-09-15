@@ -24,3 +24,4 @@ $$
 $$
 
 **LightKrylov** aims at providing a simple set of Krylov-based techniques to study the spectral properties of the *exponential propagator* $\exp \left( \tau \mathbf{A} \right)$.
+This operator is represented through an *abstract type* and its implementation is deferred to the user, typically through the use of a *matrix-free approach* (e.g. *time-stepping*).
