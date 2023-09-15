@@ -17,3 +17,10 @@ $$
 $$
 
 where $\mathbf{A}$ is the *Jacobian* matrix of the system.
+Its solution is given by
+
+$$
+\mathbf{x}(\tau) = \exp\left( \tau \mathbf{A} \right) \mathbf{x}_0.
+$$
+
+**LightKrylov** aims at providing a simple set of Krylov-based techniques to study the spectral properties of the *exponential propagator* $\exp \left( \tau \mathbf{A} \right)$.
