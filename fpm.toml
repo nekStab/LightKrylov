@@ -1,19 +1,25 @@
 name = "LightKrylov"
 version = "0.1.0"
 license = "BSD-3-Clause"
-author = "Jean-Christophe"
-maintainer = "loiseau.jc@gmail.com"
-copyright = "Copyright 2023, Jean-Christophe"
+author = "Jean-Christophe Loiseau"
+maintainer = "jean-christophe.loiseau@ensam.eu"
+copyright = "Copyright 2023, Jean-Christophe Loiseau"
 description = "Lightweight fortran implementation of Krylov subspace techniques"
+
 [build]
 auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
+
 [install]
 library = false
+
 [fortran]
 implicit-typing = false
 implicit-external = false
 source-form = "free"
 
+[dev-dependencies]
+test-drive.git = "https://github.com/fortran-lang/test-drive"
+test-drive.tag = "v0.4.0"
