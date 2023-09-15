@@ -37,7 +37,7 @@ contains
     write(*, *)
 
     write(*, *) "Version -- 0.1.0"
-    write(*, *) "License -- ???"
+    write(*, *) "License -- BSD 3-Clause"
     write(*, *)
 
     write(*, *) "-----------------------------------------------------------------"
