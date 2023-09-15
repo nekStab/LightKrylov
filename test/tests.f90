@@ -1,19 +1,32 @@
 program Tester
+  !> Fortran best practice.
   use, intrinsic :: iso_fortran_env, only : error_unit
-  use testdrive, only : run_testsuite, new_testsuite, testsuite_type
+  !> Unit-test utility.
+  use testdrive                    , only : run_testsuite, new_testsuite, testsuite_type
+  !> Abstract implementation of Krylov-based techniques.
   use LightKrylov
-  use TestVector, only : collect_vector_testsuite
+  !> Implementation of simple 3-dimensional vector types and associated matrices.
+  use TestVector                   , only : collect_real_vector_testsuite
+  use TestMatrices                 , only : collect_real_matrix_testsuite
+  use TestKrylov
+
   implicit none
 
+  !> Unit-test related.
   integer :: status, is
   type(testsuite_type), allocatable :: testsuites(:)
   character(len=*), parameter :: fmt = '("+", *(1x, a))'
 
+  ! --> Display information about the version of LightKrylov being tested.
   call greetings()
+
 
   status = 0
 
-  testsuites = [new_testsuite("Real Vector Test Suite", collect_vector_testsuite)]
+  testsuites = [&
+       new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite), &
+       new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite) &
+       ]
 
   do is = 1, size(testsuites)
      write(*, *)            "-------------------------------"
