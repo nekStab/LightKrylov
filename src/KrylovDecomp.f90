@@ -177,8 +177,10 @@ contains
 
        ! --> Exit Arnoldi loop if needed.
        if (beta < tolerance) then
-          write(*, *)
-          write(*, *) "INFO : An invariant subspace has been computed (beta =", beta, ")."
+          if (verbose) then
+             write(*, *)
+             write(*, *) "INFO : An invariant subspace has been computed (beta =", beta, ")."
+          endif
 
           ! --> Dimension of the computed invariant subspace.
           info = k
