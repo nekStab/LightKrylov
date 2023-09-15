@@ -8,6 +8,9 @@ module TestMatrices
 
   public :: collect_real_matrix_testsuite
 
+  !---------------------------------------
+  !-----     GENERAL REAL MATRIX     -----
+  !---------------------------------------
   type, extends(abstract_linop), public :: rmatrix
      double precision, dimension(3, 3) :: data = 0.0D+00
    contains
@@ -15,6 +18,17 @@ module TestMatrices
      procedure, pass(self), public :: matvec => general_matvec
      procedure, pass(self), public :: rmatvec => general_rmatvec
   end type rmatrix
+
+  !----------------------------------------
+  !-----     SYM. POS. DEF MATRIX     -----
+  !----------------------------------------
+  type, extends(abstract_spd_linop), public :: spd_matrix
+     double precision, dimension(3, 3) :: data = 0.0D+00
+   contains
+     private
+     procedure, pass(self), public :: matvec => spd_matvec
+     procedure, pass(self), public :: rmatvec => spd_matvec
+  end type spd_matrix
 
 contains
 
@@ -57,6 +71,21 @@ contains
   !-----     DEFINITION OF THE TYPE-BOUND PROCEDURES FOR SYM. POS. DEF. LINEAR OPERATORS     -----
   !-----                                                                                     -----
   !-----------------------------------------------------------------------------------------------
+
+  subroutine spd_matvec(self, vec_in, vec_out)
+    class(spd_matrix)     , intent(in)  :: self
+    class(abstract_vector), intent(in)  :: vec_in
+    class(abstract_vector), intent(out) :: vec_out
+
+    select type(vec_in)
+    type is(rvector)
+       select type(vec_out)
+       type is(rvector)
+          vec_out%data = matmul(self%data, vec_in%data)
+       end select
+    end select
+    return
+  end subroutine spd_matvec
 
   !----------------------------------------------------------------------------------
   !-----                                                                        -----
