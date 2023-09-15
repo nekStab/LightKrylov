@@ -5,7 +5,7 @@ module TestVector
 
   private
 
-  public :: collect_vector_testsuite
+  public :: collect_real_vector_testsuite
 
   type, extends(abstract_vector), public :: rvector
      double precision, dimension(3) :: data = 0.0D+00
@@ -90,7 +90,7 @@ contains
   !-----                           -----
   !-------------------------------------
 
-  subroutine collect_vector_testsuite(testsuite)
+  subroutine collect_real_vector_testsuite(testsuite)
     !> Collection of tests.
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -103,7 +103,7 @@ contains
          new_unittest("Vector zeroing", test_vector_zero) &
          ]
     return
-  end subroutine collect_vector_testsuite
+  end subroutine collect_real_vector_testsuite
 
   subroutine test_vector_norm(error)
     ! --> Error type to be returned.
