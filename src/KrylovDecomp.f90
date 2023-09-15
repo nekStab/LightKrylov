@@ -4,7 +4,8 @@ module KrylovDecomp
   implicit none
 
   private
-  public :: arnoldi_factorization
+  public :: power_iteration, &
+            arnoldi_factorization
 
 contains
 
@@ -46,24 +47,31 @@ contains
     if (present(tol)) then
        tolerance = tol
     else
-       tolerance = 1e-6
+       tolerance = 1e-12
     endif
 
     ! --> Initialization.
     lambda_old = 0.0D+00 ; lambda = 0.0D+00 ; info = -1
 
     ! --> Normalize the starting vector.
-    alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha)
+    alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha) ; wrk = x
 
     ! --> Power iteration
-    poweriteration: do k = 1, niter
-       allocate(wrk, source=x)
+    do k = 1, niter
        !> Matrix-vector product.
        call A%matvec(wrk, x)
        !> Estimated eigenvalue.
-       lambda = wrk%dot(x) ; deallocate(wrk)
+       lambda = wrk%dot(x)
        !> Normalize estimated eigenvectors.
        alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha)
+
+       if (verbose) then
+          write(*, *) "--> Power iteration n°", k, "/", niter
+          write(*, *) "    ---------------"
+          write(*, *) "    + Residual norm :", abs(lambda - lambda_old)
+          write(*, *) "    + Elapsed time  :"
+          write(*, *) "    + ETA           :"
+       endif
 
        !> Check for convergence.
        if (abs(lambda - lambda_old) < tolerance) then
@@ -74,15 +82,16 @@ contains
 
           info = 0
           ! --> Exit the loop.
-          exit poweriteration
+          exit
        else
-          lambda_old = lambda
+          !> Update old estimates.
+          lambda_old = lambda ; wrk = x
        endif
-    enddo poweriteration
+    enddo
 
-    if (info >= 0) info = 1
     if (verbose) then
        write(*, *) "INFO : Exiting the Power Iteration with exit code info = ", info, "."
+       write(*, *)
     endif
 
     return
