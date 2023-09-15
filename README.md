@@ -6,5 +6,7 @@
 Its primary use case if for bifurcation and stability analysis of large-scale nonlinear dynamical systems of the form
 
 $$
-\dot{\mathbf{x}} = \mathbf{f}(\mathbf{x}, \boldsymbol{\mu}).
+\dot{\mathbf{X}} = \mathcal{F}(\mathbf{X}, \boldsymbol{\mu}),
 $$
+
+where $\mathbf{X} \in \mathbb{R}^{n}$ is the state vector of the system, $\boldsymbol{\mu} \in \mathbb{R}^p$ the parameter vector and $\mathcal{F} : \mathbb{R}^n \times \mathbb{R}^p \to \mathbb{R}^n$ the dynamics.
