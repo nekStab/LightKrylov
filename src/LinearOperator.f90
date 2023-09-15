@@ -8,7 +8,7 @@ module LinearOperator
   ! -----     ABSTRACT TYPE FOR GENERAL MATRICES     ------
   ! -----                                            ------
   ! -------------------------------------------------------
-  
+
   type, abstract, public :: abstract_linop
    contains
      private
@@ -36,5 +36,16 @@ module LinearOperator
        class(abstract_vector), intent(out) :: vec_out
      end subroutine abstract_rmatvec
   end interface
+
+  !--------------------------------------------------------------
+  !-----                                                    -----
+  !-----     ABSTRACT TYPE FOR SYM. POS. DEF. OPERATORS     -----
+  !-----                                                    -----
+  !--------------------------------------------------------------
+
+  type, extends(abstract_linop), abstract, public :: abstract_spd_linop
+   contains
+     private
+  end type abstract_spd_linop
 
 end module LinearOperator
