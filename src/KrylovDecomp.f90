@@ -8,12 +8,90 @@ module KrylovDecomp
 
 contains
 
-  !---------------------------------------------------------------------
+  !-----------------------------------
+  !-----                         -----
+  !-----     POWER ITERATION     -----
+  !-----                         -----
+  !-----------------------------------
+
+  subroutine power_iteration(A, x, lambda, niter, info, verbosity, tol)
+    !> Linear Operator.
+    class(abstract_linop), intent(in) :: A
+    !> Starting vector.
+    class(abstract_vector), intent(inout) :: x
+    !> Estimated eigenvalues.
+    double precision, intent(out) :: lambda
+    !> Maximum number of power iterations.
+    integer, intent(in) :: niter
+    !> Information.
+    integer, intent(out) :: info
+
+    !> Optional arguments.
+    logical, optional, intent(in)          :: verbosity
+    double precision, optional, intent(in) :: tol
+
+    !> Miscellaneous.
+    class(abstract_vector), allocatable :: wrk
+    double precision :: alpha, lambda_old, tolerance
+    integer          :: k
+    logical          :: verbose
+
+    ! --> Deals with the optional arguments.
+    if (present(verbosity)) then
+       verbose = verbosity
+    else
+       verbose = .false.
+    end if
+
+    if (present(tol)) then
+       tolerance = tol
+    else
+       tolerance = 1e-6
+    endif
+
+    ! --> Initialization.
+    lambda_old = 0.0D+00 ; lambda = 0.0D+00 ; info = -1
+
+    ! --> Normalize the starting vector.
+    alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha)
+
+    ! --> Power iteration
+    poweriteration: do k = 1, niter
+       allocate(wrk, source=x)
+       !> Matrix-vector product.
+       call A%matvec(wrk, x)
+       !> Estimated eigenvalue.
+       lambda = wrk%dot(x) ; deallocate(wrk)
+       !> Normalize estimated eigenvectors.
+       alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha)
+
+       !> Check for convergence.
+       if (abs(lambda - lambda_old) < tolerance) then
+          if (verbose) then
+             write(*, *)
+             write(*, *) "INFO : Power iteration has converged to lambda = ", lambda, "."
+          endif
+
+          info = 0
+          ! --> Exit the loop.
+          exit poweriteration
+       else
+          lambda_old = lambda
+       endif
+    enddo poweriteration
+
+    if (info >= 0) info = 1
+    if (verbose) then
+       write(*, *) "INFO : Exiting the Power Iteration with exit code info = ", info, "."
+    endif
+
+    return
+  end subroutine power_iteration
+
   !---------------------------------------------------------------------
   !-----                                                           -----
   !-----     ARNOLDI FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
   !-----                                                           -----
-  !---------------------------------------------------------------------
   !---------------------------------------------------------------------
 
   subroutine arnoldi_factorization(A, X, H, kdim, info, kstart, kend, verbosity, tol)
@@ -145,20 +223,16 @@ contains
   end subroutine update_hessenberg_matrix
 
   !---------------------------------------------------------------------
-  !---------------------------------------------------------------------
   !-----                                                           -----
   !-----     LANCZOS FACTORIZATION FOR SYM. POS. DEF. MATRICES     -----
   !-----                                                           -----
   !---------------------------------------------------------------------
-  !---------------------------------------------------------------------
 
 
-  !---------------------------------------------------------------------------
   !---------------------------------------------------------------------------
   !-----                                                                 -----
   !-----      KRYLOV-SCHUR FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
   !-----                                                                 -----
-  !---------------------------------------------------------------------------
   !---------------------------------------------------------------------------
 
 end module KrylovDecomp
