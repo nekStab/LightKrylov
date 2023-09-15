@@ -10,3 +10,10 @@ $$
 $$
 
 where $\mathbf{X} \in \mathbb{R}^{n}$ is the state vector of the system, $\boldsymbol{\mu} \in \mathbb{R}^p$ the parameter vector and $\mathcal{F} : \mathbb{R}^n \times \mathbb{R}^p \to \mathbb{R}^n$ the dynamics.
+Given a fixed point $\mathbf{X}_*$ of the system, the dynamics of infinitesimal perturbations evolving in its vicinity are governed by the *linearized* equations
+
+$$
+\dot{\mathbf{x}} = \mathbf{A} \mathbf{x},
+$$
+
+where $\mathbf{A}$ is the *Jacobian* matrix of the system.
