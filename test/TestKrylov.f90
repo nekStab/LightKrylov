@@ -135,7 +135,7 @@ contains
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
     ! --> Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, kdim, info)
+    call arnoldi_factorization(A, X, H, info)
     ! --> Check correctness of full factorization.
     do k = 1, kdim+1
        Xdata(:, k) = X(k)%data
@@ -177,7 +177,7 @@ contains
     X(1)%data(3) = 0.0D+00 ! Makes sure X(1) has component only within the invariant subspace.
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
     ! --> Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, kdim, info)
+    call arnoldi_factorization(A, X, H, info)
     ! --> Check result.
     call check(error, info == 2)
 
@@ -198,7 +198,7 @@ contains
     !> Information flag.
     integer :: info
     !> Misc.
-    double precision, dimension(3, 3) :: G
+    double precision, dimension(3, 3) :: G, Id
     double precision :: alpha
     integer :: i, j, k
 
@@ -208,7 +208,7 @@ contains
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
     ! --> Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, kdim, info)
+    call arnoldi_factorization(A, X, H, info)
     ! --> Compute Gram matrix associated to the Krylov basis.
     do i = 1, kdim+1
        do j = 1, kdim+1
@@ -216,7 +216,8 @@ contains
        enddo
     enddo
     ! --> Check result.
-    call check(error, sum(G), 3.0D+00, rel=.true.)
+    Id = reshape([1, 0, 0, 0, 1, 0, 0, 0, 1], shape=[3, 3]) !> Identity matrix.
+    call check(error, norm2(G - Id) < 1e-12)
 
     return
   end subroutine test_arnoldi_basis_orthogonality
@@ -230,8 +231,122 @@ contains
   subroutine collect_lanczos_testsuite(testsuite)
     !> Collection of tests.
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+    testsuite = [&
+         new_unittest("Lanczos full factorization", test_lanczos_full_factorization),            &
+         new_unittest("Lanczos basis orthogonality", test_lanczos_basis_orthogonality),          &
+         new_unittest("Lanczos invariant subspace computation", test_lanczos_invariant_subspace) &
+         ]
     return
   end subroutine collect_lanczos_testsuite
+
+  subroutine test_lanczos_full_factorization(error)
+
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(spd_matrix), allocatable :: A
+    double precision, dimension(3, 3) :: Adata
+    !> Krylov subspace.
+    class(rvector), dimension(:), allocatable :: X
+    !> Krylov subspace dimension.
+    integer, parameter :: kdim=3
+    !> Tridiagonal matrix.
+    double precision, dimension(kdim+1, kdim) :: T
+    !> Information flag.
+    integer :: info
+    !> Misc.
+    integer :: i, j, k
+    double precision, dimension(3, kdim+1) :: Xdata
+    double precision :: alpha
+    double precision, dimension(3, 3) :: B, C
+
+    ! --> Initialize matrix.
+    call random_number(Adata) ; Adata = matmul(Adata, transpose(Adata)) ; A = spd_matrix(Adata)
+    ! --> Initialize Krylov subspace.
+    allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
+    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    ! --> Lanczos factorization.
+    call lanczos_factorization(A, X, T, info)
+    ! --> Check correctness of full factorization.
+    do k = 1, kdim+1
+       Xdata(:, k) = X(k)%data
+    enddo
+    alpha = norm2( matmul(Adata, Xdata(:, 1:kdim)) - matmul(Xdata, T) )
+    call check(error, alpha < 1e-12)
+
+    return
+  end subroutine test_lanczos_full_factorization
+
+  subroutine test_lanczos_invariant_subspace(error)
+    !> Error-type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(spd_matrix), allocatable :: A
+    !> Krylov subspace.
+    class(rvector), dimension(:), allocatable :: X
+    !> Krylov subspace dimension.
+    integer, parameter :: kdim=3
+    !> Tridiagonal matrix.
+    double precision, dimension(kdim+1, kdim) :: T
+    !> Information flag.
+    integer :: info
+    !> Misc.
+    double precision, dimension(3, 3) :: Adata
+    double precision :: alpha
+    integer :: i, j, k
+
+    ! --> Initialize matrix with a 2-dimensional invariant subspace.
+    call random_number(Adata) ; Adata = matmul(Adata, transpose(Adata))
+    Adata(3, 1:2) = 0.0D+00 ; Adata(1:2, 3) = 0.0D+00
+    A = spd_matrix(Adata)
+    ! --> Initialize Krylov subspace.
+    allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
+    X(1)%data(3) = 0.0D+00 ! Makes sure X(1) has component only within the invariant subspace.
+    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    ! --> Lanczos factorization.
+    call lanczos_factorization(A, X, T, info)
+    ! --> Check result.
+    call check(error, info == 2)
+    return
+  end subroutine test_lanczos_invariant_subspace
+
+  subroutine test_lanczos_basis_orthogonality(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(spd_matrix), allocatable :: A
+    !> Krylov subspace.
+    class(rvector), dimension(:), allocatable :: X
+    !> Krylov subspace dimension.
+    integer, parameter :: kdim = 2
+    !> Tridiagonal matrix.
+    double precision, dimension(kdim+1, kdim) :: T
+    !> Information flag.
+    integer :: info
+    !> Misc.
+    double precision, dimension(3, 3) :: G, Id
+    double precision :: alpha
+    integer :: i, j, k
+
+    ! --> Initialize random spd matrix.
+    A = spd_matrix() ; call random_number(A%data) ; A%data = matmul(A%data, transpose(A%data))
+    ! --> Initialize Krylov subspace.
+    allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
+    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    ! --> Lanczos factorization.
+    call lanczos_factorization(A, X, T, info)
+    ! --> Compute Gram matrix associated to the Krylov basis.
+    do i = 1, kdim+1
+       do j = 1, kdim+1
+          G(i, j) = X(i)%dot(X(j))
+       enddo
+    enddo
+    ! --> Check result.
+    Id = reshape([1, 0, 0, 0, 1, 0, 0, 0, 1], shape=[3, 3])
+    call check(error, norm2(G - Id) < 1e-12)
+    return
+  end subroutine test_lanczos_basis_orthogonality
 
   !-----------------------------------------------------------------
   !-----                                                       -----

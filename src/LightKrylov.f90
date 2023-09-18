@@ -5,13 +5,16 @@ module LightKrylov
   use LinearOperator
   ! --> Implementation of the various Krylov decompositions.
   use KrylovDecomp
+  ! --> Iterative Solvers.
+  use IterativeSolvers
   implicit none
   private
 
   public :: greetings, &
             abstract_vector, &
             abstract_linop, abstract_spd_linop, &
-            power_iteration, arnoldi_factorization
+            power_iteration, arnoldi_factorization, lanczos_factorization, &
+            eigs, eighs, svds, gmres, cg
 
 contains
 

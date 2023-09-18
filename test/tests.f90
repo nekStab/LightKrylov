@@ -8,7 +8,8 @@ program Tester
   !> Implementation of simple 3-dimensional vector types and associated matrices.
   use TestVector                   , only : collect_real_vector_testsuite
   use TestMatrices                 , only : collect_real_matrix_testsuite
-  use TestKrylov                   , only : collect_power_iteration_testsuite, collect_arnoldi_testsuite
+  use TestKrylov                   , only : collect_power_iteration_testsuite, collect_arnoldi_testsuite, &
+                                            collect_lanczos_testsuite
 
   implicit none
 
@@ -27,7 +28,8 @@ program Tester
        new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite),         &
        new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),         &
        new_testsuite("Power iteration Test Suite", collect_power_iteration_testsuite), &
-       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite)                  &
+       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite)                , &
+       new_testsuite("Lanczos Test Suite", collect_lanczos_testsuite)                  &
        ]
 
   do is = 1, size(testsuites)
