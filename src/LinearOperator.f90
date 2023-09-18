@@ -48,4 +48,15 @@ module LinearOperator
      private
   end type abstract_spd_linop
 
+  !-------------------------------------------------------
+  !-----                                             -----
+  !-----     ABSTRACT TYPE FOR LOW-RANK MATRICES     -----
+  !-----                                             -----
+  !-------------------------------------------------------
+
+  type, extends(abstract_linop), abstract, public :: abstract_lowrank_linop
+   contains
+     private
+  end type abstract_lowrank_linop
+  
 end module LinearOperator
