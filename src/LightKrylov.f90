@@ -11,10 +11,10 @@ module LightKrylov
   private
 
   public :: greetings, &
-            abstract_vector, &
-            abstract_linop, abstract_spd_linop, &
-            power_iteration, arnoldi_factorization, lanczos_factorization, &
-            eigs, eighs, svds, gmres, cg
+       abstract_vector, &
+       abstract_linop, abstract_spd_linop, &
+       power_iteration, arnoldi_factorization, lanczos_factorization, &
+       eigs, eighs, svds, gmres, cg
 
 contains
 

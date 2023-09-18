@@ -9,7 +9,7 @@ program Tester
   use TestVector                   , only : collect_real_vector_testsuite
   use TestMatrices                 , only : collect_real_matrix_testsuite
   use TestKrylov                   , only : collect_power_iteration_testsuite, collect_arnoldi_testsuite, &
-                                            collect_lanczos_testsuite
+       collect_lanczos_testsuite
 
   implicit none
 

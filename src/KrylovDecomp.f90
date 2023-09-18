@@ -5,8 +5,8 @@ module KrylovDecomp
 
   private
   public :: power_iteration, &
-            arnoldi_factorization, &
-            lanczos_factorization
+       arnoldi_factorization, &
+       lanczos_factorization
 
 contains
 

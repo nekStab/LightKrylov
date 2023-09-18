@@ -8,9 +8,9 @@ module TestKrylov
   private
 
   public :: collect_power_iteration_testsuite, &
-            collect_arnoldi_testsuite,         &
-            collect_lanczos_testsuite,         &
-            collect_krylov_schur_testsuite
+       collect_arnoldi_testsuite,         &
+       collect_lanczos_testsuite,         &
+       collect_krylov_schur_testsuite
 
 contains
 
@@ -47,8 +47,8 @@ contains
 
     ! --> Initialize matrix.
     A = rmatrix(reshape([1, 2, 0, &
-                        -2, 1, 2, &
-                         1, 3, 1], shape=[3, 3], order=[2, 1])) ! order=[2, 1] -> fill the matrix row-wise.
+         -2, 1, 2, &
+         1, 3, 1], shape=[3, 3], order=[2, 1])) ! order=[2, 1] -> fill the matrix row-wise.
     ! --> Initialize vector.
     x = rvector([1, 1, 1])
     ! --> Power iteration method.
@@ -75,8 +75,8 @@ contains
 
     ! --> Initialize matrix.
     A = spd_matrix(reshape([2, -1,  0, &
-                           -1,  2, -1, &
-                            0, -1,  2 ], shape=[3, 3]))
+         -1,  2, -1, &
+         0, -1,  2 ], shape=[3, 3]))
     ! --> Initialize vector.
     x = rvector([1, 1, 1])
     ! --> Power iteration method.
