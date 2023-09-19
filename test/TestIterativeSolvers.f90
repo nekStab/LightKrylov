@@ -25,7 +25,7 @@ contains
     testsuite = [&
          new_unittest("Triangular matrix eigenvalues", test_eigvals_triangular_matrix), &
          new_unittest("Sym. Pos. Def. matrix eigenvalues", test_eigvals_spd_matrix)     &
-    ]
+         ]
     return
   end subroutine collect_evp_testsuite
 
