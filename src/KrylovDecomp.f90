@@ -265,6 +265,7 @@ contains
     !> Miscellaneous.
     double precision :: beta
     integer          :: k, kdim
+    integer          :: i, j
 
     ! --> Check dimensions.
     kdim = size(X) - 1

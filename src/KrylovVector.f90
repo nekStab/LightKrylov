@@ -68,7 +68,7 @@ module KrylovVector
      subroutine abstract_scalar_multiplication(self, alpha)
        import abstract_vector
        class(abstract_vector), intent(inout) :: self
-       double precision, intent(in)                      :: alpha
+       double precision, intent(in)          :: alpha
      end subroutine abstract_scalar_multiplication
 
   end interface
