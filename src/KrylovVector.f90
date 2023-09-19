@@ -2,6 +2,7 @@ module KrylovVector
   implicit none
 
   private
+  public :: get_vec
 
   type, abstract, public :: abstract_vector
    contains
@@ -80,5 +81,33 @@ contains
     class(abstract_vector), intent(out), allocatable :: out
     allocate(out, source=from)
   end subroutine copy
+
+  subroutine get_vec(y, X, v)
+    !> Output Krylov vector.
+    class(abstract_vector), allocatable, intent(out) :: y
+    !> Krylov basis.
+    class(abstract_vector), dimension(:), intent(in) :: X
+    !> Coordinates of the output vector y in the Krylov basis X.
+    double precision, dimension(:), intent(in) :: v
+    !> Temporary Krylov vector.
+    class(abstract_vector), allocatable :: wrk
+    !> Miscellaneous.
+    integer :: i
+
+    ! --> Check sizes.
+    if (size(X) .ne. size(v)) then
+       write(*, *) "INFO : Krylov basis X and low-dimension vector v have different sizes."
+       call exit()
+    endif
+    ! --> Initialize output vector.
+    allocate(y, source=X(1)) ; call y%zero()
+    ! --> Compute output vector.
+    do i = 1, size(X)
+       wrk = X(i) ; call wrk%scalar_mult(v(i))
+       call y%add(wrk)
+    enddo
+    return
+  end subroutine get_vec
+
 
 end module KrylovVector
