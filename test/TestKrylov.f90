@@ -134,6 +134,10 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    do k = 2, size(X)
+       call X(k)%zero()
+    enddo
+    H = 0.0D+00
     ! --> Arnoldi factorization.
     call arnoldi_factorization(A, X, H, info)
     ! --> Check correctness of full factorization.
@@ -169,13 +173,16 @@ contains
     integer :: i, j, k
 
     ! --> Initialize matrix with a 2-dimensional invariant subspace.
-    call random_number(Adata)
-    Adata(3, 1:2) = 0.0D+00 ; Adata(1:2, 3) = 0.0D+00
-    A = rmatrix(Adata)
+    A = rmatrix() ; call random_number(A%data)
+    A%data(3, 1:2) = 0.0D+00 ; A%data(1:2, 3) = 0.0D+00
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     X(1)%data(3) = 0.0D+00 ! Makes sure X(1) has component only within the invariant subspace.
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    do k = 2, size(X)
+       call X(k)%zero()
+    enddo
+    H = 0.0D+00
     ! --> Arnoldi factorization.
     call arnoldi_factorization(A, X, H, info)
     ! --> Check result.
@@ -207,6 +214,10 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    do k = 2, size(X)
+       call X(k)%zero()
+    enddo
+    H = 0.0D+00
     ! --> Arnoldi factorization.
     call arnoldi_factorization(A, X, H, info)
     ! --> Compute Gram matrix associated to the Krylov basis.
@@ -262,10 +273,20 @@ contains
     double precision, dimension(3, 3) :: B, C
 
     ! --> Initialize matrix.
-    call random_number(Adata) ; Adata = matmul(Adata, transpose(Adata)) ; A = spd_matrix(Adata)
+    A = spd_matrix()
+    A%data(1, 1) = 1.0D+00    ; A%data(1, 2) = -0.5D+00 ; A%data(1, 3) = 0.0D+00
+    A%data(2, 1) = -0.5D+00   ; A%data(2, 2) = 1.0D+00  ; A%data(2, 3) = 0.0D+00
+    A%data(3, 1) = 0.0D+00    ; A%data(3, 2) = 0.0D+00  ; A%data(3, 3) = 1.0D+00
+    Adata = A%data
+
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
+    X(1)%data = [1.0D+00, 2.0D+00, 1.0D+00]
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    do k = 2, size(X)
+       call X(k)%zero()
+    enddo
+    T = 0.0D+00
     ! --> Lanczos factorization.
     call lanczos_factorization(A, X, T, info)
     ! --> Check correctness of full factorization.
@@ -297,13 +318,19 @@ contains
     integer :: i, j, k
 
     ! --> Initialize matrix with a 2-dimensional invariant subspace.
-    call random_number(Adata) ; Adata = matmul(Adata, transpose(Adata))
-    Adata(3, 1:2) = 0.0D+00 ; Adata(1:2, 3) = 0.0D+00
-    A = spd_matrix(Adata)
+    A = spd_matrix()
+    A%data(1, 1) = 1.0D+00    ; A%data(1, 2) = -0.5D+00 ; A%data(1, 3) = 0.0D+00
+    A%data(2, 1) = -0.5D+00   ; A%data(2, 2) = 1.0D+00  ; A%data(2, 3) = 0.0D+00
+    A%data(3, 1) = 0.0D+00    ; A%data(3, 2) = 0.0D+00  ; A%data(3, 3) = 1.0D+00
+
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     X(1)%data(3) = 0.0D+00 ! Makes sure X(1) has component only within the invariant subspace.
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    do k = 2, size(X)
+       call X(k)%zero()
+    enddo
+    T = 0.0D+00
     ! --> Lanczos factorization.
     call lanczos_factorization(A, X, T, info)
     ! --> Check result.
@@ -319,13 +346,13 @@ contains
     !> Krylov subspace.
     class(rvector), dimension(:), allocatable :: X
     !> Krylov subspace dimension.
-    integer, parameter :: kdim = 2
+    integer, parameter :: kdim = 3
     !> Tridiagonal matrix.
     double precision, dimension(kdim+1, kdim) :: T
     !> Information flag.
     integer :: info
     !> Misc.
-    double precision, dimension(3, 3) :: G, Id
+    double precision, dimension(kdim, kdim) :: G, Id
     double precision :: alpha
     integer :: i, j, k
 
@@ -334,11 +361,15 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    do k = 2, size(X)
+       call X(k)%zero()
+    enddo
+    T = 0.0D+00
     ! --> Lanczos factorization.
     call lanczos_factorization(A, X, T, info)
     ! --> Compute Gram matrix associated to the Krylov basis.
-    do i = 1, kdim+1
-       do j = 1, kdim+1
+    do i = 1, kdim
+       do j = 1, kdim
           G(i, j) = X(i)%dot(X(j))
        enddo
     enddo
