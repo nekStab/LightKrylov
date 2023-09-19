@@ -115,7 +115,8 @@ contains
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
     testsuite = [&
-         new_unittest("GMRES full computation", test_gmres_full_computation) &
+         new_unittest("GMRES full computation", test_gmres_full_computation),                                    &
+         new_unittest("GMRES full computation w. sym. pos. def. matrix", test_gmres_full_computation_spd_matrix) &
          ]
     return
   end subroutine collect_gmres_testsuite
@@ -141,6 +142,28 @@ contains
 
     return
   end subroutine test_gmres_full_computation
+
+  subroutine test_gmres_full_computation_spd_matrix(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Linear Problem.
+    class(spd_matrix), allocatable :: A ! Linear Operator.
+    class(rvector), allocatable :: b ! Right-hand side vector.
+    class(rvector), allocatable :: x ! Solution vector.
+    !> Information flag.
+    integer :: info
+
+    ! --> Initialize linear problem.
+    A = spd_matrix() ; call random_number(A%data) ; A%data = matmul(A%data, transpose(A%data))
+    b = rvector()    ; call random_number(b%data)
+    x = rvector()    ; call x%zero()
+    ! --> GMRES solver.
+    call gmres(A, b, x, info, kdim=3)
+    ! --> Check convergence.
+    call check(error, norm2(matmul(A%data, x%data) - b%data) < 1e-12)
+
+    return
+  end subroutine test_gmres_full_computation_spd_matrix
 
   ! subroutine test_restarted_gmres_computation(error)
   !   !> Eror type to be returned.
