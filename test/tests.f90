@@ -10,6 +10,7 @@ program Tester
   use TestMatrices                 , only : collect_real_matrix_testsuite
   use TestKrylov                   , only : collect_power_iteration_testsuite, collect_arnoldi_testsuite, &
        collect_lanczos_testsuite
+  use TestIterativeSolvers         , only : collect_evp_testsuite
 
   implicit none
 
@@ -29,7 +30,8 @@ program Tester
        new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),         &
        new_testsuite("Power iteration Test Suite", collect_power_iteration_testsuite), &
        new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite)                , &
-       new_testsuite("Lanczos Test Suite", collect_lanczos_testsuite)                  &
+       new_testsuite("Lanczos Test Suite", collect_lanczos_testsuite)                , &
+       new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite)                  &
        ]
 
   do is = 1, size(testsuites)
