@@ -2,7 +2,8 @@ module TestIterativeSolvers
   use LightKrylov
   use TestVector
   use TestMatrices
-  use testdrive, only : new_unittest, unittest_type, error_type, check
+  use testdrive  , only : new_unittest, unittest_type, error_type, check
+  use stdlib_math, only : all_close
   implicit none
 
   private
@@ -56,7 +57,7 @@ contains
     ! --> Compute eigenpairs.
     call eigs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
-    call check(error, norm2(real(eigvals) - true_eigs) < 1e-12)
+    call check(error, all_close(real(eigvals), true_eigs), .true.)
     return
   end subroutine test_eigvals_triangular_matrix
 
@@ -99,7 +100,7 @@ contains
     ! --> Compute eigenpairs.
     call eighs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
-    call check(error, norm2(eigvals - true_eigs) < 1e-12)
+    call check(error, all_close(eigvals, true_eigs), .true.)
     return
   end subroutine test_eigvals_spd_matrix
 

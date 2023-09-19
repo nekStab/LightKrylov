@@ -2,7 +2,8 @@ module TestKrylov
   use LightKrylov
   use TestVector
   use TestMatrices
-  use testdrive, only : new_unittest, unittest_type, error_type, check
+  use testdrive  , only : new_unittest, unittest_type, error_type, check
+  use stdlib_math, only : all_close
   implicit none
 
   private

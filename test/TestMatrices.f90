@@ -1,7 +1,8 @@
 module TestMatrices
   use LightKrylov
   use TestVector
-  use testdrive, only: new_unittest, unittest_type, error_type, check
+  use testdrive  , only : new_unittest, unittest_type, error_type, check
+  use stdlib_math, only : all_close
   implicit none
 
   private
@@ -130,7 +131,7 @@ contains
     ! --> Compute matrix-vector product.
     call A%matvec(x, y) ; ydata = matmul(Adata, xdata)
     ! --> Check result.
-    call check(error, norm2(y%data - ydata) < 1e-12)
+    call check(error, all_close(y%data, ydata), .true.)
 
     return
   end subroutine test_real_matvec
@@ -154,7 +155,7 @@ contains
     ! --> Compute transpose matrix-vector product.
     call A%rmatvec(x, y) ; ydata = matmul(transpose(Adata), xdata)
     ! --> Check result.
-    call check(error, norm2(y%data - ydata) < 1e-12)
+    call check(error, all_close(y%data, ydata), .true.)
     return
   end subroutine test_real_rmatvec
 
