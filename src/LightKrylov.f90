@@ -11,7 +11,7 @@ module LightKrylov
   private
 
   public :: greetings,                                                &
-       abstract_vector, get_vec                                       &
+       abstract_vector, get_vec,                                      &
        abstract_linop, abstract_spd_linop,                            &
        power_iteration, arnoldi_factorization, lanczos_factorization, &
        eigs, eighs, gmres
