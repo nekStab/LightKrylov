@@ -2,13 +2,31 @@ module IterativeSolvers
   use KrylovVector
   use LinearOperator
   use KrylovDecomp
-  use stdlib_sorting, only: sort_index, int_size
+  use stdlib_sorting, only : sort_index, int_size
+  use stdlib_optval , only : optval
   implicit none
 
   private
   public :: eigs, eighs
 
 contains
+
+  !-----------------------------
+  !-----     UTILITIES     -----
+  !-----------------------------
+
+  elemental function compute_residual(beta, x) result(residual)
+    !> Norm of Krylov residual vector.
+    double precision, intent(in) :: beta
+    !> Last element of Ritz eigenvector.
+    double precision, intent(in) :: x
+    !> Residual.
+    double precision :: residual
+
+    ! --> Compute residual.
+    residual = abs(beta * x)
+    return
+  end function compute_residual
 
   !------------------------------------------
   !-----                                -----
@@ -45,11 +63,7 @@ contains
     kdim = size(X) - 1
 
     ! --> Deals with the optional arguments.
-    if (present(verbosity)) then
-       verbose = verbosity
-    else
-       verbose = .false.
-    endif
+    verbose = optval(verbosity, .false.)
 
     ! --> Initialize variables.
     H = 0.0D+00 ; residuals = 0.0D+00 ; eigvals = (0.0D+00, 0.0D+00) ; eigvecs = (0.0D+00, 0.0D+00)
@@ -78,9 +92,7 @@ contains
 
     ! --> Compute the residual associated with each eigenpair.
     beta = H(kdim+1, kdim) !> Get Krylov residual vector norm.
-    do i = 1, kdim
-       residuals(i) = abs(beta * eigvecs(kdim, i))
-    enddo
+    residuals = compute_residual(beta, abs(eigvecs(kdim, :)))
 
     return
   end subroutine eigs
@@ -109,15 +121,13 @@ contains
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
 
+    class(abstract_vector), allocatable :: tmp
+
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
 
-    ! --> Deals with the optional argumentlambdas.
-    if (present(verbosity)) then
-       verbose = verbosity
-    else
-       verbose = .false.
-    endif
+    ! --> Deals with the optional argument.
+    verbose = optval(verbosity, .false.)
 
     ! --> Initialize all variables.
     T = 0.0D+00 ; residuals = 0.0D+00 ; eigvecs = 0.0D+00 ; eigvals = 0.0D+00
@@ -145,9 +155,7 @@ contains
 
     ! --> Compute the residual associated with each eigenpair.
     beta = T(kdim+1, kdim) !> Get Krylov residual vector norm.
-    do i = 1, kdim
-       residuals(i) = abs(beta * eigvecs(kdim, i))
-    enddo
+    residuals = compute_residual(beta, eigvecs(kdim, :))
 
     return
   end subroutine eighs
