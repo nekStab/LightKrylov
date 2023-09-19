@@ -7,7 +7,7 @@ module IterativeSolvers
   implicit none
 
   private
-  public :: eigs, eighs
+  public :: eigs, eighs, gmres
 
 contains
 
@@ -15,7 +15,7 @@ contains
   !-----     UTILITIES     -----
   !-----------------------------
 
-  elemental function compute_residual(beta, x) result(residual)
+  elemental pure function compute_residual(beta, x) result(residual)
     !> Norm of Krylov residual vector.
     double precision, intent(in) :: beta
     !> Last element of Ritz eigenvector.
@@ -57,7 +57,7 @@ contains
     !> Miscellaneous.
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
-    double precision, dimension(size(X)-1) :: abs_eigvals
+    double precision , dimension(size(X)-1) :: abs_eigvals
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
@@ -72,7 +72,7 @@ contains
     enddo
 
     ! --> Compute Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, info)
+    call arnoldi_factorization(A, X, H, info, verbosity=verbose)
 
     if (info < 0) then
        if (verbose) then
@@ -121,8 +121,6 @@ contains
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
 
-    class(abstract_vector), allocatable :: tmp
-
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
 
@@ -136,7 +134,7 @@ contains
     enddo
 
     ! --> Compute Lanczos factorization.
-    call lanczos_factorization(A, X, T, info)
+    call lanczos_factorization(A, X, T, info, verbosity=verbose)
 
     if (info < 0) then
        if (verbose) then
@@ -278,12 +276,145 @@ contains
   !-----                                  -----
   !--------------------------------------------
 
-  ! subroutine gmres(A, b)
-  !   !> Linear problem.
-  !   class(abstract_linop) , intent(in) :: A ! Linear Operator.
-  !   class(abstract_vector), intent(in) :: b ! Right-hand side.
-  !   return
-  ! end subroutine gmres
+  subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity)
+    !> Linear problem.
+    class(abstract_linop) , intent(in) :: A ! Linear Operator.
+    class(abstract_vector), intent(in) :: b ! Right-hand side.
+    !> Solution vector.
+    class(abstract_vector), intent(inout) :: x
+    !> Information flag.
+    integer                            , intent(out)   :: info
+    !> Optional arguments.
+    integer, optional, intent(in)          :: kdim      ! Krylov subspace dimension.
+    integer                                :: k_dim
+    integer, optional, intent(in)          :: maxiter   ! Maximum number full GMRES iterations.
+    integer                                :: niter
+    double precision, optional, intent(in) :: tol       ! Tolerance for the GMRES residual.
+    double precision                       :: tolerance
+    logical, optional, intent(in)          :: verbosity ! Verbosity control.
+    logical                                :: verbose
+
+    !> Krylov subspace.
+    class(abstract_vector), dimension(:)   , allocatable :: V
+    !> Upper Hessenberg matrix.
+    double precision      , dimension(:, :), allocatable :: H
+    !> Least-squares related variables.
+    double precision      , dimension(:)   , allocatable :: y
+    double precision      , dimension(:)   , allocatable :: e
+    double precision                                     :: beta
+
+    !> Miscellaneous.
+    integer :: i, j, k, l, m
+    double precision :: alpha
+    class(abstract_vector), allocatable :: dx
+
+    ! --> Deals with the optional arguments.
+    k_dim     = optval(kdim, 30)
+    niter     = optval(maxiter, 10)
+    tolerance = optval(tol, 1.0D-12)
+    verbose   = optval(verbosity, .false.)
+
+    ! --> Initialize Krylov subspace.
+    allocate(V(1:k_dim+1), source=b)
+    do i = 1, size(V)
+       call V(i)%zero()
+    enddo
+    allocate(H(k_dim+1, k_dim)) ; H = 0.0D+00
+    allocate(y(1:k_dim))        ; y = 0.0D+00
+    allocate(e(1:k_dim+1))      ; e = 0.0D+00
+
+    ! --> Initial Krylov vector.
+    call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scalar_mult(-1.0D+00)
+    beta = V(1)%norm() ; call V(1)%scalar_mult(1.0D+00 / beta)
+
+    gmres_iterations : do i = 1, niter
+       ! --> Zero-out variables.
+       H = 0.0D+00 ; y = 0.0D+00 ; e = 0.0D+00 ; e(1) = beta
+       do j = 2, size(V)
+          call V(j)%zero()
+       enddo
+
+       arnoldi : do k = 1, k_dim
+          ! --> Step-by-step Arnoldi factorization.
+          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tolerance)
+          if (info < 0) then
+             write(*, *) "INFO : Arnoldi Factorization failed with exit code info =", info
+             write(*, *) "       Stopping the GMRES computation."
+          endif
+          ! --> Least-squares problem.
+          call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+          ! --> Compute residual.
+          beta = norm2(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k)))
+          if (verbose) then
+             write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
+          endif
+          ! --> Check convergence.
+          if (beta**2 .lt. tolerance) then
+             exit arnoldi
+          endif
+       enddo arnoldi
+
+       ! --> Update solution.
+       k = min(k, k_dim)
+       if (allocated(dx) .eqv. .false.) allocate(dx, source=x)
+       call dx%zero() ; call get_vec(dx, V(1:k), y(1:k)) ; call x%add(dx)
+
+       ! --> Recompute residual for sanity check.
+       call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scalar_mult(-1.0D+00)
+
+       ! --> Initialize new starting Krylov vector if needed.
+       beta = V(1)%norm() ; call V(1)%scalar_mult(1.0D+00 / beta)
+
+       if (beta**2 .lt. tolerance) then
+          exit gmres_iterations
+       endif
+
+    enddo gmres_iterations
+
+    ! --> Deallocate variables.
+    deallocate(V, H, y, e)
+
+    return
+  end subroutine gmres
+
+  subroutine lstsq(A, b, x)
+    !> Input matrix.
+    double precision, dimension(:, :), intent(in)  :: A
+    double precision, dimension(:)   , intent(in)  :: b
+    double precision, dimension(:)   , intent(out) :: x
+
+    !> Lapack job.
+    character :: trans = "N"
+    integer   :: m, n, nrhs, lda, ldb, lwork, info
+    double precision, dimension(size(A, 1), size(A, 2)) :: A_tilde
+    double precision, dimension(size(A, 1))             :: b_tilde
+    double precision, dimension(:), allocatable         :: work
+
+    !> Interface to LAPACK dgels
+    interface
+       pure subroutine dgels(ftrans, fm, fn, fnrhs, fA, flda, fb, fldb, fwork, flwork, finfo)
+         character, intent(in)           :: ftrans
+         integer  , intent(in)           :: fm, fn, fnrhs, flda, fldb, flwork, finfo
+         double precision, intent(inout) :: fa(flda, *)
+         double precision, intent(inout) :: fb(flda, *)
+         double precision, intent(out)   :: fwork(*)
+       end subroutine dgels
+    end interface
+
+    !> Initialize variables.
+    m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
+    lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
+    A_tilde = A ; b_tilde = b
+    allocate(work(1:lwork)) ; work = 0.0D+00
+
+    !> Solve the least-squares problem.
+    call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
+
+    !> Return solution.
+    x = b_tilde(1:n)
+
+    return
+  end subroutine lstsq
 
   ! subroutine cg(A, b)
   !   !> Linear problem.
