@@ -1,6 +1,7 @@
 module KrylovDecomp
   use KrylovVector
   use LinearOperator
+  use stdlib_optval, only : optval
   implicit none
 
   private
@@ -39,17 +40,8 @@ contains
     logical          :: verbose
 
     ! --> Deals with the optional arguments.
-    if (present(verbosity)) then
-       verbose = verbosity
-    else
-       verbose = .false.
-    end if
-
-    if (present(tol)) then
-       tolerance = tol
-    else
-       tolerance = 1e-12
-    endif
+    verbose   = optval(verbosity, .false.)
+    tolerance = optval(tol, 1.0D-12)
 
     ! --> Initialization.
     lambda_old = 0.0D+00 ; lambda = 0.0D+00 ; info = -1
@@ -139,29 +131,10 @@ contains
     endif
 
     ! --> Deals with the optional arguments.
-    if (present(kstart)) then
-       k_start = kstart
-    else
-       k_start = 1
-    endif
-
-    if (present(kend)) then
-       k_end = kend
-    else
-       k_end = kdim
-    endif
-
-    if (present(verbosity)) then
-       verbose = verbosity
-    else
-       verbose = .false.
-    endif
-
-    if (present(tol)) then
-       tolerance = tol
-    else
-       tolerance = 1e-12
-    endif
+    k_start   = optval(kstart, 1)
+    k_end     = optval(kend, kdim)
+    verbose   = optval(verbosity, .false.)
+    tolerance = optval(tol, 1.0D-12)
 
     ! --> Arnoldi factorization.
     arnoldi: do k = k_start, k_end
@@ -277,29 +250,10 @@ contains
     endif
 
     ! --> Deals with the optional arguments.
-    if (present(kstart)) then
-       k_start = kstart
-    else
-       k_start = 1
-    endif
-
-    if (present(kend)) then
-       k_end = kend
-    else
-       k_end = kdim
-    endif
-
-    if (present(verbosity)) then
-       verbose = verbosity
-    else
-       verbose = .false.
-    endif
-
-    if (present(tol)) then
-       tolerance = tol
-    else
-       tolerance = 1e-12
-    endif
+    k_start   = optval(kstart, 1)
+    k_end     = optval(kend, kdim)
+    verbose   = optval(verbosity, .false.)
+    tolerance = optval(tol, 1.0D-12)
 
     ! --> Lanczos factorization.
     lanczos: do k = k_start, k_end
