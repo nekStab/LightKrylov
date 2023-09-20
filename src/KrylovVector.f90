@@ -100,7 +100,7 @@ contains
        call exit()
     endif
     ! --> Initialize output vector.
-    allocate(y, source=X(1)) ; call y%zero()
+    if (allocated(y) .eqv. .false.) allocate(y, source=X(1)) ; call y%zero()
     ! --> Compute output vector.
     do i = 1, size(X)
        wrk = X(i) ; call wrk%scalar_mult(v(i))
