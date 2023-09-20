@@ -40,7 +40,7 @@ contains
     character(len=*), intent(in) :: filename
 
     !> Miscellaneous.
-    double precision, dimension(size(real_part), size(real_part)) :: data
+    real(kind=dp), dimension(size(real_part), size(real_part)) :: data
 
     ! --> Store the data.
     data(:, 1) = real_part ; data(:, 2) = imag_part ; data(:, 3) = residuals
@@ -155,8 +155,8 @@ contains
        call X(i)%zero()
     enddo
 
-    ! --> Compute Lanczos factorization.
-    call lanczos_factorization(A, X, T, info, verbosity=verbose)
+    ! --> Compute Lanczos tridiagonalization.
+    call lanczos_tridiagonalization(A, X, T, info, verbosity=verbose)
 
     if (info < 0) then
        if (verbose) then
@@ -258,39 +258,50 @@ contains
   !-----                                    -----
   !----------------------------------------------
 
-  ! subroutine svds(A, U, S, V, niter, info, verbosity, tol)
-  !   !> Linear Operator.
-  !   class(abstract_linop), intent(in) :: A
-  !   !> Singular triplets.
-  !   class(abstract_vector), dimension(:), allocatable, intent(out) :: U
-  !   double precision, dimension(:), allocatable, intent(out)       :: S
-  !   class(abstract_vector), dimension(:), allocatable, intent(out) :: V
-  !   !> Maximum number of iterations.
-  !   integer, intent(in) :: niter
-  !   !> Information flag.
-  !   integer, intent(out) :: info
-  !   !> Verbosity control.
-  !   logical, optional, intent(in) :: verbosity
-  !   logical :: verbose
-  !   !> Tolerance control.
-  !   double precision, optional, intent(in) :: tol
-  !   double precision :: tolerance
+  subroutine svds(A, U, V, singvecs, singvals, residuals, info, verbosity)
+    !> Linear Operator.
+    class(abstract_linop), intent(in) :: A
+    !> Krylov bases.
+    class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
+    class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
+    !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
+    real(kind=dp), intent(out) :: singvecs(size(U)-1, size(U)-1)
+    real(kind=dp), intent(out) :: singvals(size(U)-1)
+    real(kind=dp), intent(out) :: residuals(size(U)-1)
+    !> Information flag.
+    integer, intent(out) :: info
+    !> Verbosity control.
+    logical, optional, intent(in) :: verbosity
+    logical verbose
 
-  !   ! --> Deals with the optional arguments.
-  !   if (present(verbosity)) then
-  !      verbose = verbosity
-  !   else
-  !      verbose = .false.
-  !   endif
+    !> Tridiagonal matrix.
+    real(kind=dp) :: T(size(U), size(U)-1)
+    real(kind=dp) :: beta
+    !> Krylov subspace dimension.
+    integer :: kdim
+    !> Miscellaneous.
+    integer :: i, j, k
+    integer(int_size) :: indices(size(U)-1)
 
-  !   if (present(tol)) then
-  !      tolerance = tol
-  !   else
-  !      tolerance = 1e-12
-  !   endif
+    ! --> Deals with the optional args.
+    verbose = optval(verbosity, .false.)
+    ! --> Assert size(U) == size(V).
+    if (size(U) .ne. size(V)) then
+       info = -1
+       if (verbose) then
+          write(*, *) "INFO : Left and Right Krylov subspaces have different dimensions."
+          write(*, *) "       Exiting svds with exit code info =", info
+       endif
+    endif
 
-  !   return
-  ! end subroutine svds
+    ! --> Initialize variables.
+    T = 0.0_dp ; residuals = 0.0_dp ; singvecs = 0.0_dp ; singvals = 0.0_dp
+    do i = 2, size(U)
+       call U(i)%zero() ; call V(i)%zero()
+    enddo
+
+    return
+  end subroutine svds
 
   !--------------------------------------------
   !-----                                  -----

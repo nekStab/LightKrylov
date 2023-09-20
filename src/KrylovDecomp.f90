@@ -1,13 +1,15 @@
 module KrylovDecomp
   use KrylovVector
   use LinearOperator
+  use stdlib_kinds , only : dp
   use stdlib_optval, only : optval
   implicit none
 
   private
   public :: power_iteration, &
        arnoldi_factorization, &
-       lanczos_factorization
+       lanczos_tridiagonalization, &
+       lanczos_bidiagonalization
 
 contains
 
@@ -211,13 +213,13 @@ contains
     return
   end subroutine update_hessenberg_matrix
 
-  !---------------------------------------------------------------------
-  !-----                                                           -----
-  !-----     LANCZOS FACTORIZATION FOR SYM. POS. DEF. MATRICES     -----
-  !-----                                                           -----
-  !---------------------------------------------------------------------
+  !--------------------------------------------------------------------------
+  !-----                                                                -----
+  !-----     LANCZOS TRIDIAGONALIZATION FOR SYM. POS. DEF. MATRICES     -----
+  !-----                                                                -----
+  !--------------------------------------------------------------------------
 
-  subroutine lanczos_factorization(A, X, T, info, kstart, kend, verbosity, tol)
+  subroutine lanczos_tridiagonalization(A, X, T, info, kstart, kend, verbosity, tol)
     !> Linear operator to be factorized;
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
@@ -255,7 +257,7 @@ contains
     verbose   = optval(verbosity, .false.)
     tolerance = optval(tol, 1.0D-12)
 
-    ! --> Lanczos factorization.
+    ! --> Lanczos tridiagonalization.
     lanczos: do k = k_start, k_end
        ! --> Matrix-vector product.
        call A%matvec(X(k), X(k+1))
@@ -295,7 +297,7 @@ contains
     endif
 
     return
-  end subroutine lanczos_factorization
+  end subroutine lanczos_tridiagonalization
 
   subroutine update_tridiag_matrix(T, X, k)
     integer, intent(in) :: k
@@ -316,6 +318,89 @@ contains
 
     return
   end subroutine update_tridiag_matrix
+
+  !----------------------------------------------------------------------------
+  !-----                                                                  -----
+  !-----     LANCZOS BIDIAGONALIZATION FOR SINGULAR VALUE COMPUTATION     -----
+  !-----                                                                  -----
+  !----------------------------------------------------------------------------
+
+  subroutine lanczos_bidiagonalization(A, U, V, B, info, kstart, kend, verbosity, tol)
+    !> Linear operator to be factorized.
+    class(abstract_linop), intent(in) :: A
+    !> Left and right Krylov basis.
+    class(abstract_vector), intent(inout) :: U(:)
+    class(abstract_vector), intent(inout) :: V(:)
+    !> Bi-diagonal matrix.
+    real(kind=dp), intent(inout) :: B(:, :)
+    !> Information flag.
+    integer, intent(out) :: info
+    !> Optional arguments.
+    integer, optional, intent(in) :: kstart
+    integer                       :: k_start
+    integer, optional, intent(in) :: kend
+    integer                       :: k_end
+    logical, optional, intent(in) :: verbosity
+    logical                       :: verbose
+    real(kind=dp), optional, intent(in) :: tol
+    real(kind=dp)                       :: tolerance
+    !> Miscellaneous.
+    real(kind=dp) :: alpha, beta
+    integer       :: i, j, k, kdim
+    class(abstract_vector), allocatable :: wrk
+
+    ! --> Check Krylov subspaces dimensions.
+    if (size(U) .ne. size(V)) then
+       write(*, *) "INFO : Left and right Krylov basis have different dimensions."
+       info = -1
+       return
+    else
+       kdim = size(U) - 1
+    endif
+
+    ! --> Check B dimensions.
+    if (all(shape(B) .ne. [kdim+1, kdim])) then
+       write(*, *) "INFO : Bidiagonal matrix and Krylov subspaces dimensions do not match."
+       info = -2
+    endif
+
+    ! --> Deals with the optional arguments.
+    k_start = optval(kstart, 1)
+    k_end   = optval(kend, kdim)
+    verbose = optval(verbosity, .false.)
+    tolerance = optval(tol, 1.0D-12)
+
+    ! --> Lanczos bidiagonalization.
+    do k = k_start, k_end
+       ! --> Transpose matrix-vector product.
+       call A%rmatvec(U(k), V(k))
+       if (k > 1) then
+          wrk = V(k-1) ; call wrk%scalar_mult(beta)
+          call V(k)%sub(wrk)
+       endif
+
+       ! --> Normalization step.
+       alpha = V(k)%norm() ; call V(k)%scalar_mult(1.0_dp / alpha)
+
+       ! --> Matrix-vector product.
+       call A%matvec(V(k), U(k+1))
+       wrk = U(k) ; call wrk%scalar_mult(alpha) ; call U(k+1)%sub(wrk)
+
+       ! --> Normalization step.
+       beta = U(k+1)%norm() ; call U(k+1)%scalar_mult(1.0_dp / beta)
+
+       ! --> Fill-in the bidiagonal matrix.
+       B(k, k) = alpha ; B(k+1, k) = beta
+    enddo
+
+    return
+  end subroutine lanczos_bidiagonalization
+
+  !------------------------------------------------------------------------------------
+  !-----                                                                          -----
+  !-----     TWO-SIDED LANCZOS TRIDIAGONALIZATION FOR GENERAL SQUARE MATRICES     -----
+  !-----                                                                          -----
+  !------------------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
   !-----                                                                 -----

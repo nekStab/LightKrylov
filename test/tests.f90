@@ -9,7 +9,7 @@ program Tester
   use TestVector                   , only : collect_real_vector_testsuite
   use TestMatrices                 , only : collect_real_matrix_testsuite
   use TestKrylov                   , only : collect_power_iteration_testsuite, collect_arnoldi_testsuite, &
-       collect_lanczos_testsuite
+       collect_lanczos_tridiag_testsuite, collect_lanczos_bidiag_testsuite
   use TestIterativeSolvers         , only : collect_evp_testsuite, collect_gmres_testsuite
 
   implicit none
@@ -30,7 +30,8 @@ program Tester
        new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),         &
        new_testsuite("Power iteration Test Suite", collect_power_iteration_testsuite), &
        new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite)                , &
-       new_testsuite("Lanczos Test Suite", collect_lanczos_testsuite)                , &
+       new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite) , &
+       new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite)   , &
        new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite)                , &
        new_testsuite("GMRES Test Suite", collect_gmres_testsuite)                      &
        ]

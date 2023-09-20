@@ -10,10 +10,10 @@ module LightKrylov
   implicit none
   private
 
-  public :: greetings,                                                &
-       abstract_vector, get_vec,                                      &
-       abstract_linop, abstract_spd_linop,                            &
-       power_iteration, arnoldi_factorization, lanczos_factorization, &
+  public :: greetings,                                                     &
+       abstract_vector, get_vec,                                           &
+       abstract_linop, abstract_spd_linop,                                 &
+       power_iteration, arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
        eigs, eighs, gmres, save_eigenspectrum
 
 contains

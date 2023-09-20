@@ -3,14 +3,16 @@ module TestKrylov
   use TestVector
   use TestMatrices
   use testdrive  , only : new_unittest, unittest_type, error_type, check
+  use stdlib_kinds, only : dp
   use stdlib_math, only : all_close
   implicit none
 
   private
 
   public :: collect_power_iteration_testsuite, &
-       collect_arnoldi_testsuite,         &
-       collect_lanczos_testsuite,         &
+       collect_arnoldi_testsuite,              &
+       collect_lanczos_tridiag_testsuite,      &
+       collect_lanczos_bidiag_testsuite,       &
        collect_krylov_schur_testsuite
 
 contains
@@ -234,25 +236,25 @@ contains
     return
   end subroutine test_arnoldi_basis_orthogonality
 
-  !------------------------------------------------------------
-  !-----                                                  -----
-  !-----     TEST SUITE FOR THE LANCZOS FACTORIZATION     -----
-  !-----                                                  -----
-  !------------------------------------------------------------
+  !-----------------------------------------------------------------
+  !-----                                                       -----
+  !-----     TEST SUITE FOR THE LANCZOS TRIDIAGONALIZATION     -----
+  !-----                                                       -----
+  !-----------------------------------------------------------------
 
-  subroutine collect_lanczos_testsuite(testsuite)
+  subroutine collect_lanczos_tridiag_testsuite(testsuite)
     !> Collection of tests.
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
     testsuite = [&
-         new_unittest("Lanczos full factorization", test_lanczos_full_factorization),            &
-         new_unittest("Lanczos basis orthogonality", test_lanczos_basis_orthogonality),          &
-         new_unittest("Lanczos invariant subspace computation", test_lanczos_invariant_subspace) &
+         new_unittest("Lanczos tridiag. full factorization", test_lanczos_tridiag_full_factorization),            &
+         new_unittest("Lanczos tridiag. basis orthogonality", test_lanczos_tridiag_basis_orthogonality),          &
+         new_unittest("Lanczos tridiag. invariant subspace computation", test_lanczos_tridiag_invariant_subspace) &
          ]
     return
-  end subroutine collect_lanczos_testsuite
+  end subroutine collect_lanczos_tridiag_testsuite
 
-  subroutine test_lanczos_full_factorization(error)
+  subroutine test_lanczos_tridiag_full_factorization(error)
 
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
@@ -289,7 +291,7 @@ contains
     enddo
     T = 0.0D+00
     ! --> Lanczos factorization.
-    call lanczos_factorization(A, X, T, info)
+    call lanczos_tridiagonalization(A, X, T, info)
     ! --> Check correctness of full factorization.
     do k = 1, kdim+1
        Xdata(:, k) = X(k)%data
@@ -298,9 +300,9 @@ contains
     call check(error, alpha < 1e-12)
 
     return
-  end subroutine test_lanczos_full_factorization
+  end subroutine test_lanczos_tridiag_full_factorization
 
-  subroutine test_lanczos_invariant_subspace(error)
+  subroutine test_lanczos_tridiag_invariant_subspace(error)
     !> Error-type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test matrix.
@@ -333,13 +335,13 @@ contains
     enddo
     T = 0.0D+00
     ! --> Lanczos factorization.
-    call lanczos_factorization(A, X, T, info)
+    call lanczos_tridiagonalization(A, X, T, info)
     ! --> Check result.
     call check(error, info == 2)
     return
-  end subroutine test_lanczos_invariant_subspace
+  end subroutine test_lanczos_tridiag_invariant_subspace
 
-  subroutine test_lanczos_basis_orthogonality(error)
+  subroutine test_lanczos_tridiag_basis_orthogonality(error)
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test matrix.
@@ -367,7 +369,7 @@ contains
     enddo
     T = 0.0D+00
     ! --> Lanczos factorization.
-    call lanczos_factorization(A, X, T, info)
+    call lanczos_tridiagonalization(A, X, T, info)
     ! --> Compute Gram matrix associated to the Krylov basis.
     do i = 1, kdim
        do j = 1, kdim
@@ -378,7 +380,65 @@ contains
     Id = reshape([1, 0, 0, 0, 1, 0, 0, 0, 1], shape=[3, 3])
     call check(error, norm2(G - Id) < 1e-12)
     return
-  end subroutine test_lanczos_basis_orthogonality
+  end subroutine test_lanczos_tridiag_basis_orthogonality
+
+  !----------------------------------------------------------------
+  !-----                                                      -----
+  !-----     TEST SUITE FOR THE LANCZOS BIDIAGONALIZATION     -----
+  !-----                                                      -----
+  !----------------------------------------------------------------
+
+  subroutine collect_lanczos_bidiag_testsuite(testsuite)
+    !> Collection of tests.
+    type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+    testsuite = [&
+         new_unittest("Lanczos bidiag. full factorization", test_lanczos_bidiag_full_factorization) &
+         ]
+
+    return
+  end subroutine collect_lanczos_bidiag_testsuite
+
+  subroutine test_lanczos_bidiag_full_factorization(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(rmatrix), allocatable :: A
+    !> Left and right Krylov subspaces.
+    class(rvector), allocatable :: U(:)
+    class(rvector), allocatable :: V(:)
+    !> Krylov subspace dimension.
+    integer, parameter :: kdim = 3
+    !> Bidiagonal matrix.
+    real(kind=dp) :: B(kdim+1, kdim)
+    !> Information flag.
+    integer :: info
+    !> Miscellaneous.
+    integer :: i, j, k
+    real(kind=dp) :: alpha
+    real(kind=dp) :: Udata(3, kdim+1), Vdata(3, kdim+1)
+
+    ! --> Initialize matrix.
+    A = rmatrix() ; call random_number(A%data)
+
+    ! --> Initialize Krylov subspaces.
+    allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1))
+    do k = 1, size(U)
+       call U(k)%zero() ; call V(k)%zero()
+    enddo
+    call random_number(U(1)%data)
+    alpha = U(1)%norm() ; call U(1)%scalar_mult(1.0_dp / alpha)
+    B = 0.0_dp
+    ! --> Lanczos bidiagonalization.
+    call lanczos_bidiagonalization(A, U, V, B, info)
+    ! --> Check correctness of full factorization.
+    do k = 1, size(U)
+       Udata(:, k) = U(k)%data ; Vdata(:, k) = V(k)%data
+    enddo
+    alpha = norm2(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B))
+    call check(error, alpha < 1e-12)
+    return
+  end subroutine test_lanczos_bidiag_full_factorization
 
   !-----------------------------------------------------------------
   !-----                                                       -----
