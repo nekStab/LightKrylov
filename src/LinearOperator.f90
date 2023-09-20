@@ -58,5 +58,5 @@ module LinearOperator
    contains
      private
   end type abstract_lowrank_linop
-
+  
 end module LinearOperator

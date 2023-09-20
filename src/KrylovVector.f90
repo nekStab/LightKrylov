@@ -84,7 +84,7 @@ contains
 
   subroutine get_vec(y, X, v)
     !> Output Krylov vector.
-    class(abstract_vector), allocatable, intent(out) :: y
+    class(abstract_vector), allocatable, intent(inout) :: y
     !> Krylov basis.
     class(abstract_vector), dimension(:), intent(in) :: X
     !> Coordinates of the output vector y in the Krylov basis X.
