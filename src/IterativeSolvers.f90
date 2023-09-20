@@ -2,12 +2,14 @@ module IterativeSolvers
   use KrylovVector
   use LinearOperator
   use KrylovDecomp
+  use stdlib_kinds  , only : dp
   use stdlib_sorting, only : sort_index, int_size
   use stdlib_optval , only : optval
+  use stdlib_io_npy , only : save_npy
   implicit none
 
   private
-  public :: eigs, eighs, gmres
+  public :: eigs, eighs, gmres, save_eigenspectrum
 
 contains
 
@@ -27,6 +29,26 @@ contains
     residual = abs(beta * x)
     return
   end function compute_residual
+
+  subroutine save_eigenspectrum(real_part, imag_part, residuals, filename)
+    !> Real and imaginary parts of the eigenvalues.
+    real(kind=dp), intent(in) :: real_part(:)
+    real(kind=dp), intent(in) :: imag_part(:)
+    !> Residual norm computed from the Arnoldi/Lanczos factorization.
+    real(kind=dp), intent(in) :: residuals(:)
+    !> Name of the output file.
+    character(len=*), intent(in) :: filename
+
+    !> Miscellaneous.
+    double precision, dimension(size(real_part), size(real_part)) :: data
+
+    ! --> Store the data.
+    data(:, 1) = real_part ; data(:, 2) = imag_part ; data(:, 3) = residuals
+    ! --> Save the eigenspectrum to disk using npy file format.
+    call save_npy(filename, data)
+
+    return
+  end subroutine save_eigenspectrum
 
   !------------------------------------------
   !-----                                -----

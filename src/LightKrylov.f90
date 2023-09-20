@@ -14,7 +14,7 @@ module LightKrylov
        abstract_vector, get_vec,                                      &
        abstract_linop, abstract_spd_linop,                            &
        power_iteration, arnoldi_factorization, lanczos_factorization, &
-       eigs, eighs, gmres
+       eigs, eighs, gmres, save_eigenspectrum
 
 contains
 
