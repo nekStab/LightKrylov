@@ -103,12 +103,10 @@ contains
        endif
        info = -1
        return
-    else
-       kdim = info
     endif
 
     ! --> Compute spectral decomposition of the Hessenberg matrix.
-    call evd(H(1:kdim, 1:kdim), eigvecs(1:kdim, 1:kdim), eigvals(1:kdim), kdim)
+    call evd(H(1:kdim, 1:kdim), eigvecs, eigvals, kdim)
 
     ! --> Sort eigenvalues with decreasing magnitude.
     abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
