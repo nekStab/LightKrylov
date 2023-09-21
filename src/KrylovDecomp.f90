@@ -387,11 +387,11 @@ contains
        endif
 
        ! --> Full re-orthogonalization of the right Krylov subspace.
-       ! do j = 1, k-1
-       !    wrk = V(j)
-       !    gamma = V(k)%dot(wrk)
-       !    call wrk%scalar_mult(gamma) ; call V(k)%sub(wrk)
-       ! enddo
+       do j = 1, k-1
+          wrk = V(j)
+          gamma = V(k)%dot(wrk)
+          call wrk%scalar_mult(gamma) ; call V(k)%sub(wrk)
+       enddo
 
        ! --> Normalization step.
        alpha = V(k)%norm() ; call V(k)%scalar_mult(1.0_dp / alpha)
@@ -401,11 +401,11 @@ contains
        wrk = U(k) ; call wrk%scalar_mult(alpha) ; call U(k+1)%sub(wrk)
 
        ! --> Full re-orthogonalization of the left Krylov subspace.
-       ! do j = 1, k
-       !    wrk = U(j)
-       !    gamma = U(k+1)%dot(wrk)
-       !    call wrk%scalar_mult(gamma) ; call U(k+1)%sub(wrk)
-       ! enddo
+       do j = 1, k
+          wrk = U(j)
+          gamma = U(k+1)%dot(wrk)
+          call wrk%scalar_mult(gamma) ; call U(k+1)%sub(wrk)
+       enddo
 
        ! --> Normalization step.
        beta = U(k+1)%norm() ; call U(k+1)%scalar_mult(1.0_dp / beta)
