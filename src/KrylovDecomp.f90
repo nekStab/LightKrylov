@@ -371,13 +371,20 @@ contains
     tolerance = optval(tol, 1.0D-12)
 
     ! --> Lanczos bidiagonalization.
-    do k = k_start, k_end
+    lanczos : do k = k_start, k_end
        ! --> Transpose matrix-vector product.
        call A%rmatvec(U(k), V(k))
        if (k > 1) then
           wrk = V(k-1) ; call wrk%scalar_mult(beta)
           call V(k)%sub(wrk)
        endif
+
+       ! --> Full re-orthogonalization of the right Krylov subspace.
+       do j = 1, k-1
+          wrk = V(j)
+          alpha = V(k)%dot(wrk)
+          call wrk%scalar_mult(alpha) ; call V(k)%sub(wrk)
+       enddo
 
        ! --> Normalization step.
        alpha = V(k)%norm() ; call V(k)%scalar_mult(1.0_dp / alpha)
@@ -386,12 +393,31 @@ contains
        call A%matvec(V(k), U(k+1))
        wrk = U(k) ; call wrk%scalar_mult(alpha) ; call U(k+1)%sub(wrk)
 
+       ! --> Full re-orthogonalization of the left Krylov subspace.
+       do j = 1, k
+          wrk = U(j)
+          beta = U(k+1)%dot(wrk)
+          call wrk%scalar_mult(beta) ; call U(k+1)%sub(wrk)
+       enddo
+
        ! --> Normalization step.
        beta = U(k+1)%norm() ; call U(k+1)%scalar_mult(1.0_dp / beta)
 
        ! --> Fill-in the bidiagonal matrix.
        B(k, k) = alpha ; B(k+1, k) = beta
-    enddo
+
+       if (verbose) then
+       endif
+
+       ! --> Exit Lanczos loop if needed.
+       if (beta < tolerance) then
+          ! --> Dimension of the computed invariant subspaces.
+          info = k
+          ! --> Exit the Lanczos iteration.
+          exit lanczos
+       endif
+
+    enddo lanczos
 
     return
   end subroutine lanczos_bidiagonalization
