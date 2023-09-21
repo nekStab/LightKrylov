@@ -40,7 +40,7 @@ contains
     character(len=*), intent(in) :: filename
 
     !> Miscellaneous.
-    real(kind=dp), dimension(size(real_part), size(real_part)) :: data
+    real(kind=dp), dimension(size(real_part), 3) :: data
 
     ! --> Store the data.
     data(:, 1) = real_part ; data(:, 2) = imag_part ; data(:, 3) = residuals
