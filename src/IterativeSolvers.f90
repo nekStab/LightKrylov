@@ -9,7 +9,7 @@ module IterativeSolvers
   implicit none
 
   private
-  public :: eigs, eighs, gmres, save_eigenspectrum
+  public :: eigs, eighs, gmres, save_eigenspectrum, svds
 
 contains
 
@@ -258,25 +258,25 @@ contains
   !-----                                    -----
   !----------------------------------------------
 
-  subroutine svds(A, U, V, singvecs, singvals, residuals, info, verbosity)
+  subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, verbosity)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov bases.
     class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
     class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
     !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-    real(kind=dp), intent(out) :: singvecs(size(U)-1, size(U)-1)
-    real(kind=dp), intent(out) :: singvals(size(U)-1)
-    real(kind=dp), intent(out) :: residuals(size(U)-1)
+    double precision, intent(out) :: uvecs(size(U), size(U)-1), vvecs(size(U)-1, size(U)-1)
+    double precision, intent(out) :: sigma(size(U)-1)
+    double precision, intent(out) :: residuals(size(U)-1)
     !> Information flag.
     integer, intent(out) :: info
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical verbose
 
-    !> Tridiagonal matrix.
-    real(kind=dp) :: T(size(U), size(U)-1)
-    real(kind=dp) :: beta
+    !> Bidiagonal matrix.
+    double precision :: B(size(U), size(U)-1)
+    double precision :: beta
     !> Krylov subspace dimension.
     integer :: kdim
     !> Miscellaneous.
@@ -292,16 +292,67 @@ contains
           write(*, *) "INFO : Left and Right Krylov subspaces have different dimensions."
           write(*, *) "       Exiting svds with exit code info =", info
        endif
+    else
+       kdim = size(U)-1
     endif
 
     ! --> Initialize variables.
-    T = 0.0_dp ; residuals = 0.0_dp ; singvecs = 0.0_dp ; singvals = 0.0_dp
+    B = 0.0D+00 ; residuals = 0.0D+00 ; uvecs = 0.0D+00 ; vvecs = 0.0D+00 ; sigma = 0.0D+00
     do i = 2, size(U)
        call U(i)%zero() ; call V(i)%zero()
     enddo
 
+    ! --> Compute the Lanczos bidiagonalization.
+    call lanczos_bidiagonalization(A, U, V, B, info, verbosity=verbose)
+    do i = 1, kdim+1
+       write(*, *) (B(i, j), j = 1, kdim)
+    enddo
+    !call save_npy("B_matrix.npy", B)
+
+    ! --> Compute the singular value decomposition of the bidiagonal matrix.
+    call svd(B, uvecs, sigma, vvecs)
+
+    ! --> Compute the residual associated with each singular triplet.
+    residuals = 0.0D+00
+
     return
   end subroutine svds
+
+  subroutine svd(A, U, S, V)
+    !> Matrix to be factorized.
+    double precision, intent(in)  :: A(:, :)
+    !> Left singular vectors.
+    double precision, intent(out) :: U(size(A, 1), size(A, 1))
+    !> Singular values.
+    double precision, intent(out) :: S(size(A, 2))
+    !> Right singular vectors.
+    double precision, intent(out) :: V(size(A, 2), size(A, 2))
+
+    !> Lapack job.
+    character                  :: jobu = "A", jobvt = "A"
+    integer                    :: m, n, lda, ldu, ldvt, lwork, info
+    double precision, allocatable :: work(:)
+    double precision :: A_tilde(size(A, 1), size(A, 2))
+
+    interface
+       pure subroutine dgesvd(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info)
+         character, intent(in) :: jobu, jobvt
+         integer  , intent(in) :: m, n, lda, ldu, ldvt, lwork, info
+         double precision, intent(inout) :: a(lda, *)
+         double precision, intent(out)   :: u(ldu, *), s(*), vt(ldvt, *), work(*)
+       end subroutine dgesvd
+    end interface
+
+    m = size(A, 1) ; n = size(A, 2)
+    lda = size(A, 1) ; ldu = size(A, 1) ; ldvt = size(A, 2)
+    lwork = max(1, 3*min(m, n), 5*min(m, n)) ; allocate(work(lwork))
+
+    a_tilde = a
+    call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, v, ldvt, work, lwork, info)
+    v = transpose(v)
+
+    return
+  end subroutine svd
 
   !--------------------------------------------
   !-----                                  -----

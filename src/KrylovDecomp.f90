@@ -394,7 +394,17 @@ contains
        enddo
 
        ! --> Normalization step.
-       alpha = V(k)%norm() ; call V(k)%scalar_mult(1.0_dp / alpha)
+       alpha = V(k)%norm()
+       if (alpha > tolerance) then
+          call V(k)%scalar_mult(1.0_dp / alpha)
+          B(k, k) = alpha
+       else
+          if (verbose) then
+             write(*, *) "INFO : alpha = ", alpha
+          endif
+          info = k
+          exit lanczos
+       endif
 
        ! --> Matrix-vector product.
        call A%matvec(V(k), U(k+1))
@@ -408,24 +418,20 @@ contains
        enddo
 
        ! --> Normalization step.
-       beta = U(k+1)%norm() ; call U(k+1)%scalar_mult(1.0_dp / beta)
-
-       ! --> Fill-in the bidiagonal matrix.
-       B(k, k) = alpha ; B(k+1, k) = beta
-
-       if (verbose) then
-       endif
-
-       ! --> Exit Lanczos loop if needed.
-       if (beta < tolerance) then
+       beta = U(k+1)%norm()
+       if (beta > tolerance) then
+          call U(k+1)%scalar_mult(1.0_dp / beta)
+          B(k+1, k) = beta
+       else
           if (verbose) then
              write(*, *) "INFO : beta = ", beta
           endif
-          ! --> Dimension of the computed invariant subspaces.
           info = k
-          ! --> Exit the Lanczos iteration.
           exit lanczos
        endif
+
+       ! --> Fill-in the bidiagonal matrix.
+       B(k, k) = alpha ; B(k+1, k) = beta
 
     enddo lanczos
 

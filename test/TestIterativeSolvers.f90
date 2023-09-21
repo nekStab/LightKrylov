@@ -8,7 +8,7 @@ module TestIterativeSolvers
 
   private
 
-  public :: collect_evp_testsuite, collect_gmres_testsuite
+  public :: collect_evp_testsuite, collect_gmres_testsuite, collect_svd_testsuite
 
 contains
 
@@ -185,5 +185,58 @@ contains
   !   call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
   !   return
   ! end subroutine test_restarted_gmres_computation
+
+  !----------------------------------
+  !-----                        -----
+  !-----     SVD TEST SUITE     -----
+  !-----                        -----
+  !----------------------------------
+
+  subroutine collect_svd_testsuite(testsuite)
+    !> Collection of tests.
+    type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+    testsuite = [&
+         new_unittest("SVD Singular Values", test_svd_singular_values) &
+         ]
+    return
+  end subroutine collect_svd_testsuite
+
+  subroutine test_svd_singular_values(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(rmatrix), allocatable :: A
+    !> Left and right Krylov subspaces.
+    class(rvector), allocatable :: U(:), V(:)
+    !> Dimension of the Krylov subspace.
+    integer, parameter :: kdim = 3
+    !> Coordinates of the singular vectors and singular values.
+    double precision :: uvecs(kdim+1, kdim), vvecs(kdim, kdim), S(kdim)
+    double precision :: residuals(kdim)
+    !> Information flag.
+    integer :: info
+
+    !> Miscellaneous.
+    double precision :: alpha
+    double precision :: true_svdvals(kdim) = [3.0D+00, 2.0D+00, 0.0D+00]
+
+    ! --> Initialize matrix.
+    A = rmatrix()
+    A%data(1, 1) = 2 ; A%data(1, 2) = 0 ; A%data(1, 3) = 0
+    A%data(2, 1) = 2 ; A%data(2, 2) = 1 ; A%data(2, 3) = 0
+    A%data(3, 1) = 0 ; A%data(3, 2) = -2 ; A%data(3, 3) = 0
+
+    ! --> Initialize Krylov subspaces.
+    allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1))
+    call random_number(U(1)%data) ; alpha = U(1)%norm() ; call U(1)%scalar_mult(1.0D+00 / alpha)
+
+    ! --> Singular Value Decomposition.
+    call svds(A, U, V, uvecs, vvecs, s, residuals, info)
+    ! --> Check singular values.
+    call check(error, all_close(s, true_svdvals))
+
+    return
+  end subroutine test_svd_singular_values
 
 end module TestIterativeSolvers
