@@ -316,6 +316,13 @@ contains
        call wrk%scalar_mult(alpha) ; call X(k+1)%sub(wrk)
     enddo
 
+    ! --> Full re-orthogonalization.
+    do i = 1, k
+       wrk = X(i)
+       alpha = X(k+1)%dot(wrk) ; call wrk%scalar_mult(alpha)
+       call X(k+1)%sub(wrk)
+    enddo
+
     return
   end subroutine update_tridiag_matrix
 
