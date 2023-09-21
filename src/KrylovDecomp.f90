@@ -352,7 +352,7 @@ contains
     real(kind=dp), optional, intent(in) :: tol
     real(kind=dp)                       :: tolerance
     !> Miscellaneous.
-    real(kind=dp) :: alpha, beta
+    real(kind=dp) :: alpha, beta, gamma
     integer       :: i, j, k, kdim
     class(abstract_vector), allocatable :: wrk
 
@@ -389,8 +389,8 @@ contains
        ! --> Full re-orthogonalization of the right Krylov subspace.
        do j = 1, k-1
           wrk = V(j)
-          alpha = V(k)%dot(wrk)
-          call wrk%scalar_mult(alpha) ; call V(k)%sub(wrk)
+          gamma = V(k)%dot(wrk)
+          call wrk%scalar_mult(gamma) ; call V(k)%sub(wrk)
        enddo
 
        ! --> Normalization step.
@@ -403,8 +403,8 @@ contains
        ! --> Full re-orthogonalization of the left Krylov subspace.
        do j = 1, k
           wrk = U(j)
-          beta = U(k+1)%dot(wrk)
-          call wrk%scalar_mult(beta) ; call U(k+1)%sub(wrk)
+          gamma = U(k+1)%dot(wrk)
+          call wrk%scalar_mult(gamma) ; call U(k+1)%sub(wrk)
        enddo
 
        ! --> Normalization step.
@@ -418,6 +418,9 @@ contains
 
        ! --> Exit Lanczos loop if needed.
        if (beta < tolerance) then
+          if (verbose) then
+             write(*, *) "INFO : beta = ", beta
+          endif
           ! --> Dimension of the computed invariant subspaces.
           info = k
           ! --> Exit the Lanczos iteration.
