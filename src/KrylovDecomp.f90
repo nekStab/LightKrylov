@@ -387,10 +387,12 @@ contains
        endif
 
        ! --> Full re-orthogonalization of the right Krylov subspace.
-       do j = 1, k-1
-          wrk = V(j)
-          gamma = V(k)%dot(wrk)
-          call wrk%scalar_mult(gamma) ; call V(k)%sub(wrk)
+       do i = 1, 2
+          do j = 1, k-1
+             wrk = V(j)
+             gamma = V(k)%dot(wrk)
+             call wrk%scalar_mult(gamma) ; call V(k)%sub(wrk)
+          enddo
        enddo
 
        ! --> Normalization step.
