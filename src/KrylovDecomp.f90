@@ -430,9 +430,6 @@ contains
           exit lanczos
        endif
 
-       ! --> Fill-in the bidiagonal matrix.
-       B(k, k) = alpha ; B(k+1, k) = beta
-
     enddo lanczos
 
     return
