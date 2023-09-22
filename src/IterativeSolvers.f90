@@ -318,17 +318,17 @@ contains
     !> Matrix to be factorized.
     double precision, intent(in)  :: A(:, :)
     !> Left singular vectors.
-    double precision, intent(out) :: U(size(A, 1), size(A, 1))
+    double precision, intent(out) :: U(size(A, 1), min(size(A, 1), size(A, 2)))
     !> Singular values.
     double precision, intent(out) :: S(size(A, 2))
     !> Right singular vectors.
-    double precision, intent(out) :: V(size(A, 2), size(A, 2))
+    double precision, intent(out) :: V(size(A, 2), min(size(A, 1), size(A, 2)))
 
     !> Lapack job.
-    character                  :: jobu = "A", jobvt = "A"
+    character                  :: jobu = "S", jobvt = "S"
     integer                    :: m, n, lda, ldu, ldvt, lwork, info
     double precision, allocatable :: work(:)
-    double precision :: A_tilde(size(A, 1), size(A, 2))
+    double precision :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
 
     interface
        pure subroutine dgesvd(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info)
@@ -344,8 +344,8 @@ contains
     lwork = max(1, 3*min(m, n), 5*min(m, n)) ; allocate(work(lwork))
 
     a_tilde = a
-    call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, v, ldvt, work, lwork, info)
-    v = transpose(v)
+    call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, info)
+    v = transpose(vt)
 
     return
   end subroutine svd
