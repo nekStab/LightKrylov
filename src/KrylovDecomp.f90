@@ -413,10 +413,12 @@ contains
        wrk = U(k) ; call wrk%scalar_mult(alpha) ; call U(k+1)%sub(wrk)
 
        ! --> Full re-orthogonalization of the left Krylov subspace.
-       do j = 1, k
-          wrk = U(j)
-          gamma = U(k+1)%dot(wrk)
-          call wrk%scalar_mult(gamma) ; call U(k+1)%sub(wrk)
+       do i = 1, 2
+          do j = 1, k
+             wrk = U(j)
+             gamma = U(k+1)%dot(wrk)
+             call wrk%scalar_mult(gamma) ; call U(k+1)%sub(wrk)
+          enddo
        enddo
 
        ! --> Normalization step.
