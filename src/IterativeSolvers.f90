@@ -304,10 +304,6 @@ contains
 
     ! --> Compute the Lanczos bidiagonalization.
     call lanczos_bidiagonalization(A, U, V, B, info, verbosity=verbose)
-    do i = 1, kdim+1
-       write(*, *) (B(i, j), j = 1, kdim)
-    enddo
-    !call save_npy("B_matrix.npy", B)
 
     ! --> Compute the singular value decomposition of the bidiagonal matrix.
     call svd(B, uvecs, sigma, vvecs)
