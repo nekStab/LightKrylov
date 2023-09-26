@@ -544,11 +544,143 @@ contains
     return
   end subroutine lstsq
 
-  ! subroutine cg(A, b)
-  !   !> Linear problem.
-  !   class(abstract_spd_linop), intent(in) :: A ! Linear Operator.
-  !   class(abstract_vector)   , intent(in) :: b ! Right-hand side.
-  !   return
-  ! end subroutine cg
+  !=======================================================================================
+  ! Conjugate Gradient (CG) Solver Subroutine
+  !=======================================================================================
+  !
+  ! Purpose:
+  ! --------
+  ! Implements the classic Conjugate Gradient (CG) algorithm for solving symmetric positive
+  ! definite (SPD) linear systems of equations, Ax = b.
+  !
+  ! Algorithmic Features:
+  ! ----------------------
+  ! - Utilizes the method of conjugate directions to iteratively refine the solution.
+  ! - Employs two sequences of vectors: residuals (r) and conjugate directions (p).
+  ! - Updates the approximate solution based on the computed alpha and beta values.
+  !
+  ! Advantages:
+  ! -----------
+  ! - Well-suited for large, sparse, symmetric positive definite (SPD) matrices.
+  ! - Memory-efficient, requiring storage for only a few vectors in comparison to GMRES.
+  ! - Under exact arithmetic, finds the exact solution within 'n' iterations for an 'n'-dimensional SPD matrix.
+  !
+  ! Limitations:
+  ! ------------
+  ! - Applicability restricted to SPD matrices.
+  ! - No preconditioning capabilities in the current implementation.
+  ! - Subject to numerical rounding errors, which might require more than 'n' iterations in practice.
+  !
+  ! Input/Output Parameters:
+  ! ------------------------
+  ! - A        : Linear Operator (SPD)        [Input]
+  ! - b        : Right-hand side vector       [Input]
+  ! - x        : Initial/Updated solution     [Input/Output]
+  ! - info     : Iteration Information flag   [Output]
+  ! - maxiter  : Maximum number of iterations [Optional, Input]
+  ! - tol      : Tolerance for convergence    [Optional, Input]
+  ! - verbosity: Verbosity control flag       [Optional, Input]
+  !
+  ! References:
+  ! -----------
+  ! - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving Linear Systems,"
+  !   Journal of Research of the National Bureau of Standards, 49(6), 409–436.
+  !
+  !=======================================================================================
+  subroutine cg(A, b, x, info, maxiter, tol, verbosity)
+    !> Linear problem.
+    class(abstract_spd_linop), intent(in) :: A ! Linear Operator.
+    class(abstract_vector), intent(in) :: b ! Right-hand side.
+    !> Solution vector.
+    class(abstract_vector), intent(inout) :: x
+    !> Information flag.
+    integer, intent(out)   :: info
+    !> Optional arguments.
+    integer, optional, intent(in) :: maxiter ! Maximum number of CG iterations.
+    integer                       :: i, niter
+    real(kind=wp), optional, intent(in) :: tol  ! Tolerance for the CG residual.
+    real(kind=wp)                       :: tolerance
+    logical, optional, intent(in)       :: verbosity ! Verbosity control.
+    logical                             :: verbose
+    
+    !> Residual and direction vectors.
+    class(abstract_vector), allocatable :: r, p, Ap
+    !> Scalars used in the CG algorithm.
+    real(kind=wp) :: alpha, beta, r_dot_r_old, r_dot_r_new, residual
+    
+    ! --> Handle optional arguments.
+    niter = optval(maxiter, 1000)
+    tolerance = optval(tol, atol + rtol*b%norm())
+    verbose = optval(verbosity, .false.)
+    
+    ! --> Initialize vectors.
+    allocate (r, source=b)
+    allocate (p, source=b)
+    allocate (Ap, source=b)
+    
+    ! --> Compute initial residual: r = b - Ax.
+    call A%matvec(x, r)
+    call r%sub(b)
+    call r%scal(-1.0_wp)
+    
+    ! --> Initialize direction vector: p = r.
+    call p%copy(r)
+    
+    ! --> Initialize dot product of residual: r_dot_r_old = r' * r.
+    r_dot_r_old = r%dot(r)
+    
+    ! --> CG Iteration Loop.
+    cg_iterations: do i = 1, niter
+       
+       ! Compute A * p.
+       call A%matvec(p, Ap)
+       
+       ! Compute step size alpha = r_dot_r_old / (p' * Ap).
+       alpha = r_dot_r_old/p%dot(Ap)
+       
+       ! Update solution x = x + alpha * p.
+       call x%axpby(alpha, p, 1.0_wp)
+       
+       ! Update residual r = r - alpha * Ap.
+       call r%axpby(-alpha, Ap, 1.0_wp)
+       
+       ! Compute new dot product of residual r_dot_r_new = r' * r.
+       r_dot_r_new = r%dot(r)
+       
+       ! Check for convergence.
+       residual = sqrt(r_dot_r_new)
+       
+       if (verbose) then
+          write (*, *) "INFO : CG residual after ", (i), "iterations : ", residual
+       end if
+       
+       if (residual < tolerance) then
+          if (verbose) then
+             write (*, *) "INFO : CG Converged: residual ", residual, "< tolerance: ", tolerance
+          end if
+          exit cg_iterations
+       end if
+       
+       ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+       beta = r_dot_r_new/r_dot_r_old
+       
+       ! Update direction p = r + beta * p.
+       call p%axpby(1.0_wp, r, beta)
+       
+       ! Update r_dot_r_old for next iteration.
+       r_dot_r_old = r_dot_r_new
+       
+    end do cg_iterations
+    
+    ! ! --> Set info flag.
+    ! if (residual < tolerance) then
+    !     info = 0
+    ! else
+    !     info = 1
+    ! end if
+    deallocate (r, p, Ap)
 
+    return
+  end subroutine cg
+    
 end module IterativeSolvers
