@@ -1,12 +1,12 @@
 module IterativeSolvers
-  use KrylovVector
+  use AbstractVector
   use LinearOperator
   use KrylovDecomp
-  use stdlib_kinds  , only : dp
   use stdlib_sorting, only : sort_index, int_size
   use stdlib_optval , only : optval
   use stdlib_io_npy , only : save_npy
   implicit none
+  include "dtypes.h"
 
   private
   public :: eigs, eighs, gmres, save_eigenspectrum, svds
@@ -32,15 +32,15 @@ contains
 
   subroutine save_eigenspectrum(real_part, imag_part, residuals, filename)
     !> Real and imaginary parts of the eigenvalues.
-    real(kind=dp), intent(in) :: real_part(:)
-    real(kind=dp), intent(in) :: imag_part(:)
+    real(kind=wp), intent(in) :: real_part(:)
+    real(kind=wp), intent(in) :: imag_part(:)
     !> Residual norm computed from the Arnoldi/Lanczos factorization.
-    real(kind=dp), intent(in) :: residuals(:)
+    real(kind=wp), intent(in) :: residuals(:)
     !> Name of the output file.
     character(len=*), intent(in) :: filename
 
     !> Miscellaneous.
-    real(kind=dp), dimension(size(real_part), 3) :: data
+    real(kind=wp), dimension(size(real_part), 3) :: data
 
     ! --> Store the data.
     data(:, 1) = real_part ; data(:, 2) = imag_part ; data(:, 3) = residuals
@@ -356,6 +356,50 @@ contains
   !-----                                  -----
   !--------------------------------------------
 
+  !=======================================================================================
+  ! Generalized Minimal Residual (GMRES) Solver Subroutine
+  !=======================================================================================
+  !
+  ! Purpose:
+  ! --------
+  ! Implements the classic, unpreconditioned Generalized Minimal Residual (GMRES) algorithm
+  ! for solving nonsymmetric, non-Hermitian linear systems of equations, Ax = b.
+  !
+  ! Algorithmic Features:
+  ! ----------------------
+  ! - Constructs a full Krylov subspace without restarts (i.e., not GMRES(m)).
+  ! - Utilizes Arnoldi factorization to generate an orthonormal basis for the Krylov subspace.
+  ! - Employs a least-squares solve to determine the optimal linear combination of the Krylov vectors.
+  ! - Updates the approximate solution based on the least-squares solution.
+  !
+  ! Advantages:
+  ! -----------
+  ! - Suitable for nonsymmetric and ill-conditioned matrices.
+  ! - Produces monotonically decreasing residuals.
+  ! - Fully utilizes the generated Krylov subspace for the solution.
+  !
+  ! Limitations:
+  ! ------------
+  ! - Memory-intensive due to the absence of restarts.
+  ! - May not be efficient for very large-scale problems.
+  ! - No preconditioning capabilities in the current implementation.
+  !
+  ! Input/Output Parameters:
+  ! ------------------------
+  ! - A        : Linear Operator              [Input]
+  ! - b        : Right-hand side vector       [Input]
+  ! - x        : Initial/Updated solution     [Input/Output]
+  ! - info     : Iteration Information flag   [Output]
+  ! - maxiter  : Maximum number of iterations [Optional, Input]
+  ! - tol      : Tolerance for convergence    [Optional, Input]
+  ! - verbosity: Verbosity control flag       [Optional, Input]
+  !
+  ! References:
+  ! -----------
+  ! - Saad, Y., and Schultz, M. H. (1986). "GMRES: A Generalized Minimal Residual Algorithm for Solving Nonsymmetric Linear Systems,"
+  !   SIAM Journal on Scientific and Statistical Computing, 7(3), 856–869.
+  !
+  !=======================================================================================
   subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity)
     !> Linear problem.
     class(abstract_linop) , intent(in) :: A ! Linear Operator.
@@ -369,29 +413,29 @@ contains
     integer                                :: k_dim
     integer, optional, intent(in)          :: maxiter   ! Maximum number full GMRES iterations.
     integer                                :: niter
-    double precision, optional, intent(in) :: tol       ! Tolerance for the GMRES residual.
-    double precision                       :: tolerance
+    real(kind=wp), optional, intent(in)    :: tol       ! Tolerance for the GMRES residual.
+    real(kind=wp)                          :: tolerance
     logical, optional, intent(in)          :: verbosity ! Verbosity control.
     logical                                :: verbose
 
     !> Krylov subspace.
     class(abstract_vector), dimension(:)   , allocatable :: V
     !> Upper Hessenberg matrix.
-    double precision      , dimension(:, :), allocatable :: H
+    real(kind=wp)         , dimension(:, :), allocatable :: H
     !> Least-squares related variables.
-    double precision      , dimension(:)   , allocatable :: y
-    double precision      , dimension(:)   , allocatable :: e
-    double precision                                     :: beta
+    real(kind=wp)         , dimension(:)   , allocatable :: y
+    real(kind=wp)         , dimension(:)   , allocatable :: e
+    real(kind=wp)                                        :: beta
 
     !> Miscellaneous.
-    integer :: i, j, k, l, m
-    double precision :: alpha
+    integer                             :: i, j, k, l, m
+    real(kind=wp)                       :: alpha
     class(abstract_vector), allocatable :: dx
 
     ! --> Deals with the optional arguments.
     k_dim     = optval(kdim, 30)
     niter     = optval(maxiter, 10)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol + rtol*b%norm())
     verbose   = optval(verbosity, .false.)
 
     ! --> Initialize Krylov subspace.
@@ -399,17 +443,17 @@ contains
     do i = 1, size(V)
        call V(i)%zero()
     enddo
-    allocate(H(k_dim+1, k_dim)) ; H = 0.0D+00
-    allocate(y(1:k_dim))        ; y = 0.0D+00
-    allocate(e(1:k_dim+1))      ; e = 0.0D+00
+    allocate(H(k_dim+1, k_dim)) ; H = 0.0_wp
+    allocate(y(1:k_dim))        ; y = 0.0_wp
+    allocate(e(1:k_dim+1))      ; e = 0.0_wp
 
     ! --> Initial Krylov vector.
-    call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scalar_mult(-1.0D+00)
-    beta = V(1)%norm() ; call V(1)%scalar_mult(1.0D+00 / beta)
+    call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
+    beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
     gmres_iterations : do i = 1, niter
        ! --> Zero-out variables.
-       H = 0.0D+00 ; y = 0.0D+00 ; e = 0.0D+00 ; e(1) = beta
+       H = 0.0_wp ; y = 0.0_wp ; e = 0.0_wp ; e(1) = beta
        do j = 2, size(V)
           call V(j)%zero()
        enddo
@@ -440,10 +484,10 @@ contains
        call dx%zero() ; call get_vec(dx, V(1:k), y(1:k)) ; call x%add(dx)
 
        ! --> Recompute residual for sanity check.
-       call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scalar_mult(-1.0D+00)
+       call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
 
        ! --> Initialize new starting Krylov vector if needed.
-       beta = V(1)%norm() ; call V(1)%scalar_mult(1.0D+00 / beta)
+       beta = V(1)%norm() ; call V(1)%scal(1.0D+00 / beta)
 
        if (beta**2 .lt. tolerance) then
           exit gmres_iterations
@@ -459,25 +503,26 @@ contains
 
   subroutine lstsq(A, b, x)
     !> Input matrix.
-    double precision, dimension(:, :), intent(in)  :: A
-    double precision, dimension(:)   , intent(in)  :: b
-    double precision, dimension(:)   , intent(out) :: x
+    real(kind=wp), dimension(:, :), intent(in)  :: A
+    real(kind=wp), dimension(:)   , intent(in)  :: b
+    real(kind=wp), dimension(:)   , intent(out) :: x
 
     !> Lapack job.
     character :: trans = "N"
     integer   :: m, n, nrhs, lda, ldb, lwork, info
-    double precision, dimension(size(A, 1), size(A, 2)) :: A_tilde
-    double precision, dimension(size(A, 1))             :: b_tilde
-    double precision, dimension(:), allocatable         :: work
+    real(kind=wp), dimension(size(A, 1), size(A, 2)) :: A_tilde
+    real(kind=wp), dimension(size(A, 1))             :: b_tilde
+    real(kind=wp), dimension(:), allocatable         :: work
 
     !> Interface to LAPACK dgels
     interface
        pure subroutine dgels(ftrans, fm, fn, fnrhs, fA, flda, fb, fldb, fwork, flwork, finfo)
+         import wp
          character, intent(in)           :: ftrans
          integer  , intent(in)           :: fm, fn, fnrhs, flda, fldb, flwork, finfo
-         double precision, intent(inout) :: fa(flda, *)
-         double precision, intent(inout) :: fb(flda, *)
-         double precision, intent(out)   :: fwork(*)
+         real(kind=wp), intent(inout)    :: fa(flda, *)
+         real(kind=wp), intent(inout)    :: fb(flda, *)
+         real(kind=wp), intent(out)      :: fwork(*)
        end subroutine dgels
     end interface
 
@@ -485,7 +530,7 @@ contains
     m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
     lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
     A_tilde = A ; b_tilde = b
-    allocate(work(1:lwork)) ; work = 0.0D+00
+    allocate(work(1:lwork)) ; work = 0.0_wp
 
     !> Solve the least-squares problem.
     call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
