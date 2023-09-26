@@ -10,7 +10,10 @@ program Tester
   use TestMatrices                 , only : collect_real_matrix_testsuite
   use TestKrylov                   , only : collect_arnoldi_testsuite, &
        collect_lanczos_tridiag_testsuite, collect_lanczos_bidiag_testsuite
-  use TestIterativeSolvers         , only : collect_evp_testsuite, collect_gmres_testsuite, collect_svd_testsuite
+  use TestIterativeSolvers         , only : collect_evp_testsuite, &
+       collect_gmres_testsuite, &
+       collect_svd_testsuite, &
+       collect_cg_testsuite
 
   implicit none
 
@@ -33,7 +36,8 @@ program Tester
        new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite)   , &
        new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite)                , &
        new_testsuite("GMRES Test Suite", collect_gmres_testsuite)                    , &
-       new_testsuite("SVD Test Suite", collect_svd_testsuite) &
+       new_testsuite("SVD Test Suite", collect_svd_testsuite), &
+       new_testsuite("CG Test Suite", collect_cg_testsuite)  &                        
        ]
 
   do is = 1, size(testsuites)

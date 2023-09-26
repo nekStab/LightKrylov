@@ -9,7 +9,7 @@ module IterativeSolvers
   include "dtypes.h"
 
   private
-  public :: eigs, eighs, gmres, save_eigenspectrum, svds
+  public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg!, bicgstab
 
 contains
 
