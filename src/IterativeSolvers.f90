@@ -19,11 +19,11 @@ contains
 
   elemental pure function compute_residual(beta, x) result(residual)
     !> Norm of Krylov residual vector.
-    double precision, intent(in) :: beta
+    real(kind=wp), intent(in) :: beta
     !> Last element of Ritz eigenvector.
-    double precision, intent(in) :: x
+    real(kind=wp), intent(in) :: x
     !> Residual.
-    double precision :: residual
+    real(kind=wp) :: residual
 
     ! --> Compute residual.
     residual = abs(beta * x)
@@ -62,9 +62,9 @@ contains
     !> Krylov basis.
     class(abstract_vector), dimension(:), intent(inout) :: X
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues and associated residuals.
-    double complex  , dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
-    double complex  , dimension(size(X)-1)           , intent(out) :: eigvals
-    double precision, dimension(size(X)-1)           , intent(out) :: residuals
+    complex(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
+    complex(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
+    real(kind=wp)   , dimension(size(X)-1)           , intent(out) :: residuals
     !> Information flag.
     integer, intent(out) :: info
     !> Verbosity control.
@@ -72,14 +72,14 @@ contains
     logical :: verbose
 
     !> Upper Hessenberg matrix.
-    double precision, dimension(size(X), size(X)-1) :: H
-    double precision                                :: beta
+    real(kind=wp), dimension(size(X), size(X)-1) :: H
+    real(kind=wp)                                :: beta
     !> Krylov subspace dimension.
     integer :: kdim
     !> Miscellaneous.
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
-    double precision , dimension(size(X)-1) :: abs_eigvals
+    real(kind=wp)    , dimension(size(X)-1) :: abs_eigvals
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
@@ -88,7 +88,7 @@ contains
     verbose = optval(verbosity, .false.)
 
     ! --> Initialize variables.
-    H = 0.0D+00 ; residuals = 0.0D+00 ; eigvals = (0.0D+00, 0.0D+00) ; eigvecs = (0.0D+00, 0.0D+00)
+    H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
     do i = 2, size(X) ! i=1 is the initial Krylov vector given by the user.
        call X(i)%zero()
     enddo
@@ -125,9 +125,9 @@ contains
     !> Krylov basis.
     class(abstract_vector), dimension(:), intent(inout) :: X
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues, and associated residuals
-    double precision, dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
-    double precision, dimension(size(X)-1)           , intent(out) :: eigvals
-    double precision, dimension(size(X)-1)           , intent(out) :: residuals
+    real(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
+    real(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
+    real(kind=wp), dimension(size(X)-1)           , intent(out) :: residuals
     !> Information flag.
     integer, intent(out) :: info
     !> Verbosity control.
@@ -135,8 +135,8 @@ contains
     logical :: verbose
 
     !> Tridiagonal matrix.
-    double precision, dimension(size(X), size(X)-1) :: T
-    double precision                                :: beta
+    real(kind=wp), dimension(size(X), size(X)-1) :: T
+    real(kind=wp)                                :: beta
     !> Krylov subspace dimension.
     integer :: kdim
     !> Miscellaneous.
@@ -150,7 +150,7 @@ contains
     verbose = optval(verbosity, .false.)
 
     ! --> Initialize all variables.
-    T = 0.0D+00 ; residuals = 0.0D+00 ; eigvecs = 0.0D+00 ; eigvals = 0.0D+00
+    T = 0.0_wp ; residuals = 0.0_wp ; eigvecs = 0.0_wp ; eigvals = 0.0_wp
     do i = 2, size(X) ! i = 1 is the starting Krylov vector provided by the user.
        call X(i)%zero()
     enddo
@@ -184,21 +184,22 @@ contains
     !> Lapack job.
     character*1 :: jobvl = "N", jobvr = "V"
     integer :: n, lwork, info, lda, ldvl, ldvr
-    double precision, dimension(n, n) :: A, A_tilde, vr
-    double precision, dimension(1, n) :: vl
-    double precision, dimension(4*n)  :: work
-    double precision, dimension(n)    :: wr, wi
-    double complex, dimension(n, n)   :: vecs
-    double complex, dimension(n)      :: vals
+    real(kind=wp), dimension(n, n) :: A, A_tilde, vr
+    real(kind=wp), dimension(1, n) :: vl
+    real(kind=wp), dimension(4*n)  :: work
+    real(kind=wp), dimension(n)    :: wr, wi
+    complex(kind=wp), dimension(n, n)   :: vecs
+    complex(kind=wp), dimension(n)      :: vals
     integer :: i
     integer, dimension(n) :: idx
 
     interface
        pure subroutine dgeev(fjobvl, fjobvr, fn, fa, flda, fwr, fwi, fvl, fldvl, fvr, fldvr, fwork, flwork, finfo)
+         import wp
          character, intent(in) :: fjobvl, fjobvr
          integer  , intent(in) :: fn, flda, fldvl, fldvr, flwork, finfo
-         double precision, intent(inout) :: fa(flda, *)
-         double precision, intent(out) :: fwr(fn), fwi(fn), fvl(fldvl, *), fvr(fldvr, *), fwork(flwork)
+         real(kind=wp), intent(inout) :: fa(flda, *)
+         real(kind=wp), intent(out) :: fwr(fn), fwi(fn), fvl(fldvl, *), fvr(fldvr, *), fwork(flwork)
        end subroutine dgeev
     end interface
 
@@ -208,15 +209,15 @@ contains
 
     ! --> Real to complex arithmetic.
     !     NOTE : Check if a LAPACK function already exists for that purpose.
-    vals = wr*(1.0D+00, 0.0D+00) + wi*(0.0D+00, 1.0D+00)
-    vecs = vr*(1.0D+00, 0.0D+00)
+    vals = wr*(1.0_wp, 0.0_wp) + wi*(0.0_wp, 1.0_wp)
+    vecs = vr*(1.0_wp, 0.0_wp)
 
     do i = 1, n-1
        if (wi(i) .gt. 0) then
-          vecs(:, i) = vr(:, i)*(1.0D+00, 0.0D+00) + vr(:, i+1)*(0.0D+00, 1.0D+00)
+          vecs(:, i) = vr(:, i)*(1.0_wp, 0.0_wp) + vr(:, i+1)*(0.0_wp, 1.0_wp)
           vecs(:, i+1) = conjg(vecs(:, i))
        else if (abs(wi(i)) .le. epsilon(wi(i))) then
-          vecs(:, i) = vr(:, i) * (1.0D+00, 0.0D+00)
+          vecs(:, i) = vr(:, i) * (1.0_wp, 0.0_wp)
        endif
     enddo
 
@@ -227,21 +228,22 @@ contains
     !> Lapack job.
     character :: jobz="V", uplo="U"
     integer :: n, lwork, info, lda
-    double precision, dimension(n) :: vals
-    double precision, dimension(n, n) :: A, A_tilde, vecs
-    double precision, dimension(3*n-1) :: work
+    real(kind=wp), dimension(n) :: vals
+    real(kind=wp), dimension(n, n) :: A, A_tilde, vecs
+    real(kind=wp), dimension(3*n-1) :: work
     integer :: i, j, k
 
     interface
        pure subroutine dsyev(fjobz, fuplo, fn, fa, flda, fw, fwork, flwork, finfo)
+         import wp
          character, intent(in) :: fjobz, fuplo
          integer, intent(in)  :: fn
          integer, intent(in)  :: flda
          integer, intent(in)  :: flwork
          integer, intent(out) :: finfo
-         double precision, intent(inout) :: fa(flda, *)
-         double precision, intent(out)   :: fw(*)
-         double precision, intent(out)   :: fwork(*)
+         real(kind=wp), intent(inout) :: fa(flda, *)
+         real(kind=wp), intent(out)   :: fw(*)
+         real(kind=wp), intent(out)   :: fwork(*)
        end subroutine dsyev
     end interface
 
@@ -265,9 +267,9 @@ contains
     class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
     class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
     !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-    double precision, intent(out) :: uvecs(size(U), size(U)-1), vvecs(size(U)-1, size(U)-1)
-    double precision, intent(out) :: sigma(size(U)-1)
-    double precision, intent(out) :: residuals(size(U)-1)
+    real(kind=wp), intent(out) :: uvecs(size(U), size(U)-1), vvecs(size(U)-1, size(U)-1)
+    real(kind=wp), intent(out) :: sigma(size(U)-1)
+    real(kind=wp), intent(out) :: residuals(size(U)-1)
     !> Information flag.
     integer, intent(out) :: info
     !> Verbosity control.
@@ -275,8 +277,8 @@ contains
     logical verbose
 
     !> Bidiagonal matrix.
-    double precision :: B(size(U), size(U)-1)
-    double precision :: beta
+    real(kind=wp) :: B(size(U), size(U)-1)
+    real(kind=wp) :: beta
     !> Krylov subspace dimension.
     integer :: kdim
     !> Miscellaneous.
@@ -297,7 +299,7 @@ contains
     endif
 
     ! --> Initialize variables.
-    B = 0.0D+00 ; residuals = 0.0D+00 ; uvecs = 0.0D+00 ; vvecs = 0.0D+00 ; sigma = 0.0D+00
+    B = 0.0_wp ; residuals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp ; sigma = 0.0_wp
     do i = 2, size(U)
        call U(i)%zero() ; call V(i)%zero()
     enddo
@@ -309,33 +311,34 @@ contains
     call svd(B, uvecs, sigma, vvecs)
 
     ! --> Compute the residual associated with each singular triplet.
-    residuals = 0.0D+00
+    residuals = 0.0_wp
 
     return
   end subroutine svds
 
   subroutine svd(A, U, S, V)
     !> Matrix to be factorized.
-    double precision, intent(in)  :: A(:, :)
+    real(kind=wp), intent(in)  :: A(:, :)
     !> Left singular vectors.
-    double precision, intent(out) :: U(size(A, 1), min(size(A, 1), size(A, 2)))
+    real(kind=wp), intent(out) :: U(size(A, 1), min(size(A, 1), size(A, 2)))
     !> Singular values.
-    double precision, intent(out) :: S(size(A, 2))
+    real(kind=wp), intent(out) :: S(size(A, 2))
     !> Right singular vectors.
-    double precision, intent(out) :: V(size(A, 2), min(size(A, 1), size(A, 2)))
+    real(kind=wp), intent(out) :: V(size(A, 2), min(size(A, 1), size(A, 2)))
 
     !> Lapack job.
     character                  :: jobu = "S", jobvt = "S"
     integer                    :: m, n, lda, ldu, ldvt, lwork, info
-    double precision, allocatable :: work(:)
-    double precision :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
+    real(kind=wp), allocatable :: work(:)
+    real(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
 
     interface
        pure subroutine dgesvd(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info)
+         import wp
          character, intent(in) :: jobu, jobvt
          integer  , intent(in) :: m, n, lda, ldu, ldvt, lwork, info
-         double precision, intent(inout) :: a(lda, *)
-         double precision, intent(out)   :: u(ldu, *), s(*), vt(ldvt, *), work(*)
+         real(kind=wp), intent(inout) :: a(lda, *)
+         real(kind=wp), intent(out)   :: u(ldu, *), s(*), vt(ldvt, *), work(*)
        end subroutine dgesvd
     end interface
 
@@ -402,30 +405,30 @@ contains
   !=======================================================================================
   subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity)
     !> Linear problem.
-    class(abstract_linop) , intent(in) :: A ! Linear Operator.
-    class(abstract_vector), intent(in) :: b ! Right-hand side.
+    class(abstract_linop)  , intent(in)    :: A ! Linear Operator.
+    class(abstract_vector) , intent(in)    :: b ! Right-hand side.
     !> Solution vector.
-    class(abstract_vector), intent(inout) :: x
+    class(abstract_vector) , intent(inout) :: x
     !> Information flag.
-    integer                            , intent(out)   :: info
+    integer                , intent(out)   :: info
     !> Optional arguments.
-    integer, optional, intent(in)          :: kdim      ! Krylov subspace dimension.
+    integer, optional      , intent(in)    :: kdim      ! Krylov subspace dimension.
     integer                                :: k_dim
-    integer, optional, intent(in)          :: maxiter   ! Maximum number full GMRES iterations.
+    integer, optional      , intent(in)    :: maxiter   ! Maximum number full GMRES iterations.
     integer                                :: niter
     real(kind=wp), optional, intent(in)    :: tol       ! Tolerance for the GMRES residual.
     real(kind=wp)                          :: tolerance
-    logical, optional, intent(in)          :: verbosity ! Verbosity control.
+    logical, optional      , intent(in)    :: verbosity ! Verbosity control.
     logical                                :: verbose
 
     !> Krylov subspace.
-    class(abstract_vector), dimension(:)   , allocatable :: V
+    class(abstract_vector), allocatable :: V(:)
     !> Upper Hessenberg matrix.
-    real(kind=wp)         , dimension(:, :), allocatable :: H
+    real(kind=wp)         , allocatable :: H(:, :)
     !> Least-squares related variables.
-    real(kind=wp)         , dimension(:)   , allocatable :: y
-    real(kind=wp)         , dimension(:)   , allocatable :: e
-    real(kind=wp)                                        :: beta
+    real(kind=wp)         , allocatable :: y(:)
+    real(kind=wp)         , allocatable :: e(:)
+    real(kind=wp)                       :: beta
 
     !> Miscellaneous.
     integer                             :: i, j, k, l, m
