@@ -3,6 +3,7 @@ module AbstractVector
   include "dtypes.h"
 
   private
+  public :: get_vec
 
   !---------------------------------------------------
   !-----     ABSTRACT VECTOR TYPE DEFINITION     -----
