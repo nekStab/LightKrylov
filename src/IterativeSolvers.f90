@@ -745,7 +745,7 @@ contains
     class(abstract_vector), allocatable :: r, r_hat, p, p_int, v, s, t
     
     ! Initialize optional parameters.
-    niter = optval(maxiter, 10)
+    niter = optval(maxiter, 100)
     tolerance = optval(tol, atol + rtol*b%norm())
     verbose = optval(verbosity, .false.)
     
