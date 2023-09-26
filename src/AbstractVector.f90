@@ -23,7 +23,7 @@ module AbstractVector
      procedure(abstract_scal), deferred, public :: scal
 
      !> Vector-vector operations.
-     procedure(axpby_interface), deferred, pass(self) :: axpby
+     procedure(axpby_interface), deferred, pass(self), public :: axpby
      procedure, pass(self), public :: add
      procedure, pass(self), public :: sub
 
