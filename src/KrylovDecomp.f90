@@ -1,96 +1,16 @@
 module KrylovDecomp
-  use KrylovVector
+  use AbstractVector
   use LinearOperator
-  use stdlib_kinds , only : dp
   use stdlib_optval, only : optval
   implicit none
+  include "dtypes.h"
 
   private
-  public :: power_iteration, &
-       arnoldi_factorization, &
+  public :: arnoldi_factorization, &
        lanczos_tridiagonalization, &
        lanczos_bidiagonalization
 
 contains
-
-  !-----------------------------------
-  !-----                         -----
-  !-----     POWER ITERATION     -----
-  !-----                         -----
-  !-----------------------------------
-
-  subroutine power_iteration(A, x, lambda, niter, info, verbosity, tol)
-    !> Linear Operator.
-    class(abstract_linop), intent(in) :: A
-    !> Starting vector.
-    class(abstract_vector), intent(inout) :: x
-    !> Estimated eigenvalues.
-    double precision, intent(out) :: lambda
-    !> Maximum number of power iterations.
-    integer, intent(in) :: niter
-    !> Information.
-    integer, intent(out) :: info
-
-    !> Optional arguments.
-    logical, optional, intent(in)          :: verbosity
-    double precision, optional, intent(in) :: tol
-
-    !> Miscellaneous.
-    class(abstract_vector), allocatable :: wrk
-    double precision :: alpha, lambda_old, tolerance
-    integer          :: k
-    logical          :: verbose
-
-    ! --> Deals with the optional arguments.
-    verbose   = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
-
-    ! --> Initialization.
-    lambda_old = 0.0D+00 ; lambda = 0.0D+00 ; info = -1
-
-    ! --> Normalize the starting vector.
-    alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha) ; wrk = x
-
-    ! --> Power iteration
-    do k = 1, niter
-       !> Matrix-vector product.
-       call A%matvec(wrk, x)
-       !> Estimated eigenvalue.
-       lambda = wrk%dot(x)
-       !> Normalize estimated eigenvectors.
-       alpha = x%norm() ; call x%scalar_mult(1.0D+00 / alpha)
-
-       if (verbose) then
-          write(*, *) "--> Power iteration n°", k, "/", niter
-          write(*, *) "    ---------------"
-          write(*, *) "    + Residual norm :", abs(lambda - lambda_old)
-          write(*, *) "    + Elapsed time  :"
-          write(*, *) "    + ETA           :"
-       endif
-
-       !> Check for convergence.
-       if (abs(lambda - lambda_old) < tolerance) then
-          if (verbose) then
-             write(*, *)
-             write(*, *) "INFO : Power iteration has converged to lambda = ", lambda, "."
-          endif
-
-          info = 0
-          ! --> Exit the loop.
-          exit
-       else
-          !> Update old estimates.
-          lambda_old = lambda ; wrk = x
-       endif
-    enddo
-
-    if (verbose) then
-       write(*, *) "INFO : Exiting the Power Iteration with exit code info = ", info, "."
-       write(*, *)
-    endif
-
-    return
-  end subroutine power_iteration
 
   !---------------------------------------------------------------------
   !-----                                                           -----
@@ -169,7 +89,7 @@ contains
           exit arnoldi
        else
           ! --> Normalize the new Krylov vector.
-          call X(k+1)%scalar_mult(1.0D+00 / beta)
+          call X(k+1)%scal(1.0D+00 / beta)
        endif
 
     enddo arnoldi
@@ -197,7 +117,7 @@ contains
        ! --> Update Hessenberg matrix.
        alpha = X(k+1)%dot(wrk) ; H(i, k) = alpha
        ! --> Orthogonalize residual vector.
-       call wrk%scalar_mult(alpha) ; call X(k+1)%sub(wrk)
+       call wrk%scal(alpha) ; call X(k+1)%sub(wrk)
     enddo
 
     ! --> Perform full re-orthogonalization (see instability of MGS process)
@@ -207,7 +127,7 @@ contains
        ! --> Update Hessenberg matrix.
        alpha = X(k+1)%dot(wrk) ; H(i, k) = H(i, k) + alpha
        ! --> Orthogonalize residual vectors.
-       call wrk%scalar_mult(alpha) ; call X(k+1)%sub(wrk)
+       call wrk%scal(alpha) ; call X(k+1)%sub(wrk)
     enddo
 
     return
@@ -287,7 +207,7 @@ contains
           exit lanczos
        else
           ! --> Normalize the new Krylov vector.
-          call X(k+1)%scalar_mult(1.0D+00 / beta)
+          call X(k+1)%scal(1.0D+00 / beta)
        endif
 
     enddo lanczos
@@ -313,13 +233,13 @@ contains
        wrk = X(i)
        ! --> Update tridiag matrix.
        alpha = X(k+1)%dot(wrk) ; T(i, k) = alpha
-       call wrk%scalar_mult(alpha) ; call X(k+1)%sub(wrk)
+       call wrk%scal(alpha) ; call X(k+1)%sub(wrk)
     enddo
 
     ! --> Full re-orthogonalization.
     do i = 1, k
        wrk = X(i)
-       alpha = X(k+1)%dot(wrk) ; call wrk%scalar_mult(alpha)
+       alpha = X(k+1)%dot(wrk) ; call wrk%scal(alpha)
        call X(k+1)%sub(wrk)
     enddo
 
@@ -339,7 +259,7 @@ contains
     class(abstract_vector), intent(inout) :: U(:)
     class(abstract_vector), intent(inout) :: V(:)
     !> Bi-diagonal matrix.
-    real(kind=dp), intent(inout) :: B(:, :)
+    real(kind=wp), intent(inout) :: B(:, :)
     !> Information flag.
     integer, intent(out) :: info
     !> Optional arguments.
@@ -349,10 +269,10 @@ contains
     integer                       :: k_end
     logical, optional, intent(in) :: verbosity
     logical                       :: verbose
-    real(kind=dp), optional, intent(in) :: tol
-    real(kind=dp)                       :: tolerance
+    real(kind=wp), optional, intent(in) :: tol
+    real(kind=wp)                       :: tolerance
     !> Miscellaneous.
-    real(kind=dp) :: alpha, beta, gamma
+    real(kind=wp) :: alpha, beta, gamma
     integer       :: i, j, k, kdim
     class(abstract_vector), allocatable :: wrk
 
@@ -382,7 +302,7 @@ contains
        ! --> Transpose matrix-vector product.
        call A%rmatvec(U(k), V(k))
        if (k > 1) then
-          wrk = V(k-1) ; call wrk%scalar_mult(beta)
+          wrk = V(k-1) ; call wrk%scal(beta)
           call V(k)%sub(wrk)
        endif
 
@@ -390,13 +310,13 @@ contains
        do j = 1, k-1
           wrk = V(j)
           gamma = V(k)%dot(wrk)
-          call wrk%scalar_mult(gamma) ; call V(k)%sub(wrk)
+          call wrk%scal(gamma) ; call V(k)%sub(wrk)
        enddo
 
        ! --> Normalization step.
        alpha = V(k)%norm()
        if (alpha > tolerance) then
-          call V(k)%scalar_mult(1.0_dp / alpha)
+          call V(k)%scal(1.0_wp / alpha)
           B(k, k) = alpha
        else
           if (verbose) then
@@ -408,19 +328,19 @@ contains
 
        ! --> Matrix-vector product.
        call A%matvec(V(k), U(k+1))
-       wrk = U(k) ; call wrk%scalar_mult(alpha) ; call U(k+1)%sub(wrk)
+       wrk = U(k) ; call wrk%scal(alpha) ; call U(k+1)%sub(wrk)
 
        ! --> Full re-orthogonalization of the left Krylov subspace.
        do j = 1, k
           wrk = U(j)
           gamma = U(k+1)%dot(wrk)
-          call wrk%scalar_mult(gamma) ; call U(k+1)%sub(wrk)
+          call wrk%scal(gamma) ; call U(k+1)%sub(wrk)
        enddo
 
        ! --> Normalization step.
        beta = U(k+1)%norm()
        if (beta > tolerance) then
-          call U(k+1)%scalar_mult(1.0_dp / beta)
+          call U(k+1)%scal(1.0_wp / beta)
           B(k+1, k) = beta
        else
           if (verbose) then
