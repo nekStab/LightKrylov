@@ -20,7 +20,7 @@ module LinearOperator
   abstract interface
      ! Interface for the matrix-vector product.
      subroutine abstract_matvec(self, vec_in, vec_out)
-       use KrylovVector
+       use AbstractVector
        import abstract_linop
        class(abstract_linop) , intent(in)  :: self
        class(abstract_vector), intent(in)  :: vec_in
@@ -29,7 +29,7 @@ module LinearOperator
 
      ! Interface for the vector-matrix product.
      subroutine abstract_rmatvec(self, vec_in, vec_out)
-       use KrylovVector
+       use AbstractVector
        import abstract_linop
        class(abstract_linop) , intent(in)  :: self
        class(abstract_vector), intent(in)  :: vec_in

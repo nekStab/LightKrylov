@@ -1,6 +1,6 @@
 module LightKrylov
   ! --> Definition of the abstract vector type.
-  use KrylovVector
+  use AbstractVector
   ! --> Definition of the abstract linear operator type.
   use LinearOperator
   ! --> Implementation of the various Krylov decompositions.
@@ -8,12 +8,14 @@ module LightKrylov
   ! --> Iterative Solvers.
   use IterativeSolvers
   implicit none
+  include "dtypes.h"
+
   private
 
-  public :: greetings,                                                     &
+  public :: greetings, wp,                                                 &
        abstract_vector, get_vec,                                           &
        abstract_linop, abstract_spd_linop,                                 &
-       power_iteration, arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
+       arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
        eigs, eighs, gmres, save_eigenspectrum, svds
 
 contains
