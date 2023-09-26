@@ -13,7 +13,8 @@ program Tester
   use TestIterativeSolvers         , only : collect_evp_testsuite, &
        collect_gmres_testsuite, &
        collect_svd_testsuite, &
-       collect_cg_testsuite
+       collect_cg_testsuite, &
+       collect_bicgstab_testsuite
 
   implicit none
 
@@ -29,15 +30,16 @@ program Tester
   status = 0
 
   testsuites = [&
-       new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite),         &
-       new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),         &
-       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite)                , &
-       new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite) , &
-       new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite)   , &
-       new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite)                , &
-       new_testsuite("GMRES Test Suite", collect_gmres_testsuite)                    , &
-       new_testsuite("SVD Test Suite", collect_svd_testsuite), &
-       new_testsuite("CG Test Suite", collect_cg_testsuite)  &                        
+       new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite),                    &
+       new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),                    &
+       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite),                            &
+       new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite), &
+       new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite),   &
+       new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite),                            &
+       new_testsuite("GMRES Test Suite", collect_gmres_testsuite),                                &
+       new_testsuite("SVD Test Suite", collect_svd_testsuite),                                    &
+       new_testsuite("CG Test Suite", collect_cg_testsuite),                                      &
+       new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite)                           &
        ]
 
   do is = 1, size(testsuites)

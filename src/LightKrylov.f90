@@ -16,7 +16,7 @@ module LightKrylov
        abstract_vector, get_vec,                                           &
        abstract_linop, abstract_spd_linop,                                 &
        arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
-       eigs, eighs, gmres, save_eigenspectrum, svds, cg!, bicgstab
+       eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
 
 contains
 
