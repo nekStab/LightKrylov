@@ -53,7 +53,7 @@ contains
     A = rmatrix() ; A%data = reshape([-2, -2, 4, -4, 1, 2, 2, 2, 5], shape=[3, 3])
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     ! --> Compute eigenpairs.
     call eigs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
@@ -96,7 +96,7 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     X(1)%data = [1.0D+00, 2.0D+00, 1.0D+00]
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     ! --> Compute eigenpairs.
     call eighs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
@@ -229,7 +229,7 @@ contains
 
     ! --> Initialize Krylov subspaces.
     allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1))
-    call random_number(U(1)%data) ; alpha = U(1)%norm() ; call U(1)%scalar_mult(1.0D+00 / alpha)
+    call random_number(U(1)%data) ; alpha = U(1)%norm() ; call U(1)%scal(1.0D+00 / alpha)
 
     ! --> Singular Value Decomposition.
     call svds(A, U, V, uvecs, vvecs, s, residuals, info)

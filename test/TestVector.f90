@@ -11,12 +11,10 @@ module TestVector
      double precision, dimension(3) :: data = 0.0D+00
    contains
      private
-     procedure, pass(self), public :: norm
-     procedure, pass(self), public :: add
-     procedure, pass(self), public :: sub
      procedure, pass(self), public :: zero
      procedure, pass(self), public :: dot
-     procedure, pass(self), public :: scalar_mult
+     procedure, pass(self), public :: scal
+     procedure, pass(self), public :: axpby
   end type rvector
 
 contains
@@ -26,37 +24,6 @@ contains
   !-----     DEFINITION OF THE TYPE-BOUND PROCEDURES     -----
   !-----                                                 -----
   !-----------------------------------------------------------
-
-  ! --> Definition of the norm.
-  double precision function norm(self) result(out)
-    class(rvector), intent(in) :: self
-    out = dsqrt( self%dot(self) )
-    return
-  end function norm
-
-  ! --> In-place vector addition.
-  subroutine add(self, vec)
-    class(rvector), intent(inout)      :: self
-    class(abstract_vector), intent(in) :: vec
-
-    select type(vec)
-    type is(rvector)
-       self%data = self%data + vec%data
-    end select
-    return
-  end subroutine add
-
-  ! --> In-place vector subtraction.
-  subroutine sub(self, vec)
-    class(rvector), intent(inout)      :: self
-    class(abstract_vector), intent(in) :: vec
-
-    select type(vec)
-    type is(rvector)
-       self%data = self%data - vec%data
-    end select
-    return
-  end subroutine sub
 
   !--> Zero-out a vector.
   subroutine zero(self)
@@ -77,12 +44,25 @@ contains
   end function dot
 
   ! --> In-place scalar multiplication.
-  subroutine scalar_mult(self, alpha)
+  subroutine scal(self, alpha)
     class(rvector), intent(inout) :: self
     double precision, intent(in) :: alpha
     self%data = self%data * alpha
     return
-  end subroutine scalar_mult
+  end subroutine scal
+
+  ! --> axpby interface
+  subroutine axpby(self, alpha, vec, beta)
+    class(rvector), intent(inout) :: self
+    class(abstract_vector), intent(in) :: vec
+    real(kind=wp)         , intent(in) :: alpha, beta
+
+    select type(vec)
+    type is(rvector)
+       self%data = alpha * self%data + beta*vec%data
+    end select
+    return
+  end subroutine axpby
 
   !-------------------------------------
   !-----                           -----
@@ -204,7 +184,7 @@ contains
     ! --> Random data.
     call random_number(y) ; x = rvector(y)
     ! --> Scalar multiplication.
-    call x%scalar_mult(2.0D+00)
+    call x%scal(2.0D+00)
     ! --> Check result.
     call check(error, norm2(x%data-2.0D+00*y) <= 1e-10)
 

@@ -3,92 +3,17 @@ module TestKrylov
   use TestVector
   use TestMatrices
   use testdrive  , only : new_unittest, unittest_type, error_type, check
-  use stdlib_kinds, only : dp
   use stdlib_math, only : all_close
   implicit none
 
   private
 
-  public :: collect_power_iteration_testsuite, &
-       collect_arnoldi_testsuite,              &
+  public :: collect_arnoldi_testsuite,              &
        collect_lanczos_tridiag_testsuite,      &
        collect_lanczos_bidiag_testsuite,       &
        collect_krylov_schur_testsuite
 
 contains
-
-  !------------------------------------------------------
-  !-----                                            -----
-  !-----     TEST SUITE FOR THE POWER ITERATION     -----
-  !-----                                            -----
-  !------------------------------------------------------
-
-  subroutine collect_power_iteration_testsuite(testsuite)
-    !> Collection of tests.
-    type(unittest_type), allocatable, intent(out) :: testsuite(:)
-
-    testsuite = [&
-         new_unittest("Power Iteration w/ real 3x3 matrix", test_real_matrix_power_iteration), &
-         new_unittest("Power Iteration w/ 3x3 Strang matrix", test_spd_matrix_power_iteration) &
-         ]
-    return
-  end subroutine collect_power_iteration_testsuite
-
-  subroutine test_real_matrix_power_iteration(error)
-    !> Error type to be returned.
-    type(error_type), allocatable, intent(out) :: error
-    !> Test matrix.
-    class(rmatrix), allocatable :: A
-    !> Starting vector.
-    class(rvector), allocatable :: x
-    !> Estimated eigenvalue.
-    double precision :: lambda
-    !> Maximum number of iterations.
-    integer :: niter = 50
-    !> Information flag.
-    integer :: info
-
-    ! --> Initialize matrix.
-    A = rmatrix(reshape([1, 2, 0, &
-         -2, 1, 2, &
-         1, 3, 1], shape=[3, 3], order=[2, 1])) ! order=[2, 1] -> fill the matrix row-wise.
-    ! --> Initialize vector.
-    x = rvector([1, 1, 1])
-    ! --> Power iteration method.
-    call power_iteration(A, x, lambda, niter, info)
-    ! --> Check result.
-    call check(error, info == 0)
-
-    return
-  end subroutine test_real_matrix_power_iteration
-
-  subroutine test_spd_matrix_power_iteration(error)
-    !> Error type to be returned.
-    type(error_type), allocatable, intent(out) :: error
-    !> Test matrix.
-    class(spd_matrix), allocatable :: A
-    !> Starting vector.
-    class(rvector), allocatable :: x
-    !> Estimated eigenvalue.
-    double precision :: lambda
-    !> Maximum number of iterations.
-    integer :: niter = 50
-    !> Information flag.
-    integer :: info
-
-    ! --> Initialize matrix.
-    A = spd_matrix(reshape([2, -1,  0, &
-         -1,  2, -1, &
-         0, -1,  2 ], shape=[3, 3]))
-    ! --> Initialize vector.
-    x = rvector([1, 1, 1])
-    ! --> Power iteration method.
-    call power_iteration(A, x, lambda, niter, info)
-    ! --> Check results.
-    call check(error, info == 0)
-
-    return
-  end subroutine test_spd_matrix_power_iteration
 
   !------------------------------------------------------------
   !-----                                                  -----
@@ -136,7 +61,7 @@ contains
     call random_number(Adata) ; A = rmatrix(Adata)
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
@@ -181,7 +106,7 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     X(1)%data(3) = 0.0D+00 ! Makes sure X(1) has component only within the invariant subspace.
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
@@ -216,7 +141,7 @@ contains
     A = rmatrix() ; call random_number(A%data)
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
@@ -285,7 +210,7 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     X(1)%data = [1.0D+00, 2.0D+00, 1.0D+00]
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
@@ -329,7 +254,7 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
     X(1)%data(3) = 0.0D+00 ! Makes sure X(1) has component only within the invariant subspace.
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
@@ -363,7 +288,7 @@ contains
     A = spd_matrix() ; call random_number(A%data) ; A%data = matmul(A%data, transpose(A%data))
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    alpha = X(1)%norm() ; call X(1)%scalar_mult(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
@@ -410,13 +335,13 @@ contains
     !> Krylov subspace dimension.
     integer, parameter :: kdim = 3
     !> Bidiagonal matrix.
-    real(kind=dp) :: B(kdim+1, kdim)
+    real(kind=wp) :: B(kdim+1, kdim)
     !> Information flag.
     integer :: info
     !> Miscellaneous.
     integer :: i, j, k
-    real(kind=dp) :: alpha
-    real(kind=dp) :: Udata(3, kdim+1), Vdata(3, kdim+1)
+    real(kind=wp) :: alpha
+    real(kind=wp) :: Udata(3, kdim+1), Vdata(3, kdim+1)
 
     ! --> Initialize matrix.
     A = rmatrix() ; call random_number(A%data)
@@ -427,8 +352,8 @@ contains
        call U(k)%zero() ; call V(k)%zero()
     enddo
     call random_number(U(1)%data)
-    alpha = U(1)%norm() ; call U(1)%scalar_mult(1.0_dp / alpha)
-    B = 0.0_dp
+    alpha = U(1)%norm() ; call U(1)%scal(1.0_wp / alpha)
+    B = 0.0_wp
     ! --> Lanczos bidiagonalization.
     call lanczos_bidiagonalization(A, U, V, B, info)
     ! --> Check correctness of full factorization.
