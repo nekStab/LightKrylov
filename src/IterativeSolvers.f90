@@ -751,18 +751,20 @@ contains
     allocate (r, source=b)
     allocate (r_hat, source=b)
     allocate (p, source=b)
-    allocate (p_int, source=b)
     allocate (v, source=b)
     allocate (s, source=b)
     allocate (t, source=b)
+        
+    ! --> Compute initial residual: r = b - Ax.
+    call A%matvec(x, r) ; call r%axpby(-1.0_wp, b, 1.0_wp)
     
-    ! Initial residual and other setups
-    call A%matvec(x, r)
-    call r%sub(b)
-    call r%scal(-1.0_wp)
-    call r_hat%copy(r)
+    !call r_hat%copy(r)
+    r_hat = r
+
     rho = r_hat%dot(r)
-    call p%copy(r)
+
+    !call p%copy(r)
+    p = r 
     
     bicgstab_loop: do i = 1, niter
        
@@ -772,22 +774,22 @@ contains
        alpha = rho/r_hat%dot(v)
        
        ! s = r - alpha * v
-       call s%copy(r)
-       call s%axpby(-alpha, v, 1.0_wp)
+       !call s%copy(r)
+       s = r
+       call s%axpby(1.0_wp, v, -alpha)
        
        ! t = A * s
        call A%matvec(s, t)
        omega = t%dot(s)/t%dot(t)
        
-       ! x = x + omega * s + alpha * p
-       call x%axpby(omega, s, 1.0_wp)
-       call x%axpby(alpha, p, 1.0_wp)
+       ! x = x + s * omega + p * alpha
+       call x%axpby(1.0_wp, s, omega)
+       call x%axpby(1.0_wp, p, alpha)
        
-       ! r = s - omega * t
-       call r%copy(s)
-       call r%axpby(-omega, t, 1.0_wp)
-       
-       !write (*, *) "INFO : BICGSTAB residual after ", i, alpha, omega, res
+       ! r = s - t * omega
+       !call r%copy(s)
+       r = s
+       call r%axpby(1.0_wp, t, -omega)
        
        res = r%norm()  
        if (verbose) then
@@ -798,19 +800,21 @@ contains
        rho_new = r_hat%dot(r)
        beta = (alpha/omega) * (rho_new/rho)
        
-       ! p_int = p - omega * v
-       call p_int%copy(p)
-       call p_int%axpby(-omega, v, 1.0_wp)
+       ! s = p - v * omega ! reusing s vector
+       !call s%copy(p)
+       s = p
+       call s%axpby(1.0_wp, v, -omega)
        
-       ! Compute p = r + beta * p_int
-       call p%copy(r)
-       call p%axpby(beta, p_int, 1.0_wp)
+       ! p = r + s * beta
+       !call p%copy(r)
+       p = r 
+       call p%axpby(1.0_wp, s, beta)
        
        rho = rho_new
        
     end do bicgstab_loop
     
-    deallocate (r, r_hat, p, p_int, v, s, t)
+    deallocate (r, r_hat, p, v, s, t)
     return
   end subroutine bicgstab
   
