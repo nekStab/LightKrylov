@@ -609,22 +609,20 @@ contains
     real(kind=wp) :: alpha, beta, r_dot_r_old, r_dot_r_new, residual
     
     ! --> Handle optional arguments.
-    niter = optval(maxiter, 1000)
+    niter = optval(maxiter, 100)
     tolerance = optval(tol, atol + rtol*b%norm())
     verbose = optval(verbosity, .false.)
     
     ! --> Initialize vectors.
-    allocate (r, source=b)
-    allocate (p, source=b)
-    allocate (Ap, source=b)
+    allocate (r, source=b)  ; call r%zero()
+    allocate (p, source=b)  ; call p%zero()
+    allocate (Ap, source=b) ; call Ap%zero()
     
     ! --> Compute initial residual: r = b - Ax.
-    call A%matvec(x, r)
-    call r%sub(b)
-    call r%scal(-1.0_wp)
+    call A%matvec(x, r) ; call r%axpby(-1.0_wp, b, 1.0_wp)
     
     ! --> Initialize direction vector: p = r.
-    call p%copy(r)
+    p = r
     
     ! --> Initialize dot product of residual: r_dot_r_old = r' * r.
     r_dot_r_old = r%dot(r)
@@ -636,13 +634,13 @@ contains
        call A%matvec(p, Ap)
        
        ! Compute step size alpha = r_dot_r_old / (p' * Ap).
-       alpha = r_dot_r_old/p%dot(Ap)
+       alpha = r_dot_r_old / p%dot(Ap)
        
        ! Update solution x = x + alpha * p.
-       call x%axpby(alpha, p, 1.0_wp)
+       call x%axpby(1.0_wp, p, alpha)
        
        ! Update residual r = r - alpha * Ap.
-       call r%axpby(-alpha, Ap, 1.0_wp)
+       call r%axpby(1.0_wp, Ap, -alpha)
        
        ! Compute new dot product of residual r_dot_r_new = r' * r.
        r_dot_r_new = r%dot(r)
@@ -665,7 +663,7 @@ contains
        beta = r_dot_r_new/r_dot_r_old
        
        ! Update direction p = r + beta * p.
-       call p%axpby(1.0_wp, r, beta)
+       call p%axpby(beta, r, 1.0_wp)
        
        ! Update r_dot_r_old for next iteration.
        r_dot_r_old = r_dot_r_new
