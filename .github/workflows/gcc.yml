@@ -1,0 +1,41 @@
+name: GCC
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  MPICH_FC: gfortran
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install dependecies
+        shell: bash
+        run: |
+          sudo apt -y update
+          sudo apt install -y gfortran
+          
+      - name: Install fpm
+        uses: fortran-lang/setup-fpm@v3
+        with:
+          fpm-version: 'v0.8.0'
+          
+      - name: Run tests
+        shell: bash
+        run: |
+          fpm test --flag "-g -fbacktrace -O3"
+ 
