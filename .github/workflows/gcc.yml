@@ -30,12 +30,9 @@ jobs:
           sudo apt install -y gfortran
           
       - name: Install fpm
-        uses: fortran-lang/setup-fpm@v3
-        with:
-          fpm-version: 'v0.8.0'
+        uses: fortran-lang/setup-fpm@v5
           
       - name: Run tests
         shell: bash
         run: |
           fpm test --flag "-g -fbacktrace -O3"
- 
