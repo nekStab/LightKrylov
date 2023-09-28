@@ -11,7 +11,8 @@ module TestKrylov
   public :: collect_arnoldi_testsuite,              &
        collect_lanczos_tridiag_testsuite,      &
        collect_lanczos_bidiag_testsuite,       &
-       collect_krylov_schur_testsuite
+       collect_krylov_schur_testsuite, &
+       collect_nonsymmetric_lanczos_testsuite
 
 contains
 
@@ -364,6 +365,73 @@ contains
     call check(error, alpha < 1e-12)
     return
   end subroutine test_lanczos_bidiag_full_factorization
+
+  !--------------------------------------------------------------------------
+  !-----                                                                -----
+  !-----     TEST SUITE FOR THE NON-SYMMETRIC LANCZOS FACTORIZATION     -----
+  !-----                                                                -----
+  !--------------------------------------------------------------------------
+
+  subroutine collect_nonsymmetric_lanczos_testsuite(testsuite)
+    !> Collection of tests.
+    type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+    testsuite = [ &
+         new_unittest("Non-symmetric Lanczos tridiag. full factorization", test_nonsym_lanczos_full_factorization) &
+         ]
+
+    return
+  end subroutine collect_nonsymmetric_lanczos_testsuite
+
+  subroutine test_nonsym_lanczos_full_factorization(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(rmatrix), allocatable :: A
+    !> Left and right Krylov subspaces.
+    class(rvector), allocatable :: V(:), W(:)
+    !> Krylov subspace dimenion.
+    integer, parameter :: kdim = 3
+    !> Tridiagonal matrix.
+    double precision :: T(kdim+1, kdim+1)
+    !> Information flag.
+    integer :: info
+    !> Miscellaneous.
+    integer :: i, j, k
+    double precision :: alpha, beta
+    double precision :: Vdata(3, kdim+1), Wdata(3, kdim+1)
+
+    ! --> Initialize matrix.
+    A = rmatrix() ; call random_number(A%data)
+
+    ! --> Initialize Krylov subspaces.
+    allocate(V(1:kdim+1)) ; allocate(W(1:kdim+1))
+    call random_number(V(1)%data) ; call random_number(W(1)%data)
+    alpha = V(1)%norm() ; call V(1)%scal(1.0_wp / alpha)
+    alpha = W(1)%norm() ; call W(1)%scal(1.0_wp / alpha)
+    do k = 2, size(V)
+       call V(k)%zero() ; call W(k)%zero()
+    enddo
+    T = 0.0_wp
+
+    ! --> Nonsymmetric Lanczos factorization.
+    call nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info)
+
+    ! --> Check correctness of the factorization.
+    do k = 1, size(V)
+       Vdata(:, k) = V(k)%data ; Wdata(:, k) = W(k)%data
+    enddo
+
+    alpha = norm2(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Vdata, T(1:kdim+1, 1:kdim)))
+    ! write(*, *) "ALPHA = ", alpha
+
+    ! alpha = norm2(matmul(transpose(A%data), Wdata(:, 1:kdim)) - matmul(Wdata, transpose(T(1:kdim, 1:kdim+1))))
+    ! write(*, *) "ALPHA =", alpha
+    ! write(*, *)
+    call check(error, alpha < 1e-12)
+
+    return
+  end subroutine test_nonsym_lanczos_full_factorization
 
   !-----------------------------------------------------------------
   !-----                                                       -----
