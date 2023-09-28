@@ -142,7 +142,7 @@ contains
     ! --> GMRES solver.
     call gmres(A, b, x, info, kdim=3)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data) < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
 
     return
   end subroutine test_gmres_full_computation
@@ -164,7 +164,7 @@ contains
     ! --> GMRES solver.
     call gmres(A, b, x, info, kdim=3)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data) < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
 
     return
   end subroutine test_gmres_full_computation_spd_matrix
@@ -276,7 +276,7 @@ contains
     ! --> CG solver.
     call cg(A, b, x, info, verbosity=.true.)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data) < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
     
     return
   end subroutine test_cg_full_computation_spd_matrix
@@ -314,7 +314,7 @@ contains
     ! --> BiCGSTAB solver.
     call bicgstab(A, b, x, info, verbosity=.true.)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data) < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
     
     return
   end subroutine test_bicgstab_full_computation

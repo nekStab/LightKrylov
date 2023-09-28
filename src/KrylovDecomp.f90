@@ -8,7 +8,8 @@ module KrylovDecomp
   private
   public :: arnoldi_factorization, &
        lanczos_tridiagonalization, &
-       lanczos_bidiagonalization
+       lanczos_bidiagonalization,  &
+       nonsymmetric_lanczos_tridiagonalization
 
 contains
 
@@ -360,6 +361,97 @@ contains
   !-----     TWO-SIDED LANCZOS TRIDIAGONALIZATION FOR GENERAL SQUARE MATRICES     -----
   !-----                                                                          -----
   !------------------------------------------------------------------------------------
+
+  subroutine nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, kstart, kend, verbosity, tol)
+    !> Linear operator to be factorized.
+    class(abstract_linop) , intent(in)    :: A
+    !> Left and right Krylov basis.
+    class(abstract_vector), intent(inout) :: V(:)
+    class(abstract_vector), intent(inout) :: W(:)
+    !> Tridiagonal matrix.
+    real(kind=wp)         , intent(inout) :: T(:, :)
+    !> Information flag.
+    integer               , intent(out)   :: info
+    !> Optional arguments.
+    integer, optional, intent(in) :: kstart
+    integer                       :: k_start
+    integer, optional, intent(in) :: kend
+    integer                       :: k_end
+    logical, optional, intent(in) :: verbosity
+    logical                       :: verbose
+    real(kind=wp), optional, intent(in) :: tol
+    real(kind=wp)                       :: tolerance
+    !> Miscellaneous.
+    real(kind=wp) :: alpha, beta, gamma, tmp
+    integer       :: i, j, k, kdim
+
+    ! --> Check Krylov subspaces dimensions.
+    if (size(V) .ne. size(W)) then
+       write(*, *) "INFO : Left and right Krylov basis have different dimensions."
+       info = -1
+    else
+       kdim = size(V) - 1
+    endif
+
+    ! --> Check T dimensions.
+    if (all(shape(T) .ne. [kdim+1, kdim+1])) then
+       write(*, *) "INFO : Tridiagonal matrix and Krylov subspaces dimensions do not match."
+       info = -2
+    endif
+
+    ! --> Deals with the optional arguments.
+    k_start = optval(kstart, 1)
+    k_end   = optval(kend, kdim)
+    verbose = optval(verbosity, .false.)
+    tolerance = optval(tol, atol)
+
+    ! --> Bi-orthogonalize the left and right starting vectors.
+    tmp = V(1)%dot(W(1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
+    call V(1)%scal(1.0_wp / beta) ; call W(1)%scal(1.0_wp / gamma)
+
+    ! --> Nonsymmetric Lanczos iterations.
+    lanczos : do k = k_start, k_end
+       ! --> Matrix-vector product.
+       call A%matvec(V(k), V(k+1))
+       call A%rmatvec(W(k), W(k+1))
+
+       ! --> Update diagonal entry of the nonsymmetric tridiagonal matrix.
+       alpha = W(k)%dot(V(k+1)) ; T(k, k) = alpha
+
+       ! --> Lanczos three term recurrence.
+       call V(k+1)%axpby(1.0_wp, V(k), -alpha)
+       if (k > 1) call V(k+1)%axpby(1.0_wp, V(k-1), -gamma)
+
+       call W(k+1)%axpby(1.0_wp, W(k), -alpha)
+       if (k > 1) call W(k+1)%axpby(1.0_wp, W(k-1), -beta)
+
+       ! --> Update the off-diagonal entries of the nonsymmetric tridiagonal matrix.
+       tmp = V(k+1)%dot(W(k+1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
+       T(k, k+1) = gamma ; T(k+1, k) = beta
+
+       if ((abs(beta) < tolerance) .or. (abs(gamma) < tolerance)) then
+          if (verbose) then
+             write(*, *) "INFO : Invariant subspaces have been computed (beta, gamma) = (", beta, ",", gamma, ")."
+          endif
+       else
+          ! --> Full re-biorthogonalization.
+          do i = 1, k
+             alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, W(i), -alpha)
+             alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, V(i), -alpha)
+          enddo
+
+          ! --> Normalization step.
+          call V(k+1)%scal(1.0_wp / beta) ; call W(k+1)%scal(1.0_wp / gamma)
+       endif
+       
+    enddo lanczos
+
+    if (verbose) then
+       write(*, *) "INFO : Exiting the nonsymmetric Lanczos factorization with exit code info = ", info, "."
+    endif
+
+    return
+  end subroutine nonsymmetric_lanczos_tridiagonalization
 
   !---------------------------------------------------------------------------
   !-----                                                                 -----

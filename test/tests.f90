@@ -9,7 +9,8 @@ program Tester
   use TestVector                   , only : collect_real_vector_testsuite
   use TestMatrices                 , only : collect_real_matrix_testsuite
   use TestKrylov                   , only : collect_arnoldi_testsuite, &
-       collect_lanczos_tridiag_testsuite, collect_lanczos_bidiag_testsuite
+       collect_lanczos_tridiag_testsuite, collect_lanczos_bidiag_testsuite, &
+       collect_nonsymmetric_lanczos_testsuite
   use TestIterativeSolvers         , only : collect_evp_testsuite, &
        collect_gmres_testsuite, &
        collect_svd_testsuite, &
@@ -39,7 +40,8 @@ program Tester
        new_testsuite("GMRES Test Suite", collect_gmres_testsuite),                                &
        new_testsuite("SVD Test Suite", collect_svd_testsuite),                                    &
        new_testsuite("CG Test Suite", collect_cg_testsuite),                                      &
-       new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite)                           &
+       new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite),                          &
+       new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite)   &
        ]
 
   do is = 1, size(testsuites)
