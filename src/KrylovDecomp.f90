@@ -229,18 +229,14 @@ contains
 
     ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
     do i = max(1, k-1), k
-       ! --> Working array.
-       wrk = X(i)
+       alpha = X(k+1)%dot(X(i)) ; call X(k+1)%axpby(1.0_wp, X(i), -alpha)
        ! --> Update tridiag matrix.
-       alpha = X(k+1)%dot(wrk) ; T(i, k) = alpha
-       call wrk%scal(alpha) ; call X(k+1)%sub(wrk)
+       T(i, k) = alpha
     enddo
 
     ! --> Full re-orthogonalization.
     do i = 1, k
-       wrk = X(i)
-       alpha = X(k+1)%dot(wrk) ; call wrk%scal(alpha)
-       call X(k+1)%sub(wrk)
+       alpha = X(k+1)%dot(X(i)) ; call X(k+1)%axpby(1.0_wp, X(i), -alpha)
     enddo
 
     return
