@@ -118,22 +118,16 @@ contains
 
     ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
     do i = 1, k
-       ! --> Working array.
-       wrk = X(i)
+       alpha = X(k+1)%dot(X(i)) ; call X(k+1)%axpby(1.0_wp, X(i), -alpha)
        ! --> Update Hessenberg matrix.
-       alpha = X(k+1)%dot(wrk) ; H(i, k) = alpha
-       ! --> Orthogonalize residual vector.
-       call wrk%scal(alpha) ; call X(k+1)%sub(wrk)
+       H(i, k) = alpha
     enddo
 
     ! --> Perform full re-orthogonalization (see instability of MGS process)
     do i = 1, k
-       ! --> Working array.
-       wrk = X(i)
+       alpha = X(k+1)%dot(X(i)) ; call X(k+1)%axpby(1.0_wp, X(i), -alpha)
        ! --> Update Hessenberg matrix.
-       alpha = X(k+1)%dot(wrk) ; H(i, k) = H(i, k) + alpha
-       ! --> Orthogonalize residual vectors.
-       call wrk%scal(alpha) ; call X(k+1)%sub(wrk)
+       H(i, k) = H(i, k) + alpha
     enddo
 
     return
