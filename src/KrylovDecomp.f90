@@ -298,15 +298,12 @@ contains
        ! --> Transpose matrix-vector product.
        call A%rmatvec(U(k), V(k))
        if (k > 1) then
-          wrk = V(k-1) ; call wrk%scal(beta)
-          call V(k)%sub(wrk)
+          call V(k)%axpby(1.0_wp, V(k-1), -beta)
        endif
 
        ! --> Full re-orthogonalization of the right Krylov subspace.
        do j = 1, k-1
-          wrk = V(j)
-          gamma = V(k)%dot(wrk)
-          call wrk%scal(gamma) ; call V(k)%sub(wrk)
+          gamma = V(k)%dot(V(j)) ; call V(k)%axpby(1.0_wp, V(j), -gamma)
        enddo
 
        ! --> Normalization step.
@@ -324,13 +321,11 @@ contains
 
        ! --> Matrix-vector product.
        call A%matvec(V(k), U(k+1))
-       wrk = U(k) ; call wrk%scal(alpha) ; call U(k+1)%sub(wrk)
+       call U(k+1)%axpby(1.0_wp, U(k), -alpha)
 
        ! --> Full re-orthogonalization of the left Krylov subspace.
        do j = 1, k
-          wrk = U(j)
-          gamma = U(k+1)%dot(wrk)
-          call wrk%scal(gamma) ; call U(k+1)%sub(wrk)
+          gamma = U(k+1)%dot(U(j)) ; call U(k+1)%axpby(1.0_wp, U(j), -gamma)
        enddo
 
        ! --> Normalization step.
