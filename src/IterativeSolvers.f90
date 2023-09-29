@@ -741,7 +741,7 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
   !
   !=======================================================================================
-  subroutine bicgstab(A, b, x, info, maxiter, tol, verbosity)
+  subroutine bicgstab(A, b, x, info, maxiter, tol, verbosity, transpose)
     !> Linear problem and initial guess.
     class(abstract_linop), intent(in) :: A
     class(abstract_vector), intent(in) :: b
@@ -751,11 +751,12 @@ contains
     integer, optional, intent(in) :: maxiter
     real(kind=wp), optional, intent(in) :: tol
     logical, optional, intent(in) :: verbosity
+    logical, optional, intent(in) :: transpose
     
     !> Internal variables.
     integer :: i, niter
     real(kind=wp) :: tolerance, res, alpha, omega, rho, rho_new, beta
-    logical :: verbose
+    logical :: verbose, trans
     
     !> BiCGSTAB vectors.
     class(abstract_vector), allocatable :: r, r_hat, p, p_int, v, s, t
@@ -764,6 +765,7 @@ contains
     niter = optval(maxiter, 100)
     tolerance = optval(tol, atol + rtol*b%norm())
     verbose = optval(verbosity, .false.)
+    trans   = optval(transpose, .false.)
     
     ! Initialize vectors.
     allocate (r, source=b)
@@ -774,7 +776,12 @@ contains
     allocate (t, source=b)
         
     ! --> Compute initial residual: r = b - Ax.
-    call A%matvec(x, r) ; call r%axpby(-1.0_wp, b, 1.0_wp)
+    if (trans) then
+       call A%rmatvec(x, r)
+    else
+       call A%matvec(x, r)
+    endif
+    call r%axpby(-1.0_wp, b, 1.0_wp)
     
     !call r_hat%copy(r)
     r_hat = r
@@ -787,7 +794,11 @@ contains
     bicgstab_loop: do i = 1, niter
        
        ! v = A * p
-       call A%matvec(p, v)
+       if (trans) then
+          call A%rmatvec(p, v)
+       else
+          call A%matvec(p, v)
+       endif
        
        alpha = rho/r_hat%dot(v)
        
@@ -797,7 +808,11 @@ contains
        call s%axpby(1.0_wp, v, -alpha)
        
        ! t = A * s
-       call A%matvec(s, t)
+       if (trans) then
+          call A%rmatvec(s, t)
+       else
+          call A%matvec(s, t)
+       endif
        omega = t%dot(s)/t%dot(t)
        
        ! x = x + s * omega + p * alpha
