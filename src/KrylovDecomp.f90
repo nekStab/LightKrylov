@@ -19,15 +19,15 @@ contains
   !-----                                                           -----
   !---------------------------------------------------------------------
 
-  subroutine arnoldi_factorization(A, X, H, info, kstart, kend, verbosity, tol)
+  subroutine arnoldi_factorization(A, X, H, info, kstart, kend, verbosity, tol, transpose)
 
     ! --> Optional arguments (mainly for GMRES)
     integer, optional, intent(in) :: kstart, kend
-    logical, optional, intent(in) :: verbosity
+    logical, optional, intent(in) :: verbosity, transpose
     double precision, optional, intent(in) :: tol
 
     integer :: k_start, k_end
-    logical :: verbose
+    logical :: verbose, trans
     double precision :: tolerance
 
     ! --> Linear Operator to be factorized.
@@ -58,11 +58,16 @@ contains
     k_end     = optval(kend, kdim)
     verbose   = optval(verbosity, .false.)
     tolerance = optval(tol, 1.0D-12)
+    trans     = optval(transpose, .false.)
 
     ! --> Arnoldi factorization.
     arnoldi: do k = k_start, k_end
        ! --> Matrix-vector product.
-       call A%matvec(X(k), X(k+1))
+       if (trans) then
+          call A%rmatvec(X(k), X(k+1))
+       else
+          call A%matvec(X(k), X(k+1))
+       endif
        ! --> Update Hessenberg matrix.
        call update_hessenberg_matrix(H, X, k)
        beta = X(k+1)%norm() ; H(k+1, k) = beta

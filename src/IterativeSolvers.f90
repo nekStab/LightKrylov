@@ -56,7 +56,7 @@ contains
   !-----                                -----
   !------------------------------------------
 
-  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, verbosity)
+  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, verbosity, transpose)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -70,6 +70,9 @@ contains
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical :: verbose
+    !> Transpose operator.
+    logical, optional, intent(in) :: transpose
+    logical :: trans
 
     !> Upper Hessenberg matrix.
     real(kind=wp), dimension(size(X), size(X)-1) :: H
@@ -86,6 +89,7 @@ contains
 
     ! --> Deals with the optional arguments.
     verbose = optval(verbosity, .false.)
+    trans   = optval(transpose, .false.)
 
     ! --> Initialize variables.
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
@@ -94,7 +98,7 @@ contains
     enddo
 
     ! --> Compute Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, info, verbosity=verbose)
+    call arnoldi_factorization(A, X, H, info, verbosity=verbose, transpose=trans)
 
     if (info < 0) then
        if (verbose) then
@@ -403,7 +407,7 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 7(3), 856–869.
   !
   !=======================================================================================
-  subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity)
+  subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
     !> Linear problem.
     class(abstract_linop)  , intent(in)    :: A ! Linear Operator.
     class(abstract_vector) , intent(in)    :: b ! Right-hand side.
@@ -420,6 +424,8 @@ contains
     real(kind=wp)                          :: tolerance
     logical, optional      , intent(in)    :: verbosity ! Verbosity control.
     logical                                :: verbose
+    logical, optional      , intent(in)    :: transpose
+    logical                                :: trans
 
     !> Krylov subspace.
     class(abstract_vector), allocatable :: V(:)
@@ -440,6 +446,7 @@ contains
     niter     = optval(maxiter, 10)
     tolerance = optval(tol, atol + rtol*b%norm())
     verbose   = optval(verbosity, .false.)
+    trans     = optval(transpose, .false.)
 
     ! --> Initialize Krylov subspace.
     allocate(V(1:k_dim+1), source=b)
@@ -451,7 +458,12 @@ contains
     allocate(e(1:k_dim+1))      ; e = 0.0_wp
 
     ! --> Initial Krylov vector.
-    call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
+    if (trans) then
+       call A%rmatvec(x, V(1))
+    else
+       call A%matvec(x, V(1))
+    endif
+    call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
     beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
     gmres_iterations : do i = 1, niter
@@ -463,7 +475,7 @@ contains
 
        arnoldi : do k = 1, k_dim
           ! --> Step-by-step Arnoldi factorization.
-          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tolerance)
+          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tolerance, transpose=trans)
           if (info < 0) then
              write(*, *) "INFO : Arnoldi Factorization failed with exit code info =", info
              write(*, *) "       Stopping the GMRES computation."
@@ -487,7 +499,13 @@ contains
        call dx%zero() ; call get_vec(dx, V(1:k), y(1:k)) ; call x%add(dx)
 
        ! --> Recompute residual for sanity check.
-       call A%matvec(x, V(1)) ; call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
+       if (trans) then
+          call A%rmatvec(x, V(1))
+       else
+          call A%matvec(x, V(1))
+       endif
+
+       call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
 
        ! --> Initialize new starting Krylov vector if needed.
        beta = V(1)%norm() ; call V(1)%scal(1.0D+00 / beta)
