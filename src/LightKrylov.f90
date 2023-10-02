@@ -12,7 +12,7 @@ module LightKrylov
 
   private
 
-  public :: greetings, wp,                                                 &
+  public :: greetings, wp, atol, rtol,                                     &
        abstract_vector, get_vec,                                           &
        abstract_linop, abstract_spd_linop,                                 &
        arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &

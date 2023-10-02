@@ -297,9 +297,11 @@ contains
     lanczos : do k = k_start, k_end
        ! --> Transpose matrix-vector product.
        call A%rmatvec(U(k), V(k))
-       if (k > 1) then
-          call V(k)%axpby(1.0_wp, V(k-1), -beta)
-       endif
+       ! /!\ Next lines not needed because already taken care of in the
+       !     full re-orthogonalization.
+       ! if (k > 1) then
+       !    call V(k)%axpby(1.0_wp, V(k-1), -beta)
+       ! endif
 
        ! --> Full re-orthogonalization of the right Krylov subspace.
        do j = 1, k-1
@@ -307,7 +309,7 @@ contains
        enddo
 
        ! --> Normalization step.
-       alpha = V(k)%norm()
+       alpha = V(k)%norm() ; B(k, k) = alpha
        if (alpha > tolerance) then
           call V(k)%scal(1.0_wp / alpha)
           B(k, k) = alpha
@@ -321,7 +323,8 @@ contains
 
        ! --> Matrix-vector product.
        call A%matvec(V(k), U(k+1))
-       call U(k+1)%axpby(1.0_wp, U(k), -alpha)
+       ! /!\ Not needed because taken care of in the full reortho. step.
+       ! call U(k+1)%axpby(1.0_wp, U(k), -alpha)
 
        ! --> Full re-orthogonalization of the left Krylov subspace.
        do j = 1, k
@@ -329,7 +332,7 @@ contains
        enddo
 
        ! --> Normalization step.
-       beta = U(k+1)%norm()
+       beta = U(k+1)%norm() ; B(k+1, k) = beta
        if (beta > tolerance) then
           call U(k+1)%scal(1.0_wp / beta)
           B(k+1, k) = beta

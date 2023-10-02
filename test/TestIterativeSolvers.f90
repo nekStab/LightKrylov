@@ -61,7 +61,7 @@ contains
     ! --> Compute eigenpairs.
     call eigs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
-    call check(error, all_close(real(eigvals), true_eigs), .true.)
+    call check(error, all_close(real(eigvals), true_eigs, rtol, atol), .true.)
     return
   end subroutine test_eigvals_triangular_matrix
 
@@ -104,7 +104,7 @@ contains
     ! --> Compute eigenpairs.
     call eighs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
-    call check(error, all_close(eigvals, true_eigs), .true.)
+    call check(error, all_close(eigvals, true_eigs, rtol, atol), .true.)
     return
   end subroutine test_eigvals_spd_matrix
 
@@ -216,7 +216,7 @@ contains
     !> Dimension of the Krylov subspace.
     integer, parameter :: kdim = 3
     !> Coordinates of the singular vectors and singular values.
-    double precision :: uvecs(kdim+1, kdim), vvecs(kdim, kdim), S(kdim)
+    double precision :: uvecs(kdim, kdim), vvecs(kdim, kdim), S(kdim)
     double precision :: residuals(kdim)
     !> Information flag.
     integer :: info
@@ -238,7 +238,7 @@ contains
     ! --> Singular Value Decomposition.
     call svds(A, U, V, uvecs, vvecs, s, residuals, info)
     ! --> Check singular values.
-    call check(error, all_close(s, true_svdvals))
+    call check(error, all_close(s, true_svdvals, rtol, atol), .true.)
 
     return
   end subroutine test_svd_singular_values

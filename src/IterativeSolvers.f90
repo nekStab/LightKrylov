@@ -271,7 +271,7 @@ contains
     class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
     class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
     !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-    real(kind=wp), intent(out) :: uvecs(size(U), size(U)-1), vvecs(size(U)-1, size(U)-1)
+    real(kind=wp), intent(out) :: uvecs(size(U)-1, size(U)-1), vvecs(size(U)-1, size(U)-1)
     real(kind=wp), intent(out) :: sigma(size(U)-1)
     real(kind=wp), intent(out) :: residuals(size(U)-1)
     !> Information flag.
@@ -312,10 +312,11 @@ contains
     call lanczos_bidiagonalization(A, U, V, B, info, verbosity=verbose)
 
     ! --> Compute the singular value decomposition of the bidiagonal matrix.
-    call svd(B, uvecs, sigma, vvecs)
+    call svd(B(1:kdim, 1:kdim), uvecs, sigma, vvecs)
 
     ! --> Compute the residual associated with each singular triplet.
-    residuals = 0.0_wp
+    beta = B(kdim+1, kdim) !> Get Krylov residual vector norm.
+    residuals = compute_residual(beta, vvecs(kdim, :))
 
     return
   end subroutine svds
