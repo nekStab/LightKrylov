@@ -315,7 +315,8 @@ contains
     call svd(B(1:kdim, 1:kdim), uvecs, sigma, vvecs)
 
     ! --> Compute the residual associated with each singular triplet.
-    residuals = 0.0_wp
+    beta = B(kdim+1, kdim) !> Get Krylov residual vector norm.
+    residuals = compute_residual(beta, vvecs(kdim, :))
 
     return
   end subroutine svds
