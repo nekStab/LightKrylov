@@ -61,7 +61,7 @@ contains
     ! --> Compute eigenpairs.
     call eigs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
-    call check(error, all_close(real(eigvals), true_eigs), .true.)
+    call check(error, all_close(real(eigvals), true_eigs, rtol, atol), .true.)
     return
   end subroutine test_eigvals_triangular_matrix
 
@@ -104,7 +104,7 @@ contains
     ! --> Compute eigenpairs.
     call eighs(A, X, eigvecs, eigvals, residuals, info)
     ! --> Check results.
-    call check(error, all_close(eigvals, true_eigs), .true.)
+    call check(error, all_close(eigvals, true_eigs, rtol, atol), .true.)
     return
   end subroutine test_eigvals_spd_matrix
 
@@ -237,8 +237,10 @@ contains
 
     ! --> Singular Value Decomposition.
     call svds(A, U, V, uvecs, vvecs, s, residuals, info)
+    write(*, *) s
+    write(*, *) true_svdvals
     ! --> Check singular values.
-    call check(error, all_close(s, true_svdvals))
+    call check(error, all_close(s, true_svdvals, rtol, atol), .true.)
 
     return
   end subroutine test_svd_singular_values
