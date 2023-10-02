@@ -216,7 +216,7 @@ contains
     !> Dimension of the Krylov subspace.
     integer, parameter :: kdim = 3
     !> Coordinates of the singular vectors and singular values.
-    double precision :: uvecs(kdim+1, kdim), vvecs(kdim, kdim), S(kdim)
+    double precision :: uvecs(kdim, kdim), vvecs(kdim, kdim), S(kdim)
     double precision :: residuals(kdim)
     !> Information flag.
     integer :: info
