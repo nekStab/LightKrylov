@@ -237,8 +237,6 @@ contains
 
     ! --> Singular Value Decomposition.
     call svds(A, U, V, uvecs, vvecs, s, residuals, info)
-    write(*, *) s
-    write(*, *) true_svdvals
     ! --> Check singular values.
     call check(error, all_close(s, true_svdvals, rtol, atol), .true.)
 
