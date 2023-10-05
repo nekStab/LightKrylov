@@ -238,7 +238,7 @@ contains
     ! --> Singular Value Decomposition.
     call svds(A, U, V, uvecs, vvecs, s, residuals, info)
     ! --> Check singular values.
-    call check(error, all_close(s, true_svdvals, rtol, atol), .true.)
+    call check(error, norm2(s-true_svdvals) < rtol, .true.)
 
     return
   end subroutine test_svd_singular_values

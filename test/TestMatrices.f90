@@ -196,7 +196,7 @@ contains
     class(rvector), allocatable :: x
     class(rvector), allocatable :: y
     !> Scaling factor.
-    double precision :: sigma
+    real(kind=wp) :: sigma
     !> Scaled linear operator.
     class(scaled_linop), allocatable :: B
 
