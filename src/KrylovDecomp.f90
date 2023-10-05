@@ -297,7 +297,7 @@ contains
     lanczos : do k = k_start, k_end
        ! --> Transpose matrix-vector product.
        call A%rmatvec(U(k), V(k))
-       ! /!\ Next lines not needed because already taken care of in the
+       ! /!\ NOTE : Next lines not needed because already taken care of in the
        !     full re-orthogonalization.
        ! if (k > 1) then
        !    call V(k)%axpby(1.0_wp, V(k-1), -beta)
@@ -323,7 +323,7 @@ contains
 
        ! --> Matrix-vector product.
        call A%matvec(V(k), U(k+1))
-       ! /!\ Not needed because taken care of in the full reortho. step.
+       ! /!\ NOTE : Not needed because taken care of in the full reortho. step.
        ! call U(k+1)%axpby(1.0_wp, U(k), -alpha)
 
        ! --> Full re-orthogonalization of the left Krylov subspace.
