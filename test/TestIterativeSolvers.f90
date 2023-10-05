@@ -88,7 +88,6 @@ contains
     integer :: info
 
     !> Miscellaneous.
-    integer :: i, j, k
     double precision :: alpha
     double precision, dimension(3), parameter :: true_eigs = [1.5D+00, 1.0D+00, 0.5D+00]
 

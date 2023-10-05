@@ -97,9 +97,8 @@ contains
     !> Information flag.
     integer :: info
     !> Misc.
-    double precision, dimension(3, 3) :: Adata
     double precision :: alpha
-    integer :: i, j, k
+    integer :: k
 
     ! --> Initialize matrix with a 2-dimensional invariant subspace.
     A = rmatrix() ; call random_number(A%data)
@@ -196,10 +195,9 @@ contains
     !> Information flag.
     integer :: info
     !> Misc.
-    integer :: i, j, k
+    integer :: k
     double precision, dimension(3, kdim+1) :: Xdata
     double precision :: alpha
-    double precision, dimension(3, 3) :: B, C
 
     ! --> Initialize matrix.
     A = spd_matrix()
@@ -242,9 +240,9 @@ contains
     !> Information flag.
     integer :: info
     !> Misc.
-    double precision, dimension(3, 3) :: Adata
+    !double precision, dimension(3, 3) :: Adata
     double precision :: alpha
-    integer :: i, j, k
+    integer :: k
 
     ! --> Initialize matrix with a 2-dimensional invariant subspace.
     A = spd_matrix()
@@ -340,7 +338,7 @@ contains
     !> Information flag.
     integer :: info
     !> Miscellaneous.
-    integer :: i, j, k
+    integer :: k
     real(kind=wp) :: alpha
     real(kind=wp) :: Udata(3, kdim+1), Vdata(3, kdim+1)
 
@@ -397,10 +395,9 @@ contains
     !> Information flag.
     integer :: info
     !> Miscellaneous.
-    integer :: i, j, k
-    double precision :: alpha, beta
+    integer :: k
+    double precision :: alpha
     double precision :: Vdata(3, kdim+1), Wdata(3, kdim+1)
-
     ! --> Initialize matrix.
     A = rmatrix() ; call random_number(A%data)
 

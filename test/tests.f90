@@ -20,7 +20,7 @@ program Tester
   implicit none
 
   !> Unit-test related.
-  integer :: status, is
+  integer :: status, is, num_tests
   type(testsuite_type), allocatable :: testsuites(:)
   character(len=*), parameter :: fmt = '("+", *(1x, a))'
 
@@ -30,18 +30,26 @@ program Tester
 
   status = 0
 
-  testsuites = [&
-       new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite),                    &
-       new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),                    &
-       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite),                            &
+ ! Explicitly allocate the array and check for allocation errors
+  num_tests = 11
+  allocate(testsuites(num_tests), stat=status)
+  if (status /= 0) then
+    write(error_unit, *) "Error allocating testsuites array"
+    error stop
+  endif
+  
+  testsuites = [ &
+       new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite), &
+       new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite), &
+       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite), &
        new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite), &
-       new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite),   &
-       new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite),                            &
-       new_testsuite("GMRES Test Suite", collect_gmres_testsuite),                                &
-       new_testsuite("SVD Test Suite", collect_svd_testsuite),                                    &
-       new_testsuite("CG Test Suite", collect_cg_testsuite),                                      &
-       new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite),                          &
-       new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite)   &
+       new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite), &
+       new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite), &
+       new_testsuite("GMRES Test Suite", collect_gmres_testsuite), &
+       new_testsuite("SVD Test Suite", collect_svd_testsuite), &
+       new_testsuite("CG Test Suite", collect_cg_testsuite), &
+       new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite), &
+       new_testsuite("Non-symmetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite) &
        ]
 
   do is = 1, size(testsuites)

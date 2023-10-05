@@ -28,4 +28,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Tests
-        run: fpm test --flag "-g -fbacktrace -O3"
+        run: 
+          
+          fpm test --verbose --flag "-Wall -Wextra -g -fbacktrace -fbounds-check"
+          
+          fpm test --flag "-O3 -march=native -funroll-loops -ffast-math"
