@@ -1,6 +1,7 @@
 module KrylovDecomp
   use AbstractVector
   use LinearOperator
+  use IterativeSolvers, only : gmres
   use stdlib_optval, only : optval
   implicit none
   include "dtypes.h"
@@ -451,5 +452,125 @@ contains
   !-----      KRYLOV-SCHUR FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
   !-----                                                                 -----
   !---------------------------------------------------------------------------
+
+  !------------------------------------------------------------------------------
+  !-----                                                                    -----
+  !-----     RATIONAL ARNOLDI FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
+  !-----                                                                    -----
+  !------------------------------------------------------------------------------
+
+  subroutine rational_arnoldi_factorization(A, X, H, G, sigma, info, kstart, kend, verbosity, tol, transpose)
+    !> Linear operator to be factorized
+    class(abstract_linop), intent(in) :: A
+    !> Krylov basis.
+    class(abstract_vector), intent(inout) :: X(:)
+    !> Upper Hessenberg matrices.
+    real(kind=wp), intent(inout) :: H(:, :), G(:, :)
+    !> Real shift for the rational approximation.
+    real(kind=wp), intent(in) :: sigma
+    !> Information flag.
+    integer, intent(out) :: info
+    !> Optional arguments.
+    integer, optional, intent(in) :: kstart
+    integer                       :: k_start
+    integer, optional, intent(in) :: kend
+    integer                       :: k_end
+    logical, optional, intent(in) :: verbosity
+    logical                       :: verbose
+    real(kind=wp), optional, intent(in) :: tol
+    real(kind=wp)                       :: tolerance
+    logical, optional, intent(in) :: transpose
+    logical                       :: trans
+
+    !> Internal variables.
+    integer :: kdim
+    integer :: i, j, k
+    real(kind=wp) :: alpha, beta
+    class(identity_linop), allocatable  :: Id
+    class(axpby_linop)   , allocatable  :: S
+    class(abstract_vector), allocatable :: wrk
+
+    !> Krylov subspace dimension.
+    kdim = size(X) - 1
+
+    !------------------------------------
+    !-----     Check dimensions     -----
+    !------------------------------------
+
+    if (all(shape(H) .ne. [kdim+1, kdim])) then
+       info = -3
+    endif
+
+    if (all(shape(G) .ne. [kdim+1, kdim])) then
+       info = -4
+    endif
+
+    !---------------------------------
+    !-----     OPTIONAL ARGS     -----
+    !---------------------------------
+
+    k_start   = optval(kstart, 1)
+    k_end     = optval(kend, kdim)
+    verbose   = optval(verbosity, .false.)
+    tolerance = optval(tol, atol + rtol)
+    trans     = optval(transpose, .false.)
+
+    !-------------------------------------------
+    !-----     RATIONAL ARNOLDI METHOD     -----
+    !-------------------------------------------
+
+    !> Definition of the shifted operator to be inverted.
+    Id = identity_linop()
+    S  = axpby_linop(Id, A, 1.0_wp, -1.0_wp/sigma) ! S = I - A/sigma
+
+    !> Initialize working array.
+    allocate(wrk, source=X(1))
+
+    !> (Rational) Arnoldi factorization.
+    arnoldi: do k = k_start, k_end
+       ! --> Zero-out working array (sanity).
+       call wrk%zero()
+
+       ! --> Matrix vector product.
+       if (trans) then
+          call A%rmatvec(X(k), wrk)
+       else
+          call A%matvec(X(k), wrk)
+       endif
+       call gmres(S, wrk, X(k+1), info, kdim, transpose=trans)
+
+       ! --> Orthogonalize residual vector w.r.t. to previously computed Krylov vectors.
+       do i = 1, k
+          alpha = X(k+1)%dot(X(i)) ; call X(k+1)%axpby(1.0_wp, X(i), -alpha)
+          ! --> Update Hessenberg matrix H.
+          H(i, k) = alpha
+       enddo
+       ! --> Perform full re-orthogonaliation (see instability of MGS process)
+       do i = 1, k
+          alpha = X(k+1)%dot(X(i)) ; call X(k+1)%axpby(1.0_wp, X(i), -alpha)
+          ! --> Update Hessenberg matrix H.
+          H(i, k) = H(i, k) + alpha
+       enddo
+
+       ! --> Update upper Hessenberg matrix G.
+       G(1:k, k) = H(1:k, k) / sigma ; G(k, k) = G(k, k) + 1.0_wp
+
+       ! --> Normalize residual and update the last row of the Hessenberg matrices.
+       beta = X(k+1)%norm() ; H(k+1, k) = beta ; G(k+1, k) = beta/sigma
+
+       ! --> Exit Arnoldi loop if needed.
+       if (beta < tolerance) then
+          !> Logging information.
+          !> Dimension of the computed invariant subspace.
+          !> Exit the loop.
+          exit arnoldi
+       else
+          call X(k+1)%scal(1.0_wp / beta)
+       endif
+
+    enddo arnoldi
+    
+    return
+  end subroutine rational_arnoldi_factorization
 
 end module KrylovDecomp
