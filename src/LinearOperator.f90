@@ -1,4 +1,5 @@
 module LinearOperator
+  use AbstractVector
   implicit none
 
   private
@@ -58,5 +59,35 @@ module LinearOperator
    contains
      private
   end type abstract_lowrank_linop
+
+  !-------------------------------------
+  !-----                           -----
+  !-----     IDENTITY OPERATOR     -----
+  !-----                           -----
+  !-------------------------------------
+
+  type, extends(abstract_linop), public :: Identity_operator
+   contains
+     private
+     procedure, pass(self), public :: matvec  => identity_matvec
+     procedure, pass(self), public :: rmatvec => identity_matvec
+  end type Identity_operator
+
+contains
+
+  !-------------------------------------------------------------------
+  !-----                                                         -----
+  !-----     TYPE-BOUND PROCEDURES FOR THE IDENTITY OPERATOR     -----
+  !-----                                                         -----
+  !-------------------------------------------------------------------
+
+  subroutine identity_matvec(self, vec_in, vec_out)
+    class(identity_operator), intent(in)  :: self
+    class(abstract_vector)  , intent(in)  :: vec_in
+    class(abstract_vector)  , intent(out) :: vec_out
+    ! /!\ NOTE : This needs to be improved. It is a simple hack but I ain't happy with it.
+    call vec_out%zero() ; call vec_out%add(vec_in)
+    return
+  end subroutine identity_matvec
   
 end module LinearOperator
