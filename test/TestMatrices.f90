@@ -182,7 +182,8 @@ contains
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
     testsuite = [ &
-         new_unittest("Scaled linear operator", test_scaled_linop) &
+         new_unittest("Scaled linear operator", test_scaled_linop), &
+         new_unittest("axpby linear operator", test_axpby_linop) &
     ]
     return
   end subroutine collect_abstract_linop_operations_testsuite
@@ -193,8 +194,7 @@ contains
     !> Test matrix.
     class(rmatrix), allocatable :: A
     !> Test vector.
-    class(rvector), allocatable :: x
-    class(rvector), allocatable :: y
+    class(rvector), allocatable :: x, y
     !> Scaling factor.
     real(kind=wp) :: sigma
     !> Scaled linear operator.
@@ -208,11 +208,38 @@ contains
     sigma = 2.0D+00 ; B = scaled_linop(A, sigma)
     ! --> Compute scaled matrix-vector product.
     call B%matvec(x, y)
-    write(*, *) y%data, sigma*matmul(A%data, x%data)
     ! --> Check error.
     call check(error, all_close(y%data, sigma*matmul(A%data, x%data)), .true.)
 
     return
   end subroutine test_scaled_linop
+
+  subroutine test_axpby_linop(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrices.
+    class(rmatrix), allocatable :: A, B
+    !> Test vector.
+    class(rvector), allocatable :: x, y
+    !> Scaling factors.
+    real(kind=wp) :: alpha, beta
+    !> axpby linear operator.
+    class(axpby_linop), allocatable :: C
+
+    ! --> Initialize test matrices and vector.
+    A = rmatrix() ; call random_number(A%data)
+    B = rmatrix() ; call random_number(B%data)
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call y%zero()
+    call random_number(alpha) ; call random_number(beta)
+    ! --> axpby linear operator.
+    C = axpby_linop(A, B, alpha, beta, .false., .false.)
+    ! --> Compute the matrix-vector product.
+    call C%matvec(x, y)
+    ! --> Check error.
+    call check(error, all_close(matmul(alpha*A%data + beta*B%data, x%data), y%data), .true.)
+
+    return
+  end subroutine test_axpby_linop
 
 end module TestMatrices

@@ -91,6 +91,27 @@ module LinearOperator
        procedure, pass(self), public :: rmatvec => scaled_rmatvec
   end type scaled_linop
 
+  !----------------------------------
+  !-----                        -----
+  !-----     AXBPY OPERATOR     -----
+  !-----                        -----
+  !----------------------------------
+
+  type, extends(abstract_linop), public :: axpby_linop
+     !> First operator.
+     class(abstract_linop), allocatable :: A
+     !> Second operator.
+     class(abstract_linop), allocatable :: B
+     !> Constants.
+     real(kind=wp) :: alpha, beta
+     !> Logicals.
+     logical :: transA = .false., transB = .false.
+   contains
+     private
+     procedure, pass(self), public :: matvec  => axpby_matvec
+     procedure, pass(self), public :: rmatvec => axpby_rmatvec
+  end type axpby_linop
+
 contains
 
   !-------------------------------------------------------------------
@@ -137,5 +158,70 @@ contains
     call vec_out%scal(self%sigma)
     return
   end subroutine scaled_rmatvec
+
+  !-------------------------------------------------------------------
+  !-----                                                         -----
+  !-----     TYPE-BOUND PROCEDURES FOR AXPBY LINEAR OPERATOR     -----
+  !-----                                                         -----
+  !-------------------------------------------------------------------
+
+  subroutine axpby_matvec(self, vec_in, vec_out)
+    !> Arguments.
+    class(axpby_linop)    , intent(in)  :: self
+    class(abstract_vector), intent(in)  :: vec_in
+    class(abstract_vector), intent(out) :: vec_out
+    !> Working array.
+    class(abstract_vector), allocatable :: wrk
+
+    ! --> Allocate working array.
+    allocate(wrk, source=vec_in)
+
+    ! --> w = A @ x
+    if (self%transA) then
+       call self%A%rmatvec(vec_in, wrk)
+    else
+       call self%A%matvec(vec_in, wrk)
+    endif
+
+    ! --> y = B @ x
+    if (self%transB) then
+       call self%B%rmatvec(vec_in, vec_out)
+    else
+       call self%B%matvec(vec_in, vec_out)
+    endif
+
+    ! --> y = alpha*w + beta*y
+    call vec_out%axpby(self%beta, wrk, self%alpha)
+
+    return
+  end subroutine axpby_matvec
+
+  subroutine axpby_rmatvec(self, vec_in, vec_out)
+    !> Arguments.
+    class(axpby_linop)    , intent(in)  :: self
+    class(abstract_vector), intent(in)  :: vec_in
+    class(abstract_vector), intent(out) :: vec_out
+    !> Working array.
+    class(abstract_vector), allocatable :: wrk
+
+    ! --> w = A @ x
+    if (self%transA) then
+       call self%A%matvec(vec_in, wrk)
+    else
+       call self%A%rmatvec(vec_in, wrk)
+    endif
+
+    ! --> y = B @ x
+    if (self%transB) then
+       call self%B%matvec(vec_in, vec_out)
+    else
+       call self%B%rmatvec(vec_in, vec_out)
+    endif
+
+    ! --> y = alpha*w + beta*y
+    call vec_out%axpby(self%beta, wrk, self%alpha)
+
+    return
+  end subroutine axpby_rmatvec
 
 end module LinearOperator
