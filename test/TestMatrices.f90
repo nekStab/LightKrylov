@@ -207,7 +207,8 @@ contains
     ! --> Scaled operator.
     sigma = 2.0D+00 ; B = scaled_linop(A, sigma)
     ! --> Compute scaled matrix-vector product.
-    call B%A%matvec(x, y) ; call y%scal(sigma)
+    call B%matvec(x, y)
+    write(*, *) y%data, sigma*matmul(A%data, x%data)
     ! --> Check error.
     call check(error, all_close(y%data, sigma*matmul(A%data, x%data)), .true.)
 
