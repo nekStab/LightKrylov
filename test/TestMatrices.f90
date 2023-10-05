@@ -7,7 +7,7 @@ module TestMatrices
 
   private
 
-  public :: collect_real_matrix_testsuite
+  public :: collect_real_matrix_testsuite, collect_abstract_linop_operations_testsuite
 
   !---------------------------------------
   !-----     GENERAL REAL MATRIX     -----
@@ -171,28 +171,47 @@ contains
     return
   end subroutine collect_spd_matrix_testsuite
 
-  !-----------------------------------------------------------
-  !-----                                                 -----
-  !-----     TEST SUITE FOR GENERAL COMPLEX MATRICES     -----
-  !-----                                                 -----
-  !-----------------------------------------------------------
+  !----------------------------------------------------------------
+  !-----                                                      -----
+  !-----     TEST SUITE FOR OPERATIONS ON ABSTRACT LINOPS     -----
+  !-----                                                      -----
+  !----------------------------------------------------------------
 
-  subroutine collect_complex_matrix_testsuite(testsuite)
+  subroutine collect_abstract_linop_operations_testsuite(testsuite)
     !> Collection of tests.
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
-    return
-  end subroutine collect_complex_matrix_testsuite
 
-  !------------------------------------------------------
-  !-----                                            -----
-  !-----      TEST SUITE FOR HERMITIAN MATRICES     -----
-  !-----                                            -----
-  !------------------------------------------------------
-
-  subroutine collect_hermitian_matrix_testsuite(testsuite)
-    !> Collection of tests.
-    type(unittest_type), allocatable, intent(out) :: testsuite(:)
+    testsuite = [ &
+         new_unittest("Scaled linear operator", test_scaled_linop) &
+    ]
     return
-  end subroutine collect_hermitian_matrix_testsuite
+  end subroutine collect_abstract_linop_operations_testsuite
+
+  subroutine test_scaled_linop(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(rmatrix), allocatable :: A
+    !> Test vector.
+    class(rvector), allocatable :: x
+    class(rvector), allocatable :: y
+    !> Scaling factor.
+    double precision :: sigma
+    !> Scaled linear operator.
+    class(scaled_linop), allocatable :: B
+
+    ! --> Initialize test matrix and vector.
+    A = rmatrix() ; call random_number(A%data)
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call y%zero()
+    ! --> Scaled operator.
+    sigma = 2.0D+00 ; B = scaled_linop(A, sigma)
+    ! --> Compute scaled matrix-vector product.
+    call B%A%matvec(x, y) ; call y%scal(sigma)
+    ! --> Check error.
+    call check(error, all_close(y%data, sigma*matmul(A%data, x%data)), .true.)
+
+    return
+  end subroutine test_scaled_linop
 
 end module TestMatrices
