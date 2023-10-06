@@ -374,7 +374,7 @@ contains
   ! for solving nonsymmetric, non-Hermitian linear systems of equations, Ax = b.
   !
   ! Algorithmic Features:
-  ! ----------------------
+  ! ---------------------
   ! - Constructs a full Krylov subspace without restarts (i.e., not GMRES(m)).
   ! - Utilizes Arnoldi factorization to generate an orthonormal basis for the Krylov subspace.
   ! - Employs a least-squares solve to determine the optimal linear combination of the Krylov vectors.

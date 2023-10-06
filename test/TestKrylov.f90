@@ -467,8 +467,9 @@ contains
     !> Information flag.
     integer :: info
     !> Misc.
-    integer :: k
+    integer :: i, j, k
     double precision, dimension(3, kdim+1) :: Xdata
+    double precision, dimension(kdim, kdim) :: T
     double precision :: alpha
 
     ! --> Initialize matrix.
@@ -481,12 +482,8 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
     ! --> Check correctness of full factorization.
-    do k = 1, kdim+1
-       Xdata(:, k) = X(k)%data
-    enddo
-
     call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) ) < rtol )
 
     return
@@ -530,7 +527,7 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
     ! --> Check result.
     call check(error, info == 2)
 
@@ -568,7 +565,7 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
     ! --> Compute Gram matrix associated to the Krylov basis.
     do i = 1, kdim+1
        do j = 1, kdim+1
@@ -581,5 +578,5 @@ contains
 
     return
   end subroutine test_rational_arnoldi_basis_orthogonality
-  
+
 end module TestKrylov

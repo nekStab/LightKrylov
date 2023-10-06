@@ -1,7 +1,6 @@
 module KrylovDecomp
   use AbstractVector
   use LinearOperator
-  use IterativeSolvers, only : gmres
   use stdlib_optval, only : optval
   implicit none
   include "dtypes.h"
@@ -448,19 +447,35 @@ contains
     return
   end subroutine nonsymmetric_lanczos_tridiagonalization
 
-  !---------------------------------------------------------------------------
-  !-----                                                                 -----
-  !-----      KRYLOV-SCHUR FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
-  !-----                                                                 -----
-  !---------------------------------------------------------------------------
 
-  !------------------------------------------------------------------------------
-  !-----                                                                    -----
-  !-----     RATIONAL ARNOLDI FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
-  !-----                                                                    -----
-  !------------------------------------------------------------------------------
-
-  subroutine rational_arnoldi_factorization(A, X, H, G, sigma, info, kstart, kend, verbosity, tol, transpose)
+  !======================================================================================  
+  ! Rational Arnoldi Factorization with single pole Subroutine
+  !======================================================================================
+  !
+  ! Purpose:
+  ! -------
+  ! Implements the Rational Arnoldi Factorization for arbitrary square linear operators.
+  ! Only the single pole case is considered with the exception of the last iteration (k=kend)
+  ! where the pole is set to +infinity to define a proper Rational Arnoldi factorization.
+  !
+  ! Algorithmic Features:
+  ! ---------------------
+  !
+  ! Advantages:
+  ! -----------
+  !
+  ! Limitations:
+  ! ------------
+  !
+  ! Input/Output Parameters:
+  ! ------------------------
+  !
+  ! References:
+  ! -----------
+  ! - S. Guttel. "Rational Krylov Methods for Operator Functions", PhD Thesis, 2010.
+  !
+  !======================================================================================
+  subroutine rational_arnoldi_factorization(A, X, H, G, sigma, info, solve, kstart, kend, verbosity, tol, transpose)
     !> Linear operator to be factorized
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -471,6 +486,21 @@ contains
     real(kind=wp), intent(in) :: sigma
     !> Information flag.
     integer, intent(out) :: info
+    !> Linear solver.
+    interface
+       subroutine solve(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
+         import abstract_linop, abstract_vector, wp
+         class(abstract_linop)  , intent(in)    :: A
+         class(abstract_vector) , intent(in)    :: b
+         class(abstract_vector) , intent(inout) :: x
+         integer                , intent(out)   :: info
+         integer, optional      , intent(in)    :: kdim
+         integer, optional      , intent(in)    :: maxiter
+         real(kind=wp), optional, intent(in)    :: tol
+         logical, optional      , intent(in)    :: verbosity
+         logical, optional      , intent(in)    :: transpose
+       end subroutine solve
+    end interface
     !> Optional arguments.
     integer, optional, intent(in) :: kstart
     integer                       :: k_start
@@ -538,7 +568,12 @@ contains
        else
           call A%matvec(X(k), wrk)
        endif
-       call gmres(S, wrk, X(k+1), info, kdim, transpose=trans)
+
+       if (k < k_end) then
+          call solve(S, wrk, X(k+1), info, kdim, transpose=trans)
+       else !> Last pole is set to +infinity.
+          call Id%matvec(wrk, X(k+1))
+       endif
 
        ! --> Orthogonalize residual vector w.r.t. to previously computed Krylov vectors.
        do i = 1, k
@@ -553,11 +588,15 @@ contains
           H(i, k) = H(i, k) + alpha
        enddo
 
-       ! --> Update upper Hessenberg matrix G.
-       G(1:k, k) = H(1:k, k) / sigma ; G(k, k) = G(k, k) + 1.0_wp
+       ! --> Normalize residual and update the last row of the Hessenberg matrix.
+       beta = X(k+1)%norm() ; H(k+1, k) = beta
 
-       ! --> Normalize residual and update the last row of the Hessenberg matrices.
-       beta = X(k+1)%norm() ; H(k+1, k) = beta ; G(k+1, k) = beta/sigma
+       ! --> Update the second Hessenberg matrix.
+       if (k < k_end) then
+          G(1:k, k) = H(1:k, k) / sigma + 1.0_wp ; G(k+1, k) = beta / sigma
+       else !> Last pole is set to +infinity.
+          G(1:k, k) = 1.0_wp ; G(k+1, k) = 0.0_wp
+       endif
 
        ! --> Exit Arnoldi loop if needed.
        if (beta < tolerance) then
@@ -574,5 +613,7 @@ contains
 
     return
   end subroutine rational_arnoldi_factorization
+
+
 
 end module KrylovDecomp
