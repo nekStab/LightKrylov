@@ -447,7 +447,6 @@ contains
     return
   end subroutine nonsymmetric_lanczos_tridiagonalization
 
-
   !======================================================================================  
   ! Rational Arnoldi Factorization with single pole Subroutine
   !======================================================================================
@@ -460,16 +459,43 @@ contains
   !
   ! Algorithmic Features:
   ! ---------------------
+  ! - Constructs a rational Krylov decomposition A*X*(I + HD) + v = XH + w where H is an upper
+  !   Hessenberg matrix, D a diagonal matrix constructed from the inverse shifts, and v and w
+  !   are residual vectors.
+  ! - The orthogonal basis X for the Krylov subspace is iteratively constructed through the
+  !   Arnoldi procedure.
+  ! - At the last iteration, the shift is chosen to be +infinity to ensure that we obtain a
+  !   well defined Arnoldi decomposition.
   !
   ! Advantages:
   ! -----------
+  ! - Rational Arnoldi produces better (rational) approximation for matrix-valued function f(A)
+  !   than its polynomial counterpart for identical dimension of the generated Krylov subspace.
   !
   ! Limitations:
   ! ------------
+  ! - By default, this implementation only handles the case of a single real repeated pole (with the
+  !   exception that the last pole is set to + infinity).
+  ! - Computational cost is mostly dominated by solving (I - A/sigma) x = b. An efficient linear solver
+  !   passed via the solve argument is thus needed. At the current time, we do not support preconditioning yet.
+  ! - Choosing an appropriate shift sigma has a huge influence on the capabilities of the rational
+  !   Arnoldi method to provide good approximations of matrix-valued functions f(A)*x. No good default choice
+  !   can be recommended as this is highly problem-dependent.
   !
   ! Input/Output Parameters:
   ! ------------------------
-  !
+  ! - A         : Linear operator [Input]
+  ! - X         : Krylov subspace, assumed to be initialized                [Input/Output]
+  ! - H         : Upper Hessenberg matrix                                   [Input/Output]
+  ! - G         : Upper Hessenberg matrix                                   [Input/Output]
+  ! - sigma     : real shift                                                [Input]
+  ! - info      : Information flag                                          [Output]
+  ! - solve     : Linear solver for (I - A/sigma)*x=b                       [Input]
+  ! - kstart    : Starting index for the Krylov iteration                   [Optional, Input]
+  ! - kend      : Last index for the Krylov iteration                       [Optional, Input]
+  ! - verbosity : Verbosity control flag                                    [Optional, Input]
+  ! - tol       : Tolerance for convergence                                 [Optional, Input]
+  ! - transpose : Logical flag to control whether A or transpose(A) is used [Optional, Input]
   ! References:
   ! -----------
   ! - S. Guttel. "Rational Krylov Methods for Operator Functions", PhD Thesis, 2010.
@@ -528,11 +554,11 @@ contains
     !-----     Check dimensions     -----
     !------------------------------------
 
-    if (all(shape(H) .ne. [kdim+1, kdim])) then
+    if ((size(X) .ne. size(H, 1)) .or. (size(X)-1 .ne. size(H, 2))) then
        info = -3
     endif
 
-    if (all(shape(G) .ne. [kdim+1, kdim])) then
+    if ((size(X) .ne. size(G, 1)) .or. (size(X)-1 .ne. size(G, 2))) then
        info = -4
     endif
 
