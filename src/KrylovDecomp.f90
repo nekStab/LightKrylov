@@ -640,6 +640,4 @@ contains
     return
   end subroutine rational_arnoldi_factorization
 
-
-
 end module KrylovDecomp
