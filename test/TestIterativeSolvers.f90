@@ -132,6 +132,8 @@ contains
     class(rmatrix), allocatable :: A ! Linear Operator.
     class(rvector), allocatable :: b ! Right-hand side vector.
     class(rvector), allocatable :: x ! Solution vector.
+    !> GMRES options.
+    type(gmres_opts) :: opts
     !> Information flag.
     integer :: info
 
@@ -140,7 +142,8 @@ contains
     b = rvector() ; call random_number(b%data)
     x = rvector() ; call x%zero()
     ! --> GMRES solver.
-    call gmres(A, b, x, info, kdim=3, verbosity=.true.)
+    opts = gmres_opts(kdim=3, verbose=.true.)
+    call gmres(A, b, x, info, opts)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
@@ -154,6 +157,8 @@ contains
     class(spd_matrix), allocatable :: A ! Linear Operator.
     class(rvector), allocatable :: b ! Right-hand side vector.
     class(rvector), allocatable :: x ! Solution vector.
+    !> GMRES options.
+    type(gmres_opts) :: opts
     !> Information flag.
     integer :: info
 
@@ -162,7 +167,8 @@ contains
     b = rvector()    ; call random_number(b%data)
     x = rvector()    ; call x%zero()
     ! --> GMRES solver.
-    call gmres(A, b, x, info, kdim=3, verbosity=.true.)
+    opts = gmres_opts(kdim=3, verbose=.true.)
+    call gmres(A, b, x, info, opts)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
