@@ -1,4 +1,5 @@
 module IterativeSolvers
+  use Utils
   use AbstractVector
   use LinearOperator
   use KrylovDecomp
@@ -408,7 +409,7 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 7(3), 856–869.
   !
   !=======================================================================================
-  subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
+  subroutine gmres(A, b, x, info, options, transpose)
     !> Linear problem.
     class(abstract_linop)  , intent(in)    :: A ! Linear Operator.
     class(abstract_vector) , intent(in)    :: b ! Right-hand side.
@@ -417,17 +418,15 @@ contains
     !> Information flag.
     integer                , intent(out)   :: info
     !> Optional arguments.
-    integer, optional      , intent(in)    :: kdim      ! Krylov subspace dimension.
-    integer                                :: k_dim
-    integer, optional      , intent(in)    :: maxiter   ! Maximum number full GMRES iterations.
-    integer                                :: niter
-    real(kind=wp), optional, intent(in)    :: tol       ! Tolerance for the GMRES residual.
-    real(kind=wp)                          :: tolerance
-    logical, optional      , intent(in)    :: verbosity ! Verbosity control.
-    logical                                :: verbose
+    class(abstract_opts), optional, intent(in) :: options
+    type(gmres_opts)                       :: opts
     logical, optional      , intent(in)    :: transpose
     logical                                :: trans
-
+    !> Internal variables.
+    integer                                :: k_dim
+    integer                                :: maxiter
+    real(kind=wp)                          :: tol
+    logical                                :: verbose
     !> Krylov subspace.
     class(abstract_vector), allocatable :: V(:)
     !> Upper Hessenberg matrix.
@@ -436,18 +435,29 @@ contains
     real(kind=wp)         , allocatable :: y(:)
     real(kind=wp)         , allocatable :: e(:)
     real(kind=wp)                       :: beta
-
     !> Miscellaneous.
     integer                             :: i, j, k, l, m
     real(kind=wp)                       :: alpha
     class(abstract_vector), allocatable :: dx
 
     ! --> Deals with the optional arguments.
-    k_dim     = optval(kdim, 30)
-    niter     = optval(maxiter, 10)
-    tolerance = optval(tol, atol + rtol*b%norm())
-    verbose   = optval(verbosity, .false.)
-    trans     = optval(transpose, .false.)
+    if (present(options)) then
+       select type(options)
+       type is(gmres_opts)
+          opts = gmres_opts(    &
+               options%kdim,    &
+               options%maxiter, &
+               options%tol,     &
+               options%verbose  &
+               )
+       end select
+    else
+       opts = gmres_opts()
+    end if
+    k_dim = opts%kdim ; maxiter = opts%maxiter ;
+    tol = opts%tol * b%norm() ; verbose = opts%verbose
+
+    trans = optval(transpose, .false.)
 
     ! --> Initialize Krylov subspace.
     allocate(V(1:k_dim+1), source=b)
@@ -467,7 +477,7 @@ contains
     call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
     beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
-    gmres_iterations : do i = 1, niter
+    gmres_iterations : do i = 1, maxiter
        ! --> Zero-out variables.
        H = 0.0_wp ; y = 0.0_wp ; e = 0.0_wp ; e(1) = beta
        do j = 2, size(V)
@@ -476,10 +486,11 @@ contains
 
        arnoldi : do k = 1, k_dim
           ! --> Step-by-step Arnoldi factorization.
-          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tolerance, transpose=trans)
+          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tol, transpose=trans)
           if (info < 0) then
              write(*, *) "INFO : Arnoldi Factorization failed with exit code info =", info
              write(*, *) "       Stopping the GMRES computation."
+             call exit()
           endif
           ! --> Least-squares problem.
           call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
@@ -489,7 +500,7 @@ contains
              write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
           endif
           ! --> Check convergence.
-          if (beta**2 .lt. tolerance) then
+          if (beta**2 .lt. tol) then
              exit arnoldi
           endif
        enddo arnoldi
@@ -511,7 +522,7 @@ contains
        ! --> Initialize new starting Krylov vector if needed.
        beta = V(1)%norm() ; call V(1)%scal(1.0D+00 / beta)
 
-       if (beta**2 .lt. tolerance) then
+       if (beta**2 .lt. tol) then
           exit gmres_iterations
        endif
 
