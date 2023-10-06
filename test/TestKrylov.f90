@@ -565,7 +565,7 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, bicgstab)
     ! --> Compute Gram matrix associated to the Krylov basis.
     do i = 1, kdim+1
        do j = 1, kdim+1
