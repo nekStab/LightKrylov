@@ -595,11 +595,11 @@ contains
           call A%matvec(X(k), wrk)
        endif
 
-       if (k < k_end) then
+       !if (k < k_end) then
           call solve(S, wrk, X(k+1), info, kdim, transpose=trans)
-       else !> Last pole is set to +infinity.
-          call Id%matvec(wrk, X(k+1))
-       endif
+       !else !> Last pole is set to +infinity.
+       !  call Id%matvec(wrk, X(k+1))
+       !endif
 
        ! --> Orthogonalize residual vector w.r.t. to previously computed Krylov vectors.
        do i = 1, k
@@ -618,11 +618,11 @@ contains
        beta = X(k+1)%norm() ; H(k+1, k) = beta
 
        ! --> Update the second Hessenberg matrix.
-       if (k < k_end) then
-          G(1:k, k) = H(1:k, k) / sigma + 1.0_wp ; G(k+1, k) = beta / sigma
-       else !> Last pole is set to +infinity.
-          G(1:k, k) = 1.0_wp ; G(k+1, k) = 0.0_wp
-       endif
+       !if (k < k_end) then
+          G(1:k, k) = H(1:k, k) / sigma ; G(k, k) = G(k, k) + 1.0_wp ; G(k+1, k) = beta / sigma
+       !else !> Last pole is set to +infinity.
+       !   G(1:k, k) = 1.0_wp ; G(k+1, k) = 0.0_wp
+       !endif
 
        ! --> Exit Arnoldi loop if needed.
        if (beta < tolerance) then

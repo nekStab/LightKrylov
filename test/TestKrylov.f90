@@ -484,8 +484,11 @@ contains
     ! --> Arnoldi factorization.
     call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
     ! --> Check correctness of full factorization.
+    do i = 1, kdim+1
+       Xdata(:, i) = X(i)%data
+    enddo
     call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) ) < rtol )
-
+    
     return
   end subroutine test_rational_arnoldi_full_factorization
 
