@@ -73,7 +73,7 @@ contains
     do k = 1, kdim+1
        Xdata(:, k) = X(k)%data
     enddo
-    call check(error, norm2(matmul(Adata, Xdata(:, 1:kdim)) - matmul(Xdata, H)) < 1e-12 )
+    call check(error, norm2(matmul(Adata, Xdata(:, 1:kdim)) - matmul(Xdata, H)) < rtol )
 
     return
   end subroutine test_arnoldi_full_factorization
@@ -157,7 +157,7 @@ contains
     enddo
     ! --> Check result.
     Id = reshape([1, 0, 0, 0, 1, 0, 0, 0, 1], shape=[3, 3]) !> Identity matrix.
-    call check(error, norm2(G - Id) < 1e-12)
+    call check(error, norm2(G - Id) < rtol)
 
     return
   end subroutine test_arnoldi_basis_orthogonality
@@ -223,7 +223,7 @@ contains
        Xdata(:, k) = X(k)%data
     enddo
     alpha = norm2( matmul(Adata, Xdata(:, 1:kdim)) - matmul(Xdata, T) )
-    call check(error, alpha < 1e-12)
+    call check(error, alpha < rtol)
 
     return
   end subroutine test_lanczos_tridiag_full_factorization
@@ -304,7 +304,7 @@ contains
     enddo
     ! --> Check result.
     Id = reshape([1, 0, 0, 0, 1, 0, 0, 0, 1], shape=[3, 3])
-    call check(error, norm2(G - Id) < 1e-12)
+    call check(error, norm2(G - Id) < rtol)
     return
   end subroutine test_lanczos_tridiag_basis_orthogonality
 
@@ -362,7 +362,7 @@ contains
        Udata(:, k) = U(k)%data ; Vdata(:, k) = V(k)%data
     enddo
     alpha = norm2(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B))
-    call check(error, alpha < 1e-12)
+    call check(error, alpha < rtol)
     return
   end subroutine test_lanczos_bidiag_full_factorization
 
@@ -421,14 +421,8 @@ contains
     do k = 1, size(V)
        Vdata(:, k) = V(k)%data ; Wdata(:, k) = W(k)%data
     enddo
-
     alpha = norm2(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Vdata, T(1:kdim+1, 1:kdim)))
-    ! write(*, *) "ALPHA = ", alpha
-
-    ! alpha = norm2(matmul(transpose(A%data), Wdata(:, 1:kdim)) - matmul(Wdata, transpose(T(1:kdim, 1:kdim+1))))
-    ! write(*, *) "ALPHA =", alpha
-    ! write(*, *)
-    call check(error, alpha < 1e-12)
+    call check(error, alpha < rtol)
 
     return
   end subroutine test_nonsym_lanczos_full_factorization
@@ -493,7 +487,7 @@ contains
        Xdata(:, k) = X(k)%data
     enddo
 
-    call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) ) < 1e-10 )
+    call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) ) < rtol )
 
     return
   end subroutine test_rational_arnoldi_full_factorization
@@ -518,7 +512,7 @@ contains
     !> Shift
     double precision :: sigma
     !> Information flag.
-    integer :: info
+    integer :: info = 0
     !> Misc.
     double precision, dimension(3, 3) :: Adata
     double precision :: alpha
@@ -587,6 +581,5 @@ contains
 
     return
   end subroutine test_rational_arnoldi_basis_orthogonality
-
-
+  
 end module TestKrylov

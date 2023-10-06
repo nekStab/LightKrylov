@@ -563,6 +563,7 @@ contains
        if (beta < tolerance) then
           !> Logging information.
           !> Dimension of the computed invariant subspace.
+          info = k
           !> Exit the loop.
           exit arnoldi
        else
@@ -570,7 +571,7 @@ contains
        endif
 
     enddo arnoldi
-    
+
     return
   end subroutine rational_arnoldi_factorization
 
