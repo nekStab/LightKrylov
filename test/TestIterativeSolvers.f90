@@ -140,7 +140,7 @@ contains
     b = rvector() ; call random_number(b%data)
     x = rvector() ; call x%zero()
     ! --> GMRES solver.
-    call gmres(A, b, x, info, kdim=3)
+    call gmres(A, b, x, info, kdim=3, verbosity=.true.)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
@@ -162,9 +162,9 @@ contains
     b = rvector()    ; call random_number(b%data)
     x = rvector()    ; call x%zero()
     ! --> GMRES solver.
-    call gmres(A, b, x, info, kdim=3)
+    call gmres(A, b, x, info, kdim=3, verbosity=.true.)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
     return
   end subroutine test_gmres_full_computation_spd_matrix
