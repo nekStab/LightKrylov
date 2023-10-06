@@ -374,7 +374,7 @@ contains
   ! for solving nonsymmetric, non-Hermitian linear systems of equations, Ax = b.
   !
   ! Algorithmic Features:
-  ! ----------------------
+  ! ---------------------
   ! - Constructs a full Krylov subspace without restarts (i.e., not GMRES(m)).
   ! - Utilizes Arnoldi factorization to generate an orthonormal basis for the Krylov subspace.
   ! - Employs a least-squares solve to determine the optimal linear combination of the Krylov vectors.
@@ -742,13 +742,14 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
   !
   !=======================================================================================
-  subroutine bicgstab(A, b, x, info, maxiter, tol, verbosity, transpose)
+  subroutine bicgstab(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
     !> Linear problem and initial guess.
     class(abstract_linop), intent(in) :: A
     class(abstract_vector), intent(in) :: b
     class(abstract_vector), intent(inout) :: x
     !> Output and optional input parameters.
     integer, intent(out) :: info
+    integer, optional, intent(in) :: kdim
     integer, optional, intent(in) :: maxiter
     real(kind=wp), optional, intent(in) :: tol
     logical, optional, intent(in) :: verbosity

@@ -6,16 +6,10 @@ program Tester
   !> Abstract implementation of Krylov-based techniques.
   use LightKrylov
   !> Implementation of simple 3-dimensional vector types and associated matrices.
-  use TestVector                   , only : collect_real_vector_testsuite
-  use TestMatrices                 , only : collect_real_matrix_testsuite
-  use TestKrylov                   , only : collect_arnoldi_testsuite, &
-       collect_lanczos_tridiag_testsuite, collect_lanczos_bidiag_testsuite, &
-       collect_nonsymmetric_lanczos_testsuite
-  use TestIterativeSolvers         , only : collect_evp_testsuite, &
-       collect_gmres_testsuite, &
-       collect_svd_testsuite, &
-       collect_cg_testsuite, &
-       collect_bicgstab_testsuite
+  use TestVector
+  use TestMatrices
+  use TestKrylov
+  use TestIterativeSolvers
 
   implicit none
 
@@ -33,7 +27,9 @@ program Tester
   testsuites = [&
        new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite),                    &
        new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),                    &
+       new_testsuite("Operations on Abstract Lin. Op.", collect_abstract_linop_operations_testsuite), &
        new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite),                            &
+       new_testsuite("Rational Arnoldi Test Suite", collect_rational_arnoldi_testsuite),          &
        new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite), &
        new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite),   &
        new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite),                            &
