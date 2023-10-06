@@ -21,9 +21,9 @@ module Utils
      !> Default maximum number of gmres restarts.
      integer :: maxiter = 10
      !> Default tolerance.
-     real(kind=wp) :: rtol
+     real(kind=wp) :: tol = rtol
      !> Default verbosity control.
-     logical :: verbosity = .false.
+     logical :: verbose = .false.
   end type gmres_opts
 
   ! --> BICGSTAB options.
@@ -31,9 +31,9 @@ module Utils
      !> Default maximum number of iterations.
      integer :: maxiter = 100
      !> Default tolerance.
-     real(kind=wp) :: rtol
+     real(kind=wp) :: tol = rtol
      !> Default verbosity control.
-     logical :: verbosity = .false.
+     logical :: verbose = .false.
   end type bicgstab_opts
 
   ! --> Conjugate Gradient options.
@@ -41,11 +41,11 @@ module Utils
      !> Default maximum number of iterations.
      integer :: maxiter = 100
      !> Default tolerance.
-     real(kind=wp) :: rtol
+     real(kind=wp) :: tol = rtol
      !> Default verbosity control.
-     logical :: verbosity = .false.
+     logical :: verbose = .false.
   end type cg_opts
-  
+
 contains
 
 end module Utils
