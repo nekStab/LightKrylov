@@ -1,4 +1,5 @@
 module KrylovDecomp
+  use Utils
   use AbstractVector
   use LinearOperator
   use stdlib_optval, only : optval
@@ -44,6 +45,8 @@ contains
     ! --> Miscellaneous
     double precision :: beta
     integer :: k, kdim
+
+    info = 0
 
     ! --> Check dimensions.
     kdim = size(X) - 1
@@ -501,7 +504,7 @@ contains
   ! - S. Guttel. "Rational Krylov Methods for Operator Functions", PhD Thesis, 2010.
   !
   !======================================================================================
-  subroutine rational_arnoldi_factorization(A, X, H, G, sigma, info, solve, kstart, kend, verbosity, tol, transpose)
+  subroutine rational_arnoldi_factorization(A, X, H, G, sigma, info, solve, linsolve_opts, kstart, kend, verbosity, tol, transpose)
     !> Linear operator to be factorized
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -514,19 +517,17 @@ contains
     integer, intent(out) :: info
     !> Linear solver.
     interface
-       subroutine solve(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
-         import abstract_linop, abstract_vector, wp
-         class(abstract_linop)  , intent(in)    :: A
-         class(abstract_vector) , intent(in)    :: b
-         class(abstract_vector) , intent(inout) :: x
-         integer                , intent(out)   :: info
-         integer, optional      , intent(in)    :: kdim
-         integer, optional      , intent(in)    :: maxiter
-         real(kind=wp), optional, intent(in)    :: tol
-         logical, optional      , intent(in)    :: verbosity
-         logical, optional      , intent(in)    :: transpose
+       subroutine solve(A, b, x, info, opts, transpose)
+         import abstract_linop, abstract_vector, abstract_opts, wp
+         class(abstract_linop)  , intent(in)        :: A
+         class(abstract_vector) , intent(in)        :: b
+         class(abstract_vector) , intent(inout)     :: x
+         integer                , intent(out)       :: info
+         class(abstract_opts), optional, intent(in) :: opts
+         logical, optional      , intent(in)        :: transpose
        end subroutine solve
     end interface
+    class(abstract_opts), optional, intent(in) :: linsolve_opts
     !> Optional arguments.
     integer, optional, intent(in) :: kstart
     integer                       :: k_start
@@ -596,7 +597,7 @@ contains
        endif
 
        if (k < k_end) then
-          call solve(S, wrk, X(k+1), info, kdim, transpose=trans)
+          call solve(S, wrk, X(k+1), info, opts=linsolve_opts, transpose=trans)
        else !> Last pole is set to +infinity.
          call Id%matvec(wrk, X(k+1))
        endif
