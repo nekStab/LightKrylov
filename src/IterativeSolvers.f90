@@ -139,6 +139,10 @@ contains
     !
     ! A * eigvecs = eigvals * eigvecs
     !
+    ! or
+    !
+    ! transpose(A) * eigvecs = eigvals * eigvecs
+    !
     ! The Krylov subspace X is formed via Arnoldi factorization, resulting in an upper Hessenberg matrix H.
     ! The eigenvalues of A are approximated by the eigenvalues of H, and the eigenvectors are computed accordingly.
     !
@@ -547,13 +551,13 @@ contains
     !
     ! Input/Output Parameters:
     ! ------------------------
-    ! - A          : Linear Operator                               [Input]
-    ! - U, V       : Krylov bases for left (U) and right (V) singular vectors [Input/Output]
+    ! - A           : Linear Operator                                                        [Input]
+    ! - U, V        : Krylov bases for left (U) and right (V) singular vectors               [Input/Output]
     ! - uvecs, vvecs: Coordinates of left (U) and right (V) singular vectors in Krylov bases [Output]
-    ! - sigma      : Singular values                               [Output]
-    ! - residuals  : Residuals associated with singular triplets  [Output]
-    ! - info       : Information flag                              [Output]
-    ! - verbosity  : Control for runtime diagnostics               [Optional, Input]
+    ! - sigma       : Singular values                                                        [Output]
+    ! - residuals   : Residuals associated with singular triplets                            [Output]
+    ! - info        : Information flag                                                       [Output]
+    ! - verbosity   : Control for runtime diagnostics                                        [Optional, Input]
     !
     ! References:
     ! -----------
@@ -717,9 +721,13 @@ contains
     !
     ! Mathematical Formulation:
     ! -------------------------
-    ! Solves the linear system of equations of the form Ax = b.
+    ! Solves the linear system of equations of the form
     !
     !  A x = b
+    !
+    ! or
+    !
+    ! transpose(A) * x = b
     !
     ! where,
     !  A ∈ R^{m x n} : Linear Operator          [Input]
@@ -1211,14 +1219,14 @@ contains
     !
     ! Input/Output Parameters:
     ! ------------------------
-    ! - A        : Linear Operator [Input]
-    ! - b        : Right-hand side vector [Input]
+    ! - A        : Linear Operator                 [Input]
+    ! - b        : Right-hand side vector          [Input]
     ! - x        : Initial/Updated solution vector [Input/Output]
-    ! - info     : Iteration Information flag [Output]
-    ! - maxiter  : Maximum iterations (Optional) [Input]
-    ! - tol      : Convergence tolerance (Optional) [Input]
-    ! - verbosity: Verbosity control flag (Optional) [Input]
-    ! - transpose: Transpose flag (Optional) [Input]
+    ! - info     : Iteration Information flag      [Output]
+    ! - maxiter  : Maximum iterations              [Input]
+    ! - tol      : Convergence tolerance           [Optional, Input]
+    ! - verbosity: Verbosity control flag          [Optional, Input]
+    ! - transpose: Transpose flag                  [Optional, Input]
     !
     ! References:
     ! -----------
