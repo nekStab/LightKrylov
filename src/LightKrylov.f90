@@ -16,7 +16,7 @@ module LightKrylov
        abstract_vector, get_vec,                                           &
        abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop, &
        arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
-       nonsymmetric_lanczos_tridiagonalization, &
+       nonsymmetric_lanczos_tridiagonalization, rational_arnoldi_factorization, &
        eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
 
 contains

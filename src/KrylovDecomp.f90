@@ -10,7 +10,8 @@ module KrylovDecomp
   public :: arnoldi_factorization, &
        lanczos_tridiagonalization, &
        lanczos_bidiagonalization,  &
-       nonsymmetric_lanczos_tridiagonalization
+       nonsymmetric_lanczos_tridiagonalization, &
+       rational_arnoldi_factorization
 
 contains
 
