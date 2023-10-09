@@ -6,7 +6,8 @@ module LightKrylov
   ! --> Definition of the abstract linear operator type.
   use LinearOperator
   ! --> Implementation of the various Krylov decompositions.
-  use KrylovDecomp
+  use BaseKrylov
+  use RationalKrylov
   ! --> Iterative Solvers.
   use IterativeSolvers
   implicit none

@@ -2,7 +2,7 @@ module IterativeSolvers
   use Utils
   use AbstractVector
   use LinearOperator
-  use KrylovDecomp
+  use BaseKrylov
   use stdlib_sorting, only : sort_index, int_size
   use stdlib_optval , only : optval
   use stdlib_io_npy , only : save_npy
@@ -11,6 +11,23 @@ module IterativeSolvers
 
   private
   public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
+
+  interface
+     subroutine generic_linear_solver(A, b, x, info, options, transpose)
+       import abstract_linop, abstract_vector, abstract_opts
+       !> Linear problem.
+       class(abstract_linop) , intent(in) :: A
+       class(abstract_vector), intent(in) :: b
+       !> Solution vector.
+       class(abstract_vector), intent(inout) :: x
+       !> Information flag.
+       integer               , intent(out) :: info
+       !> Solver options.
+       class(abstract_opts)  , optional, intent(in) :: options
+       !> Transposition flag.
+       logical               , optional, intent(in) :: transpose
+     end subroutine generic_linear_solver
+  end interface
 
 contains
 
@@ -454,9 +471,8 @@ contains
     else
        opts = gmres_opts()
     end if
-    k_dim = opts%kdim ; maxiter = opts%maxiter ;
+    k_dim = opts%kdim ; maxiter = opts%maxiter
     tol = opts%tol * b%norm() ; verbose = opts%verbose
-
     trans = optval(transpose, .false.)
 
     ! --> Initialize Krylov subspace.
