@@ -143,7 +143,7 @@ contains
     x = rvector() ; call x%zero()
     ! --> GMRES solver.
     opts = gmres_opts(kdim=3, verbose=.true.)
-    call gmres(A, b, x, info, opts)
+    call gmres(A, b, x, info, options=opts)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
@@ -168,7 +168,7 @@ contains
     x = rvector()    ; call x%zero()
     ! --> GMRES solver.
     opts = gmres_opts(kdim=3, verbose=.true.)
-    call gmres(A, b, x, info, opts)
+    call gmres(A, b, x, info, options=opts)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
