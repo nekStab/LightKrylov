@@ -1,7 +1,8 @@
 module IterativeSolvers
+  use Utils
   use AbstractVector
   use LinearOperator
-  use KrylovDecomp
+  use BaseKrylov
   use stdlib_sorting, only : sort_index, int_size
   use stdlib_optval , only : optval
   use stdlib_io_npy , only : save_npy
@@ -10,6 +11,24 @@ module IterativeSolvers
 
   private
   public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
+  public :: abstract_linear_solver
+
+  abstract interface
+     subroutine abstract_linear_solver(A, b, x, info, options, transpose)
+       import abstract_linop, abstract_vector, abstract_opts
+       !> Linear problem.
+       class(abstract_linop) , intent(in) :: A
+       class(abstract_vector), intent(in) :: b
+       !> Solution vector.
+       class(abstract_vector), intent(inout) :: x
+       !> Information flag.
+       integer               , intent(out) :: info
+       !> Solver options.
+       class(abstract_opts)  , optional, intent(in) :: options
+       !> Transposition flag.
+       logical               , optional, intent(in) :: transpose
+     end subroutine abstract_linear_solver
+  end interface
 
 contains
 
@@ -408,7 +427,7 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 7(3), 856–869.
   !
   !=======================================================================================
-  subroutine gmres(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
+  subroutine gmres(A, b, x, info, options, transpose)
     !> Linear problem.
     class(abstract_linop)  , intent(in)    :: A ! Linear Operator.
     class(abstract_vector) , intent(in)    :: b ! Right-hand side.
@@ -417,17 +436,15 @@ contains
     !> Information flag.
     integer                , intent(out)   :: info
     !> Optional arguments.
-    integer, optional      , intent(in)    :: kdim      ! Krylov subspace dimension.
-    integer                                :: k_dim
-    integer, optional      , intent(in)    :: maxiter   ! Maximum number full GMRES iterations.
-    integer                                :: niter
-    real(kind=wp), optional, intent(in)    :: tol       ! Tolerance for the GMRES residual.
-    real(kind=wp)                          :: tolerance
-    logical, optional      , intent(in)    :: verbosity ! Verbosity control.
-    logical                                :: verbose
+    class(abstract_opts), optional, intent(in) :: options
+    type(gmres_opts)                       :: opts
     logical, optional      , intent(in)    :: transpose
     logical                                :: trans
-
+    !> Internal variables.
+    integer                                :: k_dim
+    integer                                :: maxiter
+    real(kind=wp)                          :: tol
+    logical                                :: verbose
     !> Krylov subspace.
     class(abstract_vector), allocatable :: V(:)
     !> Upper Hessenberg matrix.
@@ -436,18 +453,29 @@ contains
     real(kind=wp)         , allocatable :: y(:)
     real(kind=wp)         , allocatable :: e(:)
     real(kind=wp)                       :: beta
-
     !> Miscellaneous.
     integer                             :: i, j, k, l, m
     real(kind=wp)                       :: alpha
     class(abstract_vector), allocatable :: dx
 
     ! --> Deals with the optional arguments.
-    k_dim     = optval(kdim, 30)
-    niter     = optval(maxiter, 10)
-    tolerance = optval(tol, atol + rtol*b%norm())
-    verbose   = optval(verbosity, .false.)
-    trans     = optval(transpose, .false.)
+    if (present(options)) then
+       select type(options)
+       type is(gmres_opts)
+          opts = gmres_opts(              &
+               kdim    = options%kdim,    &
+               maxiter = options%maxiter, &
+               atol    = options%atol,    &
+               rtol    = options%rtol,    &
+               verbose = options%verbose  &
+               )
+       end select
+    else
+       opts = gmres_opts()
+    end if
+    k_dim = opts%kdim ; maxiter = opts%maxiter
+    tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+    trans = optval(transpose, .false.)
 
     ! --> Initialize Krylov subspace.
     allocate(V(1:k_dim+1), source=b)
@@ -467,7 +495,7 @@ contains
     call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
     beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
-    gmres_iterations : do i = 1, niter
+    gmres_iterations : do i = 1, maxiter
        ! --> Zero-out variables.
        H = 0.0_wp ; y = 0.0_wp ; e = 0.0_wp ; e(1) = beta
        do j = 2, size(V)
@@ -476,10 +504,11 @@ contains
 
        arnoldi : do k = 1, k_dim
           ! --> Step-by-step Arnoldi factorization.
-          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tolerance, transpose=trans)
+          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tol, transpose=trans)
           if (info < 0) then
              write(*, *) "INFO : Arnoldi Factorization failed with exit code info =", info
              write(*, *) "       Stopping the GMRES computation."
+             call exit()
           endif
           ! --> Least-squares problem.
           call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
@@ -489,7 +518,7 @@ contains
              write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
           endif
           ! --> Check convergence.
-          if (beta**2 .lt. tolerance) then
+          if (beta**2 .lt. tol) then
              exit arnoldi
           endif
        enddo arnoldi
@@ -511,7 +540,7 @@ contains
        ! --> Initialize new starting Krylov vector if needed.
        beta = V(1)%norm() ; call V(1)%scal(1.0D+00 / beta)
 
-       if (beta**2 .lt. tolerance) then
+       if (beta**2 .lt. tol) then
           exit gmres_iterations
        endif
 
@@ -606,7 +635,7 @@ contains
   !   Journal of Research of the National Bureau of Standards, 49(6), 409–436.
   !
   !=======================================================================================
-  subroutine cg(A, b, x, info, maxiter, tol, verbosity)
+  subroutine cg(A, b, x, info, options)
     !> Linear problem.
     class(abstract_spd_linop), intent(in) :: A ! Linear Operator.
     class(abstract_vector), intent(in) :: b ! Right-hand side.
@@ -615,22 +644,33 @@ contains
     !> Information flag.
     integer, intent(out)   :: info
     !> Optional arguments.
-    integer, optional, intent(in) :: maxiter ! Maximum number of CG iterations.
-    integer                       :: i, niter
-    real(kind=wp), optional, intent(in) :: tol  ! Tolerance for the CG residual.
-    real(kind=wp)                       :: tolerance
-    logical, optional, intent(in)       :: verbosity ! Verbosity control.
+    class(abstract_opts), optional, intent(in) :: options
+    type(cg_opts)                              :: opts
+    integer :: maxiter ! Maximum number of CG iterations.
+    real(kind=wp) :: tol  ! Tolerance for the CG residual.
     logical                             :: verbose
     
     !> Residual and direction vectors.
     class(abstract_vector), allocatable :: r, p, Ap
     !> Scalars used in the CG algorithm.
     real(kind=wp) :: alpha, beta, r_dot_r_old, r_dot_r_new, residual
+    integer :: i, j, k
     
     ! --> Handle optional arguments.
-    niter = optval(maxiter, 100)
-    tolerance = optval(tol, atol + rtol*b%norm())
-    verbose = optval(verbosity, .false.)
+    if (present(options)) then
+       select type(options)
+       type is(cg_opts)
+          opts = cg_opts(       &
+               maxiter = options%maxiter, &
+               atol    = options%atol   , &
+               rtol    = options%rtol   , &
+               verbose = options%verbose  &
+               )
+       end select
+    else
+       opts = cg_opts()
+    endif
+    tol = opts%atol + opts%rtol * b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
     
     ! --> Initialize vectors.
     allocate (r, source=b)  ; call r%zero()
@@ -647,7 +687,7 @@ contains
     r_dot_r_old = r%dot(r)
     
     ! --> CG Iteration Loop.
-    cg_iterations: do i = 1, niter
+    cg_iterations: do i = 1, maxiter
        
        ! Compute A * p.
        call A%matvec(p, Ap)
@@ -671,9 +711,9 @@ contains
           write (*, *) "INFO : CG residual after ", (i), "iterations : ", residual
        end if
        
-       if (residual < tolerance) then
+       if (residual < tol) then
           if (verbose) then
-             write (*, *) "INFO : CG Converged: residual ", residual, "< tolerance: ", tolerance
+             write (*, *) "INFO : CG Converged: residual ", residual, "< tolerance: ", tol
           end if
           exit cg_iterations
        end if
@@ -742,32 +782,41 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
   !
   !=======================================================================================
-  subroutine bicgstab(A, b, x, info, kdim, maxiter, tol, verbosity, transpose)
+  subroutine bicgstab(A, b, x, info, options, transpose)
     !> Linear problem and initial guess.
     class(abstract_linop), intent(in) :: A
     class(abstract_vector), intent(in) :: b
     class(abstract_vector), intent(inout) :: x
     !> Output and optional input parameters.
     integer, intent(out) :: info
-    integer, optional, intent(in) :: kdim
-    integer, optional, intent(in) :: maxiter
-    real(kind=wp), optional, intent(in) :: tol
-    logical, optional, intent(in) :: verbosity
+    class(abstract_opts), optional, intent(in) :: options
+    type(bicgstab_opts)                        :: opts
     logical, optional, intent(in) :: transpose
     
     !> Internal variables.
-    integer :: i, niter
-    real(kind=wp) :: tolerance, res, alpha, omega, rho, rho_new, beta
+    integer :: i, maxiter
+    real(kind=wp) :: tol, res, alpha, omega, rho, rho_new, beta
     logical :: verbose, trans
     
     !> BiCGSTAB vectors.
     class(abstract_vector), allocatable :: r, r_hat, p, p_int, v, s, t
-    
-    ! Initialize optional parameters.
-    niter = optval(maxiter, 100)
-    tolerance = optval(tol, atol + rtol*b%norm())
-    verbose = optval(verbosity, .false.)
-    trans   = optval(transpose, .false.)
+
+    ! --> Deals with the optional arguments.
+    if (present(options)) then
+       select type(options)
+       type is(bicgstab_opts)
+          opts = bicgstab_opts( &
+               maxiter = options%maxiter, &
+               atol    = options%atol,    &
+               rtol    = options%rtol,    &
+               verbose = options%verbose  &
+          )
+       end select
+    else
+       opts = bicgstab_opts()
+    end if
+    maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
+    verbose = opts%verbose ; trans = optval(transpose, .false.)
     
     ! Initialize vectors.
     allocate (r, source=b)
@@ -785,17 +834,9 @@ contains
     endif
     call r%axpby(-1.0_wp, b, 1.0_wp)
     
-    !call r_hat%copy(r)
-    r_hat = r
-
-    rho = r_hat%dot(r)
-
-    !call p%copy(r)
-    p = r 
+    r_hat = r ; rho = r_hat%dot(r) ; p = r 
     
-    bicgstab_loop: do i = 1, niter
-       
-       ! v = A * p
+    bicgstab_loop: do i = 1, maxiter
        if (trans) then
           call A%rmatvec(p, v)
        else
@@ -805,9 +846,7 @@ contains
        alpha = rho/r_hat%dot(v)
        
        ! s = r - alpha * v
-       !call s%copy(r)
-       s = r
-       call s%axpby(1.0_wp, v, -alpha)
+       s = r ; call s%axpby(1.0_wp, v, -alpha)
        
        ! t = A * s
        if (trans) then
@@ -818,32 +857,25 @@ contains
        omega = t%dot(s)/t%dot(t)
        
        ! x = x + s * omega + p * alpha
-       call x%axpby(1.0_wp, s, omega)
-       call x%axpby(1.0_wp, p, alpha)
+       call x%axpby(1.0_wp, s, omega) ; call x%axpby(1.0_wp, p, alpha)
        
        ! r = s - t * omega
-       !call r%copy(s)
-       r = s
-       call r%axpby(1.0_wp, t, -omega)
+       r = s ; call r%axpby(1.0_wp, t, -omega)
        
        res = r%norm()  
        if (verbose) then
           write (*, *) "INFO : BICGSTAB residual after ", (i), "iterations : ", res
        end if
-       if (res < tolerance) exit bicgstab_loop
+       if (res < tol) exit bicgstab_loop
        
        rho_new = r_hat%dot(r)
        beta = (alpha/omega) * (rho_new/rho)
        
        ! s = p - v * omega ! reusing s vector
-       !call s%copy(p)
-       s = p
-       call s%axpby(1.0_wp, v, -omega)
+       s = p ; call s%axpby(1.0_wp, v, -omega)
        
        ! p = r + s * beta
-       !call p%copy(r)
-       p = r 
-       call p%axpby(1.0_wp, s, beta)
+       p = r ; call p%axpby(1.0_wp, s, beta)
        
        rho = rho_new
        

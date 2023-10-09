@@ -471,6 +471,7 @@ contains
     double precision, dimension(3, kdim+1) :: Xdata
     double precision, dimension(kdim, kdim) :: T
     double precision :: alpha
+    type(bicgstab_opts) :: opts
 
     ! --> Initialize matrix.
     A = rmatrix() ; call random_number(A%data)
@@ -482,7 +483,8 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
+    opts = bicgstab_opts(verbose=.true.)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, solve=bicgstab, linsolve_opts=opts)
     ! --> Check correctness of full factorization.
     do i = 1, kdim+1
        Xdata(:, i) = X(i)%data
@@ -517,6 +519,7 @@ contains
     double precision, dimension(3, 3) :: Adata
     double precision :: alpha
     integer :: i, j, k
+    type(gmres_opts) :: opts
 
     ! --> Initialize matrix with a 2-dimensional invariant subspace.
     A = rmatrix() ; call random_number(A%data)
@@ -530,7 +533,8 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info, gmres)
+    opts = gmres_opts(kdim=kdim, verbose=.true.)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, solve=gmres, linsolve_opts=opts)
     ! --> Check result.
     call check(error, info == 2)
 
@@ -545,7 +549,7 @@ contains
     !> Krylov subspace.
     class(rvector), dimension(:), allocatable :: X
     !> Krylov subspace dimension.
-    integer, parameter :: kdim = 2
+    integer, parameter :: kdim = 3
     !> Hessenberg matrix.
     double precision, dimension(kdim+1, kdim) :: H
     double precision, dimension(kdim+1, kdim) :: G
@@ -554,9 +558,10 @@ contains
     !> Information flag.
     integer :: info
     !> Misc.
-    double precision, dimension(3, 3) :: M, Id
+    double precision, dimension(kdim, kdim) :: M, Id
     double precision :: alpha
     integer :: i, j, k
+    type(gmres_opts) :: opts
 
     ! --> Initialize random matrix.
     A = rmatrix() ; call random_number(A%data)
@@ -568,15 +573,17 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info, bicgstab)
+    opts = gmres_opts(kdim=kdim, verbose=.true.)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, solve=gmres, linsolve_opts=opts)
     ! --> Compute Gram matrix associated to the Krylov basis.
-    do i = 1, kdim+1
-       do j = 1, kdim+1
+    Id = 0.0_wp
+    do i = 1, size(X)-1
+       Id(i, i) = 1.0_wp
+       do j = 1, size(X)-1
           M(i, j) = X(i)%dot(X(j))
        enddo
     enddo
     ! --> Check result.
-    Id = reshape([1, 0, 0, 0, 1, 0, 0, 0, 1], shape=[3, 3]) !> Identity matrix.
     call check(error, norm2(M - Id) < 1e-12)
 
     return

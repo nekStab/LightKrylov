@@ -1,10 +1,13 @@
 module LightKrylov
+  ! --> Utilities.
+  use Utils
   ! --> Definition of the abstract vector type.
   use AbstractVector
   ! --> Definition of the abstract linear operator type.
   use LinearOperator
   ! --> Implementation of the various Krylov decompositions.
-  use KrylovDecomp
+  use BaseKrylov
+  use RationalKrylov
   ! --> Iterative Solvers.
   use IterativeSolvers
   implicit none
@@ -17,7 +20,8 @@ module LightKrylov
        abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop, &
        arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
        nonsymmetric_lanczos_tridiagonalization, rational_arnoldi_factorization, &
-       eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
+       eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab, &
+       abstract_opts, gmres_opts, bicgstab_opts, cg_opts
 
 contains
 
