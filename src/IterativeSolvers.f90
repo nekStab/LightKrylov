@@ -476,18 +476,20 @@ contains
     integer                , intent(out)   :: info
     !> Preconditioner.
     class(abstract_preconditioner), optional, intent(in) :: preconditioner
-    class(abstract_preconditioner), allocatable             :: precond
-    logical                                    :: has_precond
+    class(abstract_preconditioner), allocatable          :: precond
+    logical                                              :: has_precond
     !> Optional arguments.
     class(abstract_opts), optional, intent(in) :: options
-    type(gmres_opts)                       :: opts
-    logical, optional      , intent(in)    :: transpose
-    logical                                :: trans
+    type(gmres_opts)                           :: opts
+    logical             , optional, intent(in) :: transpose
+    logical                                    :: trans
+
     !> Internal variables.
     integer                                :: k_dim
     integer                                :: maxiter
     real(kind=wp)                          :: tol
     logical                                :: verbose
+
     !> Krylov subspace.
     class(abstract_vector), allocatable :: V(:)
     !> Upper Hessenberg matrix.
@@ -588,7 +590,7 @@ contains
        call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
 
        ! --> Initialize new starting Krylov vector if needed.
-       beta = V(1)%norm() ; call V(1)%scal(1.0D+00 / beta)
+       beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
        if (beta**2 .lt. tol) then
           exit gmres_iterations
