@@ -13,7 +13,6 @@ module RationalKrylov
 
 contains
 
-
   !======================================================================================  
   ! Rational Arnoldi Factorization with single pole Subroutine
   !======================================================================================
@@ -80,17 +79,7 @@ contains
     !> Information flag.
     integer, intent(out) :: info
     !> Linear solver.
-    interface
-       subroutine solve(A, b, x, info, opts, transpose)
-         import abstract_linop, abstract_vector, abstract_opts, wp
-         class(abstract_linop)  , intent(in)        :: A
-         class(abstract_vector) , intent(in)        :: b
-         class(abstract_vector) , intent(inout)     :: x
-         integer                , intent(out)       :: info
-         class(abstract_opts), optional, intent(in) :: opts
-         logical, optional      , intent(in)        :: transpose
-       end subroutine solve
-    end interface
+    procedure(abstract_linear_solver) :: solve
     class(abstract_opts), optional, intent(in) :: linsolve_opts
     !> Optional arguments.
     integer, optional, intent(in) :: kstart
@@ -161,7 +150,7 @@ contains
        endif
 
        if (k < k_end) then
-          call solve(S, wrk, X(k+1), info, opts=linsolve_opts, transpose=trans)
+          call solve(S, wrk, X(k+1), info, options=linsolve_opts, transpose=trans)
        else !> Last pole is set to +infinity.
          call Id%matvec(wrk, X(k+1))
        endif
