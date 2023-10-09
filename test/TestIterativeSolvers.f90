@@ -280,7 +280,7 @@ contains
     b = rvector(); call random_number(b%data)
     x = rvector(); call x%zero()
     ! --> CG solver.
-    call cg(A, b, x, info, verbosity=.true.)
+    call cg(A, b, x, info)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
     
@@ -318,7 +318,7 @@ contains
     b = rvector(); call random_number(b%data)
     x = rvector(); call x%zero()
     ! --> BiCGSTAB solver.
-    call bicgstab(A, b, x, info, verbosity=.true.)
+    call bicgstab(A, b, x, info)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
     

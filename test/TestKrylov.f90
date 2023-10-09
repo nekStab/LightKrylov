@@ -471,7 +471,7 @@ contains
     double precision, dimension(3, kdim+1) :: Xdata
     double precision, dimension(kdim, kdim) :: T
     double precision :: alpha
-    type(gmres_opts) :: opts
+    type(bicgstab_opts) :: opts
 
     ! --> Initialize matrix.
     A = rmatrix() ; call random_number(A%data)
@@ -483,8 +483,8 @@ contains
     enddo
     H = 0.0D+00 ; G = 0.0D+00 ; call random_number(sigma)
     ! --> Arnoldi factorization.
-    opts = gmres_opts(kdim=kdim, verbose=.true.)
-    call rational_arnoldi_factorization(A, X, H, G, sigma, info, solve=gmres, linsolve_opts=opts)
+    opts = bicgstab_opts(verbose=.true.)
+    call rational_arnoldi_factorization(A, X, H, G, sigma, info, solve=bicgstab, linsolve_opts=opts)
     ! --> Check correctness of full factorization.
     do i = 1, kdim+1
        Xdata(:, i) = X(i)%data
