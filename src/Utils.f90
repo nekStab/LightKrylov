@@ -21,7 +21,8 @@ module Utils
      !> Default maximum number of gmres restarts.
      integer :: maxiter = 10
      !> Default tolerance.
-     real(kind=wp) :: tol = rtol
+     real(kind=wp) :: atol = atol
+     real(kind=wp) :: rtol = rtol
      !> Default verbosity control.
      logical :: verbose = .false.
   end type gmres_opts
@@ -31,7 +32,8 @@ module Utils
      !> Default maximum number of iterations.
      integer :: maxiter = 100
      !> Default tolerance.
-     real(kind=wp) :: tol = rtol
+     real(kind=wp) :: atol = atol
+     real(kind=wp) :: rtol = rtol
      !> Default verbosity control.
      logical :: verbose = .false.
   end type bicgstab_opts
@@ -41,7 +43,8 @@ module Utils
      !> Default maximum number of iterations.
      integer :: maxiter = 100
      !> Default tolerance.
-     real(kind=wp) :: tol = rtol
+     real(kind=wp) :: rtol = rtol
+     real(kind=wp) :: atol = atol
      !> Default verbosity control.
      logical :: verbose = .false.
   end type cg_opts
