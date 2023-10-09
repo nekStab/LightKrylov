@@ -834,17 +834,9 @@ contains
     endif
     call r%axpby(-1.0_wp, b, 1.0_wp)
     
-    !call r_hat%copy(r)
-    r_hat = r
-
-    rho = r_hat%dot(r)
-
-    !call p%copy(r)
-    p = r 
+    r_hat = r ; rho = r_hat%dot(r) ; p = r 
     
     bicgstab_loop: do i = 1, maxiter
-       
-       ! v = A * p
        if (trans) then
           call A%rmatvec(p, v)
        else
@@ -854,9 +846,7 @@ contains
        alpha = rho/r_hat%dot(v)
        
        ! s = r - alpha * v
-       !call s%copy(r)
-       s = r
-       call s%axpby(1.0_wp, v, -alpha)
+       s = r ; call s%axpby(1.0_wp, v, -alpha)
        
        ! t = A * s
        if (trans) then
@@ -867,13 +857,10 @@ contains
        omega = t%dot(s)/t%dot(t)
        
        ! x = x + s * omega + p * alpha
-       call x%axpby(1.0_wp, s, omega)
-       call x%axpby(1.0_wp, p, alpha)
+       call x%axpby(1.0_wp, s, omega) ; call x%axpby(1.0_wp, p, alpha)
        
        ! r = s - t * omega
-       !call r%copy(s)
-       r = s
-       call r%axpby(1.0_wp, t, -omega)
+       r = s ; call r%axpby(1.0_wp, t, -omega)
        
        res = r%norm()  
        if (verbose) then
@@ -885,14 +872,10 @@ contains
        beta = (alpha/omega) * (rho_new/rho)
        
        ! s = p - v * omega ! reusing s vector
-       !call s%copy(p)
-       s = p
-       call s%axpby(1.0_wp, v, -omega)
+       s = p ; call s%axpby(1.0_wp, v, -omega)
        
        ! p = r + s * beta
-       !call p%copy(r)
-       p = r 
-       call p%axpby(1.0_wp, s, beta)
+       p = r ; call p%axpby(1.0_wp, s, beta)
        
        rho = rho_new
        
