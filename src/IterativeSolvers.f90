@@ -369,7 +369,7 @@ contains
     ! --> Initialize variables.
     B = 0.0_wp ; residuals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp ; sigma = 0.0_wp
     !> Make sure the first Krylov vector has unit-norm.
-    alpha = U(1)%norm() ; call U(1)%scal(1.0_wp / alpha)
+    beta = U(1)%norm() ; call U(1)%scal(1.0_wp / beta)
     do i = 2, size(U)
        call U(i)%zero() ; call V(i)%zero()
     enddo
