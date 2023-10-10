@@ -10,7 +10,6 @@ module TestIterativeSolvers
 
   public :: collect_gmres_testsuite,    &
        collect_cg_testsuite,       &
-       collect_bicgstab_testsuite, &
        collect_evp_testsuite
 
 contains
@@ -270,44 +269,4 @@ contains
     return
   end subroutine test_cg_full_computation_spd_matrix
   
-  !--------------------------------------
-  !-----                            -----
-  !-----     BICGSTAB TEST SUITE    -----
-  !-----                            -----
-  !--------------------------------------
-  
-  subroutine collect_bicgstab_testsuite(testsuite)
-    !> Collection of tests.
-    type(unittest_type), allocatable, intent(out) :: testsuite(:)
-    
-    testsuite = [ &
-         new_unittest("BiCGSTAB full computation", test_bicgstab_full_computation) &
-         ]
-    return
-  end subroutine collect_bicgstab_testsuite
-  
-  subroutine test_bicgstab_full_computation(error)
-    !> Error type to be returned.
-    type(error_type), allocatable, intent(out) :: error
-    !> Linear Problem.
-    class(rmatrix), allocatable :: A ! Linear Operator.
-    class(rvector), allocatable :: b ! Right-hand side vector.
-    class(rvector), allocatable :: x ! Solution vector.
-    type(bicgstab_opts) :: opts
-    !> Information flag.
-    integer :: info
-    
-    ! --> Initialize linear problem.
-    A = rmatrix(); call random_number(A%data)
-    b = rvector(); call random_number(b%data)
-    x = rvector(); call x%zero()
-    ! --> BiCGSTAB solver.
-    opts = bicgstab_opts(verbose=.true., atol=1e-12_wp, rtol=0.0_wp)
-    call bicgstab(A, b, x, info, options=opts)
-    ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
-    
-    return
-  end subroutine test_bicgstab_full_computation
-
 end module TestIterativeSolvers

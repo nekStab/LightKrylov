@@ -387,7 +387,7 @@ contains
     !> Left and right Krylov subspaces.
     class(rvector), allocatable :: V(:), W(:)
     !> Krylov subspace dimenion.
-    integer, parameter :: kdim = test_size-10
+    integer, parameter :: kdim = test_size
     !> Tridiagonal matrix.
     real(kind=wp) :: T(kdim+1, kdim+1)
     !> Information flag.
@@ -411,7 +411,7 @@ contains
     T = 0.0_wp
 
     ! --> Nonsymmetric Lanczos factorization.
-    call nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info)
+    call nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, verbosity=.true.)
 
     ! --> Check correctness of the factorization.
     do k = 1, size(V)

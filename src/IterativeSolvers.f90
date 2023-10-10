@@ -10,7 +10,7 @@ module IterativeSolvers
   include "dtypes.h"
 
   private
-  public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
+  public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg
   public :: abstract_linear_solver
 
   abstract interface
@@ -740,150 +740,150 @@ contains
     return
   end subroutine cg
 
-  !=======================================================================================
-  ! Biconjugate Gradient Stabilized (BiCGSTAB) Solver Subroutine
-  !=======================================================================================
-  !
-  ! Purpose:
-  ! --------
-  ! Implements the Biconjugate Gradient Stabilized (BiCGSTAB) algorithm for solving
-  ! nonsymmetric and possibly ill-conditioned linear systems Ax = b.
-  !
-  ! Algorithmic Features:
-  ! ----------------------
-  ! - Extends the BiCG algorithm by stabilizing the iterations.
-  ! - Utilizes two search directions and two residuals to improve stability.
-  ! - Iteratively updates both the approximate solution and the residuals.
-  !
-  ! Advantages:
-  ! -----------
-  ! - Capable of addressing nonsymmetric and ill-conditioned matrices.
-  ! - Generally more stable and faster compared to the basic BiCG.
-  ! - Suitable for large and sparse matrices.
-  !
-  ! Limitations:
-  ! ------------
-  ! - May experience stagnation for certain types of problems.
-  ! - No preconditioning capabilities in the current implementation.
-  !
-  ! Input/Output Parameters:
-  ! ------------------------
-  ! - A        : Linear Operator (abstract_linop) [Input]
-  ! - b        : Right-hand side (abstract_vector) [Input]
-  ! - x        : Initial/Updated solution (abstract_vector) [Input/Output]
-  ! - info     : Iteration Information flag (Integer) [Output]
-  ! - maxiter  : Maximum number of iterations (Integer) [Optional, Input]
-  ! - tol      : Convergence tolerance (real(kind=dp)) [Optional, Input]
-  ! - verbosity: Verbosity control flag (Logical) [Optional, Input]
-  !
-  ! References:
-  ! -----------
-  ! - van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems,"
-  !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
-  !
-  !=======================================================================================
-  subroutine bicgstab(A, b, x, info, options, transpose)
-    !> Linear problem and initial guess.
-    class(abstract_linop), intent(in) :: A
-    class(abstract_vector), intent(in) :: b
-    class(abstract_vector), intent(inout) :: x
-    !> Output and optional input parameters.
-    integer, intent(out) :: info
-    class(abstract_opts), optional, intent(in) :: options
-    type(bicgstab_opts)                        :: opts
-    logical, optional, intent(in) :: transpose
+  ! !=======================================================================================
+  ! ! Biconjugate Gradient Stabilized (BiCGSTAB) Solver Subroutine
+  ! !=======================================================================================
+  ! !
+  ! ! Purpose:
+  ! ! --------
+  ! ! Implements the Biconjugate Gradient Stabilized (BiCGSTAB) algorithm for solving
+  ! ! nonsymmetric and possibly ill-conditioned linear systems Ax = b.
+  ! !
+  ! ! Algorithmic Features:
+  ! ! ----------------------
+  ! ! - Extends the BiCG algorithm by stabilizing the iterations.
+  ! ! - Utilizes two search directions and two residuals to improve stability.
+  ! ! - Iteratively updates both the approximate solution and the residuals.
+  ! !
+  ! ! Advantages:
+  ! ! -----------
+  ! ! - Capable of addressing nonsymmetric and ill-conditioned matrices.
+  ! ! - Generally more stable and faster compared to the basic BiCG.
+  ! ! - Suitable for large and sparse matrices.
+  ! !
+  ! ! Limitations:
+  ! ! ------------
+  ! ! - May experience stagnation for certain types of problems.
+  ! ! - No preconditioning capabilities in the current implementation.
+  ! !
+  ! ! Input/Output Parameters:
+  ! ! ------------------------
+  ! ! - A        : Linear Operator (abstract_linop) [Input]
+  ! ! - b        : Right-hand side (abstract_vector) [Input]
+  ! ! - x        : Initial/Updated solution (abstract_vector) [Input/Output]
+  ! ! - info     : Iteration Information flag (Integer) [Output]
+  ! ! - maxiter  : Maximum number of iterations (Integer) [Optional, Input]
+  ! ! - tol      : Convergence tolerance (real(kind=dp)) [Optional, Input]
+  ! ! - verbosity: Verbosity control flag (Logical) [Optional, Input]
+  ! !
+  ! ! References:
+  ! ! -----------
+  ! ! - van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems,"
+  ! !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
+  ! !
+  ! !=======================================================================================
+  ! subroutine bicgstab(A, b, x, info, options, transpose)
+  !   !> Linear problem and initial guess.
+  !   class(abstract_linop), intent(in) :: A
+  !   class(abstract_vector), intent(in) :: b
+  !   class(abstract_vector), intent(inout) :: x
+  !   !> Output and optional input parameters.
+  !   integer, intent(out) :: info
+  !   class(abstract_opts), optional, intent(in) :: options
+  !   type(bicgstab_opts)                        :: opts
+  !   logical, optional, intent(in) :: transpose
     
-    !> Internal variables.
-    integer :: i, maxiter
-    real(kind=wp) :: tol, res, alpha, omega, rho, rho_new, beta
-    logical :: verbose, trans
+  !   !> Internal variables.
+  !   integer :: i, maxiter
+  !   real(kind=wp) :: tol, res, alpha, omega, rho, rho_new, beta
+  !   logical :: verbose, trans
     
-    !> BiCGSTAB vectors.
-    class(abstract_vector), allocatable :: r, r_hat, p, p_int, v, s, t
+  !   !> BiCGSTAB vectors.
+  !   class(abstract_vector), allocatable :: r, r_hat, p, p_int, v, s, t
 
-    ! --> Deals with the optional arguments.
-    if (present(options)) then
-       select type(options)
-       type is(bicgstab_opts)
-          opts = bicgstab_opts( &
-               maxiter = options%maxiter, &
-               atol    = options%atol,    &
-               rtol    = options%rtol,    &
-               verbose = options%verbose  &
-          )
-       end select
-    else
-       opts = bicgstab_opts()
-    end if
-    maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
-    verbose = opts%verbose ; trans = optval(transpose, .false.)
+  !   ! --> Deals with the optional arguments.
+  !   if (present(options)) then
+  !      select type(options)
+  !      type is(bicgstab_opts)
+  !         opts = bicgstab_opts( &
+  !              maxiter = options%maxiter, &
+  !              atol    = options%atol,    &
+  !              rtol    = options%rtol,    &
+  !              verbose = options%verbose  &
+  !         )
+  !      end select
+  !   else
+  !      opts = bicgstab_opts()
+  !   end if
+  !   maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
+  !   verbose = opts%verbose ; trans = optval(transpose, .false.)
     
-    ! Initialize vectors.
-    allocate (r, source=b)
-    allocate (r_hat, source=b)
-    allocate (p, source=b)
-    allocate (v, source=b)
-    allocate (s, source=b)
-    allocate (t, source=b)
+  !   ! Initialize vectors.
+  !   allocate (r, source=b)     ; call r%zero()
+  !   allocate (r_hat, source=b) ; call r_hat%zero()
+  !   allocate (p, source=b)     ; call p%zero()
+  !   allocate (v, source=b)     ; call v%zero()
+  !   allocate (s, source=b)     ; call s%zero()
+  !   allocate (t, source=b)     ; call t%zero()
         
-    ! --> Compute initial residual: r = b - Ax.
-    if (trans) then
-       call A%rmatvec(x, r)
-    else
-       call A%matvec(x, r)
-    endif
-    call r%axpby(-1.0_wp, b, 1.0_wp)
+  !   ! --> Compute initial residual: r = b - Ax.
+  !   if (trans) then
+  !      call A%rmatvec(x, r)
+  !   else
+  !      call A%matvec(x, r)
+  !   endif
+  !   call r%axpby(-1.0_wp, b, 1.0_wp)
     
-    r_hat = r ; rho = r_hat%dot(r) ; p = r 
+  !   r_hat = r ; rho = r_hat%dot(r) ; p = r 
     
-    bicgstab_loop: do i = 1, maxiter
-       if (trans) then
-          call A%rmatvec(p, v)
-       else
-          call A%matvec(p, v)
-       endif
+  !   bicgstab_loop: do i = 1, maxiter
+  !      if (trans) then
+  !         call A%rmatvec(p, v)
+  !      else
+  !         call A%matvec(p, v)
+  !      endif
        
-       alpha = rho/r_hat%dot(v)
+  !      alpha = rho/r_hat%dot(v)
        
-       ! s = r - alpha * v
-       s = r ; call s%axpby(1.0_wp, v, -alpha)
+  !      ! s = r - alpha * v
+  !      s = r ; call s%axpby(1.0_wp, v, -alpha)
        
-       ! t = A * s
-       if (trans) then
-          call A%rmatvec(s, t)
-       else
-          call A%matvec(s, t)
-       endif
-       omega = t%dot(s)/t%dot(t)
+  !      ! t = A * s
+  !      if (trans) then
+  !         call A%rmatvec(s, t)
+  !      else
+  !         call A%matvec(s, t)
+  !      endif
+  !      omega = t%dot(s)/t%dot(t)
        
-       ! x = x + s * omega + p * alpha
-       call x%axpby(1.0_wp, s, omega) ; call x%axpby(1.0_wp, p, alpha)
+  !      ! x = x + s * omega + p * alpha
+  !      call x%axpby(1.0_wp, s, omega) ; call x%axpby(1.0_wp, p, alpha)
        
-       ! r = s - t * omega
-       r = s ; call r%axpby(1.0_wp, t, -omega)
+  !      ! r = s - t * omega
+  !      r = s ; call r%axpby(1.0_wp, t, -omega)
        
-       res = r%norm()  
-       if (verbose) then
-          write (*, *) "INFO : BICGSTAB residual after ", (i), "iterations : ", res
-       end if
-       if (res < tol) exit bicgstab_loop
+  !      res = r%norm()  
+  !      if (verbose) then
+  !         write (*, *) "INFO : BICGSTAB residual after ", (i), "iterations : ", res
+  !      end if
+  !      if (res < tol) exit bicgstab_loop
        
-       rho_new = r_hat%dot(r)
-       beta = (alpha/omega) * (rho_new/rho)
+  !      rho_new = r_hat%dot(r)
+  !      beta = (alpha/omega) * (rho_new/rho)
        
-       ! s = p - v * omega ! reusing s vector
-       s = p ; call s%axpby(1.0_wp, v, -omega)
+  !      ! s = p - v * omega ! reusing s vector
+  !      s = p ; call s%axpby(1.0_wp, v, -omega)
        
-       ! p = r + s * beta
-       p = r ; call p%axpby(1.0_wp, s, beta)
+  !      ! p = r + s * beta
+  !      p = r ; call p%axpby(1.0_wp, s, beta)
        
-       rho = rho_new
+  !      rho = rho_new
        
-    end do bicgstab_loop
+  !   end do bicgstab_loop
     
-    deallocate (r, r_hat, p, v, s, t)
-    return
-  end subroutine bicgstab
+  !   deallocate (r, r_hat, p, v, s, t)
+  !   return
+  ! end subroutine bicgstab
   
   ! --> Utility Functions -----
   
