@@ -12,7 +12,7 @@ module TestVector
   integer, parameter :: test_size = 100
 
   type, extends(abstract_vector), public :: rvector
-     double precision, dimension(test_size) :: data = 0.0D+00
+     real(kind=wp), dimension(test_size) :: data = 0.0_wp
    contains
      private
      procedure, pass(self), public :: zero
@@ -32,7 +32,7 @@ contains
   !--> Zero-out a vector.
   subroutine zero(self)
     class(rvector), intent(inout) :: self
-    self%data = 0.0D+00
+    self%data = 0.0_wp
     return
   end subroutine zero
 
@@ -50,7 +50,7 @@ contains
   ! --> In-place scalar multiplication.
   subroutine scal(self, alpha)
     class(rvector), intent(inout) :: self
-    double precision, intent(in) :: alpha
+    real(kind=wp), intent(in) :: alpha
     self%data = self%data * alpha
     return
   end subroutine scal
@@ -95,7 +95,7 @@ contains
 
     ! --> Test vector.
     class(rvector), allocatable :: x
-    double precision :: alpha
+    real(kind=wp) :: alpha
 
     ! --> Initialize vector.
     x = rvector() ; call random_number(x%data)
@@ -165,7 +165,7 @@ contains
 
     !> Test vectors.
     class(rvector), allocatable :: x, y
-    double precision :: alpha
+    real(kind=wp) :: alpha
 
     ! --> Initialize vectors.
     x = rvector() ; call random_number(x%data)
