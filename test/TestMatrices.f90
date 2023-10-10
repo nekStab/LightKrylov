@@ -13,7 +13,7 @@ module TestMatrices
   !-----     GENERAL REAL MATRIX     -----
   !---------------------------------------
   type, extends(abstract_linop), public :: rmatrix
-     double precision, dimension(test_size, test_size) :: data = 0.0D+00
+     real(kind=wp), dimension(test_size, test_size) :: data = 0.0_wp
    contains
      private
      procedure, pass(self), public :: matvec => general_matvec
@@ -24,7 +24,7 @@ module TestMatrices
   !-----     SYM. POS. DEF MATRIX     -----
   !----------------------------------------
   type, extends(abstract_spd_linop), public :: spd_matrix
-     double precision, dimension(test_size, test_size) :: data = 0.0D+00
+     real(kind=wp), dimension(test_size, test_size) :: data = 0.0_wp
    contains
      private
      procedure, pass(self), public :: matvec => spd_matvec
