@@ -13,9 +13,46 @@ module IterativeSolvers
   public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg, bicgstab
   public :: abstract_linear_solver
 
+  !------------------------------------------------
+  !-----                                      -----
+  !-----     ABSTRACT PRECONDITIONER TYPE     -----
+  !-----                                      -----
+  !------------------------------------------------
+
+  ! --> Abstract type definition.
+  type, abstract, public :: abstract_preconditioner
+   contains
+     private
+     procedure(abstract_apply_precond), deferred, pass(self), public :: apply
+     procedure(abstract_undo_precond) , deferred, pass(self), public :: undo
+  end type abstract_preconditioner
+
+  ! --> Definition of the type-bound procedures interfaces.
   abstract interface
-     subroutine abstract_linear_solver(A, b, x, info, options, transpose)
-       import abstract_linop, abstract_vector, abstract_opts
+     !> Apply the preconditionner.
+     subroutine abstract_apply_precond(self, vec_inout)
+       import abstract_preconditioner, abstract_vector
+       class(abstract_preconditioner), intent(in)    :: self
+       class(abstract_vector)        , intent(inout) :: vec_inout
+     end subroutine abstract_apply_precond
+
+     !> Undo the action of the preconditioner.
+     subroutine abstract_undo_precond(self, vec_inout)
+       import abstract_preconditioner, abstract_vector
+       class(abstract_preconditioner), intent(in)    :: self
+       class(abstract_vector)        , intent(inout) :: vec_inout
+     end subroutine abstract_undo_precond
+  end interface
+
+  !--------------------------------------------------------
+  !-----                                              -----
+  !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
+  !-----                                              -----
+  !--------------------------------------------------------
+
+  abstract interface
+     subroutine abstract_linear_solver(A, b, x, info, preconditioner, options, transpose)
+       import abstract_linop, abstract_vector, abstract_opts, abstract_preconditioner
        !> Linear problem.
        class(abstract_linop) , intent(in) :: A
        class(abstract_vector), intent(in) :: b
@@ -25,6 +62,8 @@ module IterativeSolvers
        integer               , intent(out) :: info
        !> Solver options.
        class(abstract_opts)  , optional, intent(in) :: options
+       !> Preconditioner.
+       class(abstract_preconditioner), optional, intent(in) :: preconditioner
        !> Transposition flag.
        logical               , optional, intent(in) :: transpose
      end subroutine abstract_linear_solver
@@ -427,7 +466,7 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 7(3), 856–869.
   !
   !=======================================================================================
-  subroutine gmres(A, b, x, info, options, transpose)
+  subroutine gmres(A, b, x, info, preconditioner, options, transpose)
     !> Linear problem.
     class(abstract_linop)  , intent(in)    :: A ! Linear Operator.
     class(abstract_vector) , intent(in)    :: b ! Right-hand side.
@@ -435,16 +474,22 @@ contains
     class(abstract_vector) , intent(inout) :: x
     !> Information flag.
     integer                , intent(out)   :: info
+    !> Preconditioner.
+    class(abstract_preconditioner), optional, intent(in) :: preconditioner
+    class(abstract_preconditioner), allocatable          :: precond
+    logical                                              :: has_precond
     !> Optional arguments.
     class(abstract_opts), optional, intent(in) :: options
-    type(gmres_opts)                       :: opts
-    logical, optional      , intent(in)    :: transpose
-    logical                                :: trans
+    type(gmres_opts)                           :: opts
+    logical             , optional, intent(in) :: transpose
+    logical                                    :: trans
+
     !> Internal variables.
     integer                                :: k_dim
     integer                                :: maxiter
     real(kind=wp)                          :: tol
     logical                                :: verbose
+
     !> Krylov subspace.
     class(abstract_vector), allocatable :: V(:)
     !> Upper Hessenberg matrix.
@@ -456,7 +501,7 @@ contains
     !> Miscellaneous.
     integer                             :: i, j, k, l, m
     real(kind=wp)                       :: alpha
-    class(abstract_vector), allocatable :: dx
+    class(abstract_vector), allocatable :: dx, wrk
 
     ! --> Deals with the optional arguments.
     if (present(options)) then
@@ -477,7 +522,15 @@ contains
     tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
     trans = optval(transpose, .false.)
 
+    if (present(preconditioner)) then
+       allocate(precond, source=preconditioner)
+       has_precond = .true.
+    else
+       has_precond = .false.
+    endif
+
     ! --> Initialize Krylov subspace.
+    allocate(wrk, source=b) ; call wrk%zero()
     allocate(V(1:k_dim+1), source=b)
     do i = 1, size(V)
        call V(i)%zero()
@@ -503,13 +556,37 @@ contains
        enddo
 
        arnoldi : do k = 1, k_dim
-          ! --> Step-by-step Arnoldi factorization.
-          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tol, transpose=trans)
-          if (info < 0) then
-             write(*, *) "INFO : Arnoldi Factorization failed with exit code info =", info
-             write(*, *) "       Stopping the GMRES computation."
-             call exit()
+          ! --> Arnoldi factorization.
+          if (has_precond) then
+             ! --> Apply preconditioner.
+             wrk = V(k) ; call precond%apply(wrk)
+             ! --> Matrix-vector product.
+             if (trans) then
+                call A%rmatvec(wrk, V(k+1))
+             else
+                call A%matvec(wrk, V(k+1))
+             endif
+          else
+             if (trans) then
+                call A%rmatvec(V(k), V(k+1))
+             else
+                call A%matvec(V(k), V(k+1))
+             endif
           endif
+
+          do j = 1, k
+             alpha = V(k+1)%dot(V(j)) ; call V(k+1)%axpby(1.0_wp, V(j), -alpha)
+             H(j, k) = alpha
+          enddo
+          do j = 1, k
+             alpha = V(k+1)%dot(V(j)) ; call V(k+1)%axpby(1.0_wp, V(j), -alpha)
+             H(j, k) = H(j, k) + alpha
+          enddo
+          H(k+1, k) = V(k+1)%norm()
+          if (H(k+1, k) > tol) then
+             call V(k+1)%scal(1.0_wp / H(k+1, k))
+          endif
+
           ! --> Least-squares problem.
           call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
           ! --> Compute residual.
@@ -526,7 +603,11 @@ contains
        ! --> Update solution.
        k = min(k, k_dim)
        if (allocated(dx) .eqv. .false.) allocate(dx, source=x)
-       call dx%zero() ; call get_vec(dx, V(1:k), y(1:k)) ; call x%add(dx)
+       call dx%zero() ; call get_vec(dx, V(1:k), y(1:k))
+       if (has_precond) then
+          call precond%apply(dx)
+       endif
+       call x%add(dx)
 
        ! --> Recompute residual for sanity check.
        if (trans) then
@@ -538,7 +619,7 @@ contains
        call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
 
        ! --> Initialize new starting Krylov vector if needed.
-       beta = V(1)%norm() ; call V(1)%scal(1.0D+00 / beta)
+       beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
        if (beta**2 .lt. tol) then
           exit gmres_iterations
@@ -635,7 +716,7 @@ contains
   !   Journal of Research of the National Bureau of Standards, 49(6), 409–436.
   !
   !=======================================================================================
-  subroutine cg(A, b, x, info, options)
+  subroutine cg(A, b, x, info, preconditioner, options)
     !> Linear problem.
     class(abstract_spd_linop), intent(in) :: A ! Linear Operator.
     class(abstract_vector), intent(in) :: b ! Right-hand side.
@@ -643,9 +724,14 @@ contains
     class(abstract_vector), intent(inout) :: x
     !> Information flag.
     integer, intent(out)   :: info
+    !> Preconditioner.
+    class(abstract_preconditioner), optional, intent(in) :: preconditioner
+    class(abstract_preconditioner), allocatable          :: precond
+    logical                                              :: has_precond
     !> Optional arguments.
     class(abstract_opts), optional, intent(in) :: options
     type(cg_opts)                              :: opts
+
     integer :: maxiter ! Maximum number of CG iterations.
     real(kind=wp) :: tol  ! Tolerance for the CG residual.
     logical                             :: verbose
@@ -671,6 +757,11 @@ contains
        opts = cg_opts()
     endif
     tol = opts%atol + opts%rtol * b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+
+    if (present(preconditioner)) then
+       write(*, *) "INFO: CG does not support preconditioning yet. Precond is thus ignored."
+       write(*, *)
+    endif
     
     ! --> Initialize vectors.
     allocate (r, source=b)  ; call r%zero()
@@ -782,13 +873,16 @@ contains
   !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
   !
   !=======================================================================================
-  subroutine bicgstab(A, b, x, info, options, transpose)
+  subroutine bicgstab(A, b, x, info, preconditioner, options, transpose)
     !> Linear problem and initial guess.
     class(abstract_linop), intent(in) :: A
     class(abstract_vector), intent(in) :: b
     class(abstract_vector), intent(inout) :: x
     !> Output and optional input parameters.
     integer, intent(out) :: info
+    class(abstract_preconditioner), optional, intent(in) :: preconditioner
+    class(abstract_preconditioner), allocatable          :: precond
+    logical                                              :: has_precond
     class(abstract_opts), optional, intent(in) :: options
     type(bicgstab_opts)                        :: opts
     logical, optional, intent(in) :: transpose
@@ -817,6 +911,11 @@ contains
     end if
     maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
     verbose = opts%verbose ; trans = optval(transpose, .false.)
+
+    if (present(preconditioner)) then
+       write(*, *) "INFO: BICGSTAB does not support preconditioning yet. Precond is thus ignored."
+       write(*, *)
+    endif
     
     ! Initialize vectors.
     allocate (r, source=b)
