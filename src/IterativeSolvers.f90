@@ -501,7 +501,7 @@ contains
     !> Miscellaneous.
     integer                             :: i, j, k, l, m
     real(kind=wp)                       :: alpha
-    class(abstract_vector), allocatable :: dx
+    class(abstract_vector), allocatable :: dx, wrk
 
     ! --> Deals with the optional arguments.
     if (present(options)) then
@@ -530,6 +530,7 @@ contains
     endif
 
     ! --> Initialize Krylov subspace.
+    allocate(wrk, source=b) ; call wrk%zero()
     allocate(V(1:k_dim+1), source=b)
     do i = 1, size(V)
        call V(i)%zero()
@@ -556,11 +557,21 @@ contains
 
        arnoldi : do k = 1, k_dim
           ! --> Arnoldi factorization.
-          ! call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tol, transpose=trans)
-          if (trans) then
-             call A%rmatvec(V(k), V(k+1))
+          if (has_precond) then
+             ! --> Apply preconditioner.
+             wrk = V(k) ; call precond%apply(wrk)
+             ! --> Matrix-vector product.
+             if (trans) then
+                call A%rmatvec(wrk, V(k+1))
+             else
+                call A%matvec(wrk, V(k+1))
+             endif
           else
-             call A%matvec(V(k), V(k+1))
+             if (trans) then
+                call A%rmatvec(V(k), V(k+1))
+             else
+                call A%matvec(V(k), V(k+1))
+             endif
           endif
 
           do j = 1, k
@@ -592,7 +603,11 @@ contains
        ! --> Update solution.
        k = min(k, k_dim)
        if (allocated(dx) .eqv. .false.) allocate(dx, source=x)
-       call dx%zero() ; call get_vec(dx, V(1:k), y(1:k)) ; call x%add(dx)
+       call dx%zero() ; call get_vec(dx, V(1:k), y(1:k))
+       if (has_precond) then
+          call precond%apply(dx)
+       endif
+       call x%add(dx)
 
        ! --> Recompute residual for sanity check.
        if (trans) then
