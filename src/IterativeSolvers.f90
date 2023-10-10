@@ -141,6 +141,7 @@ contains
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
     real(kind=wp)    , dimension(size(X)-1) :: abs_eigvals
+    real(kind=wp) :: alpha
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
@@ -151,6 +152,8 @@ contains
 
     ! --> Initialize variables.
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
+    !> Make sure the first Krylov vector has unit-norm.
+    alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
     do i = 2, size(X) ! i=1 is the initial Krylov vector given by the user.
        call X(i)%zero()
     enddo
@@ -204,6 +207,7 @@ contains
     !> Miscellaneous.
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
+    real(kind=wp) :: alpha
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
@@ -213,6 +217,8 @@ contains
 
     ! --> Initialize all variables.
     T = 0.0_wp ; residuals = 0.0_wp ; eigvecs = 0.0_wp ; eigvals = 0.0_wp
+    !> Make sure the first Krylov vector has unit-norm.
+    alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
     do i = 2, size(X) ! i = 1 is the starting Krylov vector provided by the user.
        call X(i)%zero()
     enddo
@@ -362,6 +368,8 @@ contains
 
     ! --> Initialize variables.
     B = 0.0_wp ; residuals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp ; sigma = 0.0_wp
+    !> Make sure the first Krylov vector has unit-norm.
+    alpha = U(1)%norm() ; call U(1)%scal(1.0_wp / alpha)
     do i = 2, size(U)
        call U(i)%zero() ; call V(i)%zero()
     enddo
