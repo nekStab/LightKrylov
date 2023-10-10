@@ -143,22 +143,15 @@ contains
     k = 1
     do i = 1, test_size, 2
        true_evals(i)   = a_*cmplx(1.0_wp, 0.0_wp, kind=wp) + (2_wp*b_*cos(k*pi / (test_size+1)))*cmplx(0.0_wp, 1.0_wp, kind=wp)
-       true_evals(i+1)   = a_*cmplx(1.0_wp, 0.0_wp, kind=wp) - (2_wp*b_*cos(k*pi / (test_size+1)))*cmplx(0.0_wp, 1.0_wp, kind=wp)
+       true_evals(i+1) = a_*cmplx(1.0_wp, 0.0_wp, kind=wp) - (2_wp*b_*cos(k*pi / (test_size+1)))*cmplx(0.0_wp, 1.0_wp, kind=wp)
        k = k +1
     enddo
-    
+
     !> Check correctness.
     call check(error, norm2(abs(evals - true_evals)) < rtol)
 
     return
   end subroutine test_evp_problem
-
-  !----------------------------------------------------------
-  !-----                                                -----
-  !-----     TEST FOR SYMMETRIC EIGENVALUE PROBLEMS     -----
-  !-----                                                -----
-  !----------------------------------------------------------
-
 
   !------------------------------------
   !-----                          -----

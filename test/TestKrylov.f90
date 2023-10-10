@@ -72,7 +72,7 @@ contains
     do k = 1, kdim+1
        Xdata(:, k) = X(k)%data
     enddo
-    call check(error, norm2(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H)) < rtol )
+    call check(error, all_close(matmul(A%data, Xdata(:, 1:kdim)),  matmul(Xdata, H), rtol, atol) )
 
     return
   end subroutine test_arnoldi_full_factorization
@@ -212,7 +212,10 @@ contains
     do k = 1, kdim+1
        Xdata(:, k) = X(k)%data
     enddo
-    alpha = norm2( matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T) )
+    ! --> Infinity-norm check.
+    alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+    write(*, *) "Infinity-norm      :", alpha
+    write(*, *) "Relative tolerance :", rtol
     call check(error, alpha < rtol)
 
     return
@@ -351,7 +354,10 @@ contains
     do k = 1, size(U)
        Udata(:, k) = U(k)%data ; Vdata(:, k) = V(k)%data
     enddo
-    alpha = norm2(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B))
+    ! --> Infinity-norm check.
+    alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+    write(*, *) "Infinity norm      :", alpha
+    write(*, *) "Relative tolerance :", rtol
     call check(error, alpha < rtol)
     return
   end subroutine test_lanczos_bidiag_full_factorization
@@ -411,8 +417,11 @@ contains
     do k = 1, size(V)
        Vdata(:, k) = V(k)%data ; Wdata(:, k) = W(k)%data
     enddo
-    alpha = norm2(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Vdata, T(1:kdim+1, 1:kdim)))
-    write(*, *) 'ALPHA = ', alpha, rtol
+
+    ! --> Infinity-norm check.
+    alpha = maxval( abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Vdata, T(1:kdim+1, 1:kdim))) )
+    write(*, *) "Infinity norm      :", alpha
+    write(*, *) "Relative tolerance :", rtol
     call check(error, alpha < rtol)
 
     return
@@ -478,7 +487,12 @@ contains
     do i = 1, kdim+1
        Xdata(:, i) = X(i)%data
     enddo
-    call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) )**2 < rtol )
+
+    ! --> Infinity-norm check.
+    alpha = maxval(abs(matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H)))
+    write(*, *) "Infinity-norm      :", alpha
+    write(*, *) "Relative tolerance :", rtol
+    call check(error, alpha < rtol)
     
     return
   end subroutine test_rational_arnoldi_full_factorization
