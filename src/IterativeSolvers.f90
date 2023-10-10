@@ -726,7 +726,7 @@ contains
     integer, intent(out)   :: info
     !> Preconditioner.
     class(abstract_preconditioner), optional, intent(in) :: preconditioner
-    class(abstract_preconditioner), allocatable                 :: precond
+    class(abstract_preconditioner), allocatable          :: precond
     logical                                              :: has_precond
     !> Optional arguments.
     class(abstract_opts), optional, intent(in) :: options
@@ -757,6 +757,11 @@ contains
        opts = cg_opts()
     endif
     tol = opts%atol + opts%rtol * b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+
+    if (present(preconditioner)) then
+       write(*, *) "INFO: CG does not support preconditioning yet. Precond is thus ignored."
+       write(*, *)
+    endif
     
     ! --> Initialize vectors.
     allocate (r, source=b)  ; call r%zero()
@@ -906,6 +911,11 @@ contains
     end if
     maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
     verbose = opts%verbose ; trans = optval(transpose, .false.)
+
+    if (present(precond)) then
+       write(*, *) "INFO: BICGSTAB does not support preconditioning yet. Precond is thus ignored."
+       write(*, *)
+    endif
     
     ! Initialize vectors.
     allocate (r, source=b)
