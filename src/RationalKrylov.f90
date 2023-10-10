@@ -67,7 +67,10 @@ contains
   ! - S. Guttel. "Rational Krylov Methods for Operator Functions", PhD Thesis, 2010.
   !
   !======================================================================================
-  subroutine rational_arnoldi_factorization(A, X, H, G, sigma, info, solve, linsolve_opts, kstart, kend, verbosity, tol, transpose)
+  subroutine rational_arnoldi_factorization( &
+       A, X, H, G, sigma, info, &
+       solve, linsolve_opts, preconditioner, &
+       kstart, kend, verbosity, tol, transpose)
     !> Linear operator to be factorized
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -81,6 +84,7 @@ contains
     !> Linear solver.
     procedure(abstract_linear_solver) :: solve
     class(abstract_opts), optional, intent(in) :: linsolve_opts
+    class(abstract_preconditioner), optional, intent(in) :: preconditioner
     !> Optional arguments.
     integer, optional, intent(in) :: kstart
     integer                       :: k_start
@@ -150,7 +154,7 @@ contains
        endif
 
        if (k < k_end) then
-          call solve(S, wrk, X(k+1), info, options=linsolve_opts, transpose=trans)
+          call solve(S, wrk, X(k+1), info, options=linsolve_opts, transpose=trans, preconditioner=preconditioner)
        else !> Last pole is set to +infinity.
          call Id%matvec(wrk, X(k+1))
        endif

@@ -12,7 +12,55 @@ module TestIterativeSolvers
        collect_cg_testsuite,       &
        collect_evp_testsuite
 
+  !-----------------------------------------------------------
+  !-----                                                 -----
+  !-----     JACOBI-BASED PRECONDITIONER FOR TESTING     -----
+  !-----                                                 -----
+  !-----------------------------------------------------------
+
+  type, extends(abstract_preconditioner), public :: jacobi_preconditioner
+     real(kind=wp), dimension(test_size) :: data
+   contains
+     private
+     procedure, pass(self), public :: apply
+     procedure, pass(self), public :: undo
+  end type jacobi_preconditioner
+
 contains
+
+  !--------------------------------------------------------------------
+  !-----                                                          -----
+  !-----     TYPE-BOUND PROCEDURES FOR JACOBI-PRECONDITIONING     -----
+  !-----                                                          -----
+  !--------------------------------------------------------------------
+
+  subroutine apply(self, vec_inout)
+    !> Preconditioner.
+    class(jacobi_preconditioner), intent(in)    :: self
+    !> Input/output vector.
+    class(abstract_vector)      , intent(inout) :: vec_inout
+
+    !> Diagonal scaling.
+    select type(vec_inout)
+    type is(rvector)
+       vec_inout%data = (1.0_wp / self%data) * vec_inout%data
+    end select
+    return
+  end subroutine apply
+
+  subroutine undo(self, vec_inout)
+    !> Preconditioner.
+    class(jacobi_preconditioner), intent(in)    :: self
+    !> Input/Output vector.
+    class(abstract_vector)      , intent(inout) :: vec_inout
+
+    !> Undo diagonal scaling.
+    select type(vec_inout)
+    type is(rvector)
+       vec_inout%data = self%data * vec_inout%data
+    end select
+    return
+  end subroutine undo
 
   !-------------------------------------------------------------
   !-----                                                   -----
@@ -163,8 +211,9 @@ contains
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
     testsuite = [&
-         new_unittest("GMRES full computation", test_gmres_full_computation),                                    &
-         new_unittest("GMRES full computation w. sym. pos. def. matrix", test_gmres_full_computation_spd_matrix) &
+         new_unittest("GMRES full computation", test_gmres_full_computation),                                     &
+         new_unittest("GMRES full computation w. sym. pos. def. matrix", test_gmres_full_computation_spd_matrix), &
+         new_unittest("GMRES + Jacobi precond.", test_precond_gmres_full_computation)                             &
          ]
     return
   end subroutine collect_gmres_testsuite
@@ -218,6 +267,47 @@ contains
 
     return
   end subroutine test_gmres_full_computation_spd_matrix
+
+  subroutine test_precond_gmres_full_computation(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Linear Problem.
+    class(rmatrix), allocatable :: A ! Linear Operator.
+    class(rvector), allocatable :: b ! Right-hand side vector.
+    class(rvector), allocatable :: x ! Solution vector.
+    !> GMRES options.
+    type(gmres_opts) :: opts
+    !> Preconditioner.
+    type(jacobi_preconditioner), allocatable :: D
+    real(kind=wp) :: diag(test_size)
+    !> Information flag.
+    integer :: info
+    !> Miscellaneous.
+    integer :: i, j, k
+
+    ! --> Initialize linear problem.
+    A = rmatrix() ; call random_number(A%data)
+    b = rvector() ; call random_number(b%data)
+    x = rvector() ; call x%zero()
+    ! --> Preconditioner.
+    diag = 0.0_wp
+    do i = 1, 3
+       diag(i) = A%data(i, i)
+    enddo
+    D = jacobi_preconditioner(diag)
+    ! --> GMRES solver.
+    opts = gmres_opts(kdim=3, verbose=.true.)
+    write(*, *) "--> Running Unpreconditioned GMRES :"
+    call gmres(A, b, x, info, options=opts)
+    write(*, *)
+    write(*, *) "--> Running GMRES with Jacobi preconditioning."
+    call x%zero()
+    call gmres(A, b, x, info, options=opts, preconditioner=D)
+    ! --> Check convergence.
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
+
+    return
+  end subroutine test_precond_gmres_full_computation
 
   !----------------------------------
   !-----                        -----

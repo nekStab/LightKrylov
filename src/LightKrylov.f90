@@ -15,13 +15,23 @@ module LightKrylov
 
   private
 
-  public :: greetings, wp, atol, rtol,                                     &
-       abstract_vector, get_vec,                                           &
-       abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop, &
-       arnoldi_factorization, lanczos_tridiagonalization, lanczos_bidiagonalization, &
-       nonsymmetric_lanczos_tridiagonalization, rational_arnoldi_factorization, &
-       eigs, eighs, gmres, save_eigenspectrum, svds, cg, &
-       abstract_opts, gmres_opts, bicgstab_opts, cg_opts
+  !> Global variables.
+  public :: greetings, wp, atol, rtol
+  !> Abstract vectors.
+  public :: abstract_vector, get_vec
+  !> Abstract linear operators.
+  public :: abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop
+  !> Krylov factorization for general matrix.
+  public :: arnoldi_factorization, nonsymmetric_lanczos_tridiagonalization
+  public :: lanczos_bidiagonalization, rational_arnoldi_factorization
+  !> Krylov factorization for sym. pos. def. matrices.
+  public :: lanczos_tridiagonalization
+  !> Linear solvers.
+  public :: gmres, cg, bicgstab
+  public :: abstract_opts, gmres_opts, bicgstab_opts, cg_opts
+  public :: abstract_linear_solver, abstract_preconditioner
+  !> Matrix factorization.
+  public :: eigs, eighs, svds
 
 contains
 
