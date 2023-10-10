@@ -478,7 +478,7 @@ contains
     do i = 1, kdim+1
        Xdata(:, i) = X(i)%data
     enddo
-    call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) ) < rtol )
+    call check(error, norm2( matmul(matmul(A%data, Xdata), G) - matmul(Xdata, H) )**2 < rtol )
     
     return
   end subroutine test_rational_arnoldi_full_factorization
