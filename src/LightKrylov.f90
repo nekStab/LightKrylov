@@ -27,8 +27,8 @@ module LightKrylov
   !> Krylov factorization for sym. pos. def. matrices.
   public :: lanczos_tridiagonalization
   !> Linear solvers.
-  public :: gmres, cg, bicgstab
-  public :: abstract_opts, gmres_opts, bicgstab_opts, cg_opts
+  public :: gmres, cg
+  public :: abstract_opts, gmres_opts, cg_opts
   public :: abstract_linear_solver, abstract_preconditioner
   !> Matrix factorization.
   public :: eigs, eighs, svds

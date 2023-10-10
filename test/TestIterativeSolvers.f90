@@ -236,7 +236,7 @@ contains
     x = rvector() ; call x%zero()
     ! --> GMRES solver.
     opts = gmres_opts(kdim=test_size, verbose=.false.)
-    call gmres(A, b, x, info, opts)
+    call gmres(A, b, x, info, options=opts)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
@@ -261,7 +261,7 @@ contains
     x = rvector()    ; call x%zero()
     ! --> GMRES solver.
     opts = gmres_opts(kdim=test_size, verbose=.false.)
-    call gmres(A, b, x, info, opts)
+    call gmres(A, b, x, info, options=opts)
     ! --> Check convergence.
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
@@ -291,12 +291,12 @@ contains
     x = rvector() ; call x%zero()
     ! --> Preconditioner.
     diag = 0.0_wp
-    do i = 1, 3
+    do i = 1, test_size
        diag(i) = A%data(i, i)
     enddo
     D = jacobi_preconditioner(diag)
     ! --> GMRES solver.
-    opts = gmres_opts(kdim=3, verbose=.true.)
+    opts = gmres_opts(kdim=test_size, verbose=.false.)
     write(*, *) "--> Running Unpreconditioned GMRES :"
     call gmres(A, b, x, info, options=opts)
     write(*, *)
