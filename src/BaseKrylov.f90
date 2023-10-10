@@ -432,10 +432,10 @@ contains
        else
           ! --> Full re-biorthogonalization.
           do i = 1, k
-             alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, W(i), -alpha)
-             alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, V(i), -alpha)
+             alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, V(i), -alpha)
+             alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, W(i), -alpha)
           enddo
-
+       
           ! --> Normalization step.
           call V(k+1)%scal(1.0_wp / beta) ; call W(k+1)%scal(1.0_wp / gamma)
        endif
