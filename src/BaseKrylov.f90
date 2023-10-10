@@ -25,24 +25,24 @@ contains
     ! --> Optional arguments (mainly for GMRES)
     integer, optional, intent(in) :: kstart, kend
     logical, optional, intent(in) :: verbosity, transpose
-    double precision, optional, intent(in) :: tol
+    real(kind=wp), optional, intent(in) :: tol
 
     integer :: k_start, k_end
     logical :: verbose, trans
-    double precision :: tolerance
+    real(kind=wp) :: tolerance
 
     ! --> Linear Operator to be factorized.
     class(abstract_linop), intent(in) :: A
     ! --> Krylov basis.
     class(abstract_vector), dimension(:), intent(inout) :: X
     ! --> Upper Hessenberg matrix.
-    double precision, dimension(:, :), intent(inout) :: H
+    real(kind=wp), dimension(:, :), intent(inout) :: H
     ! --> Information.
     integer, intent(out) :: info ! info < 0 : The k-step Arnoldi factorization failed.
     ! info = 0 : The k-step Arnoldi factorization succeeded.
     ! info > 0 : An invariant subspace has been computed after k=info steps.
     ! --> Miscellaneous
-    double precision :: beta
+    real(kind=wp) :: beta
     integer :: k, kdim
 
     info = 0
@@ -60,7 +60,7 @@ contains
     k_start   = optval(kstart, 1)
     k_end     = optval(kend, kdim)
     verbose   = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol)
     trans     = optval(transpose, .false.)
 
     ! --> Arnoldi factorization.
@@ -113,11 +113,11 @@ contains
 
   subroutine update_hessenberg_matrix(H, X, k)
     integer, intent(in) :: k
-    double precision, dimension(:, :), intent(inout) :: H
+    real(kind=wp), dimension(:, :), intent(inout) :: H
     class(abstract_vector), dimension(:) :: X
     class(abstract_vector), allocatable :: wrk
     integer :: i
-    double precision :: alpha
+    real(kind=wp) :: alpha
 
     ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
     do i = 1, k
@@ -148,7 +148,7 @@ contains
     !> Krylov basis.
     class(abstract_vector), dimension(:), intent(inout) :: X
     !> Tri-diagonal matrix.
-    double precision, dimension(:, :), intent(inout) :: T
+    real(kind=wp), dimension(:, :), intent(inout) :: T
     !> Information flag.
     integer, intent(out) :: info
     !> Optional arguements.
@@ -158,10 +158,10 @@ contains
     integer                       :: k_end
     logical, optional, intent(in) :: verbosity
     logical                       :: verbose
-    double precision, optional, intent(in) :: tol
-    double precision                       :: tolerance
+    real(kind=wp), optional, intent(in) :: tol
+    real(kind=wp)                       :: tolerance
     !> Miscellaneous.
-    double precision :: beta
+    real(kind=wp) :: beta
     integer          :: k, kdim
     integer          :: i, j
 
@@ -178,7 +178,7 @@ contains
     k_start   = optval(kstart, 1)
     k_end     = optval(kend, kdim)
     verbose   = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol)
 
     ! --> Lanczos tridiagonalization.
     lanczos: do k = k_start, k_end
@@ -224,11 +224,11 @@ contains
 
   subroutine update_tridiag_matrix(T, X, k)
     integer, intent(in) :: k
-    double precision, dimension(:, :), intent(inout) :: T
+    real(kind=wp), dimension(:, :), intent(inout) :: T
     class(abstract_vector), dimension(:) :: X
     class(abstract_vector), allocatable :: wrk
     integer :: i
-    double precision :: alpha
+    real(kind=wp) :: alpha
 
     ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
     do i = max(1, k-1), k
@@ -294,7 +294,7 @@ contains
     k_start = optval(kstart, 1)
     k_end   = optval(kend, kdim)
     verbose = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol)
 
     ! --> Lanczos bidiagonalization.
     lanczos : do k = k_start, k_end
@@ -425,17 +425,17 @@ contains
        tmp = V(k+1)%dot(W(k+1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
        T(k, k+1) = gamma ; T(k+1, k) = beta
 
-       if ((abs(beta) < tolerance) .or. (abs(gamma) < tolerance)) then
+       if (abs(tmp) < tolerance) then
           if (verbose) then
              write(*, *) "INFO : Invariant subspaces have been computed (beta, gamma) = (", beta, ",", gamma, ")."
           endif
        else
           ! --> Full re-biorthogonalization.
           do i = 1, k
-             alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, W(i), -alpha)
-             alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, V(i), -alpha)
+             alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, V(i), -alpha)
+             alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, W(i), -alpha)
           enddo
-
+      
           ! --> Normalization step.
           call V(k+1)%scal(1.0_wp / beta) ; call W(k+1)%scal(1.0_wp / gamma)
        endif
