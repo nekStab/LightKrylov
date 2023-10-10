@@ -193,7 +193,7 @@ contains
     integer :: info
     !> Misc.
     integer :: i, j, k
-    double precision, dimension(test_size, kdim+1) :: Xdata
+    real(kind=wp), dimension(test_size, kdim+1) :: Xdata
     real(kind=wp) :: alpha
 
     ! --> Initialize matrix.
