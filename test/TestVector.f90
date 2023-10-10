@@ -1,14 +1,18 @@
 module TestVector
   use LightKrylov
   use testdrive, only: new_unittest, unittest_type, error_type, check
+  use stdlib_math, only : is_close
+
   implicit none
 
   private
 
-  public :: collect_real_vector_testsuite
+  public :: collect_real_vector_testsuite, test_size
+
+  integer, parameter :: test_size = 100
 
   type, extends(abstract_vector), public :: rvector
-     double precision, dimension(3) :: data = 0.0D+00
+     double precision, dimension(test_size) :: data = 0.0D+00
    contains
      private
      procedure, pass(self), public :: zero
@@ -93,12 +97,12 @@ contains
     class(rvector), allocatable :: x
     double precision :: alpha
 
-    ! --> Initialize vector to x = [1, 2, 3].
-    x = rvector( (/ 1.0D+00, 2.0D+00, 3.0D+00 /) )
+    ! --> Initialize vector.
+    x = rvector() ; call random_number(x%data)
     ! --> Compute the vector norm.
     alpha = x%norm()
     ! --> Check the correctness.
-    call check(error, alpha**2, 14.0D+00)
+    call check(error, is_close(alpha, norm2(x%data)))
 
     return
   end subroutine test_vector_norm
@@ -107,16 +111,16 @@ contains
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test vectors.
-    class(rvector), allocatable :: x, y
-    double precision, dimension(3) :: xdata, ydata
+    class(rvector), allocatable :: x, y, z
 
     ! --> Initialize vectors.
-    xdata = [1.0D+00, 2.0D+00, 3.0D+00] ; ydata = xdata
-    x = rvector(xdata) ; y = rvector(ydata)
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call random_number(y%data)
+    z = rvector() ; z = x
     ! --> Vector addition.
-    call x%add(y)
+    call z%add(y)
     ! --> Check result.
-    call check(error, norm2(x%data - (xdata+ydata)) < 1e-12)
+    call check(error, norm2(z%data - (x%data+y%data)) < rtol)
 
     return
   end subroutine test_vector_add
@@ -125,16 +129,16 @@ contains
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test vectors.
-    class(rvector), allocatable :: x, y
-    double precision, dimension(3) :: xdata, ydata
+    class(rvector), allocatable :: x, y, z
 
     ! --> Initialize vectors.
-    xdata = [1.0D+00, 2.0D+00, 3.0D+00] ; ydata = xdata
-    x = rvector(xdata) ; y = rvector(ydata)
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call random_number(y%data)
+    z = rvector() ; z = x
     ! --> Vector addition.
-    call x%sub(y)
+    call z%sub(y)
     ! --> Check result.
-    call check(error, norm2(x%data - (xdata-ydata)) < 1e-12)
+    call check(error, norm2(z%data - (x%data-y%data)) < rtol)
 
     return
   end subroutine test_vector_sub
@@ -146,11 +150,11 @@ contains
     class(rvector), allocatable :: x
 
     ! --> Initialize vector.
-    x = rvector( [1.0D+00, 2.0D+00, 3.0D+00] )
+    x = rvector() ; call random_number(x%data)
     ! --> Zero-out vector.
     call x%zero()
     ! --> Check result.
-    call check(error, x%norm() < 1e-12)
+    call check(error, x%norm() < rtol)
 
     return
   end subroutine test_vector_zero
@@ -164,12 +168,12 @@ contains
     double precision :: alpha
 
     ! --> Initialize vectors.
-    x = rvector( [1.0D+00, 2.0D+00, 3.0D+00] )
-    y = rvector( [4.0D+00, 5.0D+00, 6.0D+00] )
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call random_number(y%data)
     ! --> Compute dot product.
     alpha = x%dot(y)
     ! --> Check result.
-    call check(error, alpha, 32.0D+00)
+    call check(error, is_close(alpha, dot_product(x%data, y%data)))
 
     return
   end subroutine test_vector_dot
@@ -178,15 +182,15 @@ contains
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test vector.
-    class(rvector), allocatable :: x
-    double precision, dimension(3) :: y
+    class(rvector), allocatable :: x, y
 
     ! --> Random data.
-    call random_number(y) ; x = rvector(y)
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; y = x
     ! --> Scalar multiplication.
-    call x%scal(2.0D+00)
+    call x%scal(2.0_wp)
     ! --> Check result.
-    call check(error, norm2(x%data-2.0D+00*y) <= 1e-10)
+    call check(error, norm2(x%data-2.0_wp*y%data) < rtol)
 
     return
   end subroutine test_vector_mult

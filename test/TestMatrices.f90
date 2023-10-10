@@ -13,7 +13,7 @@ module TestMatrices
   !-----     GENERAL REAL MATRIX     -----
   !---------------------------------------
   type, extends(abstract_linop), public :: rmatrix
-     double precision, dimension(3, 3) :: data = 0.0D+00
+     double precision, dimension(test_size, test_size) :: data = 0.0D+00
    contains
      private
      procedure, pass(self), public :: matvec => general_matvec
@@ -24,7 +24,7 @@ module TestMatrices
   !-----     SYM. POS. DEF MATRIX     -----
   !----------------------------------------
   type, extends(abstract_spd_linop), public :: spd_matrix
-     double precision, dimension(3, 3) :: data = 0.0D+00
+     double precision, dimension(test_size, test_size) :: data = 0.0D+00
    contains
      private
      procedure, pass(self), public :: matvec => spd_matvec
@@ -119,19 +119,16 @@ contains
     class(rvector), allocatable :: x, y
     !> Test matrix.
     class(rmatrix), allocatable :: A
-    !> Misc.
-    double precision, dimension(3)    :: xdata, ydata
-    double precision, dimension(3, 3) :: Adata
 
     ! --> Initialize vector.
-    call random_number(xdata) ; x = rvector(xdata)
-    y = rvector()
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call y%zero()
     ! --> Initialize matrix.
-    call random_number(Adata) ; A = rmatrix(Adata)
+    A = rmatrix() ; call random_number(A%data)
     ! --> Compute matrix-vector product.
-    call A%matvec(x, y) ; ydata = matmul(Adata, xdata)
+    call A%matvec(x, y)
     ! --> Check result.
-    call check(error, all_close(y%data, ydata), .true.)
+    call check(error, all_close(y%data, matmul(A%data, x%data), rtol, atol), .true.)
 
     return
   end subroutine test_real_matvec
@@ -143,19 +140,16 @@ contains
     class(rvector), allocatable :: x, y
     !> Test matrix.
     class(rmatrix), allocatable :: A
-    !> Misc.
-    double precision, dimension(3)    :: xdata, ydata
-    double precision, dimension(3, 3) :: Adata
 
     ! --> Initialize vector.
-    call random_number(xdata) ; x = rvector(xdata)
-    y = rvector()
+    x = rvector() ; call random_number(x%data)
+    y = rvector() ; call y%zero()
     ! --> Initialize matrix.
-    call random_number(Adata) ; A = rmatrix(Adata)
+    A = rmatrix() ; call random_number(A%data)
     ! --> Compute transpose matrix-vector product.
-    call A%rmatvec(x, y) ; ydata = matmul(transpose(Adata), xdata)
+    call A%rmatvec(x, y)
     ! --> Check result.
-    call check(error, all_close(y%data, ydata), .true.)
+    call check(error, all_close(y%data, matmul(transpose(A%data), x%data), rtol, atol), .true.)
     return
   end subroutine test_real_rmatvec
 
@@ -205,11 +199,11 @@ contains
     x = rvector() ; call random_number(x%data)
     y = rvector() ; call y%zero()
     ! --> Scaled operator.
-    sigma = 2.0D+00 ; B = scaled_linop(A, sigma)
+    sigma = 2.0_wp ; B = scaled_linop(A, sigma)
     ! --> Compute scaled matrix-vector product.
     call B%matvec(x, y)
     ! --> Check error.
-    call check(error, all_close(y%data, sigma*matmul(A%data, x%data)), .true.)
+    call check(error, all_close(y%data, sigma*matmul(A%data, x%data), rtol, atol), .true.)
 
     return
   end subroutine test_scaled_linop
@@ -237,7 +231,7 @@ contains
     ! --> Compute the matrix-vector product.
     call C%matvec(x, y)
     ! --> Check error.
-    call check(error, all_close(matmul(alpha*A%data + beta*B%data, x%data), y%data), .true.)
+    call check(error, all_close(matmul(alpha*A%data + beta*B%data, x%data), y%data, rtol, atol), .true.)
 
     return
   end subroutine test_axpby_linop
