@@ -555,13 +555,27 @@ contains
        enddo
 
        arnoldi : do k = 1, k_dim
-          ! --> Step-by-step Arnoldi factorization.
-          call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tol, transpose=trans)
-          if (info < 0) then
-             write(*, *) "INFO : Arnoldi Factorization failed with exit code info =", info
-             write(*, *) "       Stopping the GMRES computation."
-             call exit()
+          ! --> Arnoldi factorization.
+          ! call arnoldi_factorization(A, V, H, info, kstart=k, kend=k, verbosity=.false., tol=tol, transpose=trans)
+          if (trans) then
+             call A%rmatvec(V(k), V(k+1))
+          else
+             call A%matvec(V(k), V(k+1))
           endif
+
+          do j = 1, k
+             alpha = V(k+1)%dot(V(j)) ; call V(k+1)%axpby(1.0_wp, V(j), -alpha)
+             H(j, k) = alpha
+          enddo
+          do j = 1, k
+             alpha = V(k+1)%dot(V(j)) ; call V(k+1)%axpby(1.0_wp, V(j), -alpha)
+             H(j, k) = H(j, k) + alpha
+          enddo
+          H(k+1, k) = V(k+1)%norm()
+          if (H(k+1, k) > tol) then
+             call V(k+1)%scal(1.0_wp / H(k+1, k))
+          endif
+
           ! --> Least-squares problem.
           call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
           ! --> Compute residual.
