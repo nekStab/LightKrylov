@@ -912,7 +912,7 @@ contains
     maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
     verbose = opts%verbose ; trans = optval(transpose, .false.)
 
-    if (present(precond)) then
+    if (present(preconditioner)) then
        write(*, *) "INFO: BICGSTAB does not support preconditioning yet. Precond is thus ignored."
        write(*, *)
     endif
