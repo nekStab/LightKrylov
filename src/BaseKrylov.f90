@@ -60,7 +60,7 @@ contains
     k_start   = optval(kstart, 1)
     k_end     = optval(kend, kdim)
     verbose   = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol)
     trans     = optval(transpose, .false.)
 
     ! --> Arnoldi factorization.
@@ -178,7 +178,7 @@ contains
     k_start   = optval(kstart, 1)
     k_end     = optval(kend, kdim)
     verbose   = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol)
 
     ! --> Lanczos tridiagonalization.
     lanczos: do k = k_start, k_end
@@ -294,7 +294,7 @@ contains
     k_start = optval(kstart, 1)
     k_end   = optval(kend, kdim)
     verbose = optval(verbosity, .false.)
-    tolerance = optval(tol, 1.0D-12)
+    tolerance = optval(tol, atol)
 
     ! --> Lanczos bidiagonalization.
     lanczos : do k = k_start, k_end
@@ -425,7 +425,7 @@ contains
        tmp = V(k+1)%dot(W(k+1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
        T(k, k+1) = gamma ; T(k+1, k) = beta
 
-       if ((abs(beta) < tolerance) .or. (abs(gamma) < tolerance)) then
+       if (abs(tmp) < tolerance) then
           if (verbose) then
              write(*, *) "INFO : Invariant subspaces have been computed (beta, gamma) = (", beta, ",", gamma, ")."
           endif
@@ -435,7 +435,7 @@ contains
              alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, V(i), -alpha)
              alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, W(i), -alpha)
           enddo
-       
+      
           ! --> Normalization step.
           call V(k+1)%scal(1.0_wp / beta) ; call W(k+1)%scal(1.0_wp / gamma)
        endif
