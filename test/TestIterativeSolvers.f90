@@ -121,6 +121,7 @@ contains
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Linear Problem.
+    real(kind=wp) :: Q(test_size, 10_wp*test_size)
     class(spd_matrix), allocatable :: A ! Linear Operator.
     class(rvector), allocatable :: b ! Right-hand side vector.
     class(rvector), allocatable :: x ! Solution vector.
@@ -128,17 +129,16 @@ contains
     !> Information flag.
     integer :: info
 
-    
     ! --> Initialize linear problem.
-    A = spd_matrix(); call random_number(A%data)
-    A%data = matmul(A%data, transpose(A%data)) ; A%data = 0.5 * (A%data + transpose(A%data))
+    A = spd_matrix()
+    call random_number(Q) ; A%data = matmul(Q, transpose(Q))
+    A%data = 0.5 * (A%data + transpose(A%data))
     b = rvector(); call random_number(b%data)
     x = rvector(); call x%zero()
     ! --> CG solver.
     opts = cg_opts(verbose=.false., atol=1e-12_wp, rtol=0.0_wp)
-    call cg(A, b, x, info)
+    call cg(A, b, x, info, options=opts)
     ! --> Check convergence.
-    write(*, *) norm2(matmul(A%data, x%data) - b%data)
     call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
     
     return

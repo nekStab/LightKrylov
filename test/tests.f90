@@ -33,9 +33,9 @@ program Tester
        new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite), &
        new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite),   &
        !new_testsuite("Eigenvalues Test Suite", collect_evp_testsuite),                            &
-       new_testsuite("GMRES Test Suite", collect_gmres_testsuite)                                &
+       new_testsuite("GMRES Test Suite", collect_gmres_testsuite),                                &
        !new_testsuite("SVD Test Suite", collect_svd_testsuite),                                    &
-       !new_testsuite("CG Test Suite", collect_cg_testsuite),                                      &
+       new_testsuite("CG Test Suite", collect_cg_testsuite)                                      &
        !new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite),                          &
        !new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite)   &
        ]

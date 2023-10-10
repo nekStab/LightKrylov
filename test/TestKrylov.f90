@@ -466,7 +466,7 @@ contains
     A = rmatrix() ; call random_number(A%data)
     ! --> Initialize Krylov subspace.
     allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
+    alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
     do k = 2, size(X)
        call X(k)%zero()
     enddo
