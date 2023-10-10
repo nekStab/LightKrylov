@@ -25,24 +25,24 @@ contains
     ! --> Optional arguments (mainly for GMRES)
     integer, optional, intent(in) :: kstart, kend
     logical, optional, intent(in) :: verbosity, transpose
-    double precision, optional, intent(in) :: tol
+    real(kind=wp), optional, intent(in) :: tol
 
     integer :: k_start, k_end
     logical :: verbose, trans
-    double precision :: tolerance
+    real(kind=wp) :: tolerance
 
     ! --> Linear Operator to be factorized.
     class(abstract_linop), intent(in) :: A
     ! --> Krylov basis.
     class(abstract_vector), dimension(:), intent(inout) :: X
     ! --> Upper Hessenberg matrix.
-    double precision, dimension(:, :), intent(inout) :: H
+    real(kind=wp), dimension(:, :), intent(inout) :: H
     ! --> Information.
     integer, intent(out) :: info ! info < 0 : The k-step Arnoldi factorization failed.
     ! info = 0 : The k-step Arnoldi factorization succeeded.
     ! info > 0 : An invariant subspace has been computed after k=info steps.
     ! --> Miscellaneous
-    double precision :: beta
+    real(kind=wp) :: beta
     integer :: k, kdim
 
     info = 0
@@ -113,11 +113,11 @@ contains
 
   subroutine update_hessenberg_matrix(H, X, k)
     integer, intent(in) :: k
-    double precision, dimension(:, :), intent(inout) :: H
+    real(kind=wp), dimension(:, :), intent(inout) :: H
     class(abstract_vector), dimension(:) :: X
     class(abstract_vector), allocatable :: wrk
     integer :: i
-    double precision :: alpha
+    real(kind=wp) :: alpha
 
     ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
     do i = 1, k
@@ -148,7 +148,7 @@ contains
     !> Krylov basis.
     class(abstract_vector), dimension(:), intent(inout) :: X
     !> Tri-diagonal matrix.
-    double precision, dimension(:, :), intent(inout) :: T
+    real(kind=wp), dimension(:, :), intent(inout) :: T
     !> Information flag.
     integer, intent(out) :: info
     !> Optional arguements.
@@ -158,10 +158,10 @@ contains
     integer                       :: k_end
     logical, optional, intent(in) :: verbosity
     logical                       :: verbose
-    double precision, optional, intent(in) :: tol
-    double precision                       :: tolerance
+    real(kind=wp), optional, intent(in) :: tol
+    real(kind=wp)                       :: tolerance
     !> Miscellaneous.
-    double precision :: beta
+    real(kind=wp) :: beta
     integer          :: k, kdim
     integer          :: i, j
 
@@ -224,11 +224,11 @@ contains
 
   subroutine update_tridiag_matrix(T, X, k)
     integer, intent(in) :: k
-    double precision, dimension(:, :), intent(inout) :: T
+    real(kind=wp), dimension(:, :), intent(inout) :: T
     class(abstract_vector), dimension(:) :: X
     class(abstract_vector), allocatable :: wrk
     integer :: i
-    double precision :: alpha
+    real(kind=wp) :: alpha
 
     ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
     do i = max(1, k-1), k
