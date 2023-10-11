@@ -114,7 +114,7 @@ contains
   !-----                                -----
   !------------------------------------------
 
-  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, verbosity, transpose)
+  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, verbosity, transpose)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -125,7 +125,10 @@ contains
     real(kind=wp)   , dimension(size(X)-1)           , intent(out) :: residuals
     !> Information flag.
     integer, intent(out) :: info
-    !> Verbosity control.
+    !> Number of desired eigenvalues.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+   !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical :: verbose
     !> Transpose operator.
@@ -149,6 +152,7 @@ contains
     ! --> Deals with the optional arguments.
     verbose = optval(verbosity, .false.)
     trans   = optval(transpose, .false.)
+    nev_    = optval(nev, size(X)-1)
 
     ! --> Initialize variables.
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
@@ -158,28 +162,42 @@ contains
        call X(i)%zero()
     enddo
 
-    ! --> Compute Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, info, verbosity=verbose, transpose=trans)
+    arnoldi : do k = 1, kdim
+       !> Arnoldi step.
+       call arnoldi_factorization(A, X, H, info, kstart=k, kend=k, verbosity=verbose, transpose=trans)
 
-    if (info < 0) then
-       if (verbose) then
-          write(*, *) "INFO : Arnoldi iteration failed. Exiting the eig subroutine."
-          write(*, *) "       Arnoldi exit code :", info
+       if (info < 0) then
+          if (verbose) then
+             write(*, *) "INFO : Arnoldi iteration failed. Exiting the eig subroutine."
+             write(*, *) "       Arnoldi exit code :", info
+          endif
+          info = -1
+          return
        endif
-       info = -1
-       return
-    endif
 
-    ! --> Compute spectral decomposition of the Hessenberg matrix.
-    call evd(H(1:kdim, 1:kdim), eigvecs, eigvals, kdim)
+       !> Spectral decomposition of the k x k Hessenberg matrix.
+       eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
+       call evd(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k), k)
 
-    ! --> Sort eigenvalues with decreasing magnitude.
-    abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
-    eigvals(:) = eigvals(indices) ; eigvecs = eigvecs(:, indices)
+       !> Sort eigenvalues.
+       abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+       eigvals = eigvals(indices) ; eigvecs = eigvecs(:, indices)
 
-    ! --> Compute the residual associated with each eigenpair.
-    beta = H(kdim+1, kdim) !> Get Krylov residual vector norm.
-    residuals = compute_residual(beta, abs(eigvecs(kdim, :)))
+       !> Compute residuals.
+       beta = H(k+1, k) !> Get Krylov residual vector norm.
+       residuals(1:k) = compute_residual(beta, abs(eigvecs(k, 1:k)))
+
+       !> Check convergence.
+       conv = count(residuals(1:k) < 1e-4_wp)
+       if (conv >= nev_) then
+          if (verbose) then
+             write(*, *) "INFO : The first ", conv, "have converged."
+             write(*, *) "       Exiting the computation."
+          endif
+          exit arnoldi
+       endif
+
+    enddo arnoldi
 
     return
   end subroutine eigs
