@@ -192,10 +192,10 @@ contains
        residuals(1:k) = compute_residual(beta, abs(eigvecs(k, 1:k)))
 
        !> Check convergence.
-       conv = count(residuals(1:k) < 1e-4_wp)
+       conv = count(residuals(1:k) < tol)
        if (conv >= nev_) then
           if (verbose) then
-             write(*, *) "INFO : The first ", conv, "have converged."
+             write(*, *) "INFO : The first ", conv, "eigenpairs have converged."
              write(*, *) "       Exiting the computation."
           endif
           exit arnoldi
@@ -206,7 +206,7 @@ contains
     return
   end subroutine eigs
 
-  subroutine eighs(A, X, eigvecs, eigvals, residuals, info, verbosity)
+  subroutine eighs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity)
     !> Linear Operator.
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
@@ -217,6 +217,12 @@ contains
     real(kind=wp), dimension(size(X)-1)           , intent(out) :: residuals
     !> Information flag.
     integer, intent(out) :: info
+    !> Number of converged eigenvalues needed.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical :: verbose
@@ -236,6 +242,8 @@ contains
 
     ! --> Deals with the optional argument.
     verbose = optval(verbosity, .false.)
+    nev_    = optval(nev, size(X)-1)
+    tol     = optval(tolerance, rtol)
 
     ! --> Initialize all variables.
     T = 0.0_wp ; residuals = 0.0_wp ; eigvecs = 0.0_wp ; eigvals = 0.0_wp
@@ -245,27 +253,41 @@ contains
        call X(i)%zero()
     enddo
 
-    ! --> Compute Lanczos tridiagonalization.
-    call lanczos_tridiagonalization(A, X, T, info, verbosity=verbose)
-
-    if (info < 0) then
-       if (verbose) then
-          write(*, *) "INFO : Lanczos iteration failed. Exiting the eigh subroutine."
-          write(*, *) "       Lanczos exit code :", info
+    lanczos : do k = 1, kdim
+       ! --> Compute Lanczos tridiagonalization.
+       call lanczos_tridiagonalization(A, X, T, info, kstart=k, kend=k, verbosity=verbose)
+       
+       if (info < 0) then
+          if (verbose) then
+             write(*, *) "INFO : Lanczos iteration failed. Exiting the eigh subroutine."
+             write(*, *) "       Lanczos exit code :", info
+          endif
+          info = -1
+          return
        endif
-       info = -1
-       return
-    endif
+       
+       ! --> Compute spectral decomposition of the tridiagonal matrix.
+       eigvals = 0.0_wp ; eigvecs = 0.0_wp
+       call hevd(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k), k)
 
-    ! --> Compute spectral decomposition of the tridiagonal matrix.
-    call hevd(T(1:kdim, 1:kdim), eigvecs, eigvals, kdim)
+       ! --> Sort eigenvalues in decreasing order.
+       call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
 
-    ! --> Sort eigenvalues in decreasing order.
-    call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
+       ! --> Compute the residual associated with each eigenpair.
+       beta = T(k+1, k) !> Get Krylov residual vector norm.
+       residuals(1:k) = compute_residual(beta, eigvecs(k, 1:k))
 
-    ! --> Compute the residual associated with each eigenpair.
-    beta = T(kdim+1, kdim) !> Get Krylov residual vector norm.
-    residuals = compute_residual(beta, eigvecs(kdim, :))
+       !> Check convergence.
+       conv = count(residuals(1:k) < tol)
+       if (conv >= nev_) then
+          if (verbose) then
+             write(*, *) "INFO : The first", conv, "eigenpairs have converged."
+             write(*, *)         "Exiting the computation."
+          endif
+          exit lanczos
+       endif
+
+    enddo lanczos
 
     return
   end subroutine eighs
