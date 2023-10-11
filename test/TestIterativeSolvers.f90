@@ -10,7 +10,8 @@ module TestIterativeSolvers
 
   public :: collect_gmres_testsuite,    &
        collect_cg_testsuite,       &
-       collect_evp_testsuite
+       collect_evp_testsuite, &
+       collect_svd_testsuite
 
   !-----------------------------------------------------------
   !-----                                                 -----
@@ -315,6 +316,72 @@ contains
   !-----                        -----
   !----------------------------------
 
+  subroutine collect_svd_testsuite(testsuite)
+    !> Collection of tests.
+    type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+    testsuite = [ &
+         new_unittest("SVD computation", test_svd_problem) &
+         ]
+    return
+  end subroutine collect_svd_testsuite
+
+  subroutine test_svd_problem(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(rmatrix), allocatable :: A
+    !> Krylov subspaces.
+    class(rvector), allocatable :: U(:), V(:)
+    integer                     :: kdim = test_size
+    !> Low-dimensional singular vectors and singular values.
+    real(kind=wp) :: uvecs(1:test_size, 1:test_size), vvecs(1:test_size, 1:test_size)
+    real(kind=wp) :: svdvals(1:test_size)
+    !> Residuals.
+    real(kind=wp) :: residuals(1:test_size)
+    !> Information flag.
+    integer :: info
+    !> Miscellaneous.
+    integer :: i, j, k
+    real(kind=wp) :: alpha
+    real(kind=wp) :: true_svdvals(1:test_size), pi = 4.0_wp*atan(1.0_wp)
+
+    !> Initialize matrix.
+    A = rmatrix()
+    do i = 1, test_size
+       !> Diagonal entry.
+       A%data(i, i) = 2.0_wp
+       !> Upper diagonal entry.
+       if (i < test_size) A%data(i, i+1) = -1.0_wp
+       !> Lower diagonal entry.
+       if (i < test_size) A%data(i+1, i) = -1.0_wp
+    enddo
+
+    !> Initialize Krylov subspaces.
+    allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1))
+    call random_number(U(1)%data)
+    alpha = U(1)%norm() ; call U(1)%scal(1.0_wp / alpha)
+    call V(1)%zero()
+    do i = 2, size(U)
+       call U(i)%zero() ; call V(i)%zero()
+    enddo
+
+    !> Initialize internal variables.
+    svdvals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp
+
+    !> Compute singular value decomposition.
+    call svds(A, U, V, uvecs, vvecs, svdvals, residuals, info)
+
+    !> Analytical singular values.
+    do i = 1, test_size
+       true_svdvals(i) = 2.0_wp * (1.0_wp + cos(i*pi/(test_size+1)))
+    enddo
+
+    !> Check convergence.
+    call check(error, all_close(svdvals, true_svdvals, rtol, atol))
+
+    return
+  end subroutine test_svd_problem
   
   !------------------------------------
   !-----                          -----
