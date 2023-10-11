@@ -114,7 +114,7 @@ contains
   !-----                                -----
   !------------------------------------------
 
-  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, verbosity, transpose)
+  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -125,6 +125,12 @@ contains
     real(kind=wp)   , dimension(size(X)-1)           , intent(out) :: residuals
     !> Information flag.
     integer, intent(out) :: info
+    !> Number of desired eigenvalues.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical :: verbose
@@ -141,6 +147,7 @@ contains
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
     real(kind=wp)    , dimension(size(X)-1) :: abs_eigvals
+    real(kind=wp) :: alpha
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
@@ -148,40 +155,58 @@ contains
     ! --> Deals with the optional arguments.
     verbose = optval(verbosity, .false.)
     trans   = optval(transpose, .false.)
+    nev_    = optval(nev, size(X)-1)
+    tol     = optval(tolerance, rtol)
 
     ! --> Initialize variables.
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
+    !> Make sure the first Krylov vector has unit-norm.
+    alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
     do i = 2, size(X) ! i=1 is the initial Krylov vector given by the user.
        call X(i)%zero()
     enddo
 
-    ! --> Compute Arnoldi factorization.
-    call arnoldi_factorization(A, X, H, info, verbosity=verbose, transpose=trans)
+    arnoldi : do k = 1, kdim
+       !> Arnoldi step.
+       call arnoldi_factorization(A, X, H, info, kstart=k, kend=k, verbosity=verbose, transpose=trans)
 
-    if (info < 0) then
-       if (verbose) then
-          write(*, *) "INFO : Arnoldi iteration failed. Exiting the eig subroutine."
-          write(*, *) "       Arnoldi exit code :", info
+       if (info < 0) then
+          if (verbose) then
+             write(*, *) "INFO : Arnoldi iteration failed. Exiting the eig subroutine."
+             write(*, *) "       Arnoldi exit code :", info
+          endif
+          info = -1
+          return
        endif
-       info = -1
-       return
-    endif
 
-    ! --> Compute spectral decomposition of the Hessenberg matrix.
-    call evd(H(1:kdim, 1:kdim), eigvecs, eigvals, kdim)
+       !> Spectral decomposition of the k x k Hessenberg matrix.
+       eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
+       call evd(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k), k)
 
-    ! --> Sort eigenvalues with decreasing magnitude.
-    abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
-    eigvals(:) = eigvals(indices) ; eigvecs = eigvecs(:, indices)
+       !> Sort eigenvalues.
+       abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+       eigvals = eigvals(indices) ; eigvecs = eigvecs(:, indices)
 
-    ! --> Compute the residual associated with each eigenpair.
-    beta = H(kdim+1, kdim) !> Get Krylov residual vector norm.
-    residuals = compute_residual(beta, abs(eigvecs(kdim, :)))
+       !> Compute residuals.
+       beta = H(k+1, k) !> Get Krylov residual vector norm.
+       residuals(1:k) = compute_residual(beta, abs(eigvecs(k, 1:k)))
+
+       !> Check convergence.
+       conv = count(residuals(1:k) < tol)
+       if (conv >= nev_) then
+          if (verbose) then
+             write(*, *) "INFO : The first ", conv, "eigenpairs have converged."
+             write(*, *) "       Exiting the computation."
+          endif
+          exit arnoldi
+       endif
+
+    enddo arnoldi
 
     return
   end subroutine eigs
 
-  subroutine eighs(A, X, eigvecs, eigvals, residuals, info, verbosity)
+  subroutine eighs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity)
     !> Linear Operator.
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
@@ -192,6 +217,12 @@ contains
     real(kind=wp), dimension(size(X)-1)           , intent(out) :: residuals
     !> Information flag.
     integer, intent(out) :: info
+    !> Number of converged eigenvalues needed.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical :: verbose
@@ -204,40 +235,59 @@ contains
     !> Miscellaneous.
     integer :: i, j, k
     integer(int_size), dimension(size(X)-1) :: indices
+    real(kind=wp) :: alpha
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
 
     ! --> Deals with the optional argument.
     verbose = optval(verbosity, .false.)
+    nev_    = optval(nev, size(X)-1)
+    tol     = optval(tolerance, rtol)
 
     ! --> Initialize all variables.
     T = 0.0_wp ; residuals = 0.0_wp ; eigvecs = 0.0_wp ; eigvals = 0.0_wp
+    !> Make sure the first Krylov vector has unit-norm.
+    alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
     do i = 2, size(X) ! i = 1 is the starting Krylov vector provided by the user.
        call X(i)%zero()
     enddo
 
-    ! --> Compute Lanczos tridiagonalization.
-    call lanczos_tridiagonalization(A, X, T, info, verbosity=verbose)
-
-    if (info < 0) then
-       if (verbose) then
-          write(*, *) "INFO : Lanczos iteration failed. Exiting the eigh subroutine."
-          write(*, *) "       Lanczos exit code :", info
+    lanczos : do k = 1, kdim
+       ! --> Compute Lanczos tridiagonalization.
+       call lanczos_tridiagonalization(A, X, T, info, kstart=k, kend=k, verbosity=verbose)
+       
+       if (info < 0) then
+          if (verbose) then
+             write(*, *) "INFO : Lanczos iteration failed. Exiting the eigh subroutine."
+             write(*, *) "       Lanczos exit code :", info
+          endif
+          info = -1
+          return
        endif
-       info = -1
-       return
-    endif
+       
+       ! --> Compute spectral decomposition of the tridiagonal matrix.
+       eigvals = 0.0_wp ; eigvecs = 0.0_wp
+       call hevd(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k), k)
 
-    ! --> Compute spectral decomposition of the tridiagonal matrix.
-    call hevd(T(1:kdim, 1:kdim), eigvecs, eigvals, kdim)
+       ! --> Sort eigenvalues in decreasing order.
+       call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
 
-    ! --> Sort eigenvalues in decreasing order.
-    call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
+       ! --> Compute the residual associated with each eigenpair.
+       beta = T(k+1, k) !> Get Krylov residual vector norm.
+       residuals(1:k) = compute_residual(beta, eigvecs(k, 1:k))
 
-    ! --> Compute the residual associated with each eigenpair.
-    beta = T(kdim+1, kdim) !> Get Krylov residual vector norm.
-    residuals = compute_residual(beta, eigvecs(kdim, :))
+       !> Check convergence.
+       conv = count(residuals(1:k) < tol)
+       if (conv >= nev_) then
+          if (verbose) then
+             write(*, *) "INFO : The first", conv, "eigenpairs have converged."
+             write(*, *)         "Exiting the computation."
+          endif
+          exit lanczos
+       endif
+
+    enddo lanczos
 
     return
   end subroutine eighs
@@ -322,7 +372,7 @@ contains
   !-----                                    -----
   !----------------------------------------------
 
-  subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, verbosity)
+  subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, nev, tolerance, verbosity)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov bases.
@@ -334,6 +384,12 @@ contains
     real(kind=wp), intent(out) :: residuals(size(U)-1)
     !> Information flag.
     integer, intent(out) :: info
+    !> Number of converged singular triplets.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical verbose
@@ -348,6 +404,8 @@ contains
     integer(int_size) :: indices(size(U)-1)
 
     ! --> Deals with the optional args.
+    nev_    = optval(nev, size(U)-1)
+    tol     = optval(tolerance, rtol)
     verbose = optval(verbosity, .false.)
     ! --> Assert size(U) == size(V).
     if (size(U) .ne. size(V)) then
@@ -362,19 +420,35 @@ contains
 
     ! --> Initialize variables.
     B = 0.0_wp ; residuals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp ; sigma = 0.0_wp
+    !> Make sure the first Krylov vector has unit-norm.
+    beta = U(1)%norm() ; call U(1)%scal(1.0_wp / beta)
     do i = 2, size(U)
        call U(i)%zero() ; call V(i)%zero()
     enddo
 
-    ! --> Compute the Lanczos bidiagonalization.
-    call lanczos_bidiagonalization(A, U, V, B, info, verbosity=verbose)
+    lanczos : do k = 1, kdim
+       ! --> Compute the Lanczos bidiagonalization.
+       call lanczos_bidiagonalization(A, U, V, B, info, kstart=k, kend=k, verbosity=verbose)
+       
+       ! --> Compute the singular value decomposition of the bidiagonal matrix.
+       sigma = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp
+       call svd(B(1:k, 1:k), uvecs(1:k, 1:k), sigma(1:k), vvecs(1:k, 1:k))
+       
+       ! --> Compute the residual associated with each singular triplet.
+       beta = B(k+1, k) !> Get Krylov residual vector norm.
+       residuals(1:k) = compute_residual(beta, vvecs(k, 1:k))
 
-    ! --> Compute the singular value decomposition of the bidiagonal matrix.
-    call svd(B(1:kdim, 1:kdim), uvecs, sigma, vvecs)
+       !> Check convergence.
+       conv = count(residuals(1:k) < tol)
+       if (conv >= nev_) then
+          if (verbose) then
+             write(*, *) "INFO : The first ", conv, "singular triplets have converged."
+             write(*, *) "       Exiting the computation."
+          endif
+          exit lanczos
+       endif
 
-    ! --> Compute the residual associated with each singular triplet.
-    beta = B(kdim+1, kdim) !> Get Krylov residual vector norm.
-    residuals = compute_residual(beta, vvecs(kdim, :))
+    enddo lanczos
 
     return
   end subroutine svds

@@ -315,7 +315,6 @@ contains
        alpha = V(k)%norm() ; B(k, k) = alpha
        if (alpha > tolerance) then
           call V(k)%scal(1.0_wp / alpha)
-          B(k, k) = alpha
        else
           if (verbose) then
              write(*, *) "INFO : alpha = ", alpha
@@ -338,7 +337,6 @@ contains
        beta = U(k+1)%norm() ; B(k+1, k) = beta
        if (beta > tolerance) then
           call U(k+1)%scal(1.0_wp / beta)
-          B(k+1, k) = beta
        else
           if (verbose) then
              write(*, *) "INFO : beta = ", beta
