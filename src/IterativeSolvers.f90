@@ -114,7 +114,7 @@ contains
   !-----                                -----
   !------------------------------------------
 
-  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, verbosity, transpose)
+  subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
@@ -128,7 +128,10 @@ contains
     !> Number of desired eigenvalues.
     integer, optional, intent(in) :: nev
     integer                       :: nev_, conv
-   !> Verbosity control.
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
+    !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical :: verbose
     !> Transpose operator.
@@ -153,6 +156,7 @@ contains
     verbose = optval(verbosity, .false.)
     trans   = optval(transpose, .false.)
     nev_    = optval(nev, size(X)-1)
+    tol     = optval(tolerance, rtol)
 
     ! --> Initialize variables.
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
