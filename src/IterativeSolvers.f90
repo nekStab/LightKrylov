@@ -372,7 +372,7 @@ contains
   !-----                                    -----
   !----------------------------------------------
 
-  subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, verbosity)
+  subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, nev, tolerance, verbosity)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov bases.
@@ -384,6 +384,12 @@ contains
     real(kind=wp), intent(out) :: residuals(size(U)-1)
     !> Information flag.
     integer, intent(out) :: info
+    !> Number of converged singular triplets.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical verbose
@@ -398,6 +404,8 @@ contains
     integer(int_size) :: indices(size(U)-1)
 
     ! --> Deals with the optional args.
+    nev_    = optval(nev, size(U)-1)
+    tol     = optval(tolerance, rtol)
     verbose = optval(verbosity, .false.)
     ! --> Assert size(U) == size(V).
     if (size(U) .ne. size(V)) then
@@ -418,15 +426,29 @@ contains
        call U(i)%zero() ; call V(i)%zero()
     enddo
 
-    ! --> Compute the Lanczos bidiagonalization.
-    call lanczos_bidiagonalization(A, U, V, B, info, verbosity=verbose)
+    lanczos : do k = 1, kdim
+       ! --> Compute the Lanczos bidiagonalization.
+       call lanczos_bidiagonalization(A, U, V, B, info, kstart=k, kend=k, verbosity=verbose)
+       
+       ! --> Compute the singular value decomposition of the bidiagonal matrix.
+       sigma = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp
+       call svd(B(1:k, 1:k), uvecs(1:k, 1:k), sigma(1:k), vvecs(1:k, 1:k))
+       
+       ! --> Compute the residual associated with each singular triplet.
+       beta = B(k+1, k) !> Get Krylov residual vector norm.
+       residuals(1:k) = compute_residual(beta, vvecs(k, 1:k))
 
-    ! --> Compute the singular value decomposition of the bidiagonal matrix.
-    call svd(B(1:kdim, 1:kdim), uvecs, sigma, vvecs)
+       !> Check convergence.
+       conv = count(residuals(1:k) < tol)
+       if (conv >= nev_) then
+          if (verbose) then
+             write(*, *) "INFO : The first ", conv, "singular triplets have converged."
+             write(*, *) "       Exiting the computation."
+          endif
+          exit lanczos
+       endif
 
-    ! --> Compute the residual associated with each singular triplet.
-    beta = B(kdim+1, kdim) !> Get Krylov residual vector norm.
-    residuals = compute_residual(beta, vvecs(kdim, :))
+    enddo lanczos
 
     return
   end subroutine svds
