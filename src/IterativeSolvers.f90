@@ -450,6 +450,8 @@ contains
 
     enddo lanczos
 
+    info = min(k, kdim)
+
     return
   end subroutine svds
 
@@ -669,7 +671,7 @@ contains
              write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
           endif
           ! --> Check convergence.
-          if (beta**2 .lt. tol) then
+          if (beta .lt. tol) then
              exit arnoldi
           endif
        enddo arnoldi
@@ -695,7 +697,7 @@ contains
        ! --> Initialize new starting Krylov vector if needed.
        beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
-       if (beta**2 .lt. tol) then
+       if (beta .lt. tol) then
           exit gmres_iterations
        endif
 
@@ -703,6 +705,8 @@ contains
 
     ! --> Deallocate variables.
     deallocate(V, H, y, e)
+
+    info = (min(i, maxiter)-1)*k_dim + min(k, k_dim)
 
     return
   end subroutine gmres
