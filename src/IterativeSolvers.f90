@@ -11,6 +11,7 @@ module IterativeSolvers
 
   private
   public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg
+  public :: two_sided_eigs
   public :: abstract_linear_solver
 
   !------------------------------------------------
@@ -292,6 +293,103 @@ contains
     return
   end subroutine eighs
 
+  subroutine two_sided_eigs(A, V, W, rvecs, lvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
+    !> Linear Operator.
+    class(abstract_linop), intent(in) :: A
+    !> Left and right Krylov basis.
+    class(abstract_vector), dimension(:), intent(inout) :: V
+    class(abstract_vector), dimension(:), intent(inout) :: W
+    !> Coordinates of eigenvectors in Krylov bases, eigenvalues and associated residuals.
+    complex(kind=wp), dimension(size(V)-1, size(V)-1), intent(out) :: rvecs
+    complex(kind=wp), dimension(size(W)-1, size(W)-1), intent(out) :: lvecs
+    complex(kind=wp), dimension(size(V)-1)           , intent(out) :: eigvals
+    real(kind=wp)   , dimension(size(V)-1)           , intent(out) :: residuals
+    !> Information flag.
+    integer, intent(out) :: info
+    !> Number of desired eigenvalues.
+    integer, optional, intent(in) :: nev
+    integer                       :: nev_, conv
+    !> Tolerance control.
+    real(kind=wp), optional, intent(in) :: tolerance
+    real(kind=wp)                       :: tol
+    !> Verbosity control.
+    logical, optional, intent(in) :: verbosity
+    logical                       :: verbose
+    !> Transpose operator.
+    logical, optional, intent(in) :: transpose
+    logical                       :: trans
+
+    !> Tridiagonal matrix.
+    real(kind=wp), dimension(size(V), size(V)) :: T
+    real(kind=wp)                              :: beta, gamma
+    !> Krylov subspace dimension.
+    integer :: kdim
+    !> Miscellaneous.
+    integer :: i, j, k
+    integer(int_size), dimension(size(V)-1) :: indices
+    real(kind=wp)    , dimension(size(V)-1) :: abs_eigvals
+    real(kind=wp)                           :: alpha, tmp
+
+    !> Dimension of the Krylov subspaces.
+    kdim = size(V)-1
+
+    !> Deals with optional args.
+    verbose = optval(verbosity, .false.)
+    trans   = optval(transpose, .false.)
+    nev_    = optval(nev, kdim)
+    tol     = optval(tolerance, rtol)
+
+    !> Initialize variables.
+    T = 0.0_wp ; residuals = 0.0_wp ; eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
+    lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
+
+    !> Make sure the first Krylov vectors are bi-orthogonal.
+    tmp = V(1)%dot(W(1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
+    call V(1)%scal(1.0_wp / beta) ; call W(1)%scal(1.0_wp / gamma)
+
+    do i = 2, size(V)
+       call V(i)%zero() ; call W(i)%zero()
+    enddo
+
+    lanczos : do k = 1, kdim
+       !> Lanczos step.
+       call nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, kstart=k, kend=k, verbosity=verbose)
+
+       if (info < 0) then
+          if (verbose) then
+             write(*, *) "INFO : Lanczos iteration failed. Exiting the eig subroutine."
+             write(*, *) "       Lanczos exit code :", info
+          endif
+       endif
+       info = -1
+       return
+
+       !> Spectral decomposition of the k x k tridiagonal matrix.
+       eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
+       rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
+       call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k), k)
+       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call cinv(lvecs(1:k, 1:k))
+
+       !> Sort eigenvalues.
+       abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+       eigvals = eigvals(indices) ; rvecs = rvecs(:, indices) ; lvecs = lvecs(:, indices)
+
+       !> Compute residuals.
+       beta = abs(T(k+1, k)) ; alpha = V(k+1)%norm()
+       residuals(1:k) = compute_residual(beta*alpha, abs(rvecs(k, 1:k)))
+       write(*, *) "RESIDUALS :", residuals(1:k)
+
+       !> Check convergence.
+       conv = count(residuals(1:k) < tol)
+       if (conv >= nev_) then
+          exit lanczos
+       endif
+
+    end do lanczos
+
+    return
+  end subroutine two_sided_eigs
+
   subroutine evd(A, vecs, vals, n)
     !> Lapack job.
     character*1 :: jobvl = "N", jobvr = "V"
@@ -365,6 +463,38 @@ contains
 
     return
   end subroutine hevd
+
+  subroutine rinv(A)
+    !> Matrix to invert (in-place)
+    real(kind=wp), intent(inout) :: A(:, :)
+    !> Lapack-related.
+    integer :: n, info
+    real(kind=wp) :: work(size(A, 1))
+    integer       :: ipiv(size(A, 1))
+
+    !> Compute A = LU (in-place).
+    n = size(A, 1) ; call dgetrf(n, n, A, n, ipiv, info)
+    !> Compute inv(A).
+    call dgetri(n, A, n, ipiv, work, n, info)
+
+    return
+  end subroutine rinv
+
+  subroutine cinv(A)
+    !> Matrix to invert (in-place)
+    complex(kind=wp), intent(inout) :: A(:, :)
+    !> Lapack-related.
+    integer :: n, info
+    complex(kind=wp) :: work(size(A, 1))
+    integer          :: ipiv(size(A, 1))
+
+    !> Compute A = LU (in-place).
+    n = size(A, 1) ; call zgetrf(n, n, A, n, ipiv, info)
+    !> Compute inv(A).
+    call zgetri(n, A, n, ipiv, work, n, info)
+
+    return
+  end subroutine cinv
 
   !----------------------------------------------
   !-----                                    -----
