@@ -293,7 +293,7 @@ contains
     return
   end subroutine eighs
 
-  subroutine two_sided_eigs(A, V, W, rvecs, lvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
+  subroutine two_sided_eigs(A, V, W, rvecs, lvecs, eigvals, residuals, info, nev, tolerance, verbosity)
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Left and right Krylov basis.
@@ -315,9 +315,6 @@ contains
     !> Verbosity control.
     logical, optional, intent(in) :: verbosity
     logical                       :: verbose
-    !> Transpose operator.
-    logical, optional, intent(in) :: transpose
-    logical                       :: trans
 
     !> Tridiagonal matrix.
     real(kind=wp), dimension(size(V), size(V)) :: T
@@ -330,12 +327,16 @@ contains
     real(kind=wp)    , dimension(size(V)-1) :: abs_eigvals
     real(kind=wp)                           :: alpha, tmp
 
+    !> Gram matrix.
+    complex(kind=wp), dimension(size(V)-1, size(V)-1) :: G
+    complex(kind=wp), dimension(size(V)-1, size(V)-1) :: H
+    real(kind=wp) :: direct_residual, adjoint_residual
+
     !> Dimension of the Krylov subspaces.
     kdim = size(V)-1
 
     !> Deals with optional args.
     verbose = optval(verbosity, .false.)
-    trans   = optval(transpose, .false.)
     nev_    = optval(nev, kdim)
     tol     = optval(tolerance, rtol)
 
@@ -354,39 +355,65 @@ contains
     lanczos : do k = 1, kdim
        !> Lanczos step.
        call nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, kstart=k, kend=k, verbosity=verbose)
-
        if (info < 0) then
           if (verbose) then
              write(*, *) "INFO : Lanczos iteration failed. Exiting the eig subroutine."
              write(*, *) "       Lanczos exit code :", info
           endif
+          info = -1
+          return
        endif
-       info = -1
-       return
 
        !> Spectral decomposition of the k x k tridiagonal matrix.
        eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
        rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
        call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k), k)
-       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call cinv(lvecs(1:k, 1:k))
+       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call cinv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
 
        !> Sort eigenvalues.
        abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
        eigvals = eigvals(indices) ; rvecs = rvecs(:, indices) ; lvecs = lvecs(:, indices)
 
        !> Compute residuals.
-       beta = abs(T(k+1, k)) ; alpha = V(k+1)%norm()
+       beta = abs(T(k+1, k)) ; gamma = abs(T(k, k+1)) ; alpha = V(k+1)%norm()
        residuals(1:k) = compute_residual(beta*alpha, abs(rvecs(k, 1:k)))
-       write(*, *) "RESIDUALS :", residuals(1:k)
+
+       G = 0.0_wp ; H = 0.0_wp
+       do i = 1, k
+          G(i, i) = V(i)%dot(V(i)) ; H(i, i) = W(i)%dot(W(i))
+          do j = i+1, k
+             G(i, j) = V(i)%dot(V(j))
+             G(j, i) = G(i, j)
+
+             H(i, j) = W(i)%dot(W(j))
+             H(j, i) = H(i, j)
+          enddo
+       enddo
+       residuals = 100.0_wp
+       do i = 1, k
+          alpha = V(k+1)%norm()
+          direct_residual = compute_residual(beta*alpha, abs(rvecs(k, i))) &
+               / sqrt( real(dot_product(rvecs(:, k), matmul(G, rvecs(:, k)))) )
+          alpha = W(k+1)%norm()
+          adjoint_residual = compute_residual(gamma*alpha, abs(lvecs(k, i))) &
+               / sqrt( real(dot_product(lvecs(:, k), matmul(H, lvecs(:, k)))) )
+          residuals(i) = max(direct_residual, adjoint_residual)
+       enddo
 
        !> Check convergence.
        conv = count(residuals(1:k) < tol)
+       write(*, *) "--- Iteration ", k, "---"
+       write(*, *) conv, "eigentriplets have converged."
+       write(*, *)
        if (conv >= nev_) then
+          info = k
           exit lanczos
        endif
 
     end do lanczos
 
+    call sort_index(residuals, indices, reverse=.false.)
+    eigvals = eigvals(indices) ; rvecs = rvecs(:, indices) ; lvecs = lvecs(indices, :)
     return
   end subroutine two_sided_eigs
 
@@ -580,6 +607,8 @@ contains
 
     enddo lanczos
 
+    info = k
+
     return
   end subroutine svds
 
@@ -743,6 +772,8 @@ contains
     allocate(y(1:k_dim))        ; y = 0.0_wp
     allocate(e(1:k_dim+1))      ; e = 0.0_wp
 
+    info = 0
+
     ! --> Initial Krylov vector.
     if (trans) then
        call A%rmatvec(x, V(1))
@@ -751,33 +782,25 @@ contains
     endif
     call V(1)%sub(b) ; call V(1)%scal(-1.0_wp)
     beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
-
     gmres_iterations : do i = 1, maxiter
        ! --> Zero-out variables.
        H = 0.0_wp ; y = 0.0_wp ; e = 0.0_wp ; e(1) = beta
        do j = 2, size(V)
           call V(j)%zero()
        enddo
-
+       
+       ! --> Arnoldi factorization.
        arnoldi : do k = 1, k_dim
-          ! --> Arnoldi factorization.
-          if (has_precond) then
-             ! --> Apply preconditioner.
-             wrk = V(k) ; call precond%apply(wrk)
-             ! --> Matrix-vector product.
-             if (trans) then
-                call A%rmatvec(wrk, V(k+1))
-             else
-                call A%matvec(wrk, V(k+1))
-             endif
+          wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+
+          ! --> Matrix-vector product.
+          if (trans) then
+             call A%rmatvec(wrk, V(k+1))
           else
-             if (trans) then
-                call A%rmatvec(V(k), V(k+1))
-             else
-                call A%matvec(V(k), V(k+1))
-             endif
+             call A%matvec(wrk, V(k+1))
           endif
 
+          ! --> Gram-Schmid orthogonalization (twice is enough).
           do j = 1, k
              alpha = V(k+1)%dot(V(j)) ; call V(k+1)%axpby(1.0_wp, V(j), -alpha)
              H(j, k) = alpha
@@ -786,6 +809,8 @@ contains
              alpha = V(k+1)%dot(V(j)) ; call V(k+1)%axpby(1.0_wp, V(j), -alpha)
              H(j, k) = H(j, k) + alpha
           enddo
+
+          ! --> Update Hessenberg matrix and normalize new Krylov vector.
           H(k+1, k) = V(k+1)%norm()
           if (H(k+1, k) > tol) then
              call V(k+1)%scal(1.0_wp / H(k+1, k))
@@ -793,24 +818,27 @@ contains
 
           ! --> Least-squares problem.
           call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+
           ! --> Compute residual.
           beta = norm2(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k)))
           if (verbose) then
-             write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
+             ! write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
+             write(*, *) "INFO : GMRES residual after ", info+1, "iteration : ", beta
           endif
+
+          ! --> Current number of iterations performed.
+          info = info + 1
+
           ! --> Check convergence.
-          if (beta**2 .lt. tol) then
+          if (beta .lt. tol) then
              exit arnoldi
           endif
        enddo arnoldi
 
        ! --> Update solution.
        k = min(k, k_dim)
-       if (allocated(dx) .eqv. .false.) allocate(dx, source=x)
-       call dx%zero() ; call get_vec(dx, V(1:k), y(1:k))
-       if (has_precond) then
-          call precond%apply(dx)
-       endif
+       if (allocated(dx) .eqv. .false.) allocate(dx, source=x) ; call dx%zero()
+       call get_vec(dx, V(1:k), y(1:k)) ; if (has_precond) call precond%apply(dx)
        call x%add(dx)
 
        ! --> Recompute residual for sanity check.
@@ -825,14 +853,14 @@ contains
        ! --> Initialize new starting Krylov vector if needed.
        beta = V(1)%norm() ; call V(1)%scal(1.0_wp / beta)
 
-       if (beta**2 .lt. tol) then
-          exit gmres_iterations
-       endif
-
+       ! --> Exit GMRES if desired accuracy is reached.
+       if (beta .lt. tol) exit gmres_iterations
+    
     enddo gmres_iterations
 
-    ! --> Deallocate variables.
-    deallocate(V, H, y, e)
+    ! --> Convergence information.
+    write(*, *) "INFO : GMRES converged with residual ", beta
+    write(*, *) "       Computation required ", info, "iterations"
 
     return
   end subroutine gmres
@@ -870,6 +898,11 @@ contains
 
     !> Solve the least-squares problem.
     call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
+
+    if (info > 0) then
+       write(*, *) "INFO: Error in LAPACK least-squares solver. Stopping the computation."
+       call exit()
+    endif
 
     !> Return solution.
     x = b_tilde(1:n)
