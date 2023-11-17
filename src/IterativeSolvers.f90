@@ -413,7 +413,7 @@ contains
     end do lanczos
 
     call sort_index(residuals, indices, reverse=.false.)
-    eigvals = eigvals(indices) ; rvecs = rvecs(:, indices) ; lvecs = lvecs(indices, :)
+    eigvals = eigvals(indices) ; rvecs = rvecs(:, indices) ; lvecs = lvecs(:, indices)
     return
   end subroutine two_sided_eigs
 
