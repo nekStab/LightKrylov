@@ -12,13 +12,14 @@ auto-tests = true
 auto-examples = true
 module-naming = false
 link = ["blas", "lapack"]
+#link = ["openblas"]
 
 [install]
-library = false
+library = true
 
 [fortran]
 implicit-typing = false
-implicit-external = false
+implicit-external = true
 source-form = "free"
 
 [dependencies]
