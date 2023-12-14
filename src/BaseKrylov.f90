@@ -10,9 +10,21 @@ module BaseKrylov
   public :: arnoldi_factorization, &
        lanczos_tridiagonalization, &
        lanczos_bidiagonalization,  &
-       nonsymmetric_lanczos_tridiagonalization
+       nonsymmetric_lanczos_tridiagonalization, &
+       initialize_krylov_subspace
 
 contains
+
+  subroutine initialize_krylov_subspace(X)
+    !> Krylov subspace to be zeroed-out.
+    class(abstract_vector), intent(inout) :: X(:)
+    !> Internal variables.
+    integer :: i
+    do i = 1, size(X)
+       call X(i)%zero()
+    enddo
+    return
+  end subroutine initialize_krylov_subspace
 
   !---------------------------------------------------------------------
   !-----                                                           -----
@@ -397,11 +409,13 @@ contains
     k_start = optval(kstart, 1)
     k_end   = optval(kend, kdim)
     verbose = optval(verbosity, .false.)
-    tolerance = optval(tol, atol)
+    tolerance = optval(tol, rtol)
 
     ! --> Bi-orthogonalize the left and right starting vectors.
-    tmp = V(1)%dot(W(1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
-    call V(1)%scal(1.0_wp / beta) ; call W(1)%scal(1.0_wp / gamma)
+    if (k_start .eq. 1) then
+       tmp = V(1)%dot(W(1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
+       call V(1)%scal(1.0_wp / beta) ; call W(1)%scal(1.0_wp / gamma)
+    endif
 
     ! --> Nonsymmetric Lanczos iterations.
     lanczos : do k = k_start, k_end
@@ -410,14 +424,20 @@ contains
        call A%rmatvec(W(k), W(k+1))
 
        ! --> Update diagonal entry of the nonsymmetric tridiagonal matrix.
-       alpha = W(k)%dot(V(k+1)) ; T(k, k) = alpha
+       alpha = V(k+1)%dot(W(k)) ; T(k, k) = alpha
 
        ! --> Lanczos three term recurrence.
        call V(k+1)%axpby(1.0_wp, V(k), -alpha)
-       if (k > 1) call V(k+1)%axpby(1.0_wp, V(k-1), -gamma)
+       if (k > 1) call V(k+1)%axpby(1.0_wp, V(k-1), -T(k-1, k))
 
        call W(k+1)%axpby(1.0_wp, W(k), -alpha)
-       if (k > 1) call W(k+1)%axpby(1.0_wp, W(k-1), -beta)
+       if (k > 1) call W(k+1)%axpby(1.0_wp, W(k-1), -T(k, k-1))
+
+       ! --> Full re-biorthogonalization.
+       do i = 1, k
+          alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, V(i), -alpha)
+          alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, W(i), -alpha)
+       enddo
 
        ! --> Update the off-diagonal entries of the nonsymmetric tridiagonal matrix.
        tmp = V(k+1)%dot(W(k+1)) ; beta = sqrt(abs(tmp)) ; gamma = sign(beta, tmp)
@@ -428,16 +448,10 @@ contains
              write(*, *) "INFO : Invariant subspaces have been computed (beta, gamma) = (", beta, ",", gamma, ")."
           endif
        else
-          ! --> Full re-biorthogonalization.
-          do i = 1, k
-             alpha = V(k+1)%dot(W(i)) ; call V(k+1)%axpby(1.0_wp, V(i), -alpha)
-             alpha = W(k+1)%dot(V(i)) ; call W(k+1)%axpby(1.0_wp, W(i), -alpha)
-          enddo
-      
           ! --> Normalization step.
           call V(k+1)%scal(1.0_wp / beta) ; call W(k+1)%scal(1.0_wp / gamma)
        endif
-       
+
     enddo lanczos
 
     if (verbose) then
