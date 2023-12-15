@@ -33,7 +33,15 @@ then
 fi
 
 fpm clean
-#fpm test --verbose --compiler "$FC" --flag "$FFLAGS" || { echo 'fpm test failed' ; exit 1; }
+read -p "Do you want to run tests before installing? (y/n) " answer
+case ${answer:0:1} in
+   y|Y )
+      fpm test --verbose --compiler "$FC" --flag "$FFLAGS" || { echo 'fpm test failed' ; exit 1; }
+   ;;
+   * )
+      echo "Skipping tests..."
+   ;;
+esac
 fpm install --verbose --compiler="$FC" --flag="$FFLAGS" || { echo 'fpm install failed' ; exit 1; }
 
 
