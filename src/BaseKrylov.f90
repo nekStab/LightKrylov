@@ -506,7 +506,7 @@ contains
          R(i, j) = beta
       enddo
       beta = Q(i)%norm(); Q(i)%scal(1.0_wp / beta)
-      R(i, j) = beta
+      R(i, i) = beta
       if (abs(beta) < tolerance) then
          if (verbose) then
             write(*, *) "INFO : Invariant subspace has been computed."
@@ -523,7 +523,7 @@ contains
          R(i, j) = R(i, j) + beta
       enddo
       beta = Q(i)%norm(); Q(i)%scal(1.0_wp / beta)
-      R(i, j) = beta
+      R(i, i) = beta
       if (abs(beta) < tolerance) then
          if (verbose) then
             write(*, *) "INFO : Invariant subspace has been computed."
