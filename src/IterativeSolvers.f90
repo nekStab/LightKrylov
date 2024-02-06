@@ -722,51 +722,6 @@ contains
     return
   end subroutine gmres
 
-  ! subroutine lstsq(A, b, x)
-  !   !> Input matrix.
-  !   real(kind=wp), dimension(:, :), intent(in)  :: A
-  !   real(kind=wp), dimension(:)   , intent(in)  :: b
-  !   real(kind=wp), dimension(:)   , intent(out) :: x
-
-  !   !> Lapack job.
-  !   character :: trans = "N"
-  !   integer   :: m, n, nrhs, lda, ldb, lwork, info
-  !   real(kind=wp), dimension(size(A, 1), size(A, 2)) :: A_tilde
-  !   real(kind=wp), dimension(size(A, 1))             :: b_tilde
-  !   real(kind=wp), dimension(:), allocatable         :: work
-
-  !   !> Interface to LAPACK dgels
-  !   interface
-  !      pure subroutine dgels(ftrans, fm, fn, fnrhs, fA, flda, fb, fldb, fwork, flwork, finfo)
-  !        import wp
-  !        character, intent(in)           :: ftrans
-  !        integer  , intent(in)           :: fm, fn, fnrhs, flda, fldb, flwork, finfo
-  !        real(kind=wp), intent(inout)    :: fa(flda, *)
-  !        real(kind=wp), intent(inout)    :: fb(flda, *)
-  !        real(kind=wp), intent(out)      :: fwork(*)
-  !      end subroutine dgels
-  !   end interface
-
-  !   !> Initialize variables.
-  !   m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-  !   lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-  !   A_tilde = A ; b_tilde = b
-  !   allocate(work(1:lwork)) ; work = 0.0_wp
-
-  !   !> Solve the least-squares problem.
-  !   call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-  !   if (info > 0) then
-  !      write(*, *) "INFO: Error in LAPACK least-squares solver. Stopping the computation."
-  !      call exit()
-  !   endif
-
-  !   !> Return solution.
-  !   x = b_tilde(1:n)
-
-  !   return
-  ! end subroutine lstsq
-
   !=======================================================================================
   ! Conjugate Gradient (CG) Solver Subroutine
   !=======================================================================================
