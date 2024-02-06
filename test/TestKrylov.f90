@@ -592,4 +592,62 @@ contains
   !   return
   ! end subroutine test_rational_arnoldi_basis_orthogonality
 
+  !-------------------------------------------------------
+  !-----                                             -----
+  !-----     TEST SUITE FOR THE QR FACTORIZATION     -----
+  !-----                                             -----
+  !-------------------------------------------------------
+
+  subroutine collect_qr_testsuite(testsuite)
+   !> Collection of tests.
+   type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+   testsuite = [&
+        new_unittest("QR factorization", test_qr_factorization) &
+        ]
+
+   return
+ end subroutine collect_qr_testsuite
+
+ subroutine test_qr_factorization(error)
+   ! This function checks the correctness of the QR implementation by
+   ! verifying that the factorization is correct, i.e. A = Q @ R.
+   ! A random 3x3 matrix is used for testing.
+
+   !> Error type to be returned.
+   type(error_type), allocatable, intent(out) :: error
+   !> Test matrix.
+   class(rmatrix), allocatable :: A
+   !> Basis vectors.
+   class(rvector), dimension(:), allocatable :: Q
+   !> GS factors.
+   class(rmatrix), allocatable :: R
+   !> Krylov subspace dimension.
+   integer, parameter :: kdim=test_size
+   !> Information flag.
+   integer :: info
+   !> Misc.
+   integer :: k
+   real(kind=wp) :: Qmat(test_size, kdim)
+   real(kind=wp) :: alpha
+
+   ! --> Initialize matrix.
+   A = rmatrix() ; call random_number(A%data)
+   ! --> Initialize Krylov subspace.
+   allocate(Q(1:kdim));
+   do k = 1, size(Q)
+      call Q(k)%zero()
+   enddo
+   R = 0.0_wp
+   ! --> QR factorization.
+   call qr_factorization(A, Q, R, info)
+   ! --> Check correctness of QR factorization.
+   do k = 1, kdim
+      Qmat(:, k) = Q(k)%data
+   enddo
+   call check(error, all_close(A%data, matmul(Qdata, R), rtol, atol) )
+
+   return
+ end subroutine test_qr_factorization
+
 end module TestKrylov
