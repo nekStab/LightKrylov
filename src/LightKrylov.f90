@@ -22,6 +22,7 @@ module LightKrylov
   !> Abstract linear operators.
   public :: abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop
   !> Krylov factorization for general matrix.
+  public :: initialize_krylov_subspace
   public :: arnoldi_factorization, nonsymmetric_lanczos_tridiagonalization
   public :: lanczos_bidiagonalization, rational_arnoldi_factorization
   !> Krylov factorization for sym. pos. def. matrices.
@@ -31,7 +32,7 @@ module LightKrylov
   public :: abstract_opts, gmres_opts, cg_opts
   public :: abstract_linear_solver, abstract_preconditioner
   !> Matrix factorization.
-  public :: eigs, eighs, svds
+  public :: eigs, eighs, svds, two_sided_eigs
   public :: save_eigenspectrum
 
 contains
