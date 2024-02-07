@@ -27,8 +27,7 @@ program Tester
        new_testsuite("Real Vector Test Suite", collect_real_vector_testsuite),                    &
        new_testsuite("Real Matrix Test Suite", collect_real_matrix_testsuite),                    &
        new_testsuite("Operations on Abstract Lin. Op.", collect_abstract_linop_operations_testsuite), &
-       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite), 
-       new_testsuite("QR factorisation Test Suite", collect_qr_testsuite)                          &
+       new_testsuite("Arnoldi Test Suite", collect_arnoldi_testsuite),                            &
        !new_testsuite("Rational Arnoldi Test Suite", collect_rational_arnoldi_testsuite),          &
        new_testsuite("Lanczos tridiagonalization Test Suite", collect_lanczos_tridiag_testsuite), &
        new_testsuite("Lanczos bidiagonalization Test Suite", collect_lanczos_bidiag_testsuite),   &
@@ -37,7 +36,8 @@ program Tester
        new_testsuite("SVD Test Suite", collect_svd_testsuite),                                    &
        new_testsuite("CG Test Suite", collect_cg_testsuite),                                      &
        !new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite)                          &
-       new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite)   &
+       new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite),  &
+       new_testsuite("QR factorization Test Suite", collect_qr_testsuite)                         &
        ]
 
   do is = 1, size(testsuites)

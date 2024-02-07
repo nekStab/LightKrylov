@@ -33,6 +33,7 @@ module LightKrylov
   public :: abstract_linear_solver, abstract_preconditioner
   !> Matrix factorization.
   public :: eigs, eighs, svds, two_sided_eigs
+  public :: qr_factorization
   public :: save_eigenspectrum
 
 contains

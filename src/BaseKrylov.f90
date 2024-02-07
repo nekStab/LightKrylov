@@ -11,6 +11,7 @@ module BaseKrylov
        lanczos_tridiagonalization, &
        lanczos_bidiagonalization,  &
        nonsymmetric_lanczos_tridiagonalization, &
+       qr_factorization, &
        initialize_krylov_subspace
 
 contains
@@ -467,81 +468,86 @@ contains
   !-----                                                   -----
   !-------------------------------------------------------------
 
-  subroutine qr_factorisation(A,Q,R, info, verbosity, tol)
+  ! Simple implementation of the QR factorisation of a general (real)
+  ! basis A without pivoting using the double GS algorithm for improved
+  ! stability. 
+  ! NB: This could be further improved by adding (partial) pivoting if problems
+  ! arise due to premature breakdown.
+
+  subroutine qr_factorization(A,Q,R, info, verbosity, tol)
+   
    !> Basis to be orthonormalized.
    class(abstract_vector), intent(in)    :: A(:)
    !> Orthonormal subspace basis
-   class(abstract_vector), intent(out)   :: Q(:)
+   class(abstract_vector), intent(inout) :: Q(:)
    !> Gram-Schmidt factors
-   real(kind=wp)         , intent(out)   :: R(:,:)
+   real(kind=wp)         , intent(inout) :: R(:,:)
    !> Information flag.
-   integer       , intent(out)   :: info
+   integer       , intent(out)           :: info
    !> Optional arguments.
-   logical, optional, intent(in) :: verbosity
-   logical                       :: verbose
-   integer, optional, intent(in) :: tol
-   integer                       :: tolerance 
-   !> Local variables.
+   logical, optional, intent(in)         :: verbosity
+   logical                               :: verbose
+   real(kind=wp), optional, intent(in)   :: tol
+   real(kind=wp)                         :: tolerance 
+   !> Internal variables.
    real(kind=wp) :: beta
    integer       :: i, j, k, kdim
 
+   info = 0
+
    ! --> Get basis size.
-   kdim = size(V)
+   kdim = size(Q)
     
    ! --> Deal with the optional arguments.
    verbose   = optval(verbosity, .false.)
-   tolerance = optval(tol, atol)
-   
-   ! --> Normalize first column and add it to Q.
-   call copy(Q(1),A(1)); beta = Q(1)%norm()
-   call Q(1)%scal(1.0_wp / beta); R(1, 1) = beta
+   tolerance = optval(tol, rtol)
 
    !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
-   do i = 2, k
-      call copy(Q(i),A(i))
+   do j = 1, kdim
+      ! --> Copy column j
+      call Q(j)%axpby(0.0_wp, A(j), 1.0_wp)
       ! --> Orthonormalization against existing columns
-      do j = 1, i-1
-         beta = Q(i)%dot(Q(j)); call Q(i)%axpby(1.0_wp, Q(j), -beta)
+      do i = 1, j-1
+         beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
          ! --> Update R.
          R(i, j) = beta
       enddo
-      beta = Q(i)%norm(); Q(i)%scal(1.0_wp / beta)
-      R(i, i) = beta
+      beta = Q(j)%norm(); call Q(j)%scal(1.0_wp / beta)
+      R(j,j) = beta
       if (abs(beta) < tolerance) then
          if (verbose) then
             write(*, *) "INFO : Invariant subspace has been computed."
-            write(*, *) "       (i, beta) = (", i,",", beta, ")."
+            write(*, *) "       (j, beta) = (", j,",", beta, ")."
          endif
       endif
    enddo
-   !> second pass
-   do i = 2, k
+   !> second pass, update Q & R
+   do j = 1, kdim
       ! --> Orthonormalization against existing columns
-      do j = 1, i-1
-         beta = Q(i)%dot(Q(j)); call Q(i)%axpby(1.0_wp, Q(j), -beta)
+      do i = 1, j-1
+         beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
          ! --> Update R.
          R(i, j) = R(i, j) + beta
       enddo
-      beta = Q(i)%norm(); Q(i)%scal(1.0_wp / beta)
-      R(i, i) = beta
+      beta = Q(j)%norm(); call Q(j)%scal(1.0_wp / beta)
       if (abs(beta) < tolerance) then
          if (verbose) then
             write(*, *) "INFO : Invariant subspace has been computed."
-            write(*, *) "       (i, beta) = (", i,",", beta, ")."
+            write(*, *) "       (j, beta) = (", j,",", beta, ")."
          endif
       endif
    enddo
 
    !> Modified Gram-Schmidt
-   !do i = 1, k
-   !   call copy(Q(i),A(i))
+   !do j = 1, kdim
+   !   call Q(j)%axpby(0.0_wp, A(j), 1.0_wp)
    !enddo
 !
-   !do i = 1, k
+   !do i = 1, kdim
    !   beta = Q(i)%norm(); call Q(i)%scal(1.0_wp / beta)
    !   R(i, i) = beta
-   !   do j = i, k
-   !      beta = Q(i)%dot(Q(j)); call Q(i)%axpby(1.0_wp, Q(j), -beta)
+   !   do j = i, kdim
+   !      beta = Q(i)%dot(Q(j)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
    !      R(i,j) = beta
    !   enddo
    !enddo
@@ -551,6 +557,6 @@ contains
    endif
 
    return
-   end subroutine qr_factorisation
+   end subroutine qr_factorization
 
 end module BaseKrylov
