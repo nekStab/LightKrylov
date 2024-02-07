@@ -182,7 +182,7 @@ contains
 
        !> Spectral decomposition of the k x k Hessenberg matrix.
        eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
-       call evd(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k), k)
+       call evd(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
        !> Sort eigenvalues.
        abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
@@ -269,7 +269,7 @@ contains
        
        ! --> Compute spectral decomposition of the tridiagonal matrix.
        eigvals = 0.0_wp ; eigvecs = 0.0_wp
-       call hevd(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k), k)
+       call hevd(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
        ! --> Sort eigenvalues in decreasing order.
        call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
@@ -367,7 +367,7 @@ contains
        !> Spectral decomposition of the k x k tridiagonal matrix.
        eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
        rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
-       call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k), k)
+       call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
        lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call cinv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
 
        !> Sort eigenvalues.
@@ -416,112 +416,6 @@ contains
     eigvals = eigvals(indices) ; rvecs = rvecs(:, indices) ; lvecs = lvecs(:, indices)
     return
   end subroutine two_sided_eigs
-
-  subroutine evd(A, vecs, vals, n)
-    !> Lapack job.
-    character*1 :: jobvl = "N", jobvr = "V"
-    integer :: n, lwork, info, lda, ldvl, ldvr
-    real(kind=wp), dimension(n, n) :: A, A_tilde, vr
-    real(kind=wp), dimension(1, n) :: vl
-    real(kind=wp), dimension(4*n)  :: work
-    real(kind=wp), dimension(n)    :: wr, wi
-    complex(kind=wp), dimension(n, n)   :: vecs
-    complex(kind=wp), dimension(n)      :: vals
-    integer :: i
-    integer, dimension(n) :: idx
-
-    interface
-       pure subroutine dgeev(fjobvl, fjobvr, fn, fa, flda, fwr, fwi, fvl, fldvl, fvr, fldvr, fwork, flwork, finfo)
-         import wp
-         character, intent(in) :: fjobvl, fjobvr
-         integer  , intent(in) :: fn, flda, fldvl, fldvr, flwork, finfo
-         real(kind=wp), intent(inout) :: fa(flda, *)
-         real(kind=wp), intent(out) :: fwr(fn), fwi(fn), fvl(fldvl, *), fvr(fldvr, *), fwork(flwork)
-       end subroutine dgeev
-    end interface
-
-    ! --> Compute the eigendecomposition of A.
-    lda = n ; ldvl = 1 ; ldvr = n ; lwork = 4*n ; A_tilde = A
-    call dgeev(jobvl, jobvr, n, A_tilde, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
-
-    ! --> Real to complex arithmetic.
-    !     NOTE : Check if a LAPACK function already exists for that purpose.
-    vals = wr*(1.0_wp, 0.0_wp) + wi*(0.0_wp, 1.0_wp)
-    vecs = vr*(1.0_wp, 0.0_wp)
-
-    do i = 1, n-1
-       if (wi(i) .gt. 0) then
-          vecs(:, i) = vr(:, i)*(1.0_wp, 0.0_wp) + vr(:, i+1)*(0.0_wp, 1.0_wp)
-          vecs(:, i+1) = conjg(vecs(:, i))
-       else if (abs(wi(i)) .le. epsilon(wi(i))) then
-          vecs(:, i) = vr(:, i) * (1.0_wp, 0.0_wp)
-       endif
-    enddo
-
-    return
-  end subroutine evd
-
-  subroutine hevd(A, vecs, vals, n)
-    !> Lapack job.
-    character :: jobz="V", uplo="U"
-    integer :: n, lwork, info, lda
-    real(kind=wp), dimension(n) :: vals
-    real(kind=wp), dimension(n, n) :: A, A_tilde, vecs
-    real(kind=wp), dimension(3*n-1) :: work
-    integer :: i, j, k
-
-    interface
-       pure subroutine dsyev(fjobz, fuplo, fn, fa, flda, fw, fwork, flwork, finfo)
-         import wp
-         character, intent(in) :: fjobz, fuplo
-         integer, intent(in)  :: fn
-         integer, intent(in)  :: flda
-         integer, intent(in)  :: flwork
-         integer, intent(out) :: finfo
-         real(kind=wp), intent(inout) :: fa(flda, *)
-         real(kind=wp), intent(out)   :: fw(*)
-         real(kind=wp), intent(out)   :: fwork(*)
-       end subroutine dsyev
-    end interface
-
-    ! --> Compute the eigendecomposition of A.
-    lda = n ; lwork = 3*n-1 ; A_tilde = A
-    call dsyev(jobz, uplo, n, A_tilde, lda, vals, work, lwork, info)
-
-    return
-  end subroutine hevd
-
-  subroutine rinv(A)
-    !> Matrix to invert (in-place)
-    real(kind=wp), intent(inout) :: A(:, :)
-    !> Lapack-related.
-    integer :: n, info
-    real(kind=wp) :: work(size(A, 1))
-    integer       :: ipiv(size(A, 1))
-
-    !> Compute A = LU (in-place).
-    n = size(A, 1) ; call dgetrf(n, n, A, n, ipiv, info)
-    !> Compute inv(A).
-    call dgetri(n, A, n, ipiv, work, n, info)
-
-    return
-  end subroutine rinv
-
-  subroutine cinv(A)
-    !> Matrix to invert (in-place)
-    complex(kind=wp), intent(inout) :: A(:, :)
-    !> Lapack-related.
-    integer :: n, info
-    complex(kind=wp) :: work(size(A, 1))
-    integer          :: ipiv(size(A, 1))
-
-    !> Compute A = LU (in-place).
-    n = size(A, 1) ; call zgetrf(n, n, A, n, ipiv, info)
-    !> Compute inv(A).
-    call zgetri(n, A, n, ipiv, work, n, info)
-
-    return
-  end subroutine cinv
 
   !----------------------------------------------
   !-----                                    -----
@@ -611,43 +505,6 @@ contains
 
     return
   end subroutine svds
-
-  subroutine svd(A, U, S, V)
-    !> Matrix to be factorized.
-    real(kind=wp), intent(in)  :: A(:, :)
-    !> Left singular vectors.
-    real(kind=wp), intent(out) :: U(size(A, 1), min(size(A, 1), size(A, 2)))
-    !> Singular values.
-    real(kind=wp), intent(out) :: S(size(A, 2))
-    !> Right singular vectors.
-    real(kind=wp), intent(out) :: V(size(A, 2), min(size(A, 1), size(A, 2)))
-
-    !> Lapack job.
-    character                  :: jobu = "S", jobvt = "S"
-    integer                    :: m, n, lda, ldu, ldvt, lwork, info
-    real(kind=wp), allocatable :: work(:)
-    real(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-    interface
-       pure subroutine dgesvd(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info)
-         import wp
-         character, intent(in) :: jobu, jobvt
-         integer  , intent(in) :: m, n, lda, ldu, ldvt, lwork, info
-         real(kind=wp), intent(inout) :: a(lda, *)
-         real(kind=wp), intent(out)   :: u(ldu, *), s(*), vt(ldvt, *), work(*)
-       end subroutine dgesvd
-    end interface
-
-    m = size(A, 1) ; n = size(A, 2)
-    lda = size(A, 1) ; ldu = size(A, 1) ; ldvt = size(A, 2)
-    lwork = max(1, 3*min(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-    a_tilde = a
-    call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, info)
-    v = transpose(vt)
-
-    return
-  end subroutine svd
 
   !--------------------------------------------
   !-----                                  -----
@@ -864,51 +721,6 @@ contains
 
     return
   end subroutine gmres
-
-  subroutine lstsq(A, b, x)
-    !> Input matrix.
-    real(kind=wp), dimension(:, :), intent(in)  :: A
-    real(kind=wp), dimension(:)   , intent(in)  :: b
-    real(kind=wp), dimension(:)   , intent(out) :: x
-
-    !> Lapack job.
-    character :: trans = "N"
-    integer   :: m, n, nrhs, lda, ldb, lwork, info
-    real(kind=wp), dimension(size(A, 1), size(A, 2)) :: A_tilde
-    real(kind=wp), dimension(size(A, 1))             :: b_tilde
-    real(kind=wp), dimension(:), allocatable         :: work
-
-    !> Interface to LAPACK dgels
-    interface
-       pure subroutine dgels(ftrans, fm, fn, fnrhs, fA, flda, fb, fldb, fwork, flwork, finfo)
-         import wp
-         character, intent(in)           :: ftrans
-         integer  , intent(in)           :: fm, fn, fnrhs, flda, fldb, flwork, finfo
-         real(kind=wp), intent(inout)    :: fa(flda, *)
-         real(kind=wp), intent(inout)    :: fb(flda, *)
-         real(kind=wp), intent(out)      :: fwork(*)
-       end subroutine dgels
-    end interface
-
-    !> Initialize variables.
-    m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-    lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-    A_tilde = A ; b_tilde = b
-    allocate(work(1:lwork)) ; work = 0.0_wp
-
-    !> Solve the least-squares problem.
-    call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-    if (info > 0) then
-       write(*, *) "INFO: Error in LAPACK least-squares solver. Stopping the computation."
-       call exit()
-    endif
-
-    !> Return solution.
-    x = b_tilde(1:n)
-
-    return
-  end subroutine lstsq
 
   !=======================================================================================
   ! Conjugate Gradient (CG) Solver Subroutine

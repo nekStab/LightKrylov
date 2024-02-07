@@ -11,6 +11,7 @@ module BaseKrylov
        lanczos_tridiagonalization, &
        lanczos_bidiagonalization,  &
        nonsymmetric_lanczos_tridiagonalization, &
+       two_sided_arnoldi_factorization, &
        qr_factorization, &
        initialize_krylov_subspace
 
@@ -462,6 +463,142 @@ contains
     return
   end subroutine nonsymmetric_lanczos_tridiagonalization
 
+  !-------------------------------------------------------------------------------
+  !-----                                                                     -----
+  !-----     TWO-SIDED ARNOLDI FACTORIZATION FOR GENERAL SQUARE MATRICES     -----
+  !-----                                                                     -----
+  !-------------------------------------------------------------------------------
+
+  subroutine two_sided_arnoldi_factorization(A, V, W, H, G, info, kstart, kend, verbosity, tol)
+    !> Linear operator to be factorized.
+    class(abstract_linop),  intent(in)     :: A
+    !> Left and right Krylov basis.
+    class(abstract_vector), intent(inout)  :: V(:)
+    class(abstract_vector), intent(inout)  :: W(:)
+    !> Upper Hessenberg matrices.
+    real(kind=wp),          intent(inout) :: H(:, :), G(:, :)
+    !> Information flag.
+    integer,                intent(out) :: info
+    !> Optional arguments.
+    integer, optional,       intent(in) :: kstart
+    integer                             :: k_start
+    integer, optional,       intent(in) :: kend
+    integer                             :: k_end
+    logical, optional,       intent(in) :: verbosity
+    logical :: verbose
+    real(kind=wp), optional, intent(in) :: tol
+    real(kind=wp)                       :: tolerance
+    !> Miscellaneous.
+    real(kind=wp)                       :: alpha, beta, gamma, tmp
+    real(kind=wp), allocatable          :: M(:, :), invM(:, :) ! Inner-products matrix and its inverse.
+    real(kind=wp)                       :: tmp_vec(size(V)-1)
+    class(abstract_vector), allocatable :: tmp_krylov_vec
+    integer                             :: i, j, k, kdim
+
+    !> Check Krylov subspace dimensions.
+    if (size(V) .ne. size(W)) then
+       write(*, *) "INFO : Left and right Krylov bases have different dimensions."
+       info = -1
+       return
+    else
+       kdim = size(V) - 1
+    endif
+
+    !> Check the dimensions of the Hessenberg matrices.
+    if (all(shape(H) .ne. [kdim+1, kdim])) then
+       write(*, *) "INFO : Dimensions of the Hessenberg matrix H and Krylov subspace V do not match."
+       info = -2
+       return
+    endif
+
+    if (all(shape(G) .ne. [kdim+1, kdim])) then
+       write(*, *) "INFO : Dimensions of the Hessenberg matrix G and Krylov subspace W do not match."
+       info = -3
+       return
+    endif
+
+    !> Deals with the optional arguments.
+    k_start   = optval(kstart, 1)
+    k_end     = optval(kend, kdim)
+    verbose   = optval(verbosity, .false.)
+    tolerance = optval(tol, rtol)
+
+    !-----------------------------------------------
+    !-----     Two-sided Arnoldi iteration     -----
+    !-----------------------------------------------
+
+    arnoldi : do k = k_start, k_end
+       !> Arnoldi step for the image.
+       call arnoldi_factorization(A, V, H, info, k, k, verbose, tolerance, .false.)
+       !> Arnoldi step for the domain.
+       call arnoldi_factorization(A, W, G, info, k, k, verbose, tolerance, .true.)
+    enddo arnoldi
+
+    !------------------------------------------------------------
+    !-----     Computation of the Rayleigh quotient form     -----
+    !------------------------------------------------------------
+
+    !> Inner-product matrix.
+    allocate(M(kdim+1, kdim+1)) ; allocate(invM(kdim, kdim))
+
+    do i = 1, size(M, 1)
+       do j = 1, size(M, 2)
+          M(i, j) = W(i)%dot(V(j))
+       enddo
+    enddo
+
+    !> Inverse of the inner-product matrix (in-place).
+    invM = M(1:kdim, 1:kdim) ; call rinv(invM)
+
+    !> Update the residual vectors.
+    call update_residual_vector(V(kdim+1), V(1:kdim), W(1:kdim), invM)
+    call update_residual_vector(W(kdim+1), W(1:kdim), V(1:kdim), transpose(invM))
+
+    !> Rayleigh Quotient form of the Hessenberg matrices.
+    call rayleigh_quotient_form(H, invM, M)
+    call rayleigh_quotient_form(G, transpose(invM), transpose(M))
+
+    return
+
+  contains
+    subroutine update_residual_vector(x, V, W, M)
+      !> Residual vector.
+      class(abstract_vector), intent(inout) :: x
+      !> Krylov subspaces.
+      class(abstract_vector), intent(in)    :: V(:), W(:)
+      !> Inverse of the inner-product matrix.
+      real(kind=wp),          intent(in)    :: M(:, :)
+      !> Temporary arrays.
+      class(abstract_vector), allocatable :: dx
+      real(kind=wp)                       :: z(size(V))
+      !> Low-dimensional vector.
+      do i = 1, size(W)-1
+         z(i) = W(i)%dot(x)
+      enddo
+      z = matmul(M, z)
+      !> Correction vector.
+      call get_vec(dx, V, z) ; call x%axpby(1.0_wp, dx, -1.0_wp)
+      return
+    end subroutine update_residual_vector
+
+    subroutine rayleigh_quotient_form(H, invM, M)
+      !> Hessenberg matrix.
+      real(kind=wp), intent(inout)       :: H(:, :)
+      !> (Augmented) inner product matrix and its inverse.
+      real(kind=wp), intent(in)          :: invM(:, :), M(:, :)
+      !> Miscellaneous.
+      integer :: k
+
+      !> Column dimension of the Hessenberg matrix.
+      k = size(H, 2)
+
+      !> Rayleigh quotient update.
+      H(1:k, :) = matmul(invM, matmul(M(1:k, :), H))
+
+      return
+    end subroutine rayleigh_quotient_form
+  end subroutine two_sided_arnoldi_factorization
+
   !-------------------------------------------------------------
   !-----                                                   -----
   !-----     QR FACTORIZATION FOR GENERAL NxM MATRICES     -----
@@ -558,5 +695,6 @@ contains
 
    return
    end subroutine qr_factorization
+
 
 end module BaseKrylov
