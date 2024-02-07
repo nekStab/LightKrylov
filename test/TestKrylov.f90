@@ -8,11 +8,13 @@ module TestKrylov
 
   private
 
-  public :: collect_arnoldi_testsuite,         &
-       collect_lanczos_tridiag_testsuite,      &
-       collect_lanczos_bidiag_testsuite,       &
-       collect_nonsymmetric_lanczos_testsuite, &
-       collect_two_sided_arnoldi_testsuite
+  public :: collect_arnoldi_testsuite,              &
+            collect_lanczos_tridiag_testsuite,      &
+            collect_lanczos_bidiag_testsuite,       &
+            collect_nonsymmetric_lanczos_testsuite, &
+            collect_rational_arnoldi_testsuite,     &
+            collect_two_sided_arnoldi_testsuite,    &
+            collect_qr_testsuite
 
 contains
 
@@ -554,5 +556,122 @@ contains
 
     return
   end subroutine test_two_sided_arnoldi_basis_orthogonality_bis
+
+  !-------------------------------------------------------
+  !-----                                             -----
+  !-----     TEST SUITE FOR THE QR FACTORIZATION     -----
+  !-----                                             -----
+  !-------------------------------------------------------
+
+   subroutine collect_qr_testsuite(testsuite)
+      !> Collection of tests.
+      type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+      testsuite = [&
+        new_unittest("QR factorization", test_qr_factorization),  &
+        new_unittest("Q orthonormality", test_qr_basis_orthonormality)  &
+        ]
+
+      return
+   end subroutine collect_qr_testsuite
+
+   subroutine test_qr_factorization(error)
+     ! This function checks the correctness of the QR implementation by
+     ! verifying that the factorization is correct, i.e. A = Q @ R.
+     ! A random matrix is used for testing.
+
+     !> Error type to be returned.
+     type(error_type), allocatable, intent(out) :: error
+     !> Test matrix.
+     class(rvector), dimension(:), allocatable :: A
+     !> Basis vectors.
+     class(rvector), dimension(:), allocatable :: Q
+     !> Krylov subspace dimension.
+     integer, parameter :: kdim = 3
+     !> GS factors.
+     real(kind=wp) :: R(kdim, kdim)
+     !> Information flag.
+     integer :: info
+     !> Misc.
+     integer :: i,j,k
+     real(kind=wp) :: Amat(test_size, kdim), Qmat(test_size, kdim)
+     real(kind=wp) :: alpha
+
+     ! --> Initialize matrix.
+     allocate(A(1:kdim));
+     do k = 1, size(A)
+        call random_number(A(k)%data)
+     enddo
+     ! --> Initialize Krylov subspace.
+     allocate(Q(1:kdim));
+     do k = 1, size(Q)
+        call Q(k)%zero()
+     enddo
+     R = 0.0_wp
+     ! --> QR factorization.
+     call qr_factorization(A, Q, R, info)
+     ! --> Extract data 
+     do k = 1, kdim
+        Amat(:, k) = A(k)%data
+        Qmat(:, k) = Q(k)%data
+     enddo
+     ! --> Check correctness of QR factorization.
+     call check(error, all_close(Amat, matmul(Qmat, R), rtol, atol) )
+
+     return
+   end subroutine test_qr_factorization
+
+   subroutine test_qr_basis_orthonormality(error)
+     ! This function checks the correctness of the QR implementation by
+     ! verifying that the obtained basis is orthonormal, i.e. Q.T @ Q = I.
+     ! A random matrix is used for testing.
+      
+     !> Error type to be returned.
+     type(error_type), allocatable, intent(out) :: error
+     !> Test matrix.
+     class(rvector), dimension(:), allocatable :: A
+     !> Basis vectors.
+     class(rvector), dimension(:), allocatable :: Q
+     !> Krylov subspace dimension.
+     integer, parameter :: kdim = 3
+     !> GS factors.
+     real(kind=wp) :: R(kdim, kdim)
+     real(kind=wp) :: Id(kdim, kdim)
+     !> Information flag.
+     integer :: info
+     !> Misc.
+     integer :: i,k
+     real(kind=wp) :: Qtmat(kdim, test_size), Qmat(test_size, kdim)
+     real(kind=wp) :: alpha
+
+     ! --> Initialize matrix.
+     allocate(A(1:kdim));
+     do k = 1, size(A)
+        call random_number(A(k)%data)
+     enddo
+     ! --> Initialize Krylov subspace.
+     allocate(Q(1:kdim));
+     do k = 1, size(Q)
+        call Q(k)%zero()
+     enddo
+     R = 0.0_wp
+     ! --> QR factorization.
+     call qr_factorization(A, Q, R, info)
+     ! --> Extract data 
+     do k = 1, kdim
+        Qmat(:, k) = Q(k)%data
+        do i = 1, test_size
+           Qtmat(k,i) = Qmat(i,k)
+        enddo
+     enddo
+     ! --> Identity
+     Id = 0.0_wp
+     do k = 1, kdim
+        Id(k,k) = 1.0_wp
+     enddo
+     ! --> Check correctness of QR factorization.
+     call check(error, all_close(Id, matmul(Qtmat, Qmat), rtol, atol) )
+
+   end subroutine test_qr_basis_orthonormality
 
 end module TestKrylov

@@ -12,6 +12,7 @@ module BaseKrylov
        lanczos_bidiagonalization,  &
        nonsymmetric_lanczos_tridiagonalization, &
        two_sided_arnoldi_factorization, &
+       qr_factorization, &
        initialize_krylov_subspace
 
 contains
@@ -597,5 +598,103 @@ contains
       return
     end subroutine rayleigh_quotient_form
   end subroutine two_sided_arnoldi_factorization
+
+  !-------------------------------------------------------------
+  !-----                                                   -----
+  !-----     QR FACTORIZATION FOR GENERAL NxM MATRICES     -----
+  !-----                                                   -----
+  !-------------------------------------------------------------
+
+  ! Simple implementation of the QR factorisation of a general (real)
+  ! basis A without pivoting using the double GS algorithm for improved
+  ! stability. 
+  ! NB: This could be further improved by adding (partial) pivoting if problems
+  ! arise due to premature breakdown.
+
+  subroutine qr_factorization(A,Q,R, info, verbosity, tol)
+   
+   !> Basis to be orthonormalized.
+   class(abstract_vector), intent(in)    :: A(:)
+   !> Orthonormal subspace basis
+   class(abstract_vector), intent(inout) :: Q(:)
+   !> Gram-Schmidt factors
+   real(kind=wp)         , intent(inout) :: R(:,:)
+   !> Information flag.
+   integer       , intent(out)           :: info
+   !> Optional arguments.
+   logical, optional, intent(in)         :: verbosity
+   logical                               :: verbose
+   real(kind=wp), optional, intent(in)   :: tol
+   real(kind=wp)                         :: tolerance 
+   !> Internal variables.
+   real(kind=wp) :: beta
+   integer       :: i, j, k, kdim
+
+   info = 0
+
+   ! --> Get basis size.
+   kdim = size(Q)
+    
+   ! --> Deal with the optional arguments.
+   verbose   = optval(verbosity, .false.)
+   tolerance = optval(tol, rtol)
+
+   !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
+   do j = 1, kdim
+      ! --> Copy column j
+      call Q(j)%axpby(0.0_wp, A(j), 1.0_wp)
+      ! --> Orthonormalization against existing columns
+      do i = 1, j-1
+         beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
+         ! --> Update R.
+         R(i, j) = beta
+      enddo
+      beta = Q(j)%norm(); call Q(j)%scal(1.0_wp / beta)
+      R(j,j) = beta
+      if (abs(beta) < tolerance) then
+         if (verbose) then
+            write(*, *) "INFO : Invariant subspace has been computed."
+            write(*, *) "       (j, beta) = (", j,",", beta, ")."
+         endif
+      endif
+   enddo
+   !> second pass, update Q & R
+   do j = 1, kdim
+      ! --> Orthonormalization against existing columns
+      do i = 1, j-1
+         beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
+         ! --> Update R.
+         R(i, j) = R(i, j) + beta
+      enddo
+      beta = Q(j)%norm(); call Q(j)%scal(1.0_wp / beta)
+      if (abs(beta) < tolerance) then
+         if (verbose) then
+            write(*, *) "INFO : Invariant subspace has been computed."
+            write(*, *) "       (j, beta) = (", j,",", beta, ")."
+         endif
+      endif
+   enddo
+
+   !> Modified Gram-Schmidt
+   !do j = 1, kdim
+   !   call Q(j)%axpby(0.0_wp, A(j), 1.0_wp)
+   !enddo
+!
+   !do i = 1, kdim
+   !   beta = Q(i)%norm(); call Q(i)%scal(1.0_wp / beta)
+   !   R(i, i) = beta
+   !   do j = i, kdim
+   !      beta = Q(i)%dot(Q(j)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
+   !      R(i,j) = beta
+   !   enddo
+   !enddo
+
+   if (verbose) then
+      write(*, *) "INFO : Exiting the QR factorization with exit code info = ", info, "."
+   endif
+
+   return
+   end subroutine qr_factorization
+
 
 end module BaseKrylov
