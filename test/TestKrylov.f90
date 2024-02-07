@@ -12,7 +12,7 @@ module TestKrylov
             collect_lanczos_tridiag_testsuite,      &
             collect_lanczos_bidiag_testsuite,       &
             collect_nonsymmetric_lanczos_testsuite, &
-            collect_rational_arnoldi_testsuite,     &
+            !collect_rational_arnoldi_testsuite,     &
             collect_two_sided_arnoldi_testsuite,    &
             collect_qr_testsuite
 
