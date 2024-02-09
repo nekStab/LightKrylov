@@ -1,7 +1,7 @@
-module BaseKrylov
-  use Utils
-  use AbstractVector
-  use LinearOperator
+module lightkrylov_BaseKrylov
+  use lightkrylov_Utils
+  use lightkrylov_AbstractVector
+  use lightkrylov_LinearOperator
   use stdlib_optval, only : optval
   implicit none
   include "dtypes.h"
@@ -697,4 +697,4 @@ contains
    end subroutine qr_factorization
 
 
-end module BaseKrylov
+end module lightkrylov_BaseKrylov

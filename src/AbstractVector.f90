@@ -1,4 +1,4 @@
-module AbstractVector
+module lightkrylov_AbstractVector
   implicit none
   include "dtypes.h"
 
@@ -122,4 +122,4 @@ contains
     return
   end subroutine get_vec
 
-end module AbstractVector
+end module lightkrylov_AbstractVector

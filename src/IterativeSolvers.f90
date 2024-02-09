@@ -1,8 +1,8 @@
-module IterativeSolvers
-  use Utils
-  use AbstractVector
-  use LinearOperator
-  use BaseKrylov
+module lightkrylov_IterativeSolvers
+  use lightkrylov_Utils
+  use lightkrylov_AbstractVector
+  use lightkrylov_LinearOperator
+  use lightkrylov_BaseKrylov
   use stdlib_sorting, only : sort_index, int_size
   use stdlib_optval , only : optval
   use stdlib_io_npy , only : save_npy
@@ -1046,4 +1046,4 @@ contains
     end do
   end subroutine initialize_krylov_basis
   
-end module IterativeSolvers
+end module lightkrylov_IterativeSolvers

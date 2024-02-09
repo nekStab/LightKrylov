@@ -1,15 +1,15 @@
 module LightKrylov
   ! --> Utilities.
-  use Utils
+  use lightkrylov_Utils
   ! --> Definition of the abstract vector type.
-  use AbstractVector
+  use lightkrylov_AbstractVector
   ! --> Definition of the abstract linear operator type.
-  use LinearOperator
+  use lightkrylov_LinearOperator
   ! --> Implementation of the various Krylov decompositions.
-  use BaseKrylov
-  use RationalKrylov
+  use lightkrylov_BaseKrylov
+  use lightkrylov_RationalKrylov
   ! --> Iterative Solvers.
-  use IterativeSolvers
+  use lightkrylov_IterativeSolvers
   implicit none
   include "dtypes.h"
 
