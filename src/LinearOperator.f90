@@ -1,5 +1,5 @@
-module LinearOperator
-  use AbstractVector
+module lightkrylov_LinearOperator
+  use lightkrylov_AbstractVector
   implicit none
   include "dtypes.h"
 
@@ -22,7 +22,7 @@ module LinearOperator
   abstract interface
      ! Interface for the matrix-vector product.
      subroutine abstract_matvec(self, vec_in, vec_out)
-       use AbstractVector
+       use lightkrylov_AbstractVector
        import abstract_linop
        class(abstract_linop) , intent(in)  :: self
        class(abstract_vector), intent(in)  :: vec_in
@@ -31,7 +31,7 @@ module LinearOperator
 
      ! Interface for the vector-matrix product.
      subroutine abstract_rmatvec(self, vec_in, vec_out)
-       use AbstractVector
+       use lightkrylov_AbstractVector
        import abstract_linop
        class(abstract_linop) , intent(in)  :: self
        class(abstract_vector), intent(in)  :: vec_in
@@ -224,4 +224,4 @@ contains
     return
   end subroutine axpby_rmatvec
 
-end module LinearOperator
+end module lightkrylov_LinearOperator

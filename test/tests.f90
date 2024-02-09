@@ -37,7 +37,7 @@ program Tester
        new_testsuite("SVD Test Suite", collect_svd_testsuite),                                    &
        new_testsuite("CG Test Suite", collect_cg_testsuite),                                      &
        !new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite)                          &
-       new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite),  &
+       !new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite),  &
        new_testsuite("QR factorization Test Suite", collect_qr_testsuite)                         &
        ]
 

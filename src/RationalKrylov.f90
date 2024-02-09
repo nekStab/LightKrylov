@@ -1,8 +1,8 @@
-module RationalKrylov
-  use Utils
-  use AbstractVector
-  use LinearOperator
-  use IterativeSolvers
+module lightkrylov_RationalKrylov
+  use lightkrylov_Utils
+  use lightkrylov_AbstractVector
+  use lightkrylov_LinearOperator
+  use lightkrylov_IterativeSolvers
   use stdlib_optval, only : optval
   implicit none
   include "dtypes.h"
@@ -199,4 +199,4 @@ contains
   end subroutine rational_arnoldi_factorization
 
 
-end module RationalKrylov
+end module lightkrylov_RationalKrylov

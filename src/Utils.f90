@@ -1,4 +1,4 @@
-module Utils
+module lightkrylov_Utils
   implicit none
   include "dtypes.h"
 
@@ -232,4 +232,4 @@ contains
 
 
 
-end module Utils
+end module lightkrylov_Utils
