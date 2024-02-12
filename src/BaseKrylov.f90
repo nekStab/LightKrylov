@@ -548,7 +548,7 @@ contains
     enddo
 
     !> Inverse of the inner-product matrix (in-place).
-    invM = M(1:kdim, 1:kdim) ; call rinv(invM)
+    invM = M(1:kdim, 1:kdim) ; call inv(invM)
 
     !> Update the residual vectors.
     call update_residual_vector(V(kdim+1), V(1:kdim), W(1:kdim), invM)

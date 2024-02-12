@@ -368,7 +368,7 @@ contains
        eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
        rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
        call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
-       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call cinv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
+       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call inv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
 
        !> Sort eigenvalues.
        abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)

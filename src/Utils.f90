@@ -1,9 +1,9 @@
-module lightkrylov_Utils
+module lightkrylov_utils
   implicit none
   include "dtypes.h"
 
   private
-  public :: rinv, cinv, svd, evd, hevd, lstsq
+  public :: inv, svd, evd, hevd, lstsq
 
   !-------------------------------------------------------
   !-----                                             -----
@@ -50,7 +50,69 @@ module lightkrylov_Utils
      logical :: verbose = .false.
   end type cg_opts
 
+  !------------------------------
+  !-----     INTERFACES     -----
+  !------------------------------
+
+  !> Check dimensions of an array.
+  interface assert_shape
+     module procedure dassert_shape
+     module procedure zassert_shape
+  end interface assert_shape
+
+  !> Compute inv(A).
+  interface inv
+     module procedure dinv
+     module procedure zinv
+  end interface inv
+
 contains
+
+  !-------------------------------------
+  !-----                           -----
+  !-----     VARIOUS UTILITIES     -----
+  !-----                           -----
+  !-------------------------------------
+
+  subroutine stop_error(msg)
+    !> Error message.
+    character(len=*), intent(in) :: msg
+
+    write(*, *) msg
+    stop 1
+
+    return
+  end subroutine stop_error
+
+  subroutine dassert_shape(A, size, routine, matname)
+    !> Input matrix and expected dimensions.
+    real(kind=wp),    intent(in) :: A(:, :)
+    integer,          intent(in) :: size(:)
+    character(len=*), intent(in) :: routine, matname
+
+    if (any(shape(A) /= size)) then
+       write(*, *) "In routine " // routine // " matrix " // matname // " has illegal shape ", shape(A)
+       write(*, *) "Expected shape is ", size
+       call stop_error("Aborting due to illegal matrix operation.")
+    endif
+
+    return
+  end subroutine dassert_shape
+
+  subroutine zassert_shape(A, size, routine, matname)
+    !> Input matrix and expected dimensions.
+    complex(kind=wp), intent(in) :: A(:, :)
+    integer,          intent(in) :: size(:)
+    character(len=*), intent(in) :: routine, matname
+
+    if (any(shape(A) /= size)) then
+       write(*, *) "In routine " // routine // " matrix " // matname // " has illegal shape ", shape(A)
+       write(*, *) "Expected shape is ", size
+       call stop_error("Aborting due to illegal matrix operation.")
+    endif
+
+    return
+  end subroutine zassert_shape
 
   !-------------------------------------------
   !-----                                 -----
@@ -58,7 +120,7 @@ contains
   !-----                                 -----
   !-------------------------------------------
 
-  subroutine rinv(A)
+  subroutine dinv(A)
     !> Matrix to invert (in-place)
     real(kind=wp), intent(inout) :: A(:, :)
     !> Lapack-related.
@@ -67,14 +129,37 @@ contains
     integer       :: ipiv(size(A, 1))
 
     !> Compute A = LU (in-place)
-    n = size(A, 1) ; call dgetrf(n, n, A, n, ipiv, info)
+    n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+    call dgetrf(n, n, A, n, ipiv, info)
+    if (info /= 0) then
+       write(*, *) "DGETRF returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero. The factorization"
+          write(*, *) "has been completed but the factor U is exactly singular."
+          write(*, *) "Division by zero will occur if used to solve Ax = b."
+       endif
+       call stop_error("inv: DGETRF error.")
+    endif
+
     !> Compute inv(A).
     call dgetri(n, A, n, ipiv, work, n, info)
+    if (info /= 0) then
+       write(*, *) "DGETRI returned info =", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero."
+          write(*, *) "The matrix is singular and its inverse cannot be computed."
+       endif
+       call stop_error("inv: DGETRI error.")
+    endif
 
     return
-  end subroutine rinv
+  end subroutine dinv
 
-  subroutine cinv(A)
+  subroutine zinv(A)
     !> Matrix to invert (in-place)
     complex(kind=wp), intent(inout) :: A(:, :)
     !> Lapack-related.
@@ -83,12 +168,35 @@ contains
     integer          :: ipiv(size(A, 1))
 
     !> Compute A = LU (in-place).
-    n = size(A, 1) ; call zgetrf(n, n, A, n, ipiv, info)
+    n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+    call zgetrf(n, n, A, n, ipiv, info)
+    if (info /= 0) then
+       write(*, *) "ZGETRF returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero. The factorization"
+          write(*, *) "has been completed but the factor U is exactly singular."
+          write(*, *) "Division by zero will occur if used to solve Ax = b."
+       endif
+       call stop_error("inv: ZGETRF error.")
+    endif
+
     !> Compute inv(A).
     call zgetri(n, A, n, ipiv, work, n, info)
+    if (info /= 0) then
+       write(*, *) "ZGETRI returned info =", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero."
+          write(*, *) "The matrix is singular and its inverse cannot be computed."
+       endif
+       call stop_error("inv: ZGETRI error.")
+    endif
 
     return
-  end subroutine cinv
+  end subroutine zinv
 
   !------------------------------------------
   !-----                                -----
@@ -232,4 +340,4 @@ contains
 
 
 
-end module lightkrylov_Utils
+end module lightkrylov_utils
