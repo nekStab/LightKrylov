@@ -212,11 +212,11 @@ contains
     !> Linear Operator.
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X(:)
+    class(abstract_vector), intent(inout) :: X(:)
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues, and associated residuals
-    real(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
-    real(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
-    real(kind=wp), dimension(size(X)-1)           , intent(out) :: residuals
+    real(kind=wp), intent(out) :: eigvecs(:, :)
+    real(kind=wp), intent(out) :: eigvals(:)
+    real(kind=wp), intent(out) :: residuals(:)
     !> Information flag.
     integer, intent(out) :: info
     !> Number of converged eigenvalues needed.
@@ -251,9 +251,7 @@ contains
     T = 0.0_wp ; residuals = 0.0_wp ; eigvecs = 0.0_wp ; eigvals = 0.0_wp
     !> Make sure the first Krylov vector has unit-norm.
     alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
-    do i = 2, size(X) ! i = 1 is the starting Krylov vector provided by the user.
-       call X(i)%zero()
-    enddo
+    call initialize_krylov_subspace(X(2:kdim+1))
 
     lanczos : do k = 1, kdim
        ! --> Compute Lanczos tridiagonalization.
