@@ -392,9 +392,9 @@ contains
     !> Solve the least-squares problem.
     call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
 
-    if (info > 0) then
-       write(*, *) "INFO: Error in LAPACK least-squares solver. Stopping the computation."
-       call exit()
+    if (info /= 0) then
+       write(*, *) "The ", -info, "-th argument has an illegal value."
+       call stop_error("lstsq: dgels error")
     endif
 
     !> Return solution.
