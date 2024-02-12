@@ -182,7 +182,7 @@ contains
 
        !> Spectral decomposition of the k x k Hessenberg matrix.
        eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
-       call evd(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
+       call eig(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
        !> Sort eigenvalues.
        abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
@@ -269,7 +269,7 @@ contains
        
        ! --> Compute spectral decomposition of the tridiagonal matrix.
        eigvals = 0.0_wp ; eigvecs = 0.0_wp
-       call hevd(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
+       call eigh(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
        ! --> Sort eigenvalues in decreasing order.
        call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
@@ -367,7 +367,7 @@ contains
        !> Spectral decomposition of the k x k tridiagonal matrix.
        eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
        rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
-       call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
+       call eig(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
        lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call inv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
 
        !> Sort eigenvalues.

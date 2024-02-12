@@ -3,7 +3,7 @@ module lightkrylov_utils
   include "dtypes.h"
 
   private
-  public :: inv, svd, evd, hevd, lstsq
+  public :: inv, svd, eig, eigh, lstsq
 
   !-------------------------------------------------------
   !-----                                             -----
@@ -70,6 +70,16 @@ module lightkrylov_utils
   interface svd
      module procedure dsvd
   end interface svd
+
+  !> Compute EVD(A).
+  interface eig
+     module procedure deig
+  end interface eig
+
+  !> Compute EVD(A) with A sym. pos. def / Hermitian.
+  interface eigh
+     module procedure deigh
+  end interface eigh
 
 contains
 
@@ -261,13 +271,13 @@ contains
   !-----                                 -----
   !-------------------------------------------
 
-  subroutine evd(A, vecs, vals)
+  subroutine deig(A, vecs, vals)
     !> Matrix to be factorized.
     real(kind=wp), intent(in) :: A(:, :)
     !> Eigenvectors.
-    complex(kind=wp), intent(out) :: vecs(size(A, 1), size(A, 2))
+    complex(kind=wp), intent(out) :: vecs(:, :)
     !> Eigenvalues.
-    complex(kind=wp), intent(out) :: vals(size(A, 1))
+    complex(kind=wp), intent(out) :: vals(:)
 
     !> Lapack-related.
     character :: jobvl="n", jobvr="v"
@@ -280,32 +290,50 @@ contains
 
     !> Setup variables.
     n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; lwork = 4*n ; a_tilde = a
+
+    !> Shape assertion.
+    call assert_shape(A, [n, n], "eig", "A")
+    call assert_shape(vecs, [n, n], "eig", "vecs")
+
     !> Eigendecomposition.
     call dgeev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
+
+    if (info /= 0) then
+       write(*, *) "DGEEV returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "The QR alg. failed to compute all of the eigenvalues."
+          write(*, *) "No eigenvector has been computed."
+       endif
+       call stop_error("eig: dgeev error")
+    endif
+
     !> Real to complex arithmetic.
     !> NOTE : Check if a LAPACK function already exists for that purpose.
     vals = cmplx(1.0_wp, 0.0_wp, kind=wp)*wr + cmplx(0.0_wp, 1.0_wp, kind=wp)*wi
-    vecs = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr
+    vecs = cmplx(0.0_wp, 0.0_wp, kind=wp)*vr
 
-    do i = 1, n-1
-       if (wi(i) .gt. 0) then
-          vecs(:, i)   = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i+1)
-          vecs(:, i+1) = conjg(vecs(:, i))
-       else if (abs(wi(i)) .le. epsilon(wi(i))) then
-          vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i)
-       end if
+    do i = 1, n
+       if (wi(i) > 0.0_wp) then
+          vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i+1)
+       else if (wi(i) < 0.0_wp) then
+          vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i-1) - cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i)
+       else
+          vecs(:, i) = vr(:, i)
+       endif
     enddo
 
     return
-  end subroutine evd
+  end subroutine deig
 
-  subroutine hevd(A, vecs, vals)
+  subroutine deigh(A, vecs, vals)
     !> Matrix to be factorized.
     real(kind=wp), intent(in)  :: A(:, :)
     !> Eigenvectors.
-    real(kind=wp), intent(out) :: vecs(size(A, 1), size(A, 2))
+    real(kind=wp), intent(out) :: vecs(:, :)
     !> Eigenvalues.
-    real(kind=wp), intent(out) :: vals(size(A, 1))
+    real(kind=wp), intent(out) :: vals(:)
 
     !> Lapack-related.
     character :: jobz="v", uplo="u"
@@ -315,11 +343,26 @@ contains
 
     !> Setup variables.
     n = size(A, 1) ; lda = n ; lwork = 3*n-1 ; a_tilde = a
+
+    !> Shape assertion.
+    call assert_shape(A, [n, n], "eigh", "A")
+    call assert_shape(vecs, [n, n], "eigh", "vecs")
+
     !> Eigendecomposition.
     call dsyev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
 
+    if (info /= 0) then
+       write(*, *) "DSYEV returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "The computation failed. See lapack documentation for more details."
+       endif
+       call stop_error("eigh: dsyev error")
+    endif
+
     return
-  end subroutine hevd
+  end subroutine deigh
 
   !-----------------------------------------------------
   !-----                                           -----
