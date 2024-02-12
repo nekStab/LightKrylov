@@ -154,9 +154,9 @@ contains
     !> Linear operator to be factorized;
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     !> Tri-diagonal matrix.
-    real(kind=wp), dimension(:, :), intent(inout) :: T
+    real(kind=wp), intent(inout) :: T(:, :)
     !> Information flag.
     integer, intent(out) :: info
     !> Optional arguements.
@@ -174,13 +174,7 @@ contains
     integer          :: i, j
 
     ! --> Check dimensions.
-    kdim = size(X) - 1
-
-    if (all(shape(T) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Tridiagonal matrix and Krylov subspace dimensions do not match."
-       info = -1
-       return
-    endif
+    kdim = size(X) - 1 ; call assert_shape(T, [kdim+1, kdim], "lanczos_tridiag.", "T")
 
     ! --> Deals with the optional arguments.
     k_start   = optval(kstart, 1)
@@ -232,8 +226,8 @@ contains
 
   subroutine update_tridiag_matrix(T, X, k)
     integer, intent(in) :: k
-    real(kind=wp), dimension(:, :), intent(inout) :: T
-    class(abstract_vector), dimension(:) :: X
+    real(kind=wp), intent(inout) :: T(:, :)
+    class(abstract_vector) :: X(:)
     class(abstract_vector), allocatable :: wrk
     integer :: i
     real(kind=wp) :: alpha
