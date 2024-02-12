@@ -3,6 +3,9 @@ module lightkrylov_utils
   include "dtypes.h"
 
   private
+  !> General-purpose utilities.
+  public :: assert_shape
+  !> Linear Algebra Utilities.
   public :: inv, svd, eig, eigh, lstsq
 
   !-------------------------------------------------------
