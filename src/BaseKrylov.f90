@@ -287,10 +287,7 @@ contains
     endif
 
     ! --> Check B dimensions.
-    if (all(shape(B) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Bidiagonal matrix and Krylov subspaces dimensions do not match."
-       info = -2
-    endif
+    call assert_shape(B, [kdim+1, kdim], "lanczos_bidiag.", "B")
 
     ! --> Deals with the optional arguments.
     k_start = optval(kstart, 1)
