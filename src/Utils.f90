@@ -66,6 +66,11 @@ module lightkrylov_utils
      module procedure zinv
   end interface inv
 
+  !> Compute U, S, V = svd(A)
+  interface svd
+     module procedure dsvd
+  end interface svd
+
 contains
 
   !-------------------------------------
@@ -204,15 +209,15 @@ contains
   !-----                                -----
   !------------------------------------------
 
-  subroutine svd(A, U, S, V)
+  subroutine dsvd(A, U, S, V)
     !> Matrix to be factorized
     real(kind=wp), intent(in)  :: A(:, :)
     !> Left singular vectors.
-    real(kind=wp), intent(out) :: U(size(A, 1), min(size(A, 1), size(A, 2)))
+    real(kind=wp), intent(out) :: U(:, :)
     !> Singular values.
-    real(kind=wp), intent(out) :: S(size(A, 2))
+    real(kind=wp), intent(out) :: S(:)
     !> Right singular vectors.
-    real(kind=wp), intent(out) :: V(size(A, 2), min(size(A, 1), size(A, 2)))
+    real(kind=wp), intent(out) :: V(:, :)
 
     !> Lapack-related.
     character :: jobu="S", jobvt="S"
@@ -225,13 +230,30 @@ contains
     lda = m ; ldu = m ; ldvt = n
     lwork = max(1, 3*min(m, n), 5*min(m, n)) ; allocate(work(lwork))
 
+    !> Shape assertions.
+    call assert_shape(U, [m, min(m, n)], "svd", "U")
+    call assert_shape(V, [n, min(m, n)], "svd", "V")
+
     !> SVD computation.
     a_tilde = a
     call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, info)
+    if (info /= 0) then
+       write(*, *) "DGESVD returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "DBSQR did not converge. There are ", info, "superdiagonals"
+          write(*, *) "of an intermediate bidiagonal matrix form B which did not"
+          write(*, *) "converge to zero. See Lapack documentation for more details."
+       endif
+       call stop_error("svd: dgesvd error")
+    endif
+
+    !> Return the transpose of V.
     v = transpose(vt)
 
     return
-  end subroutine svd
+  end subroutine dsvd
 
   !-------------------------------------------
   !-----                                 -----
