@@ -111,14 +111,8 @@ contains
     !------------------------------------
     !-----     Check dimensions     -----
     !------------------------------------
-
-    if ((size(X) .ne. size(H, 1)) .or. (size(X)-1 .ne. size(H, 2))) then
-       info = -3
-    endif
-
-    if ((size(X) .ne. size(G, 1)) .or. (size(X)-1 .ne. size(G, 2))) then
-       info = -4
-    endif
+    call assert_shape(H, [kdim+1, kdim], "rational_arnoldi", "H")
+    call assert_shape(G, [kdim+1, kdim], "rational_arnoldi", "G")
 
     !---------------------------------
     !-----     OPTIONAL ARGS     -----

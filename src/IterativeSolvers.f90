@@ -119,11 +119,11 @@ contains
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues and associated residuals.
-    complex(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
-    complex(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
-    real(kind=wp)   , dimension(size(X)-1)           , intent(out) :: residuals
+    complex(kind=wp), intent(out) :: eigvecs(:, :)
+    complex(kind=wp), intent(out) :: eigvals(:)
+    real(kind=wp)   , intent(out) :: residuals(:)
     !> Information flag.
     integer, intent(out) :: info
     !> Number of desired eigenvalues.
@@ -140,18 +140,21 @@ contains
     logical :: trans
 
     !> Upper Hessenberg matrix.
-    real(kind=wp), dimension(size(X), size(X)-1) :: H
-    real(kind=wp)                                :: beta
+    real(kind=wp) :: H(size(X), size(X)-1)
+    real(kind=wp) :: beta
     !> Krylov subspace dimension.
     integer :: kdim
     !> Miscellaneous.
     integer :: i, j, k
-    integer(int_size), dimension(size(X)-1) :: indices
-    real(kind=wp)    , dimension(size(X)-1) :: abs_eigvals
-    real(kind=wp) :: alpha
+    integer(int_size) :: indices(size(X)-1)
+    real(kind=wp)     :: abs_eigvals(size(X)-1)
+    real(kind=wp)     :: alpha
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
+
+    !> Shape assertion.
+    call assert_shape(eigvecs, [kdim, kdim], "eigs", "eigvecs")
 
     ! --> Deals with the optional arguments.
     verbose = optval(verbosity, .false.)
@@ -163,9 +166,7 @@ contains
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
     !> Make sure the first Krylov vector has unit-norm.
     alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
-    do i = 2, size(X) ! i=1 is the initial Krylov vector given by the user.
-       call X(i)%zero()
-    enddo
+    call initialize_krylov_subspace(X(2:kdim+1))
 
     arnoldi : do k = 1, kdim
        !> Arnoldi step.
@@ -182,7 +183,7 @@ contains
 
        !> Spectral decomposition of the k x k Hessenberg matrix.
        eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
-       call evd(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
+       call eig(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
        !> Sort eigenvalues.
        abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
@@ -211,11 +212,11 @@ contains
     !> Linear Operator.
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues, and associated residuals
-    real(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
-    real(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
-    real(kind=wp), dimension(size(X)-1)           , intent(out) :: residuals
+    real(kind=wp), intent(out) :: eigvecs(:, :)
+    real(kind=wp), intent(out) :: eigvals(:)
+    real(kind=wp), intent(out) :: residuals(:)
     !> Information flag.
     integer, intent(out) :: info
     !> Number of converged eigenvalues needed.
@@ -250,9 +251,7 @@ contains
     T = 0.0_wp ; residuals = 0.0_wp ; eigvecs = 0.0_wp ; eigvals = 0.0_wp
     !> Make sure the first Krylov vector has unit-norm.
     alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
-    do i = 2, size(X) ! i = 1 is the starting Krylov vector provided by the user.
-       call X(i)%zero()
-    enddo
+    call initialize_krylov_subspace(X(2:kdim+1))
 
     lanczos : do k = 1, kdim
        ! --> Compute Lanczos tridiagonalization.
@@ -269,7 +268,7 @@ contains
        
        ! --> Compute spectral decomposition of the tridiagonal matrix.
        eigvals = 0.0_wp ; eigvecs = 0.0_wp
-       call hevd(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
+       call eigh(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
        ! --> Sort eigenvalues in decreasing order.
        call sort_index(eigvals, indices, reverse=.true.) ; eigvecs = eigvecs(:, indices)
@@ -367,8 +366,8 @@ contains
        !> Spectral decomposition of the k x k tridiagonal matrix.
        eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
        rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
-       call evd(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
-       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call cinv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
+       call eig(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
+       lvecs(1:k, 1:k) = rvecs(1:k, 1:k) ; call inv(lvecs(1:k, 1:k)) ; lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
 
        !> Sort eigenvalues.
        abs_eigvals = abs(eigvals) ; call sort_index(abs_eigvals, indices, reverse=.true.)
@@ -430,9 +429,9 @@ contains
     class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
     class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
     !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-    real(kind=wp), intent(out) :: uvecs(size(U)-1, size(U)-1), vvecs(size(U)-1, size(U)-1)
-    real(kind=wp), intent(out) :: sigma(size(U)-1)
-    real(kind=wp), intent(out) :: residuals(size(U)-1)
+    real(kind=wp), intent(out) :: uvecs(:, :), vvecs(:, :)
+    real(kind=wp), intent(out) :: sigma(:)
+    real(kind=wp), intent(out) :: residuals(:)
     !> Information flag.
     integer, intent(out) :: info
     !> Number of converged singular triplets.
@@ -469,13 +468,15 @@ contains
        kdim = size(U)-1
     endif
 
+    call assert_shape(uvecs, [kdim, kdim], "svds", "uvecs")
+    call assert_shape(vvecs, [kdim, kdim], "svds", "vvecs")
+
     ! --> Initialize variables.
     B = 0.0_wp ; residuals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp ; sigma = 0.0_wp
     !> Make sure the first Krylov vector has unit-norm.
     beta = U(1)%norm() ; call U(1)%scal(1.0_wp / beta)
-    do i = 2, size(U)
-       call U(i)%zero() ; call V(i)%zero()
-    enddo
+    call initialize_krylov_subspace(U(2:kdim+1))
+    call initialize_krylov_subspace(V(2:kdim+1))
 
     lanczos : do k = 1, kdim
        ! --> Compute the Lanczos bidiagonalization.
@@ -622,9 +623,7 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(wrk, source=b) ; call wrk%zero()
     allocate(V(1:k_dim+1), source=b)
-    do i = 1, size(V)
-       call V(i)%zero()
-    enddo
+    call initialize_krylov_subspace(V)
     allocate(H(k_dim+1, k_dim)) ; H = 0.0_wp
     allocate(y(1:k_dim))        ; y = 0.0_wp
     allocate(e(1:k_dim+1))      ; e = 0.0_wp
@@ -642,9 +641,7 @@ contains
     gmres_iterations : do i = 1, maxiter
        ! --> Zero-out variables.
        H = 0.0_wp ; y = 0.0_wp ; e = 0.0_wp ; e(1) = beta
-       do j = 2, size(V)
-          call V(j)%zero()
-       enddo
+       call initialize_krylov_subspace(V(2:k_dim+1))
        
        ! --> Arnoldi factorization.
        arnoldi : do k = 1, k_dim
@@ -679,7 +676,6 @@ contains
           ! --> Compute residual.
           beta = norm2(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k)))
           if (verbose) then
-             ! write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
              write(*, *) "INFO : GMRES residual after ", info+1, "iteration : ", beta
           endif
 
@@ -880,170 +876,4 @@ contains
     return
   end subroutine cg
 
-
-  !=======================================================================================
-  ! Biconjugate Gradient Stabilized (BiCGSTAB) Solver Subroutine
-  !=======================================================================================
-  !
-  ! Purpose:
-  ! --------
-  ! Implements the Biconjugate Gradient Stabilized (BiCGSTAB) algorithm for solving
-  ! nonsymmetric and possibly ill-conditioned linear systems Ax = b.
-  !
-  ! Algorithmic Features:
-  ! ----------------------
-  ! - Extends the BiCG algorithm by stabilizing the iterations.
-  ! - Utilizes two search directions and two residuals to improve stability.
-  ! - Iteratively updates both the approximate solution and the residuals.
-  !
-  ! Advantages:
-  ! -----------
-  ! - Capable of addressing nonsymmetric and ill-conditioned matrices.
-  ! - Generally more stable and faster compared to the basic BiCG.
-  ! - Suitable for large and sparse matrices.
-  !
-  ! Limitations:
-  ! ------------
-  ! - May experience stagnation for certain types of problems.
-  ! - No preconditioning capabilities in the current implementation.
-  !
-  ! Input/Output Parameters:
-  ! ------------------------
-  ! - A        : Linear Operator (abstract_linop) [Input]
-  ! - b        : Right-hand side (abstract_vector) [Input]
-  ! - x        : Initial/Updated solution (abstract_vector) [Input/Output]
-  ! - info     : Iteration Information flag (Integer) [Output]
-  ! - maxiter  : Maximum number of iterations (Integer) [Optional, Input]
-  ! - tol      : Convergence tolerance (real(kind=dp)) [Optional, Input]
-  ! - verbosity: Verbosity control flag (Logical) [Optional, Input]
-  !
-  ! References:
-  ! -----------
-  ! - van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems,"
-  !   SIAM Journal on Scientific and Statistical Computing, 13(2), 631–644.
-  !
-  !=======================================================================================
-  !subroutine bicgstab(A, b, x, info, preconditioner, options, transpose)
-  !  !> Linear problem and initial guess.
-  !  class(abstract_linop), intent(in) :: A
-  !  class(abstract_vector), intent(in) :: b
-  !  class(abstract_vector), intent(inout) :: x
-  !  !> Output and optional input parameters.
-  !  integer, intent(out) :: info
-  !  class(abstract_preconditioner), optional, intent(in) :: preconditioner
-  !  class(abstract_preconditioner), allocatable          :: precond
-  !  logical                                              :: has_precond
-  !  class(abstract_opts), optional, intent(in) :: options
-  !  type(bicgstab_opts)                        :: opts
-  !  logical, optional, intent(in) :: transpose
-    
-  !   !> Internal variables.
-  !   integer :: i, maxiter
-  !   real(kind=wp) :: tol, res, alpha, omega, rho, rho_new, beta
-  !   logical :: verbose, trans
-   
-  !   !> BiCGSTAB vectors.
-  !   class(abstract_vector), allocatable :: r, r_hat, p, p_int, v, s, t
-
-  !   ! --> Deals with the optional arguments.
-  !   if (present(options)) then
-  !      select type(options)
-  !      type is(bicgstab_opts)
-  !         opts = bicgstab_opts( &
-  !              maxiter = options%maxiter, &
-  !              atol    = options%atol,    &
-  !              rtol    = options%rtol,    &
-  !              verbose = options%verbose  &
-  !         )
-  !      end select
-  !   else
-  !      opts = bicgstab_opts()
-  !   end if
-  !   maxiter = opts%maxiter ; tol = opts%atol + opts%rtol * b%norm()
-  !   verbose = opts%verbose ; trans = optval(transpose, .false.)
-
-  !  if (present(preconditioner)) then
-  !    write(*, *) "INFO: BICGSTAB does not support preconditioning yet. Precond is thus ignored."
-  !    write(*, *)
-  !  endif
-  
-  !   ! Initialize vectors.
-  !   allocate (r, source=b)     ; call r%zero()
-  !   allocate (r_hat, source=b) ; call r_hat%zero()
-  !   allocate (p, source=b)     ; call p%zero()
-  !   allocate (v, source=b)     ; call v%zero()
-  !   allocate (s, source=b)     ; call s%zero()
-  !   allocate (t, source=b)     ; call t%zero()
-        
-  !   ! --> Compute initial residual: r = b - Ax.
-  !   if (trans) then
-  !      call A%rmatvec(x, r)
-  !   else
-  !      call A%matvec(x, r)
-  !   endif
-  !   call r%axpby(-1.0_wp, b, 1.0_wp)
-    
-  !   r_hat = r ; rho = r_hat%dot(r) ; p = r 
-    
-  !   bicgstab_loop: do i = 1, maxiter
-  !      if (trans) then
-  !         call A%rmatvec(p, v)
-  !      else
-  !         call A%matvec(p, v)
-  !      endif
-       
-  !      alpha = rho/r_hat%dot(v)
-       
-  !      ! s = r - alpha * v
-  !      s = r ; call s%axpby(1.0_wp, v, -alpha)
-       
-  !      ! t = A * s
-  !      if (trans) then
-  !         call A%rmatvec(s, t)
-  !      else
-  !         call A%matvec(s, t)
-  !      endif
-  !      omega = t%dot(s)/t%dot(t)
-       
-  !      ! x = x + s * omega + p * alpha
-  !      call x%axpby(1.0_wp, s, omega) ; call x%axpby(1.0_wp, p, alpha)
-       
-  !      ! r = s - t * omega
-  !      r = s ; call r%axpby(1.0_wp, t, -omega)
-       
-  !      res = r%norm()  
-  !      if (verbose) then
-  !         write (*, *) "INFO : BICGSTAB residual after ", (i), "iterations : ", res
-  !      end if
-  !      if (res < tol) exit bicgstab_loop
-       
-  !      rho_new = r_hat%dot(r)
-  !      beta = (alpha/omega) * (rho_new/rho)
-       
-  !      ! s = p - v * omega ! reusing s vector
-  !      s = p ; call s%axpby(1.0_wp, v, -omega)
-       
-  !      ! p = r + s * beta
-  !      p = r ; call p%axpby(1.0_wp, s, beta)
-       
-  !      rho = rho_new
-       
-  !   end do bicgstab_loop
-    
-  !   deallocate (r, r_hat, p, v, s, t)
-  !   return
-  ! end subroutine bicgstab
-  
-  ! --> Utility Functions -----
-  
-  subroutine initialize_krylov_basis(X)
-    ! Initializes Krylov basis vectors to zero, except for
-    ! the first vector which is provided by the user
-    class(abstract_vector), dimension(:), intent(inout) :: X
-    integer :: i
-    do i = 2, size(X)
-       call X(i)%zero()
-    end do
-  end subroutine initialize_krylov_basis
-  
 end module lightkrylov_IterativeSolvers

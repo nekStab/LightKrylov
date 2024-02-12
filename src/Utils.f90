@@ -1,9 +1,12 @@
-module lightkrylov_Utils
+module lightkrylov_utils
   implicit none
   include "dtypes.h"
 
   private
-  public :: rinv, cinv, svd, evd, hevd, lstsq
+  !> General-purpose utilities.
+  public :: assert_shape
+  !> Linear Algebra Utilities.
+  public :: inv, svd, eig, eigh, lstsq
 
   !-------------------------------------------------------
   !-----                                             -----
@@ -50,7 +53,84 @@ module lightkrylov_Utils
      logical :: verbose = .false.
   end type cg_opts
 
+  !------------------------------
+  !-----     INTERFACES     -----
+  !------------------------------
+
+  !> Check dimensions of an array.
+  interface assert_shape
+     module procedure dassert_shape
+     module procedure zassert_shape
+  end interface assert_shape
+
+  !> Compute inv(A).
+  interface inv
+     module procedure dinv
+     module procedure zinv
+  end interface inv
+
+  !> Compute U, S, V = svd(A)
+  interface svd
+     module procedure dsvd
+  end interface svd
+
+  !> Compute EVD(A).
+  interface eig
+     module procedure deig
+  end interface eig
+
+  !> Compute EVD(A) with A sym. pos. def / Hermitian.
+  interface eigh
+     module procedure deigh
+  end interface eigh
+
 contains
+
+  !-------------------------------------
+  !-----                           -----
+  !-----     VARIOUS UTILITIES     -----
+  !-----                           -----
+  !-------------------------------------
+
+  subroutine stop_error(msg)
+    !> Error message.
+    character(len=*), intent(in) :: msg
+
+    write(*, *) msg
+    stop 1
+
+    return
+  end subroutine stop_error
+
+  subroutine dassert_shape(A, size, routine, matname)
+    !> Input matrix and expected dimensions.
+    real(kind=wp),    intent(in) :: A(:, :)
+    integer,          intent(in) :: size(:)
+    character(len=*), intent(in) :: routine, matname
+
+    if (any(shape(A) /= size)) then
+       write(*, *) "In routine " // routine // " matrix " // matname // " has illegal shape ", shape(A)
+       write(*, *) "Expected shape is ", size
+       call stop_error("Aborting due to illegal matrix operation.")
+    endif
+
+    return
+  end subroutine dassert_shape
+
+  subroutine zassert_shape(A, size, routine, matname)
+    !> Input matrix and expected dimensions.
+    complex(kind=wp), intent(in) :: A(:, :)
+    integer,          intent(in) :: size(:)
+    character(len=*), intent(in) :: routine, matname
+
+    if (any(shape(A) /= size)) then
+       write(*, *) "In routine " // routine // " matrix " // matname // " has illegal shape ", shape(A)
+       write(*, *) "Expected shape is ", size
+       call stop_error("Aborting due to illegal matrix operation.")
+    endif
+
+    return
+  end subroutine zassert_shape
 
   !-------------------------------------------
   !-----                                 -----
@@ -58,7 +138,7 @@ contains
   !-----                                 -----
   !-------------------------------------------
 
-  subroutine rinv(A)
+  subroutine dinv(A)
     !> Matrix to invert (in-place)
     real(kind=wp), intent(inout) :: A(:, :)
     !> Lapack-related.
@@ -67,14 +147,37 @@ contains
     integer       :: ipiv(size(A, 1))
 
     !> Compute A = LU (in-place)
-    n = size(A, 1) ; call dgetrf(n, n, A, n, ipiv, info)
+    n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+    call dgetrf(n, n, A, n, ipiv, info)
+    if (info /= 0) then
+       write(*, *) "DGETRF returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero. The factorization"
+          write(*, *) "has been completed but the factor U is exactly singular."
+          write(*, *) "Division by zero will occur if used to solve Ax = b."
+       endif
+       call stop_error("inv: DGETRF error.")
+    endif
+
     !> Compute inv(A).
     call dgetri(n, A, n, ipiv, work, n, info)
+    if (info /= 0) then
+       write(*, *) "DGETRI returned info =", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero."
+          write(*, *) "The matrix is singular and its inverse cannot be computed."
+       endif
+       call stop_error("inv: DGETRI error.")
+    endif
 
     return
-  end subroutine rinv
+  end subroutine dinv
 
-  subroutine cinv(A)
+  subroutine zinv(A)
     !> Matrix to invert (in-place)
     complex(kind=wp), intent(inout) :: A(:, :)
     !> Lapack-related.
@@ -83,12 +186,35 @@ contains
     integer          :: ipiv(size(A, 1))
 
     !> Compute A = LU (in-place).
-    n = size(A, 1) ; call zgetrf(n, n, A, n, ipiv, info)
+    n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+    call zgetrf(n, n, A, n, ipiv, info)
+    if (info /= 0) then
+       write(*, *) "ZGETRF returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero. The factorization"
+          write(*, *) "has been completed but the factor U is exactly singular."
+          write(*, *) "Division by zero will occur if used to solve Ax = b."
+       endif
+       call stop_error("inv: ZGETRF error.")
+    endif
+
     !> Compute inv(A).
     call zgetri(n, A, n, ipiv, work, n, info)
+    if (info /= 0) then
+       write(*, *) "ZGETRI returned info =", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "U(", info, ",", info, ") is exactly zero."
+          write(*, *) "The matrix is singular and its inverse cannot be computed."
+       endif
+       call stop_error("inv: ZGETRI error.")
+    endif
 
     return
-  end subroutine cinv
+  end subroutine zinv
 
   !------------------------------------------
   !-----                                -----
@@ -96,15 +222,15 @@ contains
   !-----                                -----
   !------------------------------------------
 
-  subroutine svd(A, U, S, V)
+  subroutine dsvd(A, U, S, V)
     !> Matrix to be factorized
     real(kind=wp), intent(in)  :: A(:, :)
     !> Left singular vectors.
-    real(kind=wp), intent(out) :: U(size(A, 1), min(size(A, 1), size(A, 2)))
+    real(kind=wp), intent(out) :: U(:, :)
     !> Singular values.
-    real(kind=wp), intent(out) :: S(size(A, 2))
+    real(kind=wp), intent(out) :: S(:)
     !> Right singular vectors.
-    real(kind=wp), intent(out) :: V(size(A, 2), min(size(A, 1), size(A, 2)))
+    real(kind=wp), intent(out) :: V(:, :)
 
     !> Lapack-related.
     character :: jobu="S", jobvt="S"
@@ -117,13 +243,30 @@ contains
     lda = m ; ldu = m ; ldvt = n
     lwork = max(1, 3*min(m, n), 5*min(m, n)) ; allocate(work(lwork))
 
+    !> Shape assertions.
+    call assert_shape(U, [m, min(m, n)], "svd", "U")
+    call assert_shape(V, [n, min(m, n)], "svd", "V")
+
     !> SVD computation.
     a_tilde = a
     call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, info)
+    if (info /= 0) then
+       write(*, *) "DGESVD returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "DBSQR did not converge. There are ", info, "superdiagonals"
+          write(*, *) "of an intermediate bidiagonal matrix form B which did not"
+          write(*, *) "converge to zero. See Lapack documentation for more details."
+       endif
+       call stop_error("svd: dgesvd error")
+    endif
+
+    !> Return the transpose of V.
     v = transpose(vt)
 
     return
-  end subroutine svd
+  end subroutine dsvd
 
   !-------------------------------------------
   !-----                                 -----
@@ -131,13 +274,13 @@ contains
   !-----                                 -----
   !-------------------------------------------
 
-  subroutine evd(A, vecs, vals)
+  subroutine deig(A, vecs, vals)
     !> Matrix to be factorized.
     real(kind=wp), intent(in) :: A(:, :)
     !> Eigenvectors.
-    complex(kind=wp), intent(out) :: vecs(size(A, 1), size(A, 2))
+    complex(kind=wp), intent(out) :: vecs(:, :)
     !> Eigenvalues.
-    complex(kind=wp), intent(out) :: vals(size(A, 1))
+    complex(kind=wp), intent(out) :: vals(:)
 
     !> Lapack-related.
     character :: jobvl="n", jobvr="v"
@@ -150,32 +293,50 @@ contains
 
     !> Setup variables.
     n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; lwork = 4*n ; a_tilde = a
+
+    !> Shape assertion.
+    call assert_shape(A, [n, n], "eig", "A")
+    call assert_shape(vecs, [n, n], "eig", "vecs")
+
     !> Eigendecomposition.
     call dgeev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
+
+    if (info /= 0) then
+       write(*, *) "DGEEV returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "The QR alg. failed to compute all of the eigenvalues."
+          write(*, *) "No eigenvector has been computed."
+       endif
+       call stop_error("eig: dgeev error")
+    endif
+
     !> Real to complex arithmetic.
     !> NOTE : Check if a LAPACK function already exists for that purpose.
     vals = cmplx(1.0_wp, 0.0_wp, kind=wp)*wr + cmplx(0.0_wp, 1.0_wp, kind=wp)*wi
-    vecs = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr
+    vecs = cmplx(0.0_wp, 0.0_wp, kind=wp)*vr
 
-    do i = 1, n-1
-       if (wi(i) .gt. 0) then
-          vecs(:, i)   = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i+1)
-          vecs(:, i+1) = conjg(vecs(:, i))
-       else if (abs(wi(i)) .le. epsilon(wi(i))) then
-          vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i)
-       end if
+    do i = 1, n
+       if (wi(i) > 0.0_wp) then
+          vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i+1)
+       else if (wi(i) < 0.0_wp) then
+          vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i-1) - cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i)
+       else
+          vecs(:, i) = vr(:, i)
+       endif
     enddo
 
     return
-  end subroutine evd
+  end subroutine deig
 
-  subroutine hevd(A, vecs, vals)
+  subroutine deigh(A, vecs, vals)
     !> Matrix to be factorized.
     real(kind=wp), intent(in)  :: A(:, :)
     !> Eigenvectors.
-    real(kind=wp), intent(out) :: vecs(size(A, 1), size(A, 2))
+    real(kind=wp), intent(out) :: vecs(:, :)
     !> Eigenvalues.
-    real(kind=wp), intent(out) :: vals(size(A, 1))
+    real(kind=wp), intent(out) :: vals(:)
 
     !> Lapack-related.
     character :: jobz="v", uplo="u"
@@ -185,11 +346,26 @@ contains
 
     !> Setup variables.
     n = size(A, 1) ; lda = n ; lwork = 3*n-1 ; a_tilde = a
+
+    !> Shape assertion.
+    call assert_shape(A, [n, n], "eigh", "A")
+    call assert_shape(vecs, [n, n], "eigh", "vecs")
+
     !> Eigendecomposition.
     call dsyev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
 
+    if (info /= 0) then
+       write(*, *) "DSYEV returned info = ", info
+       if (info < 0) then
+          write(*, *) "The ", -info, "-th argument has an illegal value."
+       else
+          write(*, *) "The computation failed. See lapack documentation for more details."
+       endif
+       call stop_error("eigh: dsyev error")
+    endif
+
     return
-  end subroutine hevd
+  end subroutine deigh
 
   !-----------------------------------------------------
   !-----                                           -----
@@ -219,9 +395,9 @@ contains
     !> Solve the least-squares problem.
     call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
 
-    if (info > 0) then
-       write(*, *) "INFO: Error in LAPACK least-squares solver. Stopping the computation."
-       call exit()
+    if (info /= 0) then
+       write(*, *) "The ", -info, "-th argument has an illegal value."
+       call stop_error("lstsq: dgels error")
     endif
 
     !> Return solution.
@@ -232,4 +408,4 @@ contains
 
 
 
-end module lightkrylov_Utils
+end module lightkrylov_utils

@@ -48,9 +48,9 @@ contains
     ! --> Linear Operator to be factorized.
     class(abstract_linop), intent(in) :: A
     ! --> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     ! --> Upper Hessenberg matrix.
-    real(kind=wp), dimension(:, :), intent(inout) :: H
+    real(kind=wp), intent(inout) :: H(:, :)
     ! --> Information.
     integer, intent(out) :: info ! info < 0 : The k-step Arnoldi factorization failed.
     ! info = 0 : The k-step Arnoldi factorization succeeded.
@@ -62,13 +62,7 @@ contains
     info = 0
 
     ! --> Check dimensions.
-    kdim = size(X) - 1
-
-    if ( all(shape(H) .ne. [kdim+1, kdim]) ) then
-       write(*, *) "INFO : Hessenberg matrix and Krylov subspace dimensions do not match."
-       info = -1
-       return
-    endif
+    kdim = size(X) - 1 ; call assert_shape(H, [kdim+1, kdim], "arnoldi_factorization", "H")
 
     ! --> Deals with the optional arguments.
     k_start   = optval(kstart, 1)
@@ -127,8 +121,8 @@ contains
 
   subroutine update_hessenberg_matrix(H, X, k)
     integer, intent(in) :: k
-    real(kind=wp), dimension(:, :), intent(inout) :: H
-    class(abstract_vector), dimension(:) :: X
+    real(kind=wp), intent(inout) :: H(:, :)
+    class(abstract_vector) :: X(:)
     class(abstract_vector), allocatable :: wrk
     integer :: i
     real(kind=wp) :: alpha
@@ -160,9 +154,9 @@ contains
     !> Linear operator to be factorized;
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     !> Tri-diagonal matrix.
-    real(kind=wp), dimension(:, :), intent(inout) :: T
+    real(kind=wp), intent(inout) :: T(:, :)
     !> Information flag.
     integer, intent(out) :: info
     !> Optional arguements.
@@ -180,13 +174,7 @@ contains
     integer          :: i, j
 
     ! --> Check dimensions.
-    kdim = size(X) - 1
-
-    if (all(shape(T) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Tridiagonal matrix and Krylov subspace dimensions do not match."
-       info = -1
-       return
-    endif
+    kdim = size(X) - 1 ; call assert_shape(T, [kdim+1, kdim], "lanczos_tridiag.", "T")
 
     ! --> Deals with the optional arguments.
     k_start   = optval(kstart, 1)
@@ -238,8 +226,8 @@ contains
 
   subroutine update_tridiag_matrix(T, X, k)
     integer, intent(in) :: k
-    real(kind=wp), dimension(:, :), intent(inout) :: T
-    class(abstract_vector), dimension(:) :: X
+    real(kind=wp), intent(inout) :: T(:, :)
+    class(abstract_vector) :: X(:)
     class(abstract_vector), allocatable :: wrk
     integer :: i
     real(kind=wp) :: alpha
@@ -299,10 +287,7 @@ contains
     endif
 
     ! --> Check B dimensions.
-    if (all(shape(B) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Bidiagonal matrix and Krylov subspaces dimensions do not match."
-       info = -2
-    endif
+    call assert_shape(B, [kdim+1, kdim], "lanczos_bidiag.", "B")
 
     ! --> Deals with the optional arguments.
     k_start = optval(kstart, 1)
@@ -505,17 +490,9 @@ contains
     endif
 
     !> Check the dimensions of the Hessenberg matrices.
-    if (all(shape(H) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Dimensions of the Hessenberg matrix H and Krylov subspace V do not match."
-       info = -2
-       return
-    endif
+    call assert_shape(H, [kdim+1, kdim], "two_sided_arnoldi", "H")
+    call assert_shape(G, [kdim+1, kdim], "two_sided_arnoldi", "G")
 
-    if (all(shape(G) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Dimensions of the Hessenberg matrix G and Krylov subspace W do not match."
-       info = -3
-       return
-    endif
 
     !> Deals with the optional arguments.
     k_start   = optval(kstart, 1)
@@ -548,7 +525,7 @@ contains
     enddo
 
     !> Inverse of the inner-product matrix (in-place).
-    invM = M(1:kdim, 1:kdim) ; call rinv(invM)
+    invM = M(1:kdim, 1:kdim) ; call inv(invM)
 
     !> Update the residual vectors.
     call update_residual_vector(V(kdim+1), V(1:kdim), W(1:kdim), invM)
