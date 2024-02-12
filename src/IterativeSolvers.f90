@@ -119,11 +119,11 @@ contains
     !> Linear Operator.
     class(abstract_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues and associated residuals.
-    complex(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
-    complex(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
-    real(kind=wp)   , dimension(size(X)-1)           , intent(out) :: residuals
+    complex(kind=wp), intent(out) :: eigvecs(:, :)
+    complex(kind=wp), intent(out) :: eigvals(:)
+    real(kind=wp)   , intent(out) :: residuals(:)
     !> Information flag.
     integer, intent(out) :: info
     !> Number of desired eigenvalues.
@@ -140,18 +140,21 @@ contains
     logical :: trans
 
     !> Upper Hessenberg matrix.
-    real(kind=wp), dimension(size(X), size(X)-1) :: H
-    real(kind=wp)                                :: beta
+    real(kind=wp) :: H(size(X), size(X)-1)
+    real(kind=wp) :: beta
     !> Krylov subspace dimension.
     integer :: kdim
     !> Miscellaneous.
     integer :: i, j, k
-    integer(int_size), dimension(size(X)-1) :: indices
-    real(kind=wp)    , dimension(size(X)-1) :: abs_eigvals
-    real(kind=wp) :: alpha
+    integer(int_size) :: indices(size(X)-1)
+    real(kind=wp)     :: abs_eigvals(size(X)-1)
+    real(kind=wp)     :: alpha
 
     ! --> Dimension of the Krylov subspace.
     kdim = size(X) - 1
+
+    !> Shape assertion.
+    call assert_shape(eigvecs, [kdim, kdim], "eigs", "eigvecs")
 
     ! --> Deals with the optional arguments.
     verbose = optval(verbosity, .false.)
@@ -163,9 +166,7 @@ contains
     H = 0.0_wp ; residuals = 0.0_wp ; eigvals = (0.0_wp, 0.0_wp) ; eigvecs = (0.0_wp, 0.0_wp)
     !> Make sure the first Krylov vector has unit-norm.
     alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
-    do i = 2, size(X) ! i=1 is the initial Krylov vector given by the user.
-       call X(i)%zero()
-    enddo
+    call initialize_krylov_subspace(X(2:kdim+1))
 
     arnoldi : do k = 1, kdim
        !> Arnoldi step.
@@ -211,7 +212,7 @@ contains
     !> Linear Operator.
     class(abstract_spd_linop), intent(in) :: A
     !> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), dimension(:), intent(inout) :: X(:)
     !> Coordinates of eigenvectors in Krylov basis, eigenvalues, and associated residuals
     real(kind=wp), dimension(size(X)-1, size(X)-1), intent(out) :: eigvecs
     real(kind=wp), dimension(size(X)-1)           , intent(out) :: eigvals
@@ -679,7 +680,6 @@ contains
           ! --> Compute residual.
           beta = norm2(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k)))
           if (verbose) then
-             ! write(*, *) "INFO : GMRES residual after ", (i-1)*k_dim + k, "iteration : ", beta
              write(*, *) "INFO : GMRES residual after ", info+1, "iteration : ", beta
           endif
 
