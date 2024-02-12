@@ -429,9 +429,9 @@ contains
     class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
     class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
     !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-    real(kind=wp), intent(out) :: uvecs(size(U)-1, size(U)-1), vvecs(size(U)-1, size(U)-1)
-    real(kind=wp), intent(out) :: sigma(size(U)-1)
-    real(kind=wp), intent(out) :: residuals(size(U)-1)
+    real(kind=wp), intent(out) :: uvecs(:, :), vvecs(:, :)
+    real(kind=wp), intent(out) :: sigma(:)
+    real(kind=wp), intent(out) :: residuals(:)
     !> Information flag.
     integer, intent(out) :: info
     !> Number of converged singular triplets.
@@ -468,13 +468,15 @@ contains
        kdim = size(U)-1
     endif
 
+    call assert_shape(uvecs, [kdim, kdim], "svds", "uvecs")
+    call assert_shape(vvecs, [kdim, kdim], "svds", "vvecs")
+
     ! --> Initialize variables.
     B = 0.0_wp ; residuals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp ; sigma = 0.0_wp
     !> Make sure the first Krylov vector has unit-norm.
     beta = U(1)%norm() ; call U(1)%scal(1.0_wp / beta)
-    do i = 2, size(U)
-       call U(i)%zero() ; call V(i)%zero()
-    enddo
+    call initialize_krylov_subspace(U(2:kdim+1))
+    call initialize_krylov_subspace(V(2:kdim+1))
 
     lanczos : do k = 1, kdim
        ! --> Compute the Lanczos bidiagonalization.
