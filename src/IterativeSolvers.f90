@@ -623,9 +623,7 @@ contains
     ! --> Initialize Krylov subspace.
     allocate(wrk, source=b) ; call wrk%zero()
     allocate(V(1:k_dim+1), source=b)
-    do i = 1, size(V)
-       call V(i)%zero()
-    enddo
+    call initialize_krylov_subspace(V)
     allocate(H(k_dim+1, k_dim)) ; H = 0.0_wp
     allocate(y(1:k_dim))        ; y = 0.0_wp
     allocate(e(1:k_dim+1))      ; e = 0.0_wp
@@ -643,9 +641,7 @@ contains
     gmres_iterations : do i = 1, maxiter
        ! --> Zero-out variables.
        H = 0.0_wp ; y = 0.0_wp ; e = 0.0_wp ; e(1) = beta
-       do j = 2, size(V)
-          call V(j)%zero()
-       enddo
+       call initialize_krylov_subspace(V(2:k_dim+1))
        
        ! --> Arnoldi factorization.
        arnoldi : do k = 1, k_dim
