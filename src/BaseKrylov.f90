@@ -490,17 +490,9 @@ contains
     endif
 
     !> Check the dimensions of the Hessenberg matrices.
-    if (all(shape(H) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Dimensions of the Hessenberg matrix H and Krylov subspace V do not match."
-       info = -2
-       return
-    endif
+    call assert_shape(H, [kdim+1, kdim], "two_sided_arnoldi", "H")
+    call assert_shape(G, [kdim+1, kdim], "two_sided_arnoldi", "G")
 
-    if (all(shape(G) .ne. [kdim+1, kdim])) then
-       write(*, *) "INFO : Dimensions of the Hessenberg matrix G and Krylov subspace W do not match."
-       info = -3
-       return
-    endif
 
     !> Deals with the optional arguments.
     k_start   = optval(kstart, 1)
