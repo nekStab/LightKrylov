@@ -48,9 +48,9 @@ contains
     ! --> Linear Operator to be factorized.
     class(abstract_linop), intent(in) :: A
     ! --> Krylov basis.
-    class(abstract_vector), dimension(:), intent(inout) :: X
+    class(abstract_vector), intent(inout) :: X(:)
     ! --> Upper Hessenberg matrix.
-    real(kind=wp), dimension(:, :), intent(inout) :: H
+    real(kind=wp), intent(inout) :: H(:, :)
     ! --> Information.
     integer, intent(out) :: info ! info < 0 : The k-step Arnoldi factorization failed.
     ! info = 0 : The k-step Arnoldi factorization succeeded.
@@ -62,13 +62,7 @@ contains
     info = 0
 
     ! --> Check dimensions.
-    kdim = size(X) - 1
-
-    if ( all(shape(H) .ne. [kdim+1, kdim]) ) then
-       write(*, *) "INFO : Hessenberg matrix and Krylov subspace dimensions do not match."
-       info = -1
-       return
-    endif
+    kdim = size(X) - 1 ; call assert_shape(H, [kdim+1, kdim], "arnoldi_factorization", "H")
 
     ! --> Deals with the optional arguments.
     k_start   = optval(kstart, 1)
@@ -127,8 +121,8 @@ contains
 
   subroutine update_hessenberg_matrix(H, X, k)
     integer, intent(in) :: k
-    real(kind=wp), dimension(:, :), intent(inout) :: H
-    class(abstract_vector), dimension(:) :: X
+    real(kind=wp), intent(inout) :: H(:, :)
+    class(abstract_vector) :: X(:)
     class(abstract_vector), allocatable :: wrk
     integer :: i
     real(kind=wp) :: alpha
