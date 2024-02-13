@@ -712,8 +712,10 @@ contains
     enddo gmres_iterations
 
     ! --> Convergence information.
-    write(*, *) "INFO : GMRES converged with residual ", beta
-    write(*, *) "       Computation required ", info, "iterations"
+    if (verbose) then
+       write(*, *) "INFO : GMRES converged with residual ", beta
+       write(*, *) "       Computation required ", info, "iterations"
+    endif
 
     return
   end subroutine gmres
