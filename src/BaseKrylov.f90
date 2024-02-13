@@ -588,16 +588,14 @@ contains
   ! NB: This could be further improved by adding (partial) pivoting if problems
   ! arise due to premature breakdown.
 
-  subroutine qr_factorization(A,Q,R, info, verbosity, tol)
+  subroutine qr_factorization(Q,R, info, verbosity, tol)
    
    !> Basis to be orthonormalized.
-   class(abstract_vector), intent(in)    :: A(:)
-   !> Orthonormal subspace basis
    class(abstract_vector), intent(inout) :: Q(:)
    !> Gram-Schmidt factors
-   real(kind=wp)         , intent(inout) :: R(:,:)
+   real(kind=wp)         , intent(out)   :: R(:,:)
    !> Information flag.
-   integer       , intent(out)           :: info
+   integer               , intent(out)   :: info
    !> Optional arguments.
    logical, optional, intent(in)         :: verbosity
    logical                               :: verbose
@@ -618,8 +616,6 @@ contains
 
    !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
    do j = 1, kdim
-      ! --> Copy column j
-      call Q(j)%axpby(0.0_wp, A(j), 1.0_wp)
       ! --> Orthonormalization against existing columns
       do i = 1, j-1
          beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
@@ -653,10 +649,6 @@ contains
    enddo
 
    !> Modified Gram-Schmidt
-   !do j = 1, kdim
-   !   call Q(j)%axpby(0.0_wp, A(j), 1.0_wp)
-   !enddo
-!
    !do i = 1, kdim
    !   beta = Q(i)%norm(); call Q(i)%scal(1.0_wp / beta)
    !   R(i, i) = beta

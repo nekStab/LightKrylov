@@ -584,8 +584,6 @@ contains
      type(error_type), allocatable, intent(out) :: error
      !> Test matrix.
      class(rvector), dimension(:), allocatable :: A
-     !> Basis vectors.
-     class(rvector), dimension(:), allocatable :: Q
      !> Krylov subspace dimension.
      integer, parameter :: kdim = 3
      !> GS factors.
@@ -602,18 +600,16 @@ contains
      do k = 1, size(A)
         call random_number(A(k)%data)
      enddo
-     ! --> Initialize Krylov subspace.
-     allocate(Q(1:kdim));
-     do k = 1, size(Q)
-        call Q(k)%zero()
-     enddo
-     R = 0.0_wp
-     ! --> QR factorization.
-     call qr_factorization(A, Q, R, info)
-     ! --> Extract data 
+     ! --> Copy input matrix data for comparison
      do k = 1, kdim
         Amat(:, k) = A(k)%data
-        Qmat(:, k) = Q(k)%data
+     enddo
+     R = 0.0_wp
+     ! --> In-place QR factorization.
+     call qr_factorization(A, R, info)
+     ! --> Extract data 
+     do k = 1, kdim
+        Qmat(:, k) = A(k)%data
      enddo
      ! --> Check correctness of QR factorization.
      call check(error, all_close(Amat, matmul(Qmat, R), rtol, atol) )
@@ -629,9 +625,7 @@ contains
      !> Error type to be returned.
      type(error_type), allocatable, intent(out) :: error
      !> Test matrix.
-     class(rvector), dimension(:), allocatable :: A
-     !> Basis vectors.
-     class(rvector), dimension(:), allocatable :: Q
+     class(rvector), dimension(:), allocatable  :: A
      !> Krylov subspace dimension.
      integer, parameter :: kdim = 3
      !> GS factors.
@@ -649,17 +643,12 @@ contains
      do k = 1, size(A)
         call random_number(A(k)%data)
      enddo
-     ! --> Initialize Krylov subspace.
-     allocate(Q(1:kdim));
-     do k = 1, size(Q)
-        call Q(k)%zero()
-     enddo
      R = 0.0_wp
-     ! --> QR factorization.
-     call qr_factorization(A, Q, R, info)
+     ! --> In-place QR factorization.
+     call qr_factorization(A, R, info)
      ! --> Extract data 
      do k = 1, kdim
-        Qmat(:, k) = Q(k)%data
+        Qmat(:, k) = A(k)%data
         do i = 1, test_size
            Qtmat(k,i) = Qmat(i,k)
         enddo
