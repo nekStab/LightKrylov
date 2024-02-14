@@ -697,20 +697,17 @@ contains
       end subroutine rayleigh_quotient_form
    end subroutine two_sided_arnoldi_factorization
 
-   !-------------------------------------------------------------
-   !-----                                                   -----
-   !-----     QR FACTORIZATION FOR GENERAL NxM MATRICES     -----
-   !-----                                                   -----
-   !-------------------------------------------------------------
+   !=======================================================================================
+   ! QR factorization for general n x m matrices
+   !=======================================================================================
    !
    ! Purpose:
    ! --------
-   ! Simple implementation of the QR factorisation of a general (real)
-   ! Krylov basis.
+   ! Simple implementation of the QR factorization of a general (real) Krylov basis.
    !
    ! Algorithmic Features:
    ! ---------------------
-   ! - In-place factorisation
+   ! - In-place factorization
    ! - Double Gram-Schmidt procedure for stability
    ! - Includes a simple check for premature breakdown
    !
@@ -721,11 +718,10 @@ contains
    !
    ! Limitations:
    ! ------------
-   ! - No pivoting, i.e. the columns are orthonormalized in the natural
-   !   ordering. This may lead to premature breakdown if adjacent
+   ! - No pivoting, i.e. the columns are orthonormalized in the natural ordering.
+   !   This may lead to premature breakdown if adjacent
    !   columns are nearly colinear.
-   ! - The current implementation only includes a simple check for
-   !   breakdown
+   ! - The current implementation only includes a simple check for breakdown
    !
    ! Input/Output Parameters:
    ! ------------------------
@@ -735,6 +731,12 @@ contains
    ! - tol      : Tolerance for breakdown detection    [Optional, Input]
    ! - verbosity: Verbosity control flag               [Optional, Input]
    !
+   ! References:
+   ! -----------
+   !
+   ! - Any numerical linear algebra textbook.
+   !
+   !=======================================================================================
    subroutine qr_factorization(Q, R, info, verbosity, tol)
       !> Basis to be orthonormalized.
       class(abstract_vector), intent(inout) :: Q(:)
