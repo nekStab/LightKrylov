@@ -186,7 +186,8 @@ contains
    !
    ! Purpose:
    ! --------
-   ! Performs Lanczos tridiagonalization on a given SPD linear operator A, producing an orthonormal basis X and a tridiagonal matrix T.
+   ! Performs Lanczos tridiagonalization on a given SPD linear operator A, producing an
+   ! orthonormal basis X and a tridiagonal matrix T.
    !
    ! Mathematical Formulation:
    ! -------------------------
@@ -446,7 +447,7 @@ contains
    end subroutine lanczos_bidiagonalization
 
    !=======================================================================================
-   ! Nonsymmetric Two-Sided Lanczos Tridiagonalization for General Square Matrices
+   ! Nonsymmetric Lanczos Tridiagonalization for General Square Matrices
    !=======================================================================================
    !
    ! Purpose:
@@ -461,8 +462,19 @@ contains
    !
    ! Algorithmic Features:
    ! ----------------------
-   ! - Constructs orthonormal bases V and W.
+   ! - Constructs bi-orthogonal bases V and W for the domain and image of A.
    ! - Constructs a tridiagonal matrix T.
+   !
+   ! Advantages:
+   ! ----------
+   ! - Simultaneously compute a vector basis for the domain and image of A.
+   ! - Bi-orthogonality of the two bases is a feature of the algorithm.
+   !
+   ! Limitations:
+   ! -----------
+   ! - Maintaining the bi-orthogonality for high-dimensional operators is numerically
+   !   unstable and quickly suffers from accumulation of floating point erros.
+   ! - It is strongly suggested NOT to use it for production code.
    !
    ! Input/Output Parameters:
    ! ------------------------
@@ -475,6 +487,10 @@ contains
    ! kend       : Optional, ending index, integer, intent(in)
    ! verbosity  : Optional, verbosity flag, logical, intent(in)
    ! tol        : Optional, tolerance, real(kind=wp), intent(in)
+   !
+   ! References:
+   ! ----------
+   ! - ???
    !
    !=======================================================================================
    subroutine nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, kstart, kend, verbosity, tol)
