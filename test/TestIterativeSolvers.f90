@@ -8,13 +8,60 @@ module TestIterativeSolvers
 
   private
 
-  public :: collect_evp_testsuite, &
-       collect_gmres_testsuite,    &
-       collect_svd_testsuite,      &
+  public :: collect_gmres_testsuite,    &
        collect_cg_testsuite,       &
-       collect_bicgstab_testsuite
+       collect_evp_testsuite, &
+       collect_svd_testsuite
+
+  !-----------------------------------------------------------
+  !-----                                                 -----
+  !-----     JACOBI-BASED PRECONDITIONER FOR TESTING     -----
+  !-----                                                 -----
+  !-----------------------------------------------------------
+
+  type, extends(abstract_preconditioner), public :: jacobi_preconditioner
+     real(kind=wp), dimension(test_size) :: data
+   contains
+     private
+     procedure, pass(self), public :: apply
+     procedure, pass(self), public :: undo
+  end type jacobi_preconditioner
 
 contains
+
+  !--------------------------------------------------------------------
+  !-----                                                          -----
+  !-----     TYPE-BOUND PROCEDURES FOR JACOBI-PRECONDITIONING     -----
+  !-----                                                          -----
+  !--------------------------------------------------------------------
+
+  subroutine apply(self, vec_inout)
+    !> Preconditioner.
+    class(jacobi_preconditioner), intent(in)    :: self
+    !> Input/output vector.
+    class(abstract_vector)      , intent(inout) :: vec_inout
+
+    !> Diagonal scaling.
+    select type(vec_inout)
+    type is(rvector)
+       vec_inout%data = (1.0_wp / self%data) * vec_inout%data
+    end select
+    return
+  end subroutine apply
+
+  subroutine undo(self, vec_inout)
+    !> Preconditioner.
+    class(jacobi_preconditioner), intent(in)    :: self
+    !> Input/Output vector.
+    class(abstract_vector)      , intent(inout) :: vec_inout
+
+    !> Undo diagonal scaling.
+    select type(vec_inout)
+    type is(rvector)
+       vec_inout%data = self%data * vec_inout%data
+    end select
+    return
+  end subroutine undo
 
   !-------------------------------------------------------------
   !-----                                                   -----
@@ -26,86 +73,133 @@ contains
     !> Collection of tests.
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
-    testsuite = [&
-         new_unittest("Triangular matrix eigenvalues", test_eigvals_triangular_matrix), &
-         new_unittest("Sym. Pos. Def. matrix eigenvalues", test_eigvals_spd_matrix)     &
+    testsuite = [ &
+         new_unittest("Sym. EVP computation", test_spd_evp_problem), &
+         new_unittest("EVP computation", test_evp_problem)           &
          ]
     return
   end subroutine collect_evp_testsuite
 
-  subroutine test_eigvals_triangular_matrix(error)
+  subroutine test_spd_evp_problem(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Test matrix.
+    class(spd_matrix), allocatable :: A
+    !> Krylov subspace.
+    class(rvector), allocatable :: X(:)
+    !> Eigenvalues and eigenvectors.
+    real(kind=wp) :: evals(test_size), evecs(test_size, test_size)
+    !> Residuals.
+    real(kind=wp) :: residuals(test_size)
+    !> Information flag.
+    integer :: info
+    !> Toeplitz matrix.
+    real(kind=wp) :: T(test_size, test_size), a_, b_
+    !> Miscellaneous.
+    integer :: i, j, k
+    real(kind=wp) :: alpha
+    real(kind=wp) :: true_evals(test_size), pi
+
+    !> Create the sym. pos. def. Toeplitz matrix.
+    call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
+    do i = 1, test_size
+       !> Diagonal entry.
+       T(i, i) = a_
+       !> Upper diagonal entry.
+       if (i < test_size) T(i, i+1) = b_
+       !> Lower diagonal entry.
+       if (i < test_size) T(i+1, i) = b_
+    enddo
+
+    !> Test matrix.
+    A = spd_matrix(T)
+
+    !> Initialize Krylov subspace.
+    allocate(X(1:test_size+1))
+    call random_number(X(1)%data) ; alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+    do i = 2, size(X)
+       call X(i)%zero()
+    enddo
+
+    !> Initialize internal variables.
+    evals = 0.0_wp ; evecs = 0.0_wp ; residuals = 0.0_wp
+
+    !> Compute spectral decomposition.
+    call eighs(A, X, evecs, evals, residuals, info)
+
+    !> Analytical eigenvalues.
+    true_evals = 0.0_wp ; pi = 4.0_wp * atan(1.0_wp)
+    do i = 1, test_size
+       true_evals(i) = a_ + 2*abs(b_) * cos(i*pi / (test_size+1))
+    enddo
+
+    !> Check correctness.
+    call check(error, all_close(evals, true_evals, rtol, atol))
+
+    return
+  end subroutine test_spd_evp_problem
+
+  subroutine test_evp_problem(error)
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test matrix.
     class(rmatrix), allocatable :: A
     !> Krylov subspace.
-    class(rvector), dimension(:), allocatable :: X
-    !> Krylov subspace dimension.
-    integer, parameter :: kdim = 3
-    !> Eigenvectors, eigenvalues, and residuals.
-    double complex  , dimension(kdim, kdim) :: eigvecs
-    double complex  , dimension(kdim)       :: eigvals
-    double precision, dimension(kdim)       :: residuals
+    class(rvector), allocatable :: X(:)
+    !> Eigenvalues and eigenvectors.
+    complex(kind=wp) :: evals(test_size), evecs(test_size, test_size)
+    !> Residuals.
+    real(kind=wp) :: residuals(test_size)
     !> Information flag.
     integer :: info
-
+    !> Toeplitz matrix.
+    real(kind=wp) :: T(test_size, test_size), a_, b_
     !> Miscellaneous.
-    double precision :: alpha
-    double precision, dimension(3), parameter :: true_eigs = [6, -5, 3]
+    integer :: i, j, k
+    real(kind=wp) :: alpha
+    complex(kind=wp) :: true_evals(test_size), pi
 
-    ! --> Initialize matrix.
-    A = rmatrix() ; A%data = reshape([-2, -2, 4, -4, 1, 2, 2, 2, 5], shape=[3, 3])
-    ! --> Initialize Krylov subspace.
-    allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
-    ! --> Compute eigenpairs.
-    call eigs(A, X, eigvecs, eigvals, residuals, info)
-    ! --> Check results.
-    call check(error, all_close(real(eigvals), true_eigs, rtol, atol), .true.)
-    return
-  end subroutine test_eigvals_triangular_matrix
+    !> Create the sym. pos. def. Toeplitz matrix.
+    call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
+    do i = 1, test_size
+       !> Diagonal entry.
+       T(i, i) = a_
+       !> Upper diagonal entry.
+       if (i < test_size) T(i, i+1) = b_
+       !> Lower diagonal entry.
+       if (i < test_size) T(i+1, i) = -b_
+    enddo
 
-  !----------------------------------------------------------
-  !-----                                                -----
-  !-----     TEST FOR SYMMETRIC EIGENVALUE PROBLEMS     -----
-  !-----                                                -----
-  !----------------------------------------------------------
-
-  subroutine test_eigvals_spd_matrix(error)
-    !> Error type to be returned
-    type(error_type), allocatable, intent(out) :: error
     !> Test matrix.
-    class(spd_matrix), allocatable :: A
-    !> Krylov subspace.
-    class(rvector), dimension(:), allocatable :: X
-    !> Krylov subspace dimension.
-    integer, parameter :: kdim = 3
-    !> Eigenvectors, eigenvalues, and residuals.
-    double precision, dimension(kdim, kdim) :: eigvecs
-    double precision, dimension(kdim)       :: eigvals
-    double precision, dimension(kdim)       :: residuals
-    !> Information flag.
-    integer :: info
+    A = rmatrix(T)
 
-    !> Miscellaneous.
-    double precision :: alpha
-    double precision, dimension(3), parameter :: true_eigs = [1.5D+00, 1.0D+00, 0.5D+00]
+    !> Initialize Krylov subspace.
+    allocate(X(1:test_size+1))
+    call random_number(X(1)%data) ; alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+    do i = 2, size(X)
+       call X(i)%zero()
+    enddo
 
-    ! --> Initialize matrix.
-    A = spd_matrix() ;
-    A%data(1, 1) = 1.0D+00    ; A%data(1, 2) = -0.5D+00 ; A%data(1, 3) = 0.0D+00
-    A%data(2, 1) = -0.5D+00   ; A%data(2, 2) = 1.0D+00  ; A%data(2, 3) = 0.0D+00
-    A%data(3, 1) = 0.0D+00    ; A%data(3, 2) = 0.0D+00  ; A%data(3, 3) = 1.0D+00
-    ! --> Initialize Krylov subspace.
-    allocate(X(1:kdim+1)) ; call random_number(X(1)%data)
-    X(1)%data = [1.0D+00, 2.0D+00, 1.0D+00]
-    alpha = X(1)%norm() ; call X(1)%scal(1.0D+00 / alpha)
-    ! --> Compute eigenpairs.
-    call eighs(A, X, eigvecs, eigvals, residuals, info)
-    ! --> Check results.
-    call check(error, all_close(eigvals, true_eigs, rtol, atol), .true.)
+    !> Initialize internal variables.
+    evals = cmplx(0.0_wp, 0.0_wp, kind=wp) ; evecs = cmplx(0.0_wp, 0.0_wp, kind=wp) ; residuals = 0.0_wp
+
+    !> Compute spectral decomposition.
+    call eigs(A, X, evecs, evals, residuals, info)
+
+    !> Analytical eigenvalues.
+    true_evals = cmplx(0.0_wp, 0.0_wp, kind=wp) ; pi = 4.0_wp * atan(1.0_wp)
+    k = 1
+    do i = 1, test_size, 2
+       true_evals(i)   = a_*cmplx(1.0_wp, 0.0_wp, kind=wp) + (2_wp*b_*cos(k*pi / (test_size+1)))*cmplx(0.0_wp, 1.0_wp, kind=wp)
+       true_evals(i+1) = a_*cmplx(1.0_wp, 0.0_wp, kind=wp) - (2_wp*b_*cos(k*pi / (test_size+1)))*cmplx(0.0_wp, 1.0_wp, kind=wp)
+       k = k +1
+    enddo
+
+    !> Check correctness.
+    call check(error, norm2(abs(evals - true_evals)) < rtol)
+
     return
-  end subroutine test_eigvals_spd_matrix
+  end subroutine test_evp_problem
 
   !------------------------------------
   !-----                          -----
@@ -118,8 +212,9 @@ contains
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
     testsuite = [&
-         new_unittest("GMRES full computation", test_gmres_full_computation),                                    &
-         new_unittest("GMRES full computation w. sym. pos. def. matrix", test_gmres_full_computation_spd_matrix) &
+         new_unittest("GMRES full computation", test_gmres_full_computation),                                     &
+         new_unittest("GMRES full computation w. sym. pos. def. matrix", test_gmres_full_computation_spd_matrix), &
+         new_unittest("GMRES + Jacobi precond.", test_precond_gmres_full_computation)                             &
          ]
     return
   end subroutine collect_gmres_testsuite
@@ -131,6 +226,8 @@ contains
     class(rmatrix), allocatable :: A ! Linear Operator.
     class(rvector), allocatable :: b ! Right-hand side vector.
     class(rvector), allocatable :: x ! Solution vector.
+    !> GMRES options.
+    type(gmres_opts) :: opts
     !> Information flag.
     integer :: info
 
@@ -139,9 +236,10 @@ contains
     b = rvector() ; call random_number(b%data)
     x = rvector() ; call x%zero()
     ! --> GMRES solver.
-    call gmres(A, b, x, info, kdim=3)
+    opts = gmres_opts(kdim=test_size, verbose=.false.)
+    call gmres(A, b, x, info, options=opts)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
     return
   end subroutine test_gmres_full_computation
@@ -153,6 +251,8 @@ contains
     class(spd_matrix), allocatable :: A ! Linear Operator.
     class(rvector), allocatable :: b ! Right-hand side vector.
     class(rvector), allocatable :: x ! Solution vector.
+    !> GMRES options.
+    type(gmres_opts) :: opts
     !> Information flag.
     integer :: info
 
@@ -161,33 +261,54 @@ contains
     b = rvector()    ; call random_number(b%data)
     x = rvector()    ; call x%zero()
     ! --> GMRES solver.
-    call gmres(A, b, x, info, kdim=3)
+    opts = gmres_opts(kdim=test_size, verbose=.false.)
+    call gmres(A, b, x, info, options=opts)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
     return
   end subroutine test_gmres_full_computation_spd_matrix
 
-  ! subroutine test_restarted_gmres_computation(error)
-  !   !> Eror type to be returned.
-  !   type(error_type), allocatable, intent(out) :: error
-  !   !> Linear Problem.
-  !   class(rmatrix), allocatable :: A ! Linear Operator.
-  !   class(rvector), allocatable :: b ! Right-hand side vector.
-  !   class(rvector), allocatable :: x ! Solution vector.
-  !   !> Information flag.
-  !   integer :: info
+  subroutine test_precond_gmres_full_computation(error)
+    !> Error type to be returned.
+    type(error_type), allocatable, intent(out) :: error
+    !> Linear Problem.
+    class(rmatrix), allocatable :: A ! Linear Operator.
+    class(rvector), allocatable :: b ! Right-hand side vector.
+    class(rvector), allocatable :: x ! Solution vector.
+    !> GMRES options.
+    type(gmres_opts) :: opts
+    !> Preconditioner.
+    type(jacobi_preconditioner), allocatable :: D
+    real(kind=wp) :: diag(test_size)
+    !> Information flag.
+    integer :: info
+    !> Miscellaneous.
+    integer :: i, j, k
 
-  !   ! --> Initialize linear problem.
-  !   A = rmatrix() ; call random_number(A%data)
-  !   b = rvector() ; call random_number(b%data)
-  !   x = rvector() ; call x%zero()
-  !   ! --> GMRES solver.
-  !   call gmres(A, b, x, info, kdim=2, verbosity=.true., maxiter=100)
-  !   ! --> Check convergence.
-  !   call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
-  !   return
-  ! end subroutine test_restarted_gmres_computation
+    ! --> Initialize linear problem.
+    A = rmatrix() ; call random_number(A%data)
+    b = rvector() ; call random_number(b%data)
+    x = rvector() ; call x%zero()
+    ! --> Preconditioner.
+    diag = 0.0_wp
+    do i = 1, test_size
+       diag(i) = A%data(i, i)
+    enddo
+    D = jacobi_preconditioner(diag)
+    ! --> GMRES solver.
+    opts = gmres_opts(kdim=test_size, verbose=.false.)
+    write(*, *) "--> Running Unpreconditioned GMRES :"
+    call gmres(A, b, x, info, options=opts)
+    write(*, *)
+    write(*, *) "--> Running GMRES with Jacobi preconditioning."
+    call x%zero()
+    call gmres(A, b, x, info, options=opts, preconditioner=D)
+    ! --> Check convergence.
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
+
+    return
+  end subroutine test_precond_gmres_full_computation
 
   !----------------------------------
   !-----                        -----
@@ -199,48 +320,68 @@ contains
     !> Collection of tests.
     type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
-    testsuite = [&
-         new_unittest("SVD Singular Values", test_svd_singular_values) &
+    testsuite = [ &
+         new_unittest("SVD computation", test_svd_problem) &
          ]
     return
   end subroutine collect_svd_testsuite
 
-  subroutine test_svd_singular_values(error)
+  subroutine test_svd_problem(error)
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Test matrix.
     class(rmatrix), allocatable :: A
-    !> Left and right Krylov subspaces.
+    !> Krylov subspaces.
     class(rvector), allocatable :: U(:), V(:)
-    !> Dimension of the Krylov subspace.
-    integer, parameter :: kdim = 3
-    !> Coordinates of the singular vectors and singular values.
-    double precision :: uvecs(kdim, kdim), vvecs(kdim, kdim), S(kdim)
-    double precision :: residuals(kdim)
+    integer                     :: kdim = test_size
+    !> Low-dimensional singular vectors and singular values.
+    real(kind=wp) :: uvecs(1:test_size, 1:test_size), vvecs(1:test_size, 1:test_size)
+    real(kind=wp) :: svdvals(1:test_size)
+    !> Residuals.
+    real(kind=wp) :: residuals(1:test_size)
     !> Information flag.
     integer :: info
-
     !> Miscellaneous.
-    double precision :: alpha
-    double precision :: true_svdvals(kdim) = [3.0D+00, 2.0D+00, 0.0D+00]
+    integer :: i, j, k
+    real(kind=wp) :: alpha
+    real(kind=wp) :: true_svdvals(1:test_size), pi = 4.0_wp*atan(1.0_wp)
 
-    ! --> Initialize matrix.
+    !> Initialize matrix.
     A = rmatrix()
-    A%data(1, 1) = 2 ; A%data(1, 2) = 0 ; A%data(1, 3) = 0
-    A%data(2, 1) = 2 ; A%data(2, 2) = 1 ; A%data(2, 3) = 0
-    A%data(3, 1) = 0 ; A%data(3, 2) = -2 ; A%data(3, 3) = 0
+    do i = 1, test_size
+       !> Diagonal entry.
+       A%data(i, i) = 2.0_wp
+       !> Upper diagonal entry.
+       if (i < test_size) A%data(i, i+1) = -1.0_wp
+       !> Lower diagonal entry.
+       if (i < test_size) A%data(i+1, i) = -1.0_wp
+    enddo
 
-    ! --> Initialize Krylov subspaces.
+    !> Initialize Krylov subspaces.
     allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1))
-    call random_number(U(1)%data) ; alpha = U(1)%norm() ; call U(1)%scal(1.0D+00 / alpha)
+    call random_number(U(1)%data)
+    alpha = U(1)%norm() ; call U(1)%scal(1.0_wp / alpha)
+    call V(1)%zero()
+    do i = 2, size(U)
+       call U(i)%zero() ; call V(i)%zero()
+    enddo
 
-    ! --> Singular Value Decomposition.
-    call svds(A, U, V, uvecs, vvecs, s, residuals, info)
-    ! --> Check singular values.
-    call check(error, all_close(s, true_svdvals, rtol, atol), .true.)
+    !> Initialize internal variables.
+    svdvals = 0.0_wp ; uvecs = 0.0_wp ; vvecs = 0.0_wp
+
+    !> Compute singular value decomposition.
+    call svds(A, U, V, uvecs, vvecs, svdvals, residuals, info)
+
+    !> Analytical singular values.
+    do i = 1, test_size
+       true_svdvals(i) = 2.0_wp * (1.0_wp + cos(i*pi/(test_size+1)))
+    enddo
+
+    !> Check convergence.
+    call check(error, all_close(svdvals, true_svdvals, rtol, atol))
 
     return
-  end subroutine test_svd_singular_values
+  end subroutine test_svd_problem
   
   !------------------------------------
   !-----                          -----
@@ -262,60 +403,27 @@ contains
     !> Error type to be returned.
     type(error_type), allocatable, intent(out) :: error
     !> Linear Problem.
+    real(kind=wp) :: Q(test_size, 10_wp*test_size)
     class(spd_matrix), allocatable :: A ! Linear Operator.
     class(rvector), allocatable :: b ! Right-hand side vector.
     class(rvector), allocatable :: x ! Solution vector.
+    type(cg_opts)               :: opts
     !> Information flag.
     integer :: info
-    
+
     ! --> Initialize linear problem.
-    A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
+    A = spd_matrix()
+    call random_number(Q) ; A%data = matmul(Q, transpose(Q))
+    A%data = 0.5 * (A%data + transpose(A%data))
     b = rvector(); call random_number(b%data)
     x = rvector(); call x%zero()
     ! --> CG solver.
-    call cg(A, b, x, info, verbosity=.true.)
+    opts = cg_opts(verbose=.false., atol=1e-12_wp, rtol=0.0_wp)
+    call cg(A, b, x, info, options=opts)
     ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
+    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
     
     return
   end subroutine test_cg_full_computation_spd_matrix
   
-  !--------------------------------------
-  !-----                            -----
-  !-----     BICGSTAB TEST SUITE    -----
-  !-----                            -----
-  !--------------------------------------
-  
-  subroutine collect_bicgstab_testsuite(testsuite)
-    !> Collection of tests.
-    type(unittest_type), allocatable, intent(out) :: testsuite(:)
-    
-    testsuite = [ &
-         new_unittest("BiCGSTAB full computation", test_bicgstab_full_computation) &
-         ]
-    return
-  end subroutine collect_bicgstab_testsuite
-  
-  subroutine test_bicgstab_full_computation(error)
-    !> Error type to be returned.
-    type(error_type), allocatable, intent(out) :: error
-    !> Linear Problem.
-    class(rmatrix), allocatable :: A ! Linear Operator.
-    class(rvector), allocatable :: b ! Right-hand side vector.
-    class(rvector), allocatable :: x ! Solution vector.
-    !> Information flag.
-    integer :: info
-    
-    ! --> Initialize linear problem.
-    A = rmatrix(); call random_number(A%data)
-    b = rvector(); call random_number(b%data)
-    x = rvector(); call x%zero()
-    ! --> BiCGSTAB solver.
-    call bicgstab(A, b, x, info, verbosity=.true.)
-    ! --> Check convergence.
-    call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < 1e-12)
-    
-    return
-  end subroutine test_bicgstab_full_computation
-
 end module TestIterativeSolvers
