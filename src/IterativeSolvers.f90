@@ -75,37 +75,33 @@ module lightkrylov_IterativeSolvers
 
 contains
 
-   !-----------------------------
-   !-----     UTILITIES     -----
-   !-----------------------------
-
-!=======================================================================================
-! Compute Residual for Eigenpairs (compute_residual)
-!=======================================================================================
-!
-! Purpose and formulation:
-! --------
-! Computes the residual associated with an eigenpair, useful for assessing the quality
-! of the approximated eigenvalues and eigenvectors.
-!
-! Given the norm of the Krylov residual vector (beta) and the last element of the Ritz
-! eigenvector (x), the residual is calculated as follows:
-!
-! residual = |beta * x|
-!
-! Algorithmic Features:
-! ----------------------
-! - Utilizes the absolute value function for residual computation.
-! - Quick and efficient way to gauge the accuracy of the approximated eigenpair.
-! - Only computes the residual for a single eigenpair at a time.
-!
-! Input/Output Parameters:
-! ------------------------
-! - beta      : Norm of Krylov residual vector   [Input]
-! - x         : Last element of Ritz eigenvector [Input]
-! - residual  : Computed residual                [Output]
-!
-!=======================================================================================
+   !=======================================================================================
+   ! Compute Residual for Eigenpairs (compute_residual)
+   !=======================================================================================
+   !
+   ! Purpose and formulation:
+   ! -----------------------
+   ! Computes the residual associated with an eigenpair, useful for assessing the quality
+   ! of the approximated eigenvalues and eigenvectors.
+   !
+   ! Given the norm of the Krylov residual vector (beta) and the last element of the Ritz
+   ! eigenvector (x), the residual is calculated as follows:
+   !
+   ! residual = |beta * x|
+   !
+   ! Algorithmic Features:
+   ! ----------------------
+   ! - Utilizes the absolute value function for residual computation.
+   ! - Quick and efficient way to gauge the accuracy of the approximated eigenpair.
+   ! - Only computes the residual for a single eigenpair at a time.
+   !
+   ! Input/Output Parameters:
+   ! ------------------------
+   ! - beta      : Norm of Krylov residual vector   [Input]
+   ! - x         : Last element of Ritz eigenvector [Input]
+   ! - residual  : Computed residual                [Output]
+   !
+   !=======================================================================================
    elemental pure function compute_residual(beta, x) result(residual)
       !> Norm of Krylov residual vector.
       real(kind=wp), intent(in) :: beta
@@ -119,36 +115,36 @@ contains
       return
    end function compute_residual
 
-!=======================================================================================
-! Save Eigenvalues and Residuals to Disk (save_eigenspectrum)
-!=======================================================================================
-!
-! Purpose and formulation:
-! -----------------------
-! Saves the eigenvalues and corresponding residuals to disk for further analysis or
-! post-processing. The eigenvalues are split into their real and imaginary parts.
-!
-! Given arrays of real and imaginary parts of eigenvalues (real_part, imag_part)
-! and residuals, the subroutine saves this data into a structured array:
-!
-! data = [real_part, imag_part, residuals]
-!
-! Algorithmic Features:
-! ----------------------
-! - Combines real and imaginary parts along with residuals into a single 2D array.
-! - Utilizes the npy file format for saving the array to disk.
-! - Facilitates easy storage and retrieval of the eigenvalues and residuals.
-! - Utilizes a commonly-used file format (npy) for potential compatibility with Python tools.
-! - Assumes that the real and imaginary parts of the eigenvalues and the residuals are of the same length.
-!
-! Input/Output Parameters:
-! ------------------------
-! - real_part : Real part of the eigenvalues       [Input]
-! - imag_part : Imaginary part of the eigenvalues  [Input]
-! - residuals : Residual norms                     [Input]
-! - filename  : Name of the output file            [Input]
-!
-!=======================================================================================
+   !=======================================================================================
+   ! Save Eigenvalues and Residuals to Disk (save_eigenspectrum)
+   !=======================================================================================
+   !
+   ! Purpose and formulation:
+   ! -----------------------
+   ! Saves the eigenvalues and corresponding residuals to disk for further analysis or
+   ! post-processing. The eigenvalues are split into their real and imaginary parts.
+   !
+   ! Given arrays of real and imaginary parts of eigenvalues (real_part, imag_part)
+   ! and residuals, the subroutine saves this data into a structured array:
+   !
+   ! data = [real_part, imag_part, residuals]
+   !
+   ! Algorithmic Features:
+   ! ----------------------
+   ! - Combines real and imaginary parts along with residuals into a single 2D array.
+   ! - Utilizes the npy file format for saving the array to disk.
+   ! - Facilitates easy storage and retrieval of the eigenvalues and residuals.
+   ! - Utilizes a commonly-used file format (npy) for potential compatibility with Python tools.
+   ! - Assumes that the real and imaginary parts of the eigenvalues and the residuals are of the same length.
+   !
+   ! Input/Output Parameters:
+   ! ------------------------
+   ! - real_part : Real part of the eigenvalues       [Input]
+   ! - imag_part : Imaginary part of the eigenvalues  [Input]
+   ! - residuals : Residual norms                     [Input]
+   ! - filename  : Name of the output file            [Input]
+   !
+   !=======================================================================================
    subroutine save_eigenspectrum(real_part, imag_part, residuals, filename)
       !> Real and imaginary parts of the eigenvalues.
       real(kind=wp), intent(in) :: real_part(:)
@@ -169,20 +165,13 @@ contains
       return
    end subroutine save_eigenspectrum
 
-   !------------------------------------------
-   !-----                                -----
-   !-----     EIGENVALUE COMPUTATION     -----
-   !-----                                -----
-   !------------------------------------------
-
    !=======================================================================================
    ! Eigenvalue and Eigenvector Solver Subroutine (EIGS)
    !=======================================================================================
    !
    ! Purpose:
    ! --------
-   ! Solves the eigenvalue problem for a given square linear operator A using Arnoldi factorization.
-   ! The eigenvalues (eigvals) and eigenvectors (eigvecs) are computed within a Krylov subspace (X).
+   ! Computes the leading eigenpairs of a linear operator A using its Arnoldi factorization.
    !
    ! Mathematical Formulation:
    ! -------------------------
@@ -194,14 +183,15 @@ contains
    !
    ! transpose(A) * eigvecs = eigvals * eigvecs
    !
-   ! The Krylov subspace X is formed via Arnoldi factorization, resulting in an upper Hessenberg matrix H.
-   ! The eigenvalues of A are approximated by the eigenvalues of H, and the eigenvectors are computed accordingly.
+   ! The Krylov subspace X is formed via Arnoldi factorization, resulting in an upper
+   ! Hessenberg matrix H. The eigenvalues of A are approximated by the eigenvalues of H,
+   ! and the eigenvectors are computed accordingly.
    !
    ! Algorithmic Features:
    ! ----------------------
    ! - Builds a Krylov subspace (X) using Arnoldi factorization.
    ! - Computes eigenpairs of the reduced upper Hessenberg matrix (H).
-   ! - Sorts eigvals and associates eigvecs based on magnitude.
+   ! - Sorts eigvals and associated eigvecs based on magnitude.
    !
    ! Advantages:
    ! -----------
@@ -211,7 +201,7 @@ contains
    !
    ! Limitations:
    ! ------------
-   ! - Accuracy is dependent on the quality of the Krylov subspace (X).
+   ! - Accuracy is dependent on the quality of the initial Krylov vector.
    ! - No preconditioning capabilities in the current implementation.
    !
    ! Input/Output Parameters:
@@ -227,8 +217,8 @@ contains
    !
    ! References:
    ! -----------
-   ! - Arnoldi, W. E. (1951). "The Principle of Minimized Iterations in the Solution of the Matrix Eigenvalue Problem,"
-   !   Quarterly of Applied Mathematics, 9(1), 17–29.
+   ! - Arnoldi, W. E. (1951). "The Principle of Minimized Iterations in the Solution of
+   !   the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
    !
    !=======================================================================================
    subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
@@ -325,17 +315,18 @@ contains
    end subroutine eigs
 
    !=======================================================================================
-   ! Eigenvalue and Eigenvector Solver for Symmetric Positive Definite (SPD) Matrices (EIGHS)
+   ! Eigenvalue and Eigenvector Solver for Symmetric Positive Definite (SPD) Matrices
    !=======================================================================================
    !
    ! Purpose:
    ! --------
-   ! Solves the eigenvalue problem for SPD matrices (A) using the Lanczos algorithm.
-   ! The mathematical formulation is: A * eigvecs = eigvals * eigvecs, where A is of size (n x n).
+   ! Computes the leading eigenpairs of a symmetric positive definite operator A using the
+   ! iterative Lanczos factorization.
    !
    ! Algorithmic Features:
    ! ----------------------
-   ! - Employs Lanczos tridiagonalization to construct a Krylov subspace represented by matrix T of size (kdim x kdim).
+   ! - Employs Lanczos tridiagonalization to construct a Krylov subspace represented by
+   !   matrix T of size (kdim x kdim).
    ! - Computes eigenpairs (eigvals, eigvecs) of T to approximate those of A.
    ! - Sorts eigvals and eigvecs based on magnitude.
    ! - Computes residuals to assess the quality of approximations.
@@ -364,8 +355,8 @@ contains
    !
    ! References:
    ! -----------
-   ! - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators".
-   !   United States Governm. Press Office.
+   ! - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
+   !   of Linear Differential and Integral Operators". United States Governm. Press Office.
    !
    !=======================================================================================
    subroutine eighs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity)
@@ -576,12 +567,6 @@ contains
       return
    end subroutine two_sided_eigs
 
-   !----------------------------------------------
-   !-----                                    -----
-   !-----     SINGULAR VALUE COMPUTATION     -----
-   !-----                                    -----
-   !----------------------------------------------
-
    !=======================================================================================
    ! Singular Value Decomposition Subroutine (svds) - lanczos based / matrix-free
    !=======================================================================================
@@ -715,12 +700,6 @@ contains
       return
    end subroutine svds
 
-   !--------------------------------------------
-   !-----                                  -----
-   !-----     ITERATIVE LINEAR SOLVERS     -----
-   !-----                                  -----
-   !--------------------------------------------
-
    !=======================================================================================
    ! Generalized Minimal Residual (GMRES) Solver Subroutine
    !=======================================================================================
@@ -761,8 +740,9 @@ contains
    !
    ! References:
    ! -----------
-   ! - Saad, Y., and Schultz, M. H. (1986). "GMRES: A Generalized Minimal Residual Algorithm for Solving Nonsymmetric Linear Systems,"
-   !   SIAM Journal on Scientific and Statistical Computing, 7(3), 856–869.
+   ! - Saad, Y., and Schultz, M. H. (1986). "GMRES: A Generalized Minimal Residual Algorithm
+   !   for Solving Nonsymmetric Linear Systems," SIAM Journal on Scientific and Statistical
+   !   Computing, 7(3), 856–869.
    !
    !=======================================================================================
    subroutine gmres(A, b, x, info, preconditioner, options, transpose)
@@ -947,13 +927,15 @@ contains
    ! -----------
    ! - Well-suited for large, sparse, symmetric positive definite (SPD) matrices.
    ! - Memory-efficient, requiring storage for only a few vectors in comparison to GMRES.
-   ! - Under exact arithmetic, finds the exact solution within 'n' iterations for an 'n'-dimensional SPD matrix.
+   ! - Under exact arithmetic, finds the exact solution within 'n' iterations for an
+   !   n-dimensional SPD matrix.
    !
    ! Limitations:
    ! ------------
    ! - Applicability restricted to SPD matrices.
    ! - No preconditioning capabilities in the current implementation.
-   ! - Subject to numerical rounding errors, which might require more than 'n' iterations in practice.
+   ! - Subject to numerical rounding errors, which might require more than 'n' iterations
+   !   in practice.
    !
    ! Input/Output Parameters:
    ! ------------------------
@@ -967,8 +949,8 @@ contains
    !
    ! References:
    ! -----------
-   ! - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving Linear Systems,"
-   !   Journal of Research of the National Bureau of Standards, 49(6), 409–436.
+   ! - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
+   !   Linear Systems," Journal of Research of the National Bureau of Standards, 49(6), 409–436.
    !
    !=======================================================================================
    subroutine cg(A, b, x, info, preconditioner, options)

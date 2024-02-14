@@ -34,7 +34,8 @@ contains
    !
    ! Purpose:
    ! --------
-   ! Performs Arnoldi factorization to generate an orthonormal Krylov basis X and an upper Hessenberg matrix H.
+   ! Performs Arnoldi factorization to generate an orthonormal Krylov basis X and an upper
+   ! Hessenberg matrix H.
    !
    ! Mathematical Formulation:
    ! -------------------------
@@ -221,6 +222,10 @@ contains
    ! verbosity  : Optional, verbosity flag, logical, intent(in)
    ! tol        : Optional, orthogonality tolerance, double precision, intent(in)
    !
+   ! References:
+   ! ----------
+   ! - ???
+   !
    !=======================================================================================
    subroutine lanczos_tridiagonalization(A, X, T, info, kstart, kend, verbosity, tol)
       !> Linear operator to be factorized;
@@ -349,6 +354,10 @@ contains
    ! kend       : Optional, ending index, integer, intent(in)
    ! verbosity  : Optional, verbosity flag, logical, intent(in)
    ! tol        : Optional, tolerance, real(kind=wp), intent(in)
+   !
+   ! References:
+   ! ----------
+   ! - ???
    !
    !=======================================================================================
    subroutine lanczos_bidiagonalization(A, U, V, B, info, kstart, kend, verbosity, tol)
@@ -749,7 +758,6 @@ contains
    !
    ! References:
    ! -----------
-   !
    ! - Any numerical linear algebra textbook.
    !
    !=======================================================================================
