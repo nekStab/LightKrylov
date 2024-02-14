@@ -581,15 +581,40 @@ contains
   !-----     QR FACTORIZATION FOR GENERAL NxM MATRICES     -----
   !-----                                                   -----
   !-------------------------------------------------------------
-
+  !
+  ! Purpose:
+  ! --------
   ! Simple implementation of the QR factorisation of a general (real)
-  ! basis A without pivoting using the double GS algorithm for improved
-  ! stability. 
-  ! NB: This could be further improved by adding (partial) pivoting if problems
-  ! arise due to premature breakdown.
-
-  subroutine qr_factorization(Q,R, info, verbosity, tol)
-   
+  ! Krylov basis.
+  !
+  ! Algorithmic Features:
+  ! ---------------------
+  ! - In-place factorisation
+  ! - Double Gram-Schmidt procedure for stability
+  ! - Includes a simple check for premature breakdown
+  !
+  ! Advantages:
+  ! -----------
+  ! - Suitable for all Krylov subspace dimensions
+  ! - Robust with respect to floating point errors
+  !
+  ! Limitations:
+  ! ------------
+  ! - No pivoting, i.e. the columns are orthonormalized in the natural
+  !   ordering. This may lead to premature breakdown if adjacent 
+  !   columns are nearly colinear.
+  ! - The current implementation only includes a simple check for 
+  !   breakdown
+  !
+  ! Input/Output Parameters:
+  ! ------------------------
+  ! - Q        : Krylov basis to orthonormalize       [Input/Output]
+  ! - R        : Upper triangular coefficient matrix  [Output]
+  ! - info     : Information flag                     [Output]
+  ! - tol      : Tolerance for breakdown detection    [Optional, Input]
+  ! - verbosity: Verbosity control flag               [Optional, Input]
+  !  
+  subroutine qr_factorization(Q, R, info, verbosity, tol)
    !> Basis to be orthonormalized.
    class(abstract_vector), intent(inout) :: Q(:)
    !> Gram-Schmidt factors
@@ -616,33 +641,33 @@ contains
 
    !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
    do j = 1, kdim
-      ! --> Orthonormalization against existing columns
+      !> Orthonormalization against existing columns
       do i = 1, j-1
          beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
-         ! --> Update R.
+         !> Update R
          R(i, j) = beta
       enddo
       beta = Q(j)%norm(); call Q(j)%scal(1.0_wp / beta)
       R(j,j) = beta
       if (abs(beta) < tolerance) then
          if (verbose) then
-            write(*, *) "INFO : Invariant subspace has been computed."
+            write(*, *) "INFO : Colinear columns detected."
             write(*, *) "       (j, beta) = (", j,",", beta, ")."
          endif
       endif
    enddo
    !> second pass, update Q & R
    do j = 1, kdim
-      ! --> Orthonormalization against existing columns
+      !> Orthonormalization against existing columns
       do i = 1, j-1
          beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
-         ! --> Update R.
+         !> Update R
          R(i, j) = R(i, j) + beta
       enddo
       beta = Q(j)%norm(); call Q(j)%scal(1.0_wp / beta)
       if (abs(beta) < tolerance) then
          if (verbose) then
-            write(*, *) "INFO : Invariant subspace has been computed."
+            write(*, *) "INFO : Colinear columns detected."
             write(*, *) "       (j, beta) = (", j,",", beta, ")."
          endif
       endif
