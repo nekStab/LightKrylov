@@ -14,12 +14,7 @@ Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ 
    $$\mathbf{A} \mathbf{x} = \lambda \mathbf{x}$$
 
 2. Singular Value Decomposition
-   $$\left\{
-   \begin{aligned}
-   \mathbf{A} \mathbf{v} & = \sigma \mathbf{u} \\
-   \mathbf{A}^T \mathbf{u} & = \sigma \mathbf{v}
-   \end{aligned}
-   \right.$$
+   $$\left\\begin{aligned}\mathbf{A} \mathbf{v} & = \sigma \mathbf{u} \\ \mathbf{A}^T \mathbf{u} & = \sigma \mathbf{v} \end{aligned} \right.$$
 
 
 3. Linear system of equations
