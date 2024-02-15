@@ -63,6 +63,12 @@ Provided you have `git` installed, getting the code is as simple as:
 git clone https://github.com/nekStab/LightKrylov
 ```
 
+Alternatively, using `gh-cli`, you can type
+
+```
+gh repo clone nekStab/LightKrylov
+```
+
 ### Dependencies
 
 `LightKrylov` has a very minimal set of dependencies. These only include:
