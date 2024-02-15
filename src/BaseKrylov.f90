@@ -7,13 +7,17 @@ module lightkrylov_BaseKrylov
    include "dtypes.h"
 
    private
-   public :: arnoldi_factorization, &
-             lanczos_tridiagonalization, &
-             lanczos_bidiagonalization, &
-             nonsymmetric_lanczos_tridiagonalization, &
-             two_sided_arnoldi_factorization, &
-             qr_factorization, &
-             initialize_krylov_subspace
+   !> Factorization for general n x n linear operators.
+   public :: arnoldi_factorization
+   !> Factorization for symmetric positive definite operators.
+   public :: lanczos_tridiagonalization
+   !> Pre-factorization for singular value decomposition.
+   public :: lanczos_bidiagonalization
+   !> Experimental/Deprecated.
+   public :: nonsymmetric_lanczos_tridiagonalization
+   public :: two_sided_arnoldi_factorization
+   !> Miscellaneous.
+   public :: qr_factorization, initialize_krylov_subspace
 
 contains
 
