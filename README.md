@@ -32,7 +32,7 @@ Krylov methods are *iterative methods*, i.e. they iteratively refine the solutio
 `LightKrylov` leverages Fortran's `abstract type` feature to provide generic implementations of the various Krylov methods.
 The only requirement from the user to benefit from the capabilities of `LightKrylov` is to extend the `abstract_vector` and `abstract_linop` types to define their notion of vectors and linear operators. `LightKrylov` then provides the following functionalities:
 
-- **Krylov decompositions:**
+- **General-purpose Krylov decompositions:**
   + `arnoldi_factorization` : Given a linear map $f : \mathbb{R}^n \to \mathbb{R}^n$ and its matrix representation $\mathbf{A}$, the *k-step Arnoldi method* computes the following factorization
   $$\mathbf{A} \mathbf{X} = \mathbf{X} \mathbf{H} + \beta \mathbf{x} \mathbf{e}^T$$
   with $\mathbf{X} \in \mathbb{R}^{n \times k}$ an orthonormal basis for the Krylov subspace $\mathcal{K}(\mathbf{A}, \mathbf{x}_0)$ and $\mathbf{H} \in \mathbb{R}^{k \times k}$ an upper Hessenberg matrix.
@@ -42,6 +42,14 @@ The only requirement from the user to benefit from the capabilities of `LightKry
   + `lanczos_bidiagonalization` : Given a matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$, Lanczos bidiagonalization computes the following factorization
   $$\mathbf{AV} = \mathbf{UB} + \alpha \mathbf{ue}^T \quad \text{and} \quad \mathbf{A}^T \mathbf{U} = \mathbf{VB}^T + \alpha \mathbf{ve}^T,$$
   where $\mathbf{V} \in \mathbb{R}^{n \times k}$ is an orthonormal basis for the Krylov subspace $\mathcal{K}(\mathbf{A}, \mathbf{v}_0)$ and $\mathbf{U} \in \mathbb{R}^{m \times k}$ for the Krylov subspace $\mathcal{K}(\mathbf{A}^T, \mathbf{u}_0)$. The matrix $\mathbf{B} \in \mathbb{R}^{k \times k}$ is bi-diagonal.
+
+- **Eigenvalue and Singular Value Decomposition:**
+  + `eigs` :
+  + `eighs` :
+  + `svds` :
+- **Linear systems:**
+  + `gmres` :
+  + `cg` :
 
 ## Installation
 
