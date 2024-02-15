@@ -32,24 +32,19 @@ Krylov methods are *iterative methods*, i.e. they iteratively refine the solutio
 `LightKrylov` leverages Fortran's `abstract type` feature to provide generic implementations of the various Krylov methods.
 The only requirement from the user to benefit from the capabilities of `LightKrylov` is to extend the `abstract_vector` and `abstract_linop` types to define their notion of vectors and linear operators. `LightKrylov` then provides the following functionalities:
 
-- **General-purpose Krylov decompositions:**
-  + `arnoldi_factorization` : Given a linear map $f : \mathbb{R}^n \to \mathbb{R}^n$ and its matrix representation $\mathbf{A}$, the *k-step Arnoldi method* computes the following factorization
-  $$\mathbf{A} \mathbf{X} = \mathbf{X} \mathbf{H} + \beta \mathbf{x} \mathbf{e}^T$$
-  with $\mathbf{X} \in \mathbb{R}^{n \times k}$ an orthonormal basis for the Krylov subspace $\mathcal{K}(\mathbf{A}, \mathbf{x}_0)$ and $\mathbf{H} \in \mathbb{R}^{k \times k}$ an upper Hessenberg matrix.
-  + `lanczos_tridiagonalization` : Provided $\mathbf{A}$ is symmetric, the Arnoldi method reduces to the *Lanczos tridiagonalization*. The corresponding factorization reads
-  $$\mathbf{AX} = \mathbf{XT} + \beta \mathbf{x} \mathbf{e}^T$$
-  with $\mathbf{T} \in \mathbb{R}^{k \times k}$ a symmetric tridiagonal matrix.
-  + `lanczos_bidiagonalization` : Given a matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$, Lanczos bidiagonalization computes the following factorization
-  $$\mathbf{AV} = \mathbf{UB} + \alpha \mathbf{ue}^T \quad \text{and} \quad \mathbf{A}^T \mathbf{U} = \mathbf{VB}^T + \alpha \mathbf{ve}^T,$$
-  where $\mathbf{V} \in \mathbb{R}^{n \times k}$ is an orthonormal basis for the Krylov subspace $\mathcal{K}(\mathbf{A}, \mathbf{v}_0)$ and $\mathbf{U} \in \mathbb{R}^{m \times k}$ for the Krylov subspace $\mathcal{K}(\mathbf{A}^T, \mathbf{u}_0)$. The matrix $\mathbf{B} \in \mathbb{R}^{k \times k}$ is bi-diagonal.
+- Krylov factorizations : `arnoldi_factorization`, `lanczos_tridiagonalization`, `lanczos_bidiagonalization`.
+- Spectral analysis : `eigs`, `eighs`, `svds`.
+- Linear systems : `gmres`, `cg`.
 
-- **Eigenvalue and Singular Value Decomposition:**
-  + `eigs` :
-  + `eighs` :
-  + `svds` :
-- **Linear systems:**
-  + `gmres` :
-  + `cg` :
+At the present time, none of the algorithms support Krylov-Schur restarting procedure although this is part of our plan for `LightKrylov v2.0`.
+
+### Known limitations
+
+For the sake of simplicity, `LightKrylov` only works with `real` or `double precision` data. While this might seem restrictive at first, consider that a complex-valued linear system $\mathbf{Ax} = \mathbf{b}$ can always be recast as
+$$\begin{bmatrix}\mathbf{A}_r & -\mathbf{A}_i \\ \mathbf{A}_i & \mathbf{A}_r \end{bmatrix} \begin{bmatrix} \mathbf{x}_r \\ \mathbf{x}_i \end{bmatrix} = \begin{bmatrix} \mathbf{b}_r \\ \mathbf{b}_i \end{bmatrix}.$$
+The primary reason to develop `LightKrylov` is to couple it with high-performance solvers in computational mechanics which often use exclusively real-valued data types. As such, we do not have any plan to natively support complex-valued linear operators or vectors.
+
+### Examples
 
 ## Installation
 
