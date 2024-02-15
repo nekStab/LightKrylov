@@ -39,6 +39,8 @@ The only requirement from the user to benefit from the capabilities of `LightKry
   + `lanczos_tridiagonalization` : Provided $\mathbf{A}$ is symmetric, the Arnoldi method reduces to the *Lanczos tridiagonalization*. The corresponding factorization reads
   $$\mathbf{AX} = \mathbf{XT} + \beta \mathbf{x} \mathbf{e}^T$$
   with $\mathbf{T} \in \mathbb{R}^{k \times k}$ a symmetric tridiagonal matrix.
+  + `lanczos_bidiagonalization` : Given a matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$, Lanczos bidiagonalization computes the following factorization
+  $$\mathbf{AV} = \mathbf{UB} \quad \text{and} \quad \mathbf{A}^T \mathbf{U} = \mathbf{VB}^T + \alpha \mathbf{ve}^T,$$
 
 ## Installation
 
