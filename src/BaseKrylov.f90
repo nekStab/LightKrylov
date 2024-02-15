@@ -74,6 +74,11 @@ contains
    ! tol        : Optional, orthogonality tolerance, double precision, intent(in)
    ! transpose  : Optional, transpose flag for A, logical, intent(in)
    !
+   ! References:
+   ! ----------
+   ! - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+   !   see Chapter 6.3 : Arnoldi's method.
+   !
    !=======================================================================================
    subroutine arnoldi_factorization(A, X, H, info, kstart, kend, verbosity, tol, transpose)
 
@@ -228,7 +233,8 @@ contains
    !
    ! References:
    ! ----------
-   ! - ???
+   ! - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+   !   see Chapter 6.6 : The symmetric Lanczos algorithm.
    !
    !=======================================================================================
    subroutine lanczos_tridiagonalization(A, X, T, info, kstart, kend, verbosity, tol)
@@ -361,7 +367,8 @@ contains
    !
    ! References:
    ! ----------
-   ! - ???
+   ! - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." Technical Report, 1998.
+   !   url : http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf
    !
    !=======================================================================================
    subroutine lanczos_bidiagonalization(A, U, V, B, info, kstart, kend, verbosity, tol)
@@ -503,7 +510,8 @@ contains
    !
    ! References:
    ! ----------
-   ! - ???
+   ! - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+   !   see Chapter 7.1 : Lanczos biorthogonalization.
    !
    !=======================================================================================
    subroutine nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, kstart, kend, verbosity, tol)
@@ -762,7 +770,9 @@ contains
    !
    ! References:
    ! -----------
-   ! - Any numerical linear algebra textbook.
+   ! - G. H. Golub & C. F. Van Loan. "Matrix Computations". 4th edition, The John Hopkins
+   !   University Press, 2013.
+   !   See Chapter 5.2.8 : Modified Gram-Schmidt algorithm.
    !
    !=======================================================================================
    subroutine qr_factorization(Q, R, info, verbosity, tol)
