@@ -49,9 +49,11 @@ Several examples can be found in the `example` folder. These include:
 - [Ginzburg-Landau]() : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
 - [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
 
-Alternatively, you can also look at [`neklab`](), a bifurcation and stability analysis toolbox based on `LightKrylov` designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
+Alternatively, you can also look at [`neklab`](), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
 
 ## Installation
+
+
 
 ## Help and support
 
@@ -61,8 +63,14 @@ Alternatively, you can also look at [`neklab`](), a bifurcation and stability an
 
 ### Bug reports and contributions
 
-## References
+## Acknowledgment
 
-### How to cite
+The development of `LightKrylov` is part of an on-going research project funded by [Agence Nationale pour la Recherche](https://anr.fr/en/) (ANR) under the grant agreement ANR-22-CE46-0008.
 
 ### Related projects
+
+`LightKrylov` is the base package of our ecosystem. If you like it, you may also be interested in :
+- [`LightROM`](https://github.com/nekStab/LightROM) : a lightweight Fortran package providing a set of functions for reduced-order modeling, control and estimation of large-scale linear time invariant dynamical systems.
+- [`neklab`]() : a bifurcation and stability analysis toolbox based on `LightKrylov` for the massively parallel spectral element solver [`Nek5000`]().
+
+### How to cite
