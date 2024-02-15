@@ -11,26 +11,19 @@
 Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of certain of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
-   $$
-   \mathbf{A} \mathbf{x} = \lambda \mathbf{x}
-   $$
-   
+   $$\mathbf{A} \mathbf{x} = \lambda \mathbf{x}$$
 
 2. Singular Value Decomposition
-   $$
-   \left\{
+   $$\left\{
    \begin{aligned}
    \mathbf{A} \mathbf{v} & = \sigma \mathbf{u} \\
    \mathbf{A}^T \mathbf{u} & = \sigma \mathbf{v}
    \end{aligned}
-   \right.
-   $$
-   
+   \right.$$
+
 
 3. Linear system of equations
-   $$
-   \mathbf{Ax} = \mathbf{b}
-   $$
+   $$\mathbf{Ax} = \mathbf{b}$$
 
 Krylov methods are particularly appropriate in situations where such problems must be solved but factorizing the matrix $\mathbf{A}$ is not possible because:
 
