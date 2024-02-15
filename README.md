@@ -29,6 +29,14 @@ Krylov methods are *iterative methods*, i.e. they iteratively refine the solutio
 
 ## Capabilities
 
+`LightKrylov` leverages Fortran's `abstract type` feature to provide generic implementations of the various Krylov methods.
+The only requirement from the user to benefit from the capabilities of `LightKrylov` is to extend the `abstract_vector` and `abstract_linop` types to define their notion of vectors and linear operators. `LightKrylov` then provides the following functionalities:
+
+- **Krylov decompositions:**
+  + `arnoldi_factorization` : Given a linear map $f : \mathbb{R}^n \to \mathbb{R}^n$ and its matrix representation $\mathbf{A}$, the *k-step Arnoldi method* computes the following factorization
+  $$\mathbf{A} \mathbf{X}_k_ = \mathbf{X}_k_ \mathbf{H} + \beta \mathbf{x}_{k+1} \mathbf{e}_k^T,$$
+  
+
 ## Installation
 
 ## Help and support
