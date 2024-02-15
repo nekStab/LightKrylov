@@ -2,20 +2,29 @@
 ! It imports several modules to handle vectors, linear operations, and Krylov decompositions.
 ! Additionally, it imports modules from the standard library.
 module lightkrylov_IterativeSolvers
+   !> LightKrylov modules.
    use lightkrylov_Utils
    use lightkrylov_AbstractVector
    use lightkrylov_LinearOperator
    use lightkrylov_BaseKrylov
+
+   !> Fortran standard library.
    use stdlib_sorting, only: sort_index, int_size
    use stdlib_optval, only: optval
    use stdlib_io_npy, only: save_npy
+
    implicit none
    include "dtypes.h"
 
    private
-   public :: eigs, eighs, gmres, save_eigenspectrum, svds, cg
+   !> Eigenvalue analysis.
+   public :: eigs, eighs, save_eigenspectrum
+   !> Singular value decomposition.
+   public :: svds
+   !> Linear solvers.
+   public :: gmres, cg, abstract_linear_solver
+   !> Experimental.
    public :: two_sided_eigs
-   public :: abstract_linear_solver
 
    !------------------------------------------------
    !-----                                      -----
@@ -183,7 +192,7 @@ contains
    !
    ! transpose(A) * eigvecs = eigvals * eigvecs
    !
-   ! The Krylov subspace X is formed via Arnoldi factorization, resulting in an upper
+   ! The Krylov subspace X is constructed via Arnoldi factorization, resulting in an upper
    ! Hessenberg matrix H. The eigenvalues of A are approximated by the eigenvalues of H,
    ! and the eigenvectors are computed accordingly.
    !
@@ -598,6 +607,7 @@ contains
    ! ------------
    ! - Not optimized for dense matrices or those with special structures (e.g., Toeplitz, circulant).
    ! - May require many iterations for ill-conditioned matrices.
+   ! - Only a full re-orthogonalization scheme is implemented.
    !
    ! Input/Output Parameters:
    ! ------------------------
@@ -613,6 +623,8 @@ contains
    ! -----------
    ! - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and Pseudo-Inverse of a Matrix."
    ! - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos bidiagonalization methods."
+   ! - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." Technical Report, 1998.
+   !   url : http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf
    !
    !=======================================================================================
    subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, nev, tolerance, verbosity)
@@ -720,13 +732,12 @@ contains
    ! -----------
    ! - Suitable for nonsymmetric and ill-conditioned matrices.
    ! - Produces monotonically decreasing residuals.
-   ! - Fully utilizes the generated Krylov subspace for the solution.
    !
    ! Limitations:
    ! ------------
-   ! - Memory-intensive due to the absence of restarts.
-   ! - May not be efficient for very large-scale problems.
-   ! - No preconditioning capabilities in the current implementation.
+   ! - Can be memory-intensive due to the absence of restarts.
+   ! - Original gmres uses Givens rotations to update the least-squares solution. For the
+   !   sake of simplicity, we use directly the lstsq solver from LAPACK.
    !
    ! Input/Output Parameters:
    ! ------------------------
@@ -933,9 +944,7 @@ contains
    ! Limitations:
    ! ------------
    ! - Applicability restricted to SPD matrices.
-   ! - No preconditioning capabilities in the current implementation.
-   ! - Subject to numerical rounding errors, which might require more than 'n' iterations
-   !   in practice.
+   ! - Might take a large number of iterations for ill-conditioned problems.
    !
    ! Input/Output Parameters:
    ! ------------------------
