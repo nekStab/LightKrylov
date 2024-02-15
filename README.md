@@ -45,6 +45,12 @@ The primary reason to develop `LightKrylov` is to couple it with high-performanc
 
 ### Examples
 
+Several examples can be found in the `example` folder. These include:
+- [Ginzburg-Landau]() : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
+- [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
+
+Alternatively, you can also look at [`neklab`](), a bifurcation and stability analysis toolbox based on `LightKrylov` designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
+
 ## Installation
 
 ## Help and support
