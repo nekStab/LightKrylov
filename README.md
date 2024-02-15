@@ -51,7 +51,65 @@ Several examples can be found in the `example` folder. These include:
 
 Alternatively, you can also look at [`neklab`](), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
 
+| [**Ginzburg-Landau**]() | [**Laplace operator**]() |
+| :---------------------: | :----------------------: |
+|                         |                          |
+
 ## Installation
+
+Provided you have `git` installed, getting the code is as simple as:
+
+```
+git clone https://github.com/nekStab/LightKrylov
+```
+
+### Dependencies
+
+`LightKrylov` has a very minimal set of dependencies. These only include:
+
+- a Fortran compiler,
+- [LAPACK]() (or similar),
+- [`fpm`](https://github.com/fortran-lang/fpm) or `make` for building the code.
+
+And that's all of it. To date, the tested compilers include:
+
+- `gfortran 12.0.3`
+
+### Building with `fpm`
+
+### Building with `make`
+
+### Running the tests
+
+To see if the library has been compiled correctly, a set of unit tests are provided in [test](). If you use `fpm`, running these tests is as simple as
+
+```
+fpm test
+```
+
+If everything went fine, you should see
+
+```
+All tests successfully passed!
+```
+
+If not, please feel free to open an Issue.
+
+### Running the examples
+
+To run the examples:
+
+```
+fpm run --example
+```
+
+This command will run all of the examples sequentially. You can alternatively run a specific example using e.g.
+
+```
+fpm run --example Ginzburg-Landau
+```
+
+For more details, please refer to each of the examples.
 
 ## Help and support
 
@@ -77,5 +135,3 @@ The development of `LightKrylov` is part of an on-going research project funded 
 `LightKrylov` is the base package of our ecosystem. If you like it, you may also be interested in :
 - [`LightROM`](https://github.com/nekStab/LightROM) : a lightweight Fortran package providing a set of functions for reduced-order modeling, control and estimation of large-scale linear time invariant dynamical systems.
 - [`neklab`]() : a bifurcation and stability analysis toolbox based on `LightKrylov` for the massively parallel spectral element solver [`Nek5000`]().
-
-### How to cite
