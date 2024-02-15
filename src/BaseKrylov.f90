@@ -51,7 +51,7 @@ contains
    ! A * X(:, k) = X(:, 1:k) * H(1:k, k) + h_{k+1,k} * X(:, k+1)
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Constructs an orthonormal Krylov basis X via modified Gram-Schmidt.
    ! - Constructs an upper Hessenberg matrix H.
    ! - Checks for convergence and invariant subspaces.
@@ -79,7 +79,7 @@ contains
    ! transpose  : Optional, transpose flag for A, logical, intent(in)
    !
    ! References:
-   ! ----------
+   ! -----------
    ! - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
    !   see Chapter 6.3 : Arnoldi's method.
    !
@@ -209,7 +209,7 @@ contains
    ! A * X(:, k) = X(:, 1:k) * T(1:k, k) + t_{k+1,k} * X(:, k+1)
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Constructs an orthonormal Krylov basis X.
    ! - Constructs a tridiagonal matrix T.
    ! - Checks for convergence and invariant subspaces.
@@ -236,7 +236,7 @@ contains
    ! tol        : Optional, orthogonality tolerance, double precision, intent(in)
    !
    ! References:
-   ! ----------
+   ! -----------
    ! - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
    !   see Chapter 6.6 : The symmetric Lanczos algorithm.
    !
@@ -353,7 +353,7 @@ contains
    ! A * V = U * B
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Constructs orthonormal bases U and V.
    ! - Constructs a bidiagonal matrix B.
    !
@@ -370,7 +370,7 @@ contains
    ! tol        : Optional, tolerance, real(kind=wp), intent(in)
    !
    ! References:
-   ! ----------
+   ! -----------
    ! - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." Technical Report, 1998.
    !   url : http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf
    !
@@ -485,17 +485,17 @@ contains
    ! A * V = W * T
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Constructs bi-orthogonal bases V and W for the domain and image of A.
    ! - Constructs a tridiagonal matrix T.
    !
    ! Advantages:
-   ! ----------
+   ! -----------
    ! - Simultaneously compute a vector basis for the domain and image of A.
    ! - Bi-orthogonality of the two bases is a feature of the algorithm.
    !
    ! Limitations:
-   ! -----------
+   ! ------------
    ! - Maintaining the bi-orthogonality for high-dimensional operators is numerically
    !   unstable and quickly suffers from accumulation of floating point erros.
    ! - It is strongly suggested NOT to use it for production code.
@@ -513,7 +513,7 @@ contains
    ! tol        : Optional, tolerance, real(kind=wp), intent(in)
    !
    ! References:
-   ! ----------
+   ! -----------
    ! - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
    !   see Chapter 7.1 : Lanczos biorthogonalization.
    !

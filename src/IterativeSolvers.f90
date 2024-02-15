@@ -197,7 +197,7 @@ contains
    ! and the eigenvectors are computed accordingly.
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Builds a Krylov subspace (X) using Arnoldi factorization.
    ! - Computes eigenpairs of the reduced upper Hessenberg matrix (H).
    ! - Sorts eigvals and associated eigvecs based on magnitude.
@@ -333,7 +333,7 @@ contains
    ! iterative Lanczos factorization.
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Employs Lanczos tridiagonalization to construct a Krylov subspace represented by
    !   matrix T of size (kdim x kdim).
    ! - Computes eigenpairs (eigvals, eigvecs) of T to approximate those of A.
@@ -591,7 +591,7 @@ contains
    ! A = U Sigma V^T
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Utilizes Lanczos bidiagonalization to approximate A with a bidiagonal matrix B.
    ! - Computes the singular value decomposition of B to obtain singular values and vectors.
    ! - Calculates residuals for singular triplets as: residual = | A v - sigma u |.
@@ -929,7 +929,7 @@ contains
    ! definite (SPD) linear systems of equations, Ax = b.
    !
    ! Algorithmic Features:
-   ! ----------------------
+   ! ---------------------
    ! - Utilizes the method of conjugate directions to iteratively refine the solution.
    ! - Employs two sequences of vectors: residuals (r) and conjugate directions (p).
    ! - Updates the approximate solution based on the computed alpha and beta values.
