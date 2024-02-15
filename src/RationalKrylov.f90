@@ -62,6 +62,7 @@ contains
    ! - verbosity : Verbosity control flag                                    [Optional, Input]
    ! - tol       : Tolerance for convergence                                 [Optional, Input]
    ! - transpose : Logical flag to control whether A or transpose(A) is used [Optional, Input]
+   !
    ! References:
    ! -----------
    ! - S. Guttel. "Rational Krylov Methods for Operator Functions", PhD Thesis, 2010.
