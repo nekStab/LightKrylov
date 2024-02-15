@@ -1,9 +1,13 @@
 module lightkrylov_RationalKrylov
+   !> LightKrylov modules.
    use lightkrylov_Utils
    use lightkrylov_AbstractVector
    use lightkrylov_LinearOperator
    use lightkrylov_IterativeSolvers
+
+   !> Fortran standard library.
    use stdlib_optval, only: optval
+
    implicit none
    include "dtypes.h"
 

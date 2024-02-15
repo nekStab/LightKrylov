@@ -1,8 +1,12 @@
 module lightkrylov_BaseKrylov
+   !> LightKrylov modules.
    use lightkrylov_Utils
    use lightkrylov_AbstractVector
    use lightkrylov_LinearOperator
+
+   !> Fortran standard library.
    use stdlib_optval, only: optval
+
    implicit none
    include "dtypes.h"
 
