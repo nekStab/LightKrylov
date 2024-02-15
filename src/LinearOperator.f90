@@ -1,227 +1,227 @@
 module lightkrylov_LinearOperator
-  use lightkrylov_AbstractVector
-  implicit none
-  include "dtypes.h"
+   use lightkrylov_AbstractVector
+   implicit none
+   include "dtypes.h"
 
-  private
+   private
 
-  ! -------------------------------------------------------
-  ! -----                                            ------
-  ! -----     ABSTRACT TYPE FOR GENERAL MATRICES     ------
-  ! -----                                            ------
-  ! -------------------------------------------------------
+   ! -------------------------------------------------------
+   ! -----                                            ------
+   ! -----     ABSTRACT TYPE FOR GENERAL MATRICES     ------
+   ! -----                                            ------
+   ! -------------------------------------------------------
 
-  type, abstract, public :: abstract_linop
+   type, abstract, public :: abstract_linop
    contains
-     private
-     ! Matrix-vector product.
-     procedure(abstract_matvec), pass(self), deferred, public  :: matvec
-     procedure(abstract_rmatvec), pass(self), deferred, public :: rmatvec
-  end type abstract_linop
+      private
+      ! Matrix-vector product.
+      procedure(abstract_matvec), pass(self), deferred, public  :: matvec
+      procedure(abstract_rmatvec), pass(self), deferred, public :: rmatvec
+   end type abstract_linop
 
-  abstract interface
-     ! Interface for the matrix-vector product.
-     subroutine abstract_matvec(self, vec_in, vec_out)
-       use lightkrylov_AbstractVector
-       import abstract_linop
-       class(abstract_linop) , intent(in)  :: self
-       class(abstract_vector), intent(in)  :: vec_in
-       class(abstract_vector), intent(out) :: vec_out
-     end subroutine abstract_matvec
+   abstract interface
+      ! Interface for the matrix-vector product.
+      subroutine abstract_matvec(self, vec_in, vec_out)
+         use lightkrylov_AbstractVector
+         import abstract_linop
+         class(abstract_linop), intent(in)  :: self
+         class(abstract_vector), intent(in)  :: vec_in
+         class(abstract_vector), intent(out) :: vec_out
+      end subroutine abstract_matvec
 
-     ! Interface for the vector-matrix product.
-     subroutine abstract_rmatvec(self, vec_in, vec_out)
-       use lightkrylov_AbstractVector
-       import abstract_linop
-       class(abstract_linop) , intent(in)  :: self
-       class(abstract_vector), intent(in)  :: vec_in
-       class(abstract_vector), intent(out) :: vec_out
-     end subroutine abstract_rmatvec
-  end interface
+      ! Interface for the vector-matrix product.
+      subroutine abstract_rmatvec(self, vec_in, vec_out)
+         use lightkrylov_AbstractVector
+         import abstract_linop
+         class(abstract_linop), intent(in)  :: self
+         class(abstract_vector), intent(in)  :: vec_in
+         class(abstract_vector), intent(out) :: vec_out
+      end subroutine abstract_rmatvec
+   end interface
 
-  !--------------------------------------------------------------
-  !-----                                                    -----
-  !-----     ABSTRACT TYPE FOR SYM. POS. DEF. OPERATORS     -----
-  !-----                                                    -----
-  !--------------------------------------------------------------
+   !--------------------------------------------------------------
+   !-----                                                    -----
+   !-----     ABSTRACT TYPE FOR SYM. POS. DEF. OPERATORS     -----
+   !-----                                                    -----
+   !--------------------------------------------------------------
 
-  type, extends(abstract_linop), abstract, public :: abstract_spd_linop
+   type, extends(abstract_linop), abstract, public :: abstract_spd_linop
    contains
-     private
-  end type abstract_spd_linop
+      private
+   end type abstract_spd_linop
 
-  !-------------------------------------------------------
-  !-----                                             -----
-  !-----     ABSTRACT TYPE FOR LOW-RANK MATRICES     -----
-  !-----                                             -----
-  !-------------------------------------------------------
+   !-------------------------------------------------------
+   !-----                                             -----
+   !-----     ABSTRACT TYPE FOR LOW-RANK MATRICES     -----
+   !-----                                             -----
+   !-------------------------------------------------------
 
-  type, extends(abstract_linop), abstract, public :: abstract_lowrank_linop
+   type, extends(abstract_linop), abstract, public :: abstract_lowrank_linop
    contains
-     private
-  end type abstract_lowrank_linop
+      private
+   end type abstract_lowrank_linop
 
-  !-------------------------------------
-  !-----                           -----
-  !-----     IDENTITY OPERATOR     -----
-  !-----                           -----
-  !-------------------------------------
+   !-------------------------------------
+   !-----                           -----
+   !-----     IDENTITY OPERATOR     -----
+   !-----                           -----
+   !-------------------------------------
 
-  type, extends(abstract_linop), public :: identity_linop
+   type, extends(abstract_linop), public :: identity_linop
    contains
-     private
-     procedure, pass(self), public :: matvec  => identity_matvec
-     procedure, pass(self), public :: rmatvec => identity_matvec
-  end type identity_linop
+      private
+      procedure, pass(self), public :: matvec => identity_matvec
+      procedure, pass(self), public :: rmatvec => identity_matvec
+   end type identity_linop
 
-  !-----------------------------------
-  !-----                         -----
-  !-----     SCALED OPERATOR     -----
-  !-----                         -----
-  !-----------------------------------
+   !-----------------------------------
+   !-----                         -----
+   !-----     SCALED OPERATOR     -----
+   !-----                         -----
+   !-----------------------------------
 
-  type, extends(abstract_linop), public :: scaled_linop
-     !> Original operator.
-     class(abstract_linop), allocatable :: A
-     !> Scaling factor.
-     real(kind=wp)         :: sigma
-     contains
-       private
-       procedure, pass(self), public :: matvec  => scaled_matvec
-       procedure, pass(self), public :: rmatvec => scaled_rmatvec
-  end type scaled_linop
-
-  !----------------------------------
-  !-----                        -----
-  !-----     AXBPY OPERATOR     -----
-  !-----                        -----
-  !----------------------------------
-
-  type, extends(abstract_linop), public :: axpby_linop
-     !> First operator.
-     class(abstract_linop), allocatable :: A
-     !> Second operator.
-     class(abstract_linop), allocatable :: B
-     !> Constants.
-     real(kind=wp) :: alpha, beta
-     !> Logicals.
-     logical :: transA = .false., transB = .false.
+   type, extends(abstract_linop), public :: scaled_linop
+      !> Original operator.
+      class(abstract_linop), allocatable :: A
+      !> Scaling factor.
+      real(kind=wp)         :: sigma
    contains
-     private
-     procedure, pass(self), public :: matvec  => axpby_matvec
-     procedure, pass(self), public :: rmatvec => axpby_rmatvec
-  end type axpby_linop
+      private
+      procedure, pass(self), public :: matvec => scaled_matvec
+      procedure, pass(self), public :: rmatvec => scaled_rmatvec
+   end type scaled_linop
+
+   !----------------------------------
+   !-----                        -----
+   !-----     AXBPY OPERATOR     -----
+   !-----                        -----
+   !----------------------------------
+
+   type, extends(abstract_linop), public :: axpby_linop
+      !> First operator.
+      class(abstract_linop), allocatable :: A
+      !> Second operator.
+      class(abstract_linop), allocatable :: B
+      !> Constants.
+      real(kind=wp) :: alpha, beta
+      !> Logicals.
+      logical :: transA = .false., transB = .false.
+   contains
+      private
+      procedure, pass(self), public :: matvec => axpby_matvec
+      procedure, pass(self), public :: rmatvec => axpby_rmatvec
+   end type axpby_linop
 
 contains
 
-  !-------------------------------------------------------------------
-  !-----                                                         -----
-  !-----     TYPE-BOUND PROCEDURES FOR THE IDENTITY OPERATOR     -----
-  !-----                                                         -----
-  !-------------------------------------------------------------------
+   !-------------------------------------------------------------------
+   !-----                                                         -----
+   !-----     TYPE-BOUND PROCEDURES FOR THE IDENTITY OPERATOR     -----
+   !-----                                                         -----
+   !-------------------------------------------------------------------
 
-  subroutine identity_matvec(self, vec_in, vec_out)
-    class(identity_linop) , intent(in)  :: self
-    class(abstract_vector), intent(in)  :: vec_in
-    class(abstract_vector), intent(out) :: vec_out
-    ! /!\ NOTE : This needs to be improved. It is a simple hack but I ain't happy with it.
-    call vec_out%axpby(0.0_wp, vec_in, 1.0_wp)
-    return
-  end subroutine identity_matvec
+   subroutine identity_matvec(self, vec_in, vec_out)
+      class(identity_linop), intent(in)  :: self
+      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_vector), intent(out) :: vec_out
+      ! /!\ NOTE : This needs to be improved. It is a simple hack but I ain't happy with it.
+      call vec_out%axpby(0.0_wp, vec_in, 1.0_wp)
+      return
+   end subroutine identity_matvec
 
-  !------------------------------------------------------------------
-  !-----                                                        -----
-  !-----      TYPE-BOUND PROCEDURES FOR THE SCALED OPERATOR     -----
-  !-----                                                        -----
-  !------------------------------------------------------------------
+   !------------------------------------------------------------------
+   !-----                                                        -----
+   !-----      TYPE-BOUND PROCEDURES FOR THE SCALED OPERATOR     -----
+   !-----                                                        -----
+   !------------------------------------------------------------------
 
-  subroutine scaled_matvec(self, vec_in, vec_out)
-    !> Arguments.
-    class(scaled_linop), intent(in)     :: self
-    class(abstract_vector), intent(in)  :: vec_in
-    class(abstract_vector), intent(out) :: vec_out
-    !> Original matrix-vector product.
-    call self%A%matvec(vec_in, vec_out)
-    !> Scale the result.
-    call vec_out%scal(self%sigma)
-    return
-  end subroutine scaled_matvec
-  
-  subroutine scaled_rmatvec(self, vec_in, vec_out)
-    !> Arguments.
-    class(scaled_linop), intent(in)     :: self
-    class(abstract_vector), intent(in)  :: vec_in
-    class(abstract_vector), intent(out) :: vec_out
-    !> Original matrix-vector product.
-    call self%A%rmatvec(vec_in, vec_out)
-    !> Scale the result.
-    call vec_out%scal(self%sigma)
-    return
-  end subroutine scaled_rmatvec
+   subroutine scaled_matvec(self, vec_in, vec_out)
+      !> Arguments.
+      class(scaled_linop), intent(in)     :: self
+      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_vector), intent(out) :: vec_out
+      !> Original matrix-vector product.
+      call self%A%matvec(vec_in, vec_out)
+      !> Scale the result.
+      call vec_out%scal(self%sigma)
+      return
+   end subroutine scaled_matvec
 
-  !-------------------------------------------------------------------
-  !-----                                                         -----
-  !-----     TYPE-BOUND PROCEDURES FOR AXPBY LINEAR OPERATOR     -----
-  !-----                                                         -----
-  !-------------------------------------------------------------------
+   subroutine scaled_rmatvec(self, vec_in, vec_out)
+      !> Arguments.
+      class(scaled_linop), intent(in)     :: self
+      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_vector), intent(out) :: vec_out
+      !> Original matrix-vector product.
+      call self%A%rmatvec(vec_in, vec_out)
+      !> Scale the result.
+      call vec_out%scal(self%sigma)
+      return
+   end subroutine scaled_rmatvec
 
-  subroutine axpby_matvec(self, vec_in, vec_out)
-    !> Arguments.
-    class(axpby_linop)    , intent(in)  :: self
-    class(abstract_vector), intent(in)  :: vec_in
-    class(abstract_vector), intent(out) :: vec_out
-    !> Working array.
-    class(abstract_vector), allocatable :: wrk
+   !-------------------------------------------------------------------
+   !-----                                                         -----
+   !-----     TYPE-BOUND PROCEDURES FOR AXPBY LINEAR OPERATOR     -----
+   !-----                                                         -----
+   !-------------------------------------------------------------------
 
-    ! --> Allocate working array.
-    allocate(wrk, source=vec_in)
+   subroutine axpby_matvec(self, vec_in, vec_out)
+      !> Arguments.
+      class(axpby_linop), intent(in)  :: self
+      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_vector), intent(out) :: vec_out
+      !> Working array.
+      class(abstract_vector), allocatable :: wrk
 
-    ! --> w = A @ x
-    if (self%transA) then
-       call self%A%rmatvec(vec_in, wrk)
-    else
-       call self%A%matvec(vec_in, wrk)
-    endif
+      ! --> Allocate working array.
+      allocate (wrk, source=vec_in)
 
-    ! --> y = B @ x
-    if (self%transB) then
-       call self%B%rmatvec(vec_in, vec_out)
-    else
-       call self%B%matvec(vec_in, vec_out)
-    endif
+      ! --> w = A @ x
+      if (self%transA) then
+         call self%A%rmatvec(vec_in, wrk)
+      else
+         call self%A%matvec(vec_in, wrk)
+      end if
 
-    ! --> y = alpha*w + beta*y
-    call vec_out%axpby(self%beta, wrk, self%alpha)
+      ! --> y = B @ x
+      if (self%transB) then
+         call self%B%rmatvec(vec_in, vec_out)
+      else
+         call self%B%matvec(vec_in, vec_out)
+      end if
 
-    return
-  end subroutine axpby_matvec
+      ! --> y = alpha*w + beta*y
+      call vec_out%axpby(self%beta, wrk, self%alpha)
 
-  subroutine axpby_rmatvec(self, vec_in, vec_out)
-    !> Arguments.
-    class(axpby_linop)    , intent(in)  :: self
-    class(abstract_vector), intent(in)  :: vec_in
-    class(abstract_vector), intent(out) :: vec_out
-    !> Working array.
-    class(abstract_vector), allocatable :: wrk
+      return
+   end subroutine axpby_matvec
 
-    ! --> w = A @ x
-    if (self%transA) then
-       call self%A%matvec(vec_in, wrk)
-    else
-       call self%A%rmatvec(vec_in, wrk)
-    endif
+   subroutine axpby_rmatvec(self, vec_in, vec_out)
+      !> Arguments.
+      class(axpby_linop), intent(in)  :: self
+      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_vector), intent(out) :: vec_out
+      !> Working array.
+      class(abstract_vector), allocatable :: wrk
 
-    ! --> y = B @ x
-    if (self%transB) then
-       call self%B%matvec(vec_in, vec_out)
-    else
-       call self%B%rmatvec(vec_in, vec_out)
-    endif
+      ! --> w = A @ x
+      if (self%transA) then
+         call self%A%matvec(vec_in, wrk)
+      else
+         call self%A%rmatvec(vec_in, wrk)
+      end if
 
-    ! --> y = alpha*w + beta*y
-    call vec_out%axpby(self%beta, wrk, self%alpha)
+      ! --> y = B @ x
+      if (self%transB) then
+         call self%B%matvec(vec_in, vec_out)
+      else
+         call self%B%rmatvec(vec_in, vec_out)
+      end if
 
-    return
-  end subroutine axpby_rmatvec
+      ! --> y = alpha*w + beta*y
+      call vec_out%axpby(self%beta, wrk, self%alpha)
+
+      return
+   end subroutine axpby_rmatvec
 
 end module lightkrylov_LinearOperator
