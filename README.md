@@ -53,13 +53,18 @@ Alternatively, you can also look at [`neklab`](), a bifurcation and stability an
 
 ## Installation
 
-
-
 ## Help and support
 
 ## Contributing
 
 ### Current developers
+
+`LightKrylov` is currently developed and maintained by a team of three:
+- [Jean-Christophe Loiseau](https://loiseaujc.github.io/) : Assistant Professor of Applied maths and Fluid dynamics at [DynFluid](https://dynfluid.ensam.eu/), Arts et Métiers Institute of Technology, Paris, France.
+- [Ricardo Frantz](https://github.com/ricardofrantz) : PhD in Fluid dynamics (Arts et Métiers, France, 2022) and currently postdoctoral researcher at DynFluid.
+- [Simon Kern](https://github.com/Simkern/) : PhD in Fluid dynamics (KTH, Sweden, 2023) and currently postdoctoral researcher at DynFluid.
+
+Anyone else interested in contributing is obviously most welcomed!
 
 ### Bug reports and contributions
 
