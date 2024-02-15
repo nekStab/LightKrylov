@@ -34,7 +34,7 @@ The only requirement from the user to benefit from the capabilities of `LightKry
 
 - **Krylov decompositions:**
   + `arnoldi_factorization` : Given a linear map $f : \mathbb{R}^n \to \mathbb{R}^n$ and its matrix representation $\mathbf{A}$, the *k-step Arnoldi method* computes the following factorization
-  $$\mathbf{A} \mathbf{X}_k_ = \mathbf{X}_k_ \mathbf{H} + \beta \mathbf{x}_{k+1} \mathbf{e}_k^T,$$
+  $$\mathbf{A} \mathbf{X}_k = \mathbf{X}_k \mathbf{H} + \beta \mathbf{x}_{k+1} \mathbf{e}_k^T,$$
   
 
 ## Installation
