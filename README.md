@@ -35,7 +35,7 @@ The only requirement from the user to benefit from the capabilities of `LightKry
 - **Krylov decompositions:**
   + `arnoldi_factorization` : Given a linear map $f : \mathbb{R}^n \to \mathbb{R}^n$ and its matrix representation $\mathbf{A}$, the *k-step Arnoldi method* computes the following factorization
     $$\mathbf{A} \mathbf{X} = \mathbf{X} \mathbf{H} + \beta \mathbf{x} \mathbf{e}^T$$
-  
+  with $\mathbf{X} \in \mathbb{R}^{n \times k}$ an orthonormal basis for the Krylov subspace $\mathcal{K}(\mathbf{A}, \mathbf{x}_0)$ and $\mathbf{H} \in \mathbb{R}^{k \times k}$ an upper Hessenberg matrix.
 
 ## Installation
 
