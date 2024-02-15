@@ -40,7 +40,8 @@ The only requirement from the user to benefit from the capabilities of `LightKry
   $$\mathbf{AX} = \mathbf{XT} + \beta \mathbf{x} \mathbf{e}^T$$
   with $\mathbf{T} \in \mathbb{R}^{k \times k}$ a symmetric tridiagonal matrix.
   + `lanczos_bidiagonalization` : Given a matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$, Lanczos bidiagonalization computes the following factorization
-  $$\mathbf{AV} = \mathbf{UB} \quad \text{and} \quad \mathbf{A}^T \mathbf{U} = \mathbf{VB}^T + \alpha \mathbf{ve}^T,$$
+  $$\mathbf{AV} = \mathbf{UB} + \alpha \mathbf{ue}^T \quad \text{and} \quad \mathbf{A}^T \mathbf{U} = \mathbf{VB}^T + \alpha \mathbf{ve}^T,$$
+  where $\mathbf{V} \in \mathbb{R}^{n \times k}$ is an orthonormal basis for the Krylov subspace $\mathcal{K}(\mathbf{A}, \mathbf{v}_0)$ and $\mathbf{U} \in \mathbb{R}^{m \times k}$ for the Krylov subspace $\mathcal{K}(\mathbf{A}^T, \mathbf{u}_0)$. The matrix $\mathbf{B} \in \mathbb{R}^{k \times k}$ is bi-diagonal.
 
 ## Installation
 
