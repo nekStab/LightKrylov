@@ -53,7 +53,7 @@ Alternatively, you can also look at [`neklab`](), a bifurcation and stability an
 
 | [**Ginzburg-Landau**]() | [**Laplace operator**]() |
 | :---------------------: | :----------------------: |
-|                         |                          |
+|       ADD FIGURE        |        ADD FIGURE        |
 
 ## Installation
 
