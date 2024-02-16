@@ -83,7 +83,15 @@ And that's all of it. To date, the tested compilers include:
 
 ### Building with `fpm`
 
+Provided you have cloned the repo, installing `LightKrylov` with `fpm` is as simple as
+
+```
+fpm build --profile release
+```
+
 ### Building with `make`
+
+N/A
 
 ### Running the tests
 
@@ -117,8 +125,6 @@ fpm run --example Ginzburg-Landau
 
 For more details, please refer to each of the examples.
 
-## Help and support
-
 ## Contributing
 
 ### Current developers
@@ -129,8 +135,6 @@ For more details, please refer to each of the examples.
 - [Simon Kern](https://github.com/Simkern/) : PhD in Fluid dynamics (KTH, Sweden, 2023) and currently postdoctoral researcher at DynFluid.
 
 Anyone else interested in contributing is obviously most welcomed!
-
-### Bug reports and contributions
 
 ## Acknowledgment
 
