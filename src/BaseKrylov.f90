@@ -690,5 +690,132 @@ contains
    return
    end subroutine qr_factorization
 
+   subroutine block_arnoldi_factorization(A, X, H, p, info, kstart, kend, verbosity, tol, transpose)
+
+      ! --> Optional arguments (mainly for GMRES)
+      integer, optional, intent(in) :: kstart, kend
+      logical, optional, intent(in) :: verbosity, transpose
+      real(kind=wp), optional, intent(in) :: tol
+  
+      integer :: k_start, k_end
+      logical :: verbose, trans
+      real(kind=wp) :: tolerance
+  
+      ! --> Linear Operator to be factorized.
+      class(abstract_linop), intent(in) :: A
+      ! --> Krylov basis.
+      class(abstract_vector), intent(inout) :: X(:)
+      ! --> Upper Hessenberg matrix.
+      real(kind=wp), intent(inout) :: H(:, :)
+      ! --> Size of the blocks
+      integer, intent(in) :: p
+      ! --> Information.
+      integer, intent(out) :: info ! info < 0 : The k-step Arnoldi factorization failed.
+      ! info = 0 : The k-step Arnoldi factorization succeeded.
+      ! info > 0 : An invariant subspace has been computed after k=info steps.
+      ! --> Miscellaneous
+      real(kind=wp) :: beta
+      integer :: k, kk, i, kdim
+      integer :: kpm, kp, kpp
+      
+      kpm = (k-1)*p
+      kp  = kpm + p
+      kpp = kp  + p
+  
+      info = 0
+  
+      ! --> Check dimensions.
+      kdim = size(X) - 1 ; call assert_shape(H, [p*(kdim+1), p*kdim], "arnoldi_factorization", "H")
+  
+      ! --> Deals with the optional arguments.
+      k_start   = optval(kstart, 1)
+      k_end     = optval(kend, kdim)
+      verbose   = optval(verbosity, .false.)
+      tolerance = optval(tol, atol)
+      trans     = optval(transpose, .false.)
+  
+      ! --> Arnoldi factorization.
+      block_arnoldi: do k = k_start, k_end
+         ! --> Matrix-vector products.
+         kk = kpm + 1
+         if (trans) then
+            do i = 1,p
+               call A%rmatvec(X(kk+i), X(kk+p+i))
+            enddo
+         else
+            do i = 1,p
+               call A%matvec(X(kk+i), X(kk+p+i))
+            enddo
+         endif
+         ! --> Update Hessenberg matrix.
+         call block_update_hessenberg_matrix(H, X, k, p)
+         call qr_factorization(X(kp+1:kpp),H(kp+1:kpp,kpm+1:kp),info)
+  
+         !if (verbose) then
+         !   write(*, *) "--> Arnoldi iteration n°", k, "/", k_end
+         !   write(*, *) "    -----------------"
+         !   write(*, *) "    + Residual norm :", beta
+         !   write(*, *) "    + Elapsed time  :"
+         !   write(*, *) "    + ETA           :"
+         !   write(*, *)
+         !endif
+  
+         ! --> Exit Arnoldi loop if needed.
+         !if (beta < tolerance) then
+         !   if (verbose) then
+         !      write(*, *)
+         !      write(*, *) "INFO : An invariant subspace has been computed (beta =", beta, ")."
+         !   endif
+  !
+         !   ! --> Dimension of the computed invariant subspace.
+         !   info = k
+  !
+         !   ! --> Exit the Arnoldi iteration.
+         !   exit arnoldi
+         !else
+         !   ! --> Normalize the new Krylov vector.
+         !   call X(k+1)%scal(1.0D+00 / beta)
+         !endif
+  
+      enddo block_arnoldi
+  
+      if(verbose) then
+         write(*, *) "INFO : Exiting the block Arnoldi factorization with exit code info =", info, "."
+         write(*, *)
+      endif
+  
+      return
+    end subroutine block_arnoldi_factorization
+
+    subroutine block_update_hessenberg_matrix(H, X, k, p)
+      integer, intent(in) :: k
+      ! --> Size of the blocks
+      integer, intent(in) :: p
+      real(kind=wp), intent(inout) :: H(:, :)
+      class(abstract_vector) :: X(:)
+      real(wp), allocatable :: wrk(:,:)
+      integer :: i, j, kpm, kp, kpp
+      real(kind=wp) :: alpha
+  
+      kpm = (k-1)*p
+      kp  = kpm + p
+      kpp = kp  + p
+      allocate(wrk(1:kp,1:p))
+      wrk = 0.0_wp
+      ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
+      call mat_mult(H(1:kp,kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        
+      ! --> Perform full re-orthogonalization (see instability of MGS process)
+      call mat_mult(wrk,              X(1:kp), X(kp+1:kpp))
+
+      ! --> Update Hessenberg matrix
+      do i = 1,kp
+         do j = 1,p
+            H(i,kpm+j) = H(i,kpm+j) + wrk(i,kpm+j)
+         enddo
+      enddo
+  
+      return
+    end subroutine block_update_hessenberg_matrix
 
 end module lightkrylov_BaseKrylov
