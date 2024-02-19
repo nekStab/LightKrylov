@@ -737,14 +737,16 @@ contains
       ! --> Arnoldi factorization.
       block_arnoldi: do k = k_start, k_end
          ! --> Matrix-vector products.
-         kk = kpm + 1
+         !> This is a quick-fix that assumes a block arnoldi decomposition with a fixed linear operator.
+         !> It would be more general if the user could choose an arbitrary, generic series of rational 
+         !> expressions involving A to build the Krylov subspace (like in KPIK alternating between A and Ainv) 
          if (trans) then
             do i = 1,p
-               call A%rmatvec(X(kk+i), X(kk+p+i))
+               call A%rmatvec(X(kpm+i), X(kp+i))
             enddo
          else
             do i = 1,p
-               call A%matvec(X(kk+i), X(kk+p+i))
+               call A%matvec(X(kpm+i), X(kp+i))
             enddo
          endif
          ! --> Update Hessenberg matrix.
