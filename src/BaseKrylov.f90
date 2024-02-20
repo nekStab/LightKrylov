@@ -690,16 +690,19 @@ contains
    return
    end subroutine qr_factorization
 
-   subroutine block_arnoldi_factorization(A, X, H, p, info, kstart, kend, verbosity, tol, transpose)
+   subroutine block_arnoldi_factorization(A, X, H, block_size, info, kstart, kend, verbosity, tol, transpose)
 
       ! --> Optional arguments (mainly for GMRES)
       integer, optional, intent(in) :: kstart, kend
       logical, optional, intent(in) :: verbosity, transpose
       real(kind=wp), optional, intent(in) :: tol
   
-      integer :: k_start, k_end
+      integer :: k_start, k_end, p
       logical :: verbose, trans
       real(kind=wp) :: tolerance
+
+      ! --> Optional: size of blocks, default = 1
+      integer, optional, intent(in) :: block_size
   
       ! --> Linear Operator to be factorized.
       class(abstract_linop), intent(in) :: A
@@ -707,25 +710,25 @@ contains
       class(abstract_vector), intent(inout) :: X(:)
       ! --> Upper Hessenberg matrix.
       real(kind=wp), intent(inout) :: H(:, :)
-      ! --> Size of the blocks
-      integer, intent(in) :: p
       ! --> Information.
       integer, intent(out) :: info ! info < 0 : The k-step Arnoldi factorization failed.
       ! info = 0 : The k-step Arnoldi factorization succeeded.
       ! info > 0 : An invariant subspace has been computed after k=info steps.
       ! --> Miscellaneous
       real(kind=wp) :: beta
-      integer :: k, kk, i, kdim
+      integer :: k, i, kdim
       integer :: kpm, kp, kpp
       
+      ! --> Deals with optional non-unity block size
+      p   = optval(block_size, 1)
       kpm = (k-1)*p
       kp  = kpm + p
       kpp = kp  + p
   
       info = 0
-  
+
       ! --> Check dimensions.
-      kdim = size(X) - 1 ; call assert_shape(H, [p*(kdim+1), p*kdim], "arnoldi_factorization", "H")
+      kdim = (size(X) - p)/p ; call assert_shape(H, [p*(kdim+1), p*kdim], "arnoldi_factorization", "H")
   
       ! --> Deals with the optional arguments.
       k_start   = optval(kstart, 1)
@@ -737,9 +740,6 @@ contains
       ! --> Arnoldi factorization.
       block_arnoldi: do k = k_start, k_end
          ! --> Matrix-vector products.
-         !> This is a quick-fix that assumes a block arnoldi decomposition with a fixed linear operator.
-         !> It would be more general if the user could choose an arbitrary, generic series of rational 
-         !> expressions involving A to build the Krylov subspace (like in KPIK alternating between A and Ainv) 
          if (trans) then
             do i = 1,p
                call A%rmatvec(X(kpm+i), X(kp+i))
