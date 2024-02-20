@@ -1,7 +1,7 @@
 module TestVector
    use LightKrylov
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use stdlib_math, only: is_close
+   use stdlib_math, only: is_close, all_close
 
    implicit none
 
