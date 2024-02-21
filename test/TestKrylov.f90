@@ -30,7 +30,9 @@ contains
 
       testsuite = [ &
                   new_unittest("Arnoldi full factorization", test_arnoldi_full_factorization), &
-                  new_unittest("Arnoldi basis orthogonality", test_arnoldi_basis_orthogonality) &
+                  new_unittest("Arnoldi basis orthogonality", test_arnoldi_basis_orthogonality), &
+                  new_unittest("Block Arnoldi full factorization", test_block_arnoldi_full_factorization), &
+                  new_unittest("Block Arnoldi basis orthogonality", test_block_arnoldi_basis_orthogonality) &
                   ]
 
       return
@@ -120,6 +122,99 @@ contains
 
       return
    end subroutine test_arnoldi_basis_orthogonality
+
+   subroutine test_block_arnoldi_full_factorization(error)
+      ! This function checks the correctness of the block Arnoldi implementation by
+      ! verifying that the full factorization is correct, i.e. A @ X[1:p*k] = X[1:p*(k+1)] @ H.
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rmatrix), allocatable :: A
+      !> Krylov subspace.
+      class(rvector), dimension(:), allocatable :: X
+      !> Krylov subspace dimension.
+      integer, parameter :: p = 2
+      integer, parameter :: kdim = test_size/p
+      !> Hessenberg matrix.
+      real(kind=wp) :: H(p*(kdim + 1), p*kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: k
+      real(kind=wp) :: Xdata(test_size, p*(kdim + 1))
+      real(kind=wp) :: Rwrk(p,p)
+      double precision, dimension(p*kdim, p*kdim) :: G, Id
+      
+      ! --> Initialize matrix.
+      A = rmatrix(); call random_number(A%data)
+      ! --> Initialize Krylov subspace.
+      allocate (X(1:p*(kdim + 1))); 
+      do k = 1,p
+         call random_number(X(k)%data)
+      enddo
+      call qr_factorization(X(1:p), Rwrk, info)
+      do k = p+1, size(X)
+         call X(k)%zero()
+      end do
+      H = 0.0_wp
+
+      ! --> Arnoldi factorization.
+      call block_arnoldi_factorization(A, X, H, info, block_size = p) 
+      ! --> Check correctness of full factorization.
+      do k = 1, p*(kdim + 1)
+         Xdata(:, k) = X(k)%data
+      end do
+      call check(error, all_close(matmul(A%data, Xdata(:, 1:p*kdim)), matmul(Xdata, H), rtol, atol))
+
+      return
+   end subroutine test_block_arnoldi_full_factorization
+
+   subroutine test_block_arnoldi_basis_orthogonality(error)
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rmatrix), allocatable :: A
+      !> Krylov subspace.
+      class(rvector), dimension(:), allocatable :: X
+      !> Krylov subspace dimension.
+      integer, parameter :: p = 2
+      integer, parameter :: kdim = test_size/p
+      !> Hessenberg matrix.
+      double precision, dimension(p*(kdim + 1), p*kdim) :: H
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      double precision, dimension(p*kdim, p*kdim) :: G, Id
+      double precision :: Rwrk(p,p), alpha
+      integer :: i, j, k
+
+      !! --> Initialize random matrix.
+      A = rmatrix(); call random_number(A%data)
+      !! --> Initialize Krylov subspace.
+      allocate (X(1:p*(kdim + 1))); 
+      do k = 1,p
+         call random_number(X(k)%data)
+      enddo
+      call qr_factorization(X(1:p), Rwrk, info)
+      do k = p+1, size(X)
+         call X(k)%zero()
+      enddo
+      H = 0.0_wp
+      ! --> Arnoldi factorization.
+      call block_arnoldi_factorization(A, X, H, info, block_size = p)
+      ! --> Compute Gram matrix associated to the Krylov basis.
+      do i = 1, p*kdim
+         do j = 1, p*kdim
+            G(i, j) = X(i)%dot(X(j))
+         enddo
+      enddo
+      ! --> Check result.
+      Id = 0.0_wp; forall (i=1:p*kdim) Id(i, i) = 1.0_wp
+      call check(error, norm2(G - Id) < rtol)
+
+      return
+   end subroutine test_block_arnoldi_basis_orthogonality
 
    !-----------------------------------------------------------------
    !-----                                                       -----
@@ -569,7 +664,8 @@ contains
 
       testsuite = [ &
                   new_unittest("QR factorization", test_qr_factorization), &
-                  new_unittest("Q orthonormality", test_qr_basis_orthonormality) &
+                  new_unittest("Q orthonormality", test_qr_basis_orthonormality), &
+                  new_unittest("QR worst case breakdown", test_qr_breakdown) &
                   ]
 
       return
@@ -662,5 +758,57 @@ contains
       call check(error, all_close(Id, matmul(Qtmat, Qmat), rtol, atol))
 
    end subroutine test_qr_basis_orthonormality
+
+   subroutine test_qr_breakdown(error)
+      ! This function checks the correctness of the QR implementation in a worst
+      ! case scenario where the basis vectors are nearly linearly dependent.
+      ! The snaller the value of eps, the closer the columns are to linear dependence.
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rvector), dimension(:), allocatable  :: A
+      !> Krylov subspace dimension.
+      integer,       parameter :: kdim = 6
+      real(kind=wp), parameter :: eps = 1e-10
+      !> GS factors.
+      real(kind=wp) :: R(kdim, kdim)
+      real(kind=wp) :: Id(kdim, kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: i, k
+      real(kind=wp) :: Qtmat(kdim, test_size), Qmat(test_size, kdim)
+      class(rvector) , dimension(:), allocatable :: wrk
+
+      ! --> Initialize matrix with worst case scenario
+      allocate (A(1:kdim)); call mat_zero(A)
+      allocate (wrk(1))
+      call random_number(A(1)%data)
+      do k = 2, size(A)
+         ! each column is different from the previous one by eps
+         call random_number(wrk(1)%data)
+         call A(k)%axpby(0.0_wp, A(k-1), 1.0_wp)
+         call A(k)%axpby(1.0_wp, wrk(1), eps)
+      end do
+      R = 0.0_wp
+      ! --> In-place QR factorization.
+      call qr_factorization(A, R, info)
+      ! --> Extract data
+      do k = 1, kdim
+         Qmat(:, k) = A(k)%data
+         do i = 1, test_size
+            Qtmat(k, i) = Qmat(i, k)
+         end do
+      end do
+      ! --> Identity
+      Id = 0.0_wp
+      do k = 1, kdim
+         Id(k, k) = 1.0_wp
+      end do
+      ! --> Check correctness of QR factorization.
+      call check(error, all_close(Id, matmul(Qtmat, Qmat), rtol, atol))
+
+   end subroutine test_qr_breakdown
 
 end module TestKrylov

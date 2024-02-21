@@ -23,7 +23,8 @@ module LightKrylov
    public :: abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop
    !> Krylov factorization for general matrix.
    public :: initialize_krylov_subspace
-   public :: arnoldi_factorization, nonsymmetric_lanczos_tridiagonalization, two_sided_arnoldi_factorization
+   public :: arnoldi_factorization , block_arnoldi_factorization
+   public :: nonsymmetric_lanczos_tridiagonalization, two_sided_arnoldi_factorization
    public :: lanczos_bidiagonalization, rational_arnoldi_factorization
    !> Krylov factorization for sym. pos. def. matrices.
    public :: lanczos_tridiagonalization

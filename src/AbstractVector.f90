@@ -162,8 +162,14 @@ contains
     
       !> Check sizes.
       if (size(A) .ne. size(B,1)) then
-         write(*,*) "INFO : Abstract vector basis A and coefficient matrix B have incompatible sizes for the product A @ B."
-         return
+         write(*,*) "INFO : mat_mult dimension error"
+         write(*,*) "Abstract vector basis A and coefficient matrix B have incompatible sizes for the product C = A @ B."
+         STOP 1
+      endif
+      if (size(C) .ne. size(B,2)) then
+         write(*,*) "INFO : mat_mult dimension error"
+         write(*,*) "Coefficient matrix B does not have the same amout of colums as output basis C for the product C = A @ B."
+         STOP 1
       endif
       allocate(wrk, source=A(1))
       !> Compute product column-wise

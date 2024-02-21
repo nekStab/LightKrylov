@@ -12,7 +12,7 @@ module lightkrylov_BaseKrylov
 
    private
    !> Factorization for general n x n linear operators.
-   public :: arnoldi_factorization
+   public :: arnoldi_factorization, block_arnoldi_factorization
    !> Factorization for symmetric positive definite operators.
    public :: lanczos_tridiagonalization
    !> Pre-factorization for singular value decomposition.
@@ -812,24 +812,15 @@ contains
             !> Update R
             R(i, j) = beta
          end do
+         !!> Second pass
+         do i = 1, j - 1                                                   ! comment out the
+            beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)    ! second pass to
+            !> Update R                                                    ! see the simple QR
+            R(i, j) = R(i, j) + beta                                       ! factorization fail 
+         end do                                                            ! in the test
+         !> Normalize column
          beta = Q(j)%norm(); call Q(j)%scal(1.0_wp/beta)
          R(j, j) = beta
-         if (abs(beta) < tolerance) then
-            if (verbose) then
-               write (*, *) "INFO : Colinear columns detected."
-               write (*, *) "       (j, beta) = (", j, ",", beta, ")."
-            end if
-         end if
-      end do
-      !> second pass, update Q & R
-      do j = 1, kdim
-         !> Orthonormalization against existing columns
-         do i = 1, j - 1
-            beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
-            !> Update R
-            R(i, j) = R(i, j) + beta
-         end do
-         beta = Q(j)%norm(); call Q(j)%scal(1.0_wp/beta)
          if (abs(beta) < tolerance) then
             if (verbose) then
                write (*, *) "INFO : Colinear columns detected."
@@ -844,7 +835,7 @@ contains
       return
    end subroutine qr_factorization
 
-   subroutine block_arnoldi_factorization(A, X, H, block_size, info, kstart, kend, verbosity, tol, transpose)
+   subroutine block_arnoldi_factorization(A, X, H, info, kstart, kend, verbosity, tol, transpose, block_size)
 
       ! --> Optional arguments (mainly for GMRES)
       integer, optional, intent(in) :: kstart, kend
@@ -870,14 +861,13 @@ contains
       ! info > 0 : An invariant subspace has been computed after k=info steps.
       ! --> Miscellaneous
       real(kind=wp) :: beta
+      real(kind=wp), allocatable :: res(:)
       integer :: k, i, kdim
       integer :: kpm, kp, kpp
       
       ! --> Deals with optional non-unity block size
       p   = optval(block_size, 1)
-      kpm = (k-1)*p
-      kp  = kpm + p
-      kpp = kp  + p
+      allocate(res(1:p))
   
       info = 0
 
@@ -893,6 +883,10 @@ contains
   
       ! --> Arnoldi factorization.
       block_arnoldi: do k = k_start, k_end
+         ! --> Counters
+         kpm = (k-1)*p
+         kp  = kpm + p
+         kpp = kp  + p
          ! --> Matrix-vector products.
          if (trans) then
             do i = 1,p
@@ -903,35 +897,44 @@ contains
                call A%matvec(X(kpm+i), X(kp+i))
             enddo
          endif
-         ! --> Update Hessenberg matrix.
+         ! --> Update Hessenberg matrix w.r.t. existing vectors
          call block_update_hessenberg_matrix(H, X, k, p)
+         ! --> Orthogonalize current vectors
          call qr_factorization(X(kp+1:kpp),H(kp+1:kpp,kpm+1:kp),info)
-  
-         !if (verbose) then
-         !   write(*, *) "--> Arnoldi iteration n°", k, "/", k_end
-         !   write(*, *) "    -----------------"
-         !   write(*, *) "    + Residual norm :", beta
-         !   write(*, *) "    + Elapsed time  :"
-         !   write(*, *) "    + ETA           :"
-         !   write(*, *)
-         !endif
+         ! --> extract residual norm (smallest diagonal element of R matrix)
+         res = 0.0_wp
+         do i = 1,p
+            res(i) = H(kp+i,kpm+i)
+         enddo
+         beta = minval(res)
+         
+         if (verbose) then
+            if (p.eq.1) then
+               write(*, *) "--> Arnoldi iteration n°", k, "/", k_end
+            else
+               write(*, *) "--> Block Arnoldi iteration n°", k, "/", k_end
+               write(*, *) "    n° of vectors in basis:", kp
+            endif
+            write(*, *) "    -----------------"
+            write(*, *) "    + Residual norm :", beta
+            write(*, *) "    + Elapsed time  :"
+            write(*, *) "    + ETA           :"
+            write(*, *)
+         endif
   
          ! --> Exit Arnoldi loop if needed.
-         !if (beta < tolerance) then
-         !   if (verbose) then
-         !      write(*, *)
-         !      write(*, *) "INFO : An invariant subspace has been computed (beta =", beta, ")."
-         !   endif
-  !
-         !   ! --> Dimension of the computed invariant subspace.
-         !   info = k
-  !
-         !   ! --> Exit the Arnoldi iteration.
-         !   exit arnoldi
-         !else
-         !   ! --> Normalize the new Krylov vector.
-         !   call X(k+1)%scal(1.0D+00 / beta)
-         !endif
+         if (beta < tolerance) then
+            if (verbose) then
+               write(*, *)
+               write(*, *) "INFO : An invariant subspace has been computed (beta =", beta, ")."
+            endif
+  
+            ! --> Dimension of the computed invariant subspace.
+            info = kp
+  
+            ! --> Exit the Arnoldi iteration.
+            exit block_arnoldi
+         endif
   
       enddo block_arnoldi
   
@@ -949,27 +952,31 @@ contains
       integer, intent(in) :: p
       real(kind=wp), intent(inout) :: H(:, :)
       class(abstract_vector) :: X(:)
+      !> Mist
+      class(abstract_vector), allocatable :: Xwrk(:)
       real(wp), allocatable :: wrk(:,:)
-      integer :: i, j, kpm, kp, kpp
-      real(kind=wp) :: alpha
-  
+      integer :: kpm, kp, kpp
+    
       kpm = (k-1)*p
       kp  = kpm + p
       kpp = kp  + p
-      allocate(wrk(1:kp,1:p))
-      wrk = 0.0_wp
+      allocate(wrk(1:kp,1:p)) ; wrk = 0.0_wp
+      allocate(Xwrk(1:kp), source=X(1:kp)) ; call mat_zero(Xwrk)
       ! --> Orthogonalize residual w.r.t to previously computed Krylov vectors.
+      ! --> pass 1
       call mat_mult(H(1:kp,kpm+1:kp), X(1:kp), X(kp+1:kpp))
-        
-      ! --> Perform full re-orthogonalization (see instability of MGS process)
+      call mat_mult(Xwrk(1:p), X(1:kp), H(1:kp,kpm+1:kp))
+      ! --> Project out existing vectors
+      call mat_axpby(X(kp+1:kpp), 1.0_wp, Xwrk(1:p), -1.0_wp)
+      ! --> pass 2
       call mat_mult(wrk,              X(1:kp), X(kp+1:kpp))
+      call mat_mult(Xwrk(1:p), X(1:kp), wrk)
+      ! --> Project out existing vectors
+      call mat_axpby(X(kp+1:kpp), 1.0_wp, Xwrk(1:p), -1.0_wp)
 
-      ! --> Update Hessenberg matrix
-      do i = 1,kp
-         do j = 1,p
-            H(i,kpm+j) = H(i,kpm+j) + wrk(i,kpm+j)
-         enddo
-      enddo
+      ! --> Update Hessenberg matrix with data from second pass
+      call mat_axpby(H(1:kp,kpm+1:kp), 1.0_wp, wrk, 1.0_wp)
+      deallocate(wrk)
   
       return
     end subroutine block_update_hessenberg_matrix
