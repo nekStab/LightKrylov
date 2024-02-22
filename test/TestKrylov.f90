@@ -59,18 +59,19 @@ contains
       integer :: k
       real(kind=wp) :: Xdata(test_size, kdim + 1)
       real(kind=wp) :: alpha
+      class(rvector), allocatable :: X0(1)
 
       ! --> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
-      allocate (X(1:kdim + 1)); call random_number(X(1)%data)
-      alpha = X(1)%norm(); call X(1)%scal(1.0D+00/alpha)
-      do k = 2, size(X)
-         call X(k)%zero()
-      end do
+      allocate (X(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
+
       ! --> Arnoldi factorization.
       call arnoldi_factorization(A, X, H, info)
+
       ! --> Check correctness of full factorization.
       do k = 1, kdim + 1
          Xdata(:, k) = X(k)%data
@@ -87,6 +88,7 @@ contains
       class(rmatrix), allocatable :: A
       !> Krylov subspace.
       class(rvector), dimension(:), allocatable :: X
+      class(rvector), dimension(:), allocatable :: X0
       !> Krylov subspace dimension.
       integer, parameter :: kdim = test_size
       !> Hessenberg matrix.
@@ -101,21 +103,18 @@ contains
       ! --> Initialize random matrix.
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
-      allocate (X(1:kdim + 1)); call random_number(X(1)%data)
-      alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
-      do k = 2, size(X)
-         call X(k)%zero()
-      end do
+      allocate (X(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
+
       ! --> Arnoldi factorization.
       call arnoldi_factorization(A, X, H, info)
+      
       ! --> Compute Gram matrix associated to the Krylov basis.
-      do i = 1, kdim
-         do j = 1, kdim
-            G(i, j) = X(i)%dot(X(j))
-         end do
-      end do
-
+      G = 0.0_wp
+      call mat_mult(G,X(1:kdim),X(1:kdim))
+      
       ! --> Check result.
       Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
       call check(error, norm2(G - Id) < rtol)
@@ -145,22 +144,21 @@ contains
       real(kind=wp) :: Xdata(test_size, p*(kdim + 1))
       real(kind=wp) :: Rwrk(p,p)
       double precision, dimension(p*kdim, p*kdim) :: G, Id
+      class(rvector), dimension(:), allocatable :: X0
       
       ! --> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
-      allocate (X(1:p*(kdim + 1))); 
+      allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
       do k = 1,p
-         call random_number(X(k)%data)
+         call random_number(X0(k)%data)
       enddo
-      call qr_factorization(X(1:p), Rwrk, info)
-      do k = p+1, size(X)
-         call X(k)%zero()
-      end do
+      call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
 
       ! --> Arnoldi factorization.
-      call block_arnoldi_factorization(A, X, H, info, block_size = p) 
+      call arnoldi_factorization(A, X, H, info, block_size = p) 
+      
       ! --> Check correctness of full factorization.
       do k = 1, p*(kdim + 1)
          Xdata(:, k) = X(k)%data
@@ -177,6 +175,7 @@ contains
       class(rmatrix), allocatable :: A
       !> Krylov subspace.
       class(rvector), dimension(:), allocatable :: X
+      class(rvector), dimension(:), allocatable :: X0
       !> Krylov subspace dimension.
       integer, parameter :: p = 2
       integer, parameter :: kdim = test_size/p
@@ -192,23 +191,20 @@ contains
       !! --> Initialize random matrix.
       A = rmatrix(); call random_number(A%data)
       !! --> Initialize Krylov subspace.
-      allocate (X(1:p*(kdim + 1))); 
+      allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
       do k = 1,p
-         call random_number(X(k)%data)
+         call random_number(X0(k)%data)
       enddo
-      call qr_factorization(X(1:p), Rwrk, info)
-      do k = p+1, size(X)
-         call X(k)%zero()
-      enddo
+      call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
+
       ! --> Arnoldi factorization.
-      call block_arnoldi_factorization(A, X, H, info, block_size = p)
+      call arnoldi_factorization(A, X, H, info, block_size = p)
+
       ! --> Compute Gram matrix associated to the Krylov basis.
-      do i = 1, p*kdim
-         do j = 1, p*kdim
-            G(i, j) = X(i)%dot(X(j))
-         enddo
-      enddo
+      G = 0.0_wp
+      call mat_mult(G,X(1:p*kdim),X(1:p*kdim))
+
       ! --> Check result.
       Id = 0.0_wp; forall (i=1:p*kdim) Id(i, i) = 1.0_wp
       call check(error, norm2(G - Id) < rtol)
@@ -251,19 +247,19 @@ contains
       integer :: i, j, k
       real(kind=wp), dimension(test_size, kdim + 1) :: Xdata
       real(kind=wp) :: alpha
+      class(rvector), allocatable :: X0(1)
 
       ! --> Initialize matrix.
       A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
-
       ! --> Initialize Krylov subspace.
-      allocate (X(1:kdim + 1)); call random_number(X(1)%data)
-      alpha = X(1)%norm(); call X(1)%scal(1.0D+00/alpha)
-      do k = 2, size(X)
-         call X(k)%zero()
-      end do
+      allocate (X(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(X, X0)
       T = 0.0_wp
+
       ! --> Lanczos factorization.
       call lanczos_tridiagonalization(A, X, T, info)
+
       ! --> Check correctness of full factorization.
       do k = 1, kdim + 1
          Xdata(:, k) = X(k)%data
@@ -293,28 +289,28 @@ contains
       !> Misc.
       double precision, dimension(kdim + 1, kdim + 1) :: G, Id
       double precision :: alpha
+      class(rvector), allocatable :: X0(1)
       integer :: i, j, k
 
       ! --> Initialize random spd matrix.
       A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
       ! --> Initialize Krylov subspace.
-      allocate (X(1:kdim + 1)); call random_number(X(1)%data)
-      alpha = X(1)%norm(); call X(1)%scal(1.0D+00/alpha)
-      do k = 2, size(X)
-         call X(k)%zero()
-      end do
+      allocate (X(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(X, X0)
       T = 0.0_wp
+
       ! --> Lanczos factorization.
       call lanczos_tridiagonalization(A, X, T, info)
+
       ! --> Compute Gram matrix associated to the Krylov basis.
-      do i = 1, kdim
-         do j = 1, kdim
-            G(i, j) = X(i)%dot(X(j))
-         end do
-      end do
+      G = 0.0_wp
+      call mat_mult(G,X,X)
+
       ! --> Check result.
       Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
       call check(error, norm2(G - Id) < rtol)
+
       return
    end subroutine test_lanczos_tridiag_basis_orthogonality
 
@@ -341,8 +337,7 @@ contains
       !> Test matrix.
       class(rmatrix), allocatable :: A
       !> Left and right Krylov subspaces.
-      class(rvector), allocatable :: U(:)
-      class(rvector), allocatable :: V(:)
+      class(rvector), allocatable :: U(:), V(:)
       !> Krylov subspace dimension.
       integer, parameter :: kdim = test_size
       !> Bidiagonal matrix.
@@ -353,20 +348,21 @@ contains
       integer :: k
       real(kind=wp) :: alpha
       real(kind=wp) :: Udata(test_size, kdim + 1), Vdata(test_size, kdim + 1)
+      class(rvector), allocatable :: X0(1)
 
       ! --> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
-
       ! --> Initialize Krylov subspaces.
-      allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1))
-      do k = 1, size(U)
-         call U(k)%zero(); call V(k)%zero()
-      end do
-      call random_number(U(1)%data)
-      alpha = U(1)%norm(); call U(1)%scal(1.0_wp/alpha)
+      allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(U, X0)
+      call random_number(X0(1)%data); ! new random number for V
+      call initialize_krylov_subspace(V, X0)
       B = 0.0_wp
+
       ! --> Lanczos bidiagonalization.
       call lanczos_bidiagonalization(A, U, V, B, info)
+
       ! --> Check correctness of full factorization.
       do k = 1, size(U)
          Udata(:, k) = U(k)%data; Vdata(:, k) = V(k)%data
@@ -413,18 +409,17 @@ contains
       integer :: i, j, k
       real(kind=wp) :: alpha, beta
       real(kind=wp) :: Vdata(test_size, kdim + 1), Wdata(test_size, kdim + 1)
+      class(rvector), allocatable :: X0(1)
 
       ! --> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
 
       ! --> Initialize Krylov subspaces.
-      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1))
-      call random_number(V(1)%data); call random_number(W(1)%data)
-      alpha = V(1)%norm(); call V(1)%scal(1.0_wp/alpha)
-      alpha = W(1)%norm(); call W(1)%scal(1.0_wp/alpha)
-      do k = 2, size(V)
-         call V(k)%zero(); call W(k)%zero()
-      end do
+      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(V, X0)
+      call random_number(X0(1)%data); ! new random number for W
+      call initialize_krylov_subspace(W, X0)
       T = 0.0_wp
 
       ! --> Nonsymmetric Lanczos factorization.
@@ -434,7 +429,6 @@ contains
       do k = 1, size(V)
          Vdata(:, k) = V(k)%data; Wdata(:, k) = W(k)%data
       end do
-
       ! --> Infinity-norm check.
       alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Vdata, T(1:kdim + 1, 1:kdim))))
       write (*, *) "Infinity norm      :", alpha
@@ -479,21 +473,18 @@ contains
       integer :: info
       !> Miscellaneous.
       integer :: k
-      real(kind=wp) :: Vdata(test_size, kdim + 1), Wdata(test_size, kdim + 1)
-      real(kind=wp) :: alpha
+      real(kind=wp)  :: Vdata(test_size, kdim + 1), Wdata(test_size, kdim + 1)
+      real(kind=wp)  :: alpha
+      class(rvector), allocatable :: X0(1)
 
       !> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
-      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1))
-      call random_number(V(1)%data); call random_number(W(1)%data)
-      alpha = V(1)%norm(); call V(1)%scal(1.0_wp/alpha)
-      alpha = W(1)%norm(); call W(1)%scal(1.0_wp/alpha)
-      do k = 2, size(V)
-         call V(k)%zero(); call W(k)%zero()
-      end do
-
-      !> Initialize Hessenberg matrices.
+      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1));  allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(V, X0)
+      call random_number(X0(1)%data); ! new random number for W
+      call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
       !> Two-sided Arnoldi factoriztion.
@@ -525,19 +516,16 @@ contains
       integer :: k
       real(kind=wp) :: Vdata(test_size, kdim + 1), Wdata(test_size, kdim + 1)
       real(kind=wp) :: alpha
+      class(rvector), allocatable :: X0(1)
 
       !> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
-      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1))
-      call random_number(V(1)%data); call random_number(W(1)%data)
-      alpha = V(1)%norm(); call V(1)%scal(1.0_wp/alpha)
-      alpha = W(1)%norm(); call W(1)%scal(1.0_wp/alpha)
-      do k = 2, size(V)
-         call V(k)%zero(); call W(k)%zero()
-      end do
-
-      !> Initialize Hessenberg matrices.
+      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1))
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(V, X0)
+      call random_number(X0(1)%data); ! new random number for W
+      call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
       !> Two-sided Arnoldi factoriztion.
@@ -569,19 +557,16 @@ contains
       real(kind=wp) :: M(kdim, kdim), Id(kdim, kdim)
       integer :: i, j, k
       real(kind=wp) :: alpha
+      class(rvector), allocatable :: X0(1)
 
       !> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
-      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1))
-      call random_number(V(1)%data); call random_number(W(1)%data)
-      alpha = V(1)%norm(); call V(1)%scal(1.0_wp/alpha)
-      alpha = W(1)%norm(); call W(1)%scal(1.0_wp/alpha)
-      do k = 2, size(V)
-         call V(k)%zero(); call W(k)%zero()
-      end do
-
-      !> Initialize Hessenberg matrices.
+      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1)); 
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(V, X0)
+      call random_number(X0(1)%data); ! new random number for W
+      call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
       !> Two-sided Arnoldi factoriztion.
@@ -589,17 +574,14 @@ contains
 
       !> Inner-product matrix.
       M = 0.0_wp
-      do i = 1, kdim
-         do j = 1, kdim
-            M(i, j) = V(i)%dot(V(j))
-         end do
-      end do
+      call mat_mult(M,V(1:kdim),V(1:kdim))
 
       !> Check results.
       Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
       call check(error, norm2(M - Id) < rtol)
 
       return
+
    end subroutine test_two_sided_arnoldi_basis_orthogonality
 
    subroutine test_two_sided_arnoldi_basis_orthogonality_bis(error)
@@ -619,19 +601,16 @@ contains
       real(kind=wp) :: M(kdim, kdim), Id(kdim, kdim)
       integer :: i, j, k
       real(kind=wp) :: alpha
+      class(rvector), allocatable :: X0(1)
 
       !> Initialize matrix.
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
-      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1))
-      call random_number(V(1)%data); call random_number(W(1)%data)
-      alpha = V(1)%norm(); call V(1)%scal(1.0_wp/alpha)
-      alpha = W(1)%norm(); call W(1)%scal(1.0_wp/alpha)
-      do k = 2, size(V)
-         call V(k)%zero(); call W(k)%zero()
-      end do
-
-      !> Initialize Hessenberg matrices.
+      allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1)); 
+      call random_number(X0(1)%data);
+      call initialize_krylov_subspace(V, X0)
+      call random_number(X0(1)%data); ! new random number for W
+      call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
       !> Two-sided Arnoldi factoriztion.
@@ -639,12 +618,8 @@ contains
 
       !> Inner-product matrix.
       M = 0.0_wp
-      do i = 1, kdim
-         do j = 1, kdim
-            M(i, j) = W(i)%dot(W(j))
-         end do
-      end do
-
+      call mat_mult(M,V(1:kdim),V(1:kdim))
+      
       !> Check results.
       Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
       call check(error, norm2(M - Id) < rtol)
@@ -731,31 +706,25 @@ contains
       integer :: info
       !> Misc.
       integer :: i, k
-      real(kind=wp) :: Qtmat(kdim, test_size), Qmat(test_size, kdim)
+      real(kind=wp) :: Qmat(test_size, kdim)
       real(kind=wp) :: alpha
 
       ! --> Initialize matrix.
       allocate (A(1:kdim)); 
       do k = 1, size(A)
          call random_number(A(k)%data)
-      end do
+      enddo
       R = 0.0_wp
       ! --> In-place QR factorization.
       call qr_factorization(A, R, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
-         do i = 1, test_size
-            Qtmat(k, i) = Qmat(i, k)
-         end do
-      end do
+      enddo
       ! --> Identity
-      Id = 0.0_wp
-      do k = 1, kdim
-         Id(k, k) = 1.0_wp
-      end do
+      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(Id, matmul(Qtmat, Qmat), rtol, atol))
+      call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
 
    end subroutine test_qr_basis_orthonormality
 
@@ -778,7 +747,7 @@ contains
       integer :: info
       !> Misc.
       integer :: i, k
-      real(kind=wp) :: Qtmat(kdim, test_size), Qmat(test_size, kdim)
+      real(kind=wp) :: Qmat(test_size, kdim)
       class(rvector) , dimension(:), allocatable :: wrk
 
       ! --> Initialize matrix with worst case scenario
@@ -797,17 +766,11 @@ contains
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
-         do i = 1, test_size
-            Qtmat(k, i) = Qmat(i, k)
-         end do
       end do
       ! --> Identity
-      Id = 0.0_wp
-      do k = 1, kdim
-         Id(k, k) = 1.0_wp
-      end do
+      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(Id, matmul(Qtmat, Qmat), rtol, atol))
+      call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
 
    end subroutine test_qr_breakdown
 
