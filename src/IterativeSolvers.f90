@@ -23,8 +23,6 @@ module lightkrylov_IterativeSolvers
    public :: svds
    !> Linear solvers.
    public :: gmres, cg, abstract_linear_solver
-   !> Experimental.
-   public :: two_sided_eigs
 
    !------------------------------------------------
    !-----                                      -----
@@ -503,14 +501,15 @@ contains
    !   url : http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf
    !
    !=======================================================================================
-   subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, nev, tolerance, verbosity)
+   subroutine svds(A, U, V, sigma, residuals, info, nev, tolerance, verbosity)
       !> Linear Operator.
       class(abstract_linop), intent(in) :: A
       !> Krylov bases.
       class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
       class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
+      class(abstract_vector), allocatable   :: Uwrk(:), Vwrk(:)
       !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-      real(kind=wp), intent(out) :: uvecs(:, :), vvecs(:, :)
+      real(kind=wp), allocatable :: uvecs(:, :), vvecs(:, :)
       real(kind=wp), intent(out) :: sigma(:)
       real(kind=wp), intent(out) :: residuals(:)
       !> Information flag.
@@ -549,15 +548,15 @@ contains
          kdim = size(U) - 1
       end if
 
-      call assert_shape(uvecs, [kdim, kdim], "svds", "uvecs")
-      call assert_shape(vvecs, [kdim, kdim], "svds", "vvecs")
-
       ! --> Initialize variables.
-      B = 0.0_wp; residuals = 0.0_wp; uvecs = 0.0_wp; vvecs = 0.0_wp; sigma = 0.0_wp
+      B = 0.0_wp; residuals = 0.0_wp; sigma = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       beta = U(1)%norm(); call U(1)%scal(1.0_wp/beta)
       call initialize_krylov_subspace(U(2:kdim + 1))
       call initialize_krylov_subspace(V(2:kdim + 1))
+
+      allocate(uvecs(kdim, kdim)) ; uvecs = 0.0_wp
+      allocate(vvecs(kdim, kdim)) ; vvecs = 0.0_wp
 
       lanczos: do k = 1, kdim
          ! --> Compute the Lanczos bidiagonalization.
@@ -584,6 +583,10 @@ contains
       end do lanczos
 
       info = k
+
+      !> Compute and return the low-rank factors from the Krylov bases.
+      allocate(Uwrk, source=U) ; allocate(Vwrk, source=V)
+      call mat_mult(U(1:kdim), Uwrk(1:kdim), uvecs) ; call mat_mult(V(1:kdim), Vwrk(1:kdim), vvecs)
 
       return
    end subroutine svds
