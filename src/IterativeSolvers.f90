@@ -353,8 +353,7 @@ contains
    ! Input/Output Parameters:
    ! ------------------------
    ! - A         : Linear Operator (assumed SPD)  [Input]
-   ! - X         : Krylov basis vectors           [Input/Output]
-   ! - eigvecs   : Eigenvectors in Krylov basis   [Output]
+   ! - X         : Eigenvectors                   [Input/Output]
    ! - eigvals   : Eigenvalues                    [Output]
    ! - residuals : Residuals of eigenpairs        [Output]
    ! - info      : Iteration Information flag     [Output]
