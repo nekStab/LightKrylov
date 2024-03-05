@@ -147,7 +147,7 @@ contains
       !> Krylov subspace.
       class(rvector), allocatable :: X(:)
       !> Eigenvalues and eigenvectors.
-      complex(kind=wp) :: evals(test_size), evecs(test_size, test_size)
+      complex(kind=wp) :: evals(test_size)
       !> Residuals.
       real(kind=wp) :: residuals(test_size)
       !> Information flag.
@@ -181,10 +181,10 @@ contains
       end do
 
       !> Initialize internal variables.
-      evals = cmplx(0.0_wp, 0.0_wp, kind=wp); evecs = cmplx(0.0_wp, 0.0_wp, kind=wp); residuals = 0.0_wp
+      evals = cmplx(0.0_wp, 0.0_wp, kind=wp); residuals = 0.0_wp
 
       !> Compute spectral decomposition.
-      call eigs(A, X, evecs, evals, residuals, info)
+      call eigs(A, X, evals, residuals, info)
 
       !> Analytical eigenvalues.
       true_evals = cmplx(0.0_wp, 0.0_wp, kind=wp); pi = 4.0_wp*atan(1.0_wp)
