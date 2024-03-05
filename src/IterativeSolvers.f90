@@ -486,8 +486,7 @@ contains
    ! Input/Output Parameters:
    ! ------------------------
    ! - A           : Linear Operator                                                        [Input]
-   ! - U, V        : Krylov bases for left (U) and right (V) singular vectors               [Input/Output]
-   ! - uvecs, vvecs: Coordinates of left (U) and right (V) singular vectors in Krylov bases [Output]
+   ! - U, V        : Left (U) and right (V) singular vectors                                [Input/Output]
    ! - sigma       : Singular values                                                        [Output]
    ! - residuals   : Residuals associated with singular triplets                            [Output]
    ! - info        : Information flag                                                       [Output]
