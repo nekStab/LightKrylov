@@ -334,8 +334,7 @@ contains
       !> Krylov subspaces.
       class(rvector), allocatable :: U(:), V(:)
       integer                     :: kdim = test_size
-      !> Low-dimensional singular vectors and singular values.
-      real(kind=wp) :: uvecs(1:test_size, 1:test_size), vvecs(1:test_size, 1:test_size)
+      !> Singular values.
       real(kind=wp) :: svdvals(1:test_size)
       !> Residuals.
       real(kind=wp) :: residuals(1:test_size)
@@ -367,10 +366,10 @@ contains
       end do
 
       !> Initialize internal variables.
-      svdvals = 0.0_wp; uvecs = 0.0_wp; vvecs = 0.0_wp
+      svdvals = 0.0_wp
 
       !> Compute singular value decomposition.
-      call svds(A, U, V, uvecs, vvecs, svdvals, residuals, info)
+      call svds(A, U, V, svdvals, residuals, info)
 
       !> Analytical singular values.
       do i = 1, test_size
