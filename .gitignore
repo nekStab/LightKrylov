@@ -33,3 +33,4 @@
 
 # Log files
 *.log
+*.npy
