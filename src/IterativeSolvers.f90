@@ -228,13 +228,14 @@ contains
    !   the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
    !
    !=======================================================================================
-   subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
+   subroutine eigs(A, X, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
       !> Linear Operator.
       class(abstract_linop), intent(in) :: A
       !> Krylov basis.
       class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_vector), allocatable   :: Xwrk(:)
       !> Coordinates of eigenvectors in Krylov basis, eigenvalues and associated residuals.
-      complex(kind=wp), intent(out) :: eigvecs(:, :)
+      real(kind=wp), allocatable :: eigvecs(:, :)
       complex(kind=wp), intent(out) :: eigvals(:)
       real(kind=wp), intent(out) :: residuals(:)
       !> Information flag.
@@ -266,9 +267,6 @@ contains
       ! --> Dimension of the Krylov subspace.
       kdim = size(X) - 1
 
-      !> Shape assertion.
-      call assert_shape(eigvecs, [kdim, kdim], "eigs", "eigvecs")
-
       ! --> Deals with the optional arguments.
       verbose = optval(verbosity, .false.)
       trans = optval(transpose, .false.)
@@ -276,7 +274,8 @@ contains
       tol = optval(tolerance, rtol)
 
       ! --> Initialize variables.
-      H = 0.0_wp; residuals = 0.0_wp; eigvals = (0.0_wp, 0.0_wp); eigvecs = (0.0_wp, 0.0_wp)
+      allocate(eigvecs(kdim, kdim))
+      H = 0.0_wp; residuals = 0.0_wp; eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp); eigvecs = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
       call initialize_krylov_subspace(X(2:kdim + 1))
@@ -295,7 +294,7 @@ contains
          end if
 
          !> Spectral decomposition of the k x k Hessenberg matrix.
-         eigvals = (0.0_wp, 0.0_wp); eigvecs = (0.0_wp, 0.0_wp)
+         eigvals = 0.0_wp; eigvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
          call eig(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
          !> Sort eigenvalues.
@@ -317,6 +316,9 @@ contains
          end if
 
       end do arnoldi
+
+      !> Reconstruct the eigenvectors from the Krylov basis.
+      allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
 
       return
    end subroutine eigs
