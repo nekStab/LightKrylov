@@ -366,13 +366,14 @@ contains
    !   of Linear Differential and Integral Operators". United States Governm. Press Office.
    !
    !=======================================================================================
-   subroutine eighs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity)
+   subroutine eighs(A, X, eigvals, residuals, info, nev, tolerance, verbosity)
       !> Linear Operator.
       class(abstract_spd_linop), intent(in) :: A
       !> Krylov basis.
       class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_vector), allocatable   :: Xwrk(:)
       !> Coordinates of eigenvectors in Krylov basis, eigenvalues, and associated residuals
-      real(kind=wp), intent(out) :: eigvecs(:, :)
+      real(kind=wp), allocatable :: eigvecs(:, :)
       real(kind=wp), intent(out) :: eigvals(:)
       real(kind=wp), intent(out) :: residuals(:)
       !> Information flag.
@@ -406,6 +407,7 @@ contains
       tol = optval(tolerance, rtol)
 
       ! --> Initialize all variables.
+      allocate(eigvecs(1:kdim, 1:kdim))
       T = 0.0_wp; residuals = 0.0_wp; eigvecs = 0.0_wp; eigvals = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
@@ -446,6 +448,9 @@ contains
          end if
 
       end do lanczos
+
+      !> Compute and returns the eigenvectors constructed from the Krylov basis.
+      allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
 
       return
    end subroutine eighs
@@ -504,8 +509,8 @@ contains
       !> Linear Operator.
       class(abstract_linop), intent(in) :: A
       !> Krylov bases.
-      class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
-      class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
+      class(abstract_vector), intent(inout) :: U(:) ! Left sing. vectors.
+      class(abstract_vector), intent(inout) :: V(:) ! Right sing. vectors.
       class(abstract_vector), allocatable   :: Uwrk(:), Vwrk(:)
       !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
       real(kind=wp), allocatable :: uvecs(:, :), vvecs(:, :)
