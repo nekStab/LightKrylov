@@ -278,7 +278,7 @@ contains
       !> Matrix to be factorized.
       real(kind=wp), intent(in) :: A(:, :)
       !> Eigenvectors.
-      complex(kind=wp), intent(out) :: vecs(:, :)
+      real(kind=wp), intent(out) :: vecs(:, :)
       !> Eigenvalues.
       complex(kind=wp), intent(out) :: vals(:)
 
@@ -299,7 +299,7 @@ contains
       call assert_shape(vecs, [n, n], "eig", "vecs")
 
       !> Eigendecomposition.
-      call dgeev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
+      call dgeev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
 
       if (info /= 0) then
          write (*, *) "DGEEV returned info = ", info
@@ -312,20 +312,20 @@ contains
          call stop_error("eig: dgeev error")
       end if
 
-      !> Real to complex arithmetic.
-      !> NOTE : Check if a LAPACK function already exists for that purpose.
+      ! !> Real to complex arithmetic.
+      ! !> NOTE : Check if a LAPACK function already exists for that purpose.
       vals = cmplx(1.0_wp, 0.0_wp, kind=wp)*wr + cmplx(0.0_wp, 1.0_wp, kind=wp)*wi
-      vecs = cmplx(0.0_wp, 0.0_wp, kind=wp)*vr
+      ! vecs = cmplx(0.0_wp, 0.0_wp, kind=wp)*vr
 
-      do i = 1, n
-         if (wi(i) > 0.0_wp) then
-            vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i + 1)
-         else if (wi(i) < 0.0_wp) then
-            vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i - 1) - cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i)
-         else
-            vecs(:, i) = vr(:, i)
-         end if
-      end do
+      ! do i = 1, n
+      !    if (wi(i) > 0.0_wp) then
+      !       vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i + 1)
+      !    else if (wi(i) < 0.0_wp) then
+      !       vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i - 1) - cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i)
+      !    else
+      !       vecs(:, i) = vr(:, i)
+      !    end if
+      ! end do
 
       return
    end subroutine deig
