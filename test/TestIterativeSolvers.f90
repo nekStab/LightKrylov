@@ -88,7 +88,7 @@ contains
       !> Krylov subspace.
       class(rvector), allocatable :: X(:)
       !> Eigenvalues and eigenvectors.
-      real(kind=wp) :: evals(test_size), evecs(test_size, test_size)
+      real(kind=wp) :: evals(test_size)
       !> Residuals.
       real(kind=wp) :: residuals(test_size)
       !> Information flag.
@@ -122,10 +122,10 @@ contains
       end do
 
       !> Initialize internal variables.
-      evals = 0.0_wp; evecs = 0.0_wp; residuals = 0.0_wp
+      evals = 0.0_wp; residuals = 0.0_wp
 
       !> Compute spectral decomposition.
-      call eighs(A, X, evecs, evals, residuals, info)
+      call eighs(A, X, evals, residuals, info)
 
       !> Analytical eigenvalues.
       true_evals = 0.0_wp; pi = 4.0_wp*atan(1.0_wp)
