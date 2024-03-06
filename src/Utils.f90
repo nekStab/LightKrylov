@@ -245,8 +245,8 @@ contains
       lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork))
 
       !> Shape assertions.
-      call assert_shape(U, [m, min(m, n)], "svd", "U")
-      call assert_shape(V, [n, min(m, n)], "svd", "V")
+      call assert_shape(U, [m, m], "svd", "U")
+      call assert_shape(V, [n, n], "svd", "V")
 
       !> SVD computation.
       a_tilde = a
@@ -292,8 +292,8 @@ contains
      lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork)) ; allocate(rwork(5*min(m, n)))
 
      !> Shape assertion.
-     call assert_shape(U, [m, min(m, n)], "svd", "U")
-     call assert_shape(V, [n, min(m, n)], "svd", "V")
+     call assert_shape(U, [m, m], "svd", "U")
+     call assert_shape(V, [n, n], "svd", "V")
 
      !> SVD computation.
      a_tilde = a

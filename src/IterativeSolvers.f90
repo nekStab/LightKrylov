@@ -519,8 +519,15 @@ contains
 
       end do lanczos
 
+      !> Compute refined Ritz vectors.
+      deallocate(eigvecs) ; allocate(eigvecs(conv, conv)) ; eigvecs = 0.0_wp
+      do i = 1, conv
+         eigvecs(:, i) = refined_real_ritz_vector(T(1:conv+1, 1:conv), eigvals(i))
+      enddo
+
       !> Compute and returns the eigenvectors constructed from the Krylov basis.
-      allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
+      allocate(Xwrk, source=X(1:conv)) ; call initialize_krylov_subspace(X)
+      call mat_mult(X(1:conv), Xwrk(1:conv), eigvecs)
 
       return
    end subroutine eighs
