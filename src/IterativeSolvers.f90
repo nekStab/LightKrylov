@@ -80,6 +80,15 @@ module lightkrylov_IterativeSolvers
       end subroutine abstract_linear_solver
    end interface
 
+   !-----
+   !-----
+   !-----
+
+   interface refined_ritz_vector
+      module procedure refined_real_ritz_vector
+      module procedure refined_cmplx_ritz_vector
+   end interface refined_ritz_vector
+   
 contains
 
    !=======================================================================================
@@ -522,7 +531,7 @@ contains
       !> Compute refined Ritz vectors.
       deallocate(eigvecs) ; allocate(eigvecs(conv, conv)) ; eigvecs = 0.0_wp
       do i = 1, conv
-         eigvecs(:, i) = refined_real_ritz_vector(T(1:conv+1, 1:conv), eigvals(i))
+         eigvecs(:, i) = refined_ritz_vector(T(1:conv+1, 1:conv), eigvals(i))
       enddo
 
       !> Compute and returns the eigenvectors constructed from the Krylov basis.
