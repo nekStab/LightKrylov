@@ -173,6 +173,75 @@ contains
    end subroutine save_eigenspectrum
 
    !=======================================================================================
+   ! Refined Ritz vectors.
+   !=======================================================================================
+   !
+   ! Purpose and formulation:
+   ! -----------------------
+   !
+   !
+   ! Algorithmic Features:
+   ! ----------------------
+   ! - ???
+   !
+   ! Input/Output Parameters:
+   ! ------------------------
+   ! - ???       [Input]
+   !
+   !=======================================================================================
+   function refined_real_ritz_vector(H, theta) result(x)
+     !> Input-output data.
+     real(kind=wp), intent(in) :: H(:, :)
+     real(kind=wp), intent(in) :: theta
+     real(kind=wp)             :: x(size(H, 2))
+     !> Miscellaneous.
+     real(kind=wp) :: A(size(H, 1), size(H, 2))
+     real(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
+     real(kind=wp) :: S(size(H, 2))
+     integer       :: i
+
+     !> Build H - theta*Id.
+     A = H
+     do i = 1, size(A, 2)
+        A(i, i) = A(i, i) - theta
+     enddo
+
+     !> USV.T = svd(A).
+     call svd(A, U, S, V)
+
+     !> Refined Ritz vector.
+     x = V(:, size(H, 2))
+
+     return
+   end function refined_real_ritz_vector
+
+   function refined_cmplx_ritz_vector(H, theta) result(x)
+     !> Input-Output data.
+     real(kind=wp)   , intent(in) :: H(:, :)
+     complex(kind=wp), intent(in) :: theta
+     complex(kind=wp)             :: x(size(H, 2))
+     !> Miscellaneous.
+     complex(kind=wp) :: A(size(H, 1), size(H, 2))
+     complex(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
+     real(kind=wp)    :: S(size(H, 2))
+     integer          :: i
+
+     !> Build H - theta*Id.
+     A = H
+     do i = 1, size(A, 2)
+        A(i, i) = A(i, i) - theta
+     enddo
+
+     !> USV.H = svd(A).
+     call svd(A, U, S, V)
+
+     !> Refined Ritz vector.
+     x = V(:, size(H, 2))
+
+     return
+   end function refined_cmplx_ritz_vector
+
+   !=======================================================================================
    ! Eigenvalue and Eigenvector Solver Subroutine (EIGS)
    !=======================================================================================
    !
