@@ -898,6 +898,7 @@ end subroutine initialize_krylov_subspace_mat
       verbose = optval(verbosity, .false.)
       tolerance = optval(tol, rtol)
 
+      R = 0.0_wp
       !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
       do j = 1, kdim
          !> Orthonormalization against existing columns
