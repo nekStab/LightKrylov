@@ -454,4 +454,62 @@ contains
       return
    end subroutine lstsq
 
+   !----------------------------------------------
+   !-----                                    -----
+   !-----     LAPACK SCHUR DECOMPOSITION     -----
+   !-----                                    -----
+   !----------------------------------------------
+
+   subroutine schur(A, Z, eigvals)
+     !> Matrix to be factorize.
+     real(kind=wp)   , intent(inout) :: A(:, :)
+     !> Schur basis.
+     real(kind=wp)   , intent(out)   :: Z(:, :)
+     !> Eigenvalues.
+     complex(kind=wp), intent(out)   :: eigvals(:)
+
+     !> LAPACK-related.
+     character :: jobvs="v", sort="n"
+     integer   :: n, lda, sdim, ldvs, lwork, info
+     real(kind=wp) :: wr(size(A, 1)), wi(size(A, 1))
+     real(kind=wp) :: work(3*size(A, 1))
+     logical       :: bwork(size(A, 1))
+
+     !> Setup lapack variables.
+     n = size(A, 1); lda = max(1, n); ldvs = max(1, n); lwork = max(1, 3*n)
+
+     !> Perform Schur decomposition.
+     call dgees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+
+     return
+   end subroutine schur
+
+   subroutine ordschur(T, Q, selected)
+     !> Schur matrix to be reordered.
+     real(kind=wp), intent(inout) :: T(:, :)
+     !> Schur basis to be reordered.
+     real(kind=wp), intent(inout) :: Q(:, :)
+     !> Array of selected eigenvalues.
+     logical      , intent(in)    :: selected(:)
+
+     !> LAPACK-related.
+     character :: job="n", compq="v"
+     integer   :: info, ldq, ldt, liwork, lwork, m, n, iwork(size(T, 1))
+     real(kind=wp) :: s, sep
+     real(kind=wp) :: work(size(T, 1)), wr(size(T, 1)), wi(size(T, 1))
+
+     !> Setup variables.
+     n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n) ; liwork = 1
+
+     !> Re-order Schur.
+     call dtrsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+
+     return
+   end subroutine ordschur
+
+   logical function dummy_select(wr, wi) result(out)
+     real(kind=wp), intent(in) :: wr, wi
+     return
+   end function dummy_select
+
 end module lightkrylov_utils
