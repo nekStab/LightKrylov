@@ -3,7 +3,8 @@ module TestKrylov
    use TestVector
    use TestMatrices
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use stdlib_math, only: all_close
+   use stdlib_math, only: all_close, is_close
+   use stdlib_io_npy
    implicit none
 
    private
@@ -29,10 +30,12 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("Arnoldi full factorization", test_arnoldi_full_factorization), &
-                  new_unittest("Arnoldi basis orthogonality", test_arnoldi_basis_orthogonality), &
-                  new_unittest("Block Arnoldi full factorization", test_block_arnoldi_full_factorization), &
-                  new_unittest("Block Arnoldi basis orthogonality", test_block_arnoldi_basis_orthogonality) &
+           new_unittest("Arnoldi full factorization", test_arnoldi_full_factorization), &
+           new_unittest("Arnoldi basis orthogonality", test_arnoldi_basis_orthogonality), &
+           new_unittest("Block Arnoldi full factorization", test_block_arnoldi_full_factorization), &
+           new_unittest("Block Arnoldi basis orthogonality", test_block_arnoldi_basis_orthogonality), &
+           new_unittest("Krylov-Schur restart", test_krylov_schur), &
+           new_unittest("Krylov-Schur basis orthogonality", test_krylov_schur_basis_orthogonality) &
                   ]
 
       return
@@ -211,6 +214,112 @@ contains
 
       return
    end subroutine test_block_arnoldi_basis_orthogonality
+
+   subroutine test_krylov_schur(error)
+      ! This function checks the correctness of the Arnoldi implementation by
+      ! verifying that the full factorization is correct, i.e. A @ X[1:k] = X[1:k+1] @ H.
+      ! A random 3x3 matrix is used for testing.
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rmatrix), allocatable :: A
+      !> Krylov subspace.
+      class(rvector), dimension(:), allocatable :: X
+      !> Krylov subspace dimension.
+      integer, parameter :: kdim = 10
+      !> Hessenberg matrix.
+      real(kind=wp) :: H(kdim + 1, kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: k, nblk
+      real(kind=wp) :: Xdata(test_size, kdim + 1)
+      real(kind=wp) :: alpha
+
+      ! --> Initialize matrix.
+      A = rmatrix(); call random_number(A%data)
+      ! --> Initialize Krylov subspace.
+      allocate (X(1:kdim + 1)) ; call initialize_krylov_subspace(X)
+      call random_number(X(1)%data); alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+      H = 0.0_wp
+
+      ! --> Arnoldi factorization.
+      call arnoldi_factorization(A, X, H, info)
+
+      ! --> Krylov-Schur condensation.
+      call krylov_schur_restart(nblk, X, H, select_eigs)
+
+      ! --> Check correctness of full factorization.
+      do k = 1, kdim + 1
+         Xdata(:, k) = X(k)%data
+      end do
+
+      !> Infinity-norm of the error.
+      alpha = maxval(abs(matmul(A%data, Xdata(:, 1:nblk)) - matmul(Xdata(:, 1:nblk+1), H(1:nblk+1, 1:nblk))))
+
+      !> Check correctness.
+      call check(error, alpha < rtol)
+
+      return
+    contains
+      function select_eigs(eigvals) result(selected)
+        complex(kind=wp), intent(in) :: eigvals(:)
+        logical                      :: selected(size(eigvals))
+        selected = (eigvals%re > 0.5_wp)
+        return
+      end function select_eigs
+    end subroutine test_krylov_schur
+
+   subroutine test_krylov_schur_basis_orthogonality(error)
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rmatrix), allocatable :: A
+      !> Krylov subspace.
+      class(rvector), dimension(:), allocatable :: X
+      class(rvector), dimension(:), allocatable :: X0
+      !> Krylov subspace dimension.
+      integer, parameter :: kdim = 10
+      !> Hessenberg matrix.
+      double precision, dimension(kdim + 1, kdim) :: H
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      double precision, dimension(kdim, kdim) :: G, Id
+      double precision :: alpha
+      integer :: i, j, k, nblk
+
+      !! --> Initialize random matrix.
+      A = rmatrix(); call random_number(A%data)
+      !! --> Initialize Krylov subspace.
+      allocate(X(kdim + 1)) ; call initialize_krylov_subspace(X)
+      call random_number(X(1)%data) ; alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+      H = 0.0_wp
+
+      ! --> Arnoldi factorization.
+      call arnoldi_factorization(A, X, H, info)
+
+      ! --> Krylov-Schur condensation.
+      call krylov_schur_restart(nblk, X, H, select_eigs)
+
+      ! --> Compute Gram matrix associated to the Krylov basis.
+      G = 0.0_wp
+      call mat_mult(G(1:nblk, 1:nblk),X(1:nblk),X(1:nblk))
+
+      ! --> Check result.
+      Id = 0.0_wp; forall (i=1:nblk) Id(i, i) = 1.0_wp
+      call check(error, norm2(G - Id) < rtol)
+
+      return
+    contains
+      function select_eigs(eigvals) result(selected)
+        complex(kind=wp), intent(in) :: eigvals(:)
+        logical                      :: selected(size(eigvals))
+        selected = (eigvals%re > 0.5_wp)
+        return
+      end function select_eigs
+    end subroutine test_krylov_schur_basis_orthogonality
 
    !-----------------------------------------------------------------
    !-----                                                       -----
