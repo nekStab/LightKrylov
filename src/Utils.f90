@@ -4,9 +4,9 @@ module lightkrylov_utils
 
    private
    !> General-purpose utilities.
-   public :: assert_shape
+   public :: assert_shape, stop_error
    !> Linear Algebra Utilities.
-   public :: inv, svd, eig, eigh, lstsq
+   public :: inv, svd, eig, eigh, lstsq, schur, ordschur
 
    !-------------------------------------------------------
    !-----                                             -----
@@ -72,6 +72,7 @@ module lightkrylov_utils
    !> Compute U, S, V = svd(A)
    interface svd
       module procedure dsvd
+      module procedure zsvd
    end interface svd
 
    !> Compute EVD(A).
@@ -244,8 +245,8 @@ contains
       lwork = max(1, 3*min(m, n)+max(m, n), 5*min(m, n)); allocate (work(lwork))
 
       !> Shape assertions.
-      call assert_shape(U, [m, min(m, n)], "svd", "U")
-      call assert_shape(V, [n, min(m, n)], "svd", "V")
+      call assert_shape(U, [m, m], "svd", "U")
+      call assert_shape(V, [n, n], "svd", "V")
 
       !> SVD computation.
       a_tilde = a
@@ -267,6 +268,53 @@ contains
 
       return
    end subroutine dsvd
+
+   subroutine zsvd(A, U, S, V)
+     !> Matrix to be factorized
+     complex(kind=wp), intent(in)  :: A(:, :)
+     !> Left singular vectors.
+     complex(kind=wp), intent(out) :: U(:, :)
+     !> Singular values.
+     real(kind=wp), intent(out) :: S(:)
+     !> Right singular vectors.
+     complex(kind=wp), intent(out) :: V(:, :)
+
+     !> Lapack-related.
+     character :: jobu = "S", jobvt = "S"
+     integer   :: m, n, lda, ldu, ldvt, lwork, info
+     complex(kind=wp), allocatable :: work(:)
+     real(kind=wp), allocatable :: rwork(:)
+     complex(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
+
+     !> Setup variables.
+     m = size(A, 1); n = size(A, 2)
+     lda = m; ldu = m; ldvt = n
+     lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork)) ; allocate(rwork(5*min(m, n)))
+
+     !> Shape assertion.
+     call assert_shape(U, [m, m], "svd", "U")
+     call assert_shape(V, [n, n], "svd", "V")
+
+     !> SVD computation.
+     a_tilde = a
+     call zgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, rwork, info)
+     if (info /= 0) then
+        write (*, *) "ZGESVD returned info = ", info
+        if (info < 0) then
+           write (*, *) "The ", -info, "-th argument has an illegal value."
+        else
+           write (*, *) "ZBSQR did not converge. There are ", info, "superdiagonals"
+           write (*, *) "of an intermediate bidiagonal matrix form B which did not"
+           write (*, *) "converge to zero. See Lapack documentation for more details."
+        end if
+        call stop_error("svd: zgesvd error")
+     end if
+
+    !> Return the transpose of V.
+     v = transpose(vt) ; v = conjg(v)
+
+     return
+   end subroutine zsvd
 
    !-------------------------------------------
    !-----                                 -----
@@ -405,5 +453,66 @@ contains
 
       return
    end subroutine lstsq
+
+   !----------------------------------------------
+   !-----                                    -----
+   !-----     LAPACK SCHUR DECOMPOSITION     -----
+   !-----                                    -----
+   !----------------------------------------------
+
+   subroutine schur(A, Z, eigvals)
+     !> Matrix to be factorize.
+     real(kind=wp)   , intent(inout) :: A(:, :)
+     !> Schur basis.
+     real(kind=wp)   , intent(out)   :: Z(:, :)
+     !> Eigenvalues.
+     complex(kind=wp), intent(out)   :: eigvals(:)
+
+     !> LAPACK-related.
+     character :: jobvs="v", sort="n"
+     integer   :: n, lda, sdim, ldvs, lwork, info
+     real(kind=wp) :: wr(size(A, 1)), wi(size(A, 1))
+     real(kind=wp) :: work(3*size(A, 1))
+     logical       :: bwork(size(A, 1))
+
+     !> Setup lapack variables.
+     n = size(A, 1); lda = max(1, n); ldvs = max(1, n); lwork = max(1, 3*n)
+
+     !> Perform Schur decomposition.
+     call dgees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+
+     !> Eigenvalues.
+     eigvals = cmplx(wr, wi, kind=wp)
+
+     return
+   end subroutine schur
+
+   subroutine ordschur(T, Q, selected)
+     !> Schur matrix to be reordered.
+     real(kind=wp), intent(inout) :: T(:, :)
+     !> Schur basis to be reordered.
+     real(kind=wp), intent(inout) :: Q(:, :)
+     !> Array of selected eigenvalues.
+     logical      , intent(in)    :: selected(:)
+
+     !> LAPACK-related.
+     character :: job="n", compq="v"
+     integer   :: info, ldq, ldt, liwork, lwork, m, n, iwork(size(T, 1))
+     real(kind=wp) :: s, sep
+     real(kind=wp) :: work(size(T, 1)), wr(size(T, 1)), wi(size(T, 1))
+
+     !> Setup variables.
+     n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n) ; liwork = 1
+
+     !> Re-order Schur.
+     call dtrsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+
+     return
+   end subroutine ordschur
+
+   pure logical function dummy_select(wr, wi) result(out)
+     real(kind=wp), intent(in) :: wr, wi
+     return
+   end function dummy_select
 
 end module lightkrylov_utils
