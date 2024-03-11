@@ -34,3 +34,6 @@
 # Log files
 *.log
 *.npy
+
+# swap files
+*~

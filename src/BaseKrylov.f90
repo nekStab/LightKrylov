@@ -25,39 +25,39 @@ module lightkrylov_BaseKrylov
 
 contains
 
-   subroutine initialize_krylov_subspace(X,B0)
-      !> Krylov subspace to be initialized
-      class(abstract_vector), intent(inout) :: X(:)
-      !> Optional: Initial vector/matrix  ::  default is zeros
-      class(abstract_vector), optional, intent(in) :: B0(:)
-      !> Internal variables.
-      class(abstract_vector), allocatable :: B(:)
-      real(kind=wp),          allocatable :: Rwrk(:,:)
-      integer :: i, p, info
+subroutine initialize_krylov_subspace(X,B0)
+   !> Krylov subspace to be initialized
+   class(abstract_vector), intent(inout) :: X(:)
+   !> Optional: Initial vector/matrix  ::  default is zeros
+   class(abstract_vector), optional, intent(in) :: B0(:)
+   !> Internal variables.
+   class(abstract_vector), allocatable :: B(:)
+   real(kind=wp),          allocatable :: Rwrk(:,:)
+   integer :: i, p, info
 
-      !> zero out X
-      call mat_zero(X)
+   !> zero out X
+   call mat_zero(X)
 
-      !> Deals with the optional starting vector
-      if (present(B0)) then
-         p = size(B0)
-         !> Sanity check
-         if (size(X) .lt. p) then
-            write(*,*) "ERROR : Mismatch between basis size and size of initial vector."
-            STOP 1
-         endif
-         !> allocate & initialize
-         allocate(B(1:p), source=B0(1:p))
-         call mat_zero(B); call mat_copy(B,B0)
-         !> orthonormalize
-         allocate(Rwrk(1:p,1:p)); Rwrk = 0.0_wp
-         call qr_factorization(B,Rwrk,info)
-         !> Set initial vector
-         call mat_copy(X(1:p),B)
-      endif      
+   !> Deals with the optional starting vector
+   if (present(B0)) then
+      p = size(B0)
+      !> Sanity check
+      if (size(X) .lt. p) then
+         write(*,*) "ERROR : Mismatch between basis size and size of initial vector."
+         STOP 1
+      endif
+      !> allocate & initialize
+      allocate(B(1:p), source=B0(1:p))
+      call mat_zero(B); call mat_copy(B,B0)
+      !> orthonormalize
+      allocate(Rwrk(1:p,1:p)); Rwrk = 0.0_wp
+      call qr_factorization(B,Rwrk,info)
+      !> Set initial vector
+      call mat_copy(X(1:p),B)
+   endif      
 
-      return
-   end subroutine initialize_krylov_subspace
+   return
+end subroutine initialize_krylov_subspace
 
    !=======================================================================================
    ! Arnoldi Factorization Subroutine
@@ -865,6 +865,7 @@ contains
       verbose = optval(verbosity, .false.)
       tolerance = optval(tol, rtol)
 
+      R = 0.0_wp
       !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
       do j = 1, kdim
          !> Orthonormalization against existing columns

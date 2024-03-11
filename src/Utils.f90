@@ -241,7 +241,7 @@ contains
       !> Setup variables.
       m = size(A, 1); n = size(A, 2)
       lda = m; ldu = m; ldvt = n
-      lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork))
+      lwork = max(1, 3*min(m, n)+max(m, n), 5*min(m, n)); allocate (work(lwork))
 
       !> Shape assertions.
       call assert_shape(U, [m, min(m, n)], "svd", "U")
