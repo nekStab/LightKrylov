@@ -23,8 +23,6 @@ module lightkrylov_IterativeSolvers
    public :: svds
    !> Linear solvers.
    public :: gmres, cg, abstract_linear_solver
-   !> Experimental.
-   public :: two_sided_eigs
 
    !------------------------------------------------
    !-----                                      -----
@@ -230,13 +228,14 @@ contains
    !   the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
    !
    !=======================================================================================
-   subroutine eigs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
+   subroutine eigs(A, X, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
       !> Linear Operator.
       class(abstract_linop), intent(in) :: A
       !> Krylov basis.
       class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_vector), allocatable   :: Xwrk(:)
       !> Coordinates of eigenvectors in Krylov basis, eigenvalues and associated residuals.
-      complex(kind=wp), intent(out) :: eigvecs(:, :)
+      real(kind=wp), allocatable :: eigvecs(:, :)
       complex(kind=wp), intent(out) :: eigvals(:)
       real(kind=wp), intent(out) :: residuals(:)
       !> Information flag.
@@ -268,9 +267,6 @@ contains
       ! --> Dimension of the Krylov subspace.
       kdim = size(X) - 1
 
-      !> Shape assertion.
-      call assert_shape(eigvecs, [kdim, kdim], "eigs", "eigvecs")
-
       ! --> Deals with the optional arguments.
       verbose = optval(verbosity, .false.)
       trans = optval(transpose, .false.)
@@ -278,7 +274,8 @@ contains
       tol = optval(tolerance, rtol)
 
       ! --> Initialize variables.
-      H = 0.0_wp; residuals = 0.0_wp; eigvals = (0.0_wp, 0.0_wp); eigvecs = (0.0_wp, 0.0_wp)
+      allocate(eigvecs(kdim, kdim))
+      H = 0.0_wp; residuals = 0.0_wp; eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp); eigvecs = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
       call initialize_krylov_subspace(X(2:kdim + 1))
@@ -297,7 +294,7 @@ contains
          end if
 
          !> Spectral decomposition of the k x k Hessenberg matrix.
-         eigvals = (0.0_wp, 0.0_wp); eigvecs = (0.0_wp, 0.0_wp)
+         eigvals = 0.0_wp; eigvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
          call eig(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
 
          !> Sort eigenvalues.
@@ -319,6 +316,9 @@ contains
          end if
 
       end do arnoldi
+
+      !> Reconstruct the eigenvectors from the Krylov basis.
+      allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
 
       return
    end subroutine eigs
@@ -355,8 +355,7 @@ contains
    ! Input/Output Parameters:
    ! ------------------------
    ! - A         : Linear Operator (assumed SPD)  [Input]
-   ! - X         : Krylov basis vectors           [Input/Output]
-   ! - eigvecs   : Eigenvectors in Krylov basis   [Output]
+   ! - X         : Eigenvectors                   [Input/Output]
    ! - eigvals   : Eigenvalues                    [Output]
    ! - residuals : Residuals of eigenpairs        [Output]
    ! - info      : Iteration Information flag     [Output]
@@ -368,13 +367,14 @@ contains
    !   of Linear Differential and Integral Operators". United States Governm. Press Office.
    !
    !=======================================================================================
-   subroutine eighs(A, X, eigvecs, eigvals, residuals, info, nev, tolerance, verbosity)
+   subroutine eighs(A, X, eigvals, residuals, info, nev, tolerance, verbosity)
       !> Linear Operator.
       class(abstract_spd_linop), intent(in) :: A
       !> Krylov basis.
       class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_vector), allocatable   :: Xwrk(:)
       !> Coordinates of eigenvectors in Krylov basis, eigenvalues, and associated residuals
-      real(kind=wp), intent(out) :: eigvecs(:, :)
+      real(kind=wp), allocatable :: eigvecs(:, :)
       real(kind=wp), intent(out) :: eigvals(:)
       real(kind=wp), intent(out) :: residuals(:)
       !> Information flag.
@@ -408,6 +408,7 @@ contains
       tol = optval(tolerance, rtol)
 
       ! --> Initialize all variables.
+      allocate(eigvecs(1:kdim, 1:kdim))
       T = 0.0_wp; residuals = 0.0_wp; eigvecs = 0.0_wp; eigvals = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
@@ -449,132 +450,11 @@ contains
 
       end do lanczos
 
+      !> Compute and returns the eigenvectors constructed from the Krylov basis.
+      allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
+
       return
    end subroutine eighs
-
-   subroutine two_sided_eigs(A, V, W, rvecs, lvecs, eigvals, residuals, info, nev, tolerance, verbosity)
-      !> Linear Operator.
-      class(abstract_linop), intent(in) :: A
-      !> Left and right Krylov basis.
-      class(abstract_vector), dimension(:), intent(inout) :: V
-      class(abstract_vector), dimension(:), intent(inout) :: W
-      !> Coordinates of eigenvectors in Krylov bases, eigenvalues and associated residuals.
-      complex(kind=wp), dimension(size(V) - 1, size(V) - 1), intent(out) :: rvecs
-      complex(kind=wp), dimension(size(W) - 1, size(W) - 1), intent(out) :: lvecs
-      complex(kind=wp), dimension(size(V) - 1), intent(out) :: eigvals
-      real(kind=wp), dimension(size(V) - 1), intent(out) :: residuals
-      !> Information flag.
-      integer, intent(out) :: info
-      !> Number of desired eigenvalues.
-      integer, optional, intent(in) :: nev
-      integer                       :: nev_, conv
-      !> Tolerance control.
-      real(kind=wp), optional, intent(in) :: tolerance
-      real(kind=wp)                       :: tol
-      !> Verbosity control.
-      logical, optional, intent(in) :: verbosity
-      logical                       :: verbose
-
-      !> Tridiagonal matrix.
-      real(kind=wp), dimension(size(V), size(V)) :: T
-      real(kind=wp)                              :: beta, gamma
-      !> Krylov subspace dimension.
-      integer :: kdim
-      !> Miscellaneous.
-      integer :: i, j, k
-      integer(int_size), dimension(size(V) - 1) :: indices
-      real(kind=wp), dimension(size(V) - 1) :: abs_eigvals
-      real(kind=wp)                           :: alpha, tmp
-
-      !> Gram matrix.
-      complex(kind=wp), dimension(size(V) - 1, size(V) - 1) :: G
-      complex(kind=wp), dimension(size(V) - 1, size(V) - 1) :: H
-      real(kind=wp) :: direct_residual, adjoint_residual
-
-      !> Dimension of the Krylov subspaces.
-      kdim = size(V) - 1
-
-      !> Deals with optional args.
-      verbose = optval(verbosity, .false.)
-      nev_ = optval(nev, kdim)
-      tol = optval(tolerance, rtol)
-
-      !> Initialize variables.
-      T = 0.0_wp; residuals = 0.0_wp; eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
-      lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp); rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
-
-      !> Make sure the first Krylov vectors are bi-orthogonal.
-      tmp = V(1)%dot(W(1)); beta = sqrt(abs(tmp)); gamma = sign(beta, tmp)
-      call V(1)%scal(1.0_wp/beta); call W(1)%scal(1.0_wp/gamma)
-
-      do i = 2, size(V)
-         call V(i)%zero(); call W(i)%zero()
-      end do
-
-      lanczos: do k = 1, kdim
-         !> Lanczos step.
-         call nonsymmetric_lanczos_tridiagonalization(A, V, W, T, info, kstart=k, kend=k, verbosity=verbose)
-         if (info < 0) then
-            if (verbose) then
-               write (*, *) "INFO : Lanczos iteration failed. Exiting the eig subroutine."
-               write (*, *) "       Lanczos exit code :", info
-            end if
-            info = -1
-            return
-         end if
-
-         !> Spectral decomposition of the k x k tridiagonal matrix.
-         eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp)
-         rvecs = cmplx(0.0_wp, 0.0_wp, kind=wp); lvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
-         call eig(T(1:k, 1:k), rvecs(1:k, 1:k), eigvals(1:k))
-         lvecs(1:k, 1:k) = rvecs(1:k, 1:k); call inv(lvecs(1:k, 1:k)); lvecs(1:k, 1:k) = transpose(conjg(lvecs(1:k, 1:k)))
-
-         !> Sort eigenvalues.
-         abs_eigvals = abs(eigvals); call sort_index(abs_eigvals, indices, reverse=.true.)
-         eigvals = eigvals(indices); rvecs = rvecs(:, indices); lvecs = lvecs(:, indices)
-
-         !> Compute residuals.
-         beta = abs(T(k + 1, k)); gamma = abs(T(k, k + 1)); alpha = V(k + 1)%norm()
-         residuals(1:k) = compute_residual(beta*alpha, abs(rvecs(k, 1:k)))
-
-         G = 0.0_wp; H = 0.0_wp
-         do i = 1, k
-            G(i, i) = V(i)%dot(V(i)); H(i, i) = W(i)%dot(W(i))
-            do j = i + 1, k
-               G(i, j) = V(i)%dot(V(j))
-               G(j, i) = G(i, j)
-
-               H(i, j) = W(i)%dot(W(j))
-               H(j, i) = H(i, j)
-            end do
-         end do
-         residuals = 100.0_wp
-         do i = 1, k
-            alpha = V(k + 1)%norm()
-            direct_residual = compute_residual(beta*alpha, abs(rvecs(k, i))) &
-                              /sqrt(real(dot_product(rvecs(:, k), matmul(G, rvecs(:, k)))))
-            alpha = W(k + 1)%norm()
-            adjoint_residual = compute_residual(gamma*alpha, abs(lvecs(k, i))) &
-                               /sqrt(real(dot_product(lvecs(:, k), matmul(H, lvecs(:, k)))))
-            residuals(i) = max(direct_residual, adjoint_residual)
-         end do
-
-         !> Check convergence.
-         conv = count(residuals(1:k) < tol)
-         write (*, *) "--- Iteration ", k, "---"
-         write (*, *) conv, "eigentriplets have converged."
-         write (*, *)
-         if (conv >= nev_) then
-            info = k
-            exit lanczos
-         end if
-
-      end do lanczos
-
-      call sort_index(residuals, indices, reverse=.false.)
-      eigvals = eigvals(indices); rvecs = rvecs(:, indices); lvecs = lvecs(:, indices)
-      return
-   end subroutine two_sided_eigs
 
    !=======================================================================================
    ! Singular Value Decomposition Subroutine (svds) - lanczos based / matrix-free
@@ -612,8 +492,7 @@ contains
    ! Input/Output Parameters:
    ! ------------------------
    ! - A           : Linear Operator                                                        [Input]
-   ! - U, V        : Krylov bases for left (U) and right (V) singular vectors               [Input/Output]
-   ! - uvecs, vvecs: Coordinates of left (U) and right (V) singular vectors in Krylov bases [Output]
+   ! - U, V        : Left (U) and right (V) singular vectors                                [Input/Output]
    ! - sigma       : Singular values                                                        [Output]
    ! - residuals   : Residuals associated with singular triplets                            [Output]
    ! - info        : Information flag                                                       [Output]
@@ -627,14 +506,15 @@ contains
    !   url : http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf
    !
    !=======================================================================================
-   subroutine svds(A, U, V, uvecs, vvecs, sigma, residuals, info, nev, tolerance, verbosity)
+   subroutine svds(A, U, V, sigma, residuals, info, nev, tolerance, verbosity)
       !> Linear Operator.
       class(abstract_linop), intent(in) :: A
       !> Krylov bases.
-      class(abstract_vector), intent(inout) :: U(:) ! Basis for left sing. vectors.
-      class(abstract_vector), intent(inout) :: V(:) ! Basis for right sing. vectors.
+      class(abstract_vector), intent(inout) :: U(:) ! Left sing. vectors.
+      class(abstract_vector), intent(inout) :: V(:) ! Right sing. vectors.
+      class(abstract_vector), allocatable   :: Uwrk(:), Vwrk(:)
       !> Coordinates of singular vectors in Krylov bases, singular values, and associated residuals.
-      real(kind=wp), intent(out) :: uvecs(:, :), vvecs(:, :)
+      real(kind=wp), allocatable :: uvecs(:, :), vvecs(:, :)
       real(kind=wp), intent(out) :: sigma(:)
       real(kind=wp), intent(out) :: residuals(:)
       !> Information flag.
@@ -673,15 +553,15 @@ contains
          kdim = size(U) - 1
       end if
 
-      call assert_shape(uvecs, [kdim, kdim], "svds", "uvecs")
-      call assert_shape(vvecs, [kdim, kdim], "svds", "vvecs")
-
       ! --> Initialize variables.
-      B = 0.0_wp; residuals = 0.0_wp; uvecs = 0.0_wp; vvecs = 0.0_wp; sigma = 0.0_wp
+      B = 0.0_wp; residuals = 0.0_wp; sigma = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       beta = U(1)%norm(); call U(1)%scal(1.0_wp/beta)
       call initialize_krylov_subspace(U(2:kdim + 1))
       call initialize_krylov_subspace(V(2:kdim + 1))
+
+      allocate(uvecs(kdim, kdim)) ; uvecs = 0.0_wp
+      allocate(vvecs(kdim, kdim)) ; vvecs = 0.0_wp
 
       lanczos: do k = 1, kdim
          ! --> Compute the Lanczos bidiagonalization.
@@ -708,6 +588,10 @@ contains
       end do lanczos
 
       info = k
+
+      !> Compute and return the low-rank factors from the Krylov bases.
+      allocate(Uwrk, source=U) ; allocate(Vwrk, source=V)
+      call mat_mult(U(1:kdim), Uwrk(1:kdim), uvecs) ; call mat_mult(V(1:kdim), Vwrk(1:kdim), vvecs)
 
       return
    end subroutine svds

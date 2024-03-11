@@ -23,8 +23,6 @@ program demo
   integer, parameter :: kdim = 2*nx
   !> Krylov subspace.
   type(state_vector), allocatable :: X(:)
-  !> Coordinates of the eigenvectors in the Krylov basis.
-  complex(kind=wp) :: v(kdim, kdim)
   !> Eigenvalues.
   complex(kind=wp) :: lambda(kdim)
   !> Residual.
@@ -61,7 +59,7 @@ program demo
   !------------------------------------------
 
   !> Call to LightKrylov.
-  call eigs(A, X, v, lambda, residuals, info, nev=nev)
+  call eigs(A, X, lambda, residuals, info, nev=nev)
 
   !> Transform eigenspectrum from unit-disk to standard complex plane.
   lambda = log(lambda) / tau
@@ -76,18 +74,9 @@ program demo
   !> Reconstruct the leading eigenvectors from the Krylov basis.
   do i = 1, nev
      !> Real part.
-     call get_vec(wrk, X(1:kdim), v(:, i)%re)
-     select type(wrk)
-     type is(state_vector)
-        eigenvectors(:, i)%re = wrk%state(1:nx)
-     end select
-
+     eigenvectors(:, i)%re = X(i)%state(1:nx)
      !> Imaginary part.
-     call get_vec(wrk, X(1:kdim), v(:, i)%im)
-     select type(wrk)
-     type is(state_vector)
-        eigenvectors(:, i)%im = wrk%state(1:nx)
-     end select
+     eigenvectors(:, i)%im = X(i+1)%state(1:nx)
   enddo
 
   !> Save eigenvectors to disk.

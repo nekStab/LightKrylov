@@ -88,7 +88,7 @@ contains
       !> Krylov subspace.
       class(rvector), allocatable :: X(:)
       !> Eigenvalues and eigenvectors.
-      real(kind=wp) :: evals(test_size), evecs(test_size, test_size)
+      real(kind=wp) :: evals(test_size)
       !> Residuals.
       real(kind=wp) :: residuals(test_size)
       !> Information flag.
@@ -122,10 +122,10 @@ contains
       end do
 
       !> Initialize internal variables.
-      evals = 0.0_wp; evecs = 0.0_wp; residuals = 0.0_wp
+      evals = 0.0_wp; residuals = 0.0_wp
 
       !> Compute spectral decomposition.
-      call eighs(A, X, evecs, evals, residuals, info)
+      call eighs(A, X, evals, residuals, info)
 
       !> Analytical eigenvalues.
       true_evals = 0.0_wp; pi = 4.0_wp*atan(1.0_wp)
@@ -147,7 +147,7 @@ contains
       !> Krylov subspace.
       class(rvector), allocatable :: X(:)
       !> Eigenvalues and eigenvectors.
-      complex(kind=wp) :: evals(test_size), evecs(test_size, test_size)
+      complex(kind=wp) :: evals(test_size)
       !> Residuals.
       real(kind=wp) :: residuals(test_size)
       !> Information flag.
@@ -181,10 +181,10 @@ contains
       end do
 
       !> Initialize internal variables.
-      evals = cmplx(0.0_wp, 0.0_wp, kind=wp); evecs = cmplx(0.0_wp, 0.0_wp, kind=wp); residuals = 0.0_wp
+      evals = cmplx(0.0_wp, 0.0_wp, kind=wp); residuals = 0.0_wp
 
       !> Compute spectral decomposition.
-      call eigs(A, X, evecs, evals, residuals, info)
+      call eigs(A, X, evals, residuals, info)
 
       !> Analytical eigenvalues.
       true_evals = cmplx(0.0_wp, 0.0_wp, kind=wp); pi = 4.0_wp*atan(1.0_wp)
@@ -334,8 +334,7 @@ contains
       !> Krylov subspaces.
       class(rvector), allocatable :: U(:), V(:)
       integer                     :: kdim = test_size
-      !> Low-dimensional singular vectors and singular values.
-      real(kind=wp) :: uvecs(1:test_size, 1:test_size), vvecs(1:test_size, 1:test_size)
+      !> Singular values.
       real(kind=wp) :: svdvals(1:test_size)
       !> Residuals.
       real(kind=wp) :: residuals(1:test_size)
@@ -367,10 +366,10 @@ contains
       end do
 
       !> Initialize internal variables.
-      svdvals = 0.0_wp; uvecs = 0.0_wp; vvecs = 0.0_wp
+      svdvals = 0.0_wp
 
       !> Compute singular value decomposition.
-      call svds(A, U, V, uvecs, vvecs, svdvals, residuals, info)
+      call svds(A, U, V, svdvals, residuals, info)
 
       !> Analytical singular values.
       do i = 1, test_size
