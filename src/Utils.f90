@@ -507,7 +507,7 @@ contains
      return
    end subroutine ordschur
 
-   logical function dummy_select(wr, wi) result(out)
+   pure logical function dummy_select(wr, wi) result(out)
      real(kind=wp), intent(in) :: wr, wi
      return
    end function dummy_select

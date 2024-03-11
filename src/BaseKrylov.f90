@@ -12,7 +12,7 @@ module lightkrylov_BaseKrylov
 
    private
    !> Factorization for general n x n linear operators.
-   public :: arnoldi_factorization
+   public :: arnoldi_factorization, krylov_schur_restart
    !> Factorization for symmetric positive definite operators.
    public :: lanczos_tridiagonalization
    !> Pre-factorization for singular value decomposition.
@@ -895,5 +895,88 @@ contains
 
       return
    end subroutine qr_factorization
+
+   !=======================================================================================
+   ! Krylov-Schur restarting procedure
+   !=======================================================================================
+   !
+   ! Purpose:
+   ! --------
+   !
+   ! Algorithmic Features:
+   ! ---------------------
+   !
+   ! Advantages:
+   ! -----------
+   !
+   ! Limitations:
+   ! ------------
+   !
+   ! Input/Output Parameters:
+   ! ------------------------
+   !
+   ! References:
+   ! -----------
+   !
+   !=======================================================================================
+   subroutine krylov_schur_restart(nblk, X, H, select_eigs, blksize)
+     use stdlib_io_npy
+     integer, intent(out) :: nblk
+     !> Krylov basis.
+     class(abstract_vector), intent(inout) :: X(:)
+     class(abstract_vector), allocatable   :: Xwrk(:)
+     !> Hessenberg matrix.
+     real(kind=wp), intent(inout) :: H(:, :)
+     real(kind=wp), allocatable   :: b(:)
+     !> Eigenvalue selector.
+     interface
+        function selector(lambda) result(out)
+          import wp
+          complex(kind=wp), intent(in) :: lambda(:)
+          logical                      :: out(size(lambda))
+        end function selector
+     end interface
+     procedure(selector) :: select_eigs
+     !> Block size (optional).
+     integer, optional, intent(in) :: blksize
+     integer                       :: blksize_
+
+     !> Schur-related.
+     real(kind=wp)   , allocatable :: Z(:, :)
+     complex(kind=wp), allocatable :: eigvals(:)
+     logical         , allocatable :: selected(:)
+
+     !> Internal variables.
+     integer :: k, i, kdim
+
+     !> Sets up the optional args.
+     blksize_ = optval(blksize, 1)
+     kdim = size(X) - 1
+
+     !> Allocate variables.
+     allocate(eigvals(kdim))  ; eigvals = 0.0_wp
+     allocate(Z(kdim, kdim))  ; Z = 0.0_wp
+     allocate(selected(kdim)) ; selected = .false.
+     allocate(b(size(H, 2)))  ; b = 0.0_wp
+
+     !> Schur decomposition of the Hessenberg matrix.
+     call schur(H(1:kdim, :), Z, eigvals)
+
+     !> Eigenvalue selection for the upper left block.
+     selected = select_eigs(eigvals) ; nblk = count(selected) ! Number of selected eigs.
+     !> Re-order Schur decomposition and vectors.
+     call ordschur(H(1:kdim, 1:kdim), Z, selected)
+
+     !> Update Krylov basis.
+     allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), Z)
+     call X(nblk+1)%axpby(0.0_wp, Xwrk(kdim+1), 1.0_wp)
+     call initialize_krylov_subspace(X(nblk+2:size(X)))
+
+     !> Update Hessenberg matrix.
+     b = matmul(H(kdim+1, :), Z) ; H(nblk+1, :) = b
+     H(nblk+2:size(H, 1), :) = 0.0_wp ; H(:, nblk+1:size(H, 2)) = 0.0_wp
+
+     return
+   end subroutine krylov_schur_restart
 
 end module lightkrylov_BaseKrylov
