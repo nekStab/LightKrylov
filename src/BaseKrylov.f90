@@ -23,42 +23,9 @@ module lightkrylov_BaseKrylov
    !> Miscellaneous.
    public :: qr_factorization, initialize_krylov_subspace
 
-   interface initialize_krylov_subspace
-      module procedure initialize_krylov_subspace_vec
-      module procedure initialize_krylov_subspace_mat
-   end interface
-
 contains
 
-subroutine initialize_krylov_subspace_vec(X,b0)
-   !> Krylov subspace to be initialized
-   class(abstract_vector), intent(inout) :: X(:)
-   !> Optional: Initial vector/matrix  ::  default is zeros
-   class(abstract_vector), optional, intent(in) :: b0
-   !> Internal variables.
-   class(abstract_vector), allocatable :: b
-   integer                             :: i
-   real(kind=wp)                       :: beta
-
-   !> zero out X
-   call x%zero()
-
-   !> Deals with the optional starting vector
-   if (present(b0)) then
-      !> allocate & initialize
-      allocate(b, source=b0)
-      call b%axpby(0.0_wp, b0, 1.0_wp)
-      !> orthonormalize
-      beta = b%norm()
-      call b%scal(1.0/beta)
-      !> Set initial vector
-      call X(1)%axbpy(0.0_wp, b, 1.0_wp)
-   endif      
-
-   return
-end subroutine initialize_krylov_subspace_vec
-
-subroutine initialize_krylov_subspace_mat(X,B0)
+subroutine initialize_krylov_subspace(X,B0)
    !> Krylov subspace to be initialized
    class(abstract_vector), intent(inout) :: X(:)
    !> Optional: Initial vector/matrix  ::  default is zeros
@@ -90,7 +57,7 @@ subroutine initialize_krylov_subspace_mat(X,B0)
    endif      
 
    return
-end subroutine initialize_krylov_subspace_mat
+end subroutine initialize_krylov_subspace
 
    !=======================================================================================
    ! Arnoldi Factorization Subroutine
