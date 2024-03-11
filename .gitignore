@@ -33,3 +33,6 @@
 
 # Log files
 *.log
+
+# swap files
+*~
