@@ -927,7 +927,7 @@ contains
      class(abstract_vector), allocatable   :: Xwrk(:)
      !> Hessenberg matrix.
      real(kind=wp), intent(inout) :: H(:, :)
-     real(kind=wp), allocatable   :: b(:)
+     real(kind=wp), allocatable   :: b(:, :)
      !> Eigenvalue selector.
      interface
         function selector(lambda) result(out)
@@ -951,30 +951,41 @@ contains
 
      !> Sets up the optional args.
      blksize_ = optval(blksize, 1)
-     kdim = size(X) - 1
+     kdim = (size(X) - blksize_)/blksize_
+
+     if (blksize_ /= 1) then
+        call stop_error("Block Krylov-Schur restart is not supported yet.")
+     endif
 
      !> Allocate variables.
-     allocate(eigvals(kdim))  ; eigvals = 0.0_wp
-     allocate(Z(kdim, kdim))  ; Z = 0.0_wp
-     allocate(selected(kdim)) ; selected = .false.
-     allocate(b(size(H, 2)))  ; b = 0.0_wp
+     allocate(eigvals(kdim*blksize_))           ; eigvals = 0.0_wp
+     allocate(Z(kdim*blksize_, kdim*blksize_))  ; Z = 0.0_wp
+     allocate(selected(kdim*blksize_))          ; selected = .false.
+     allocate(b(blksize_, size(H, 2)))          ; b = 0.0_wp
 
      !> Schur decomposition of the Hessenberg matrix.
-     call schur(H(1:kdim, :), Z, eigvals)
-
+     call schur(H(1:kdim*blksize_, :), Z, eigvals)
      !> Eigenvalue selection for the upper left block.
      selected = select_eigs(eigvals) ; nblk = count(selected) ! Number of selected eigs.
+     if (mod(nblk, blksize_) /=0 ) then
+        nblk = nblk/blksize_ + 1
+     else
+        nblk = nblk/blksize_
+     endif
+
      !> Re-order Schur decomposition and vectors.
-     call ordschur(H(1:kdim, 1:kdim), Z, selected)
+     call ordschur(H(1:kdim*blksize_, 1:kdim*blksize_), Z, selected)
 
      !> Update Krylov basis.
-     allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), Z)
-     call X(nblk+1)%axpby(0.0_wp, Xwrk(kdim+1), 1.0_wp)
-     call initialize_krylov_subspace(X(nblk+2:size(X)))
+     allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim*blksize_), Xwrk(1:kdim*blksize_), Z)
+     do i = 1, blksize_
+        call X(nblk*blksize_+i)%axpby(0.0_wp, Xwrk(kdim*blksize_+i), 1.0_wp)
+     enddo
+     call initialize_krylov_subspace(X((nblk+1)*blksize_+1:size(X)))
 
      !> Update Hessenberg matrix.
-     b = matmul(H(kdim+1, :), Z) ; H(nblk+1, :) = b
-     H(nblk+2:size(H, 1), :) = 0.0_wp ; H(:, nblk+1:size(H, 2)) = 0.0_wp
+     b = matmul(H(kdim*blksize_+1:size(H, 1), :), Z) ; H(nblk*blksize_+1:(nblk+1)*blksize_, :) = b
+     H((nblk+1)*blksize_+1:size(H, 1), :) = 0.0_wp ; H(:, nblk*blksize_+1:size(H, 2)) = 0.0_wp
 
      return
    end subroutine krylov_schur_restart
