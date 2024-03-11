@@ -4,7 +4,7 @@ module lightkrylov_utils
 
    private
    !> General-purpose utilities.
-   public :: assert_shape
+   public :: assert_shape, stop_error
    !> Linear Algebra Utilities.
    public :: inv, svd, eig, eigh, lstsq, schur, ordschur
 
