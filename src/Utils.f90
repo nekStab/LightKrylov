@@ -6,7 +6,7 @@ module lightkrylov_utils
    !> General-purpose utilities.
    public :: assert_shape
    !> Linear Algebra Utilities.
-   public :: inv, svd, eig, eigh, lstsq
+   public :: inv, svd, eig, eigh, lstsq, schur, ordschur
 
    !-------------------------------------------------------
    !-----                                             -----
@@ -480,6 +480,9 @@ contains
 
      !> Perform Schur decomposition.
      call dgees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+
+     !> Eigenvalues.
+     eigvals = cmplx(wr, wi, kind=wp)
 
      return
    end subroutine schur
