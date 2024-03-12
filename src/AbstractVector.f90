@@ -64,9 +64,15 @@ module lightkrylov_AbstractVector
    !---------------------------------------------------
 
    type, abstract, public :: abstract_vector
+      !! Abstract type from which users need to extend in order to define the vectors used by `LightKrylov`.
+      !! Upon extension, the user needs to provide a handful of type-bound procedures:
+      !!
+      !! - `zero(self)`
+      !! - `scal(self, alpha)`
+      !! - `axpby(self, alpha, vec, beta)`
+      !! - `dot(self, vec)`
    contains
       private
-
       procedure, pass(from), public :: copy
       generic, public             :: assignment(=) => copy
       !! Overload the assignment operator.
