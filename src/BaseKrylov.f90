@@ -1,4 +1,17 @@
 module lightkrylov_BaseKrylov
+  !! This module provides a large collection of Krylov-based factorizations forming the computational core
+  !! of `LightKrylov`. These include:
+  !!
+  !! - the Arnoldi factorization for general square matrices,
+  !! - the Lanczos factorization for symmetric matrices,
+  !! - the Lanczos factorization for non-symmetric matrices,
+  !! - the Lanczos bidiagonalization for arbitrary linear operators,
+  !!
+  !! It also provides a set of utility functions to initialize Krylov subspaces, perform Krylov-Schur restarts
+  !! (only for Arnoldi for the moment) or orthogonalization of an array of Krylov vectors using the modified
+  !! Gram-Schmid process. Note that the Arnoldi factorization supports both the standard and block
+  !! implementations.
+
    ! Fortran intrinsic module.
    use iso_fortran_env
 
