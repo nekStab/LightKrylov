@@ -763,137 +763,100 @@ contains
       end subroutine rayleigh_quotient_form
    end subroutine two_sided_arnoldi_factorization
 
-   !=======================================================================================
-   ! QR factorization for general n x m matrices
-   !=======================================================================================
-   !
-   ! Purpose:
-   ! --------
-   ! Simple implementation of the QR factorization of a general (real) Krylov basis.
-   !
-   ! Algorithmic Features:
-   ! ---------------------
-   ! - In-place factorization
-   ! - Double Gram-Schmidt procedure for stability
-   ! - Includes a simple check for premature breakdown
-   !
-   ! Advantages:
-   ! -----------
-   ! - Suitable for all Krylov subspace dimensions
-   ! - Robust with respect to floating point errors
-   !
-   ! Limitations:
-   ! ------------
-   ! - No pivoting, i.e. the columns are orthonormalized in the natural ordering.
-   !   This may lead to premature breakdown if adjacent
-   !   columns are nearly colinear.
-   ! - The current implementation only includes a simple check for breakdown
-   !
-   ! Input/Output Parameters:
-   ! ------------------------
-   ! - Q        : Krylov basis to orthonormalize       [Input/Output]
-   ! - R        : Upper triangular coefficient matrix  [Output]
-   ! - info     : Information flag                     [Output]
-   ! - tol      : Tolerance for breakdown detection    [Optional, Input]
-   ! - verbosity: Verbosity control flag               [Optional, Input]
-   !
-   ! References:
-   ! -----------
-   ! - G. H. Golub & C. F. Van Loan. "Matrix Computations". 4th edition, The John Hopkins
-   !   University Press, 2013.
-   !   See Chapter 5.2.8 : Modified Gram-Schmidt algorithm.
-   !
-   !=======================================================================================
    subroutine qr_factorization(Q, R, info, verbosity, tol)
-      !> Basis to be orthonormalized.
+      !! Orthogonalization of an array of `abstract_vector` using the modified Gram-Schmid process.
+      !!
+      !! **Algorithmic Features**
+      !!
+      !! - In-place factorization
+      !! - Double Gram-Schmidt procedure for stability
+      !! - Includes a simple check for premature breakdown
+      !!
+      !! **Advantages**
+      !!
+      !! - Suitable for all Krylov subspace dimensions
+      !! - Robust with respect to floating point errors
+      !!
+      !! **Limitations**
+      !!
+      !! - No pivoting, i.e. the columns are orthonormalized in the natural ordering.
+      !!   This may lead to premature breakdown if adjacent
+      !!   columns are nearly colinear.
+      !! - The current implementation only includes a simple check for breakdown
+      !!
+      !! **References**
+      !!
+      !! - G. H. Golub & C. F. Van Loan. "Matrix Computations". 4th edition, The John Hopkins
+      !!   University Press, 2013.
+      !!   See Chapter 5.2.8 : Modified Gram-Schmidt algorithm.
       class(abstract_vector), intent(inout) :: Q(:)
-      !> Gram-Schmidt factors
+      !! Array of `abstract_vector` that need to be orthogonalized.
       real(kind=wp), intent(out)   :: R(:, :)
-      !> Information flag.
+      !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factoriation.
       integer, intent(out)   :: info
-      !> Optional arguments.
+      !! Information flag.
       logical, optional, intent(in)         :: verbosity
-      logical                               :: verbose
+      !! Verbosity control (default `.false.`).
       real(kind=wp), optional, intent(in)   :: tol
-      real(kind=wp)                         :: tolerance
-      !> Internal variables.
+      !! Tolerance to determine colinearity (default `sqrt(epsilon(1.0_wp))`).
+
+      ! Internal variables.
       real(kind=wp) :: beta
+      logical                               :: verbose
       integer       :: i, j, k, kdim
+      real(kind=wp)                         :: tolerance
 
       info = 0
 
-      ! --> Get basis size.
+      ! Get basis size.
       kdim = size(Q)
 
-      ! --> Deal with the optional arguments.
+      ! Deal with the optional arguments.
       verbose = optval(verbosity, .false.)
       tolerance = optval(tol, rtol)
 
       R = 0.0_wp
-      !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
+      ! Double Gram-Schmidt (To avoid stability issues with the classical GS)
       do j = 1, kdim
-         !> Orthonormalization against existing columns
+         ! Orthonormalization against existing columns
          do i = 1, j - 1
             beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
-            !> Update R
+            ! Update R
             R(i, j) = beta
          end do
-         !!> Second pass
-         do i = 1, j - 1                                                   ! comment out the
-            beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)    ! second pass to
-            !> Update R                                                    ! see the simple QR
-            R(i, j) = R(i, j) + beta                                       ! factorization fail
-         end do                                                            ! in the test
-         !> Normalize column
+         ! Second pass
+         do i = 1, j - 1
+            beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
+            ! Update R
+            R(i, j) = R(i, j) + beta
+         end do
+         ! Normalize column
          beta = Q(j)%norm(); call Q(j)%scal(1.0_wp/beta)
          R(j, j) = beta
          if (abs(beta) < tolerance) then
             if (verbose) then
-               write (*, *) "INFO : Colinear columns detected."
-               write (*, *) "       (j, beta) = (", j, ",", beta, ")."
+               write (output_unit, *) "INFO : Colinear columns detected."
+               write (output_unit, *) "       (j, beta) = (", j, ",", beta, ")."
             end if
          end if
       end do
       if (verbose) then
-         write (*, *) "INFO : Exiting the QR factorization with exit code info = ", info, "."
+         write (output_unit, *) "INFO : Exiting the QR factorization with exit code info = ", info, "."
       end if
 
       return
    end subroutine qr_factorization
 
-   !=======================================================================================
-   ! Krylov-Schur restarting procedure
-   !=======================================================================================
-   !
-   ! Purpose:
-   ! --------
-   !
-   ! Algorithmic Features:
-   ! ---------------------
-   !
-   ! Advantages:
-   ! -----------
-   !
-   ! Limitations:
-   ! ------------
-   !
-   ! Input/Output Parameters:
-   ! ------------------------
-   !
-   ! References:
-   ! -----------
-   !
-   !=======================================================================================
    subroutine krylov_schur_restart(nblk, X, H, select_eigs, blksize)
-      use stdlib_io_npy
       integer, intent(out) :: nblk
-      !> Krylov basis.
+      !! Number of blocks (or vectors if `blksize=1`) that have been moved to the upper left block
+      !! of the Schur factorization of `H`.
       class(abstract_vector), intent(inout) :: X(:)
+      !! Krylov basis.
       class(abstract_vector), allocatable   :: Xwrk(:)
-      !> Hessenberg matrix.
       real(kind=wp), intent(inout) :: H(:, :)
+      !! Hessenberg/Schur matrix of the Krylov decomposition.
       real(kind=wp), allocatable   :: b(:, :)
-      !> Eigenvalue selector.
       interface
          function selector(lambda) result(out)
             import wp
@@ -902,19 +865,34 @@ contains
          end function selector
       end interface
       procedure(selector) :: select_eigs
-      !> Block size (optional).
+      !! Routine to select the eigenvalues that need to be moved in the upper left block of the
+      !! Schur factorization. Its interface needs to be compliant with
+      !!```
+      !! interface
+      !!    function selector(lambda) result(out)
+      !!      import wp
+      !!      complex(kind=wp), intent(in) :: lambda(:)
+      !!      logical                      :: out(size(lambda))
+      !!    end function selector
+      !! end interface
+      !!```
       integer, optional, intent(in) :: blksize
+      !! Block-size if block Arnoldi is being used (default `blksize = 1`).
+      !!@warning
+      !! The routine will return an error if `blksize /= 1`. This is related to an issue with the current
+      !! implement if the number of selected eigenvalues is not a multiple of the block size.
+      !!@endwarning
       integer                       :: blksize_
 
-      !> Schur-related.
+      ! Schur-related.
       real(kind=wp), allocatable :: Z(:, :)
       complex(kind=wp), allocatable :: eigvals(:)
       logical, allocatable :: selected(:)
 
-      !> Internal variables.
+      ! Internal variables.
       integer :: k, i, kdim
 
-      !> Sets up the optional args.
+      ! Sets up the optional args.
       blksize_ = optval(blksize, 1)
       kdim = (size(X) - blksize_)/blksize_
 
@@ -922,15 +900,15 @@ contains
          call stop_error("Block Krylov-Schur restart is not supported yet.")
       end if
 
-      !> Allocate variables.
+      ! Allocate variables.
       allocate (eigvals(kdim*blksize_)); eigvals = 0.0_wp
       allocate (Z(kdim*blksize_, kdim*blksize_)); Z = 0.0_wp
       allocate (selected(kdim*blksize_)); selected = .false.
       allocate (b(blksize_, size(H, 2))); b = 0.0_wp
 
-      !> Schur decomposition of the Hessenberg matrix.
+      ! Schur decomposition of the Hessenberg matrix.
       call schur(H(1:kdim*blksize_, :), Z, eigvals)
-      !> Eigenvalue selection for the upper left block.
+      ! Eigenvalue selection for the upper left block.
       selected = select_eigs(eigvals); nblk = count(selected) ! Number of selected eigs.
       if (mod(nblk, blksize_) /= 0) then
          nblk = nblk/blksize_ + 1
@@ -938,17 +916,17 @@ contains
          nblk = nblk/blksize_
       end if
 
-      !> Re-order Schur decomposition and vectors.
+      ! Re-order Schur decomposition and vectors.
       call ordschur(H(1:kdim*blksize_, 1:kdim*blksize_), Z, selected)
 
-      !> Update Krylov basis.
+      ! Update Krylov basis.
       allocate (Xwrk, source=X); call mat_mult(X(1:kdim*blksize_), Xwrk(1:kdim*blksize_), Z)
       do i = 1, blksize_
          call X(nblk*blksize_ + i)%axpby(0.0_wp, Xwrk(kdim*blksize_ + i), 1.0_wp)
       end do
       call initialize_krylov_subspace(X((nblk + 1)*blksize_ + 1:size(X)))
 
-      !> Update Hessenberg matrix.
+      ! Update Hessenberg matrix.
       b = matmul(H(kdim*blksize_ + 1:size(H, 1), :), Z); H(nblk*blksize_ + 1:(nblk + 1)*blksize_, :) = b
       H((nblk + 1)*blksize_ + 1:size(H, 1), :) = 0.0_wp; H(:, nblk*blksize_ + 1:size(H, 2)) = 0.0_wp
 
