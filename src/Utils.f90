@@ -1,7 +1,7 @@
 module lightkrylov_utils
   !! This module provides a set of utilities used throughout `LightKrylov`.
   !! It also provides a selection wrapper around LAPACK to perform standard linear algebra computations.
-  use iso_fortran_env, only: output_unit
+   use iso_fortran_env, only: output_unit
    implicit none
    include "dtypes.h"
 
@@ -89,41 +89,41 @@ contains
 
    subroutine stop_error(msg)
      !! Utility function to print an error message.
-     character(len=*), intent(in) :: msg
+      character(len=*), intent(in) :: msg
      !! Error message.
-     write(output_unit, *) msg ; stop 1
-     return
+      write (output_unit, *) msg; stop 1
+      return
    end subroutine stop_error
 
    subroutine dassert_shape(A, size, routine, matname)
      !! Utility function to assert the shape of a real-valued matrix.
-     real(kind=wp), intent(in) :: A(:, :)
+      real(kind=wp), intent(in) :: A(:, :)
      !! Matrix whose dimensions need to be asserted.
-     integer, intent(in) :: size(:)
+      integer, intent(in) :: size(:)
      !! Expected dimensions of A.
-     character(len=*), intent(in) :: routine
+      character(len=*), intent(in) :: routine
      !! Name of the routine where assertion is done.
-     character(len=*), intent(in) :: matname
+      character(len=*), intent(in) :: matname
      !! Name of the asserted matrix.
 
-     if (any(shape(A) /= size)) then
-        write (output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-        write (output_unit, *) "Expected shape is ", size
-        call stop_error("Aborting due to illegal matrix operation.")
-     end if
+      if (any(shape(A) /= size)) then
+         write (output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
+         write (output_unit, *) "Expected shape is ", size
+         call stop_error("Aborting due to illegal matrix operation.")
+      end if
 
       return
    end subroutine dassert_shape
 
    subroutine zassert_shape(A, size, routine, matname)
      !! Utility function to assert the shape of a complex-valued matrix.
-     complex(kind=wp), intent(in) :: A(:, :)
+      complex(kind=wp), intent(in) :: A(:, :)
      !! Matrix whose dimensions need to be asserted.
-     integer, intent(in) :: size(:)
+      integer, intent(in) :: size(:)
      !! Expected dimensions of A.
-     character(len=*), intent(in) :: routine
+      character(len=*), intent(in) :: routine
      !! Name of the routine where assertion is done.
-     character(len=*), intent(in) :: matname
+      character(len=*), intent(in) :: matname
      !! Name of the asserted matrix.
 
       if (any(shape(A) /= size)) then
@@ -249,7 +249,7 @@ contains
       ! Setup variables.
       m = size(A, 1); n = size(A, 2)
       lda = m; ldu = m; ldvt = n
-      lwork = max(1, 3*min(m, n)+max(m, n), 5*min(m, n)); allocate (work(lwork))
+      lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)); allocate (work(lwork))
 
       ! Shape assertions.
       call assert_shape(U, [m, m], "svd", "U")
@@ -278,50 +278,50 @@ contains
 
    subroutine zsvd(A, U, S, V)
      !! Singular Value Decomposition of a complex-valued matrix using LAPACK.
-     complex(kind=wp), intent(in)  :: A(:, :)
+      complex(kind=wp), intent(in)  :: A(:, :)
      !! Matrix to be factorized.
-     complex(kind=wp), intent(out) :: U(:, :)
+      complex(kind=wp), intent(out) :: U(:, :)
      !! Left singular vectors.
-     real(kind=wp), intent(out) :: S(:)
+      real(kind=wp), intent(out) :: S(:)
      !! Singular values.
-     complex(kind=wp), intent(out) :: V(:, :)
+      complex(kind=wp), intent(out) :: V(:, :)
      !! Right singular vectors.
 
-     ! Lapack-related.
-     character :: jobu = "S", jobvt = "S"
-     integer   :: m, n, lda, ldu, ldvt, lwork, info
-     complex(kind=wp), allocatable :: work(:)
-     real(kind=wp), allocatable :: rwork(:)
-     complex(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
+      ! Lapack-related.
+      character :: jobu = "S", jobvt = "S"
+      integer   :: m, n, lda, ldu, ldvt, lwork, info
+      complex(kind=wp), allocatable :: work(:)
+      real(kind=wp), allocatable :: rwork(:)
+      complex(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
 
-     ! Setup variables.
-     m = size(A, 1); n = size(A, 2)
-     lda = m; ldu = m; ldvt = n
-     lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork)) ; allocate(rwork(5*min(m, n)))
+      ! Setup variables.
+      m = size(A, 1); n = size(A, 2)
+      lda = m; ldu = m; ldvt = n
+      lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork)); allocate (rwork(5*min(m, n)))
 
-     ! Shape assertion.
-     call assert_shape(U, [m, m], "svd", "U")
-     call assert_shape(V, [n, n], "svd", "V")
+      ! Shape assertion.
+      call assert_shape(U, [m, m], "svd", "U")
+      call assert_shape(V, [n, n], "svd", "V")
 
-     ! SVD computation.
-     a_tilde = a
-     call zgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, rwork, info)
-     if (info /= 0) then
-        write (output_unit, *) "ZGESVD returned info = ", info
-        if (info < 0) then
-           write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-        else
-           write (output_unit, *) "ZBSQR did not converge. There are ", info, "superdiagonals"
-           write (output_unit, *) "of an intermediate bidiagonal matrix form B which did not"
-           write (output_unit, *) "converge to zero. See Lapack documentation for more details."
-        end if
-        call stop_error("svd: zgesvd error")
-     end if
+      ! SVD computation.
+      a_tilde = a
+      call zgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, rwork, info)
+      if (info /= 0) then
+         write (output_unit, *) "ZGESVD returned info = ", info
+         if (info < 0) then
+            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
+         else
+            write (output_unit, *) "ZBSQR did not converge. There are ", info, "superdiagonals"
+            write (output_unit, *) "of an intermediate bidiagonal matrix form B which did not"
+            write (output_unit, *) "converge to zero. See Lapack documentation for more details."
+         end if
+         call stop_error("svd: zgesvd error")
+      end if
 
-     ! Return the transpose of V.
-     v = transpose(vt) ; v = conjg(v)
+      ! Return the transpose of V.
+      v = transpose(vt); v = conjg(v)
 
-     return
+      return
    end subroutine zsvd
 
    !-------------------------------------------
@@ -475,60 +475,60 @@ contains
 
    subroutine schur(A, Z, eigvals)
      !! Compute the Schur form (in-place) and Schur vectors of a real-valued matrix.
-     real(kind=wp)   , intent(inout) :: A(:, :)
+      real(kind=wp), intent(inout) :: A(:, :)
      !! Matrix to be factorized.
-     real(kind=wp)   , intent(out)   :: Z(:, :)
+      real(kind=wp), intent(out)   :: Z(:, :)
      !! Schur basis.
-     complex(kind=wp), intent(out)   :: eigvals(:)
+      complex(kind=wp), intent(out)   :: eigvals(:)
      !! Eigenvalues.
 
-     ! LAPACK-related.
-     character :: jobvs="v", sort="n"
-     integer   :: n, lda, sdim, ldvs, lwork, info
-     real(kind=wp) :: wr(size(A, 1)), wi(size(A, 1))
-     real(kind=wp) :: work(3*size(A, 1))
-     logical       :: bwork(size(A, 1))
+      ! LAPACK-related.
+      character :: jobvs = "v", sort = "n"
+      integer   :: n, lda, sdim, ldvs, lwork, info
+      real(kind=wp) :: wr(size(A, 1)), wi(size(A, 1))
+      real(kind=wp) :: work(3*size(A, 1))
+      logical       :: bwork(size(A, 1))
 
-     ! Setup lapack variables.
-     n = size(A, 1); lda = max(1, n); ldvs = max(1, n); lwork = max(1, 3*n)
+      ! Setup lapack variables.
+      n = size(A, 1); lda = max(1, n); ldvs = max(1, n); lwork = max(1, 3*n)
 
-     ! Perform Schur decomposition.
-     call dgees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+      ! Perform Schur decomposition.
+      call dgees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
 
-     ! Eigenvalues.
-     eigvals = cmplx(wr, wi, kind=wp)
+      ! Eigenvalues.
+      eigvals = cmplx(wr, wi, kind=wp)
 
-     return
+      return
    end subroutine schur
 
    subroutine ordschur(T, Q, selected)
      !! Re-order the Schur factorization of a real-valued matrix by moving the selected eigenvalues
      !! in the upper-left block.
-     real(kind=wp), intent(inout) :: T(:, :)
+      real(kind=wp), intent(inout) :: T(:, :)
      !! Schur matrix to be reordered.
-     real(kind=wp), intent(inout) :: Q(:, :)
+      real(kind=wp), intent(inout) :: Q(:, :)
      !! Schur vectors to be reordered.
-     logical      , intent(in)    :: selected(:)
+      logical, intent(in)    :: selected(:)
      !! Boolean array defining the selected eigenvalues.
 
-     ! LAPACK-related.
-     character :: job="n", compq="v"
-     integer   :: info, ldq, ldt, liwork, lwork, m, n, iwork(size(T, 1))
-     real(kind=wp) :: s, sep
-     real(kind=wp) :: work(size(T, 1)), wr(size(T, 1)), wi(size(T, 1))
+      ! LAPACK-related.
+      character :: job = "n", compq = "v"
+      integer   :: info, ldq, ldt, liwork, lwork, m, n, iwork(size(T, 1))
+      real(kind=wp) :: s, sep
+      real(kind=wp) :: work(size(T, 1)), wr(size(T, 1)), wi(size(T, 1))
 
-     ! Setup variables.
-     n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n) ; liwork = 1
+      ! Setup variables.
+      n = size(T, 2); ldt = n; ldq = n; lwork = max(1, n); liwork = 1
 
-     ! Re-order Schur.
-     call dtrsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+      ! Re-order Schur.
+      call dtrsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
 
-     return
+      return
    end subroutine ordschur
 
    pure logical function dummy_select(wr, wi) result(out)
-     real(kind=wp), intent(in) :: wr, wi
-     return
+      real(kind=wp), intent(in) :: wr, wi
+      return
    end function dummy_select
 
 end module lightkrylov_utils

@@ -134,41 +134,41 @@ contains
 
    subroutine copy(out, from)
      !! This function copies the content in `from` to `out`.
-     class(abstract_vector), intent(in)               :: from
+      class(abstract_vector), intent(in)               :: from
      !! Vector we wish to copy from.
-     class(abstract_vector), allocatable, intent(out) :: out
+      class(abstract_vector), allocatable, intent(out) :: out
      !! Vector we wish to copy to.
-     if (allocated(out)) deallocate (out)
-     allocate (out, source=from)
-     return
+      if (allocated(out)) deallocate (out)
+      allocate (out, source=from)
+      return
    end subroutine copy
 
    subroutine add(self, y)
      !! Add two `abstract_vector` in-place.
-     class(abstract_vector), intent(inout) :: self
+      class(abstract_vector), intent(inout) :: self
      !! Input/Output vector.
-     class(abstract_vector), intent(in)    :: y
+      class(abstract_vector), intent(in)    :: y
      !! Vector to add to `self`.
-     call self%axpby(1.0_wp, y, 1.0_wp)
-     return
+      call self%axpby(1.0_wp, y, 1.0_wp)
+      return
    end subroutine add
 
    subroutine sub(self, y)
      !! Subtract two `abstract_vector` in-place.
-     class(abstract_vector), intent(inout) :: self
+      class(abstract_vector), intent(inout) :: self
      !! Input/Output vector.
-     class(abstract_vector), intent(in)    :: y
+      class(abstract_vector), intent(in)    :: y
      !! Vector to subtract from `self`.
-     call self%axpby(1.0_wp, y, -1.0_wp)
-     return
+      call self%axpby(1.0_wp, y, -1.0_wp)
+      return
    end subroutine sub
 
    real(kind=wp) function norm(self) result(alpha)
      !! Compute the norm of an `abstract_vector`. Note that it is based
      !! on the subroutine `dot` which needs to be provided by the user.
-     class(abstract_vector), intent(in) :: self
+      class(abstract_vector), intent(in) :: self
      !! Vector whose norm is computed.
-     alpha = sqrt(self%dot(self))
+      alpha = sqrt(self%dot(self))
    end function norm
 
    !------------------------------------------
@@ -181,33 +181,33 @@ contains
      !! Given `X` and `v`, this function returns \( \mathbf{y} = \mathbf{Xv} \) where
      !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a Fortran
      !! array containing the coefficients of the linear combination.
-     class(abstract_vector), allocatable, intent(out) :: y
+      class(abstract_vector), allocatable, intent(out) :: y
      !! Output vector.
-     class(abstract_vector), dimension(:), intent(in) :: X
+      class(abstract_vector), dimension(:), intent(in) :: X
      !! Krylov basis.
-     real(kind=wp), dimension(:), intent(in) :: v
+      real(kind=wp), dimension(:), intent(in) :: v
      !! Coordinates of the output vector y in the Krylov basis X.
-     class(abstract_vector), allocatable :: wrk
-     ! Temporary working abstract vector.
-     integer :: i
-     ! Miscellaneous.
-     
-     ! Check sizes.
-     if (size(X) .ne. size(v)) then
-        write (*, *) "INFO : Krylov basis X and low-dimension vector v have different sizes."
-        return
-     end if
-     ! Initialize output vector.
-     if (allocated(y) .eqv. .false.) allocate (y, source=X(1)); call y%zero()
-     ! Compute output vector.
-     if (.not. allocated(wrk)) allocate (wrk, source=X(1))
-     do i = 1, size(X)
-        wrk = X(i)
-        call wrk%scal(v(i))
-        call y%add(wrk)
-     end do
-     if (allocated(wrk)) deallocate (wrk)
-     return
+      class(abstract_vector), allocatable :: wrk
+      ! Temporary working abstract vector.
+      integer :: i
+      ! Miscellaneous.
+
+      ! Check sizes.
+      if (size(X) .ne. size(v)) then
+         write (*, *) "INFO : Krylov basis X and low-dimension vector v have different sizes."
+         return
+      end if
+      ! Initialize output vector.
+      if (allocated(y) .eqv. .false.) allocate (y, source=X(1)); call y%zero()
+      ! Compute output vector.
+      if (.not. allocated(wrk)) allocate (wrk, source=X(1))
+      do i = 1, size(X)
+         wrk = X(i)
+         call wrk%scal(v(i))
+         call y%add(wrk)
+      end do
+      if (allocated(wrk)) deallocate (wrk)
+      return
    end subroutine get_vec
 
    !------------------------------------------
@@ -216,125 +216,125 @@ contains
    !-----                                -----
    !------------------------------------------
 
-   subroutine mat_mult_direct(C,A,B)
+   subroutine mat_mult_direct(C, A, B)
      !! Utility function to compute the product \( \mathbf{C} = \mathbf{AB} \) where
      !! `A` and `C` are arrays of `abstract_vector` and `B` a real-valued matrix.
-     class(abstract_vector), intent(out) :: C(:)
+      class(abstract_vector), intent(out) :: C(:)
      !! Array of `abstract_vector` containing the result of the operation.
-     class(abstract_vector), intent(in)  :: A(:)
+      class(abstract_vector), intent(in)  :: A(:)
      !! Array of `abstract_vector` to be right-multiplied by `B`.
-     real(kind=wp)         , intent(in)  :: B(:, :)
+      real(kind=wp), intent(in)  :: B(:, :)
      !! Real-valued matrix to be left-multiplied by `A`.
 
-     ! Local variables
-     class(abstract_vector) , allocatable :: wrk
-     integer :: i
+      ! Local variables
+      class(abstract_vector), allocatable :: wrk
+      integer :: i
 
-     ! Check sizes.
-     if (size(A) .ne. size(B,1)) then
-        write(*,*) "INFO : mat_mult dimension error"
-        write(*,*) "Abstract vector basis A and coefficient matrix B have incompatible sizes for the product C = A @ B."
-        stop 1
-     endif
-     if (size(C) .ne. size(B,2)) then
-        write(*,*) "INFO : mat_mult dimension error"
-        write(*,*) "Coefficient matrix B does not have the same amout of colums as output basis C for the product C = A @ B."
-        stop 1
-     endif
-     allocate(wrk, source=A(1))
-     ! Compute product column-wise
-     do i = 1, size(B,2)
-        call get_vec(wrk, A, B(:, i))
-        call C(i)%axpby(0.0_wp, wrk, 1.0_wp)
-     enddo
-     deallocate(wrk)
-     return
+      ! Check sizes.
+      if (size(A) .ne. size(B, 1)) then
+         write (*, *) "INFO : mat_mult dimension error"
+         write (*, *) "Abstract vector basis A and coefficient matrix B have incompatible sizes for the product C = A @ B."
+         stop 1
+      end if
+      if (size(C) .ne. size(B, 2)) then
+         write (*, *) "INFO : mat_mult dimension error"
+         write (*, *) "Coefficient matrix B does not have the same amout of colums as output basis C for the product C = A @ B."
+         stop 1
+      end if
+      allocate (wrk, source=A(1))
+      ! Compute product column-wise
+      do i = 1, size(B, 2)
+         call get_vec(wrk, A, B(:, i))
+         call C(i)%axpby(0.0_wp, wrk, 1.0_wp)
+      end do
+      deallocate (wrk)
+      return
    end subroutine mat_mult_direct
 
-    subroutine mat_mult_transpose(C,A,B)
+   subroutine mat_mult_transpose(C, A, B)
       !! Utility function to compute the product \(\mathbf{C} = \mathbf{A}^T \mathbf{B} \) where
       !! `C` is a real-valued matrix while `A` and `B` are arrays of `abstract_vector`.
-       class(abstract_vector) , intent(in)  :: A(:)
+      class(abstract_vector), intent(in)  :: A(:)
        !! Array of `abstract_vector`.
-       class(abstract_vector) , intent(in)  :: B(:)
+      class(abstract_vector), intent(in)  :: B(:)
        !! Array of `abstract_vector`.
-       real(kind=wp)          , intent(out) :: C(size(A),size(B))
+      real(kind=wp), intent(out) :: C(size(A), size(B))
        !! Inner-product matrix.
 
-       ! Local variables
-       integer :: i, j
+      ! Local variables
+      integer :: i, j
 
-       ! Compute product column-wise
-       C = 0.0_wp
-       do i = 1, size(A)
-          do j = 1, size(B)
-             C(i,j) = A(i)%dot(B(j))
-          enddo
-       enddo
-       return
-    end subroutine mat_mult_transpose
+      ! Compute product column-wise
+      C = 0.0_wp
+      do i = 1, size(A)
+         do j = 1, size(B)
+            C(i, j) = A(i)%dot(B(j))
+         end do
+      end do
+      return
+   end subroutine mat_mult_transpose
 
-    !--------------------------------
-    !-----                      -----
-    !-----     MATRIX UTILS     -----
-    !-----                      -----
-    !--------------------------------
- 
-    subroutine mat_axpby_realmat(A,alpha,B,beta)
+   !--------------------------------
+   !-----                      -----
+   !-----     MATRIX UTILS     -----
+   !-----                      -----
+   !--------------------------------
+
+   subroutine mat_axpby_realmat(A, alpha, B, beta)
       !! Utility function to compute in-place the result \( \mathbf{A} = \alpha \mathbf{A} + \beta \mathbf{B} \)
       !! where `A` and `B` are real-valued matrices.
       !!@note
       !! This function might probably be replaced by a call to an appropriate `blas` function.
       !!@endnote
-      real(kind=wp) , intent(inout)  :: A(:,:)
+      real(kind=wp), intent(inout)  :: A(:, :)
       !! Input/Ouput matrix.
-      real(kind=wp) , intent(in)     :: B(:,:)
+      real(kind=wp), intent(in)     :: B(:, :)
       !! Matrix to be added/subtracted to `A`.
-      real(kind=wp) , intent(in)     :: alpha, beta
+      real(kind=wp), intent(in)     :: alpha, beta
       !! Scalar multipliers.
 
       ! local variables
-      integer :: i,j
+      integer :: i, j
 
       ! Check size
       if (any(shape(A) .ne. shape(B))) then
-         write(*, *) "INFO : Array sizes incompatible for summation. "
+         write (*, *) "INFO : Array sizes incompatible for summation. "
          stop 1
-      endif
-      do i = 1, size(A,1)
-         do j = 1, size(A,2)
-            A(i,j) = alpha*A(i,j) + beta*B(i,j)
-         enddo
-      enddo
-    end subroutine mat_axpby_realmat
+      end if
+      do i = 1, size(A, 1)
+         do j = 1, size(A, 2)
+            A(i, j) = alpha*A(i, j) + beta*B(i, j)
+         end do
+      end do
+   end subroutine mat_axpby_realmat
 
-    subroutine mat_axpby_avecmat(A,alpha,B,beta)
+   subroutine mat_axpby_avecmat(A, alpha, B, beta)
       !! Utility function to compute in-place the result \( \mathbf{A} = \alpha \mathbf{A} + \beta \mathbf{B} \)
       !! where `A` and `B` are arrays of `abstract_vector`.
-       class(abstract_vector) , intent(inout)  :: A(:)
+      class(abstract_vector), intent(inout)  :: A(:)
        !! Input/Output array of `abstract_vector`.
-       class(abstract_vector) , intent(in)     :: B(:)
+      class(abstract_vector), intent(in)     :: B(:)
        !! Array of `abstract_vector` to be added/subtracted to `A`.
-       real(kind=wp)          , intent(in)     :: alpha, beta
+      real(kind=wp), intent(in)     :: alpha, beta
        !! Scalar multipliers.
 
-       ! local variables
-       integer :: i
+      ! local variables
+      integer :: i
 
-       ! Check size
-       if (size(A) .ne. size(B)) then
-          write(*, *) "INFO : Array sizes incompatible for summation. "
-          stop 1
-       endif
-       do i = 1, size(A)
-          call A(i)%axpby(alpha, B(i), beta)
-       enddo
-    end subroutine mat_axpby_avecmat
+      ! Check size
+      if (size(A) .ne. size(B)) then
+         write (*, *) "INFO : Array sizes incompatible for summation. "
+         stop 1
+      end if
+      do i = 1, size(A)
+         call A(i)%axpby(alpha, B(i), beta)
+      end do
+   end subroutine mat_axpby_avecmat
 
-    subroutine mat_zero(A)
+   subroutine mat_zero(A)
       !! Initialize an array of `abstract_vector` to zero by repeatedly calling
       !! `A(i)%zero()` for `i = 1, size(A)`.
-      class(abstract_vector) , intent(inout)  :: A(:)
+      class(abstract_vector), intent(inout)  :: A(:)
       !! Array of `abstract_vector` to be zeroed-out.
 
       ! local variables
@@ -342,16 +342,16 @@ contains
 
       do i = 1, size(A)
          call A(i)%zero()
-      enddo
-    end subroutine mat_zero
+      end do
+   end subroutine mat_zero
 
-    subroutine mat_copy(A,B)
+   subroutine mat_copy(A, B)
       !! Utility function to copy an array of `abstract_vector` into another one.
-      class(abstract_vector) , intent(out)  :: A(:)
+      class(abstract_vector), intent(out)  :: A(:)
       !! Output array.
-      class(abstract_vector) , intent(in)   :: B(:)
+      class(abstract_vector), intent(in)   :: B(:)
       !! Input array from which we wish to copy the content.
-      call mat_axpby(A,0.0_wp,B,1.0_wp)
-    end subroutine mat_copy
+      call mat_axpby(A, 0.0_wp, B, 1.0_wp)
+   end subroutine mat_copy
 
 end module lightkrylov_AbstractVector

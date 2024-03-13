@@ -180,7 +180,7 @@ contains
       class(abstract_vector), intent(out) :: vec_out
       !! Result of the matrix-vector product \(\mathbf{y} = \sigma \mathbf{Ax}\).
 
-      call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+      call self%A%matvec(vec_in, vec_out); call vec_out%scal(self%sigma)
       return
    end subroutine scaled_matvec
 
@@ -192,7 +192,7 @@ contains
       class(abstract_vector), intent(out) :: vec_out
       !! Result of the transpose matrix-vector product \(\mathbf{y} = \sigma \mathbf{A}^T \mathbf{x}\).
 
-      call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+      call self%A%rmatvec(vec_in, vec_out); call vec_out%scal(self%sigma)
       return
    end subroutine scaled_rmatvec
 

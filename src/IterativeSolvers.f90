@@ -88,7 +88,7 @@ module lightkrylov_IterativeSolvers
       module procedure refined_real_ritz_vector
       module procedure refined_cmplx_ritz_vector
    end interface refined_ritz_vector
-   
+
 contains
 
    !=======================================================================================
@@ -199,55 +199,55 @@ contains
    !
    !=======================================================================================
    function refined_real_ritz_vector(H, theta) result(x)
-     !> Input-output data.
-     real(kind=wp), intent(in) :: H(:, :)
-     real(kind=wp), intent(in) :: theta
-     real(kind=wp)             :: x(size(H, 2))
-     !> Miscellaneous.
-     real(kind=wp) :: A(size(H, 1), size(H, 2))
-     real(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
-     real(kind=wp) :: S(size(H, 2))
-     integer       :: i
+      !> Input-output data.
+      real(kind=wp), intent(in) :: H(:, :)
+      real(kind=wp), intent(in) :: theta
+      real(kind=wp)             :: x(size(H, 2))
+      !> Miscellaneous.
+      real(kind=wp) :: A(size(H, 1), size(H, 2))
+      real(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
+      real(kind=wp) :: S(size(H, 2))
+      integer       :: i
 
-     !> Build H - theta*Id.
-     A = H
-     do i = 1, size(A, 2)
-        A(i, i) = A(i, i) - theta
-     enddo
+      !> Build H - theta*Id.
+      A = H
+      do i = 1, size(A, 2)
+         A(i, i) = A(i, i) - theta
+      end do
 
-     !> USV.T = svd(A).
-     call svd(A, U, S, V)
+      !> USV.T = svd(A).
+      call svd(A, U, S, V)
 
-     !> Refined Ritz vector.
-     x = V(:, size(H, 2))
+      !> Refined Ritz vector.
+      x = V(:, size(H, 2))
 
-     return
+      return
    end function refined_real_ritz_vector
 
    function refined_cmplx_ritz_vector(H, theta) result(x)
-     !> Input-Output data.
-     real(kind=wp)   , intent(in) :: H(:, :)
-     complex(kind=wp), intent(in) :: theta
-     complex(kind=wp)             :: x(size(H, 2))
-     !> Miscellaneous.
-     complex(kind=wp) :: A(size(H, 1), size(H, 2))
-     complex(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
-     real(kind=wp)    :: S(size(H, 2))
-     integer          :: i
+      !> Input-Output data.
+      real(kind=wp), intent(in) :: H(:, :)
+      complex(kind=wp), intent(in) :: theta
+      complex(kind=wp)             :: x(size(H, 2))
+      !> Miscellaneous.
+      complex(kind=wp) :: A(size(H, 1), size(H, 2))
+      complex(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
+      real(kind=wp)    :: S(size(H, 2))
+      integer          :: i
 
-     !> Build H - theta*Id.
-     A = H
-     do i = 1, size(A, 2)
-        A(i, i) = A(i, i) - theta
-     enddo
+      !> Build H - theta*Id.
+      A = H
+      do i = 1, size(A, 2)
+         A(i, i) = A(i, i) - theta
+      end do
 
-     !> USV.H = svd(A).
-     call svd(A, U, S, V)
+      !> USV.H = svd(A).
+      call svd(A, U, S, V)
 
-     !> Refined Ritz vector.
-     x = V(:, size(H, 2))
+      !> Refined Ritz vector.
+      x = V(:, size(H, 2))
 
-     return
+      return
    end function refined_cmplx_ritz_vector
 
    !=======================================================================================
@@ -352,7 +352,7 @@ contains
       tol = optval(tolerance, rtol)
 
       ! --> Initialize variables.
-      allocate(eigvecs(kdim, kdim))
+      allocate (eigvecs(kdim, kdim))
       H = 0.0_wp; residuals = 0.0_wp; eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp); eigvecs = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
@@ -396,7 +396,7 @@ contains
       end do arnoldi
 
       !> Reconstruct the eigenvectors from the Krylov basis.
-      allocate(Xwrk, source=X) ; call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
+      allocate (Xwrk, source=X); call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
 
       return
    end subroutine eigs
@@ -486,7 +486,7 @@ contains
       tol = optval(tolerance, rtol)
 
       ! --> Initialize all variables.
-      allocate(eigvecs(1:kdim, 1:kdim))
+      allocate (eigvecs(1:kdim, 1:kdim))
       T = 0.0_wp; residuals = 0.0_wp; eigvecs = 0.0_wp; eigvals = 0.0_wp
       !> Make sure the first Krylov vector has unit-norm.
       alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
@@ -529,13 +529,13 @@ contains
       end do lanczos
 
       !> Compute refined Ritz vectors.
-      deallocate(eigvecs) ; allocate(eigvecs(k, conv)) ; eigvecs = 0.0_wp
+      deallocate (eigvecs); allocate (eigvecs(k, conv)); eigvecs = 0.0_wp
       do i = 1, conv
-         eigvecs(:, i) = refined_ritz_vector(T(1:k+1, 1:k), eigvals(i))
-      enddo
+         eigvecs(:, i) = refined_ritz_vector(T(1:k + 1, 1:k), eigvals(i))
+      end do
 
       !> Compute and returns the eigenvectors constructed from the Krylov basis.
-      allocate(Xwrk, source=X(1:k)) ; call initialize_krylov_subspace(X)
+      allocate (Xwrk, source=X(1:k)); call initialize_krylov_subspace(X)
       call mat_mult(X(1:conv), Xwrk(1:k), eigvecs)
 
       return
@@ -645,8 +645,8 @@ contains
       call initialize_krylov_subspace(U(2:kdim + 1))
       call initialize_krylov_subspace(V(2:kdim + 1))
 
-      allocate(uvecs(kdim, kdim)) ; uvecs = 0.0_wp
-      allocate(vvecs(kdim, kdim)) ; vvecs = 0.0_wp
+      allocate (uvecs(kdim, kdim)); uvecs = 0.0_wp
+      allocate (vvecs(kdim, kdim)); vvecs = 0.0_wp
 
       lanczos: do k = 1, kdim
          ! --> Compute the Lanczos bidiagonalization.
@@ -675,8 +675,8 @@ contains
       info = k
 
       !> Compute and return the low-rank factors from the Krylov bases.
-      allocate(Uwrk, source=U) ; allocate(Vwrk, source=V)
-      call mat_mult(U(1:kdim), Uwrk(1:kdim), uvecs) ; call mat_mult(V(1:kdim), Vwrk(1:kdim), vvecs)
+      allocate (Uwrk, source=U); allocate (Vwrk, source=V)
+      call mat_mult(U(1:kdim), Uwrk(1:kdim), uvecs); call mat_mult(V(1:kdim), Vwrk(1:kdim), vvecs)
 
       return
    end subroutine svds
