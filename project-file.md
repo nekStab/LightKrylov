@@ -9,6 +9,10 @@ project_github: https://github.com/nekStab/LightKrylov
 max_frontpage_items: 0
 ---
 
+@note
+This documentation still is work in progress.
+@endnote
+
 Targeting large-scale linear algebra applications where the matrix \(\mathbf{A}\) is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of certain of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
