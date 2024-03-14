@@ -36,8 +36,6 @@ The only requirement from the user to benefit from the capabilities of `LightKry
 - Spectral analysis : `eigs`, `eighs`, `svds`.
 - Linear systems : `gmres`, `cg`.
 
-At the present time, none of the algorithms support Krylov-Schur restarting procedure although this is part of our plan for `LightKrylov v2.0`.
-
 ### Known limitations
 
 For the sake of simplicity, `LightKrylov` only works with `real` or `double precision` data. While this might seem restrictive at first, consider that a complex-valued $n \times n$ linear system $\mathbf{Ax} = \mathbf{b}$ can always be rewritten using only real arithmetic as a $2n \times 2n$ real-valued system.
