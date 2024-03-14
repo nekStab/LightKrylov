@@ -13,10 +13,10 @@ jobs:
         uses: ResearchSoftwareActions/ford-build@v1.0
       - name: Deploy
         if: success()
-        uses: crazy-max/ghaction-github-pages@v1
+        uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: gh-pages
-          build_dir: ${{ steps.build.outputs.output_dir }}
+          build_dir: public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             
