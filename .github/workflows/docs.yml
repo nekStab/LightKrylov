@@ -1,0 +1,22 @@
+name: Docs
+
+on: push
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build
+        id: build
+        uses: ResearchSoftwareActions/ford-build@v1
+      - name: Deploy
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v1
+        with:
+          target_branch: gh-pages
+          build_dir: ${{ steps.build.outputs.output_dir }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            
