@@ -813,33 +813,35 @@ end subroutine initialize_krylov_subspace
    !
    ! Purpose:
    ! --------
-   ! Simple implementation of the QR factorization of a general (real) Krylov basis.
+   ! Simple implementation of the pivoted QR factorization of a general (real) Krylov basis.
+   !
+   !               A @ P = Q @ R
    !
    ! Algorithmic Features:
    ! ---------------------
    ! - In-place factorization
-   ! - Double Gram-Schmidt procedure for stability
+   ! - Modified / Double Gram-Schmidt procedure for stability
    ! - Includes a simple check for premature breakdown
    !
    ! Advantages:
    ! -----------
    ! - Suitable for all Krylov subspace dimensions
    ! - Robust with respect to floating point errors
+   ! - Optional pivoting to deal with rank-deficient matrices
    !
    ! Limitations:
    ! ------------
-   ! - No pivoting, i.e. the columns are orthonormalized in the natural ordering.
-   !   This may lead to premature breakdown if adjacent
-   !   columns are nearly colinear.
    ! - The current implementation only includes a simple check for breakdown
    !
    ! Input/Output Parameters:
    ! ------------------------
-   ! - Q        : Krylov basis to orthonormalize       [Input/Output]
-   ! - R        : Upper triangular coefficient matrix  [Output]
-   ! - info     : Information flag                     [Output]
-   ! - tol      : Tolerance for breakdown detection    [Optional, Input]
-   ! - verbosity: Verbosity control flag               [Optional, Input]
+   ! - Q        : Krylov basis to orthonormalize                  [Input/Output]
+   ! - R        : Upper triangular coefficient matrix             [Output]
+   ! - P        : Permutation matrix (Identity if no pivoting)    [Output]
+   ! - info     : Information flag                                [Output]
+   ! - ifpivot  : Switch on pivoting                              [Optional, Input], default: .false.
+   ! - verbosity: Verbosity control flag                          [Optional, Input], default: .false.
+   ! - tol      : Tolerance for breakdown detection               [Optional, Input]
    !
    ! References:
    ! -----------
