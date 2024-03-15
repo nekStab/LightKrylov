@@ -6,6 +6,7 @@ module lightkrylov_BaseKrylov
 
    !> Fortran standard library.
    use stdlib_optval, only: optval
+   use stdlib_linalg, only: eye
 
    implicit none
    include "dtypes.h"
@@ -33,7 +34,10 @@ subroutine initialize_krylov_subspace(X,B0)
    !> Internal variables.
    class(abstract_vector), allocatable :: B(:)
    real(kind=wp),          allocatable :: Rwrk(:,:)
+   real(kind=wp),          allocatable :: Pwrk(:,:)
    integer :: i, p, info
+
+   
 
    !> zero out X
    call mat_zero(X)
@@ -51,7 +55,8 @@ subroutine initialize_krylov_subspace(X,B0)
       call mat_zero(B); call mat_copy(B,B0)
       !> orthonormalize
       allocate(Rwrk(1:p,1:p)); Rwrk = 0.0_wp
-      call qr_factorization(B,Rwrk,info)
+      allocate(Pwrk(1:p,1:p)); Pwrk = 0.0_wp
+      call qr_factorization(B, Rwrk, Pwrk, info)
       !> Set initial vector
       call mat_copy(X(1:p),B)
    endif      
@@ -134,11 +139,14 @@ end subroutine initialize_krylov_subspace
       ! --> Miscellaneous
       real(kind=wp) :: beta
       real(kind=wp), allocatable :: res(:)
+      real(kind=wp), allocatable :: perm(:,:)
       integer :: k, i, kdim, kpm, kp, kpp
       
       ! --> Deals with optional non-unity block size
       p   = optval(block_size, 1)
       allocate(res(1:p))
+
+      allocate(perm(1:size(H,1),1:size(H,2))); perm = 0.0_wp
   
       info = 0
 
@@ -171,7 +179,7 @@ end subroutine initialize_krylov_subspace
          ! --> Update Hessenberg matrix w.r.t. existing vectors
          call update_hessenberg_matrix(H, X, k, p)
          ! --> Orthogonalize current vectors
-         call qr_factorization(X(kp+1:kpp),H(kp+1:kpp,kpm+1:kp),info)
+         call qr_factorization(X(kp+1:kpp), H(kp+1:kpp,kpm+1:kp), perm, info)
          ! --> extract residual norm (smallest diagonal element of R matrix)
          res = 0.0_wp
          do i = 1,p
@@ -840,61 +848,202 @@ end subroutine initialize_krylov_subspace
    !   See Chapter 5.2.8 : Modified Gram-Schmidt algorithm.
    !
    !=======================================================================================
-   subroutine qr_factorization(Q, R, info, verbosity, tol)
+   subroutine qr_factorization(Q, R, P, info, ifpivot, verbosity, tol)
       !> Basis to be orthonormalized.
       class(abstract_vector), intent(inout) :: Q(:)
       !> Gram-Schmidt factors
-      real(kind=wp), intent(out)   :: R(:, :)
+      real(kind=wp), intent(out)            :: R(:, :)
+      !> Permutation matrix
+      real(kind=wp), intent(out)            :: P(:,:)
       !> Information flag.
-      integer, intent(out)   :: info
+      integer, intent(out)                  :: info
       !> Optional arguments.
+      logical, optional, intent(in)         :: ifpivot
+      logical                               :: pivot
       logical, optional, intent(in)         :: verbosity
       logical                               :: verbose
       real(kind=wp), optional, intent(in)   :: tol
       real(kind=wp)                         :: tolerance
       !> Internal variables.
-      real(kind=wp) :: beta
-      integer       :: i, j, k, kdim
+      real(kind=wp)                         :: beta
+      integer                               :: idx, i, j, kdim, iwrk
+
+      integer                               :: idxv(1)
+      integer,                allocatable   :: ord(:)
+      real(kind=wp),          allocatable   :: Rii(:)
+      class(abstract_vector), allocatable   :: Qwrk(1)
 
       info = 0
 
-      ! --> Get basis size.
+      ! --> Get basis size and allocate temporary variables
       kdim = size(Q)
+      allocate(ord(1:kdim))
+      do i = 1, kdim
+         ord(i) = i
+      end do
+      allocate(Rii(1:kdim)); Rii = 0.0_wp
+      allocate(Qwrk(1), source=Q(1))
 
       ! --> Deal with the optional arguments.
-      verbose = optval(verbosity, .false.)
-      tolerance = optval(tol, rtol)
+      verbose   = optval(verbosity, .false.)
+      pivot     = optval(ifpivot, .false.)
+      tolerance = optval(tol, atol)
 
       R = 0.0_wp
-      !> Double Gram-Schmidt (To avoid stability issues with the classical GS)
-      do j = 1, kdim
-         !> Orthonormalization against existing columns
-         do i = 1, j - 1
-            beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
-            !> Update R
-            R(i, j) = beta
+      if (pivot) then
+
+         do i = 1, kdim
+            Rii(i) = Q(i)%dot(Q(i))
          end do
-         !!> Second pass
-         do i = 1, j - 1                                                   ! comment out the
-            beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)    ! second pass to
-            !> Update R                                                    ! see the simple QR
-            R(i, j) = R(i, j) + beta                                       ! factorization fail 
-         end do                                                            ! in the test
-         !> Normalize column
-         beta = Q(j)%norm(); call Q(j)%scal(1.0_wp/beta)
-         R(j, j) = beta
-         if (abs(beta) < tolerance) then
-            if (verbose) then
-               write (*, *) "INFO : Colinear columns detected."
-               write (*, *) "       (j, beta) = (", j, ",", beta, ")."
+
+         QR_step: do j = 1, kdim
+            idxv = maxloc(Rii)
+            idx = idxv(1)
+            if ( Rii(idx) < tolerance ) then
+               if (verbose) then
+                  write(*,*) 'INFO : Numerical rank is', j-1
+               endif
+               exit QR_step
+            endif
+
+            call swap_columns(Q, R, Rii, ord, j, idx)
+          
+            !> Normalize column
+            beta = Q(j)%norm();
+            !> Check for breakdown
+            if (abs(beta) < tolerance) then
+               if (verbose) then
+                  write (*, *) "INFO : Colinear columns detected."
+                  write (*, *) "       (j, beta) = (", j, ",", beta, ")."
+               end if
+               R(j,j) = 0.0_wp
+               call Q(j)%zero()
+            else
+               call Q(j)%scal(1.0_wp/beta)
+               R(j, j) = beta
             end if
-         end if
-      end do
+
+            !> Orthonormalize all columns against new vector (MGS)
+            do i = j+1, kdim
+               beta = Q(j)%dot(Q(i)); call Q(i)%axpby(1.0_wp, Q(j), -beta)
+               !> Update R
+               R(j, i) = beta
+            end do
+
+            ! Update Rii
+            Rii(j) = 0.0_wp
+            do i = j+1, kdim
+               Rii(i) = Rii(i) - R(j,i)**2
+            end do
+
+         end do QR_step
+
+         ! compute permutation matrix
+         P = 0.0_wp
+         do i = 1,kdim
+            P(ord(i),i) = 1.0
+         end do
+
+      else ! no pivoting
+
+         P = eye(kdim)
+         do j = 1, kdim
+            !> Orthonormalization against existing columns
+            do i = 1, j - 1
+               beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)
+               !> Update R
+               R(i, j) = beta
+            end do
+
+            !!> Second pass
+            do i = 1, j - 1                                                   ! comment out the
+               beta = Q(j)%dot(Q(i)); call Q(j)%axpby(1.0_wp, Q(i), -beta)    ! second pass to
+               !> Update R                                                    ! see the simple QR
+               R(i, j) = R(i, j) + beta                                       ! factorization fail 
+            end do                                                            ! in the test
+                                                                
+            !> Normalize column
+            beta = Q(j)%norm();
+            !> Check for breakdown
+            if (abs(beta) < tolerance) then
+               if (verbose) then
+                  write (*, *) "INFO : Colinear columns detected."
+                  write (*, *) "       (j, beta) = (", j, ",", beta, ")."
+               end if
+               R(j,j) = 0.0_wp
+               call Q(j)%zero()
+            else
+               call Q(j)%scal(1.0_wp/beta)
+               R(j, j) = beta
+            end if
+         end do 
+
+      end if
+         
       if (verbose) then
          write (*, *) "INFO : Exiting the QR factorization with exit code info = ", info, "."
       end if
 
       return
    end subroutine qr_factorization
+
+   subroutine swap_columns(Q, R, Rii, ord, i, j)
+      implicit none
+      !> Krylov Basis
+      class(abstract_vector), intent(inout) :: Q(:)
+      !> Gram-Schmidt factors
+      real(kind=wp),          intent(inout) :: R(:, :)
+      !> Diagonal factors
+      real(kind=wp),          intent(inout) :: Rii(:)
+      !> column ordering 
+      integer,                intent(inout) :: ord(:)
+      !> column indeces to be swapped
+      integer,                intent(in)    :: i, j
+
+      !> internals
+      class(abstract_vector), allocatable :: Qwrk
+      real(kind=wp),          allocatable :: Rwrk(:)
+      integer                             :: iwrk, m, n
+
+      ! sanity check
+      m = size(Q);
+      n = min(i,j) - 1
+      call assert_shape(R, [m, m], "swap_columns", "R")
+      if (i .gt. size(Q)) then
+         write (*, *) "swap_columns: Index", i, "is out of range."
+         STOP 1
+      endif
+      if (j .gt. size(Q)) then
+         write (*, *) "swap_columns: Index", j, "is out of range."
+         STOP 1
+      endif
+
+      ! allocate memory
+      allocate(Qwrk, source=Q(1)); call Qwrk%zero()
+      allocate(Rwrk(1:max(1,n))); Rwrk = 0.0_wp
+
+      ! swap columns 
+      call Qwrk%axpby(0.0_wp, Q(j), 1.0_wp)
+      call Q(j)%axpby(0.0_wp, Q(i), 1.0_wp)
+      call Q(i)%axpby(0.0_wp, Qwrk, 1.0_wp)
+      
+      Rwrk = 0.0_wp
+      Rwrk(1) = Rii(j)
+      Rii(j)  = Rii(i)
+      Rii(i)  = Rwrk(1)
+
+      iwrk   = ord(j)
+      ord(j) = ord(i)
+      ord(i) = iwrk
+
+      if (n .gt. 0) then
+         Rwrk     = R(1:n,j)
+         R(1:n,j) = R(1:n,i)
+         R(1:n,i) = Rwrk
+      endif
+
+      return
+   
+   end subroutine swap_columns
 
 end module lightkrylov_BaseKrylov

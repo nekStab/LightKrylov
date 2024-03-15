@@ -2,8 +2,10 @@ module TestKrylov
    use LightKrylov
    use TestVector
    use TestMatrices
+   use lightkrylov_Utils
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use stdlib_math, only: all_close
+   use stdlib_linalg, only: eye
    implicit none
 
    private
@@ -116,7 +118,7 @@ contains
       call mat_mult(G,X(1:kdim),X(1:kdim))
       
       ! --> Check result.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       call check(error, norm2(G - Id) < rtol)
 
       return
@@ -206,7 +208,7 @@ contains
       call mat_mult(G,X(1:p*kdim),X(1:p*kdim))
 
       ! --> Check result.
-      Id = 0.0_wp; forall (i=1:p*kdim) Id(i, i) = 1.0_wp
+      Id = eye(p*kdim)
       call check(error, norm2(G - Id) < rtol)
 
       return
@@ -308,7 +310,8 @@ contains
       call mat_mult(G,X,X)
 
       ! --> Check result.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = 0.0_wp
+      Id(1:kdim,1:kdim) = eye(kdim)
       call check(error, norm2(G - Id) < rtol)
 
       return
@@ -577,7 +580,7 @@ contains
       call mat_mult(M,V(1:kdim),V(1:kdim))
 
       !> Check results.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       call check(error, norm2(M - Id) < rtol)
 
       return
@@ -621,7 +624,7 @@ contains
       call mat_mult(M,V(1:kdim),V(1:kdim))
       
       !> Check results.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       call check(error, norm2(M - Id) < rtol)
 
       return
@@ -640,7 +643,9 @@ contains
       testsuite = [ &
                   new_unittest("QR factorization", test_qr_factorization), &
                   new_unittest("Q orthonormality", test_qr_basis_orthonormality), &
-                  new_unittest("QR worst case breakdown", test_qr_breakdown) &
+                  new_unittest("QR worst case breakdown", test_qr_breakdown), &
+                  new_unittest("Pivoted QR for exactly rank deficient matrices", test_piv_qr_absolute_rank_deficiency), &
+                  new_unittest("Pivoted QR for numerically rank deficient matrices", test_piv_qr_num_rank_deficiency) &
                   ]
 
       return
@@ -656,9 +661,11 @@ contains
       !> Test matrix.
       class(rvector), dimension(:), allocatable :: A
       !> Krylov subspace dimension.
-      integer, parameter :: kdim = 3
+      integer, parameter :: kdim = test_size
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
       !> Information flag.
       integer :: info
       !> Misc.
@@ -677,7 +684,7 @@ contains
       end do
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, info)
+      call qr_factorization(A, R, P, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
@@ -698,16 +705,17 @@ contains
       !> Test matrix.
       class(rvector), dimension(:), allocatable  :: A
       !> Krylov subspace dimension.
-      integer, parameter :: kdim = 3
+      integer, parameter :: kdim = test_size
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
       !> Misc.
       integer :: i, k
       real(kind=wp) :: Qmat(test_size, kdim)
-      real(kind=wp) :: alpha
 
       ! --> Initialize matrix.
       allocate (A(1:kdim)); 
@@ -716,13 +724,13 @@ contains
       enddo
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, info)
+      call qr_factorization(A, R, P, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       enddo
       ! --> Identity
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       ! --> Check correctness of QR factorization.
       call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
 
@@ -742,6 +750,8 @@ contains
       real(kind=wp), parameter :: eps = 1e-10
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
@@ -762,16 +772,146 @@ contains
       end do
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, info)
+      call qr_factorization(A, R, P, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       end do
       ! --> Identity
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       ! --> Check correctness of QR factorization.
       call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
 
    end subroutine test_qr_breakdown
+
+   subroutine test_piv_qr_absolute_rank_deficiency(error)
+      ! This function checks the correctness of the pivoted  QR implementation 
+      ! by testing it on a rank deficient matrix
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rvector), dimension(:), allocatable  :: A
+      !> Krylov subspace dimension.
+      integer, parameter :: kdim = 20
+      !> Number of zero columns
+      integer, parameter :: nzero = 5
+      !> GS factors.
+      real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
+      real(kind=wp) :: Id(kdim, kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: i, k, idx, rk
+      real(kind=wp) :: Amat(test_size, kdim), Qmat(test_size, kdim)
+      real(kind=wp) :: alpha
+      logical       :: mask(kdim)
+
+      ! Effective rank 
+      rk = kdim - nzero
+
+      ! --> Initialize matrix.
+      allocate (A(1:kdim)); 
+      do k = 1, kdim
+         call random_number(A(k)%data)
+      enddo
+      ! add zero vectors at random places
+      mask = .true.
+      k = nzero
+      do while ( k .gt. 0 )
+         call random_number(alpha)
+         idx = 1 + floor(kdim*alpha)
+         if (mask(idx)) then
+            A(idx)%data = 0.0_wp
+            mask(idx) = .false.
+            k = k - 1
+         endif
+      end do
+      ! copy data
+      do k = 1, kdim
+         Amat(:, k) = A(k)%data
+      end do
+
+      R = 0.0_wp
+      ! --> In-place QR factorization.
+      call qr_factorization(A, R, P, info,  ifpivot = .true.)
+      ! --> Extract data
+      do k = 1, kdim
+         Qmat(:, k) = A(k)%data
+      enddo
+
+      ! --> Check correctness of QR factorization.
+      call check(error, all_close(matmul(Amat,P), matmul(Qmat, R), rtol, atol))
+
+   end subroutine test_piv_qr_absolute_rank_deficiency
+
+   subroutine test_piv_qr_num_rank_deficiency(error)
+      ! This function checks the correctness of the pivoted  QR implementation 
+      ! by testing it on a rank deficient matrix
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rvector), dimension(:), allocatable  :: A
+      !> Krylov subspace dimension.
+      integer, parameter :: kdim = 5
+      !> Number of zero columns
+      integer, parameter :: nzero = 1
+      !> GS factors.
+      real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
+      real(kind=wp) :: Id(kdim, kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: i, k, idx, rk
+      real(kind=wp) :: Amat(test_size, kdim), Qmat(test_size, kdim)
+      real(kind=wp) :: rnd(test_size)
+      real(kind=wp) :: alpha
+      logical       :: mask(kdim)
+
+      ! Effective rank 
+      rk = kdim - nzero
+
+      ! --> Initialize matrix.
+      allocate (A(1:kdim)); 
+      do k = 1, kdim
+         call random_number(A(k)%data)
+      enddo
+
+      ! add zero vectors at random places
+      mask = .true.
+      k = 1
+      do while ( k .le. nzero )
+         call random_number(alpha)
+         idx = 1 + floor(kdim*alpha)
+         if (mask(idx)) then
+            call random_number(rnd)
+            A(idx)%data = A(k)%data + 10*atol*rnd
+            mask(idx) = .false.
+            k = k + 1
+         endif
+      end do
+      ! copy data
+      do k = 1, kdim
+         Amat(:, k) = A(k)%data
+      end do
+
+      R = 0.0_wp
+      ! --> In-place QR factorization.
+      call qr_factorization(A, R, P, info, ifpivot = .true.)
+     
+      ! --> Extract data
+      do k = 1, kdim
+         Qmat(:, k) = A(k)%data
+      enddo
+
+      ! --> Check correctness of QR factorization.
+      call check(error, all_close(matmul(Amat,P), matmul(Qmat, R), rtol, atol))
+
+   end subroutine test_piv_qr_num_rank_deficiency
 
 end module TestKrylov
