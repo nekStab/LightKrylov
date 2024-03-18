@@ -1,0 +1,28 @@
+name: Docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+    pull_request:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build
+        id: build
+        uses: ResearchSoftwareActions/ford-build@v1.0
+      - name: Deploy
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: gh-pages
+          build_dir: doc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            
