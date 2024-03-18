@@ -780,7 +780,7 @@ contains
       end subroutine rayleigh_quotient_form
    end subroutine two_sided_arnoldi_factorization
 
-   subroutine qr_factorization(Q, R, info, verbosity, tol)
+   subroutine qr_factorization(Q, R, P, info, ifpivot, verbosity, tol)
       !! Orthogonalization of an array of `abstract_vector` using the modified Gram-Schmid process.
       !!
       !! **Algorithmic Features**
