@@ -865,8 +865,6 @@ contains
                   !> Orthonormalize against existing columns
                   do k = 1, i-1
                      beta = Q(i)%dot(Q(k)); call Q(i)%axpby(1.0_wp, Q(k), -beta)
-                     !> Update R
-                     R(k, i) = beta
                   end do
                   beta = Q(i)%norm();
                   call Q(i)%scal(1.0_wp/beta)
