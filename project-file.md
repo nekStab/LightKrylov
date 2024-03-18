@@ -6,7 +6,6 @@ media_dir: ./imgs
 graph: true
 license: bsd
 project_github: https://github.com/nekStab/LightKrylov
-max_frontpage_items: 0
 ---
 
 @note
@@ -82,6 +81,8 @@ Provided you have cloned the repo, installing `LightKrylov` with `fpm` is as sim
 fpm build --profile release
 ```
 
+Please refer to the `fpm` documentation to see how to link `LightKrylov` with your application.
+
 ### Building with `make`
 
 N/A
@@ -117,6 +118,19 @@ fpm run --example Ginzburg-Landau
 ```
 
 For more details, please refer to each of the examples.
+
+### Documentation
+
+Online documentation is available [here](https://nekstab.github.io/LightKrylov/).
+If you want to generate the documentation locally, you can do so by using [`ford`](https://github.com/Fortran-FOSS-Programmers/ford), an automatic documentation generator for modern Fortran programs.
+Provided you have `ford` installed, you can build the documentation locally by running
+
+```{bash}
+ford project-file.md
+```
+
+Using Github Actions, the online documentation is automatically updated on every pull request to the `main` branch.
+Documentation related to features included in the `dev` branch is only available in the source code.
 
 ## Contributing
 
