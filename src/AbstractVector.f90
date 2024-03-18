@@ -29,9 +29,10 @@ module lightkrylov_AbstractVector
 
       !> Basic operations.
       procedure, pass(from), public :: copy
-      generic, public             :: assignment(=) => copy
+      generic, public               :: assignment(=) => copy
 
       procedure(abstract_zero), deferred, public :: zero
+      procedure(abstract_rand), deferred, public :: rand
 
       !> Scalar-vector product.
       procedure(abstract_scal), deferred, public :: scal
@@ -54,6 +55,13 @@ module lightkrylov_AbstractVector
          class(abstract_vector), intent(inout) :: self
       end subroutine abstract_zero
 
+      !> Random vector
+      subroutine abstract_rand(self, normalize)
+         import abstract_vector
+         class(abstract_vector), intent(inout) :: self
+         logical,                intent(in)    :: normalize
+      end subroutine abstract_rand
+
       !> Scalar-vector product.
       subroutine abstract_scal(self, alpha)
          import abstract_vector, wp
@@ -74,6 +82,7 @@ module lightkrylov_AbstractVector
          import abstract_vector, wp
          class(abstract_vector), intent(in) :: self, vec
       end function abstract_dot
+
    end interface
 
 contains

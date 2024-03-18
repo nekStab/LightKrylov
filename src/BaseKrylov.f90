@@ -37,8 +37,6 @@ subroutine initialize_krylov_subspace(X,B0)
    real(kind=wp),          allocatable :: Pwrk(:,:)
    integer :: i, p, info
 
-   
-
    !> zero out X
    call mat_zero(X)
 
@@ -868,7 +866,7 @@ end subroutine initialize_krylov_subspace
       real(kind=wp)                         :: tolerance
       !> Internal variables.
       real(kind=wp)                         :: beta
-      integer                               :: idx, i, j, kdim, iwrk
+      integer                               :: idx, i, j, k, kdim, iwrk
 
       integer                               :: idxv(1)
       integer,                allocatable   :: ord(:)
@@ -905,6 +903,17 @@ end subroutine initialize_krylov_subspace
                if (verbose) then
                   write(*,*) 'INFO : Numerical rank is', j-1
                endif
+               do i = j, kdim
+                  call Q(i)%rand(.true.)
+                  !> Orthonormalize against existing columns
+                  do k = 1, i-1
+                     beta = Q(i)%dot(Q(k)); call Q(i)%axpby(1.0_wp, Q(k), -beta)
+                     !> Update R
+                     R(k, i) = beta
+                  end do
+                  beta = Q(i)%norm();
+                  call Q(i)%scal(1.0_wp/beta)
+               end do
                exit QR_step
             endif
 
