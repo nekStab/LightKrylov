@@ -93,7 +93,7 @@ module lightkrylov_AbstractVector
       !! Compute the norm of an `abstract_vector`.
    end type abstract_vector
 
-   !> Abstract interfaces for the type-bound procedures.
+   ! Abstract interfaces for the type-bound procedures.
    abstract interface
       subroutine abstract_zero(self)
         !! Abstract interface to zero-out a vector in-place.

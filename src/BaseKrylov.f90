@@ -138,8 +138,6 @@ contains
       integer :: k_start, k_end, p
       logical :: verbose, trans
       real(kind=wp) :: tolerance
-
-      ! Internal variables.
       real(kind=wp) :: beta
       real(kind=wp), allocatable :: res(:)
       integer :: k, i, kdim, kpm, kp, kpp
