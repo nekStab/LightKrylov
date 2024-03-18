@@ -40,6 +40,7 @@ module Ginzburg_Landau
      procedure, pass(self), public :: dot
      procedure, pass(self), public :: scal
      procedure, pass(self), public :: axpby
+     procedure, pass(self), public :: rand
   end type state_vector
 
   !------------------------------------------
@@ -288,6 +289,15 @@ contains
     end select
     return
   end subroutine axpby
+
+  subroutine rand(self, normalize)
+    class(state_vector), intent(inout) :: self
+    logical,   intent(in)              :: normalize
+    if (normalize) then
+      call random_number(self%state)
+    endif
+    return
+  end subroutine rand
 
   !------------------------------------------------------------------------
   !-----     TYPE-BOUND PROCEDURES FOR THE EXPONENTIAL PROPAGATOR     -----

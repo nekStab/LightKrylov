@@ -825,7 +825,7 @@ contains
       ! Internal variables.
       real(kind=wp) :: beta
       logical                               :: verbose
-      integer       :: idx, i, j, kdim, iwrk
+      integer       :: idx, i, j, k, kdim, iwrk
       real(kind=wp)                         :: tolerance
       integer                               :: idxv(1)
       integer,                allocatable   :: ord(:)
