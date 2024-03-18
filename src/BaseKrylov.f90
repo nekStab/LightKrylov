@@ -781,24 +781,22 @@ contains
    end subroutine two_sided_arnoldi_factorization
 
    subroutine qr_factorization(Q, R, P, info, ifpivot, verbosity, tol)
-      !! Orthogonalization of an array of `abstract_vector` using the modified Gram-Schmid process.
+      !! Orthogonalization of an array of `abstract_vector` using the modified Gram-Schmid process with or without column pivoting.
       !!
       !! **Algorithmic Features**
       !!
       !! - In-place factorization
-      !! - Double Gram-Schmidt procedure for stability
+      !! - Modified / Double Gram-Schmidt procedure for stability
       !! - Includes a simple check for premature breakdown
       !!
       !! **Advantages**
       !!
       !! - Suitable for all Krylov subspace dimensions
       !! - Robust with respect to floating point errors
+      !! - Optional pivoting to deal with rank-deficient Krylov bases
       !!
       !! **Limitations**
       !!
-      !! - No pivoting, i.e. the columns are orthonormalized in the natural ordering.
-      !!   This may lead to premature breakdown if adjacent
-      !!   columns are nearly colinear.
       !! - The current implementation only includes a simple check for breakdown
       !!
       !! **References**
