@@ -861,7 +861,7 @@ contains
                   write(output_unit,*) 'INFO : Numerical rank is', j-1
                endif
                do i = j, kdim
-                  call Q(i)%rand(.true.)
+                  call Q(i)%rand(.false.)
                   !> Orthonormalize against existing columns
                   do k = 1, i-1
                      beta = Q(i)%dot(Q(k)); call Q(i)%axpby(1.0_wp, Q(k), -beta)

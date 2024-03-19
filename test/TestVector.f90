@@ -70,10 +70,14 @@ contains
    end subroutine axpby
 
    subroutine rand(self, normalize)
-      class(rvector), intent(inout) :: self
-      logical,   intent(in)         :: normalize
+      class(rvector),    intent(inout) :: self
+      logical, optional, intent(in)    :: normalize
+      ! internals
+      real(kind=wp) :: alpha
+      call random_number(self%data)
       if (normalize) then
-        call random_number(self%data)
+         alpha = self%norm()
+         call self%scal(1.0/alpha)
       endif
       return
     end subroutine rand

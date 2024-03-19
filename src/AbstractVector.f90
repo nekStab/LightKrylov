@@ -107,7 +107,7 @@ module lightkrylov_AbstractVector
          !! Abstract interface to set vector to (normalized) random vector
          import abstract_vector
          class(abstract_vector), intent(inout) :: self
-         logical,                intent(in)    :: normalize
+         logical, optional,      intent(in)    :: normalize
       end subroutine abstract_rand
 
       subroutine abstract_scal(self, alpha)

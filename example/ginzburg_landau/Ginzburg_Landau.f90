@@ -292,9 +292,13 @@ contains
 
   subroutine rand(self, normalize)
     class(state_vector), intent(inout) :: self
-    logical,   intent(in)              :: normalize
+    logical, optional,   intent(in)    :: normalize
+    ! internals
+    real(kind=wp) :: alpha
+    call random_number(self%state)
     if (normalize) then
-      call random_number(self%state)
+      alpha = self%norm()
+      call self%scal(1.0/alpha)
     endif
     return
   end subroutine rand
