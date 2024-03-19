@@ -1041,7 +1041,7 @@ contains
       !> Misc.
       integer :: i, k, idx, rk
       real(kind=wp) :: Amat(test_size, kdim), Qmat(test_size, kdim)
-      real(kind=wp) :: rnd(test_size)
+      real(kind=wp) :: rnd(test_size,2)
       real(kind=wp) :: alpha
       logical       :: mask(kdim)
 
@@ -1062,7 +1062,7 @@ contains
          idx = 1 + floor(kdim*alpha)
          if (mask(idx)) then
             call random_number(rnd)
-            A(idx)%data = A(k)%data + 10*atol*rnd
+            A(idx)%data = rnd(:,1)*A(k)%data + atol*rnd(:,2)
             mask(idx) = .false.
             k = k + 1
          endif
