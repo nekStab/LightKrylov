@@ -9,6 +9,7 @@ program Tester
    use TestVector
    use TestMatrices
    use TestKrylov
+   use TestExpm
    use TestIterativeSolvers
 
    implicit none
@@ -38,7 +39,8 @@ program Tester
                 new_testsuite("CG Test Suite", collect_cg_testsuite), &
                 !new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite)                          &
                 !new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite),  &
-                new_testsuite("QR factorization Test Suite", collect_qr_testsuite) &
+                new_testsuite("QR factorization Test Suite", collect_qr_testsuite), &
+                new_testsuite("Matrix Exponential", collect_expm_testsuite) &
                 ]
 
    do is = 1, size(testsuites)
