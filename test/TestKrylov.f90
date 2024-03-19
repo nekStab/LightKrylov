@@ -68,7 +68,7 @@ contains
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand();
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
 
@@ -107,7 +107,7 @@ contains
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
 
@@ -154,7 +154,7 @@ contains
       ! --> Initialize Krylov subspace.
       allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
       do k = 1,p
-         call random_number(X0(k)%data)
+         call X0(k)%rand()
       enddo
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
@@ -196,7 +196,7 @@ contains
       !! --> Initialize Krylov subspace.
       allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
       do k = 1,p
-         call random_number(X0(k)%data)
+         call X0(k)%rand()
       enddo
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
@@ -226,6 +226,7 @@ contains
      class(rmatrix), allocatable :: A
      !> Krylov subspace.
      class(rvector), dimension(:), allocatable :: X
+     class(rvector), dimension(:), allocatable :: X0
      !> Krylov subspace dimension.
      integer, parameter :: kdim = 10
      !> Hessenberg matrix.
@@ -240,8 +241,9 @@ contains
      ! --> Initialize matrix.
      A = rmatrix(); call random_number(A%data)
      ! --> Initialize Krylov subspace.
-     allocate (X(1:kdim + 1)) ; call initialize_krylov_subspace(X)
-     call random_number(X(1)%data); alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+     allocate (X(1:kdim + 1)); allocate (X0(1))
+     call X0(1)%rand()
+     call initialize_krylov_subspace(X, X0)
      H = 0.0_wp
      
      ! --> Arnoldi factorization.
@@ -304,7 +306,7 @@ contains
      ! --> Initialize Krylov subspace.
      allocate (X(p*(kdim + 1))) ; allocate(X0(p))
      do k = 1, p
-        call random_number(X0(k)%data)
+        call X0(k)%rand()
      enddo
      call initialize_krylov_subspace(X, X0)
      H = 0.0_wp
@@ -358,8 +360,9 @@ contains
      ! --> Initialize random matrix.
      A = rmatrix(); call random_number(A%data)
      ! --> Initialize Krylov subspace.
-     allocate(X(kdim + 1)) ; call initialize_krylov_subspace(X)
-     call random_number(X(1)%data) ; alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+     allocate (X(1:kdim + 1)); allocate (X0(1))
+     call X0(1)%rand()
+     call initialize_krylov_subspace(X, X0)
      H = 0.0_wp
      
      ! --> Arnoldi factorization.
@@ -427,7 +430,7 @@ contains
       A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(X, X0)
       T = 0.0_wp
 
@@ -470,7 +473,7 @@ contains
       A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(X, X0)
       T = 0.0_wp
 
@@ -529,9 +532,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspaces.
       allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(U, X0)
-      call random_number(X0(1)%data); ! new random number for V
+      call X0(1)%rand() ! new random number for V
       call initialize_krylov_subspace(V, X0)
       B = 0.0_wp
 
@@ -591,9 +594,9 @@ contains
 
       ! --> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       T = 0.0_wp
 
@@ -656,9 +659,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1));  allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -697,9 +700,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -738,9 +741,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1)); 
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -782,9 +785,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1)); 
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -938,7 +941,7 @@ contains
       call random_number(A(1)%data)
       do k = 2, size(A)
          ! each column is different from the previous one by eps
-         call random_number(wrk(1)%data)
+         call wrk(1)%rand()
          call A(k)%axpby(0.0_wp, A(k-1), 1.0_wp)
          call A(k)%axpby(1.0_wp, wrk(1), eps)
       end do
