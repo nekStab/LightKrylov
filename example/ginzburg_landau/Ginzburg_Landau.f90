@@ -5,6 +5,7 @@ module Ginzburg_Landau
   use LightKrylov
   !> Standard Library.
   use stdlib_math, only : linspace
+  use stdlib_optval, only : optval
   implicit none
 
   private
@@ -245,7 +246,7 @@ contains
 
 
   !=========================================================
-  !=========================================================
+  !======================================================normaliz===
   !=====                                               =====
   !=====     LIGHTKRYLOV MANDATORY IMPLEMENTATIONS     =====
   !=====                                               =====
@@ -290,11 +291,13 @@ contains
     return
   end subroutine axpby
 
-  subroutine rand(self, normalize)
+  subroutine rand(self, ifnorm)
     class(state_vector), intent(inout) :: self
-    logical, optional,   intent(in)    :: normalize
+    logical, optional,   intent(in)    :: ifnorm
     ! internals
+    logical :: normalize
     real(kind=wp) :: alpha
+    normalize = optval(ifnorm,.true.)
     call random_number(self%state)
     if (normalize) then
       alpha = self%norm()

@@ -103,11 +103,11 @@ module lightkrylov_AbstractVector
          !! Vector to be zeroed-out.
       end subroutine abstract_zero
 
-      subroutine abstract_rand(self, normalize)
+      subroutine abstract_rand(self, ifnorm)
          !! Abstract interface to set vector to (normalized) random vector
          import abstract_vector
          class(abstract_vector), intent(inout) :: self
-         logical, optional,      intent(in)    :: normalize
+         logical, optional,      intent(in)    :: ifnorm
       end subroutine abstract_rand
 
       subroutine abstract_scal(self, alpha)

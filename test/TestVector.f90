@@ -2,6 +2,7 @@ module TestVector
    use LightKrylov
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use stdlib_math, only: is_close, all_close
+   use stdlib_optval, only: optval
 
    implicit none
 
@@ -69,11 +70,13 @@ contains
       return
    end subroutine axpby
 
-   subroutine rand(self, normalize)
+   subroutine rand(self, ifnorm)
       class(rvector),    intent(inout) :: self
-      logical, optional, intent(in)    :: normalize
+      logical, optional, intent(in)    :: ifnorm
       ! internals
+      logical :: normalize
       real(kind=wp) :: alpha
+      normalize = optval(ifnorm, .true.)
       call random_number(self%data)
       if (normalize) then
          alpha = self%norm()
