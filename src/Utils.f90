@@ -7,7 +7,7 @@ module lightkrylov_utils
 
    private
    ! General-purpose utilities.
-   public :: assert_shape, stop_error
+   public :: assert_shape, stop_error, norml, log2
    ! Linear Algebra Utilities.
    public :: inv, svd, eig, eigh, lstsq, schur, ordschur
 
@@ -134,6 +134,36 @@ contains
 
       return
    end subroutine zassert_shape
+
+   !-------------------------------------
+   !-----                           -----
+   !-----     VARIOUS FUNCTIONS     -----
+   !-----                           -----
+   !-------------------------------------
+
+   function log2(x) result(y)
+      !! compute the base-2 logarithm of the input
+      implicit none
+      real(kind=wp), intent(in) :: x
+      real(kind=wp) :: y
+      y = log(x) / log(2.0_wp)
+   end function log2
+ 
+   function norml(A) result(norm)
+      !! compute the infinity norm of the real-valued input matrix A
+      implicit none   
+      real(kind=wp), intent(in) :: A(:,:)
+      ! Internal variables
+      integer       :: i, n
+      real(kind=wp) :: row_sum, norm
+      
+      norm = 0.0_wp
+      n = size(A,1)
+      do i = 1, n
+      row_sum = sum ( abs ( A(i,1:n) ) )
+      norm = max ( norm, row_sum )
+      end do
+   end function norml
 
    !-------------------------------------------
    !-----                                 -----
