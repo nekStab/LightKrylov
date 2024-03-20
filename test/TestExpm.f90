@@ -104,6 +104,8 @@ module TestExpm
       real(kind=wp) :: Xdata(test_size), Qdata(test_size)
       real(kind=wp) :: err
 
+!#define DEBUG
+
       Adata = 0.0_wp; Edata = 0.0_wp; Xdata = 0.0_wp
       allocate(Q); allocate(Xref); allocate(Xkryl)
       call Xref%zero()
@@ -126,6 +128,17 @@ module TestExpm
       
       !> Compute Krylov matrix exponential using the arnoldi method
       call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = verb, kdim = nkmax)
+
+#ifdef DEBUG
+      !> Save test data to disk.
+      call save_npy("debug/test_krylov_expm_operator.npy", Adata)
+      call save_npy("debug/test_krylov_expm_rhs.npy", Qdata)
+      call save_npy("debug/test_krylov_expm_ref.npy", Xdata)
+      call get_data(Xdata, Xkryl)
+      call save_npy("debug/test_krylov_expm_kexpm.npy", Xdata)
+#endif
+#undef DEBUG
+
       call Xkryl%axpby(1.0_wp, Xref, -1.0_wp)
       
       !> Compute 2-norm of the error
@@ -172,7 +185,7 @@ module TestExpm
       real(kind=wp) :: alpha
       real(kind=wp) :: err(p,p)
 
-#define DEBUG
+!#define DEBUG
 
       Adata = 0.0_wp; Edata = 0.0_wp; Xdata = 0.0_wp
       allocate(Xref(1:p)) ; call mat_zero(Xref)
@@ -215,9 +228,9 @@ module TestExpm
       call save_npy("debug/test_block_krylov_expm_rhs.npy", Qdata)
       call save_npy("debug/test_block_krylov_expm_ref.npy", Xdata)
       call get_data(Xdata, Xkryl)
-      call save_npy("debug/test_block_krylov_expm_ref_kexpm_seq.npy", Xdata)
+      call save_npy("debug/test_block_krylov_expm_kexpm_seq.npy", Xdata)
       call get_data(Xdata, Xkryl_block)
-      call save_npy("debug/test_block_krylov_expm_ref_kexpm_blk.npy", Xdata)
+      call save_npy("debug/test_block_krylov_expm_kexpm_blk.npy", Xdata)
 #endif
 #undef DEBUG
 
