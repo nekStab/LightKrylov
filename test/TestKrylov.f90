@@ -2,8 +2,10 @@ module TestKrylov
    use LightKrylov
    use TestVector
    use TestMatrices
+   use lightkrylov_Utils
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use stdlib_math, only: all_close
+   use stdlib_math, only: all_close, is_close
+   use stdlib_linalg, only: eye
    implicit none
 
    private
@@ -29,10 +31,11 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("Arnoldi full factorization", test_arnoldi_full_factorization), &
-                  new_unittest("Arnoldi basis orthogonality", test_arnoldi_basis_orthogonality), &
-                  new_unittest("Block Arnoldi full factorization", test_block_arnoldi_full_factorization), &
-                  new_unittest("Block Arnoldi basis orthogonality", test_block_arnoldi_basis_orthogonality) &
+           new_unittest("Arnoldi full factorization", test_arnoldi_full_factorization), &
+           new_unittest("Arnoldi basis orthogonality", test_arnoldi_basis_orthogonality), &
+           new_unittest("Block Arnoldi full factorization", test_block_arnoldi_full_factorization), &
+           new_unittest("Block Arnoldi basis orthogonality", test_block_arnoldi_basis_orthogonality), &
+           new_unittest("Krylov-Schur restart", test_krylov_schur) &
                   ]
 
       return
@@ -65,7 +68,7 @@ contains
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand();
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
 
@@ -104,7 +107,7 @@ contains
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
 
@@ -116,7 +119,7 @@ contains
       call mat_mult(G,X(1:kdim),X(1:kdim))
       
       ! --> Check result.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       call check(error, norm2(G - Id) < rtol)
 
       return
@@ -151,7 +154,7 @@ contains
       ! --> Initialize Krylov subspace.
       allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
       do k = 1,p
-         call random_number(X0(k)%data)
+         call X0(k)%rand()
       enddo
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
@@ -193,7 +196,7 @@ contains
       !! --> Initialize Krylov subspace.
       allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
       do k = 1,p
-         call random_number(X0(k)%data)
+         call X0(k)%rand()
       enddo
       call initialize_krylov_subspace(X, X0)
       H = 0.0_wp
@@ -206,12 +209,186 @@ contains
       call mat_mult(G,X(1:p*kdim),X(1:p*kdim))
 
       ! --> Check result.
-      Id = 0.0_wp; forall (i=1:p*kdim) Id(i, i) = 1.0_wp
+      Id = eye(p*kdim)
       call check(error, norm2(G - Id) < rtol)
 
       return
    end subroutine test_block_arnoldi_basis_orthogonality
 
+   subroutine test_krylov_schur(error)
+     ! This function checks the correctness of the Arnoldi implementation by
+     ! verifying that the full factorization is correct, i.e. A @ X[1:k] = X[1:k+1] @ H.
+     ! A random 3x3 matrix is used for testing.
+     
+     !> Error type to be returned.
+     type(error_type), allocatable, intent(out) :: error
+     !> Test matrix.
+     class(rmatrix), allocatable :: A
+     !> Krylov subspace.
+     class(rvector), dimension(:), allocatable :: X
+     class(rvector), dimension(:), allocatable :: X0
+     !> Krylov subspace dimension.
+     integer, parameter :: kdim = 10
+     !> Hessenberg matrix.
+     real(kind=wp) :: H(kdim + 1, kdim)
+     !> Information flag.
+     integer :: info
+     !> Misc.
+     integer :: k, nblk
+     real(kind=wp) :: Xdata(test_size, kdim + 1)
+     real(kind=wp) :: alpha
+     
+     ! --> Initialize matrix.
+     A = rmatrix(); call random_number(A%data)
+     ! --> Initialize Krylov subspace.
+     allocate (X(1:kdim + 1)); allocate (X0(1))
+     call X0(1)%rand()
+     call initialize_krylov_subspace(X, X0)
+     H = 0.0_wp
+     
+     ! --> Arnoldi factorization.
+     call arnoldi_factorization(A, X, H, info)
+     
+     ! --> Krylov-Schur condensation.
+     call krylov_schur_restart(nblk, X, H, select_eigs)
+     
+     ! --> Check correctness of full factorization.
+     do k = 1, kdim + 1
+        Xdata(:, k) = X(k)%data
+     end do
+     
+     !> Infinity-norm of the error.
+     alpha = maxval(abs(matmul(A%data, Xdata(:, 1:nblk)) - matmul(Xdata(:, 1:nblk+1), H(1:nblk+1, 1:nblk))))
+     
+     !> Check correctness.
+     call check(error, alpha < rtol)
+     
+     return
+   contains
+     function select_eigs(eigvals) result(selected)
+       complex(kind=wp), intent(in) :: eigvals(:)
+       logical                      :: selected(size(eigvals))
+       selected = (eigvals%re > 0.5_wp)
+       return
+     end function select_eigs
+   end subroutine test_krylov_schur
+   
+   subroutine test_block_krylov_schur(error)
+     ! This function checks the correctness of the Arnoldi implementation by
+     ! verifying that the full factorization is correct, i.e. A @ X[1:k] = X[1:k+1] @ H.
+     ! A random 3x3 matrix is used for testing.
+     
+     !> Error type to be returned.
+     type(error_type), allocatable, intent(out) :: error
+     !> Test matrix.
+     class(rmatrix), allocatable :: A
+     !> Krylov subspace.
+     class(rvector), dimension(:), allocatable :: X
+     !> Krylov subspace dimension.
+     integer, parameter :: p = 3
+     integer, parameter :: kdim = 7
+     !> Hessenberg matrix.
+     real(kind=wp) :: H(p*(kdim + 1), p*kdim)
+     !> Information flag.
+     integer :: info
+     !> Misc.
+     integer :: k, nblk
+     real(kind=wp) :: Xdata(test_size, p*(kdim + 1))
+     real(kind=wp) :: alpha, m(test_size)
+     class(rvector), allocatable :: X0(:)
+     
+     ! --> Initialize matrix.
+     A = rmatrix(); call random_number(A%data) ; m = sum(A%data, 2)/test_size
+     do k = 1, test_size
+        A%data(:, k) = A%data(:, k) - m
+     enddo
+     !A%data = 0.5 * (A%data + transpose(A%data))
+     ! --> Initialize Krylov subspace.
+     allocate (X(p*(kdim + 1))) ; allocate(X0(p))
+     do k = 1, p
+        call X0(k)%rand()
+     enddo
+     call initialize_krylov_subspace(X, X0)
+     H = 0.0_wp
+     
+     ! --> Arnoldi factorization.
+     call arnoldi_factorization(A, X, H, info, block_size=p)
+     
+     ! --> Krylov-Schur condensation.
+     call krylov_schur_restart(nblk, X, H, select_eigs, p)
+     
+     ! --> Check correctness of full factorization.
+     do k = 1, p*(kdim + 1)
+        Xdata(:, k) = X(k)%data
+     end do
+     
+     !> Infinity-norm of the error.
+     alpha = maxval(abs(matmul(A%data, Xdata(:, 1:p*nblk)) - matmul(Xdata(:, 1:p*(nblk+1)), H(1:p*(nblk+1), 1:p*nblk))))
+     
+     !> Check correctness.
+     call check(error, alpha < rtol)
+     
+     return
+   contains
+     function select_eigs(eigvals) result(selected)
+       complex(kind=wp), intent(in) :: eigvals(:)
+       logical                      :: selected(size(eigvals))
+       selected = (abs(eigvals) > 2.0_wp)
+       return
+     end function select_eigs
+   end subroutine test_block_krylov_schur
+   
+   subroutine test_krylov_schur_basis_orthogonality(error)
+     !> Error type to be returned.
+     type(error_type), allocatable, intent(out) :: error
+     !> Test matrix.
+     class(rmatrix), allocatable :: A
+     !> Krylov subspace.
+     class(rvector), dimension(:), allocatable :: X
+     class(rvector), dimension(:), allocatable :: X0
+     !> Krylov subspace dimension.
+     integer, parameter :: kdim = 10
+     !> Hessenberg matrix.
+     double precision, dimension(kdim + 1, kdim) :: H
+     !> Information flag.
+     integer :: info
+     !> Misc.
+     double precision, dimension(kdim, kdim) :: G, Id
+     double precision :: alpha
+     integer :: i, j, k, nblk
+     
+     ! --> Initialize random matrix.
+     A = rmatrix(); call random_number(A%data)
+     ! --> Initialize Krylov subspace.
+     allocate (X(1:kdim + 1)); allocate (X0(1))
+     call X0(1)%rand()
+     call initialize_krylov_subspace(X, X0)
+     H = 0.0_wp
+     
+     ! --> Arnoldi factorization.
+     call arnoldi_factorization(A, X, H, info)
+     
+     ! --> Krylov-Schur condensation.
+     call krylov_schur_restart(nblk, X, H, select_eigs)
+     
+     ! --> Compute Gram matrix associated to the Krylov basis.
+     G = 0.0_wp
+     call mat_mult(G(1:nblk, 1:nblk),X(1:nblk),X(1:nblk))
+     
+     ! --> Check result.
+     Id = 0.0_wp; forall (i=1:nblk) Id(i, i) = 1.0_wp
+     call check(error, norm2(G - Id) < rtol)
+     
+     return
+   contains
+     function select_eigs(eigvals) result(selected)
+       complex(kind=wp), intent(in) :: eigvals(:)
+       logical                      :: selected(size(eigvals))
+       selected = (abs(eigvals) > 0.5_wp)
+       return
+     end function select_eigs
+   end subroutine test_krylov_schur_basis_orthogonality
+   
    !-----------------------------------------------------------------
    !-----                                                       -----
    !-----     TEST SUITE FOR THE LANCZOS TRIDIAGONALIZATION     -----
@@ -253,7 +430,7 @@ contains
       A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(X, X0)
       T = 0.0_wp
 
@@ -296,7 +473,7 @@ contains
       A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
       ! --> Initialize Krylov subspace.
       allocate (X(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(X, X0)
       T = 0.0_wp
 
@@ -308,7 +485,8 @@ contains
       call mat_mult(G,X,X)
 
       ! --> Check result.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = 0.0_wp
+      Id(1:kdim,1:kdim) = eye(kdim)
       call check(error, norm2(G - Id) < rtol)
 
       return
@@ -354,9 +532,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       ! --> Initialize Krylov subspaces.
       allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(U, X0)
-      call random_number(X0(1)%data); ! new random number for V
+      call X0(1)%rand() ! new random number for V
       call initialize_krylov_subspace(V, X0)
       B = 0.0_wp
 
@@ -416,9 +594,9 @@ contains
 
       ! --> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       T = 0.0_wp
 
@@ -481,9 +659,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1));  allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -522,9 +700,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1))
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -563,9 +741,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1)); 
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -577,7 +755,7 @@ contains
       call mat_mult(M,V(1:kdim),V(1:kdim))
 
       !> Check results.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       call check(error, norm2(M - Id) < rtol)
 
       return
@@ -607,9 +785,9 @@ contains
       A = rmatrix(); call random_number(A%data)
       !> Initialize Krylov subspaces.
       allocate (V(1:kdim + 1)); allocate (W(1:kdim + 1)); allocate (X0(1)); 
-      call random_number(X0(1)%data);
+      call X0(1)%rand()
       call initialize_krylov_subspace(V, X0)
-      call random_number(X0(1)%data); ! new random number for W
+      call X0(1)%rand() ! new random number for W
       call initialize_krylov_subspace(W, X0)
       H = 0.0_wp; G = 0.0_wp
 
@@ -621,7 +799,7 @@ contains
       call mat_mult(M,V(1:kdim),V(1:kdim))
       
       !> Check results.
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       call check(error, norm2(M - Id) < rtol)
 
       return
@@ -640,7 +818,9 @@ contains
       testsuite = [ &
                   new_unittest("QR factorization", test_qr_factorization), &
                   new_unittest("Q orthonormality", test_qr_basis_orthonormality), &
-                  new_unittest("QR worst case breakdown", test_qr_breakdown) &
+                  new_unittest("QR worst case breakdown", test_qr_breakdown), &
+                  new_unittest("Pivoted QR for exactly rank deficient matrices", test_piv_qr_absolute_rank_deficiency), &
+                  new_unittest("Pivoted QR for numerically rank deficient matrices", test_piv_qr_num_rank_deficiency) &
                   ]
 
       return
@@ -656,9 +836,11 @@ contains
       !> Test matrix.
       class(rvector), dimension(:), allocatable :: A
       !> Krylov subspace dimension.
-      integer, parameter :: kdim = 3
+      integer, parameter :: kdim = test_size
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
       !> Information flag.
       integer :: info
       !> Misc.
@@ -677,7 +859,7 @@ contains
       end do
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, info)
+      call qr_factorization(A, R, P, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
@@ -698,16 +880,17 @@ contains
       !> Test matrix.
       class(rvector), dimension(:), allocatable  :: A
       !> Krylov subspace dimension.
-      integer, parameter :: kdim = 3
+      integer, parameter :: kdim = test_size
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
       !> Misc.
       integer :: i, k
       real(kind=wp) :: Qmat(test_size, kdim)
-      real(kind=wp) :: alpha
 
       ! --> Initialize matrix.
       allocate (A(1:kdim)); 
@@ -716,15 +899,16 @@ contains
       enddo
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, info)
+      call qr_factorization(A, R, P, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       enddo
+
       ! --> Identity
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
+      call check(error, norm2(Id - matmul(transpose(Qmat), Qmat)) < rtol)
 
    end subroutine test_qr_basis_orthonormality
 
@@ -742,6 +926,8 @@ contains
       real(kind=wp), parameter :: eps = 1e-10
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
@@ -756,22 +942,152 @@ contains
       call random_number(A(1)%data)
       do k = 2, size(A)
          ! each column is different from the previous one by eps
-         call random_number(wrk(1)%data)
+         call wrk(1)%rand()
          call A(k)%axpby(0.0_wp, A(k-1), 1.0_wp)
          call A(k)%axpby(1.0_wp, wrk(1), eps)
       end do
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, info)
+      call qr_factorization(A, R, P, info)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       end do
       ! --> Identity
-      Id = 0.0_wp; forall (i=1:kdim) Id(i, i) = 1.0_wp
+      Id = eye(kdim)
       ! --> Check correctness of QR factorization.
       call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
 
    end subroutine test_qr_breakdown
+
+   subroutine test_piv_qr_absolute_rank_deficiency(error)
+      ! This function checks the correctness of the pivoted  QR implementation 
+      ! by testing it on a rank deficient matrix
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rvector), dimension(:), allocatable  :: A
+      !> Krylov subspace dimension.
+      integer, parameter :: kdim = 20
+      !> Number of zero columns
+      integer, parameter :: nzero = 5
+      !> GS factors.
+      real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
+      real(kind=wp) :: Id(kdim, kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: i, k, idx, rk
+      real(kind=wp) :: Amat(test_size, kdim), Qmat(test_size, kdim)
+      real(kind=wp) :: alpha
+      logical       :: mask(kdim)
+
+      ! Effective rank 
+      rk = kdim - nzero
+
+      ! --> Initialize matrix.
+      allocate (A(1:kdim)); 
+      do k = 1, kdim
+         call random_number(A(k)%data)
+      enddo
+      ! add zero vectors at random places
+      mask = .true.
+      k = nzero
+      do while ( k .gt. 0 )
+         call random_number(alpha)
+         idx = 1 + floor(kdim*alpha)
+         if (mask(idx)) then
+            A(idx)%data = 0.0_wp
+            mask(idx) = .false.
+            k = k - 1
+         endif
+      end do
+      ! copy data
+      do k = 1, kdim
+         Amat(:, k) = A(k)%data
+      end do
+
+      R = 0.0_wp
+      ! --> In-place QR factorization.
+      call qr_factorization(A, R, P, info,  ifpivot = .true.)
+      ! --> Extract data
+      do k = 1, kdim
+         Qmat(:, k) = A(k)%data
+      enddo
+
+      ! --> Check correctness of QR factorization.
+      call check(error, all_close(matmul(Amat,P), matmul(Qmat, R), rtol, atol))
+
+   end subroutine test_piv_qr_absolute_rank_deficiency
+
+   subroutine test_piv_qr_num_rank_deficiency(error)
+      ! This function checks the correctness of the pivoted  QR implementation 
+      ! by testing it on a rank deficient matrix
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Test matrix.
+      class(rvector), dimension(:), allocatable  :: A
+      !> Krylov subspace dimension.
+      integer, parameter :: kdim = 5
+      !> Number of zero columns
+      integer, parameter :: nzero = 1
+      !> GS factors.
+      real(kind=wp) :: R(kdim, kdim)
+      !> Permutation matrix.
+      real(kind=wp) :: P(kdim, kdim)
+      real(kind=wp) :: Id(kdim, kdim)
+      !> Information flag.
+      integer :: info
+      !> Misc.
+      integer :: i, k, idx, rk
+      real(kind=wp) :: Amat(test_size, kdim), Qmat(test_size, kdim)
+      real(kind=wp) :: rnd(test_size,2)
+      real(kind=wp) :: alpha
+      logical       :: mask(kdim)
+
+      ! Effective rank 
+      rk = kdim - nzero
+
+      ! --> Initialize matrix.
+      allocate (A(1:kdim)); 
+      do k = 1, kdim
+         call random_number(A(k)%data)
+      enddo
+
+      ! add zero vectors at random places
+      mask = .true.
+      k = 1
+      do while ( k .le. nzero )
+         call random_number(alpha)
+         idx = 1 + floor(kdim*alpha)
+         if (mask(idx)) then
+            call random_number(rnd)
+            A(idx)%data = rnd(:,1)*A(k)%data + atol*rnd(:,2)
+            mask(idx) = .false.
+            k = k + 1
+         endif
+      end do
+      ! copy data
+      do k = 1, kdim
+         Amat(:, k) = A(k)%data
+      end do
+
+      R = 0.0_wp
+      ! --> In-place QR factorization.
+      call qr_factorization(A, R, P, info, ifpivot = .true.)
+     
+      ! --> Extract data
+      do k = 1, kdim
+         Qmat(:, k) = A(k)%data
+      enddo
+
+      ! --> Check correctness of QR factorization.
+      call check(error, all_close(matmul(Amat,P), matmul(Qmat, R), rtol, atol))
+
+   end subroutine test_piv_qr_num_rank_deficiency
 
 end module TestKrylov

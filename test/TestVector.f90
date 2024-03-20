@@ -2,6 +2,7 @@ module TestVector
    use LightKrylov
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use stdlib_math, only: is_close, all_close
+   use stdlib_optval, only: optval
 
    implicit none
 
@@ -19,6 +20,7 @@ module TestVector
       procedure, pass(self), public :: dot
       procedure, pass(self), public :: scal
       procedure, pass(self), public :: axpby
+      procedure, pass(self), public :: rand
    end type rvector
 
 contains
@@ -67,6 +69,21 @@ contains
       end select
       return
    end subroutine axpby
+
+   subroutine rand(self, ifnorm)
+      class(rvector),    intent(inout) :: self
+      logical, optional, intent(in)    :: ifnorm
+      ! internals
+      logical :: normalize
+      real(kind=wp) :: alpha
+      normalize = optval(ifnorm, .true.)
+      call random_number(self%data)
+      if (normalize) then
+         alpha = self%norm()
+         call self%scal(1.0/alpha)
+      endif
+      return
+    end subroutine rand
 
    !-------------------------------------
    !-----                           -----
