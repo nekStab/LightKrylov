@@ -1,0 +1,27 @@
+name: Docs
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  publish:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Documentation
+        uses: ResearchSoftwareActions/ford-build@v1.0
+        id: build
+
+      - name: Deploy to GitHub Pages
+        if: steps.build.outcome == 'success'
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: gh-pages
+          build_dir: doc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
