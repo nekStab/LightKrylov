@@ -146,6 +146,7 @@ contains
       call mat_zero(Xwrk)
       call mat_copy(Xwrk(1:p),B(1:p))
       call qr_factorization(Xwrk(1:p),R(1:p,1:p),perm(1:p,1:p),info,ifpivot=.true.)
+      R = matmul(R, transpose(perm))
       if (norm2(R(1:p,1:p)) .eq. 0.0_wp) then
          ! input is zero => output is zero
          call mat_zero(C)
