@@ -37,3 +37,6 @@
 
 # swap files
 *~
+
+# test/debug folder
+debug/

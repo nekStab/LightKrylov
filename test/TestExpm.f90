@@ -5,6 +5,7 @@ module TestExpm
    Use LightKrylov_expmlib
    use testdrive  , only : new_unittest, unittest_type, error_type, check
    use stdlib_math, only : all_close
+   use stdlib_io_npy, only : save_npy
    implicit none
  
    private
@@ -167,6 +168,8 @@ module TestExpm
       real(kind=wp) :: alpha
       real(kind=wp) :: err(p,p)
 
+      #define DEBUG
+
       Amat = 0.0_wp; Emat = 0.0_wp; Xmat = 0.0_wp
       allocate(Xref(1:p)) ; call mat_zero(Xref)
       allocate(Xkryl(1:p)) ; call mat_zero(Xkryl)
@@ -195,12 +198,31 @@ module TestExpm
       do i = 1,p
          write(*,*) '    column',i
          call kexpm(Xkryl(i:i), A, Q(i:i), tau, tol, info, verbosity = .true., kdim = nkmax)
-         call Xkryl(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
       end do
       write(*,*) 'BLOCK-ARNOLDI'
       !> Compute Krylov matrix exponential using block-arnoldi method
       call kexpm(Xkryl_block(1:p), A, Q(1:p), tau, tol, info, verbosity = .true., kdim = nkmax)
+      
+      #ifdef DEBUG
+      !> Save test data to disk.
+      call save_npy("debug/test_block_krylov_expm_operator.npy", Amat)
+      call save_npy("debug/test_block_krylov_expm_rhs.npy", Qmat)
+      call save_npy("debug/test_block_krylov_expm_ref.npy", Xmat)
+      Xmat = 0.0_wp
       do i = 1,p
+         Xmat(:,i) = Xkryl(i)%data
+      end do
+      call save_npy("debug/test_block_krylov_expm_ref_kexpm_seq.npy", Xmat)
+      Xmat = 0.0_wp
+      do i = 1,p
+         Xmat(:,i) = Xkryl_block(i)%data
+      end do
+      call save_npy("debug/test_block_krylov_expm_ref_kexpm_blk.npy", Xmat)
+      #endif
+      !#undef DEBUG
+
+      do i = 1,p
+         call Xkryl(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
          call Xkryl_block(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
       end do
 
