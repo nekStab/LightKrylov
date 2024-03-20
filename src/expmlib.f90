@@ -144,8 +144,8 @@ contains
       ! Normalize input vector and set initialise Krylov subspace
       R = 0.0_wp
       call mat_zero(Xwrk)
-      call mat_copy(Xwrk(1:p),B(1:p))
-      call qr_factorization(Xwrk(1:p),R(1:p,1:p),perm(1:p,1:p),info,ifpivot=.true.)
+      call mat_copy(Xwrk(1:p), B(1:p))
+      call qr_factorization(Xwrk(1:p), R(1:p,1:p), perm(1:p,1:p), info, ifpivot=.true.)
       R = matmul(R, transpose(perm))
       if (norm2(R(1:p,1:p)) .eq. 0.0_wp) then
          ! input is zero => output is zero
@@ -174,18 +174,18 @@ contains
                kpp = kp
             endif
             ! compute the (dense) matrix exponential of the extended Hessenberg matrix
-            call expm(E(1:kpp,1:kpp),tau*H(1:kpp,1:kpp))
+            call expm(E(1:kpp,1:kpp), tau*H(1:kpp,1:kpp))
             ! project back into original space
             call mat_zero(C)
-            call mat_mult(Xwrk(1:p),X(1:kpp),E(1:kpp,1:p))
-            call mat_mult(C(1:p),Xwrk(1:p),R(1:p,1:p))
+            call mat_mult(Xwrk(1:p), X(1:kpp), E(1:kpp,1:p))
+            call mat_mult(C(1:p), Xwrk(1:p), R(1:p,1:p))
 
             ! cheap error estimate (this is actually the magnitude of the included correction thus too conservative)
             if (info .eq. kp) then
                ! approximation is exact
                err_est = 0.0_wp
             else
-               em = matmul(E(kp+1:kpp,1:p),R(1:p,1:p))
+               em = matmul(E(kp+1:kpp,1:p), R(1:p,1:p))
                err_est = norm2(em)
             endif
             if (err_est .lt. tol) then
