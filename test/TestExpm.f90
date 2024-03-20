@@ -97,6 +97,7 @@ module TestExpm
       integer, parameter         :: nkmax = 15
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
+      logical, parameter         :: verb  = .false.
       !> Misc.
       integer :: i,j,k
       real(kind=wp) :: Xmat(test_size), Qmat(test_size)
@@ -122,12 +123,12 @@ module TestExpm
       Xref%data = Xmat(:)
       
       !> Compute Krylov matrix exponential using the arnoldi method
-      call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = .true., kdim = nkmax)
+      call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = verb, kdim = nkmax)
       call Xkryl%axpby(1.0_wp, Xref, -1.0_wp)
       
       !> Compute 2-norm of the error
       err = Xkryl%norm()
-      write(*, *) '    true error:          ||error||_2 = ', err
+      if (verb) write(*, *) '    true error:          ||error||_2 = ', err
      
       call check(error, err < rtol)
       
@@ -162,13 +163,14 @@ module TestExpm
       integer, parameter         :: p     = 2
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
+      logical, parameter         :: verb  = .false.
       !> Misc.
       integer :: i,j,k
       real(kind=wp) :: Xmat(test_size,p), Qmat(test_size,p)
       real(kind=wp) :: alpha
       real(kind=wp) :: err(p,p)
 
-      #define DEBUG
+!#define DEBUG
 
       Amat = 0.0_wp; Emat = 0.0_wp; Xmat = 0.0_wp
       allocate(Xref(1:p)) ; call mat_zero(Xref)
@@ -194,32 +196,14 @@ module TestExpm
       end do
 
       !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
-      write(*,*) 'SEQUENTIAL ARNOLDI'
+      if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
       do i = 1,p
-         write(*,*) '    column',i
-         call kexpm(Xkryl(i:i), A, Q(i:i), tau, tol, info, verbosity = .true., kdim = nkmax)
+         if (verb) write(*,*) '    column',i
+         call kexpm(Xkryl(i:i), A, Q(i:i), tau, tol, info, verbosity = verb, kdim = nkmax)
       end do
-      write(*,*) 'BLOCK-ARNOLDI'
+      if (verb) write(*,*) 'BLOCK-ARNOLDI'
       !> Compute Krylov matrix exponential using block-arnoldi method
-      call kexpm(Xkryl_block(1:p), A, Q(1:p), tau, tol, info, verbosity = .true., kdim = nkmax)
-      
-      #ifdef DEBUG
-      !> Save test data to disk.
-      call save_npy("debug/test_block_krylov_expm_operator.npy", Amat)
-      call save_npy("debug/test_block_krylov_expm_rhs.npy", Qmat)
-      call save_npy("debug/test_block_krylov_expm_ref.npy", Xmat)
-      Xmat = 0.0_wp
-      do i = 1,p
-         Xmat(:,i) = Xkryl(i)%data
-      end do
-      call save_npy("debug/test_block_krylov_expm_ref_kexpm_seq.npy", Xmat)
-      Xmat = 0.0_wp
-      do i = 1,p
-         Xmat(:,i) = Xkryl_block(i)%data
-      end do
-      call save_npy("debug/test_block_krylov_expm_ref_kexpm_blk.npy", Xmat)
-      #endif
-      !#undef DEBUG
+      call kexpm(Xkryl_block(1:p), A, Q(1:p), tau, tol, info, verbosity = verb, kdim = nkmax)
 
       do i = 1,p
          call Xkryl(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
@@ -227,13 +211,15 @@ module TestExpm
       end do
 
       !> Compute 2-norm of the error
-      call mat_mult(err,Xkryl(1:p),Xkryl(1:p))
-      alpha = sqrt(norm2(err))
-      write(*,*) '--------------------------------------------------------------------'
-      write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+      if (verb) then
+         call mat_mult(err,Xkryl(1:p),Xkryl(1:p))
+         alpha = sqrt(norm2(err))
+         write(*,*) '--------------------------------------------------------------------'
+         write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+      endif
       call mat_mult(err,Xkryl_block(1:p),Xkryl_block(1:p))
       alpha = sqrt(norm2(err))
-      write(*, *) '    true error (block):  ||error||_2 = ', alpha
+      if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
      
       call check(error, alpha < rtol)
       
