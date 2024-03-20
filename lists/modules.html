@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>All Modules &ndash; LightKrylov
+</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="../lists/files.html">Source Files</a></li>
+            <li><a href="../lists/modules.html">Modules</a></li>
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+            <li><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                   <li><a href="../lists/types.html">Derived Types</a></li>
+       
+            </ul>
+        
+            </li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                             <li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+          </ul>
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12" id='text'>
+			 <h1>Modules</h1>
+			 <table class="table">
+			 <thead><tr><th>Module</th><th>Source File</th><th>Description</th></tr></thead>
+			 <tbody>
+			   <tr class="active"><td><a href='../module/lightkrylov.html'>LightKrylov</a></td><td><a href='../sourcefile/lightkrylov.f90.html'>LightKrylov.f90</a></td><td><p>Global variables.
+Abstract vectors.
+Abstract linear operators.
+Krylov factorization for general matrix.
+Krylov factorization for sym. pos. def. matrices.
+Linear solvers.
+Matrix factorization.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/lightkrylov_abstractvector.html'>lightkrylov_AbstractVector</a></td><td><a href='../sourcefile/abstractvector.f90.html'>AbstractVector.f90</a></td><td><p>This module provides the base class <code>abstract_vector</code> from which all Krylov vectors need to be derived.
+In order to use <code>LightKrylov</code>, you need to extend this class for your own definition of a vector and
+provide implementations for the following type-bound procedures:</p><a href="../module/lightkrylov_abstractvector.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/lightkrylov_basekrylov.html'>lightkrylov_BaseKrylov</a></td><td><a href='../sourcefile/basekrylov.f90.html'>BaseKrylov.f90</a></td><td><p>This module provides a large collection of Krylov-based factorizations forming the computational core
+of <code>LightKrylov</code>. These include:</p><a href="../module/lightkrylov_basekrylov.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_expmlib</a></td><td><a href='../sourcefile/expmlib.f90.html'>expmlib.f90</a></td><td><p>This module provides the routines for computation of dense matrix exponentiation and default routines for 
+the approximation of the action of the exponential propagator on a given input vector using Krylov </p><a href="../module/lightkrylov_expmlib.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/lightkrylov_iterativesolvers.html'>lightkrylov_IterativeSolvers</a></td><td><a href='../sourcefile/iterativesolvers.f90.html'>IterativeSolvers.f90</a></td><td><p>This module provides some of the most important computational routines provided by <code>LightKrylov</code>.
+These include:</p><a href="../module/lightkrylov_iterativesolvers.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/lightkrylov_linearoperator.html'>lightkrylov_LinearOperator</a></td><td><a href='../sourcefile/linearoperator.f90.html'>LinearOperator.f90</a></td><td><p>This module provides the base class <code>abstract_linop</code> from which all linear operators used in <code>LightKrylov</code> needs to be extended.
+ To extend <code>abstract_linop</code>, you simply need to provide two type-bound procedures:</p><a href="../module/lightkrylov_linearoperator.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/lightkrylov_rationalkrylov.html'>lightkrylov_RationalKrylov</a></td><td><a href='../sourcefile/rationalkrylov.f90.html'>RationalKrylov.f90</a></td><td><p></p><a href="../module/lightkrylov_rationalkrylov.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/lightkrylov_utils.html'>lightkrylov_utils</a></td><td><a href='../sourcefile/utils.f90.html'>Utils.f90</a></td><td><p>This module provides a set of utilities used throughout <code>LightKrylov</code>.
+It also provides a selection wrapper around LAPACK to perform standard linear algebra computations.</p></td></tr>
+<!---->			 </tbody></table>
+             <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: module~~graph~~ModuleGraph Pages: 1 -->
+<svg id="modulegraphModuleGraph" width="855pt" height="338pt"
+ viewBox="0.00 0.00 855.00 337.69" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~graph~~ModuleGraph" class="graph" transform="scale(1.36 1.36) rotate(0) translate(4 454.54)">
+<title>module~~graph~~ModuleGraph</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-454.54 1157,-454.54 1157,4 -4,4"/>
+<!-- module~lightkrylov_linearoperator -->
+<g id="module~~graph~~ModuleGraph_node1" class="node">
+<title>module~lightkrylov_linearoperator</title>
+<g id="a_module~~graph~~ModuleGraph_node1"><a xlink:href=".././module/lightkrylov_linearoperator.html" xlink:title="lightkrylov_LinearOperator">
+<polygon fill="#337ab7" stroke="#337ab7" points="342,-345 187,-345 187,-321 342,-321 342,-345"/>
+<text text-anchor="middle" x="264.5" y="-330.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_LinearOperator</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_abstractvector -->
+<g id="module~~graph~~ModuleGraph_node6" class="node">
+<title>module~lightkrylov_abstractvector</title>
+<g id="a_module~~graph~~ModuleGraph_node6"><a xlink:href=".././module/lightkrylov_abstractvector.html" xlink:title="lightkrylov_AbstractVector">
+<polygon fill="#337ab7" stroke="#337ab7" points="151,-345 0,-345 0,-321 151,-321 151,-345"/>
+<text text-anchor="middle" x="75.5" y="-330.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_AbstractVector</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_linearoperator&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~graph~~ModuleGraph_edge1" class="edge">
+<title>module~lightkrylov_linearoperator&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M186.9,-333C178.42,-333 169.74,-333 161.17,-333"/>
+<polygon fill="#000000" stroke="#000000" points="161.17,-329.5 151.17,-333 161.17,-336.5 161.17,-329.5"/>
+</g>
+<!-- module~lightkrylov_basekrylov -->
+<g id="module~~graph~~ModuleGraph_node2" class="node">
+<title>module~lightkrylov_basekrylov</title>
+<g id="a_module~~graph~~ModuleGraph_node2"><a xlink:href=".././module/lightkrylov_basekrylov.html" xlink:title="lightkrylov_BaseKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="511,-104 378,-104 378,-80 511,-80 511,-104"/>
+<text text-anchor="middle" x="444.5" y="-89.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_BaseKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_linearoperator -->
+<g id="module~~graph~~ModuleGraph_edge6" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_linearoperator</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M389.16,-104.08C385.02,-106.53 381.21,-109.47 378,-113 327.77,-168.19 382.74,-214.48 342,-277 331.48,-293.14 314.6,-306.23 299.36,-315.68"/>
+<polygon fill="#000000" stroke="#000000" points="297.47,-312.72 290.64,-320.82 301.03,-318.75 297.47,-312.72"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~graph~~ModuleGraph_edge7" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M397.31,-104.02C390.63,-106.54 383.99,-109.52 378,-113 319.37,-147.02 326.75,-186.94 265.5,-216"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.5,-216C231.85,-231.02 218,-218.68 187,-235 149.01,-255 113.44,-290.76 93.38,-313.11"/>
+<polygon fill="#000000" stroke="#000000" points="90.7,-310.86 86.72,-320.68 95.95,-315.49 90.7,-310.86"/>
+</g>
+<!-- module~lightkrylov_utils -->
+<g id="module~~graph~~ModuleGraph_node8" class="node">
+<title>module~lightkrylov_utils</title>
+<g id="a_module~~graph~~ModuleGraph_node8"><a xlink:href=".././module/lightkrylov_utils.html" xlink:title="lightkrylov_utils">
+<polygon fill="#337ab7" stroke="#337ab7" points="312,-24 217,-24 217,0 312,0 312,-24"/>
+<text text-anchor="middle" x="264.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_utils</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~graph~~ModuleGraph_edge5" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M407.63,-79.88C397.76,-75.98 387.24,-71.28 378,-66 360.4,-55.94 359.84,-47.62 342,-38 334.63,-34.03 326.55,-30.5 318.47,-27.42"/>
+<polygon fill="#000000" stroke="#000000" points="319.64,-24.12 309.05,-24.01 317.26,-30.7 319.64,-24.12"/>
+</g>
+<!-- iso_fortran_env -->
+<g id="module~~graph~~ModuleGraph_node9" class="node">
+<title>iso_fortran_env</title>
+<g id="a_module~~graph~~ModuleGraph_node9"><a xlink:href="http://fortranwiki.org/fortran/show/iso_fortran_env" xlink:title="iso_fortran_env">
+<polygon fill="#337ab7" stroke="#337ab7" points="122.5,-44 28.5,-44 28.5,-20 122.5,-20 122.5,-44"/>
+<text text-anchor="middle" x="75.5" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">iso_fortran_env</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;iso_fortran_env -->
+<g id="module~~graph~~ModuleGraph_edge2" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M402.23,-79.94C366.43,-70.15 313.05,-57.16 265.5,-52"/>
+</g>
+<!-- stdlib_linalg -->
+<g id="module~~graph~~ModuleGraph_node10" class="node">
+<title>stdlib_linalg</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="302.5,-104 226.5,-104 226.5,-80 302.5,-80 302.5,-104"/>
+<text text-anchor="middle" x="264.5" y="-89.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_linalg</text>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;stdlib_linalg -->
+<g id="module~~graph~~ModuleGraph_edge3" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;stdlib_linalg</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.98,-92C356.37,-92 332.77,-92 312.79,-92"/>
+<polygon fill="#000000" stroke="#000000" points="312.71,-88.5 302.71,-92 312.71,-95.5 312.71,-88.5"/>
+</g>
+<!-- stdlib_optval -->
+<g id="module~~graph~~ModuleGraph_node13" class="node">
+<title>stdlib_optval</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="304,-268 225,-268 225,-244 304,-244 304,-268"/>
+<text text-anchor="middle" x="264.5" y="-253.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_optval</text>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;stdlib_optval -->
+<g id="module~~graph~~ModuleGraph_edge4" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;stdlib_optval</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.1,-104.01C385.66,-106.47 381.53,-109.43 378,-113 339.76,-151.7 379.91,-190.97 342,-230 334.29,-237.93 324.07,-243.45 313.62,-247.28"/>
+<polygon fill="#000000" stroke="#000000" points="312.49,-243.97 304.03,-250.35 314.62,-250.64 312.49,-243.97"/>
+</g>
+<!-- module~lightkrylov_rationalkrylov -->
+<g id="module~~graph~~ModuleGraph_node3" class="node">
+<title>module~lightkrylov_rationalkrylov</title>
+<g id="a_module~~graph~~ModuleGraph_node3"><a xlink:href=".././module/lightkrylov_rationalkrylov.html" xlink:title="lightkrylov_RationalKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="890,-145 740,-145 740,-121 890,-121 890,-145"/>
+<text text-anchor="middle" x="815" y="-130.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_RationalKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_linearoperator -->
+<g id="module~~graph~~ModuleGraph_edge8" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_linearoperator</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M624.5,-273C538.84,-316.59 428.24,-329.56 352.58,-332.91"/>
+<polygon fill="#000000" stroke="#000000" points="351.99,-329.43 342.14,-333.32 352.27,-336.43 351.99,-329.43"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers -->
+<g id="module~~graph~~ModuleGraph_node4" class="node">
+<title>module~lightkrylov_iterativesolvers</title>
+<g id="a_module~~graph~~ModuleGraph_node4"><a xlink:href=".././module/lightkrylov_iterativesolvers.html" xlink:title="lightkrylov_IterativeSolvers">
+<polygon fill="#337ab7" stroke="#337ab7" points="704,-145 547,-145 547,-121 704,-121 704,-145"/>
+<text text-anchor="middle" x="625.5" y="-130.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_IterativeSolvers</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_iterativesolvers -->
+<g id="module~~graph~~ModuleGraph_edge11" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_iterativesolvers</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M739.9,-133C731.43,-133 722.75,-133 714.13,-133"/>
+<polygon fill="#000000" stroke="#000000" points="714.07,-129.5 704.07,-133 714.07,-136.5 714.07,-129.5"/>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~graph~~ModuleGraph_edge10" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M808.45,-145.32C794.83,-174.23 756.95,-246.98 704,-287 662.71,-318.2 316.08,-454.94 265.5,-444"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.5,-444C196.24,-430.42 130.22,-380.17 97.59,-352.17"/>
+<polygon fill="#000000" stroke="#000000" points="99.49,-349.18 89.66,-345.23 94.89,-354.45 99.49,-349.18"/>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~graph~~ModuleGraph_edge9" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M788.88,-120.97C730.37,-93.83 579.79,-29.06 445.5,-14"/>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;stdlib_optval -->
+<g id="module~~graph~~ModuleGraph_edge12" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;stdlib_optval</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M801.65,-145.39C773.38,-173 700.64,-239.75 626.5,-273"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M624.5,-273C520.59,-319.61 382.35,-291.11 311.56,-270.92"/>
+<polygon fill="#000000" stroke="#000000" points="312.2,-267.46 301.62,-268.01 310.24,-274.17 312.2,-267.46"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_linearoperator -->
+<g id="module~~graph~~ModuleGraph_edge15" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_linearoperator</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M612.89,-145.12C593.36,-164.96 552.05,-204.71 511,-230 446.99,-269.44 365.21,-300.34 314.09,-317.63"/>
+<polygon fill="#000000" stroke="#000000" points="312.66,-314.42 304.28,-320.91 314.88,-321.06 312.66,-314.42"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_basekrylov -->
+<g id="module~~graph~~ModuleGraph_edge17" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_basekrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M571.76,-120.92C551.82,-116.35 528.93,-111.11 508.17,-106.35"/>
+<polygon fill="#000000" stroke="#000000" points="508.7,-102.89 498.17,-104.06 507.14,-109.71 508.7,-102.89"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~graph~~ModuleGraph_edge20" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M606.3,-145.02C584.42,-159.04 546.24,-182.19 511,-197 483.06,-208.74 474.71,-207.91 445.5,-216"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-216C367.26,-237.12 336.97,-182.09 265.5,-216"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~graph~~ModuleGraph_edge19" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M579.13,-120.9C568.18,-116.99 556.82,-112.06 547,-106 528.01,-94.27 530.29,-82.22 511,-71 484.8,-55.76 474.75,-59.96 445.5,-52"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-52C403.31,-41.06 357.43,-30.8 322.32,-23.42"/>
+<polygon fill="#000000" stroke="#000000" points="322.76,-19.93 312.25,-21.31 321.33,-26.78 322.76,-19.93"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;iso_fortran_env -->
+<g id="module~~graph~~ModuleGraph_edge13" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-52C367.17,-31.23 344.15,-60.53 265.5,-52"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.5,-52C219.59,-47.24 169.87,-41.92 132.74,-37.97"/>
+<polygon fill="#000000" stroke="#000000" points="132.93,-34.47 122.61,-36.89 132.19,-41.43 132.93,-34.47"/>
+</g>
+<!-- stdlib_io_npy -->
+<g id="module~~graph~~ModuleGraph_node11" class="node">
+<title>stdlib_io_npy</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="485,-146 404,-146 404,-122 485,-122 485,-146"/>
+<text text-anchor="middle" x="444.5" y="-131.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_io_npy</text>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;stdlib_io_npy -->
+<g id="module~~graph~~ModuleGraph_edge18" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;stdlib_io_npy</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M546.77,-133.43C529.28,-133.53 511.18,-133.63 495.2,-133.72"/>
+<polygon fill="#000000" stroke="#000000" points="495.01,-130.22 485.03,-133.78 495.05,-137.22 495.01,-130.22"/>
+</g>
+<!-- stdlib_sorting -->
+<g id="module~~graph~~ModuleGraph_node12" class="node">
+<title>stdlib_sorting</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="486,-188 403,-188 403,-164 486,-164 486,-188"/>
+<text text-anchor="middle" x="444.5" y="-173.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_sorting</text>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;stdlib_sorting -->
+<g id="module~~graph~~ModuleGraph_edge16" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;stdlib_sorting</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M574.16,-145.09C549.71,-150.97 520.41,-158 495.95,-163.88"/>
+<polygon fill="#000000" stroke="#000000" points="495.04,-160.5 486.14,-166.24 496.68,-167.31 495.04,-160.5"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;stdlib_optval -->
+<g id="module~~graph~~ModuleGraph_edge14" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;stdlib_optval</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-216C400.3,-227.97 350.46,-238.93 314.53,-246.34"/>
+<polygon fill="#000000" stroke="#000000" points="313.41,-243 304.31,-248.43 314.81,-249.85 313.41,-243"/>
+</g>
+<!-- module~lightkrylov_expmlib -->
+<g id="module~~graph~~ModuleGraph_node5" class="node">
+<title>module~lightkrylov_expmlib</title>
+<g id="a_module~~graph~~ModuleGraph_node5"><a xlink:href=".././module/lightkrylov_expmlib.html" xlink:title="LightKrylov_expmlib">
+<polygon fill="#337ab7" stroke="#337ab7" points="1153,-104 1034,-104 1034,-80 1153,-80 1153,-104"/>
+<text text-anchor="middle" x="1093.5" y="-89.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">LightKrylov_expmlib</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov -->
+<g id="module~~graph~~ModuleGraph_node7" class="node">
+<title>module~lightkrylov</title>
+<g id="a_module~~graph~~ModuleGraph_node7"><a xlink:href=".././module/lightkrylov.html" xlink:title="LightKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="998,-104 926,-104 926,-80 998,-80 998,-104"/>
+<text text-anchor="middle" x="962" y="-89.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">LightKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;module~lightkrylov -->
+<g id="module~~graph~~ModuleGraph_edge22" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;module~lightkrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1033.81,-92C1025.25,-92 1016.54,-92 1008.3,-92"/>
+<polygon fill="#000000" stroke="#000000" points="1008.15,-88.5 998.15,-92 1008.15,-95.5 1008.15,-88.5"/>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~graph~~ModuleGraph_edge21" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1060.77,-79.89C1009.99,-61.24 906.94,-26.35 816,-14"/>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;stdlib_optval -->
+<g id="module~~graph~~ModuleGraph_edge23" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;stdlib_optval</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1086.26,-104.13C1060.34,-152.63 955.98,-330 816,-330 816,-330 816,-330 624.5,-330 514.43,-330 484.44,-334.05 378,-306 349.06,-298.38 318.13,-284.14 296.04,-272.8"/>
+<polygon fill="#000000" stroke="#000000" points="297.63,-269.68 287.14,-268.14 294.38,-275.88 297.63,-269.68"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_linearoperator -->
+<g id="module~~graph~~ModuleGraph_edge28" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_linearoperator</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M953.2,-104.15C909.76,-170.13 690.9,-480.97 445.5,-444"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-444C376.04,-440.89 312.92,-384.05 283.24,-352.95"/>
+<polygon fill="#000000" stroke="#000000" points="285.48,-350.22 276.11,-345.28 280.36,-354.99 285.48,-350.22"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_basekrylov -->
+<g id="module~~graph~~ModuleGraph_edge24" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_basekrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M931.59,-79.99C902.71,-69.22 857.11,-54.98 816,-54"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M814,-54C712.37,-51.59 595.76,-66.64 521.41,-78.51"/>
+<polygon fill="#000000" stroke="#000000" points="520.51,-75.11 511.2,-80.16 521.63,-82.02 520.51,-75.11"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_rationalkrylov -->
+<g id="module~~graph~~ModuleGraph_edge27" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_rationalkrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M925.9,-101.92C908.63,-106.81 887.45,-112.8 868.32,-118.21"/>
+<polygon fill="#000000" stroke="#000000" points="867.2,-114.89 858.53,-120.97 869.11,-121.62 867.2,-114.89"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_iterativesolvers -->
+<g id="module~~graph~~ModuleGraph_edge26" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_iterativesolvers</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M814,-54C751.44,-52.51 685.67,-90.92 651.09,-114.72"/>
+<polygon fill="#000000" stroke="#000000" points="648.75,-112.09 642.59,-120.71 652.78,-117.81 648.75,-112.09"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~graph~~ModuleGraph_edge29" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-444C364.47,-440.36 343.05,-459.66 265.5,-444"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~graph~~ModuleGraph_edge25" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M947.14,-79.92C933.4,-68.42 911.36,-51.25 890,-40 859.16,-23.75 850.57,-18.51 816,-14"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M814,-14C651.6,7.18 608.91,-25.03 445.5,-14"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-14C402.94,-11.37 357.08,-10.92 322.06,-11.1"/>
+<polygon fill="#000000" stroke="#000000" points="322,-7.6 312.02,-11.17 322.05,-14.6 322,-7.6"/>
+</g>
+<!-- module~lightkrylov_utils&#45;&gt;iso_fortran_env -->
+<g id="module~~graph~~ModuleGraph_edge30" class="edge">
+<title>module~lightkrylov_utils&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M216.79,-17C191.28,-19.72 159.5,-23.12 132.64,-26"/>
+<polygon fill="#000000" stroke="#000000" points="132.18,-22.52 122.61,-27.07 132.93,-29.49 132.18,-22.52"/>
+</g>
+</g>
+</svg>
+</div><script>var panmodulegraphModuleGraph = svgPanZoom('#modulegraphModuleGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="518pt" height="32pt"
+ viewBox="0.00 0.00 517.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-28 513.5,-28 513.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234,-24 164,-24 164,0 234,0 234,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="310,-24 252,-24 252,0 310,0 310,-24"/>
+<text text-anchor="middle" x="281" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="386,-24 328,-24 328,0 386,0 386,-24"/>
+<text text-anchor="middle" x="357" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="509.5,-24 404.5,-24 404.5,0 509.5,0 509.5,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+        </div>
+      </div>
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>LightKrylov was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>&copy; 2024 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+  </body>
+</html>

@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>abstract_vector &ndash; LightKrylov </title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="../lists/files.html">Source Files</a></li>
+            <li><a href="../lists/modules.html">Modules</a></li>
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+            <li><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                   <li><a href="../lists/types.html">Derived Types</a></li>
+       
+            </ul>
+        
+            </li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                             <li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+          </ul>
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+  <div class="row">
+    <h1>abstract_vector
+      <small>Derived Type</small>
+      
+    </h1>
+      <div class="row" id="info-bar">
+    <div class="col-lg-12">
+      <div class="well well-sm">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+          <li id="statements"><i class="fa fa-list-ol"></i>
+            <a data-toggle="tooltip"
+               data-placement="bottom" data-html="true"
+               title="<p>17.9% of total for derived types.</p>Including implementation: 44 statements, 25.1% of total for derived types.">14 statements</a>
+          </li>
+
+            <li id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/AbstractVector.f90"> Source File</a>
+            </li>
+        </ul>
+        <ol class="breadcrumb in-well text-right">
+              <li><a href='../sourcefile/abstractvector.f90.html'>AbstractVector.f90</a></li>
+              <li><a href='../module/lightkrylov_abstractvector.html'>lightkrylov_AbstractVector</a></li>
+          <li class="active">abstract_vector</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+    })
+  </script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+      <div id="sidebar">
+      <h3>Contents</h3>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#boundprocs-0">Type-Bound Procedures</a>
+        </h3>
+      </div>
+      <div id="boundprocs-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-copy">copy</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-assignment%28%3D%29">assignment(=)</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-zero">zero</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-rand">rand</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-scal">scal</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-axpby">axpby</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-add">add</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-sub">sub</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-dot">dot</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-norm">norm</a>
+        </div>
+      </div>
+    </div>
+
+  
+
+
+  </div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+      <h2>type, public, abstract :: abstract_vector</h2>
+    <p>Abstract type from which users need to extend in order to define the vectors used by <code>LightKrylov</code>.
+Upon extension, the user needs to provide a handful of type-bound procedures:</p>
+<ul>
+<li><code>zero(self)</code></li>
+<li><code>scal(self, alpha)</code></li>
+<li><code>axpby(self, alpha, vec, beta)</code></li>
+<li><code>dot(self, vec)</code></li>
+</ul>
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+        <h3>Contents</h3>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#boundprocs-1">Type-Bound Procedures</a>
+        </h3>
+      </div>
+      <div id="boundprocs-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-copy">copy</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-assignment%28%3D%29">assignment(=)</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-zero">zero</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-rand">rand</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-scal">scal</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-axpby">axpby</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-add">add</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-sub">sub</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-dot">dot</a>
+            <a class="list-group-item" href="../type/abstract_vector.html#boundprocedure-norm">norm</a>
+        </div>
+      </div>
+    </div>
+
+  
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+
+      <section>
+        <h2>Type-Bound Procedures</h2>
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-copy"></span><h3>procedure, public, pass(from) :: <strong>copy</strong>          
+    </h3></div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+    private  subroutine copy(out, from)  
+</h3>
+  <p>This function copies the content in <code>from</code> to <code>out</code>.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>out</strong></td>
+            <td>
+                <p>Vector we wish to copy to.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>from</strong></td>
+            <td>
+                <p>Vector we wish to copy from.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-assignment%28%3D%29"></span><h3>generic, public :: <strong>assignment(=)</strong>  => <a href='../type/abstract_vector.html#boundprocedure-copy'>copy</a>         
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>Overload the assignment operator.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+    private  subroutine copy(out, from)  
+</h3>
+  <p>This function copies the content in <code>from</code> to <code>out</code>.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>out</strong></td>
+            <td>
+                <p>Vector we wish to copy to.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>from</strong></td>
+            <td>
+                <p>Vector we wish to copy from.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-zero"></span><h3>procedure(abstract_zero), public, deferred :: <strong>zero</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>Sets an <code>abstract_vector</code> to zero.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+     subroutine abstract_zero(self)  
+<small>Prototype</small></h3>
+  <p>Abstract interface to zero-out a vector in-place.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Vector to be zeroed-out.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-rand"></span><h3>procedure(abstract_rand), public, deferred :: <strong>rand</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>Create a random `æbstract_vector.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+     subroutine abstract_rand(self, ifnorm)  
+<small>Prototype</small></h3>
+  <p>Abstract interface to set vector to (normalized) random vector</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>ifnorm</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-scal"></span><h3>procedure(abstract_scal), public, deferred :: <strong>scal</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>Compute the scalar-vector product.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+     subroutine abstract_scal(self, alpha)  
+<small>Prototype</small></h3>
+  <p>Abstract interface for in-place scalar-vector multiplication.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Input/Output vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>alpha</strong></td>
+            <td>
+                <p>Scalar multiplier.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-axpby"></span><h3>procedure(axpby_interface), public, deferred, pass(self) :: <strong>axpby</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>In-place computation of <script type="math/tex"> \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} </script>.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+     subroutine axpby_interface(self, alpha, vec, beta)  
+<small>Prototype</small></h3>
+  <p>Abstract interface to compute <script type="math/tex"> \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} </script>
+</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Input/Output vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>alpha</strong></td>
+            <td>
+                <p>Scalar multipliers.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec</strong></td>
+            <td>
+                <p>Vector to be add/subtracted.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>beta</strong></td>
+            <td>
+                <p>Scalar multipliers.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-add"></span><h3>procedure, public, pass(self) :: <strong>add</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>In-place vector addition.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+    private  subroutine add(self, y)  
+</h3>
+  <p>Add two <code>abstract_vector</code> in-place.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Input/Output vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>y</strong></td>
+            <td>
+                <p>Vector to add to <code>self</code>.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-sub"></span><h3>procedure, public, pass(self) :: <strong>sub</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>In-place vector subtraction.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+    private  subroutine sub(self, y)  
+</h3>
+  <p>Subtract two <code>abstract_vector</code> in-place.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Input/Output vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>y</strong></td>
+            <td>
+                <p>Vector to subtract from <code>self</code>.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-dot"></span><h3>procedure(abstract_dot), public, deferred, pass(self) :: <strong>dot</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>Computes the dot product between two <code>abstract_vector</code>.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+     function abstract_dot(self, vec) result(alpha)  
+<small>Prototype</small></h3>
+  <p>Abstract interface to compute the dot product between two <code>abstract_vector</code>.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Vectors whose dot product will be computed.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec</strong></td>
+            <td>
+                <p>Vectors whose dot product will be computed.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=wp)</small>
+    </h4>
+    
+
+        </li>
+    </ul>
+  </div>
+
+            <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-norm"></span><h3>procedure, public, pass(self) :: <strong>norm</strong>          
+    </h3></div>
+      <div class="panel-body">
+        
+        <p>Compute the norm of an <code>abstract_vector</code>.</p>
+      </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+                  <h3>
+    private  function norm(self) result(alpha)  
+</h3>
+  <p>Compute the norm of an <code>abstract_vector</code>. Note that it is based
+on the subroutine <code>dot</code> which needs to be provided by the user.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Vector whose norm is computed.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=wp)</small>
+    </h4>
+    
+
+        </li>
+    </ul>
+  </div>
+
+      </section>
+
+    
+    </div>
+  </div>
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>LightKrylov was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>&copy; 2024 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+  </body>
+</html>

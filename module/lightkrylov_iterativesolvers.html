@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>lightkrylov_IterativeSolvers &ndash; LightKrylov</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="../lists/files.html">Source Files</a></li>
+            <li><a href="../lists/modules.html">Modules</a></li>
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+            <li><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                   <li><a href="../lists/types.html">Derived Types</a></li>
+       
+            </ul>
+        
+            </li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                             <li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+          </ul>
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+  <div class="row">
+    <h1>lightkrylov_IterativeSolvers 
+    <small>Module</small>
+    
+    </h1>
+      <div class="row" id="info-bar">
+    <div class="col-lg-12">
+      <div class="well well-sm">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+          <li id="statements"><i class="fa fa-list-ol"></i>
+            <a data-toggle="tooltip"
+               data-placement="bottom" data-html="true"
+               title="22.6% of total for modules and submodules.">496 statements</a>
+          </li>
+
+            <li id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/IterativeSolvers.f90"> Source File</a>
+            </li>
+        </ul>
+        <ol class="breadcrumb in-well text-right">
+              <li><a href='../sourcefile/iterativesolvers.f90.html'>IterativeSolvers.f90</a></li>
+          <li class="active">lightkrylov_IterativeSolvers</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+    })
+  </script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+      <div id="sidebar">
+      <h3>Contents</h3>
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#vars-0">Variables</a>
+        </h3>
+      </div>
+      <div id="vars-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#variable-wp~6">wp</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#variable-atol~8">atol</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#variable-rtol~8">rtol</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#absints-0">Abstract Interfaces</a>
+        </h3>
+      </div>
+      <div id="absints-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#interface-abstract_linear_solver">abstract_linear_solver</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#types-0">Derived Types</a>
+        </h3>
+      </div>
+      <div id="types-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#type-abstract_preconditioner">abstract_preconditioner</a>
+        </div>
+      </div>
+    </div>
+
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#subs-0">Subroutines</a>
+        </h3>
+      </div>
+      <div id="subs-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-save_eigenspectrum">save_eigenspectrum</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-eigs">eigs</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-eighs">eighs</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-svds">svds</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-gmres">gmres</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-cg">cg</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+
+
+  </div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    <p>This module provides some of the most important computational routines provided by <code>LightKrylov</code>.
+These include:</p>
+<ul>
+<li><code>eigs</code> : Compute the leading eigenpairs of a square linear operator <script type="math/tex">\mathbf{A}</script>.</li>
+<li><code>eighs</code> : Compute the leading eigenpairs of a symmetric positive definite operator <script type="math/tex">\mathbf{A}</script>.</li>
+<li><code>svds</code> : Compute the leading singular triplets of a linear operator <script type="math/tex">\mathbf{A}</script>.</li>
+<li><code>gmres</code> : Solve the linear system <script type="math/tex"> \mathbf{Ax} = \mathbf{b}</script> using the <em>generalized minimum
+   residual method</em>.</li>
+<li><code>cg</code> : Solve the linear system <script type="math/tex"> \mathbf{Ax} = \mathbf{b} </script> where <script type="math/tex">\mathbf{A}</script> is symmetric
+  positive definite using the <em>Conjugate Gradient</em> method.</li>
+</ul>
+<p>It also provides abstract interfaces to pass user-defined linear solvers and preconditioners to
+<code>LightKrylov</code>. Note that these features are still experimental however.</p>
+<br>        <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Uses</h3>
+      </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+            <ul class="list-inline">
+                <li><a href="http://fortranwiki.org/fortran/show/iso_fortran_env">iso_fortran_env</a></li>
+                <li><a href='../module/lightkrylov_basekrylov.html'>lightkrylov_BaseKrylov</a></li>
+                <li><a href='../module/lightkrylov_linearoperator.html'>lightkrylov_LinearOperator</a></li>
+                <li>stdlib_sorting</li>
+                <li>stdlib_optval</li>
+                <li>stdlib_io_npy</li>
+                <li><a href='../module/lightkrylov_utils.html'>lightkrylov_utils</a></li>
+                <li><a href='../module/lightkrylov_abstractvector.html'>lightkrylov_AbstractVector</a></li>
+            </ul>
+          </li>
+          <li class="list-group-item">
+            <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: module~~lightkrylov_iterativesolvers~~UsesGraph Pages: 1 -->
+<svg id="modulelightkrylov_iterativesolversUsesGraph" width="641pt" height="253pt"
+ viewBox="0.00 0.00 641.00 252.68" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph" class="graph" transform="scale(1.11 1.11) rotate(0) translate(4 276.67)">
+<title>module~~lightkrylov_iterativesolvers~~UsesGraph</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-276.67 708,-276.67 708,4 -4,4"/>
+<!-- module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node1" class="node">
+<title>module~lightkrylov_iterativesolvers</title>
+<polygon fill="none" stroke="black" points="704,-166.24 547,-166.24 547,-142.24 704,-142.24 704,-166.24"/>
+<text text-anchor="middle" x="625.5" y="-151.84" font-family="Helvetica,sans-Serif" font-size="10.50">lightkrylov_IterativeSolvers</text>
+</g>
+<!-- iso_fortran_env -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node2" class="node">
+<title>iso_fortran_env</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsesGraph_node2"><a xlink:href="http://fortranwiki.org/fortran/show/iso_fortran_env" xlink:title="iso_fortran_env">
+<polygon fill="#337ab7" stroke="#337ab7" points="122.5,-168.24 28.5,-168.24 28.5,-144.24 122.5,-144.24 122.5,-168.24"/>
+<text text-anchor="middle" x="75.5" y="-153.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">iso_fortran_env</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;iso_fortran_env -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge1" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-257.24C331.54,-280.33 294.14,-278.1 187,-238.24 150.63,-224.71 115.93,-195.34 95.42,-175.67"/>
+<polygon fill="#000000" stroke="#000000" points="97.62,-172.93 88.03,-168.42 92.71,-177.92 97.62,-172.93"/>
+</g>
+<!-- module~lightkrylov_linearoperator -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node3" class="node">
+<title>module~lightkrylov_linearoperator</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsesGraph_node3"><a xlink:href=".././module/lightkrylov_linearoperator.html" xlink:title="lightkrylov_LinearOperator">
+<polygon fill="#337ab7" stroke="#337ab7" points="342,-65.24 187,-65.24 187,-41.24 342,-41.24 342,-65.24"/>
+<text text-anchor="middle" x="264.5" y="-50.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_LinearOperator</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_linearoperator -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge3" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_linearoperator</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-13.24C418.92,-6.29 354.65,-23.98 310.46,-38.02"/>
+<polygon fill="#000000" stroke="#000000" points="309.25,-34.73 300.81,-41.13 311.4,-41.39 309.25,-34.73"/>
+</g>
+<!-- stdlib_sorting -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node4" class="node">
+<title>stdlib_sorting</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="486,-226.24 403,-226.24 403,-202.24 486,-202.24 486,-226.24"/>
+<text text-anchor="middle" x="444.5" y="-211.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_sorting</text>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;stdlib_sorting -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge4" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;stdlib_sorting</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M588.28,-166.38C560.28,-175.77 521.36,-188.82 491.22,-198.92"/>
+<polygon fill="#000000" stroke="#000000" points="489.73,-195.72 481.36,-202.22 491.96,-202.36 489.73,-195.72"/>
+</g>
+<!-- module~lightkrylov_basekrylov -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node5" class="node">
+<title>module~lightkrylov_basekrylov</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsesGraph_node5"><a xlink:href=".././module/lightkrylov_basekrylov.html" xlink:title="lightkrylov_BaseKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="511,-146.24 378,-146.24 378,-122.24 511,-122.24 511,-146.24"/>
+<text text-anchor="middle" x="444.5" y="-131.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_BaseKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_basekrylov -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge5" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_basekrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M546.77,-145.56C538.32,-144.61 529.72,-143.65 521.3,-142.71"/>
+<polygon fill="#000000" stroke="#000000" points="521.44,-139.21 511.12,-141.57 520.67,-146.16 521.44,-139.21"/>
+</g>
+<!-- stdlib_optval -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node6" class="node">
+<title>stdlib_optval</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="304,-187.24 225,-187.24 225,-163.24 304,-163.24 304,-187.24"/>
+<text text-anchor="middle" x="264.5" y="-172.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_optval</text>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;stdlib_optval -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge2" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;stdlib_optval</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M546.6,-158.8C475.98,-162.93 374.08,-168.89 314.33,-172.39"/>
+<polygon fill="#000000" stroke="#000000" points="313.82,-168.91 304.04,-172.99 314.23,-175.9 313.82,-168.91"/>
+</g>
+<!-- stdlib_io_npy -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node7" class="node">
+<title>stdlib_io_npy</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="485,-104.24 404,-104.24 404,-80.24 485,-80.24 485,-104.24"/>
+<text text-anchor="middle" x="444.5" y="-89.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_io_npy</text>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;stdlib_io_npy -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge6" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;stdlib_io_npy</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M591.83,-142.08C569.21,-133.75 538.37,-122.57 511,-113.24 505.42,-111.34 499.57,-109.39 493.74,-107.49"/>
+<polygon fill="#000000" stroke="#000000" points="494.61,-104.09 484.02,-104.34 492.45,-110.75 494.61,-104.09"/>
+</g>
+<!-- module~lightkrylov_utils -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node8" class="node">
+<title>module~lightkrylov_utils</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsesGraph_node8"><a xlink:href=".././module/lightkrylov_utils.html" xlink:title="lightkrylov_utils">
+<polygon fill="#337ab7" stroke="#337ab7" points="312,-229.24 217,-229.24 217,-205.24 312,-205.24 312,-229.24"/>
+<text text-anchor="middle" x="264.5" y="-214.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_utils</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge7" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M610.35,-166.47C589.71,-183.79 549.6,-215.54 511,-235.24 483.65,-249.2 475.58,-251.04 445.5,-257.24"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-257.24C418.84,-262.33 356.16,-245.67 312.2,-232.31"/>
+<polygon fill="#000000" stroke="#000000" points="313.15,-228.95 302.57,-229.35 311.1,-235.64 313.15,-228.95"/>
+</g>
+<!-- module~lightkrylov_abstractvector -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node9" class="node">
+<title>module~lightkrylov_abstractvector</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsesGraph_node9"><a xlink:href=".././module/lightkrylov_abstractvector.html" xlink:title="lightkrylov_AbstractVector">
+<polygon fill="#337ab7" stroke="#337ab7" points="151,-65.24 0,-65.24 0,-41.24 151,-41.24 151,-65.24"/>
+<text text-anchor="middle" x="75.5" y="-50.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_AbstractVector</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge8" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M614.96,-141.87C590.71,-111.7 523.16,-35.2 445.5,-13.24"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.5,-13.24C329.75,18.92 189.42,-16.02 119.84,-38.07"/>
+<polygon fill="#000000" stroke="#000000" points="118.54,-34.81 110.1,-41.22 120.7,-41.47 118.54,-34.81"/>
+</g>
+<!-- module~lightkrylov_linearoperator&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge9" class="edge">
+<title>module~lightkrylov_linearoperator&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M186.9,-53.24C178.42,-53.24 169.74,-53.24 161.17,-53.24"/>
+<polygon fill="#000000" stroke="#000000" points="161.17,-49.74 151.17,-53.24 161.17,-56.74 161.17,-49.74"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;iso_fortran_env -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge10" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.5,-93.24C204.57,-88.42 140.11,-118.73 104.36,-139"/>
+<polygon fill="#000000" stroke="#000000" points="102.37,-136.1 95.49,-144.16 105.89,-142.16 102.37,-136.1"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_linearoperator -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge14" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_linearoperator</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M396.92,-122.18C390.36,-119.67 383.86,-116.7 378,-113.24 359.05,-102.05 360.85,-90.6 342,-79.24 335.56,-75.36 328.46,-71.96 321.26,-69.02"/>
+<polygon fill="#000000" stroke="#000000" points="322.02,-65.57 311.43,-65.28 319.53,-72.11 322.02,-65.57"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;stdlib_optval -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge12" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;stdlib_optval</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M391.06,-146.32C366.65,-151.94 337.8,-158.59 313.92,-164.09"/>
+<polygon fill="#000000" stroke="#000000" points="312.97,-160.72 304.01,-166.37 314.54,-167.54 312.97,-160.72"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge13" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M427.05,-146.3C407.6,-160.08 373.84,-182.47 342,-196.24 335.71,-198.96 328.99,-201.41 322.22,-203.6"/>
+<polygon fill="#000000" stroke="#000000" points="320.88,-200.36 312.33,-206.63 322.92,-207.05 320.88,-200.36"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_abstractvector -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge15" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_abstractvector</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M405.81,-122.21C370.12,-111.62 314.81,-97.27 265.5,-93.24"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.5,-93.24C216.92,-89.43 165.03,-77.72 127.75,-67.94"/>
+<polygon fill="#000000" stroke="#000000" points="128.2,-64.44 117.63,-65.25 126.39,-71.21 128.2,-64.44"/>
+</g>
+<!-- stdlib_linalg -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_node10" class="node">
+<title>stdlib_linalg</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="302.5,-145.24 226.5,-145.24 226.5,-121.24 302.5,-121.24 302.5,-145.24"/>
+<text text-anchor="middle" x="264.5" y="-130.84" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_linalg</text>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;stdlib_linalg -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge11" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;stdlib_linalg</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.98,-133.87C356.37,-133.75 332.77,-133.62 312.79,-133.51"/>
+<polygon fill="#000000" stroke="#000000" points="312.73,-130.01 302.71,-133.45 312.69,-137.01 312.73,-130.01"/>
+</g>
+<!-- module~lightkrylov_utils&#45;&gt;iso_fortran_env -->
+<g id="module~~lightkrylov_iterativesolvers~~UsesGraph_edge16" class="edge">
+<title>module~lightkrylov_utils&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M217.21,-205.17C207.2,-202.38 196.71,-199.33 187,-196.24 163.67,-188.83 137.93,-179.58 117.17,-171.84"/>
+<polygon fill="#000000" stroke="#000000" points="118.3,-168.53 107.71,-168.29 115.84,-175.08 118.3,-168.53"/>
+</g>
+</g>
+</svg>
+</div><script>var panmodulelightkrylov_iterativesolversUsesGraph = svgPanZoom('#modulelightkrylov_iterativesolversUsesGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="518pt" height="32pt"
+ viewBox="0.00 0.00 517.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-28 513.5,-28 513.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234,-24 164,-24 164,0 234,0 234,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="310,-24 252,-24 252,0 310,0 310,-24"/>
+<text text-anchor="middle" x="281" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="386,-24 328,-24 328,0 386,0 386,-24"/>
+<text text-anchor="middle" x="357" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="509.5,-24 404.5,-24 404.5,0 509.5,0 509.5,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+          </li>
+      </ul>
+    </div>
+
+        <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Used by</h3>
+      </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+            <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: module~~lightkrylov_iterativesolvers~~UsedByGraph Pages: 1 -->
+<svg id="modulelightkrylov_iterativesolversUsedByGraph" width="614pt" height="52pt"
+ viewBox="0.00 0.00 614.00 52.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 48)">
+<title>module~~lightkrylov_iterativesolvers~~UsedByGraph</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-48 610,-48 610,4 -4,4"/>
+<!-- module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_node1" class="node">
+<title>module~lightkrylov_iterativesolvers</title>
+<polygon fill="none" stroke="black" points="157,-44 0,-44 0,-20 157,-20 157,-44"/>
+<text text-anchor="middle" x="78.5" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50">lightkrylov_IterativeSolvers</text>
+</g>
+<!-- module~lightkrylov_rationalkrylov -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_node2" class="node">
+<title>module~lightkrylov_rationalkrylov</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsedByGraph_node2"><a xlink:href=".././module/lightkrylov_rationalkrylov.html" xlink:title="lightkrylov_RationalKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="343,-24 193,-24 193,0 343,0 343,-24"/>
+<text text-anchor="middle" x="268" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_RationalKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_edge1" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_iterativesolvers</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M192.9,-19.9C184.43,-20.81 175.75,-21.73 167.13,-22.65"/>
+<polygon fill="#000000" stroke="#000000" points="166.64,-19.18 157.07,-23.73 167.39,-26.15 166.64,-19.18"/>
+</g>
+<!-- module~lightkrylov -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_node3" class="node">
+<title>module~lightkrylov</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsedByGraph_node3"><a xlink:href=".././module/lightkrylov.html" xlink:title="LightKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="451,-44 379,-44 379,-20 451,-20 451,-44"/>
+<text text-anchor="middle" x="415" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">LightKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_edge2" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_iterativesolvers</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M378.97,-32.59C367.51,-32.76 354.71,-32.92 343,-33 276.33,-33.47 259.67,-33.29 193,-33 184.64,-32.96 175.94,-32.91 167.24,-32.85"/>
+<polygon fill="#000000" stroke="#000000" points="167.06,-29.35 157.04,-32.77 167.01,-36.35 167.06,-29.35"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_rationalkrylov -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_edge3" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_rationalkrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M378.9,-27.16C370.9,-26.05 362.06,-24.84 352.97,-23.58"/>
+<polygon fill="#000000" stroke="#000000" points="353.43,-20.11 343.05,-22.21 352.47,-27.05 353.43,-20.11"/>
+</g>
+<!-- module~lightkrylov_expmlib -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_node4" class="node">
+<title>module~lightkrylov_expmlib</title>
+<g id="a_module~~lightkrylov_iterativesolvers~~UsedByGraph_node4"><a xlink:href=".././module/lightkrylov_expmlib.html" xlink:title="LightKrylov_expmlib">
+<polygon fill="#337ab7" stroke="#337ab7" points="606,-44 487,-44 487,-20 606,-20 606,-44"/>
+<text text-anchor="middle" x="546.5" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">LightKrylov_expmlib</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;module~lightkrylov -->
+<g id="module~~lightkrylov_iterativesolvers~~UsedByGraph_edge4" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;module~lightkrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M486.81,-32C478.25,-32 469.54,-32 461.3,-32"/>
+<polygon fill="#000000" stroke="#000000" points="461.15,-28.5 451.15,-32 461.15,-35.5 461.15,-28.5"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="518pt" height="32pt"
+ viewBox="0.00 0.00 517.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-28 513.5,-28 513.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234,-24 164,-24 164,0 234,0 234,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="310,-24 252,-24 252,0 310,0 310,-24"/>
+<text text-anchor="middle" x="281" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="386,-24 328,-24 328,0 386,0 386,-24"/>
+<text text-anchor="middle" x="357" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="509.5,-24 404.5,-24 404.5,0 509.5,0 509.5,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+          </li>
+      </ul>
+    </div>
+
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+        <h3>Contents</h3>
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#vars-1">Variables</a>
+        </h3>
+      </div>
+      <div id="vars-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#variable-wp~6">wp</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#variable-atol~8">atol</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#variable-rtol~8">rtol</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#absints-1">Abstract Interfaces</a>
+        </h3>
+      </div>
+      <div id="absints-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#interface-abstract_linear_solver">abstract_linear_solver</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#types-1">Derived Types</a>
+        </h3>
+      </div>
+      <div id="types-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#type-abstract_preconditioner">abstract_preconditioner</a>
+        </div>
+      </div>
+    </div>
+
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#subs-1">Subroutines</a>
+        </h3>
+      </div>
+      <div id="subs-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-save_eigenspectrum">save_eigenspectrum</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-eigs">eigs</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-eighs">eighs</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-svds">svds</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-gmres">gmres</a>
+            <a class="list-group-item" href="../module/lightkrylov_iterativesolvers.html#proc-cg">cg</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+
+    <section>
+    <h2>Variables</h2>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Visibility</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+<th></th><th>Initial</th>        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-wp~6"></span>
+              integer,
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>wp</strong></td>
+<td> =</td>
+                <td>selected_real_kind(15, 307)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-atol~8"></span>
+              real(kind=wp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>atol</strong></td>
+<td> =</td>
+                <td>epsilon(1.0_wp)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rtol~8"></span>
+              real(kind=wp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>rtol</strong></td>
+<td> =</td>
+                <td>sqrt(atol)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    </section>
+    <br>
+    
+    
+
+    <section>
+     <h2>Abstract Interfaces</h2>
+       <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="interface-abstract_linear_solver"></span><h3>abstract interface
+        
+    </h3></div>
+    <ul class="list-group">
+      <li class="list-group-item">
+            <h3>
+    public  subroutine abstract_linear_solver(A, b, x, info, preconditioner, options, transpose)  
+
+    </h3>
+  <p>Abstract interface to use a user-defined linear solver in <code>LightKrylov</code>.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+                <p>Linear operator to invert.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>b</strong></td>
+            <td>
+                <p>Right-hand side vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+                <p>Solution vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+                <p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_preconditioner.html'>abstract_preconditioner</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>preconditioner</strong></td>
+            <td>
+                <p>Preconditioner.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_opts.html'>abstract_opts</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>options</strong></td>
+            <td>
+                <p>Options passed to the linear solver.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>transpose</strong></td>
+            <td>
+                <p>Determine whether <script type="math/tex">\mathbf{A}</script> (<code>.false.</code>) or <script type="math/tex">\mathbf{A}^T</script> (<code>.true.</code>) is being used.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+      </li>
+    </ul>
+  </div>
+
+    </section>
+  <br>
+    
+    <section>
+     <h2>Derived Types</h2>
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="type-abstract_preconditioner"></span>
+      <h3>
+        type, public&nbsp;::&nbsp;
+        <a href='../type/abstract_preconditioner.html'>abstract_preconditioner</a>
+        
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>Abstract type that needs to be extended to define a preconditioner usable by <code>LightKrylov</code>.
+Upon extension, the user needs to provide a type-bound procedure <code>apply</code>.</p>
+
+
+
+
+        <h4>Type-Bound Procedures</h4>
+        <table class="table table-striped varlist">
+          <tbody>
+              <tr>
+                <td>
+                    procedure
+(abstract_apply_precond)                    ,                  public
+, pass(self)                  :: <strong><a href='../type/abstract_preconditioner.html#boundprocedure-apply'>apply</a></strong>
+<small></small>                </td>
+                <td><p>In-place application of the preconditioner.</p></td>
+              </tr>
+              <tr>
+                <td>
+                    procedure
+(abstract_undo_precond)                    ,                  public
+, pass(self)                  :: <strong><a href='../type/abstract_preconditioner.html#boundprocedure-undo'>undo</a></strong>
+<small></small>                </td>
+                <td><p>Deprecated.</p></td>
+              </tr>
+          </tbody>
+        </table>
+    </div>
+  </div>
+
+    </section>
+  <br>
+    
+
+    <section>
+    <h2>Subroutines</h2>
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-save_eigenspectrum"></span><h3>public  subroutine <a href='../proc/save_eigenspectrum.html'>save_eigenspectrum</a>(real_part, imag_part, residuals, filename)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Saves the eigenvalues and corresponding residuals to disk using the <code>npy</code> binary format
+to be compatible with <code>Python</code>.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>real_part</strong>(:)</td>
+            <td>
+<p>Real parts of the eigenvalues.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>imag_part</strong>(:)</td>
+            <td>
+<p>Imaginary parts of the eigenvalues.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>residuals</strong>(:)</td>
+            <td>
+<p>Residual of the corresponding Ritz eigenpairs.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>filename</strong></td>
+            <td>
+<p>Name of the output file.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-eigs"></span><h3>public  subroutine <a href='../proc/eigs.html'>eigs</a>(A, X, eigvals, residuals, info, nev, tolerance, verbosity, transpose)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Computes the leading eigenpairs of a linear operator A using its Arnoldi factorization.
+Given a square linear operator A of size (n x n), find eigvals and eigvecs such that:</p><a href="../proc/eigs.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+<p>Linear operator whose leading eigenpairs need to be computed.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>X</strong>(:)</td>
+            <td>
+<p>Leading eigenvectors of <script type="math/tex">\mathbf{A}</script>. On entry, <code>X(1)</code> needs to be set to the starting Krylov vector.
+On exit, storage of the real and imaginary parts of the eigenvectors follows the LAPACK convention.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>eigvals</strong>(:)</td>
+            <td>
+<p>Leading eigenvalues of <script type="math/tex"> \mathbf{A} </script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>residuals</strong>(:)</td>
+            <td>
+<p>Residual associated with each computed Ritz eigenpair.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+<p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>nev</strong></td>
+            <td>
+<p>Desired number of eigenpairs.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>tolerance</strong></td>
+            <td>
+<p>Tolerance to determine whether a Ritz eigenpair has converged or not (default <code>sqrt(epsilon(1.0_wp))</code>).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>verbosity</strong></td>
+            <td>
+<p>Verbosity control (default <code>.false.</code>)</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>transpose</strong></td>
+            <td>
+<p>Determine whether <script type="math/tex">\mathbf{A}</script> (default <code>.false.</code>) or <script type="math/tex"> \mathbf{A}^T</script> (<code>.true.</code>) is used.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-eighs"></span><h3>public  subroutine <a href='../proc/eighs.html'>eighs</a>(A, X, eigvals, residuals, info, nev, tolerance, verbosity)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Computes the leading eigenpairs of a symmetric positive definite operator <script type="math/tex"> \mathbf{A} </script> using the
+iterative Lanczos factorization.</p><a href="../proc/eighs.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_spd_linop.html'>abstract_spd_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+<p>Linear operator whose leading eigenpairs need to be computed.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>X</strong>(:)</td>
+            <td>
+<p>Leading eigenvectors of <script type="math/tex">\mathbf{A}</script>. On entry, <code>X(1)</code> needs to be set to the starting
+Krylov vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>eigvals</strong>(:)</td>
+            <td>
+<p>Leading eigenvalues of <script type="math/tex">\mathbf{A}</script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>residuals</strong>(:)</td>
+            <td>
+<p>Residual associated to each Ritz eigenpair computed.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+<p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>nev</strong></td>
+            <td>
+<p>Desired number of eigenpairs. If not specified, <code>k = size(X)</code> Lanczos iterations are done
+and all the eigenpairs are reported even if not converged.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>tolerance</strong></td>
+            <td>
+<p>Tolerance to check convergence of a given eigenpair (default <code>sqrt(epsilon(1.0_wp))</code>).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>verbosity</strong></td>
+            <td>
+<p>Verbosity control (default <code>.false.</code>).</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-svds"></span><h3>public  subroutine <a href='../proc/svds.html'>svds</a>(A, U, V, sigma, residuals, info, nev, tolerance, verbosity)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Computes the singular value decomposition of a given linear operator <script type="math/tex">\mathbf{A}</script> using Lanczos
+bidiagonalization. The subroutine finds matrices <script type="math/tex">\mathbf{U}</script>, <script type="math/tex">\boldsymbol{\Sigma}</script>, and <script type="math/tex">\mathbf{V}</script>
+such that</p><a href="../proc/svds.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+<p>Linear operator whose leading singular triplets are to be computed.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>U</strong>(:)</td>
+            <td>
+<p>Leading left singular vectors of <script type="math/tex">\mathbf{A}</script>. On entry, <code>U(1)</code> needs to be set to the starting
+Krylov vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>V</strong>(:)</td>
+            <td>
+<p>Leading right singular vectors of <script type="math/tex">\mathbf{A}</script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>sigma</strong>(:)</td>
+            <td>
+<p>Leading singular values.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>residuals</strong>(:)</td>
+            <td>
+<p>Residual associated to each Ritz singular triplet.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+<p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>nev</strong></td>
+            <td>
+<p>Desired number of converged singular triplets.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>tolerance</strong></td>
+            <td>
+<p>Tolerance to check convergence of each triplet.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>verbosity</strong></td>
+            <td>
+<p>Verbosity control.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-gmres"></span><h3>public  subroutine <a href='../proc/gmres.html'>gmres</a>(A, b, x, info, preconditioner, options, transpose)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Implements the classic, unpreconditioned Generalized Minimal Residual (GMRES) algorithm
+for solving nonsymmetric linear systems of equations <script type="math/tex"> \mathbf{Ax} = \mathbf{b}</script>.</p><a href="../proc/gmres.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+<p>Linear operator to be inverted.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>b</strong></td>
+            <td>
+<p>Right-hand side vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+<p>Solution vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+<p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_preconditioner.html'>abstract_preconditioner</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>preconditioner</strong></td>
+            <td>
+<p>Preconditioner.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_opts.html'>abstract_opts</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>options</strong></td>
+            <td>
+<p>Options.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>transpose</strong></td>
+            <td>
+<p>Whether <script type="math/tex">\mathbf{A}</script> (<code>.false.</code>) or <script type="math/tex">\mathbf{A}^T</script> (<code>.true.</code>) is used.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-cg"></span><h3>public  subroutine <a href='../proc/cg.html'>cg</a>(A, b, x, info, preconditioner, options)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Implements the classic Conjugate Gradient (CG) algorithm for solving symmetric positive
+definite linear systems of equations, <script type="math/tex">\mathbf{Ax} = \mathbf{b}</script>.</p><a href="../proc/cg.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_spd_linop.html'>abstract_spd_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+<p>Linear operator to be inverted.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>b</strong></td>
+            <td>
+<p>Right-hand side vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+<p>Solution vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+<p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_preconditioner.html'>abstract_preconditioner</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>preconditioner</strong></td>
+            <td>
+<p>Preconditioner (not yet supported).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='../type/abstract_opts.html'>abstract_opts</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>options</strong></td>
+            <td>
+<p>Options.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+    </section>
+    <br>
+
+
+
+    </div>
+  </div>
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>LightKrylov was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>&copy; 2024 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+  </body>
+</html>
