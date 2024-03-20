@@ -305,7 +305,7 @@ contains
       real(kind=wp),          intent(in)  :: tau
       !! Time horizon for exponentiation
       real(kind=wp),          intent(in)  :: tol
-      !! Slution tolerance based on error estimates
+      !! Solution tolerance based on error estimates
       integer,                intent(out) :: info
       !! Information flag
       logical, optional,      intent(in)  :: verbosity
@@ -412,7 +412,7 @@ contains
    
    subroutine expm(E,A, order)
       !! Computes the matrix exponential \( \mathbf{E} = e^{\mathbf{A}} \) for a real-valued dense square matrix of 
-      !! order n using the scaling and squaring approach, where the scaled problem is computed
+      !! order \( n \) using the scaling and squaring approach, where the scaled problem is computed
       !! using a rational matrix Pade approximation of the form
       !! \[ 
       !!    \mathbf{R}_{pq}(\mathbf{X}) = [ \mathbf{Q}_q(\mathbf{X}) ]^{-1} \mathbf{P}_p(\mathbf{X}) 
