@@ -904,10 +904,11 @@ contains
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       enddo
+
       ! --> Identity
       Id = eye(kdim)
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(Id, matmul(transpose(Qmat), Qmat), rtol, atol))
+      call check(error, norm2(Id - matmul(transpose(Qmat), Qmat)) < rtol)
 
    end subroutine test_qr_basis_orthonormality
 

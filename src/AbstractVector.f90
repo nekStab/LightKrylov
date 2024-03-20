@@ -77,11 +77,11 @@ module lightkrylov_AbstractVector
       generic, public               :: assignment(=) => copy
       !! Overload the assignment operator.
       procedure(abstract_zero), deferred, public :: zero
-      procedure(abstract_rand), deferred, public :: rand
       !! Sets an `abstract_vector` to zero.
+      procedure(abstract_rand), deferred, public :: rand
+      !! Create a random `æbstract_vector.
       procedure(abstract_scal), deferred, public :: scal
       !! Compute the scalar-vector product.
-      !> Vector-vector operations.
       procedure(axpby_interface), deferred, pass(self), public :: axpby
       !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
       procedure, pass(self), public :: add
