@@ -859,7 +859,7 @@ contains
 
       ! --> Check correctness of QR factorization.
       Id = eye(kdim)
-      call check(error, all_close(Id, matmul(transpose(Qdata), Qdata), rtol, atol))
+      call check(error, norm2(Id - matmul(transpose(Qdata), Qdata)) < rtol)
 
    end subroutine test_qr_basis_orthonormality
 

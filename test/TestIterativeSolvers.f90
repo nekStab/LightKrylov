@@ -282,7 +282,7 @@ contains
       !> Information flag.
       integer :: info
       !> Miscellaneous.
-      integer :: i, j, k
+      integer :: i
 
       ! --> Initialize linear problem.
       A = rmatrix(); call init_rand(A)
