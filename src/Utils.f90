@@ -8,6 +8,8 @@ module lightkrylov_utils
    private
    ! General-purpose utilities.
    public :: assert_shape, stop_error, norml, log2
+   ! Print matrices
+   public :: print_mat
    ! Linear Algebra Utilities.
    public :: inv, svd, eig, eigh, lstsq, schur, ordschur
 
@@ -134,6 +136,109 @@ contains
 
       return
    end subroutine zassert_shape
+
+   subroutine print_mat(m, n, A, name)
+      !! Utility function to print a m-by-n matrix with a title
+      integer , intent(in)                         :: n
+      integer , intent(in)                         :: m
+      real (kind=wp)  , intent(in)                 :: a(m,n)
+      character(*) , optional,  intent(in)         :: name
+
+      ! internal variables
+      real (kind=wp) :: amin, amax
+      character ( len = 10 ) iform
+      integer :: i, ihi, ilo, j, jhi, jlo, lmax, npline
+      logical :: integ
+      
+      write(*,*)
+      if (present(name)) then
+         write(*,*) 'Output matrix: ', trim(name)
+      endif
+      
+      ! Check if all entries are integral. 
+      integ = .true.
+
+      do i = 1, m
+         do j = 1, n
+            if ( integ ) then
+               if ( a(i,j) /= real ( int ( a(i,j) ),kind=wp) ) then
+                  integ = .false.
+               end if
+            end if
+         end do
+      end do
+
+      ! Find the maximum and minimum entries.
+      amax = maxval ( a(1:m,1:n) )
+      amin = minval ( a(1:m,1:n) )
+
+      ! Use the information about the maximum size of an entry to
+      ! compute an intelligent format for use with integer entries.      
+      if ( amax .lt. 1e-12) amax = 1e-12 
+      ! to avoid problems with zero matrix
+      lmax = int ( log10 ( amax ) )
+      if ( lmax .lt. -2 ) lmax = 0
+   
+      if ( integ ) then
+         npline = 79 / ( lmax + 3 )
+         write ( iform, '(''('',i2,''I'',i2,'')'')' ) npline, lmax+3
+      else
+         npline = 8
+         iform = ' '
+      end if
+
+      ! Print a scalar quantity.
+      if ( m == 1 .and. n == 1 ) then
+         if ( integ ) then
+            write ( *, iform ) int ( a(1,1) )
+         else
+            write ( *, '(2x,g10.2)' ) a(1,1)
+         end if
+
+      ! Column vector of length M,
+      else if ( n == 1 ) then
+         do ilo = 1, m, npline
+            ihi = min ( ilo+npline-1, m )
+            if ( integ ) then
+               write ( *, iform ) ( int ( a(i,1) ), i = ilo, ihi )
+            else
+               write ( *, '(2x,8g10.2)' ) a(ilo:ihi,1)
+            end if
+         end do
+
+      ! Row vector of length N,
+      else if ( m == 1 ) then
+         do jlo = 1, n, npline
+            jhi = min ( jlo+npline-1, n )
+            if ( integ ) then
+               write ( *, iform ) int ( a(1,jlo:jhi) )
+            else
+               write ( *, '(2x,8g10.2)' ) a(1,jlo:jhi)
+            end if
+         end do
+      
+      ! M by N Array
+      else
+         do jlo = 1, n, npline
+            jhi = min ( jlo+npline-1, n )
+            if ( npline < n ) then
+               write ( *, '(a)' ) ' '
+               write ( *, '(a,i8,a,i8)' ) 'Matrix columns ', jlo, ' to ', jhi
+               write ( *, '(a)' ) ' '
+            end if
+            do i = 1, m
+               if ( integ ) then
+                  write ( *, iform ) int ( a(i,jlo:jhi) )
+               else
+                  write ( *, '(2x,8g14.6)' ) a(i,jlo:jhi)
+               end if
+            end do
+         end do
+      end if
+      write(*,*)
+   
+      return
+   end subroutine print_mat
 
    !-------------------------------------
    !-----                           -----

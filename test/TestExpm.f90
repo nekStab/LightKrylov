@@ -2,9 +2,11 @@ module TestExpm
    use LightKrylov
    use TestVector
    use TestMatrices
-   Use LightKrylov_expmlib
+   use TestUtils
+   use LightKrylov_expmlib
    use testdrive  , only : new_unittest, unittest_type, error_type, check
    use stdlib_math, only : all_close
+   use stdlib_io_npy, only : save_npy
    implicit none
  
    private
@@ -85,8 +87,8 @@ module TestExpm
       !> Krylov subspace dimension.
       integer, parameter :: kdim = test_size
       !> Test matrix.
-      real(kind=wp) :: Amat(kdim, kdim)
-      real(kind=wp) :: Emat(kdim, kdim)
+      real(kind=wp) :: Adata(kdim, kdim)
+      real(kind=wp) :: Edata(kdim, kdim)
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
@@ -96,37 +98,52 @@ module TestExpm
       integer, parameter         :: nkmax = 15
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
+      logical, parameter         :: verb  = .true.
       !> Misc.
       integer :: i,j,k
-      real(kind=wp) :: Xmat(test_size), Qmat(test_size)
+      real(kind=wp) :: Xdata(test_size), Qdata(test_size)
       real(kind=wp) :: err
 
-      Amat = 0.0_wp; Emat = 0.0_wp; Xmat = 0.0_wp
+!#define DEBUG
+
+      Adata = 0.0_wp; Edata = 0.0_wp; Xdata = 0.0_wp
       allocate(Q); allocate(Xref); allocate(Xkryl)
       call Xref%zero()
       call Xkryl%zero()
 
       ! --> Initialize operator.
-      A = rmatrix() ; call random_number(A%data)
-      Amat = A%data     
+      A = rmatrix()
+      call init_rand(A)
+      call get_data(Adata, A)   
       ! --> Initialize rhs.
-      call random_number(Q%data)
-      Qmat(:) = Q%data
+      call init_rand(Q)
+      call get_data(Qdata, Q)
       
       !> Comparison is dense computation (10th order Pade approximation)
-      call expm(Emat, tau*Amat)
-      Xmat = matmul(Emat,Qmat)
+      call expm(Edata, tau*Adata)
+      Xdata = matmul(Edata,Qdata)
      
       !> Copy reference data into Krylov vector
-      Xref%data = Xmat(:)
+      call put_data(Xref, Xdata)
       
       !> Compute Krylov matrix exponential using the arnoldi method
-      call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = .true., kdim = nkmax)
+      call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = verb, kdim = nkmax)
+
+#ifdef DEBUG
+      !> Save test data to disk.
+      call save_npy("debug/test_krylov_expm_operator.npy", Adata)
+      call save_npy("debug/test_krylov_expm_rhs.npy", Qdata)
+      call save_npy("debug/test_krylov_expm_ref.npy", Xdata)
+      call get_data(Xdata, Xkryl)
+      call save_npy("debug/test_krylov_expm_kexpm.npy", Xdata)
+#endif
+#undef DEBUG
+
       call Xkryl%axpby(1.0_wp, Xref, -1.0_wp)
       
       !> Compute 2-norm of the error
       err = Xkryl%norm()
-      write(*, *) '    true error:          ||error||_2 = ', err
+      if (verb) write(*, *) '    true error:          ||error||_2 = ', err
      
       call check(error, err < rtol)
       
@@ -149,8 +166,8 @@ module TestExpm
       !> Krylov subspace dimension.
       integer, parameter :: kdim = test_size
       !> Test matrix.
-      real(kind=wp) :: Amat(kdim, kdim)
-      real(kind=wp) :: Emat(kdim, kdim)
+      real(kind=wp) :: Adata(kdim, kdim)
+      real(kind=wp) :: Edata(kdim, kdim)
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
@@ -161,57 +178,72 @@ module TestExpm
       integer, parameter         :: p     = 2
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
+      logical, parameter         :: verb  = .true.
       !> Misc.
       integer :: i,j,k
-      real(kind=wp) :: Xmat(test_size,p), Qmat(test_size,p)
+      real(kind=wp) :: Xdata(test_size,p), Qdata(test_size,p)
       real(kind=wp) :: alpha
       real(kind=wp) :: err(p,p)
 
-      Amat = 0.0_wp; Emat = 0.0_wp; Xmat = 0.0_wp
+!#define DEBUG
+
+      Adata = 0.0_wp; Edata = 0.0_wp; Xdata = 0.0_wp
       allocate(Xref(1:p)) ; call mat_zero(Xref)
       allocate(Xkryl(1:p)) ; call mat_zero(Xkryl)
       allocate(Xkryl_block(1:p)) ; call mat_zero(Xkryl_block)
 
       ! --> Initialize operator.
-      A = rmatrix() ; call random_number(A%data)
-      Amat = A%data     
+      A = rmatrix()
+      call init_rand(A)
+      call get_data(Adata, A)
       ! --> Initialize rhs.
-      allocate(Q(1:p)) ; 
-      do i = 1,p
-         call random_number(Q(i)%data)
-         Qmat(:,i) = Q(i)%data
-      end do
+      allocate(Q(1:p))
+      call init_rand(Q) 
+      call get_data(Qdata, Q)
       
       !> Comparison is dense computation (10th order Pade approximation)
-      call expm(Emat, tau*Amat)
-      Xmat = matmul(Emat,Qmat)
+      call expm(Edata, tau*Adata)
+      Xdata = matmul(Edata,Qdata)
       !> Copy reference data into Krylov vector
-      do i = 1,p
-         Xref(i)%data = Xmat(:,i)
-      end do
+      call put_data(Xref, Xdata)
 
       !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
-      write(*,*) 'SEQUENTIAL ARNOLDI'
+      if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
       do i = 1,p
-         write(*,*) '    column',i
-         call kexpm(Xkryl(i:i), A, Q(i:i), tau, tol, info, verbosity = .true., kdim = nkmax)
-         call Xkryl(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
+         if (verb) write(*,*) '    column',i
+         call kexpm(Xkryl(i:i), A, Q(i:i), tau, tol, info, verbosity = verb, kdim = nkmax)
       end do
-      write(*,*) 'BLOCK-ARNOLDI'
+      if (verb) write(*,*) 'BLOCK-ARNOLDI'
       !> Compute Krylov matrix exponential using block-arnoldi method
-      call kexpm(Xkryl_block(1:p), A, Q(1:p), tau, tol, info, verbosity = .true., kdim = nkmax)
+      call kexpm(Xkryl_block(1:p), A, Q(1:p), tau, tol, info, verbosity = verb, kdim = nkmax)
+
       do i = 1,p
+         call Xkryl(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
          call Xkryl_block(i)%axpby(1.0_wp, Xref(i), -1.0_wp)
       end do
 
+#ifdef DEBUG
+      !> Save test data to disk.
+      call save_npy("debug/test_block_krylov_expm_operator.npy", Adata)
+      call save_npy("debug/test_block_krylov_expm_rhs.npy", Qdata)
+      call save_npy("debug/test_block_krylov_expm_ref.npy", Xdata)
+      call get_data(Xdata, Xkryl)
+      call save_npy("debug/test_block_krylov_expm_kexpm_seq.npy", Xdata)
+      call get_data(Xdata, Xkryl_block)
+      call save_npy("debug/test_block_krylov_expm_kexpm_blk.npy", Xdata)
+#endif
+#undef DEBUG
+
       !> Compute 2-norm of the error
-      call mat_mult(err,Xkryl(1:p),Xkryl(1:p))
-      alpha = sqrt(norm2(err))
-      write(*,*) '--------------------------------------------------------------------'
-      write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+      if (verb) then
+         call mat_mult(err,Xkryl(1:p),Xkryl(1:p))
+         alpha = sqrt(norm2(err))
+         write(*,*) '--------------------------------------------------------------------'
+         write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+      endif
       call mat_mult(err,Xkryl_block(1:p),Xkryl_block(1:p))
       alpha = sqrt(norm2(err))
-      write(*, *) '    true error (block):  ||error||_2 = ', alpha
+      if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
      
       call check(error, alpha < rtol)
       
