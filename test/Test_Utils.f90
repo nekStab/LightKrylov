@@ -54,7 +54,7 @@ contains
       return
    end subroutine get_data_vec
 
-   subroutine get_data_vec_basis (mat_out, basis_in)
+   subroutine get_data_vec_basis(mat_out, basis_in)
       !! Utility function to transfer data from a rvector basis to a real array
       real(kind=wp),          intent(out) :: mat_out(:,:)
       class(abstract_vector), intent(in)  :: basis_in(:)
@@ -104,7 +104,7 @@ contains
       return
    end subroutine put_data_vec
 
-   subroutine put_data_vec_basis (basis_out, mat_in)
+   subroutine put_data_vec_basis(basis_out, mat_in)
       !! Utility function to transfer data from a real array to a rvector basis
       class(abstract_vector), intent(out) :: basis_out(:)
       real(kind=wp),          intent(in)  :: mat_in(:,:)
