@@ -1,5 +1,6 @@
 module TestKrylov
    use LightKrylov
+   use lightkrylov_BaseKrylov
    use TestVector
    use TestMatrices
    use lightkrylov_Utils
@@ -839,8 +840,8 @@ contains
       integer, parameter :: kdim = test_size
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
-      !> Permutation matrix.
-      real(kind=wp) :: P(kdim, kdim)
+      !> Permutation vector.
+      integer :: perm(kdim)
       !> Information flag.
       integer :: info
       !> Misc.
@@ -859,7 +860,7 @@ contains
       end do
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, P, info)
+      call qr_factorization(A, R, perm, info, ifpivot = .false.)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
@@ -883,8 +884,8 @@ contains
       integer, parameter :: kdim = test_size
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
-      !> Permutation matrix.
-      real(kind=wp) :: P(kdim, kdim)
+      !> Permutation vector.
+      integer :: perm(kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
@@ -899,7 +900,7 @@ contains
       enddo
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, P, info)
+      call qr_factorization(A, R, perm, info, ifpivot = .false.)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
@@ -926,8 +927,8 @@ contains
       real(kind=wp), parameter :: eps = 1e-10
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
-      !> Permutation matrix.
-      real(kind=wp) :: P(kdim, kdim)
+      !> Permutation vector.
+      integer :: perm(kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
@@ -948,7 +949,7 @@ contains
       end do
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, P, info)
+      call qr_factorization(A, R, perm, info, ifpivot = .false.)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
@@ -974,8 +975,8 @@ contains
       integer, parameter :: nzero = 5
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
-      !> Permutation matrix.
-      real(kind=wp) :: P(kdim, kdim)
+      !> Permutation vector.
+      integer :: perm(kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
@@ -1012,14 +1013,15 @@ contains
 
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, P, info,  ifpivot = .true.)
+      call qr_factorization(A, R, perm, info,  ifpivot = .true.)
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       enddo
 
+      call apply_permutation(Amat, perm, .false.)
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(matmul(Amat,P), matmul(Qmat, R), rtol, atol))
+      call check(error, all_close(Amat, matmul(Qmat, R), rtol, atol))
 
    end subroutine test_piv_qr_absolute_rank_deficiency
 
@@ -1037,8 +1039,8 @@ contains
       integer, parameter :: nzero = 1
       !> GS factors.
       real(kind=wp) :: R(kdim, kdim)
-      !> Permutation matrix.
-      real(kind=wp) :: P(kdim, kdim)
+      !> Permutation vector.
+      integer :: perm(kdim)
       real(kind=wp) :: Id(kdim, kdim)
       !> Information flag.
       integer :: info
@@ -1078,15 +1080,16 @@ contains
 
       R = 0.0_wp
       ! --> In-place QR factorization.
-      call qr_factorization(A, R, P, info, ifpivot = .true.)
+      call qr_factorization(A, R, perm, info, ifpivot = .true.)
      
       ! --> Extract data
       do k = 1, kdim
          Qmat(:, k) = A(k)%data
       enddo
 
+      call apply_permutation(Amat, perm, .false.)
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(matmul(Amat,P), matmul(Qmat, R), rtol, atol))
+      call check(error, all_close(Amat, matmul(Qmat, R), rtol, atol))
 
    end subroutine test_piv_qr_num_rank_deficiency
 

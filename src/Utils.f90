@@ -7,7 +7,7 @@ module lightkrylov_utils
 
    private
    ! General-purpose utilities.
-   public :: assert_shape, stop_error, norml, log2
+   public :: assert_shape, stop_error, iargsort, norml, log2
    ! Linear Algebra Utilities.
    public :: inv, svd, eig, eigh, lstsq, schur, ordschur
 
@@ -164,6 +164,29 @@ contains
       norm = max ( norm, row_sum )
       end do
    end function norml
+
+   function iargsort(a) result(idx)
+      integer, intent(in):: a(:)    ! array of numbers
+      integer :: idx(size(a))       ! indices into the array 'a' that sort it
+      integer :: N                  ! number of numbers/vectors
+      integer :: i,imin             ! indices: i, i of smallest
+      integer :: temp               ! temporary
+      integer :: a2(size(a))
+      a2 = a
+      N=size(a)
+      do i = 1, N
+          idx(i) = i
+      end do
+      do i = 1, N-1
+          ! find ith smallest in 'a'
+          imin = minloc(a2(i:),1) + i - 1
+          ! swap to position i in 'a' and 'b', if not already there
+          if (imin /= i) then
+              temp = a2(i);a2(i) = a2(imin); a2(imin) = temp
+              temp = idx(i); idx(i) = idx(imin); idx(imin) = temp
+          end if
+      end do
+   end function
 
    !-------------------------------------------
    !-----                                 -----

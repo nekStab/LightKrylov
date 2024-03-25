@@ -11,6 +11,7 @@ module LightKrylov_expmlib
    !! It also provides an abstract interface for the exponential propagator to which user-defined alternatives 
    !! to conform.
    Use LightKrylov
+   Use lightkrylov_BaseKrylov
    Use LightKrylov_Utils
 
    ! Fortran standard library.
@@ -114,7 +115,8 @@ contains
       class(abstract_vector), allocatable :: X(:)
       real(kind=wp), allocatable          :: H(:,:)
       ! Normalisation & temp arrays
-      real(kind=wp), allocatable          :: R(:,:), E(:,:), em(:,:), perm(:,:)
+      real(kind=wp), allocatable          :: R(:,:), E(:,:), em(:,:)
+      integer, allocatable                :: perm(:), ptrans(:)
       class(abstract_vector), allocatable :: Xwrk(:), Cwrk(:)
       real(kind=wp) :: err_est
       ! Optional arguments
@@ -132,7 +134,8 @@ contains
 
       ! Allocate memory
       allocate(R(1:p,1:p))
-      allocate(perm(1:p,1:p))
+      allocate(perm(1:p))
+      allocate(ptrans(1:p))
       allocate(X(1:p*(nk+1)), source=B(1)); 
       allocate(H(1:p*(nk+1),1:p*(nk+1)))
       allocate(E(1:p*(nk+1),1:nk))
@@ -145,8 +148,9 @@ contains
       R = 0.0_wp
       call mat_zero(Xwrk)
       call mat_copy(Xwrk(1:p), B(1:p))
-      call qr_factorization(Xwrk(1:p), R(1:p,1:p), perm(1:p,1:p), info, ifpivot=.true.)
-      R = matmul(R, transpose(perm))
+      call qr_factorization(Xwrk(1:p), R(1:p,1:p), perm(1:p), info, ifpivot=.true.)
+      call apply_permutation(R, perm, trans = .true.)
+      !R = matmul(R, transpose(perm))
       if (norm2(R(1:p,1:p)) .eq. 0.0_wp) then
          ! input is zero => output is zero
          call mat_zero(C)

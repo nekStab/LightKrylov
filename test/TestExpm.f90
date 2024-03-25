@@ -158,7 +158,7 @@ module TestExpm
       integer :: info
       !> Test parameters
       integer, parameter         :: nkmax = 15
-      integer, parameter         :: p     = 2
+      integer, parameter         :: p     = 3
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
       !> Misc.
