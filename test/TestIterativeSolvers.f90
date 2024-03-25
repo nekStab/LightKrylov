@@ -2,6 +2,7 @@ module TestIterativeSolvers
    use LightKrylov
    use TestVector
    use TestMatrices
+   use TestUtils
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use stdlib_math, only: all_close
    implicit none
@@ -96,9 +97,10 @@ contains
       !> Toeplitz matrix.
       real(kind=wp) :: T(test_size, test_size), a_, b_
       !> Miscellaneous.
-      integer :: i, j, k
+      integer :: i
       real(kind=wp) :: alpha
       real(kind=wp) :: true_evals(test_size), pi
+      class(rvector), allocatable :: X0(1)
 
       !> Create the sym. pos. def. Toeplitz matrix.
       call random_number(a_); call random_number(b_); b_ = -abs(b_)
@@ -113,13 +115,10 @@ contains
 
       !> Test matrix.
       A = spd_matrix(T)
-
       !> Initialize Krylov subspace.
-      allocate (X(1:test_size + 1))
-      call random_number(X(1)%data); alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
-      do i = 2, size(X)
-         call X(i)%zero()
-      end do
+      allocate (X(1:test_size + 1)); allocate (X0(1))
+      call init_rand(X0)
+      call initialize_krylov_subspace(X, X0)
 
       !> Initialize internal variables.
       evals = 0.0_wp; residuals = 0.0_wp
@@ -155,9 +154,10 @@ contains
       !> Toeplitz matrix.
       real(kind=wp) :: T(test_size, test_size), a_, b_
       !> Miscellaneous.
-      integer :: i, j, k
+      integer :: i, k
       real(kind=wp) :: alpha
       complex(kind=wp) :: true_evals(test_size), pi
+      class(rvector), allocatable :: X0(1)
 
       !> Create the sym. pos. def. Toeplitz matrix.
       call random_number(a_); call random_number(b_); b_ = abs(b_)
@@ -174,11 +174,9 @@ contains
       A = rmatrix(T)
 
       !> Initialize Krylov subspace.
-      allocate (X(1:test_size + 1))
-      call random_number(X(1)%data); alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
-      do i = 2, size(X)
-         call X(i)%zero()
-      end do
+      allocate (X(1:test_size + 1)); allocate (X0(1))
+      call init_rand(X0)
+      call initialize_krylov_subspace(X, X0)
 
       !> Initialize internal variables.
       evals = cmplx(0.0_wp, 0.0_wp, kind=wp); residuals = 0.0_wp
@@ -232,8 +230,8 @@ contains
       integer :: info
 
       ! --> Initialize linear problem.
-      A = rmatrix(); call random_number(A%data)
-      b = rvector(); call random_number(b%data)
+      A = rmatrix(); call init_rand(A)
+      b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
       ! --> GMRES solver.
       opts = gmres_opts(kdim=test_size, verbose=.false.)
@@ -257,8 +255,8 @@ contains
       integer :: info
 
       ! --> Initialize linear problem.
-      A = spd_matrix(); call random_number(A%data); A%data = matmul(A%data, transpose(A%data))
-      b = rvector(); call random_number(b%data)
+      A = spd_matrix(); call init_rand(A)
+      b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
       ! --> GMRES solver.
       opts = gmres_opts(kdim=test_size, verbose=.false.)
@@ -284,11 +282,11 @@ contains
       !> Information flag.
       integer :: info
       !> Miscellaneous.
-      integer :: i, j, k
+      integer :: i
 
       ! --> Initialize linear problem.
-      A = rmatrix(); call random_number(A%data)
-      b = rvector(); call random_number(b%data)
+      A = rmatrix(); call init_rand(A)
+      b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
       ! --> Preconditioner.
       diag = 0.0_wp
@@ -341,9 +339,10 @@ contains
       !> Information flag.
       integer :: info
       !> Miscellaneous.
-      integer :: i, j, k
+      integer :: i
       real(kind=wp) :: alpha
       real(kind=wp) :: true_svdvals(1:test_size), pi = 4.0_wp*atan(1.0_wp)
+      class(rvector), allocatable :: U0(1)
 
       !> Initialize matrix.
       A = rmatrix()
@@ -357,13 +356,10 @@ contains
       end do
 
       !> Initialize Krylov subspaces.
-      allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1))
-      call random_number(U(1)%data)
-      alpha = U(1)%norm(); call U(1)%scal(1.0_wp/alpha)
-      call V(1)%zero()
-      do i = 2, size(U)
-         call U(i)%zero(); call V(i)%zero()
-      end do
+      allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1)); allocate (U0(1))
+      call init_rand(U0)
+      call initialize_krylov_subspace(U, U0)
+      call mat_zero(V)
 
       !> Initialize internal variables.
       svdvals = 0.0_wp
@@ -411,10 +407,10 @@ contains
       integer :: info
 
       ! --> Initialize linear problem.
-      A = spd_matrix()
-      call random_number(Q); A%data = matmul(Q, transpose(Q))
-      A%data = 0.5*(A%data + transpose(A%data))
-      b = rvector(); call random_number(b%data)
+      A = spd_matrix(); 
+      call random_number(Q); 
+      A%data = matmul(Q, transpose(Q)); A%data = 0.5*(A%data + transpose(A%data))
+      b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
       ! --> CG solver.
       opts = cg_opts(verbose=.false., atol=1e-12_wp, rtol=0.0_wp)
