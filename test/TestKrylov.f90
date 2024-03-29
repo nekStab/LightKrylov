@@ -960,9 +960,9 @@ contains
       ! --> Extract data
       call get_data(Qdata, A)
 
-      call apply_permutation(Amat, perm, .false.)
+      call apply_permutation(Adata, perm, .false.)
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(Amat, matmul(Qmat, R), rtol, atol))
+      call check(error, all_close(Adata, matmul(Qdata, R), rtol, atol))
 
    end subroutine test_piv_qr_absolute_rank_deficiency
 
@@ -1020,9 +1020,9 @@ contains
       ! --> Extract data
       call get_data(Qdata, A)
 
-      call apply_permutation(Amat, perm, .false.)
+      call apply_permutation(Adata, perm, .false.)
       ! --> Check correctness of QR factorization.
-      call check(error, all_close(Amat, matmul(Qmat, R), rtol, atol))
+      call check(error, all_close(Adata, matmul(Qdata, R), rtol, atol))
 
    end subroutine test_piv_qr_num_rank_deficiency
 
