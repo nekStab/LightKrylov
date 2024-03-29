@@ -82,8 +82,6 @@ contains
       logical                                     :: verbose
       logical                                     :: transpose
 
-      write(*,*) 'DO EXPTA'
-
       tol     = atol
       verbose = .false.
       kdim    = 30
