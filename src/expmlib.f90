@@ -36,7 +36,7 @@ module LightKrylov_expmlib
    end type kexpm_opts
 
    abstract interface
-      subroutine abstract_exptA(vec_out, A, vec_in, tau, info)
+      subroutine abstract_exptA(vec_out, A, vec_in, tau, info, trans)
          import abstract_linop, abstract_vector, abstract_opts, wp
          !! Abstract interface to use a user-defined exponential propagator  in `LightKrylov`
          class(abstract_vector),         intent(out) :: vec_out
@@ -49,6 +49,8 @@ module LightKrylov_expmlib
          !! Time horizon for integration
          integer,                        intent(out) :: info
          !! Information flag
+         logical, optional,              intent(in)  :: trans
+         !! Use transpose?
       end subroutine abstract_exptA
    end interface
 
@@ -59,7 +61,7 @@ module LightKrylov_expmlib
 
 contains
 
-   subroutine k_exptA(vec_out, A, vec_in, tau, info)
+   subroutine k_exptA(vec_out, A, vec_in, tau, info, trans)
       
       class(abstract_vector),         intent(out) :: vec_out
       !! Solution vector
@@ -71,21 +73,27 @@ contains
       !! Time horizon for integration
       integer,                        intent(out) :: info
       !! Information flag
+      logical, optional,              intent(in)  :: trans
+      !! Use transpose?
 
       ! Internals
       real(kind=wp)                               :: tol
       integer                                     :: kdim
       logical                                     :: verbose
+      logical                                     :: transpose
+
+      write(*,*) 'DO EXPTA'
 
       tol     = atol
       verbose = .false.
       kdim    = 30
+      transpose = optval(trans, .false.)
 
-      call kexpm(vec_out, A, vec_in, tau, tol, info, verbosity = verbose, kdim =kdim)
+      call kexpm(vec_out, A, vec_in, tau, tol, info, trans=transpose, verbosity = verbose, kdim =kdim)
 
    end subroutine k_exptA
 
-   subroutine kexpm_mat(C, A, B, tau, tol, info, verbosity, kdim)
+   subroutine kexpm_mat(C, A, B, tau, tol, info, trans, verbosity, kdim)
       !! Approximates the action of the exponential propagator (matrix exponential) of a linear 
       !! operator \( \mathbf{A} \) on a given matrix \( \mathbf{B} \) by computing the action of the exponential propagator
       !! on the projection of the operator on a (small) Krylov subspace.
@@ -103,6 +111,8 @@ contains
       !! Solution tolerance based on error estimates
       integer,                intent(out) :: info
       !! Information flag
+      logical, optional,      intent(in)  :: trans
+      !! Use transpose?
       logical, optional,      intent(in)  :: verbosity
       !! Verbosity control (default `.false.`)
       integer, optional,      intent(in)  :: kdim
@@ -120,6 +130,7 @@ contains
       class(abstract_vector), allocatable :: Xwrk(:), Cwrk(:)
       real(kind=wp) :: err_est
       ! Optional arguments
+      logical                             :: transpose
       logical                             :: verbose
       integer                             :: nstep
 
@@ -127,9 +138,10 @@ contains
       p = size(B)
 
       ! Deal with optional arguments
-      verbose = optval(verbosity, .false.)
-      nstep   = optval(kdim, kmax)
-      nk      = nstep*p
+      transpose = optval(trans, .false.)
+      verbose   = optval(verbosity, .false.)
+      nstep     = optval(kdim, kmax)
+      nk        = nstep*p
       info = 0
 
       ! Allocate memory
@@ -170,7 +182,7 @@ contains
             E = 0.0_wp; call mat_zero(Xwrk)
 
             ! compute kth stop of the Arnoldi factorization
-            call arnoldi_factorization(A, X(1:kpp), H(1:kpp,1:kp), info, kstart=k, kend=k, block_size=p)
+            call arnoldi_factorization(A, X(1:kpp), H(1:kpp,1:kp), info, kstart=k, kend=k, transpose=transpose, block_size=p)
             
             ! compute approximation
             if (info .eq. kp) then
@@ -230,7 +242,7 @@ contains
       return
    end subroutine kexpm_mat
 
-   subroutine kexpm_vec(c, A, b, tau, tol, info, verbosity, kdim)
+   subroutine kexpm_vec(c, A, b, tau, tol, info, trans, verbosity, kdim)
       !! Approximates the action of the exponential propagator (matrix exponential) of a linear 
       !! operator \( \mathbf{A} \) on a given vector \( \mathbf{b} \) by computing the action of 
       !! the exponential propagator on the projection of the operator on a (small) Krylov subspace.
@@ -312,6 +324,8 @@ contains
       !! Solution tolerance based on error estimates
       integer,                intent(out) :: info
       !! Information flag
+      logical, optional,      intent(in)  :: trans
+      !! Use transpose?
       logical, optional,      intent(in)  :: verbosity
       !! Verbosity control (default `.false.`)
       integer, optional,      intent(in)  :: kdim
@@ -328,13 +342,15 @@ contains
       class(abstract_vector), allocatable :: xwrk
       real(kind=wp)                       :: err_est, beta
       ! Optinal arguments
+      logical                             :: transpose
       logical                             :: verbose
       integer                             :: nstep
       
       ! Deal with optional arguemnts
-      verbose = optval(verbosity, .false.)
-      nstep   = optval(kdim, kmax)
-      nk      = nstep
+      transpose = optval(trans, .false.)
+      verbose   = optval(verbosity, .false.)
+      nstep     = optval(kdim, kmax)
+      nk        = nstep
       
       info = 0
       
@@ -365,7 +381,7 @@ contains
             E = 0.0_wp
 
             ! compute kth stop of the Arnoldi factorization
-            call arnoldi_factorization(A, X(1:kp), H(1:kp,1:k), info, kstart=k, kend=k)
+            call arnoldi_factorization(A, X(1:kp), H(1:kp,1:k), info, kstart=k, kend=k, transpose=transpose)
 
             ! compute approximation
             if (info .eq. k) then 
