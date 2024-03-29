@@ -250,6 +250,7 @@ contains
          write (*, *) "Coefficient matrix B does not have the same amout of colums as output basis C for the product C = A @ B."
          stop 1
       end if
+      call mat_zero(C)
       allocate (wrk, source=A(1))
       ! Compute product column-wise
       do i = 1, size(B, 2)
