@@ -688,11 +688,13 @@ contains
       info = 0
 
       ! Initial Krylov vector.
-      if (trans) then
-         call A%rmatvec(x, V(1))
-      else
-         call A%matvec(x, V(1))
-      end if
+      if (x%norm() .ne. 0.0_wp) then
+         if (trans) then
+            call A%rmatvec(x, V(1))
+         else
+            call A%matvec(x, V(1))
+         end if
+      endif
       call V(1)%sub(b); call V(1)%scal(-1.0_wp)
       beta = V(1)%norm(); call V(1)%scal(1.0_wp/beta)
       gmres_iterations: do i = 1, maxiter
