@@ -243,7 +243,7 @@ contains
          write (*, *) "Coefficient matrix B does not have the same amout of colums as output basis C for the product C = A @ B."
          stop 1
       end if
-      
+
       ! Compute product column-wise
       do j = 1, size(B, 2)
          call C(j)%zero()
