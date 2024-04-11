@@ -335,7 +335,7 @@ contains
       end do arnoldi
 
       ! Reconstruct the eigenvectors from the Krylov basis.
-      allocate (Xwrk, source=X); call mat_mult(X(1:kdim), Xwrk(1:kdim), eigvecs)
+      allocate (Xwrk, source=X); call mat_mult(X(1:k), Xwrk(1:k), eigvecs(1:k, 1:k))
 
       return
    end subroutine eigs
@@ -581,9 +581,10 @@ contains
       info = k
 
       ! Compute and return the low-rank factors from the Krylov bases.
-      allocate (Uwrk, source=U); allocate (Vwrk, source=V)
-      call mat_mult(U(1:kdim), Uwrk(1:kdim), uvecs); call mat_mult(V(1:kdim), Vwrk(1:kdim), vvecs)
-
+      allocate (Uwrk, source=U(1:k)); allocate (Vwrk, source=V(1:k))
+      call mat_mult(U(1:k), Uwrk, uvecs(1:k, 1:k))
+      call mat_mult(V(1:k), Vwrk, vvecs(1:k, 1:k))
+      
       return
    end subroutine svds
 

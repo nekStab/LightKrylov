@@ -22,6 +22,10 @@ implicit-typing = false
 implicit-external = true
 source-form = "free"
 
+[preprocess]
+[preprocess.cpp]
+directories = ["test/TestExpm.f90"]
+
 [dependencies]
 stdlib = "*"
 
