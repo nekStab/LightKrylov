@@ -270,8 +270,8 @@ contains
 
       ! Compute product column-wise
       C = 0.0_wp
-      do i = 1, size(A)
-         do j = 1, size(B)
+      do j = 1, size(B)
+         do i = 1, size(A)
             C(i, j) = A(i)%dot(B(j))
          end do
       end do
@@ -305,8 +305,8 @@ contains
          write (*, *) "INFO : Array sizes incompatible for summation. "
          stop 1
       end if
-      do i = 1, size(A, 1)
-         do j = 1, size(A, 2)
+      do j = 1, size(A, 2)
+         do i = 1, size(A, 1)
             A(i, j) = alpha*A(i, j) + beta*B(i, j)
          end do
       end do
