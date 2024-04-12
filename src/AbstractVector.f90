@@ -79,7 +79,7 @@ module lightkrylov_AbstractVector
       procedure(abstract_zero), deferred, public :: zero
       !! Sets an `abstract_vector` to zero.
       procedure(abstract_rand), deferred, public :: rand
-      !! Create a random `æbstract_vector.
+      !! Create a random `abstract_vector.
       procedure(abstract_scal), deferred, public :: scal
       !! Compute the scalar-vector product.
       procedure(axpby_interface), deferred, pass(self), public :: axpby
