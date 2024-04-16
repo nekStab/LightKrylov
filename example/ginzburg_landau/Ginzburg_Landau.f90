@@ -33,7 +33,7 @@ module Ginzburg_Landau
   !-----     LIGHTKRYLOV VECTOR TYPE     -----
   !-------------------------------------------
 
-  type, extends(abstract_vector), public :: state_vector
+  type, extends(abstract_real_vector), public :: state_vector
      real(kind=wp) :: state(2*nx) = 0.0_wp
    contains
      private
@@ -265,7 +265,7 @@ contains
 
   real(kind=wp) function dot(self, vec) result(alpha)
     class(state_vector)   , intent(in) :: self
-    class(abstract_vector), intent(in) :: vec
+    class(abstract_real_vector), intent(in) :: vec
     select type(vec)
     type is(state_vector)
        alpha = dot_product(self%state, vec%state)
@@ -282,7 +282,7 @@ contains
 
   subroutine axpby(self, alpha, vec, beta)
     class(state_vector)   , intent(inout) :: self
-    class(abstract_vector), intent(in)    :: vec
+    class(abstract_real_vector), intent(in)    :: vec
     real(kind=wp)         , intent(in)    :: alpha, beta
     select type(vec)
     type is(state_vector)
@@ -314,9 +314,9 @@ contains
     !> Linear Operator.
     class(exponential_prop), intent(in)  :: self
     !> Input vector.
-    class(abstract_vector) , intent(in)  :: vec_in
+    class(abstract_real_vector) , intent(in)  :: vec_in
     !> Output vector.
-    class(abstract_vector) , intent(out) :: vec_out
+    class(abstract_real_vector) , intent(out) :: vec_out
 
     !> Time-integrator.
     type(rks54_class) :: prop
@@ -341,9 +341,9 @@ contains
     !> Linear Operator.
     class(exponential_prop), intent(in)  :: self
     !> Input vector.
-    class(abstract_vector) , intent(in)  :: vec_in
+    class(abstract_real_vector) , intent(in)  :: vec_in
     !> Output vector.
-    class(abstract_vector) , intent(out) :: vec_out
+    class(abstract_real_vector) , intent(out) :: vec_out
 
     !> Time-integrator.
     type(rks54_class) :: prop

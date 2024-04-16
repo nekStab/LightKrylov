@@ -56,18 +56,18 @@ module lightkrylov_IterativeSolvers
    abstract interface
       subroutine abstract_apply_precond(self, vec_inout)
         !! Abstract interface to apply a preconditioner in `LightKrylov`.
-         import abstract_preconditioner, abstract_vector
+         import abstract_preconditioner, abstract_real_vector
          class(abstract_preconditioner), intent(in) :: self
          !! Preconditioner.
-         class(abstract_vector), intent(inout) :: vec_inout
+         class(abstract_real_vector), intent(inout) :: vec_inout
          !! Input/Output vector.
       end subroutine abstract_apply_precond
 
       subroutine abstract_undo_precond(self, vec_inout)
         !! Deprecated.
-         import abstract_preconditioner, abstract_vector
+         import abstract_preconditioner, abstract_real_vector
          class(abstract_preconditioner), intent(in) :: self
-         class(abstract_vector), intent(inout) :: vec_inout
+         class(abstract_real_vector), intent(inout) :: vec_inout
       end subroutine abstract_undo_precond
    end interface
 
@@ -80,12 +80,12 @@ module lightkrylov_IterativeSolvers
    abstract interface
       subroutine abstract_linear_solver(A, b, x, info, preconditioner, options, transpose)
         !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-         import abstract_linop, abstract_vector, abstract_opts, abstract_preconditioner
+         import abstract_linop, abstract_real_vector, abstract_opts, abstract_preconditioner
          class(abstract_linop), intent(in) :: A
          !! Linear operator to invert.
-         class(abstract_vector), intent(in) :: b
+         class(abstract_real_vector), intent(in) :: b
          !! Right-hand side vector.
-         class(abstract_vector), intent(inout) :: x
+         class(abstract_real_vector), intent(inout) :: x
          !! Solution vector.
          integer, intent(out) :: info
          !! Information flag.
@@ -248,7 +248,7 @@ contains
      !!   the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
       class(abstract_linop), intent(in) :: A
       !! Linear operator whose leading eigenpairs need to be computed.
-      class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_real_vector), intent(inout) :: X(:)
       !! Leading eigenvectors of \(\mathbf{A}\). On entry, `X(1)` needs to be set to the starting Krylov vector.
       !! On exit, storage of the real and imaginary parts of the eigenvectors follows the LAPACK convention.
       complex(kind=wp), intent(out) :: eigvals(:)
@@ -267,7 +267,7 @@ contains
       !! Determine whether \(\mathbf{A}\) (default `.false.`) or \( \mathbf{A}^T\) (`.true.`) is used.
 
       ! Internal variables.
-      class(abstract_vector), allocatable   :: Xwrk(:)
+      class(abstract_real_vector), allocatable   :: Xwrk(:)
       real(kind=wp), allocatable :: eigvecs(:, :)
       integer                       :: nev_, conv
       real(kind=wp)                       :: tol
@@ -377,7 +377,7 @@ contains
      !!   of Linear Differential and Integral Operators". United States Governm. Press Office.
       class(abstract_spd_linop), intent(in) :: A
       !! Linear operator whose leading eigenpairs need to be computed.
-      class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_real_vector), intent(inout) :: X(:)
       !! Leading eigenvectors of \(\mathbf{A}\). On entry, `X(1)` needs to be set to the starting
       !! Krylov vector.
       real(kind=wp), intent(out) :: eigvals(:)
@@ -395,7 +395,7 @@ contains
       !! Verbosity control (default `.false.`).
 
       ! Internal variables
-      class(abstract_vector), allocatable   :: Xwrk(:)
+      class(abstract_real_vector), allocatable   :: Xwrk(:)
       real(kind=wp), allocatable :: eigvecs(:, :)
       integer                       :: nev_, conv
       real(kind=wp)                       :: tol
@@ -508,10 +508,10 @@ contains
      !!   [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
       class(abstract_linop), intent(in) :: A
       !! Linear operator whose leading singular triplets are to be computed.
-      class(abstract_vector), intent(inout) :: U(:)
+      class(abstract_real_vector), intent(inout) :: U(:)
       !! Leading left singular vectors of \(\mathbf{A}\). On entry, `U(1)` needs to be set to the starting
       !! Krylov vector.
-      class(abstract_vector), intent(inout) :: V(:)
+      class(abstract_real_vector), intent(inout) :: V(:)
       !! Leading right singular vectors of \(\mathbf{A}\).
       real(kind=wp), intent(out) :: sigma(:)
       !! Leading singular values.
@@ -532,7 +532,7 @@ contains
       integer :: kdim
       integer :: i, j, k
       integer(int_size) :: indices(size(U) - 1)
-      class(abstract_vector), allocatable   :: Uwrk(:), Vwrk(:)
+      class(abstract_real_vector), allocatable   :: Uwrk(:), Vwrk(:)
       real(kind=wp), allocatable :: uvecs(:, :), vvecs(:, :)
       integer                       :: nev_, conv
       real(kind=wp)                       :: tol
@@ -625,9 +625,9 @@ contains
      !!   Computing, 7(3), 856–869.
       class(abstract_linop), intent(in)     :: A
       !! Linear operator to be inverted.
-      class(abstract_vector), intent(in)    :: b
+      class(abstract_real_vector), intent(in)    :: b
       !! Right-hand side vector.
-      class(abstract_vector), intent(inout) :: x
+      class(abstract_real_vector), intent(inout) :: x
       !! Solution vector.
       integer, intent(out)   :: info
       !! Information flag.
@@ -645,7 +645,7 @@ contains
       logical                                :: verbose
 
       ! Krylov subspace.
-      class(abstract_vector), allocatable :: V(:)
+      class(abstract_real_vector), allocatable :: V(:)
       ! Upper Hessenberg matrix.
       real(kind=wp), allocatable :: H(:, :)
       ! Least-squares related variables.
@@ -655,7 +655,7 @@ contains
       ! Miscellaneous.
       integer                             :: i, j, k, l, m
       real(kind=wp)                       :: alpha
-      class(abstract_vector), allocatable :: dx, wrk
+      class(abstract_real_vector), allocatable :: dx, wrk
       logical                                              :: has_precond
       class(abstract_preconditioner), allocatable          :: precond
       type(gmres_opts)                           :: opts
@@ -811,9 +811,9 @@ contains
      !!   Linear Systems," Journal of Research of the National Bureau of Standards, 49(6), 409–436.
       class(abstract_spd_linop), intent(in) :: A
       !! Linear operator to be inverted.
-      class(abstract_vector), intent(in) :: b
+      class(abstract_real_vector), intent(in) :: b
       !! Right-hand side vector.
-      class(abstract_vector), intent(inout) :: x
+      class(abstract_real_vector), intent(inout) :: x
       !! Solution vector.
       integer, intent(out)   :: info
       !! Information flag.
@@ -830,7 +830,7 @@ contains
       logical       :: verbose
 
       ! Residual and direction vectors.
-      class(abstract_vector), allocatable :: r, p, Ap
+      class(abstract_real_vector), allocatable :: r, p, Ap
       ! Scalars used in the CG algorithm.
       real(kind=wp) :: alpha, beta, r_dot_r_old, r_dot_r_new, residual
       integer :: i, j, k

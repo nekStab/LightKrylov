@@ -43,7 +43,7 @@ contains
    subroutine get_data_vec(vec_out, vec_in)
       !! Utility function to transfer data from a rvector to a real array
       real(kind=wp),          intent(out) :: vec_out(:)
-      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(in)  :: vec_in
       ! internal variables
       integer :: k, kdim
       vec_out = 0.0_wp
@@ -57,7 +57,7 @@ contains
    subroutine get_data_vec_basis (mat_out, basis_in)
       !! Utility function to transfer data from a rvector basis to a real array
       real(kind=wp),          intent(out) :: mat_out(:,:)
-      class(abstract_vector), intent(in)  :: basis_in(:)
+      class(abstract_real_vector), intent(in)  :: basis_in(:)
       ! internal variables
       integer :: k, kdim
       mat_out = 0.0_wp
@@ -93,7 +93,7 @@ contains
 
    subroutine put_data_vec(vec_out, vec_in)
       !! Utility function to transfer data from a real array to a rvector
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(out) :: vec_out
       real(kind=wp),          intent(in)  :: vec_in(:)
       ! internal variables
       select type (vec_out)
@@ -106,7 +106,7 @@ contains
 
    subroutine put_data_vec_basis (basis_out, mat_in)
       !! Utility function to transfer data from a real array to a rvector basis
-      class(abstract_vector), intent(out) :: basis_out(:)
+      class(abstract_real_vector), intent(out) :: basis_out(:)
       real(kind=wp),          intent(in)  :: mat_in(:,:)
       ! internal variables
       integer :: k, kdim
@@ -140,7 +140,7 @@ contains
 
    subroutine init_rand_vec(vec)
       !! Utility function to initialize a rvector
-      class(abstract_vector), intent(inout) :: vec
+      class(abstract_real_vector), intent(inout) :: vec
       select type (vec)
       type is (rvector)
          call vec%rand()
@@ -150,7 +150,7 @@ contains
 
    subroutine init_rand_vec_basis (basis)
       !! Utility function to initialize a rvector basis
-      class(abstract_vector), intent(inout) :: basis (:)
+      class(abstract_real_vector), intent(inout) :: basis (:)
       ! internal variables
       integer :: k, kdim
       select type (basis)

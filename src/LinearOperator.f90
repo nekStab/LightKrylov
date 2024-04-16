@@ -47,9 +47,9 @@ module lightkrylov_LinearOperator
          import abstract_linop
          class(abstract_linop), intent(in)  :: self
          !! Linear operator `A`.
-         class(abstract_vector), intent(in)  :: vec_in
+         class(abstract_real_vector), intent(in)  :: vec_in
          !! Vector to be multiplied by \(\mathbf{A}\).
-         class(abstract_vector), intent(out) :: vec_out
+         class(abstract_real_vector), intent(out) :: vec_out
          !! Result of the matrix-vector product.
       end subroutine abstract_matvec
 
@@ -59,9 +59,9 @@ module lightkrylov_LinearOperator
          import abstract_linop
          class(abstract_linop), intent(in)  :: self
          !! Linear operator `A`.
-         class(abstract_vector), intent(in)  :: vec_in
+         class(abstract_real_vector), intent(in)  :: vec_in
          !! Vector to be multiplied by \(\mathbf{A}^T\).
-         class(abstract_vector), intent(out) :: vec_out
+         class(abstract_real_vector), intent(out) :: vec_out
          !! Result of the transpose matrix-vector product.
       end subroutine abstract_rmatvec
    end interface
@@ -160,8 +160,8 @@ contains
 
    subroutine identity_matvec(self, vec_in, vec_out)
       class(identity_linop), intent(in)  :: self
-      class(abstract_vector), intent(in)  :: vec_in
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(out) :: vec_out
       call vec_out%axpby(0.0_wp, vec_in, 1.0_wp)
       return
    end subroutine identity_matvec
@@ -175,9 +175,9 @@ contains
    subroutine scaled_matvec(self, vec_in, vec_out)
       class(scaled_linop), intent(in)     :: self
       !! Linear operator \( \mathbf{B} = \sigma \mathbf{A} \).
-      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(in)  :: vec_in
       !! Vector to be multiplied by \(\mathbf{B}\).
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(out) :: vec_out
       !! Result of the matrix-vector product \(\mathbf{y} = \sigma \mathbf{Ax}\).
 
       call self%A%matvec(vec_in, vec_out); call vec_out%scal(self%sigma)
@@ -187,9 +187,9 @@ contains
    subroutine scaled_rmatvec(self, vec_in, vec_out)
       class(scaled_linop), intent(in)     :: self
       !! Linear operator \( \mathbf{B} = \sigma \mathbf{A} \).
-      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(in)  :: vec_in
       !! Vector to be multiplied by \( \mathbf{B} \).
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(out) :: vec_out
       !! Result of the transpose matrix-vector product \(\mathbf{y} = \sigma \mathbf{A}^T \mathbf{x}\).
 
       call self%A%rmatvec(vec_in, vec_out); call vec_out%scal(self%sigma)
@@ -205,13 +205,13 @@ contains
    subroutine axpby_matvec(self, vec_in, vec_out)
       class(axpby_linop), intent(in)  :: self
       !! Linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(in)  :: vec_in
       !! Vector to be multiplied by \( \mathbf{C} \).
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(out) :: vec_out
       !! Result of the matrix-vector product \(\mathbf{y} = \mathbf{Cx}\).
 
       ! Working array.
-      class(abstract_vector), allocatable :: wrk
+      class(abstract_real_vector), allocatable :: wrk
 
       ! --> Allocate working array.
       allocate (wrk, source=vec_in)
@@ -239,13 +239,13 @@ contains
    subroutine axpby_rmatvec(self, vec_in, vec_out)
       class(axpby_linop), intent(in)  :: self
       !! Linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-      class(abstract_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(in)  :: vec_in
       !! Vector to be multiplied by \(\mathbf{C}\).
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(out) :: vec_out
       !! Result of the transpose matrix-vector product \(\mathbf{y} = \mathbf{C}^T \mathbf{x}\).
 
       ! Working array.
-      class(abstract_vector), allocatable :: wrk
+      class(abstract_real_vector), allocatable :: wrk
 
       ! --> w = A @ x
       if (self%transA) then

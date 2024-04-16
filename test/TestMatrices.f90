@@ -41,8 +41,8 @@ contains
 
    subroutine general_matvec(self, vec_in, vec_out)
       class(rmatrix), intent(in)  :: self
-      class(abstract_vector), intent(in)  :: vec_in
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(out) :: vec_out
 
       select type (vec_in)
       type is (rvector)
@@ -55,8 +55,8 @@ contains
 
    subroutine general_rmatvec(self, vec_in, vec_out)
       class(rmatrix), intent(in)          :: self
-      class(abstract_vector), intent(in)  :: vec_in
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(out) :: vec_out
 
       select type (vec_in)
       type is (rvector)
@@ -75,8 +75,8 @@ contains
 
    subroutine spd_matvec(self, vec_in, vec_out)
       class(spd_matrix), intent(in)  :: self
-      class(abstract_vector), intent(in)  :: vec_in
-      class(abstract_vector), intent(out) :: vec_out
+      class(abstract_real_vector), intent(in)  :: vec_in
+      class(abstract_real_vector), intent(out) :: vec_out
 
       select type (vec_in)
       type is (rvector)

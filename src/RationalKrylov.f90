@@ -59,7 +59,7 @@ contains
       !! - S. Guttel. "Rational Krylov Methods for Operator Functions", PhD Thesis, 2010.
       class(abstract_linop), intent(in) :: A
       !! Linear operator to be factorized.
-      class(abstract_vector), intent(inout) :: X(:)
+      class(abstract_real_vector), intent(inout) :: X(:)
       !! Resulting rational Krylov basis. On entry, `X(1)` needs to contain the starting Krylov vector.
       real(kind=wp), intent(inout) :: H(:, :), G(:, :)
       !! Upper Hessenberg matrices defining the rational factorization.
@@ -95,7 +95,7 @@ contains
       real(kind=wp) :: alpha, beta
       class(identity_linop), allocatable  :: Id
       class(axpby_linop), allocatable  :: S
-      class(abstract_vector), allocatable :: wrk
+      class(abstract_real_vector), allocatable :: wrk
 
       ! Krylov subspace dimension.
       kdim = size(X) - 1

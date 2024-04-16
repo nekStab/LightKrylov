@@ -18,7 +18,7 @@ module LightKrylov
    !> Global variables.
    public :: greetings, wp, atol, rtol
    !> Abstract vectors.
-   public :: abstract_vector, get_vec, mat_mult, mat_axpby, mat_zero, mat_copy
+   public :: abstract_vector, abstract_real_vector, get_vec, mat_mult, mat_axpby, mat_zero, mat_copy
    !> Abstract linear operators.
    public :: abstract_linop, abstract_spd_linop, identity_linop, scaled_linop, axpby_linop
    !> Krylov factorization for general matrix.
