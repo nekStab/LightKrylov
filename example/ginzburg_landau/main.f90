@@ -33,7 +33,7 @@ program demo
   !> Miscellaneous.
   integer       :: i, j, k
   real(kind=wp) :: alpha
-  class(abstract_real_vector), allocatable :: wrk
+  class(abstract_vector), allocatable :: wrk
   complex(kind=wp)                    :: eigenvectors(nx, nev)
 
   !=============================================================================

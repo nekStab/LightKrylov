@@ -49,15 +49,15 @@ module lightkrylov_BaseKrylov
 contains
 
    subroutine initialize_krylov_subspace(X, B0)
-    !! Utility function to initializes an array of `abstract_real_vector`. By default, it initializes `X` to an array of zero `abstract_real_vector`s.
+    !! Utility function to initializes an array of `abstract_vector`. By default, it initializes `X` to an array of zero `abstract_vector`s.
     !! If `B0` is passed, it initializes the first `p` columns of `X` with the content of `B0` followed by orthogonalization.
-      class(abstract_real_vector), intent(inout) :: X(:)
-    !! Array of `abstract_real_vector` to initialize.
-      class(abstract_real_vector), optional, intent(in) :: B0(:)
+      class(abstract_vector), intent(inout) :: X(:)
+    !! Array of `abstract_vector` to initialize.
+      class(abstract_vector), optional, intent(in) :: B0(:)
     !! If present, the span of the first `p` columns.
 
       ! Internal variables.
-      class(abstract_real_vector), allocatable :: B(:)
+      class(abstract_vector), allocatable :: B(:)
       real(kind=wp), allocatable :: Rwrk(:, :)
       integer, allocatable :: pwrk(:)      
       integer :: i, p, info
@@ -120,7 +120,7 @@ contains
 
       class(abstract_linop), intent(in) :: A
       !! Linear operator to be factorized.
-      class(abstract_real_vector), intent(inout) :: X(:)
+      class(abstract_vector), intent(inout) :: X(:)
       !! Orthogonal Krylov subspace. Note that on entry `X(1)` needs to be set to the initial Krylov vector.
       real(kind=wp), intent(inout) :: H(:, :)
       !! Upper Hessenberg matrix.
@@ -238,7 +238,7 @@ contains
    subroutine update_hessenberg_matrix(H, X, k, block_size)
       integer, intent(in) :: k
       real(kind=wp), intent(inout) :: H(:, :)
-      class(abstract_real_vector) :: X(:)
+      class(abstract_vector) :: X(:)
       ! Optional: size of blocks, default = 1
       integer, optional, intent(in) :: block_size
       ! Internal variables.
@@ -305,7 +305,7 @@ contains
 
       class(abstract_spd_linop), intent(in) :: A
       !! Linear operator to be factorized.
-      class(abstract_real_vector), intent(inout) :: X(:)
+      class(abstract_vector), intent(inout) :: X(:)
       !! Orthogonal Krylov subspace. Note that on entry, `X(1)` needs to be set to the initial Krylov vector.
       real(kind=wp), intent(inout) :: T(:, :)
       !! Tridiagonal matrix.
@@ -383,8 +383,8 @@ contains
    subroutine update_tridiag_matrix(T, X, k)
       integer, intent(in) :: k
       real(kind=wp), intent(inout) :: T(:, :)
-      class(abstract_real_vector) :: X(:)
-      class(abstract_real_vector), allocatable :: wrk
+      class(abstract_vector) :: X(:)
+      class(abstract_vector), allocatable :: wrk
       integer :: i
       real(kind=wp) :: alpha
 
@@ -423,10 +423,10 @@ contains
      !!   [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
       class(abstract_linop), intent(in) :: A
       !! Linear operator to be factorized.
-      class(abstract_real_vector), intent(inout) :: U(:)
+      class(abstract_vector), intent(inout) :: U(:)
       !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
       !! the starting Krylov vector.
-      class(abstract_real_vector), intent(inout) :: V(:)
+      class(abstract_vector), intent(inout) :: V(:)
       !! Orthonormal basis for the row span of \(\mathbf{A}\).
       real(kind=wp), intent(inout) :: B(:, :)
       !! Bidiagonal matrix satisfying \( \mathbf{U}^T \mathbf{AV} = \mathbf{B} \).
@@ -559,10 +559,10 @@ contains
       !!   see Chapter 7.1 : Lanczos biorthogonalization.
       class(abstract_linop), intent(in)    :: A
       !! Linear operator to be factorized.
-      class(abstract_real_vector), intent(inout) :: V(:)
+      class(abstract_vector), intent(inout) :: V(:)
       !! Bi-orthogonal basis for the column span of \(\mathbf{A}\). On entry `V(1)` needs to be initialized
       !! with the starting Krylov vector for the column span.
-      class(abstract_real_vector), intent(inout) :: W(:)
+      class(abstract_vector), intent(inout) :: W(:)
       !! Bi-orthogonal basis for the row span of \(\mathbf{A}\). On entry `W(1)` needs to be initialized with
       !! the starting Krylov vector for the row span.
       real(kind=wp), intent(inout) :: T(:, :)
@@ -670,8 +670,8 @@ contains
       !> Linear operator to be factorized.
       class(abstract_linop), intent(in)     :: A
       !> Left and right Krylov basis.
-      class(abstract_real_vector), intent(inout)  :: V(:)
-      class(abstract_real_vector), intent(inout)  :: W(:)
+      class(abstract_vector), intent(inout)  :: V(:)
+      class(abstract_vector), intent(inout)  :: W(:)
       !> Upper Hessenberg matrices.
       real(kind=wp), intent(inout) :: H(:, :), G(:, :)
       !> Information flag.
@@ -689,7 +689,7 @@ contains
       real(kind=wp)                       :: alpha, beta, gamma, tmp
       real(kind=wp), allocatable          :: M(:, :), invM(:, :) ! Inner-products matrix and its inverse.
       real(kind=wp)                       :: tmp_vec(size(V) - 1)
-      class(abstract_real_vector), allocatable :: tmp_krylov_vec
+      class(abstract_vector), allocatable :: tmp_krylov_vec
       integer                             :: i, j, k, kdim
 
       !> Check Krylov subspace dimensions.
@@ -751,13 +751,13 @@ contains
    contains
       subroutine update_residual_vector(x, V, W, M)
          !> Residual vector.
-         class(abstract_real_vector), intent(inout) :: x
+         class(abstract_vector), intent(inout) :: x
          !> Krylov subspaces.
-         class(abstract_real_vector), intent(in)    :: V(:), W(:)
+         class(abstract_vector), intent(in)    :: V(:), W(:)
          !> Inverse of the inner-product matrix.
          real(kind=wp), intent(in)    :: M(:, :)
          !> Temporary arrays.
-         class(abstract_real_vector), allocatable :: dx
+         class(abstract_vector), allocatable :: dx
          real(kind=wp)                       :: z(size(V))
          !> Low-dimensional vector.
          do i = 1, size(W) - 1
@@ -788,7 +788,7 @@ contains
    end subroutine two_sided_arnoldi_factorization
 
    subroutine qr_factorization(Q, R, perm, info, ifpivot, verbosity, tol)
-      !! Orthogonalization of an array of `abstract_real_vector` using the modified Gram-Schmid process with or without column pivoting.
+      !! Orthogonalization of an array of `abstract_vector` using the modified Gram-Schmid process with or without column pivoting.
       !!
       !! **Algorithmic Features**
       !!
@@ -811,8 +811,8 @@ contains
       !! - G. H. Golub & C. F. Van Loan. "Matrix Computations". 4th edition, The John Hopkins
       !!   University Press, 2013.
       !!   See Chapter 5.2.8 : Modified Gram-Schmidt algorithm.
-      class(abstract_real_vector), intent(inout) :: Q(:)
-      !! Array of `abstract_real_vector` that need to be orthogonalized.
+      class(abstract_vector), intent(inout) :: Q(:)
+      !! Array of `abstract_vector` that need to be orthogonalized.
       real(kind=wp), intent(out)   :: R(:, :)
       !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factoriation.
       integer, intent(out)   :: info
@@ -834,7 +834,7 @@ contains
       real(kind=wp)                         :: tolerance
       integer                               :: idxv(1)
       real(kind=wp),          allocatable   :: Rii(:)
-      class(abstract_real_vector), allocatable   :: Qwrk(1)
+      class(abstract_vector), allocatable   :: Qwrk(1)
 
       info = 0
 
@@ -954,7 +954,7 @@ contains
    subroutine swap_columns(Q, R, Rii, perm, i, j)
       implicit none
       ! Krylov Basis
-      class(abstract_real_vector), intent(inout) :: Q(:)
+      class(abstract_vector), intent(inout) :: Q(:)
       ! Gram-Schmidt factors
       real(kind=wp),          intent(inout) :: R(:, :)
       ! Diagonal factors
@@ -965,7 +965,7 @@ contains
       integer,                intent(in)    :: i, j
 
       ! internals
-      class(abstract_real_vector), allocatable :: Qwrk
+      class(abstract_vector), allocatable :: Qwrk
       real(kind=wp),          allocatable :: Rwrk(:)
       integer                             :: iwrk, m, n
 
@@ -1005,8 +1005,8 @@ contains
    end subroutine swap_columns
 
    subroutine apply_global_column_permutation_vec(X, p, trans)
-      !! Utility function to permute the columns of an abstract_real_vector type as defined by p
-      class(abstract_real_vector),     intent(inout) :: X(:)
+      !! Utility function to permute the columns of an abstract_vector type as defined by p
+      class(abstract_vector),     intent(inout) :: X(:)
       integer,                    intent(in)    :: p(:)
       logical, optional,          intent(in)    :: trans
 
@@ -1014,7 +1014,7 @@ contains
       integer :: i
       integer :: ptrans(size(p))
       logical :: transpose
-      class(abstract_real_vector), allocatable :: X2(:)
+      class(abstract_vector), allocatable :: X2(:)
 
       ! deal with optional arguments
       transpose = optval(trans, .false.)
@@ -1079,9 +1079,9 @@ contains
       integer, intent(out) :: nblk
       !! Number of blocks (or vectors if `blksize=1`) that have been moved to the upper left block
       !! of the Schur factorization of `H`.
-      class(abstract_real_vector), intent(inout) :: X(:)
+      class(abstract_vector), intent(inout) :: X(:)
       !! Krylov basis.
-      class(abstract_real_vector), allocatable   :: Xwrk(:)
+      class(abstract_vector), allocatable   :: Xwrk(:)
       real(kind=wp), intent(inout) :: H(:, :)
       !! Hessenberg/Schur matrix of the Krylov decomposition.
       real(kind=wp), allocatable   :: b(:, :)

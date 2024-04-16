@@ -12,7 +12,7 @@ module TestVector
 
    integer, parameter :: test_size = 100
 
-   type, extends(abstract_real_vector), public :: rvector
+   type, extends(abstract_vector), public :: rvector
       real(kind=wp), dimension(test_size) :: data = 0.0_wp
    contains
       private
@@ -40,7 +40,7 @@ contains
 
    double precision function dot(self, vec) result(alpha)
       class(rvector), intent(in)         :: self
-      class(abstract_real_vector), intent(in) :: vec
+      class(abstract_vector), intent(in) :: vec
 
       select type (vec)
       type is (rvector)
@@ -60,7 +60,7 @@ contains
    ! --> axpby interface
    subroutine axpby(self, alpha, vec, beta)
       class(rvector), intent(inout) :: self
-      class(abstract_real_vector), intent(in) :: vec
+      class(abstract_vector), intent(in) :: vec
       real(kind=wp), intent(in) :: alpha, beta
 
       select type (vec)

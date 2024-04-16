@@ -40,7 +40,7 @@ contains
       !> Preconditioner.
       class(jacobi_preconditioner), intent(in)    :: self
       !> Input/output vector.
-      class(abstract_real_vector), intent(inout) :: vec_inout
+      class(abstract_vector), intent(inout) :: vec_inout
 
       !> Diagonal scaling.
       select type (vec_inout)
@@ -54,7 +54,7 @@ contains
       !> Preconditioner.
       class(jacobi_preconditioner), intent(in)    :: self
       !> Input/Output vector.
-      class(abstract_real_vector), intent(inout) :: vec_inout
+      class(abstract_vector), intent(inout) :: vec_inout
 
       !> Undo diagonal scaling.
       select type (vec_inout)
