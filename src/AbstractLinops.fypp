@@ -1,0 +1,60 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_AbstractLinops
+    use lightkrylov_constants
+    use lightkrylov_AbstractVectors
+    implicit none
+    private
+
+    type, abstract, public :: abstract_linop
+    contains
+    private
+        procedure, pass(from), public :: copy
+        generic, public :: assignment(=) => copy
+    end type abstract_linop
+
+
+
+
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    !------------------------------------------------------------------------------
+    !-----     Definition of an abstract ${t1}$ operator with kind=${k1}$     -----
+    !------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop), public :: abstract_linop_${t1[0]}$${k1}$
+    contains
+        private
+        procedure(abstract_matvec_${t1[0]}$${k1}$), pass(self), deferred, public :: matvec
+        procedure(abstract_matvec_${t1[0]}$${k1}$), pass(self), deferred, public :: rmatvec
+    end type
+
+    abstract interface
+        subroutine abstract_matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_linop_${t1[0]}$${k1}$
+            class(abstract_linop_${t1[0]}$${k1}$) , intent(in)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_${t1[0]}$${k1}$), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_${t1[0]}$${k1}$), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_matvec_${t1[0]}$${k1}$
+    end interface
+
+
+
+
+
+    #:endfor
+contains
+
+    subroutine copy(out, from)
+        class(abstract_linop), intent(in) :: from
+        class(abstract_linop), allocatable, intent(out) :: out
+        if (allocated(out)) deallocate(out)
+        allocate(out, source=from)
+        return
+    end subroutine copy
+
+end module lightkrylov_AbstractLinops

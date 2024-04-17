@@ -1,0 +1,132 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestKrylov
+    ! Fortran Standard Library.
+    use iso_fortran_env
+    use stdlib_math, only: is_close, all_close
+    use stdlib_linalg, only: eye
+
+    ! LightKrylov
+    use LightKrylov
+
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    use TestVectors
+    use TestLinops
+    use TestUtils
+
+    implicit none
+    private
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    public :: collect_qr_${t1[0]}$${k1}$_testsuite
+    #:endfor
+
+contains
+
+    !--------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS UNIT TEST     -----
+    !--------------------------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine collect_qr_${t1[0]}$${k1}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                        new_unittest("QR factorization", test_qr_factorization_${t1[0]}$${k1}$), &
+                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$) &
+                    ]
+        return
+    end subroutine collect_qr_${t1[0]}$${k1}$_testsuite
+
+    subroutine test_qr_factorization_${t1[0]}$${k1}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_${t1[0]}$${k1}$), allocatable :: A(:)
+        !> Upper triangular matrix.
+        ${t1}$ :: R(kdim, kdim) = 0.0_${k1}$
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        ${t1}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
+
+        ! Initiliaze matrix.
+        allocate(A(1:kdim)) ; call init_rand(A)
+
+        ! Get data.
+        call get_data(Adata, A)
+
+        ! In-place QR factorization.
+        call qr(A, R, info)
+
+        ! Get data.
+        call get_data(Qdata, A)
+
+        ! Check correctness.
+        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${k1}$)
+
+        return
+    end subroutine test_qr_factorization_${t1[0]}$${k1}$
+
+    subroutine test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test basis.
+        type(vector_${t1[0]}$${k1}$), allocatable :: A(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 20
+        !> Number of zero columns.
+        integer, parameter :: nzero = 5
+        !> Upper triangular matrix.
+        ${t1}$ :: R(kdim, kdim)
+        !> Permutation vector.
+        integer :: perm(kdim)
+        ${t1}$ :: Id(kdim, kdim)
+        !> Information flag.
+        integer :: info
+       
+        !> Miscellaneous.
+        integer :: k, idx, rk
+        ${t1}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        real(${k1}$) :: alpha
+        logical :: mask(kdim)
+
+        ! Effective rank.
+        rk = kdim - nzero
+
+        ! Initialize matrix.
+        allocate(A(1:kdim)) ; call init_rand(A)
+
+        ! Add zero vectors at random places.
+        mask = .true. ; k = nzero
+        do while (k > 0)
+            call random_number(alpha)
+            idx = 1 + floor(kdim*alpha)
+            if (mask(idx)) then
+                A(idx)%data = 0.0_${k1}$
+                mask(idx) = .false.
+                k = k-1
+            endif
+        enddo
+
+        ! Copy data.
+        call get_data(Adata, A)
+
+        ! In-place QR factorization.
+        call qr(A, R, perm, info)
+
+        ! Extract data
+        call get_data(Qdata, A)
+        Adata = Adata(:, perm)
+
+        ! Check correctness.
+        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${k1}$)
+
+        return
+    end subroutine test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$
+
+    #:endfor
+
+end module TestKrylov

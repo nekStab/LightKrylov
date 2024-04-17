@@ -1,0 +1,163 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestLinops
+    ! Fortran Standard Library
+    use stdlib_math, only: is_close, all_close
+
+    ! LightKrylov
+    use LightKrylov
+    
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    use TestVectors
+
+    implicit none
+    private
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    public :: collect_linop_${t1[0]}$${k1}$_testsuite
+    #:endfor
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    type, extends(abstract_linop_${t1[0]}$${k1}$), public :: linop_${t1[0]}$${k1}$
+        ${t1}$, dimension(test_size, test_size) :: data = 0.0_${k1}$
+    contains
+        private
+        procedure, pass(self), public :: matvec  => matvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: rmatvec => rmatvec_${t1[0]}$${k1}$
+    end type
+
+    #:endfor
+contains
+
+    !--------------------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS TYPE-BOUND PROCEDURES     -----
+    !--------------------------------------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
+        class(linop_${t1[0]}$${k1}$), intent(in)  :: self
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_${t1[0]}$${k1}$)
+            select type(vec_out)
+            type is(vector_${t1[0]}$${k1}$)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine matvec_${t1[0]}$${k1}$
+
+    subroutine rmatvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
+        class(linop_${t1[0]}$${k1}$), intent(in)  :: self
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_${t1[0]}$${k1}$)
+            select type(vec_out)
+            type is(vector_${t1[0]}$${k1}$)
+
+            #:if t1[0] == "c"
+            vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
+            #:else
+            vec_out%data = matmul(transpose(self%data), vec_in%data)
+            #:endif
+
+            end select
+        end select
+
+        return
+    end subroutine rmatvec_${t1[0]}$${k1}$
+
+    #:endfor
+
+    !---------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS     -----
+    !---------------------------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine collect_linop_${t1[0]}$${k1}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("Matrix-vector product", test_matvec_${t1[0]}$${k1}$), &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${t1[0]}$${k1}$)  &
+                    ]
+        return
+    end subroutine collect_linop_${t1[0]}$${k1}$_testsuite
+
+    subroutine test_matvec_${t1[0]}$${k1}$(error)
+        !> Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test vectors.
+        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        !> Test LinOp.
+        type(linop_${t1[0]}$${k1}$), allocatable :: A
+
+        ! Initialize vectors.
+        x = vector_${t1[0]}$${k1}$() ; call x%rand()
+        y = vector_${t1[0]}$${k1}$() ; call y%rand()
+
+        ! Initialize matrix.
+        A = linop_${t1[0]}$${k1}$()
+        #:if t1[0] == "c"
+        call random_number(A%data%re) ; call random_number(A%data%im)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Compute matrix-vector product.
+        call A%matvec(x, y)
+
+        ! Check result.
+        #:if t1[0] == "c"
+        call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_${k1}$)
+        #:else
+        call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${k1}$)
+        #:endif
+
+        return
+    end subroutine test_matvec_${t1[0]}$${k1}$
+
+    subroutine test_rmatvec_${t1[0]}$${k1}$(error)
+        !> Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test vectors.
+        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        !> Test LinOp.
+        type(linop_${t1[0]}$${k1}$), allocatable :: A
+
+        ! Initialize vectors.
+        x = vector_${t1[0]}$${k1}$() ; call x%rand()
+        y = vector_${t1[0]}$${k1}$() ; call y%rand()
+
+        ! Initialize matrix.
+        A = linop_${t1[0]}$${k1}$()
+        #:if t1[0] == "c"
+        call random_number(A%data%re) ; call random_number(A%data%im)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Compute matrix-vector product.
+        call A%rmatvec(x, y)
+
+        ! Check result.
+        #:if t1[0] == "c"
+        call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_${k1}$)
+        #:else
+        call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${k1}$)
+        #:endif
+        
+        return
+    end subroutine test_rmatvec_${t1[0]}$${k1}$
+
+    #:endfor
+end module TestLinops
+

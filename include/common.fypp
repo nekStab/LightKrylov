@@ -1,0 +1,256 @@
+#:mute
+
+#! Support for C_BOOL logical
+#:if not defined("WITH_CBOOL")
+#:set WITH_CBOOL = False
+#:endif
+
+#! Support for quadruple precision floating point numbers
+#:if not defined("WITH_QP")
+#:set WITH_QP = False
+#:endif
+
+#! Support for extended double precision floating point numbers
+#:if not defined("WITH_XDP")
+#:set WITH_XDP = False
+#:endif
+
+#! Real kinds to be considered during templating
+#:set REAL_KINDS = ["sp", "dp"]
+#:if WITH_XDP
+#:set REAL_KINDS = REAL_KINDS + ["xdp"]
+#:endif
+#:if WITH_QP
+#:set REAL_KINDS = REAL_KINDS + ["qp"]
+#:endif
+
+#! Real types to be considered during templating
+#:set REAL_TYPES = ["real({})".format(k) for k in REAL_KINDS]
+
+#! Collected (kind, type) tuples for real types
+#:set REAL_KINDS_TYPES = list(zip(REAL_KINDS, REAL_TYPES))
+
+#! Complex kinds to be considered during templating
+#:set CMPLX_KINDS = ["sp", "dp"]
+#:if WITH_XDP
+#:set CMPLX_KINDS = CMPLX_KINDS + ["xdp"]
+#:endif
+#:if WITH_QP
+#:set CMPLX_KINDS = CMPLX_KINDS + ["qp"]
+#:endif
+
+#! Complex types to be considered during templating
+#:set CMPLX_TYPES = ["complex({})".format(k) for k in CMPLX_KINDS]
+
+#! Collected (kind, type) tuples for complex types
+#:set CMPLX_KINDS_TYPES = list(zip(CMPLX_KINDS, CMPLX_TYPES))
+
+#! Integer kinds to be considered during templating
+#:set INT_KINDS = ["int8", "int16", "int32", "int64"]
+
+#! Integer types to be considered during templating
+#:set INT_TYPES = ["integer({})".format(k) for k in INT_KINDS]
+
+#! Collected (kind, type) tuples for integer types
+#:set INT_KINDS_TYPES = list(zip(INT_KINDS, INT_TYPES))
+
+#! Logical kinds to be considered during templating
+#:set LOG_KINDS = ["lk"]
+#:if WITH_CBOOL
+#:set LOG_KINDS = LOG_KINDS + ["c_bool"]
+#:endif
+
+#! Logical types to be considered during templating
+#:set LOG_TYPES = ["logical({})".format(k) for k in LOG_KINDS]
+
+#! Collected (kind, type) tuples for logical types
+#:set LOG_KINDS_TYPES = list(zip(LOG_KINDS, LOG_TYPES))
+
+#! Derived type string_type
+#:set STRING_KINDS = ["string_type"]
+
+#! String types to be considered during templating
+#:set STRING_TYPES = ["type({})".format(k) for k in STRING_KINDS]
+
+#! Collected (kind, type) tuples for string derived types
+#:set STRING_KINDS_TYPES = list(zip(STRING_KINDS, STRING_TYPES))
+
+#! Derived type bitsets
+#:set BITSET_KINDS = ["bitset_64", "bitset_large"]
+
+#! Bitset types to be considered during templating
+#:set BITSET_TYPES = ["type({})".format(k) for k in BITSET_KINDS]
+
+#! Whether Fortran 90 compatible code should be generated
+#:set VERSION90 = defined('VERSION90')
+
+#! Ranks to be generated when templates are created
+#:if not defined('MAXRANK')
+  #:if VERSION90
+    #:set MAXRANK = 7
+  #:else
+    #:set MAXRANK = 15
+  #:endif
+#:endif
+
+
+#! Generates an array rank suffix.
+#!
+#! Args:
+#!     rank (int): Rank of the variable
+#!
+#! Returns:
+#!     Array rank suffix string (e.g. (:,:) if rank = 2)
+#!
+#:def ranksuffix(rank)
+#{if rank > 0}#(${":" + ",:" * (rank - 1)}$)#{endif}#
+#:enddef
+
+
+#! Joins stripped lines with given character string
+#!
+#! Args:
+#!   txt (str): Text to process
+#!   joinstr (str): String to use as connector
+#!   prefix (str): String to add as prefix before the joined text
+#!   suffix (str): String to add as suffix after the joined text
+#!
+#! Returns:
+#!   Lines stripped and joined with the given string.
+#!
+#:def join_lines(txt, joinstr, prefix="", suffix="")
+${prefix + joinstr.join([line.strip() for line in txt.split("\n")]) + suffix}$
+#:enddef
+
+
+#! Brace enclosed, comma separated Fortran expressions for a reduced shape.
+#!
+#! Rank of the original variable will be reduced by one. The routine generates
+#! for each dimension a Fortan expression using merge(), which calculates the
+#! size of the array for that dimension.
+#!
+#! Args:
+#!   varname (str): Name of the variable to be used as origin
+#!   origrank (int): Rank of the original variable
+#!   idim (int): Index of the reduced dimension
+#!
+#! Returns:
+#!   Shape expression enclosed in braces, so that it can be used as suffix to
+#!   define array shapes in declarations.
+#!
+#:def reduced_shape(varname, origrank, idim)
+  #:assert origrank > 0
+  #:if origrank > 1
+    #:call join_lines(joinstr=", ", prefix="(", suffix=")")
+      #:for i in range(1, origrank)
+        merge(size(${varname}$, ${i}$), size(${varname}$, ${i + 1}$), mask=${i}$<${idim}$)
+      #:endfor
+    #:endcall
+  #:endif
+#:enddef
+
+
+#! Generates a routine name from a generic name, rank, type and kind
+#!
+#! Args:
+#!   gname (str): Generic name
+#!   rank (integer): Rank if exist
+#!   type (str): Type of the input
+#!   kind (str): kind of inputs variable
+#!   suffix (str): other identifier (could be used for output type/kind)
+#!
+#! Returns:
+#!   A string with a new name
+#!
+#:def rname(gname, rank, type, kind, suffix='')
+  $:"{0}_{1}_{2}{3}_{2}{3}".format(gname, rank, type[0], kind) if suffix == '' else "{0}_{1}_{2}{3}_{4}".format(gname, rank, type[0], kind, suffix)
+#:enddef
+
+
+#! Generates an array rank suffix for subarrays reducing the dimension
+#!
+#! Args:
+#!   rank (int): Rank of the original variable
+#!   selectors (array): Dimension and name of the variable(s)
+#!
+#! Returns:
+#!   Array rank suffix string enclosed in braces
+#!
+#! E.g.,
+#!   select_subarray(5 , [(4, 'i'), (5, 'j')])}$
+#!   -> (:, :, :, i, j)
+#!
+#:def select_subarray(rank, selectors)
+  #:assert rank > 0
+  #:set seldict = dict(selectors)
+  #:call join_lines(joinstr=", ", prefix="(", suffix=")")
+    #:for i in range(1, rank + 1)
+      $:seldict.get(i, ":")
+    #:endfor
+  #:endcall
+#:enddef
+
+#!
+#! Generates an array rank suffix for subarrays along a dimension
+#!
+#! Args:
+#!   varname (str): Name of the variable to be used as origin
+#!   rank (int): Rank of the original variable
+#!   dim (int): Dimension of the variable
+#!
+#! Returns:
+#!   Array rank suffix string enclosed in braces
+#!
+#! E.g.,
+#!  select_subvector('j', 5, 2)
+#!   -> (j1, :, j3, j4, j5)
+#!
+#! Used, e.g., in
+#!  stdlib_stats_median.fypp
+#!
+#:def select_subvector(varname, rank, idim)
+  #:assert rank > 0
+  #:call join_lines(joinstr=", ", prefix="(", suffix=")")
+    #:for i in range(1, idim)
+      ${varname}$${i}$
+    #:endfor
+    :
+    #:for i in range(idim + 1, rank + 1)
+      ${varname}$${i}$
+    #:endfor
+  #:endcall
+#:enddef
+
+#!
+#! Generates an array rank suffix for arrays
+#!
+#! Args:
+#!   varname (str): Name of the variable to be used as origin
+#!   rank (int): Rank of the original array variable
+#!   idim (int): Dimension of the variable dropped
+#!
+#! Returns:
+#!   Array rank suffix string enclosed in braces
+#!
+#! E.g.,
+#!  reduce_subvector('j', 5, 2)
+#!   -> (j1, j3, j4, j5)
+#!
+#! Used, e.g., in
+#!  stdlib_stats_median.fypp
+#!
+#:def reduce_subvector(varname, rank, idim)
+  #:assert rank > 0
+  #:if rank > 1
+    #:call join_lines(joinstr=", ", prefix="(", suffix=")")
+      #:for i in range(1, idim)
+        ${varname}$${i}$
+      #:endfor
+      #:for i in range(idim + 1, rank + 1)
+        ${varname}$${i}$
+      #:endfor
+    #:endcall
+  #:endif
+#:enddef
+
+#:endmute
