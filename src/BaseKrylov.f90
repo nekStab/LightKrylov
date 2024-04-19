@@ -1196,8 +1196,6 @@ contains
 
         enddo blk_arnoldi
 
-        write(output_unit, *) "Dimension of subspace :", info
-
         return
     end subroutine arnoldi_rsp
 
@@ -1321,8 +1319,6 @@ contains
             endif
 
         enddo blk_arnoldi
-
-        write(output_unit, *) "Dimension of subspace :", info
 
         return
     end subroutine arnoldi_rdp
@@ -1448,8 +1444,6 @@ contains
 
         enddo blk_arnoldi
 
-        write(output_unit, *) "Dimension of subspace :", info
-
         return
     end subroutine arnoldi_csp
 
@@ -1573,8 +1567,6 @@ contains
             endif
 
         enddo blk_arnoldi
-
-        write(output_unit, *) "Dimension of subspace :", info
 
         return
     end subroutine arnoldi_cdp

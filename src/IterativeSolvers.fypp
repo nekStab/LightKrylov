@@ -1,0 +1,218 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_IterativeSolvers
+
+    use iso_fortran_env, only: output_unit
+    
+    use stdlib_sorting, only: sort_index, int_size
+    use stdlib_optval, only: optval
+    use stdlib_io_npy, only: save_npy
+
+    use lightkrylov_constants
+    use lightkrylov_Utils
+    use lightkrylov_AbstractVectors
+    use lightkrylov_AbstractLinops
+    use lightkrylov_BaseKrylov
+
+    implicit none
+
+    private
+
+    public :: save_eigenspectrum
+    public :: eigs
+
+    interface save_eigenspectrum
+        #:for kind in REAL_KINDS
+        module procedure save_eigenspectrum_${kind}$
+        #:endfor
+    end interface
+
+    interface eigs
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure eigs_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+contains
+
+    !-------------------------------------
+    !-----     UTILITY FUNCTIONS     -----
+    !-------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    elemental pure function compute_residual_${type[0]}$${kind}$(beta, x) result(residual)
+        !! Computes the residual associated with a Ritz eigenpair.
+        ${type}$, intent(in) :: beta
+        !! Norm of the residual Krylov vector.
+        ${type}$, intent(in) :: x
+        !! Last entry of the low-dimensional Ritz eigenvector.
+        real(${kind}$) :: residual
+        !! Residual associated to the corresponding Ritz eigenpair.
+        residual = abs(beta*x)
+        return
+    end function compute_residual_${type[0]}$${kind}$
+
+    #:endfor
+
+    #:for kind in REAL_KINDS
+    subroutine save_eigenspectrum_${kind}$(eigvals, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        complex(${kind}$), intent(in) :: eigvals(:)
+        !! Eigenalues.
+        real(${kind}$), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
+
+        ! Internal variables.
+        real(${kind}$) :: data(size(eigvals), 3)
+
+        ! Store data.
+        data(:, 1) = eigvals%re ; data(:, 2) = eigvals%im ; data(:, 3) = residuals
+        ! Save the eigenspectrum to disk.
+        call save_npy(fname, data)
+
+        return
+    end subroutine save_eigenspectrum_${kind}$
+
+    #:endfor
+
+    !---------------------------------------------------
+    !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
+    !---------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, tolerance, verbosity, transpose)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(${kind}$), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(${kind}$), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(${kind}$), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        !> Krylov subspace and Krylov subspace dimension.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+        integer :: kdim_
+        !> Hessenberg matrix.
+        ${type}$, allocatable :: H(:, :)
+        !> Working arrays for the eigenvectors and eigenvalues.
+        #:if type[0] == "c"
+        ${type}$, allocatable :: eigvecs_wrk(:, :)
+        #:else
+        real(${kind}$), allocatable :: eigvecs_wrk(:, :)
+        #:endif
+        complex(${kind}$), allocatable :: eigvals_wrk(:)
+        real(${kind}$), allocatable :: residuals_wrk(:)
+        !> Miscellaneous.
+        integer :: nev, conv
+        integer :: i, j, k
+        logical :: verbose, trans
+        real(${kind}$) :: tol
+        ${type}$ :: beta
+        #:if type[0] == "r"
+        ${type}$ :: alpha
+        #:endif
+
+        ! Deals with optional parameters.
+        nev = size(X)
+        kdim_   = optval(kdim, 4*nev)
+        verbose = optval(verbosity, .false.)
+        tol     = optval(tolerance, rtol_${kind}$)
+
+        ! Allocate eigenvalues.
+        allocate(eigvals(nev)) ; eigvals = 0.0_${kind}$
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(H(kdim_+1, kdim_)) ; H = 0.0_${kind}$
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_${kind}$
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_${kind}$
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
+
+        ! Ritz eigenpairs computation.
+        arnoldi_factorization: do k = 1, kdim_
+            ! Arnoldi step.
+            call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+            if (info < 0) then
+                call stop_error("eigs: Error in Arnoldi iteration.")
+            endif
+
+            ! Spectral decomposition of the k x k Hessenberg matrix.
+            eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = 0.0_${kind}$
+            call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+
+            ! Compute residuals.
+            beta = H(k+1, k)
+            #:if type[0] == "c"
+            residuals_wrk(1:k) = compute_residual_${type[0]}$${kind}$(beta, eigvecs_wrk(k,1:k))
+            #:else
+            do i = 1, k
+                if (eigvals_wrk(i)%im > 0) then
+                    alpha = abs(cmplx(eigvecs_wrk(k, i), eigvecs_wrk(k, i+1), kind=${kind}$))
+                else if (eigvals_wrk(i)%im < 0) then
+                    alpha = abs(cmplx(eigvecs_wrk(k, i-1), eigvecs_wrk(k, i), kind=${kind}$))
+                else
+                    alpha = abs(eigvecs_wrk(k, i))
+                endif
+                residuals_wrk(i) = compute_residual_${type[0]}$${kind}$(beta, alpha)
+            enddo
+            #:endif
+
+            ! Check convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nev) then
+                exit arnoldi_factorization
+            endif
+
+        enddo arnoldi_factorization
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+        integer(int_size) :: indices(kdim_)
+        real(${kind}$) :: abs_eigvals(kdim_)
+       
+        ! Sort eigenvalues.
+        abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+        eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+
+        ! Store converged eigenvalues.
+        eigvals = eigvals_wrk(1:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                #:if type[0] == "c"
+                call X(i)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), Xwrk(j), eigvecs_wrk(j, i))
+                #:else
+                call X(i)%axpby(1.0_${kind}$, Xwrk(j), eigvecs_wrk(j, i))
+                #:endif
+            enddo
+        enddo
+
+        return
+    end subroutine eigs_${type[0]}$${kind}$
+    #:endfor
+
+end module lightkrylov_IterativeSolvers

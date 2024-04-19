@@ -444,8 +444,6 @@ contains
 
         enddo blk_arnoldi
 
-        write(output_unit, *) "Dimension of subspace :", info
-
         return
     end subroutine arnoldi_${type[0]}$${kind}$
 

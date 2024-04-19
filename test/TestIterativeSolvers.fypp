@@ -1,0 +1,99 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestIterativeSolvers
+    ! Fortran Standard library.
+    use iso_fortran_env
+    use stdlib_math, only: is_close, all_close
+    use stdlib_linalg, only: eye
+
+    ! LightKrylov
+    use LightKrylov
+
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    use TestVectors
+    use TestLinops
+    use TestUtils
+    use TestKrylov
+
+    implicit none
+    private
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_eig_${type[0]}$${kind}$_testsuite
+    #:endfor
+
+contains
+
+    !---------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR EIGS     -----
+    !---------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_eig_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("Eigs computation", test_evp_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_eig_${type[0]}$${kind}$_testsuite
+
+    subroutine test_evp_${type[0]}$${kind}$(error)
+        !> Error type.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Eigenvectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        !> Eigenvalues.
+        complex(${kind}$), allocatable :: eigvals(:)
+        !> Residuals.
+        real(${kind}$), allocatable :: residuals(:)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        integer :: i, k, n
+        complex(${kind}$) :: true_eigvals(test_size)
+        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        #:if type[0] == "r"
+        ${type}$ :: a_, b_
+
+        ! Allocate eigenvectors.
+        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        
+        ! Initialize linear operator with random tridiagonal Toeplitz matrix.
+        A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
+
+        call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = a_
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = b_
+                A%data(i+1, i) = -b_
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call eigs(A, X, eigvals, residuals, info)
+
+        ! Analytical eigenvalues.
+        true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
+        do i = 1, test_size, 2
+            true_eigvals(i) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+            true_eigvals(i+1) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+            k = k+1
+        enddo
+
+        call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_${kind}$)
+        #:endif
+
+        return
+    end subroutine test_evp_${type[0]}$${kind}$
+
+    #:endfor
+
+end module TestIterativeSolvers
+
