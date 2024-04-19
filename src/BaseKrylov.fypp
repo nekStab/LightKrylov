@@ -15,6 +15,7 @@ module lightkrylov_BaseKrylov
     public :: apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: lanczos_bidiagonalization
 
     interface qr
         #:for k1, t1 in RC_KINDS_TYPES
@@ -50,6 +51,13 @@ module lightkrylov_BaseKrylov
     interface initialize_krylov_subspace
         #:for kind, type in RC_KINDS_TYPES
         module procedure initialize_krylov_subspace_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+
+    interface lanczos_bidiagonalization
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -486,6 +494,102 @@ contains
 
         return
     end subroutine update_hessenberg_matrix_${type[0]}$${kind}$
+
+    #:endfor
+
+
+    !---------------------------------------------
+    !-----     LANCZOS BIDIAGONALIZATION     -----
+    !---------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine lanczos_bidiagonalization_${type[0]}$${kind}$(A, U, V, B, info, kstart, kend, verbosity, tol)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
+        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
+        !! the starting Krylov vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: V(:)
+        !! Orthonormal basis for the row span of \(\mathbf{A}\).
+        ${type}$, intent(inout) :: B(:, :)
+        !! Bidiagonal matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Lanczos factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Lanczos factorization (default 1).
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control (default `.false.`)
+        real(${kind}$), optional, intent(in) :: tol
+        !! Tolerance to determine whether invariant subspaces have been computed or not.
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(${kind}$) :: tolerance
+        ${type}$ :: alpha, beta, gamma
+        integer :: i, j, k, kdim
+
+        ! Krylov subspace dimension.
+        kdim = size(U) - 1
+
+        ! Deals with the optional args.
+        k_start = optval(kstart, 1)
+        k_end   = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_${kind}$)
+
+        ! Lanczos bidiagonalization.
+        lanczos : do k = k_start, k_end
+            ! Transpose matrix-vector product.
+            call A%rmatvec(U(k), V(k))
+
+            ! Full reorthogonalization of the right Krylov subspace.
+            do j = 1, k-1
+                gamma = V(j)%dot(V(k))
+                #:if type[0] == "c"
+                call V(k)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), V(j), -gamma)
+                #:else
+                call V(k)%axpby(1.0_${kind}$, V(j), -gamma)
+                #:endif
+            enddo
+
+            ! Normalization step.
+            alpha = V(k)%norm() ; B(k, k) = alpha
+            if (abs(alpha) > tolerance) then
+                call V(k)%scal(1.0_${kind}$/alpha)
+            else
+                info = k
+                exit lanczos
+            endif
+
+            ! Matrix-vector product.
+            call A%matvec(V(k), U(k+1))
+
+            ! Full re-orthogonalization of the left Krylov subspace.
+            do j = 1, k
+                gamma = U(j)%dot(U(k+1))
+                #:if type[0] == "c"
+                call U(k+1)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), U(j), -gamma)
+                #:else
+                call U(k+1)%axpby(1.0_${kind}$, U(j), -gamma)
+                #:endif
+           enddo
+
+            ! Normalization step
+            beta = U(k+1)%norm() ; B(k+1, k) = beta
+            if (abs(beta) > tolerance) then
+                call U(k+1)%scal(1.0_${kind}$ / beta)
+            else
+                info = k
+                exit lanczos
+            endif
+
+        enddo lanczos
+
+        return
+    end subroutine lanczos_bidiagonalization_${type[0]}$${kind}$
 
     #:endfor
 

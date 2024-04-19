@@ -36,6 +36,7 @@ module LightKrylov
     public :: apply_permutation_matrix, apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: lanczos_bidiagonalization
 
 contains
 

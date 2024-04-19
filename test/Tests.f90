@@ -30,7 +30,8 @@ program Tester
                 new_testsuite("Real Vector (sp) Test Suite", collect_vector_rsp_testsuite), &
                 new_testsuite("Real Linops (sp) Test Suite", collect_linop_rsp_testsuite), &
                 new_testsuite("Real QR (sp) Test Suite", collect_qr_rsp_testsuite), &
-                new_testsuite("Real Arnoldi (sp) Test Suite", collect_arnoldi_rsp_testsuite) &
+                new_testsuite("Real Arnoldi (sp) Test Suite", collect_arnoldi_rsp_testsuite), &
+                new_testsuite("Real Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_rsp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"
@@ -65,7 +66,8 @@ program Tester
                 new_testsuite("Real Vector (dp) Test Suite", collect_vector_rdp_testsuite), &
                 new_testsuite("Real Linops (dp) Test Suite", collect_linop_rdp_testsuite), &
                 new_testsuite("Real QR (dp) Test Suite", collect_qr_rdp_testsuite), &
-                new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite) &
+                new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
+                new_testsuite("Real Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_rdp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"
@@ -100,7 +102,8 @@ program Tester
                 new_testsuite("Complex Vector (sp) Test Suite", collect_vector_csp_testsuite), &
                 new_testsuite("Complex Linops (sp) Test Suite", collect_linop_csp_testsuite), &
                 new_testsuite("Complex QR (sp) Test Suite", collect_qr_csp_testsuite), &
-                new_testsuite("Complex Arnoldi (sp) Test Suite", collect_arnoldi_csp_testsuite) &
+                new_testsuite("Complex Arnoldi (sp) Test Suite", collect_arnoldi_csp_testsuite), &
+                new_testsuite("Complex Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_csp_testsuite) &
                 ]
 
    write(output_unit, *) "-------------------------------------------------------------------"
@@ -135,7 +138,8 @@ program Tester
                 new_testsuite("Complex Vector (dp) Test Suite", collect_vector_cdp_testsuite),  &
                 new_testsuite("Complex Linops (dp) Test Suite", collect_linop_cdp_testsuite),  &
                 new_testsuite("Complex QR (dp) Test Suite", collect_qr_cdp_testsuite), &
-                new_testsuite("Complex QR (dp) Test Suite", collect_arnoldi_cdp_testsuite) &
+                new_testsuite("Complex QR (dp) Test Suite", collect_arnoldi_cdp_testsuite), &
+                new_testsuite("Complex Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_cdp_testsuite) &
                 ]
 
    write(output_unit, *) "-------------------------------------------------------------------"

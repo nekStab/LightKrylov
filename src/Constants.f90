@@ -3,7 +3,7 @@ module lightkrylov_constants
     private
 
     integer , parameter, public :: sp = selected_real_kind(6, 37)
-    real(sp), parameter, public :: atol_sp = epsilon(1.0_sp)
+    real(sp), parameter, public :: atol_sp = 10*epsilon(1.0_sp)
     real(sp), parameter, public :: rtol_sp = sqrt(atol_sp)
 
     integer , parameter, public :: dp = selected_real_kind(15, 307)

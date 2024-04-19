@@ -18,12 +18,20 @@ module TestKrylov
 
     public :: collect_qr_rsp_testsuite
     public :: collect_arnoldi_rsp_testsuite
+    public :: collect_lanczos_bidiag_rsp_testsuite
+
     public :: collect_qr_rdp_testsuite
     public :: collect_arnoldi_rdp_testsuite
+    public :: collect_lanczos_bidiag_rdp_testsuite
+
     public :: collect_qr_csp_testsuite
     public :: collect_arnoldi_csp_testsuite
+    public :: collect_lanczos_bidiag_csp_testsuite
+
     public :: collect_qr_cdp_testsuite
     public :: collect_arnoldi_cdp_testsuite
+    public :: collect_lanczos_bidiag_cdp_testsuite
+
 
 contains
 
@@ -1147,6 +1155,559 @@ contains
 
         return
     end subroutine test_block_arnoldi_basis_orthogonality_cdp
+
+
+    !------------------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT-TESTS FOR LANCZOS BIDIAGONALIZATION     -----
+    !------------------------------------------------------------------------------
+
+    subroutine collect_lanczos_bidiag_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_rsp), &
+            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_rsp), &
+            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_rsp) &
+                ]
+        return
+    end subroutine collect_lanczos_bidiag_rsp_testsuite
+
+    subroutine test_lanczos_bidiag_factorization_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_rsp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_rsp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Bidiagonal matrix.
+        real(sp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(sp) :: alpha
+        real(sp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        type(vector_rsp), allocatable :: X0(:)
+
+        ! Initialize linear operator.
+        A = linop_rsp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_sp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+
+        alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        write(*, *) alpha, rtol_sp
+        call check(error, alpha < rtol_sp)
+
+        return
+    end subroutine test_lanczos_bidiag_factorization_rsp
+
+    subroutine test_lanczos_bidiag_left_orthogonality_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_rsp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_rsp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        real(sp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_rsp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_rsp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_sp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_sp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = U(i)%dot(U(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_sp)
+
+        return
+    end subroutine test_lanczos_bidiag_left_orthogonality_rsp
+
+    subroutine test_lanczos_bidiag_right_orthogonality_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_rsp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_rsp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        real(sp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_rsp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_rsp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_sp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_sp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = V(i)%dot(V(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_sp)
+
+        return
+    end subroutine test_lanczos_bidiag_right_orthogonality_rsp
+
+    subroutine collect_lanczos_bidiag_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_rdp), &
+            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_rdp), &
+            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_rdp) &
+                ]
+        return
+    end subroutine collect_lanczos_bidiag_rdp_testsuite
+
+    subroutine test_lanczos_bidiag_factorization_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_rdp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_rdp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Bidiagonal matrix.
+        real(dp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(dp) :: alpha
+        real(dp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        type(vector_rdp), allocatable :: X0(:)
+
+        ! Initialize linear operator.
+        A = linop_rdp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_dp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+
+        alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        write(*, *) alpha, rtol_dp
+        call check(error, alpha < rtol_dp)
+
+        return
+    end subroutine test_lanczos_bidiag_factorization_rdp
+
+    subroutine test_lanczos_bidiag_left_orthogonality_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_rdp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_rdp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        real(dp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_rdp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_rdp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_dp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_dp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = U(i)%dot(U(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_dp)
+
+        return
+    end subroutine test_lanczos_bidiag_left_orthogonality_rdp
+
+    subroutine test_lanczos_bidiag_right_orthogonality_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_rdp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_rdp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        real(dp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_rdp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_rdp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_dp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_dp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = V(i)%dot(V(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_dp)
+
+        return
+    end subroutine test_lanczos_bidiag_right_orthogonality_rdp
+
+    subroutine collect_lanczos_bidiag_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_csp), &
+            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_csp), &
+            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_csp) &
+                ]
+        return
+    end subroutine collect_lanczos_bidiag_csp_testsuite
+
+    subroutine test_lanczos_bidiag_factorization_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_csp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_csp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Bidiagonal matrix.
+        complex(sp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(sp) :: alpha
+        complex(sp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        type(vector_csp), allocatable :: X0(:)
+
+        ! Initialize linear operator.
+        A = linop_csp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_sp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+
+        alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        write(*, *) alpha, rtol_sp
+        call check(error, alpha < rtol_sp)
+
+        return
+    end subroutine test_lanczos_bidiag_factorization_csp
+
+    subroutine test_lanczos_bidiag_left_orthogonality_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_csp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_csp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        complex(sp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_csp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_csp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_sp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_sp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = U(i)%dot(U(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_sp)
+
+        return
+    end subroutine test_lanczos_bidiag_left_orthogonality_csp
+
+    subroutine test_lanczos_bidiag_right_orthogonality_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_csp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_csp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        complex(sp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_csp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_csp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_sp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_sp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = V(i)%dot(V(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_sp)
+
+        return
+    end subroutine test_lanczos_bidiag_right_orthogonality_csp
+
+    subroutine collect_lanczos_bidiag_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_cdp), &
+            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_cdp), &
+            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_cdp) &
+                ]
+        return
+    end subroutine collect_lanczos_bidiag_cdp_testsuite
+
+    subroutine test_lanczos_bidiag_factorization_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_cdp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_cdp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Bidiagonal matrix.
+        complex(dp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(dp) :: alpha
+        complex(dp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        type(vector_cdp), allocatable :: X0(:)
+
+        ! Initialize linear operator.
+        A = linop_cdp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_dp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+
+        alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        write(*, *) alpha, rtol_dp
+        call check(error, alpha < rtol_dp)
+
+        return
+    end subroutine test_lanczos_bidiag_factorization_cdp
+
+    subroutine test_lanczos_bidiag_left_orthogonality_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_cdp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_cdp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        complex(dp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_cdp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_cdp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_dp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_dp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = U(i)%dot(U(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_dp)
+
+        return
+    end subroutine test_lanczos_bidiag_left_orthogonality_cdp
+
+    subroutine test_lanczos_bidiag_right_orthogonality_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_cdp), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_cdp), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        complex(dp) :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_cdp), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_cdp() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_dp
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_dp
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = V(i)%dot(V(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_dp)
+
+        return
+    end subroutine test_lanczos_bidiag_right_orthogonality_cdp
 
 
 end module TestKrylov

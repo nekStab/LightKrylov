@@ -21,6 +21,8 @@ module TestKrylov
     #:for k1, t1 in RC_KINDS_TYPES
     public :: collect_qr_${t1[0]}$${k1}$_testsuite
     public :: collect_arnoldi_${t1[0]}$${k1}$_testsuite
+    public :: collect_lanczos_bidiag_${t1[0]}$${k1}$_testsuite
+
     #:endfor
 
 contains
@@ -316,5 +318,149 @@ contains
     end subroutine test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$
 
     #:endfor
+
+    !------------------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT-TESTS FOR LANCZOS BIDIAGONALIZATION     -----
+    !------------------------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_lanczos_bidiag_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_${type[0]}$${kind}$), &
+            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_${type[0]}$${kind}$), &
+            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_${type[0]}$${kind}$) &
+                ]
+        return
+    end subroutine collect_lanczos_bidiag_${type[0]}$${kind}$_testsuite
+
+    subroutine test_lanczos_bidiag_factorization_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Bidiagonal matrix.
+        ${type}$ :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(${kind}$) :: alpha
+        ${type}$ :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_${kind}$
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+
+        alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        write(*, *) alpha, rtol_${kind}$
+        call check(error, alpha < rtol_${kind}$)
+
+        return
+    end subroutine test_lanczos_bidiag_factorization_${type[0]}$${kind}$
+
+    subroutine test_lanczos_bidiag_left_orthogonality_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        ${type}$ :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(${kind}$) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_${kind}$
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_${kind}$
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = U(i)%dot(U(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_${kind}$)
+
+        return
+    end subroutine test_lanczos_bidiag_left_orthogonality_${type[0]}$${kind}$
+
+    subroutine test_lanczos_bidiag_right_orthogonality_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear Operator
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Left and right Krylov bases.
+        type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 3!test_size
+        !> Bidiagonal matrix.
+        ${type}$ :: B(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        real(${kind}$) :: Id(kdim, kdim), G(kdim, kdim)
+        type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+
+        ! Initialize Krylov subspaces.
+        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
+        call initialize_krylov_subspace(V) ; B = 0.0_${kind}$
+
+        ! Lanczos bidiagonalization.
+        call lanczos_bidiagonalization(A, U, V, B, info)
+
+        ! Check correctness.
+        Id = eye(kdim)
+        G = 0.0_${kind}$
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = V(i)%dot(V(j))
+            enddo
+        enddo
+
+        call check(error, maxval(abs(Id - G)) < rtol_${kind}$)
+
+        return
+    end subroutine test_lanczos_bidiag_right_orthogonality_${type[0]}$${kind}$
+
+   #:endfor
 
 end module TestKrylov
