@@ -34,6 +34,8 @@ module LightKrylov
     ! BaseKrylov exports.
     public :: qr
     public :: apply_permutation_matrix, apply_inverse_permutation_matrix
+    public :: arnoldi
+    public :: initialize_krylov_subspace
 
 contains
 

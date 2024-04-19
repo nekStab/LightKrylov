@@ -5,6 +5,15 @@ module lightkrylov_AbstractVectors
     implicit none
     private
 
+    public :: innerprod_matrix
+
+    interface innerprod_matrix
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure innerprod_matrix_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+
     type, abstract, public :: abstract_vector
     contains
     private
@@ -148,4 +157,30 @@ contains
     end subroutine chsgn_${t1[0]}$${k1}$
 
     #:endfor
+    
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine innerprod_matrix_${type[0]}$${kind}$(M, X, Y)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: Y(:)
+        ${type}$, intent(out) :: M(size(X), size(Y))
+
+        ! Local variables.
+        integer :: i, j
+
+        M = 0.0_${kind}$
+        do j = 1, size(Y)
+            do i = 1, size(X)
+                M(i, j) = X(i)%dot(Y(j))
+            enddo
+        enddo
+
+        return
+    end subroutine innerprod_matrix_${type[0]}$${kind}$
+    
+    #:endfor
+
 end module lightkrylov_AbstractVectors

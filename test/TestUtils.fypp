@@ -129,8 +129,10 @@ contains
     subroutine init_rand_linop_${t1[0]}$${k1}$(linop)
         type(linop_${t1[0]}$${k1}$), intent(inout) :: linop
         #:if t1[0] == "c"
-        call random_number(linop%data%re)
-        call random_number(linop%data%im)
+        real(${k1}$), dimension(test_size, test_size, 2) :: data
+        call random_number(data)
+        linop%data%re = data(:, :, 1)
+        linop%data%im = data(:, :, 2)
         #:else
         call random_number(linop%data)
         #:endif

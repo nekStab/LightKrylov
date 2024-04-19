@@ -346,8 +346,10 @@ contains
 
     subroutine init_rand_linop_csp(linop)
         type(linop_csp), intent(inout) :: linop
-        call random_number(linop%data%re)
-        call random_number(linop%data%im)
+        real(sp), dimension(test_size, test_size, 2) :: data
+        call random_number(data)
+        linop%data%re = data(:, :, 1)
+        linop%data%im = data(:, :, 2)
         return
     end subroutine init_rand_linop_csp
 
@@ -368,8 +370,10 @@ contains
 
     subroutine init_rand_linop_cdp(linop)
         type(linop_cdp), intent(inout) :: linop
-        call random_number(linop%data%re)
-        call random_number(linop%data%im)
+        real(dp), dimension(test_size, test_size, 2) :: data
+        call random_number(data)
+        linop%data%re = data(:, :, 1)
+        linop%data%im = data(:, :, 2)
         return
     end subroutine init_rand_linop_cdp
 

@@ -6,7 +6,7 @@ module TestVectors
     implicit none
     private
 
-    integer, parameter, public :: test_size = 256
+    integer, parameter, public :: test_size = 128
 
     public :: collect_vector_rsp_testsuite
     public :: collect_vector_rdp_testsuite
@@ -102,8 +102,15 @@ contains
     subroutine rand_rsp(self, ifnorm)
         class(vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-
+        logical :: normalized
+        real(sp) :: alpha
         call random_number(self%data)
+
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(1.0_sp/alpha)
+        endif
     end subroutine rand_rsp
 
     subroutine zero_rdp(self)
@@ -145,8 +152,15 @@ contains
     subroutine rand_rdp(self, ifnorm)
         class(vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-
+        logical :: normalized
+        real(dp) :: alpha
         call random_number(self%data)
+
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(1.0_dp/alpha)
+        endif
     end subroutine rand_rdp
 
     subroutine zero_csp(self)
@@ -188,9 +202,19 @@ contains
     subroutine rand_csp(self, ifnorm)
         class(vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
+        logical :: normalized
+        complex(sp) :: alpha
+        real(sp), dimension(test_size, 2) :: data
 
-        call random_number(self%data%re)
-        call random_number(self%data%im)
+        call random_number(data)
+        self%data%re = data(:, 1)
+        self%data%im = data(:, 2)
+
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(1.0_sp/alpha)
+        endif
     end subroutine rand_csp
 
     subroutine zero_cdp(self)
@@ -232,9 +256,19 @@ contains
     subroutine rand_cdp(self, ifnorm)
         class(vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
+        logical :: normalized
+        complex(dp) :: alpha
+        real(dp), dimension(test_size, 2) :: data
 
-        call random_number(self%data%re)
-        call random_number(self%data%im)
+        call random_number(data)
+        self%data%re = data(:, 1)
+        self%data%im = data(:, 2)
+
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(1.0_dp/alpha)
+        endif
     end subroutine rand_cdp
 
     

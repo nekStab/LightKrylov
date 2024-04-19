@@ -8,7 +8,7 @@ module TestVectors
     implicit none
     private
 
-    integer, parameter, public :: test_size = 256
+    integer, parameter, public :: test_size = 128
 
     #:for k1, t1 in RC_KINDS_TYPES
     public :: collect_vector_${t1[0]}$${k1}$_testsuite
@@ -73,13 +73,23 @@ contains
     subroutine rand_${t1[0]}$${k1}$(self, ifnorm)
         class(vector_${t1[0]}$${k1}$), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-
+        logical :: normalized
+        ${t1}$ :: alpha
         #:if t1[0] == "c"
-        call random_number(self%data%re)
-        call random_number(self%data%im)
+        real(${k1}$), dimension(test_size, 2) :: data
+
+        call random_number(data)
+        self%data%re = data(:, 1)
+        self%data%im = data(:, 2)
         #:else
         call random_number(self%data)
         #:endif
+
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(1.0_${k1}$/alpha)
+        endif
     end subroutine rand_${t1[0]}$${k1}$
 
     #:endfor

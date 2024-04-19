@@ -13,6 +13,8 @@ module lightkrylov_BaseKrylov
     public :: qr
     public :: apply_permutation_matrix
     public :: apply_inverse_permutation_matrix
+    public :: arnoldi
+    public :: initialize_krylov_subspace
 
     interface qr
         #:for k1, t1 in RC_KINDS_TYPES
@@ -36,6 +38,18 @@ module lightkrylov_BaseKrylov
     interface apply_inverse_permutation_matrix
         #:for k1, t1 in RC_KINDS_TYPES
         module procedure apply_inverse_permutation_matrix_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface arnoldi
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure arnoldi_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface initialize_krylov_subspace
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure initialize_krylov_subspace_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -117,7 +131,7 @@ contains
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 #:if t1[0] == "c"
                 call Q(j)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), -beta)
                 #:else
@@ -128,7 +142,7 @@ contains
 
             ! Second pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 #:if t1[0] == "c"
                 call Q(j)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), -beta)
                 #:else
@@ -188,7 +202,7 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = real(Q(i)%dot(Q(i)))
+            Rii(i) = Q(i)%dot(Q(i))
         enddo
 
         qr_step: do j = 1, kdim
@@ -334,5 +348,145 @@ contains
 
     #:endfor
 
+    !-----------------------------------------
+    !-----     ARNOLDI FACTORIZATION     -----
+    !-----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine arnoldi_${type[0]}$${kind}$(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        !! Orthogonal basis for the generated Krylov subspace.
+        ${type}$, intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Arnoldi factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Arnoldi factorization (default `size(X)-1`)
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+        real(${kind}$), optional, intent(in) :: tol
+        !! Tolerance to determine whether an invariant subspace has been computed or not.
+        integer, optional, intent(in) :: blksize
+        !! Block size for block Arnoldi (default 1).
+
+        ! Internal variables.
+        integer :: k_start, k_end, p
+        logical :: verbose, trans
+        real(${kind}$) :: tolerance
+        real(${kind}$) :: beta
+        ${type}$, allocatable :: res(:)
+        integer, allocatable :: perm(:)
+        integer :: k, i, kdim, kpm, kp, kpp
+
+        ! Deals with optional non-unity blksize and allocations.
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_${kind}$
+        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+
+        ! Check dimensions.
+        kdim = (size(X) - p) / p
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        verbose   = optval(verbosity, .false.)
+        tolerance = optval (tol, atol_${kind}$)
+        trans     = optval(transpose, .false.)
+
+        ! Arnoldi factorization.
+        blk_arnoldi: do k = k_start, k_end
+            ! Counters
+            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+            ! Matrix-vector product.
+            if (trans) then
+                do i = 1, p
+                    call A%rmatvec(X(kpm+i), X(kp+i))
+                enddo
+            else
+                do i = 1, p
+                    call A%matvec(X(kpm+i), X(kp+i))
+                enddo
+            endif
+
+            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
+            call update_hessenberg_matrix_${type[0]}$${kind}$(H, X, k, p)
+
+            ! Orthogonalize current blk vectors.
+            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+
+            ! Extract residual norm (smallest diagonal element of H matrix).
+            res = 0.0_${kind}$
+            do i = 1, p
+                res(i) = H(kp+i, kpm+i)
+            enddo
+            beta = minval(abs(res))
+            info = kp
+            ! Exit Arnoldi loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = kp
+                ! Exit the Arnoldi iteration.
+                exit blk_arnoldi
+            endif
+
+        enddo blk_arnoldi
+
+        write(output_unit, *) "Dimension of subspace :", info
+
+        return
+    end subroutine arnoldi_${type[0]}$${kind}$
+
+    subroutine update_hessenberg_matrix_${type[0]}$${kind}$(H, X, k, blksize)
+        integer, intent(in) :: k
+        ${type}$, intent(inout) :: H(:, :)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        integer, optional, intent(in) :: blksize
+
+        ! Internal variables.
+        ${type}$, allocatable :: wrk(:, :)
+        integer :: p, kpm, kp, kpp, i, j
+
+        ! Deals with optional non-unity block size.
+        p = optval(blksize, 1)
+
+        ! Counters and allocations.
+        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_${kind}$
+
+        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
+        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                #:if type[0] == "c"
+                call X(kp+i)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), X(j), -H(j, kpm+i))
+                #:else
+                call X(kp+i)%axpby(1.0_${kind}$, X(j), -H(j, kpm+i))
+                #:endif
+            enddo
+        enddo
+
+        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                 #:if type[0] == "c"
+                call X(kp+i)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), X(j), -wrk(j, i))
+                #:else
+                call X(kp+i)%axpby(1.0_${kind}$, X(j), -wrk(j, i))
+                #:endif
+            enddo
+        enddo
+
+        ! Update Hessenberg matrix with the second pass correction.
+        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
+
+        return
+    end subroutine update_hessenberg_matrix_${type[0]}$${kind}$
+
+    #:endfor
 
 end module lightkrylov_BaseKrylov

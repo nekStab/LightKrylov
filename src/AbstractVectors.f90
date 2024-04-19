@@ -3,6 +3,16 @@ module lightkrylov_AbstractVectors
     implicit none
     private
 
+    public :: innerprod_matrix
+
+    interface innerprod_matrix
+        module procedure innerprod_matrix_rsp
+        module procedure innerprod_matrix_rdp
+        module procedure innerprod_matrix_csp
+        module procedure innerprod_matrix_cdp
+    end interface
+
+
     type, abstract, public :: abstract_vector
     contains
     private
@@ -450,5 +460,83 @@ contains
         class(abstract_vector_cdp), intent(inout) :: self
         call self%scal(cmplx(-1.0_dp, 0.0_dp, kind=dp))
     end subroutine chsgn_cdp
+
+    
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
+
+    subroutine innerprod_matrix_rsp(M, X, Y)
+        class(abstract_vector_rsp), intent(in) :: X(:)
+        class(abstract_vector_rsp), intent(in) :: Y(:)
+        real(sp), intent(out) :: M(size(X), size(Y))
+
+        ! Local variables.
+        integer :: i, j
+
+        M = 0.0_sp
+        do j = 1, size(Y)
+            do i = 1, size(X)
+                M(i, j) = X(i)%dot(Y(j))
+            enddo
+        enddo
+
+        return
+    end subroutine innerprod_matrix_rsp
+    
+    subroutine innerprod_matrix_rdp(M, X, Y)
+        class(abstract_vector_rdp), intent(in) :: X(:)
+        class(abstract_vector_rdp), intent(in) :: Y(:)
+        real(dp), intent(out) :: M(size(X), size(Y))
+
+        ! Local variables.
+        integer :: i, j
+
+        M = 0.0_dp
+        do j = 1, size(Y)
+            do i = 1, size(X)
+                M(i, j) = X(i)%dot(Y(j))
+            enddo
+        enddo
+
+        return
+    end subroutine innerprod_matrix_rdp
+    
+    subroutine innerprod_matrix_csp(M, X, Y)
+        class(abstract_vector_csp), intent(in) :: X(:)
+        class(abstract_vector_csp), intent(in) :: Y(:)
+        complex(sp), intent(out) :: M(size(X), size(Y))
+
+        ! Local variables.
+        integer :: i, j
+
+        M = 0.0_sp
+        do j = 1, size(Y)
+            do i = 1, size(X)
+                M(i, j) = X(i)%dot(Y(j))
+            enddo
+        enddo
+
+        return
+    end subroutine innerprod_matrix_csp
+    
+    subroutine innerprod_matrix_cdp(M, X, Y)
+        class(abstract_vector_cdp), intent(in) :: X(:)
+        class(abstract_vector_cdp), intent(in) :: Y(:)
+        complex(dp), intent(out) :: M(size(X), size(Y))
+
+        ! Local variables.
+        integer :: i, j
+
+        M = 0.0_dp
+        do j = 1, size(Y)
+            do i = 1, size(X)
+                M(i, j) = X(i)%dot(Y(j))
+            enddo
+        enddo
+
+        return
+    end subroutine innerprod_matrix_cdp
+    
 
 end module lightkrylov_AbstractVectors

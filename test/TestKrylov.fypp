@@ -20,13 +20,14 @@ module TestKrylov
 
     #:for k1, t1 in RC_KINDS_TYPES
     public :: collect_qr_${t1[0]}$${k1}$_testsuite
+    public :: collect_arnoldi_${t1[0]}$${k1}$_testsuite
     #:endfor
 
 contains
 
-    !--------------------------------------------------------
-    !-----     DEFINITIONS OF THE VARIOUS UNIT TEST     -----
-    !--------------------------------------------------------
+    !----------------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS FOR QR     -----
+    !----------------------------------------------------------------
 
     #:for k1, t1 in RC_KINDS_TYPES
     subroutine collect_qr_${t1[0]}$${k1}$_testsuite(testsuite)
@@ -126,6 +127,193 @@ contains
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$
+
+    #:endfor
+    
+    !--------------------------------------------------------------
+    !-----     DEFINITIONS OF THE UNIT-TESTS FOR ARNOLDI      -----
+    !--------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+            new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_${type[0]}$${kind}$), &
+            new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
+
+    subroutine test_arnoldi_factorization_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        integer, parameter :: kdim = test_size
+        !> Hessenberg matrix.
+        ${type}$ :: H(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        ${type}$ :: Xdata(test_size, kdim+1), alpha
+    
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        ! Initialize Krylov subspace.
+        allocate(X(1:kdim+1)) ;
+        call initialize_krylov_subspace(X)
+        call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
+        call X(1)%scal(1.0_${kind}$ / alpha)
+        H = 0.0_${kind}$
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! Check correctness of full factorization.
+        call get_data(Xdata, X)
+
+        call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_${kind}$)
+
+        return
+    end subroutine test_arnoldi_factorization_${type[0]}$${kind}$
+
+    subroutine test_arnoldi_basis_orthogonality_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Krylov subspace.
+        type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X
+        type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X0
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Hessenberg matrix.
+        ${type}$, dimension(kdim + 1, kdim) :: H
+        !> Information flag.
+        integer :: info
+        !> Misc.
+        ${type}$, dimension(kdim, kdim) :: G, Id
+        integer :: i, j
+
+        ! --> Initialize random matrix.
+        A = linop_${type[0]}$${kind}$(); call init_rand(A)
+        ! --> Initialize Krylov subspace.
+        allocate (X(1:kdim + 1)); allocate (X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_${kind}$
+
+        ! --> Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! --> Compute Gram matrix associated to the Krylov basis.
+        G = 0.0_${kind}$
+        do j = 1, kdim
+            do i = 1, kdim
+                G(i, j) = X(i)%dot(X(j))
+            enddo
+        enddo
+        ! call innerprod_matrix(G, X(1:kdim), X(1:kdim))
+
+        ! --> Check result.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+
+        return
+    end subroutine test_arnoldi_basis_orthogonality_${type[0]}$${kind}$
+
+    subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test Linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        integer, parameter :: p = 2
+        integer, parameter :: kdim = test_size/2
+        !> Hessenberg matrix.
+        ${type}$ :: H(p*(kdim+1), p*kdim)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+        ${type}$ :: Xdata(test_size, p*(kdim+1)), G(p*(kdim+1), p*(kdim+1))
+        integer :: i, j
+
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_${kind}$
+
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info, blksize=p)
+
+        G = 0.0_${kind}$
+        do j = 1, size(G, 2)
+            do i = 1, size(G, 1)
+                G(i, j) = X(i)%dot(X(j))
+            enddo
+        enddo
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        
+        call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_${kind}$)
+
+        return
+    end subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$
+
+    subroutine test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        class(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Krylov subspace.
+        type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X
+        type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X0
+        !> Krylov subspace dimension.
+        integer, parameter :: p = 2
+        integer, parameter :: kdim = test_size/2
+        !> Hessenberg matrix.
+        ${type}$, dimension(p*(kdim + 1), p*kdim) :: H
+        !> Information flag.
+        integer :: info
+        !> Misc.
+        ${type}$, dimension(p*kdim, p*kdim) :: G, Id
+        integer :: i, j
+
+        ! --> Initialize random matrix.
+        A = linop_${type[0]}$${kind}$(); call init_rand(A)
+
+        ! --> Initialize Krylov subspace.
+        allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
+        call init_rand(X0)
+        call initialize_krylov_subspace(X, X0)
+        H = 0.0_${kind}$
+
+        ! --> Arnoldi factorization.
+        call arnoldi(A, X, H, info, blksize=p)
+
+        ! --> Compute Gram matrix associated to the Krylov basis.
+        G = 0.0_${kind}$
+        do j = 1, size(G, 2)
+            do i = 1, size(G, 1)
+                G(i, j) = X(i)%dot(X(j))
+            enddo
+        enddo
+
+        ! --> Check result.
+        Id = eye(p*kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+
+        return
+    end subroutine test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$
 
     #:endfor
 

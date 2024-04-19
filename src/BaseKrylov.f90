@@ -11,6 +11,8 @@ module lightkrylov_BaseKrylov
     public :: qr
     public :: apply_permutation_matrix
     public :: apply_inverse_permutation_matrix
+    public :: arnoldi
+    public :: initialize_krylov_subspace
 
     interface qr
         module procedure qr_no_pivoting_rsp
@@ -42,6 +44,20 @@ module lightkrylov_BaseKrylov
         module procedure apply_inverse_permutation_matrix_rdp
         module procedure apply_inverse_permutation_matrix_csp
         module procedure apply_inverse_permutation_matrix_cdp
+    end interface
+
+    interface arnoldi
+        module procedure arnoldi_rsp
+        module procedure arnoldi_rdp
+        module procedure arnoldi_csp
+        module procedure arnoldi_cdp
+    end interface
+
+    interface initialize_krylov_subspace
+        module procedure initialize_krylov_subspace_rsp
+        module procedure initialize_krylov_subspace_rdp
+        module procedure initialize_krylov_subspace_csp
+        module procedure initialize_krylov_subspace_cdp
     end interface
 
 contains
@@ -233,14 +249,14 @@ contains
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(1.0_sp, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(1.0_sp, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
@@ -296,7 +312,7 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = real(Q(i)%dot(Q(i)))
+            Rii(i) = Q(i)%dot(Q(i))
         enddo
 
         qr_step: do j = 1, kdim
@@ -452,14 +468,14 @@ contains
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(1.0_dp, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(1.0_dp, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
@@ -515,7 +531,7 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = real(Q(i)%dot(Q(i)))
+            Rii(i) = Q(i)%dot(Q(i))
         enddo
 
         qr_step: do j = 1, kdim
@@ -671,14 +687,14 @@ contains
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
@@ -734,7 +750,7 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = real(Q(i)%dot(Q(i)))
+            Rii(i) = Q(i)%dot(Q(i))
         enddo
 
         qr_step: do j = 1, kdim
@@ -890,14 +906,14 @@ contains
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
-                beta = Q(j)%dot(Q(i))
+                beta = Q(i)%dot(Q(j))
                 call Q(j)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
@@ -953,7 +969,7 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = real(Q(i)%dot(Q(i)))
+            Rii(i) = Q(i)%dot(Q(i))
         enddo
 
         qr_step: do j = 1, kdim
@@ -1083,6 +1099,514 @@ contains
         return
     end subroutine apply_inverse_permutation_matrix_cdp
 
+
+    !-----------------------------------------
+    !-----     ARNOLDI FACTORIZATION     -----
+    !-----------------------------------------
+
+    subroutine arnoldi_rsp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+        class(abstract_linop_rsp), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        !! Orthogonal basis for the generated Krylov subspace.
+        real(sp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Arnoldi factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Arnoldi factorization (default `size(X)-1`)
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+        real(sp), optional, intent(in) :: tol
+        !! Tolerance to determine whether an invariant subspace has been computed or not.
+        integer, optional, intent(in) :: blksize
+        !! Block size for block Arnoldi (default 1).
+
+        ! Internal variables.
+        integer :: k_start, k_end, p
+        logical :: verbose, trans
+        real(sp) :: tolerance
+        real(sp) :: beta
+        real(sp), allocatable :: res(:)
+        integer, allocatable :: perm(:)
+        integer :: k, i, kdim, kpm, kp, kpp
+
+        ! Deals with optional non-unity blksize and allocations.
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_sp
+        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+
+        ! Check dimensions.
+        kdim = (size(X) - p) / p
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        verbose   = optval(verbosity, .false.)
+        tolerance = optval (tol, atol_sp)
+        trans     = optval(transpose, .false.)
+
+        ! Arnoldi factorization.
+        blk_arnoldi: do k = k_start, k_end
+            ! Counters
+            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+            ! Matrix-vector product.
+            if (trans) then
+                do i = 1, p
+                    call A%rmatvec(X(kpm+i), X(kp+i))
+                enddo
+            else
+                do i = 1, p
+                    call A%matvec(X(kpm+i), X(kp+i))
+                enddo
+            endif
+
+            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
+            call update_hessenberg_matrix_rsp(H, X, k, p)
+
+            ! Orthogonalize current blk vectors.
+            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+
+            ! Extract residual norm (smallest diagonal element of H matrix).
+            res = 0.0_sp
+            do i = 1, p
+                res(i) = H(kp+i, kpm+i)
+            enddo
+            beta = minval(abs(res))
+            info = kp
+            ! Exit Arnoldi loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = kp
+                ! Exit the Arnoldi iteration.
+                exit blk_arnoldi
+            endif
+
+        enddo blk_arnoldi
+
+        write(output_unit, *) "Dimension of subspace :", info
+
+        return
+    end subroutine arnoldi_rsp
+
+    subroutine update_hessenberg_matrix_rsp(H, X, k, blksize)
+        integer, intent(in) :: k
+        real(sp), intent(inout) :: H(:, :)
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        integer, optional, intent(in) :: blksize
+
+        ! Internal variables.
+        real(sp), allocatable :: wrk(:, :)
+        integer :: p, kpm, kp, kpp, i, j
+
+        ! Deals with optional non-unity block size.
+        p = optval(blksize, 1)
+
+        ! Counters and allocations.
+        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_sp
+
+        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
+        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(1.0_sp, X(j), -H(j, kpm+i))
+            enddo
+        enddo
+
+        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(1.0_sp, X(j), -wrk(j, i))
+            enddo
+        enddo
+
+        ! Update Hessenberg matrix with the second pass correction.
+        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
+
+        return
+    end subroutine update_hessenberg_matrix_rsp
+
+    subroutine arnoldi_rdp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+        class(abstract_linop_rdp), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        !! Orthogonal basis for the generated Krylov subspace.
+        real(dp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Arnoldi factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Arnoldi factorization (default `size(X)-1`)
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+        real(dp), optional, intent(in) :: tol
+        !! Tolerance to determine whether an invariant subspace has been computed or not.
+        integer, optional, intent(in) :: blksize
+        !! Block size for block Arnoldi (default 1).
+
+        ! Internal variables.
+        integer :: k_start, k_end, p
+        logical :: verbose, trans
+        real(dp) :: tolerance
+        real(dp) :: beta
+        real(dp), allocatable :: res(:)
+        integer, allocatable :: perm(:)
+        integer :: k, i, kdim, kpm, kp, kpp
+
+        ! Deals with optional non-unity blksize and allocations.
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_dp
+        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+
+        ! Check dimensions.
+        kdim = (size(X) - p) / p
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        verbose   = optval(verbosity, .false.)
+        tolerance = optval (tol, atol_dp)
+        trans     = optval(transpose, .false.)
+
+        ! Arnoldi factorization.
+        blk_arnoldi: do k = k_start, k_end
+            ! Counters
+            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+            ! Matrix-vector product.
+            if (trans) then
+                do i = 1, p
+                    call A%rmatvec(X(kpm+i), X(kp+i))
+                enddo
+            else
+                do i = 1, p
+                    call A%matvec(X(kpm+i), X(kp+i))
+                enddo
+            endif
+
+            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
+            call update_hessenberg_matrix_rdp(H, X, k, p)
+
+            ! Orthogonalize current blk vectors.
+            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+
+            ! Extract residual norm (smallest diagonal element of H matrix).
+            res = 0.0_dp
+            do i = 1, p
+                res(i) = H(kp+i, kpm+i)
+            enddo
+            beta = minval(abs(res))
+            info = kp
+            ! Exit Arnoldi loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = kp
+                ! Exit the Arnoldi iteration.
+                exit blk_arnoldi
+            endif
+
+        enddo blk_arnoldi
+
+        write(output_unit, *) "Dimension of subspace :", info
+
+        return
+    end subroutine arnoldi_rdp
+
+    subroutine update_hessenberg_matrix_rdp(H, X, k, blksize)
+        integer, intent(in) :: k
+        real(dp), intent(inout) :: H(:, :)
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        integer, optional, intent(in) :: blksize
+
+        ! Internal variables.
+        real(dp), allocatable :: wrk(:, :)
+        integer :: p, kpm, kp, kpp, i, j
+
+        ! Deals with optional non-unity block size.
+        p = optval(blksize, 1)
+
+        ! Counters and allocations.
+        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_dp
+
+        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
+        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(1.0_dp, X(j), -H(j, kpm+i))
+            enddo
+        enddo
+
+        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(1.0_dp, X(j), -wrk(j, i))
+            enddo
+        enddo
+
+        ! Update Hessenberg matrix with the second pass correction.
+        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
+
+        return
+    end subroutine update_hessenberg_matrix_rdp
+
+    subroutine arnoldi_csp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+        class(abstract_linop_csp), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        !! Orthogonal basis for the generated Krylov subspace.
+        complex(sp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Arnoldi factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Arnoldi factorization (default `size(X)-1`)
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+        real(sp), optional, intent(in) :: tol
+        !! Tolerance to determine whether an invariant subspace has been computed or not.
+        integer, optional, intent(in) :: blksize
+        !! Block size for block Arnoldi (default 1).
+
+        ! Internal variables.
+        integer :: k_start, k_end, p
+        logical :: verbose, trans
+        real(sp) :: tolerance
+        real(sp) :: beta
+        complex(sp), allocatable :: res(:)
+        integer, allocatable :: perm(:)
+        integer :: k, i, kdim, kpm, kp, kpp
+
+        ! Deals with optional non-unity blksize and allocations.
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_sp
+        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+
+        ! Check dimensions.
+        kdim = (size(X) - p) / p
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        verbose   = optval(verbosity, .false.)
+        tolerance = optval (tol, atol_sp)
+        trans     = optval(transpose, .false.)
+
+        ! Arnoldi factorization.
+        blk_arnoldi: do k = k_start, k_end
+            ! Counters
+            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+            ! Matrix-vector product.
+            if (trans) then
+                do i = 1, p
+                    call A%rmatvec(X(kpm+i), X(kp+i))
+                enddo
+            else
+                do i = 1, p
+                    call A%matvec(X(kpm+i), X(kp+i))
+                enddo
+            endif
+
+            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
+            call update_hessenberg_matrix_csp(H, X, k, p)
+
+            ! Orthogonalize current blk vectors.
+            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+
+            ! Extract residual norm (smallest diagonal element of H matrix).
+            res = 0.0_sp
+            do i = 1, p
+                res(i) = H(kp+i, kpm+i)
+            enddo
+            beta = minval(abs(res))
+            info = kp
+            ! Exit Arnoldi loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = kp
+                ! Exit the Arnoldi iteration.
+                exit blk_arnoldi
+            endif
+
+        enddo blk_arnoldi
+
+        write(output_unit, *) "Dimension of subspace :", info
+
+        return
+    end subroutine arnoldi_csp
+
+    subroutine update_hessenberg_matrix_csp(H, X, k, blksize)
+        integer, intent(in) :: k
+        complex(sp), intent(inout) :: H(:, :)
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        integer, optional, intent(in) :: blksize
+
+        ! Internal variables.
+        complex(sp), allocatable :: wrk(:, :)
+        integer :: p, kpm, kp, kpp, i, j
+
+        ! Deals with optional non-unity block size.
+        p = optval(blksize, 1)
+
+        ! Counters and allocations.
+        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_sp
+
+        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
+        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), X(j), -H(j, kpm+i))
+            enddo
+        enddo
+
+        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), X(j), -wrk(j, i))
+            enddo
+        enddo
+
+        ! Update Hessenberg matrix with the second pass correction.
+        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
+
+        return
+    end subroutine update_hessenberg_matrix_csp
+
+    subroutine arnoldi_cdp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+        class(abstract_linop_cdp), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        !! Orthogonal basis for the generated Krylov subspace.
+        complex(dp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Arnoldi factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Arnoldi factorization (default `size(X)-1`)
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+        real(dp), optional, intent(in) :: tol
+        !! Tolerance to determine whether an invariant subspace has been computed or not.
+        integer, optional, intent(in) :: blksize
+        !! Block size for block Arnoldi (default 1).
+
+        ! Internal variables.
+        integer :: k_start, k_end, p
+        logical :: verbose, trans
+        real(dp) :: tolerance
+        real(dp) :: beta
+        complex(dp), allocatable :: res(:)
+        integer, allocatable :: perm(:)
+        integer :: k, i, kdim, kpm, kp, kpp
+
+        ! Deals with optional non-unity blksize and allocations.
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_dp
+        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+
+        ! Check dimensions.
+        kdim = (size(X) - p) / p
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        verbose   = optval(verbosity, .false.)
+        tolerance = optval (tol, atol_dp)
+        trans     = optval(transpose, .false.)
+
+        ! Arnoldi factorization.
+        blk_arnoldi: do k = k_start, k_end
+            ! Counters
+            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+            ! Matrix-vector product.
+            if (trans) then
+                do i = 1, p
+                    call A%rmatvec(X(kpm+i), X(kp+i))
+                enddo
+            else
+                do i = 1, p
+                    call A%matvec(X(kpm+i), X(kp+i))
+                enddo
+            endif
+
+            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
+            call update_hessenberg_matrix_cdp(H, X, k, p)
+
+            ! Orthogonalize current blk vectors.
+            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+
+            ! Extract residual norm (smallest diagonal element of H matrix).
+            res = 0.0_dp
+            do i = 1, p
+                res(i) = H(kp+i, kpm+i)
+            enddo
+            beta = minval(abs(res))
+            info = kp
+            ! Exit Arnoldi loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = kp
+                ! Exit the Arnoldi iteration.
+                exit blk_arnoldi
+            endif
+
+        enddo blk_arnoldi
+
+        write(output_unit, *) "Dimension of subspace :", info
+
+        return
+    end subroutine arnoldi_cdp
+
+    subroutine update_hessenberg_matrix_cdp(H, X, k, blksize)
+        integer, intent(in) :: k
+        complex(dp), intent(inout) :: H(:, :)
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        integer, optional, intent(in) :: blksize
+
+        ! Internal variables.
+        complex(dp), allocatable :: wrk(:, :)
+        integer :: p, kpm, kp, kpp, i, j
+
+        ! Deals with optional non-unity block size.
+        p = optval(blksize, 1)
+
+        ! Counters and allocations.
+        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_dp
+
+        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
+        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), X(j), -H(j, kpm+i))
+            enddo
+        enddo
+
+        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), X(j), -wrk(j, i))
+            enddo
+        enddo
+
+        ! Update Hessenberg matrix with the second pass correction.
+        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
+
+        return
+    end subroutine update_hessenberg_matrix_cdp
 
 
 end module lightkrylov_BaseKrylov
