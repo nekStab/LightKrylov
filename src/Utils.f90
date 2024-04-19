@@ -1,17 +1,18 @@
 module lightkrylov_utils
-  !! This module provides a set of utilities used throughout `LightKrylov`.
-  !! It also provides a selection wrapper around LAPACK to perform standard linear algebra computations.
+   !! This module provides a set of utilities used throughout `LightKrylov`.
+   !! It also provides a selection wrapper around LAPACK to perform standard linear algebra computations.
+   use stdlib_linalg, only: diag, is_symmetric
    use iso_fortran_env, only: output_unit
    implicit none
    include "dtypes.h"
 
    private
    ! General-purpose utilities.
-   public :: assert_shape, stop_error, norml, log2
+   public :: assert_shape, stop_error, iargsort, norml, log2
    ! Print matrices
    public :: print_mat
    ! Linear Algebra Utilities.
-   public :: inv, svd, eig, eigh, lstsq, schur, ordschur
+   public :: inv, svd, eig, eigh, lstsq, schur, ordschur, sqrtm
 
    !-------------------------------------------------------
    !-----                                             -----
@@ -270,6 +271,29 @@ contains
       end do
    end function norml
 
+   function iargsort(a) result(idx)
+      integer, intent(in):: a(:)    ! array of numbers
+      integer :: idx(size(a))       ! indices into the array 'a' that sort it
+      integer :: N                  ! number of numbers/vectors
+      integer :: i,imin             ! indices: i, i of smallest
+      integer :: temp               ! temporary
+      integer :: a2(size(a))
+      a2 = a
+      N=size(a)
+      do i = 1, N
+          idx(i) = i
+      end do
+      do i = 1, N-1
+          ! find ith smallest in 'a'
+          imin = minloc(a2(i:),1) + i - 1
+          ! swap to position i in 'a' and 'b', if not already there
+          if (imin /= i) then
+              temp = a2(i);a2(i) = a2(imin); a2(imin) = temp
+              temp = idx(i); idx(i) = idx(imin); idx(imin) = temp
+          end if
+      end do
+   end function
+
    !-------------------------------------------
    !-----                                 -----
    !-----     LAPACK MATRIX INVERSION     -----
@@ -523,7 +547,7 @@ contains
    end subroutine deig
 
    subroutine deigh(A, vecs, vals)
-     !! Eigenvalue decomposition of a real-valued sym. pos. def. matrix using LAPACK.
+      !! Eigenvalue decomposition of a real-valued sym. pos. def. matrix using LAPACK.
       real(kind=wp), intent(in)  :: A(:, :)
       !! Matrix to be factorized.
       real(kind=wp), intent(out) :: vecs(:, :)
@@ -555,6 +579,8 @@ contains
             write (output_unit, *) "The computation failed. See lapack documentation for more details."
          end if
          call stop_error("eigh: dsyev error")
+      else
+         vecs = a_tilde
       end if
 
       return
@@ -567,7 +593,7 @@ contains
    !-----------------------------------------------------
 
    subroutine lstsq(A, b, x)
-     !! Solves a linear least-squares problem \( \min~\| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
+      !! Solves a linear least-squares problem \( \min~\| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
       real(kind=wp), dimension(:, :), intent(in)  :: A
       !! Matrix to be "pseudo-inverted".
       real(kind=wp), dimension(:), intent(in)  :: b
@@ -609,13 +635,13 @@ contains
    !----------------------------------------------
 
    subroutine schur(A, Z, eigvals)
-     !! Compute the Schur form (in-place) and Schur vectors of a real-valued matrix.
+      !! Compute the Schur form (in-place) and Schur vectors of a real-valued matrix.
       real(kind=wp), intent(inout) :: A(:, :)
-     !! Matrix to be factorized.
+      !! Matrix to be factorized.
       real(kind=wp), intent(out)   :: Z(:, :)
-     !! Schur basis.
+      !! Schur basis.
       complex(kind=wp), intent(out)   :: eigvals(:)
-     !! Eigenvalues.
+      !! Eigenvalues.
 
       ! LAPACK-related.
       character :: jobvs = "v", sort = "n"
@@ -637,14 +663,14 @@ contains
    end subroutine schur
 
    subroutine ordschur(T, Q, selected)
-     !! Re-order the Schur factorization of a real-valued matrix by moving the selected eigenvalues
-     !! in the upper-left block.
+      !! Re-order the Schur factorization of a real-valued matrix by moving the selected eigenvalues
+      !! in the upper-left block.
       real(kind=wp), intent(inout) :: T(:, :)
-     !! Schur matrix to be reordered.
+      !! Schur matrix to be reordered.
       real(kind=wp), intent(inout) :: Q(:, :)
-     !! Schur vectors to be reordered.
+      !! Schur vectors to be reordered.
       logical, intent(in)    :: selected(:)
-     !! Boolean array defining the selected eigenvalues.
+      !! Boolean array defining the selected eigenvalues.
 
       ! LAPACK-related.
       character :: job = "n", compq = "v"
@@ -660,6 +686,52 @@ contains
 
       return
    end subroutine ordschur
+
+   !-------------------------------
+   !-----                     -----
+   !-----     MATRIX SQRT     -----
+   !-----                     -----
+   !-------------------------------
+
+   subroutine sqrtm(sqrtmA, A)
+      !! Compute the matrix square root of a small dense positive semi-definite matrix via eigenvalues
+      real(kind=wp), intent(out) :: sqrtmA(:, :)
+      !! Result
+      real(kind=wp), intent(in) :: A(:, :)
+      !! Matrix of which to compute sqrtm
+      
+      ! internal variables
+      integer :: i, rk
+      real(kind=wp), allocatable :: U(:, :)
+      real(kind=wp), allocatable :: lambda(:)
+
+      rk = size(A,1)
+      call assert_shape(A, [rk, rk], "sqrmt", "A")
+      call assert_shape(sqrtmA, [rk, rk], "sqrmt", "sqrtmA")
+      if (maxval(A - transpose(A)) .gt. atol) then
+         write(*,*) 'sqrtm: Input matrix is not symmetric. Abort.'
+         STOP 1
+      end if
+
+      allocate(U(rk,rk)); allocate(lambda(rk))
+      call eigh(A, U, lambda)
+
+      do i=1,rk
+         if (abs(lambda(i)) .lt. atol) then
+            lambda(i) = 0.0_wp       ! deal with positive semi-definite matrices in eig
+         else if (lambda(i) .lt. 0.0) then
+            write(*,*) 'sqrtm: Input matrix is not SPD. Abort.'
+            STOP 1
+         else
+            lambda(i) = sqrt(lambda(i))
+         end if
+         
+      enddo
+
+      sqrtmA = matmul(U, matmul(diag(lambda), transpose(U)))
+
+      return
+   end subroutine sqrtm
 
    pure logical function dummy_select(wr, wi) result(out)
       real(kind=wp), intent(in) :: wr, wi

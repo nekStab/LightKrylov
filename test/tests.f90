@@ -40,7 +40,8 @@ program Tester
                 !new_testsuite("BICGSTAB Test Suite", collect_bicgstab_testsuite)                          &
                 !new_testsuite("Non-symetric Lanczos Test Suite", collect_nonsymmetric_lanczos_testsuite),  &
                 new_testsuite("QR factorization Test Suite", collect_qr_testsuite), &
-                new_testsuite("Matrix Exponential Test Suite", collect_expm_testsuite) &
+                new_testsuite("Dense Matrix Functions Test Suite", collect_dense_matrix_functions_testsuite), &
+                new_testsuite("Krylov Matrix Exponential Test Suite", collect_kexpm_testsuite) &
                 ]
 
    do is = 1, size(testsuites)

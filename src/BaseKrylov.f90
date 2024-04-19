@@ -38,7 +38,13 @@ module lightkrylov_BaseKrylov
    public :: nonsymmetric_lanczos_tridiagonalization
    public :: two_sided_arnoldi_factorization
    ! Miscellaneous.
-   public :: qr_factorization, initialize_krylov_subspace
+   public :: qr_factorization, initialize_krylov_subspace, apply_permutation
+
+   interface apply_permutation
+      !! Interface to apply a (transposed) permutation to a Krylov basis/Matrix (in-place)
+      module procedure apply_global_column_permutation_vec
+      module procedure apply_global_column_permutation_mat
+   end interface apply_permutation
 
 contains
 
@@ -53,7 +59,7 @@ contains
       ! Internal variables.
       class(abstract_vector), allocatable :: B(:)
       real(kind=wp), allocatable :: Rwrk(:, :)
-      real(kind=wp),          allocatable :: Pwrk(:,:)      
+      integer, allocatable :: pwrk(:)      
       integer :: i, p, info
 
       ! Zero out X
@@ -72,8 +78,8 @@ contains
          call mat_zero(B); call mat_copy(B, B0)
          ! Orthonormalize
          allocate(Rwrk(1:p,1:p)); Rwrk = 0.0_wp
-         allocate(Pwrk(1:p,1:p)); Pwrk = 0.0_wp
-         call qr_factorization(B, Rwrk, Pwrk, info)         
+         allocate(pwrk(1:p)); pwrk = 0
+         call qr_factorization(B, Rwrk, pwrk, info)         
          ! Set initial vector
          call mat_copy(X(1:p), B)
       end if
@@ -143,14 +149,14 @@ contains
       real(kind=wp) :: tolerance
       real(kind=wp) :: beta
       real(kind=wp), allocatable :: res(:)
-      real(kind=wp), allocatable :: perm(:,:)
+      integer, allocatable :: perm(:)
       integer :: k, i, kdim, kpm, kp, kpp
       
       ! --> Deals with optional non-unity block size
       p   = optval(block_size, 1)
       allocate(res(1:p))
 
-      allocate(perm(1:size(H,1),1:size(H,2))); perm = 0.0_wp
+      allocate(perm(1:size(H,2))); perm = 0
   
       info = 0
 
@@ -236,9 +242,8 @@ contains
       ! Optional: size of blocks, default = 1
       integer, optional, intent(in) :: block_size
       ! Internal variables.
-      class(abstract_vector), allocatable :: Xwrk(:)
       real(wp), allocatable :: wrk(:, :)
-      integer :: p, kpm, kp, kpp
+      integer :: p, kpm, kp, kpp, i, j
 
       ! Deals with optional non-unity block size
       p = optval(block_size, 1)
@@ -247,22 +252,24 @@ contains
       kp = kpm + p
       kpp = kp + p
       allocate (wrk(1:kp, 1:p)); wrk = 0.0_wp
-      allocate (Xwrk(1:kp), source=X(1:kp)); call mat_zero(Xwrk)
       ! Orthogonalize residual w.r.t to previously computed Krylov vectors.
       ! - Pass 1
       call mat_mult(H(1:kp, kpm + 1:kp), X(1:kp), X(kp + 1:kpp))
-      call mat_mult(Xwrk(1:p), X(1:kp), H(1:kp, kpm + 1:kp))
-      ! Project out existing vectors
-      call mat_axpby(X(kp + 1:kpp), 1.0_wp, Xwrk(1:p), -1.0_wp)
+      do i = 1, p
+         do j = 1, kp
+            call X(kp+i)%axpby(1.0_wp, X(j), -H(j, kpm+i))
+         enddo
+      enddo
       ! - Pass 2
       call mat_mult(wrk, X(1:kp), X(kp + 1:kpp))
-      call mat_mult(Xwrk(1:p), X(1:kp), wrk)
-      ! Project out existing vectors
-      call mat_axpby(X(kp + 1:kpp), 1.0_wp, Xwrk(1:p), -1.0_wp)
+      do i = 1, p
+         do j = 1, kp
+            call X(kp+i)%axpby(1.0_wp, X(j), -wrk(j, i))
+         enddo
+      enddo
 
       ! Update Hessenberg matrix with data from second pass
       call mat_axpby(H(1:kp, kpm + 1:kp), 1.0_wp, wrk, 1.0_wp)
-      deallocate (wrk)
 
       return
    end subroutine update_hessenberg_matrix
@@ -780,7 +787,7 @@ contains
       end subroutine rayleigh_quotient_form
    end subroutine two_sided_arnoldi_factorization
 
-   subroutine qr_factorization(Q, R, P, info, ifpivot, verbosity, tol)
+   subroutine qr_factorization(Q, R, perm, info, ifpivot, verbosity, tol)
       !! Orthogonalization of an array of `abstract_vector` using the modified Gram-Schmid process with or without column pivoting.
       !!
       !! **Algorithmic Features**
@@ -810,7 +817,7 @@ contains
       !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factoriation.
       integer, intent(out)   :: info
       !! Information flag.
-      real(kind=wp), intent(out) :: P(:, :)
+      integer, intent(out) :: perm(size(Q))
       !! Permutation matrix.
       logical, optional, intent(in) :: ifpivot
       !! QR with (`.true.`) or without (`.false.`) column pivoting.
@@ -826,7 +833,6 @@ contains
       integer       :: idx, i, j, k, kdim, iwrk
       real(kind=wp)                         :: tolerance
       integer                               :: idxv(1)
-      integer,                allocatable   :: ord(:)
       real(kind=wp),          allocatable   :: Rii(:)
       class(abstract_vector), allocatable   :: Qwrk(1)
 
@@ -834,9 +840,8 @@ contains
 
       ! --> Get basis size and allocate temporary variables
       kdim = size(Q)
-      allocate(ord(1:kdim))
       do i = 1, kdim
-         ord(i) = i
+         perm(i) = i
       end do
       allocate(Rii(1:kdim)); Rii = 0.0_wp
       allocate(Qwrk(1), source=Q(1))
@@ -872,7 +877,7 @@ contains
                exit QR_step
             endif
 
-            call swap_columns(Q, R, Rii, ord, j, idx)
+            call swap_columns(Q, R, Rii, perm, j, idx)
           
             ! Normalize column
             beta = Q(j)%norm();
@@ -904,15 +909,8 @@ contains
 
          end do QR_step
 
-         ! compute permutation matrix
-         P = 0.0_wp
-         do i = 1,kdim
-            P(ord(i),i) = 1.0
-         end do
-
       else ! no pivoting
 
-         P = eye(kdim)
          do j = 1, kdim
             ! Orthonormalization against existing columns
             do i = 1, j - 1
@@ -953,7 +951,7 @@ contains
       return
    end subroutine qr_factorization
 
-   subroutine swap_columns(Q, R, Rii, ord, i, j)
+   subroutine swap_columns(Q, R, Rii, perm, i, j)
       implicit none
       ! Krylov Basis
       class(abstract_vector), intent(inout) :: Q(:)
@@ -962,7 +960,7 @@ contains
       ! Diagonal factors
       real(kind=wp),          intent(inout) :: Rii(:)
       ! column ordering 
-      integer,                intent(inout) :: ord(:)
+      integer,                intent(inout) :: perm(:)
       ! column indeces to be swapped
       integer,                intent(in)    :: i, j
 
@@ -994,23 +992,88 @@ contains
       call Q(i)%axpby(0.0_wp, Qwrk, 1.0_wp)
       
       Rwrk = 0.0_wp
-      Rwrk(1) = Rii(j)
-      Rii(j)  = Rii(i)
-      Rii(i)  = Rwrk(1)
+      Rwrk(1) = Rii(j); Rii(j)  = Rii(i); Rii(i)  = Rwrk(1)
 
-      iwrk   = ord(j)
-      ord(j) = ord(i)
-      ord(i) = iwrk
+      iwrk = perm(j); perm(j) = perm(i); perm(i) = iwrk
 
       if (n .gt. 0) then
-         Rwrk     = R(1:n,j)
-         R(1:n,j) = R(1:n,i)
-         R(1:n,i) = Rwrk
+         Rwrk = R(1:n,j); R(1:n,j) = R(1:n,i); R(1:n,i) = Rwrk
       endif
 
       return
    
    end subroutine swap_columns
+
+   subroutine apply_global_column_permutation_vec(X, p, trans)
+      !! Utility function to permute the columns of an abstract_vector type as defined by p
+      class(abstract_vector),     intent(inout) :: X(:)
+      integer,                    intent(in)    :: p(:)
+      logical, optional,          intent(in)    :: trans
+
+      ! internal variables
+      integer :: i
+      integer :: ptrans(size(p))
+      logical :: transpose
+      class(abstract_vector), allocatable :: X2(:)
+
+      ! deal with optional arguments
+      transpose = optval(trans, .false.)
+
+      if (size(X) /= size(p)) then
+         write (*, *) "apply_permutation: Size mismatch between Krylov basis and permutation vector."
+         call stop_error("Aborting due to illegal matrix operation.")
+      end if
+
+      allocate(X2, source=X)
+
+      if (transpose) then
+         ptrans = iargsort(p)
+         do i = 1, size(ptrans)
+            call X(i)%axpby(0.0_wp, X2(ptrans(i)), 1.0_wp)
+         end do
+      else
+         do i = 1, size(p)
+            call X(i)%axpby(0.0_wp, X2(p(i)), 1.0_wp)
+         end do
+      end if
+      return
+
+   end subroutine apply_global_column_permutation_vec
+
+   subroutine apply_global_column_permutation_mat(A, p, trans)
+      !! Utility function to permute the columns of a real matrix as defined by p
+      real(kind=wp),     intent(inout) :: A(:, :)
+      integer,           intent(in)    :: p(:)
+      logical, optional, intent(in)    :: trans
+
+      ! internal variables
+      integer :: i
+      integer :: ptrans(size(p))
+      logical :: transpose
+      real(kind=wp), allocatable :: A2(:,:)
+
+      ! deal with optional arguments
+      transpose = optval(trans, .false.)
+
+      if (size(A,2) /= size(p)) then
+         write (*, *) "apply_permutation: Size mismatch between matrix and permutation vector."
+         call stop_error("Aborting due to illegal matrix operation.")
+      end if
+
+      allocate(A2, source=A)
+
+      if (transpose) then
+         ptrans = iargsort(p)
+         do i = 1, size(ptrans)
+            A(:,i) = A2(:,ptrans(i))
+         end do
+      else
+         do i = 1, size(p)
+            A(:,i) = A2(:,p(i))
+         end do
+      end if
+      return
+   end subroutine apply_global_column_permutation_mat
 
    subroutine krylov_schur_restart(nblk, X, H, select_eigs, blksize)
       integer, intent(out) :: nblk

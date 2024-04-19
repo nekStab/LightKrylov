@@ -79,7 +79,7 @@ module lightkrylov_AbstractVector
       procedure(abstract_zero), deferred, public :: zero
       !! Sets an `abstract_vector` to zero.
       procedure(abstract_rand), deferred, public :: rand
-      !! Create a random `æbstract_vector.
+      !! Create a random `abstract_vector.
       procedure(abstract_scal), deferred, public :: scal
       !! Compute the scalar-vector product.
       procedure(axpby_interface), deferred, pass(self), public :: axpby
@@ -196,8 +196,6 @@ contains
      !! Krylov basis.
       real(kind=wp), dimension(:), intent(in) :: v
      !! Coordinates of the output vector y in the Krylov basis X.
-      class(abstract_vector), allocatable :: wrk
-      ! Temporary working abstract vector.
       integer :: i
       ! Miscellaneous.
 
@@ -209,13 +207,9 @@ contains
       ! Initialize output vector.
       if (allocated(y) .eqv. .false.) allocate (y, source=X(1)); call y%zero()
       ! Compute output vector.
-      if (.not. allocated(wrk)) allocate (wrk, source=X(1))
       do i = 1, size(X)
-         wrk = X(i)
-         call wrk%scal(v(i))
-         call y%add(wrk)
+         call y%axpby(1.0_wp, X(i), v(i))
       end do
-      if (allocated(wrk)) deallocate (wrk)
       return
    end subroutine get_vec
 
@@ -236,8 +230,7 @@ contains
      !! Real-valued matrix to be left-multiplied by `A`.
 
       ! Local variables
-      class(abstract_vector), allocatable :: wrk
-      integer :: i
+      integer :: i, j
 
       ! Check sizes.
       if (size(A) .ne. size(B, 1)) then
@@ -250,13 +243,15 @@ contains
          write (*, *) "Coefficient matrix B does not have the same amout of colums as output basis C for the product C = A @ B."
          stop 1
       end if
-      allocate (wrk, source=A(1))
+
       ! Compute product column-wise
-      do i = 1, size(B, 2)
-         call get_vec(wrk, A, B(:, i))
-         call C(i)%axpby(0.0_wp, wrk, 1.0_wp)
+      do j = 1, size(B, 2)
+         call C(j)%zero()
+         do i = 1, size(B, 1)
+            call C(j)%axpby(1.0_wp, A(i), B(i, j))
+         enddo
       end do
-      deallocate (wrk)
+
       return
    end subroutine mat_mult_direct
 
@@ -275,8 +270,8 @@ contains
 
       ! Compute product column-wise
       C = 0.0_wp
-      do i = 1, size(A)
-         do j = 1, size(B)
+      do j = 1, size(B)
+         do i = 1, size(A)
             C(i, j) = A(i)%dot(B(j))
          end do
       end do
@@ -310,8 +305,8 @@ contains
          write (*, *) "INFO : Array sizes incompatible for summation. "
          stop 1
       end if
-      do i = 1, size(A, 1)
-         do j = 1, size(A, 2)
+      do j = 1, size(A, 2)
+         do i = 1, size(A, 1)
             A(i, j) = alpha*A(i, j) + beta*B(i, j)
          end do
       end do
