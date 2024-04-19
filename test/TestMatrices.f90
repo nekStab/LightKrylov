@@ -16,7 +16,7 @@ module TestMatrices
       real(kind=wp), dimension(test_size, test_size) :: data = 0.0_wp
    contains
       private
-      procedure, pass(self), public :: matvec => general_matvec
+      procedure, pass(self), public :: matvec = general_matvec
       procedure, pass(self), public :: rmatvec => general_rmatvec
    end type rmatrix
 
@@ -120,35 +120,35 @@ contains
       !> Test matrix.
       class(rmatrix), allocatable :: A
 
-      ! --> Initialize vector.
+      ! Initialize vector.
       x = rvector(); call random_number(x%data)
       y = rvector(); call y%zero()
-      ! --> Initialize matrix.
+      ! Initialize matrix.
       A = rmatrix(); call random_number(A%data)
-      ! --> Compute matrix-vector product.
+      ! Compute matrix-vector product.
       call A%matvec(x, y)
-      ! --> Check result.
+      ! Check result.
       call check(error, all_close(y%data, matmul(A%data, x%data), rtol, atol), .true.)
 
       return
    end subroutine test_real_matvec
 
    subroutine test_real_rmatvec(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test vector.
+      ! Test vector.
       class(rvector), allocatable :: x, y
-      !> Test matrix.
+      ! Test matrix.
       class(rmatrix), allocatable :: A
 
-      ! --> Initialize vector.
+      ! Initialize vector.
       x = rvector(); call random_number(x%data)
       y = rvector(); call y%zero()
-      ! --> Initialize matrix.
+      ! Initialize matrix.
       A = rmatrix(); call random_number(A%data)
-      ! --> Compute transpose matrix-vector product.
+      ! Compute transpose matrix-vector product.
       call A%rmatvec(x, y)
-      ! --> Check result.
+      ! Check result.
       call check(error, all_close(y%data, matmul(transpose(A%data), x%data), rtol, atol), .true.)
       return
    end subroutine test_real_rmatvec
@@ -160,7 +160,7 @@ contains
    !----------------------------------------------------------
 
    subroutine collect_spd_matrix_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
       return
    end subroutine collect_spd_matrix_testsuite
@@ -172,7 +172,7 @@ contains
    !----------------------------------------------------------------
 
    subroutine collect_abstract_linop_operations_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
@@ -183,54 +183,54 @@ contains
    end subroutine collect_abstract_linop_operations_testsuite
 
    subroutine test_scaled_linop(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrix.
+      ! Test matrix.
       class(rmatrix), allocatable :: A
-      !> Test vector.
+      ! Test vector.
       class(rvector), allocatable :: x, y
-      !> Scaling factor.
+      ! Scaling factor.
       real(kind=wp) :: sigma
-      !> Scaled linear operator.
+      ! Scaled linear operator.
       class(scaled_linop), allocatable :: B
 
-      ! --> Initialize test matrix and vector.
+      ! Initialize test matrix and vector.
       A = rmatrix(); call random_number(A%data)
       x = rvector(); call random_number(x%data)
       y = rvector(); call y%zero()
-      ! --> Scaled operator.
+      ! Scaled operator.
       sigma = 2.0_wp; B = scaled_linop(A, sigma)
-      ! --> Compute scaled matrix-vector product.
+      ! Compute scaled matrix-vector product.
       call B%matvec(x, y)
-      ! --> Check error.
+      ! Check error.
       call check(error, all_close(y%data, sigma*matmul(A%data, x%data), rtol, atol), .true.)
 
       return
    end subroutine test_scaled_linop
 
    subroutine test_axpby_linop(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrices.
+      ! Test matrices.
       class(rmatrix), allocatable :: A, B
-      !> Test vector.
+      ! Test vector.
       class(rvector), allocatable :: x, y
-      !> Scaling factors.
+      ! Scaling factors.
       real(kind=wp) :: alpha, beta
-      !> axpby linear operator.
+      ! axpby linear operator.
       class(axpby_linop), allocatable :: C
 
-      ! --> Initialize test matrices and vector.
+      ! Initialize test matrices and vector.
       A = rmatrix(); call random_number(A%data)
       B = rmatrix(); call random_number(B%data)
       x = rvector(); call random_number(x%data)
       y = rvector(); call y%zero()
       call random_number(alpha); call random_number(beta)
-      ! --> axpby linear operator.
+      ! axpby linear operator.
       C = axpby_linop(A, B, alpha, beta, .false., .false.)
-      ! --> Compute the matrix-vector product.
+      ! Compute the matrix-vector product.
       call C%matvec(x, y)
-      ! --> Check error.
+      ! Check error.
       call check(error, all_close(matmul(alpha*A%data + beta*B%data, x%data), y%data, rtol, atol), .true.)
 
       return

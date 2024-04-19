@@ -1,10 +1,12 @@
 module TestExpm
    use LightKrylov
+   use LightKrylov_expmlib
+   use LightKrylov_utils
+
    use TestVector
    use TestMatrices
    use TestUtils
-   use LightKrylov_expmlib
-   use LightKrylov_utils
+   
    use testdrive  , only : new_unittest, unittest_type, error_type, check
    use stdlib_linalg, only: diag
    use stdlib_math, only : all_close
@@ -24,7 +26,7 @@ contains
    !---------------------------------------------------------
  
   subroutine collect_dense_matrix_functions_testsuite(testsuite)
-     !> Collection of tests.
+     ! Collection of tests.
      type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [&
@@ -37,27 +39,27 @@ contains
    end subroutine collect_dense_matrix_functions_testsuite
 
    subroutine test_dense_matrix_exponential(error)
-      !> This function tests the scaling and squaring followed by rational Pade approximation
-      ! of the matrix exponential for a matrix for which the exponential propagator is known
-      ! analytically
+      !! This function tests the scaling and squaring followed by rational Pade approximation
+      !! of the matrix exponential for a matrix for which the exponential propagator is known
+      !! analytically
 
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Problem dimension.
+      ! Problem dimension.
       integer, parameter :: n = 5
       integer, parameter :: m = 6
-      !> Test matrix.
+      ! Test matrix.
       real(kind=wp) :: A(n, n)
       real(kind=wp) :: E(n, n)
       real(kind=wp) :: Eref(n, n)
       integer :: i, j
 
-      ! --> Initialize matrix.
+      ! Initialize matrix.
       A = 0.0_wp
       do i = 1, n-1
          A(i,i+1) = m*1.0_wp
       end do
-      ! --> Reference with analytical exponential
+      ! Reference with analytical exponential
       Eref = 0.0_wp
       forall (i=1:n) Eref(i, i) = 1.0_wp
       do i = 1, n-1
@@ -65,7 +67,7 @@ contains
             Eref(i,i+j) = Eref(i,i+j-1)*m/j
          end do
       end do
-      ! --> Compute exponential numerically
+      ! Compute exponential numerically
       E = 0.0_wp
       call expm(E, A)
 
@@ -75,20 +77,20 @@ contains
    end subroutine test_dense_matrix_exponential
 
    subroutine test_dense_sqrtm_SPD(error)
-      !> This function tests the matrix version of the sqrt function for the case of
-      ! a SPD matrix
+      !! This function tests the matrix version of the sqrt function for the case of
+      !! a SPD matrix
 
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Problem dimension.
+      ! Problem dimension.
       integer, parameter :: n = 5
-      !> Test matrix.
+      ! Test matrix.
       real(kind=wp) :: A(n, n)
       real(kind=wp) :: sqrtmA(n, n)
       complex(kind=wp) :: lambda(n)
       integer :: i, j
 
-      ! --> Initialize matrix.
+      ! Initialize matrix.
       call random_number(A)
       ! make SPD
       A = 0.5_wp*(A + transpose(A))
@@ -108,20 +110,20 @@ contains
    end subroutine test_dense_sqrtm_SPD
 
    subroutine test_dense_sqrtm_pos_semidefinite(error)
-      !> This function tests the matrix version of the sqrt function for the case 
-      ! of a symmetric semi-definite matrix
+      !! This function tests the matrix version of the sqrt function for the case 
+      !! of a symmetric semi-definite matrix
 
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Problem dimension.
+      ! Problem dimension.
       integer, parameter :: n = 5
-      !> Test matrix.
+      ! Test matrix.
       real(kind=wp) :: A(n, n)
       real(kind=wp) :: sqrtmA(n, n)
       complex(kind=wp) :: lambda(n)
       integer :: i, j
 
-      ! --> Initialize matrix.
+      ! Initialize matrix.
       call random_number(A)
       ! make positive semi-definite
       A = 0.5_wp*(A + transpose(A))
@@ -148,7 +150,7 @@ contains
    !---------------------------------------------------------
 
    subroutine collect_kexpm_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [&
@@ -160,32 +162,32 @@ contains
    end subroutine collect_kexpm_testsuite
 
    subroutine test_krylov_matrix_exponential(error)
-      !> This function tests the Krylov based approximation of the action of the exponential
-      ! propagator against the dense computation for a random operator, a random RHS and a 
-      ! typical value of tau.
-      !> Error type to be returned.
+      !! This function tests the Krylov based approximation of the action of the exponential
+      !! propagator against the dense computation for a random operator, a random RHS and a 
+      !! typical value of tau.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
       class(rmatrix), allocatable :: A
-      !> Basis vectors.
+      ! Basis vectors.
       class(rvector), allocatable :: Q
       class(rvector), allocatable :: Xref
       class(rvector), allocatable :: Xkryl
-      !> Krylov subspace dimension.
+      ! Krylov subspace dimension.
       integer, parameter :: kdim = test_size
-      !> Test matrix.
+      ! Test matrix.
       real(kind=wp) :: Adata(kdim, kdim)
       real(kind=wp) :: Edata(kdim, kdim)
-      !> GS factors.
+      ! GS factors.
       real(kind=wp) :: R(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
-      !> Information flag.
+      ! Information flag.
       integer :: info
-      !> Test parameters
+      ! Test parameters
       integer, parameter         :: nkmax = 15
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
       logical, parameter         :: verb  = .true.
-      !> Misc.
+      ! Misc.
       integer :: i,j,k
       real(kind=wp) :: Xdata(test_size), Qdata(test_size)
       real(kind=wp) :: err
@@ -197,26 +199,26 @@ contains
       call Xref%zero()
       call Xkryl%zero()
 
-      ! --> Initialize operator.
+      ! Initialize operator.
       A = rmatrix()
       call init_rand(A)
       call get_data(Adata, A)   
-      ! --> Initialize rhs.
+      ! Initialize rhs.
       call init_rand(Q)
       call get_data(Qdata, Q)
 
-      !> Comparison is dense computation (10th order Pade approximation)
+      ! Comparison is dense computation (10th order Pade approximation)
       call expm(Edata, tau*Adata)
       Xdata = matmul(Edata,Qdata)
 
-      !> Copy reference data into Krylov vector
+      ! Copy reference data into Krylov vector
       call put_data(Xref, Xdata)
 
-      !> Compute Krylov matrix exponential using the arnoldi method
+      ! Compute Krylov matrix exponential using the arnoldi method
       call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = verb, kdim = nkmax)
 
 #ifdef DEBUG
-      !> Save test data to disk.
+      ! Save test data to disk.
       call save_npy("debug/test_krylov_expm_operator.npy", Adata)
       call save_npy("debug/test_krylov_expm_rhs.npy", Qdata)
       call save_npy("debug/test_krylov_expm_ref.npy", Xdata)
@@ -227,7 +229,7 @@ contains
 
       call Xkryl%axpby(1.0_wp, Xref, -1.0_wp)
 
-      !> Compute 2-norm of the error
+      ! Compute 2-norm of the error
       err = Xkryl%norm()
       if (verb) write(*, *) '    true error:          ||error||_2 = ', err
 
@@ -237,35 +239,35 @@ contains
    end subroutine test_krylov_matrix_exponential
 
    subroutine test_block_krylov_matrix_exponential(error)
-      !> This function tests the Krylov based approximation of the action of the exponential
-      ! propagator against the dense computation for a random operator, a random RHS and a 
-      ! typical value of tau.
+      !! This function tests the Krylov based approximation of the action of the exponential
+      !! propagator against the dense computation for a random operator, a random RHS and a 
+      !! typical value of tau.
 
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
       class(rmatrix), allocatable :: A
-      !> Basis vectors.
+      ! Basis vectors.
       class(rvector), allocatable :: Q(:)
       class(rvector), allocatable :: Xref(:)
       class(rvector), allocatable :: Xkryl(:)
       class(rvector), allocatable :: Xkryl_block(:)
-      !> Krylov subspace dimension.
+      ! Krylov subspace dimension.
       integer, parameter :: kdim = test_size
-      !> Test matrix.
+      ! Test matrix.
       real(kind=wp) :: Adata(kdim, kdim)
       real(kind=wp) :: Edata(kdim, kdim)
-      !> GS factors.
+      ! GS factors.
       real(kind=wp) :: R(kdim, kdim)
       real(kind=wp) :: Id(kdim, kdim)
-      !> Information flag.
+      ! Information flag.
       integer :: info
-      !> Test parameters
+      ! Test parameters
       integer, parameter         :: nkmax = 15
       integer, parameter         :: p     = 3
       real(kind=wp), parameter   :: tau   = 0.1_wp
       real(kind=wp), parameter   :: tol   = 1e-10_wp
       logical, parameter         :: verb  = .true.
-      !> Misc.
+      ! Misc.
       integer :: i,j,k
       real(kind=wp) :: Xdata(test_size,p), Qdata(test_size,p)
       real(kind=wp) :: alpha
@@ -278,29 +280,29 @@ contains
       allocate(Xkryl(1:p)) ; call mat_zero(Xkryl)
       allocate(Xkryl_block(1:p)) ; call mat_zero(Xkryl_block)
 
-      ! --> Initialize operator.
+      ! Initialize operator.
       A = rmatrix()
       call init_rand(A)
       call get_data(Adata, A)
-      ! --> Initialize rhs.
+      ! Initialize rhs.
       allocate(Q(1:p))
       call init_rand(Q) 
       call get_data(Qdata, Q)
 
-      !> Comparison is dense computation (10th order Pade approximation)
+      ! Comparison is dense computation (10th order Pade approximation)
       call expm(Edata, tau*Adata)
       Xdata = matmul(Edata,Qdata)
-      !> Copy reference data into Krylov vector
+      ! Copy reference data into Krylov vector
       call put_data(Xref, Xdata)
 
-      !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
+      ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
       if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
       do i = 1,p
          if (verb) write(*,*) '    column',i
          call kexpm(Xkryl(i:i), A, Q(i:i), tau, tol, info, verbosity = verb, kdim = nkmax)
       end do
       if (verb) write(*,*) 'BLOCK-ARNOLDI'
-      !> Compute Krylov matrix exponential using block-arnoldi method
+      ! Compute Krylov matrix exponential using block-arnoldi method
       call kexpm(Xkryl_block(1:p), A, Q(1:p), tau, tol, info, verbosity = verb, kdim = nkmax)
 
       do i = 1,p
@@ -309,7 +311,7 @@ contains
       end do
 
 #ifdef DEBUG
-      !> Save test data to disk.
+      ! Save test data to disk.
       call save_npy("debug/test_block_krylov_expm_operator.npy", Adata)
       call save_npy("debug/test_block_krylov_expm_rhs.npy", Qdata)
       call save_npy("debug/test_block_krylov_expm_ref.npy", Xdata)
@@ -320,7 +322,7 @@ contains
 #endif
 #undef DEBUG
 
-      !> Compute 2-norm of the error
+      ! Compute 2-norm of the error
       if (verb) then
          call mat_mult(err,Xkryl(1:p),Xkryl(1:p))
          alpha = sqrt(norm2(err))

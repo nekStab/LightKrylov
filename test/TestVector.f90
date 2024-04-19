@@ -31,7 +31,7 @@ contains
    !-----                                                 -----
    !-----------------------------------------------------------
 
-   !--> Zero-out a vector.
+   ! Zero-out a vector.
    subroutine zero(self)
       class(rvector), intent(inout) :: self
       self%data = 0.0_wp
@@ -49,7 +49,7 @@ contains
       return
    end function dot
 
-   ! --> In-place scalar multiplication.
+   ! In-place scalar multiplication.
    subroutine scal(self, alpha)
       class(rvector), intent(inout) :: self
       real(kind=wp), intent(in) :: alpha
@@ -57,7 +57,7 @@ contains
       return
    end subroutine scal
 
-   ! --> axpby interface
+   ! axpby interface
    subroutine axpby(self, alpha, vec, beta)
       class(rvector), intent(inout) :: self
       class(abstract_vector), intent(in) :: vec
@@ -92,7 +92,7 @@ contains
    !-------------------------------------
 
    subroutine collect_real_vector_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
@@ -111,129 +111,129 @@ contains
    end subroutine collect_real_vector_testsuite
 
    subroutine test_vector_norm(error)
-      ! --> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
 
-      ! --> Test vector.
+      ! Test vector.
       class(rvector), allocatable :: x
       real(kind=wp) :: alpha
 
-      ! --> Initialize vector.
+      ! Initialize vector.
       x = rvector(); call random_number(x%data)
-      ! --> Compute the vector norm.
+      ! Compute the vector norm.
       alpha = x%norm()
-      ! --> Check the correctness.
+      ! Check the correctness.
       call check(error, is_close(alpha, norm2(x%data)))
 
       return
    end subroutine test_vector_norm
 
    subroutine test_vector_add(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test vectors.
+      ! Test vectors.
       class(rvector), allocatable :: x, y, z
 
-      ! --> Initialize vectors.
+      ! Initialize vectors.
       x = rvector(); call random_number(x%data)
       y = rvector(); call random_number(y%data)
       z = rvector(); z = x
-      ! --> Vector addition.
+      ! Vector addition.
       call z%add(y)
-      ! --> Check result.
+      ! Check result.
       call check(error, norm2(z%data - (x%data + y%data)) < rtol)
 
       return
    end subroutine test_vector_add
 
    subroutine test_vector_sub(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test vectors.
+      ! Test vectors.
       class(rvector), allocatable :: x, y, z
 
-      ! --> Initialize vectors.
+      ! Initialize vectors.
       x = rvector(); call random_number(x%data)
       y = rvector(); call random_number(y%data)
       z = rvector(); z = x
-      ! --> Vector addition.
+      ! Vector addition.
       call z%sub(y)
-      ! --> Check result.
+      ! Check result.
       call check(error, norm2(z%data - (x%data - y%data)) < rtol)
 
       return
    end subroutine test_vector_sub
 
    subroutine test_vector_zero(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test vector.
+      ! Test vector.
       class(rvector), allocatable :: x
 
-      ! --> Initialize vector.
+      ! Initialize vector.
       x = rvector(); call random_number(x%data)
-      ! --> Zero-out vector.
+      ! Zero-out vector.
       call x%zero()
-      ! --> Check result.
+      ! Check result.
       call check(error, x%norm() < rtol)
 
       return
    end subroutine test_vector_zero
 
    subroutine test_vector_dot(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
 
-      !> Test vectors.
+      ! Test vectors.
       class(rvector), allocatable :: x, y
       real(kind=wp) :: alpha
 
-      ! --> Initialize vectors.
+      ! Initialize vectors.
       x = rvector(); call random_number(x%data)
       y = rvector(); call random_number(y%data)
-      ! --> Compute dot product.
+      ! Compute dot product.
       alpha = x%dot(y)
-      ! --> Check result.
+      ! Check result.
       call check(error, is_close(alpha, dot_product(x%data, y%data)))
 
       return
    end subroutine test_vector_dot
 
    subroutine test_vector_mult(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test vector.
+      ! Test vector.
       class(rvector), allocatable :: x, y
 
-      ! --> Random data.
+      ! Random data.
       x = rvector(); call random_number(x%data)
       y = rvector(); y = x
-      ! --> Scalar multiplication.
+      ! Scalar multiplication.
       call x%scal(2.0_wp)
-      ! --> Check result.
+      ! Check result.
       call check(error, norm2(x%data - 2.0_wp*y%data) < rtol)
 
       return
    end subroutine test_vector_mult
 
    subroutine test_direct_krylov_matrix_product(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test bases.
+      ! Test bases.
       class(rvector), dimension(:), allocatable :: A(:)
       class(rvector), dimension(:), allocatable :: C(:)
-      !> Krylov subspace dimension.
+      ! Krylov subspace dimension.
       integer, parameter :: kdim1 = 3
-      !> Number of columns in coefficien matrix
+      ! Number of columns in coefficien matrix
       integer, parameter :: kdim2 = 4
-      !> Test matrices.
+      ! Test matrices.
       real(kind=wp)               :: B(kdim1, kdim2)
       real(kind=wp)               :: Amat(test_size, kdim1)
       real(kind=wp)               :: Cmat(test_size, kdim2)
-      !> Misc.
+      ! Misc.
       integer :: i,j
 
-      !> Initialize basis and copy data to matrix
+      ! Initialize basis and copy data to matrix
       allocate(A(1:kdim1))
       do i = 1, size(A)
          call random_number(A(i)%data)
@@ -247,9 +247,9 @@ contains
          enddo
       enddo
       call mat_zero(C)
-      !> Compute product
+      ! Compute product
       call mat_mult(C,A,B)
-      !> Copy data
+      ! Copy data
       do i = 1, kdim2
          Cmat(:, i) = C(i)%data
       enddo
@@ -258,22 +258,22 @@ contains
    end subroutine test_direct_krylov_matrix_product
 
    subroutine test_transpose_krylov_matrix_product(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test bases.
+      ! Test bases.
       class(rvector), dimension(:), allocatable :: A(:)
       class(rvector), dimension(:), allocatable :: B(:)
-      !> Krylov subspace dimension.
+      ! Krylov subspace dimension.
       integer, parameter :: kdim1 = 3
       integer, parameter :: kdim2 = 4
-      !> Test matrices.
+      ! Test matrices.
       real(kind=wp)               :: C(kdim1, kdim2)
       real(kind=wp)               :: Amat(test_size, kdim1)
       real(kind=wp)               :: Bmat(test_size, kdim2)
-      !> Misc.
+      ! Misc.
       integer :: k
 
-      !> Initialize bases and copy data to matrices
+      ! Initialize bases and copy data to matrices
       allocate(A(1:kdim1))
       Amat = 0.0_wp
       do k = 1, size(A)
@@ -287,29 +287,29 @@ contains
          Bmat(:, k) = B(k)%data
       enddo
       C = 0.0_wp
-      !> Compute product
+      ! Compute product
       call mat_mult(C,A,B)
       call check(error, all_close(matmul(transpose(Amat), Bmat), C, rtol, atol) )
       return
    end subroutine test_transpose_krylov_matrix_product
 
    subroutine test_real_matrix_axpby(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrices.
+      ! Test matrices.
       real(kind=wp) , allocatable :: A(:,:)
       real(kind=wp) , allocatable :: B(:,:)
       ! factors
       real(kind=wp) :: alpha
       real(kind=wp) :: beta   
-      !> Size
+      ! Size
       integer, parameter :: kdim = 3
-      !> Comparison.
+      ! Comparison.
       real(kind=wp) :: Z(test_size, kdim)
-      !> Misc.
+      ! Misc.
       integer :: i,j
 
-      !> Initialize matrices
+      ! Initialize matrices
       allocate(A(1:test_size, 1:kdim))
       allocate(B(1:test_size, 1:kdim))
       do i = 1, test_size
@@ -319,30 +319,30 @@ contains
          enddo
       enddo
       Z = 0.0_wp
-      !> Compute sum
+      ! Compute sum
       call mat_axpby(A,2.0_wp,B,1.0_wp)
       call check(error, all_close(A, Z, rtol, atol) )
       return
    end subroutine test_real_matrix_axpby
 
    subroutine test_krylov_matrix_axpby(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrices.
+      ! Test matrices.
       class(rvector) , allocatable :: A(:)
       class(rvector) , allocatable :: B(:)
       ! factors
       real(kind=wp) :: alpha
       real(kind=wp) :: beta   
-      !> Size
+      ! Size
       integer, parameter :: kdim = 3
-      !> Comparison.
+      ! Comparison.
       real(kind=wp) :: Amat(test_size, kdim)
       real(kind=wp) :: Zmat(test_size, kdim)
-      !> Misc.
+      ! Misc.
       integer :: i
 
-      !> Initialize bases and copy data to matrices
+      ! Initialize bases and copy data to matrices
       allocate(A(1:kdim))
       allocate(B(1:kdim))
       do i = 1, kdim
@@ -350,10 +350,10 @@ contains
          call B(i)%axpby(0.0_wp,A(i),-2.0_wp)
       enddo
       Zmat = 0.0_wp
-      !> Compute sum
+      ! Compute sum
       call mat_axpby(A,4.0_wp,B,2.0_wp)
       Amat = 0.0_wp
-      !> Copy data to matrix
+      ! Copy data to matrix
       do i = 1, kdim
          Amat(:, i) = A(i)%data
       enddo

@@ -14,12 +14,12 @@ program Tester
 
    implicit none
 
-   !> Unit-test related.
+   ! Unit-test related.
    integer :: status, is, num_tests
    type(testsuite_type), allocatable :: testsuites(:)
    character(len=*), parameter :: fmt = '("+", *(1x, a))'
 
-   ! --> Display information about the version of LightKrylov being tested.
+   ! Display information about the version of LightKrylov being tested.
    call greetings()
 
    status = 0

@@ -37,12 +37,12 @@ contains
    !--------------------------------------------------------------------
 
    subroutine apply(self, vec_inout)
-      !> Preconditioner.
+      ! Preconditioner.
       class(jacobi_preconditioner), intent(in)    :: self
-      !> Input/output vector.
+      ! Input/output vector.
       class(abstract_vector), intent(inout) :: vec_inout
 
-      !> Diagonal scaling.
+      ! Diagonal scaling.
       select type (vec_inout)
       type is (rvector)
          vec_inout%data = (1.0_wp/self%data)*vec_inout%data
@@ -51,12 +51,12 @@ contains
    end subroutine apply
 
    subroutine undo(self, vec_inout)
-      !> Preconditioner.
+      ! Preconditioner.
       class(jacobi_preconditioner), intent(in)    :: self
-      !> Input/Output vector.
+      ! Input/Output vector.
       class(abstract_vector), intent(inout) :: vec_inout
 
-      !> Undo diagonal scaling.
+      ! Undo diagonal scaling.
       select type (vec_inout)
       type is (rvector)
          vec_inout%data = self%data*vec_inout%data
@@ -71,7 +71,7 @@ contains
    !-------------------------------------------------------------
 
    subroutine collect_evp_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
@@ -82,109 +82,109 @@ contains
    end subroutine collect_evp_testsuite
 
    subroutine test_spd_evp_problem(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrix.
+      ! Test matrix.
       class(spd_matrix), allocatable :: A
-      !> Krylov subspace.
+      ! Krylov subspace.
       class(rvector), allocatable :: X(:)
-      !> Eigenvalues and eigenvectors.
+      ! Eigenvalues and eigenvectors.
       real(kind=wp) :: evals(test_size)
-      !> Residuals.
+      ! Residuals.
       real(kind=wp) :: residuals(test_size)
-      !> Information flag.
+      ! Information flag.
       integer :: info
-      !> Toeplitz matrix.
+      ! Toeplitz matrix.
       real(kind=wp) :: T(test_size, test_size), a_, b_
-      !> Miscellaneous.
+      ! Miscellaneous.
       integer :: i
       real(kind=wp) :: alpha
       real(kind=wp) :: true_evals(test_size), pi
       class(rvector), allocatable :: X0(1)
 
-      !> Create the sym. pos. def. Toeplitz matrix.
+      ! Create the sym. pos. def. Toeplitz matrix.
       call random_number(a_); call random_number(b_); b_ = -abs(b_)
       do i = 1, test_size
-         !> Diagonal entry.
+         ! Diagonal entry.
          T(i, i) = a_
-         !> Upper diagonal entry.
+         ! Upper diagonal entry.
          if (i < test_size) T(i, i + 1) = b_
-         !> Lower diagonal entry.
+         ! Lower diagonal entry.
          if (i < test_size) T(i + 1, i) = b_
       end do
 
-      !> Test matrix.
+      ! Test matrix.
       A = spd_matrix(T)
-      !> Initialize Krylov subspace.
+      ! Initialize Krylov subspace.
       allocate (X(1:test_size + 1)); allocate (X0(1))
       call init_rand(X0)
       call initialize_krylov_subspace(X, X0)
 
-      !> Initialize internal variables.
+      ! Initialize internal variables.
       evals = 0.0_wp; residuals = 0.0_wp
 
-      !> Compute spectral decomposition.
+      ! Compute spectral decomposition.
       call eighs(A, X, evals, residuals, info)
 
-      !> Analytical eigenvalues.
+      ! Analytical eigenvalues.
       true_evals = 0.0_wp; pi = 4.0_wp*atan(1.0_wp)
       do i = 1, test_size
          true_evals(i) = a_ + 2*abs(b_)*cos(i*pi/(test_size + 1))
       end do
 
-      !> Check correctness.
+      ! Check correctness.
       call check(error, all_close(evals, true_evals, rtol, atol))
 
       return
    end subroutine test_spd_evp_problem
 
    subroutine test_evp_problem(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrix.
+      ! Test matrix.
       class(rmatrix), allocatable :: A
-      !> Krylov subspace.
+      ! Krylov subspace.
       class(rvector), allocatable :: X(:)
-      !> Eigenvalues and eigenvectors.
+      ! Eigenvalues and eigenvectors.
       complex(kind=wp) :: evals(test_size)
-      !> Residuals.
+      ! Residuals.
       real(kind=wp) :: residuals(test_size)
-      !> Information flag.
+      ! Information flag.
       integer :: info
-      !> Toeplitz matrix.
+      ! Toeplitz matrix.
       real(kind=wp) :: T(test_size, test_size), a_, b_
-      !> Miscellaneous.
+      ! Miscellaneous.
       integer :: i, k
       real(kind=wp) :: alpha
       complex(kind=wp) :: true_evals(test_size), pi
       class(rvector), allocatable :: X0(1)
 
-      !> Create the sym. pos. def. Toeplitz matrix.
+      ! Create the sym. pos. def. Toeplitz matrix.
       call random_number(a_); call random_number(b_); b_ = abs(b_)
       do i = 1, test_size
-         !> Diagonal entry.
+         ! Diagonal entry.
          T(i, i) = a_
-         !> Upper diagonal entry.
+         ! Upper diagonal entry.
          if (i < test_size) T(i, i + 1) = b_
-         !> Lower diagonal entry.
+         ! Lower diagonal entry.
          if (i < test_size) T(i + 1, i) = -b_
       end do
 
-      !> Test matrix.
+      ! Test matrix.
       A = rmatrix(T)
 
-      !> Initialize Krylov subspace.
+      ! Initialize Krylov subspace.
       allocate (X(1:test_size + 1)); allocate (X0(1))
       call init_rand(X0)
       call initialize_krylov_subspace(X, X0)
 
-      !> Initialize internal variables.
+      ! Initialize internal variables.
       evals = cmplx(0.0_wp, 0.0_wp, kind=wp); residuals = 0.0_wp
 
-      !> Compute spectral decomposition.
+      ! Compute spectral decomposition.
       call eigs(A, X, evals, residuals, info)
 
-      !> Analytical eigenvalues.
+      ! Analytical eigenvalues.
       true_evals = cmplx(0.0_wp, 0.0_wp, kind=wp); pi = 4.0_wp*atan(1.0_wp)
       k = 1
       do i = 1, test_size, 2
@@ -193,7 +193,7 @@ contains
          k = k + 1
       end do
 
-      !> Check correctness.
+      ! Check correctness.
       call check(error, norm2(abs(evals - true_evals)) < rtol)
 
       return
@@ -206,7 +206,7 @@ contains
    !------------------------------------
 
    subroutine collect_gmres_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
@@ -218,91 +218,91 @@ contains
    end subroutine collect_gmres_testsuite
 
    subroutine test_gmres_full_computation(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Linear Problem.
+      ! Linear Problem.
       class(rmatrix), allocatable :: A ! Linear Operator.
       class(rvector), allocatable :: b ! Right-hand side vector.
       class(rvector), allocatable :: x ! Solution vector.
-      !> GMRES options.
+      ! GMRES options.
       type(gmres_opts) :: opts
-      !> Information flag.
+      ! Information flag.
       integer :: info
 
-      ! --> Initialize linear problem.
+      ! Initialize linear problem.
       A = rmatrix(); call init_rand(A)
       b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
-      ! --> GMRES solver.
+      ! GMRES solver.
       opts = gmres_opts(kdim=test_size, verbose=.false.)
       call gmres(A, b, x, info, options=opts)
-      ! --> Check convergence.
+      ! Check convergence.
       call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
       return
    end subroutine test_gmres_full_computation
 
    subroutine test_gmres_full_computation_spd_matrix(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Linear Problem.
+      ! Linear Problem.
       class(spd_matrix), allocatable :: A ! Linear Operator.
       class(rvector), allocatable :: b ! Right-hand side vector.
       class(rvector), allocatable :: x ! Solution vector.
-      !> GMRES options.
+      ! GMRES options.
       type(gmres_opts) :: opts
-      !> Information flag.
+      ! Information flag.
       integer :: info
 
-      ! --> Initialize linear problem.
+      ! Initialize linear problem.
       A = spd_matrix(); call init_rand(A)
       b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
-      ! --> GMRES solver.
+      ! GMRES solver.
       opts = gmres_opts(kdim=test_size, verbose=.false.)
       call gmres(A, b, x, info, options=opts)
-      ! --> Check convergence.
+      ! Check convergence.
       call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
       return
    end subroutine test_gmres_full_computation_spd_matrix
 
    subroutine test_precond_gmres_full_computation(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Linear Problem.
+      ! Linear Problem.
       class(rmatrix), allocatable :: A ! Linear Operator.
       class(rvector), allocatable :: b ! Right-hand side vector.
       class(rvector), allocatable :: x ! Solution vector.
-      !> GMRES options.
+      ! GMRES options.
       type(gmres_opts) :: opts
-      !> Preconditioner.
+      ! Preconditioner.
       type(jacobi_preconditioner), allocatable :: D
       real(kind=wp) :: diag(test_size)
-      !> Information flag.
+      ! Information flag.
       integer :: info
-      !> Miscellaneous.
+      ! Miscellaneous.
       integer :: i
 
-      ! --> Initialize linear problem.
+      ! Initialize linear problem.
       A = rmatrix(); call init_rand(A)
       b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
-      ! --> Preconditioner.
+      ! Preconditioner.
       diag = 0.0_wp
       do i = 1, test_size
          diag(i) = A%data(i, i)
       end do
       D = jacobi_preconditioner(diag)
-      ! --> GMRES solver.
+      ! GMRES solver.
       opts = gmres_opts(kdim=test_size, verbose=.false.)
-      write (*, *) "--> Running Unpreconditioned GMRES :"
+      write (*, *) "-- Running Unpreconditioned GMRES :"
       call gmres(A, b, x, info, options=opts)
       write (*, *)
-      write (*, *) "--> Running GMRES with Jacobi preconditioning."
+      write (*, *) "-- Running GMRES with Jacobi preconditioning."
       call x%zero()
       call gmres(A, b, x, info, options=opts, preconditioner=D)
-      ! --> Check convergence.
+      ! Check convergence.
       call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
       return
@@ -315,7 +315,7 @@ contains
    !----------------------------------
 
    subroutine collect_svd_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
@@ -325,54 +325,54 @@ contains
    end subroutine collect_svd_testsuite
 
    subroutine test_svd_problem(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Test matrix.
+      ! Test matrix.
       class(rmatrix), allocatable :: A
-      !> Krylov subspaces.
+      ! Krylov subspaces.
       class(rvector), allocatable :: U(:), V(:)
       integer                     :: kdim = test_size
-      !> Singular values.
+      ! Singular values.
       real(kind=wp) :: svdvals(1:test_size)
-      !> Residuals.
+      ! Residuals.
       real(kind=wp) :: residuals(1:test_size)
-      !> Information flag.
+      ! Information flag.
       integer :: info
-      !> Miscellaneous.
+      ! Miscellaneous.
       integer :: i
       real(kind=wp) :: alpha
       real(kind=wp) :: true_svdvals(1:test_size), pi = 4.0_wp*atan(1.0_wp)
       class(rvector), allocatable :: U0(1)
 
-      !> Initialize matrix.
+      ! Initialize matrix.
       A = rmatrix()
       do i = 1, test_size
-         !> Diagonal entry.
+         ! Diagonal entry.
          A%data(i, i) = 2.0_wp
-         !> Upper diagonal entry.
+         ! Upper diagonal entry.
          if (i < test_size) A%data(i, i + 1) = -1.0_wp
-         !> Lower diagonal entry.
+         ! Lower diagonal entry.
          if (i < test_size) A%data(i + 1, i) = -1.0_wp
       end do
 
-      !> Initialize Krylov subspaces.
+      ! Initialize Krylov subspaces.
       allocate (U(1:kdim + 1)); allocate (V(1:kdim + 1)); allocate (U0(1))
       call init_rand(U0)
       call initialize_krylov_subspace(U, U0)
       call mat_zero(V)
 
-      !> Initialize internal variables.
+      ! Initialize internal variables.
       svdvals = 0.0_wp
 
-      !> Compute singular value decomposition.
+      ! Compute singular value decomposition.
       call svds(A, U, V, svdvals, residuals, info)
 
-      !> Analytical singular values.
+      ! Analytical singular values.
       do i = 1, test_size
          true_svdvals(i) = 2.0_wp*(1.0_wp + cos(i*pi/(test_size + 1)))
       end do
 
-      !> Check convergence.
+      ! Check convergence.
       call check(error, all_close(svdvals, true_svdvals, rtol, atol))
 
       return
@@ -385,7 +385,7 @@ contains
    !------------------------------------
 
    subroutine collect_cg_testsuite(testsuite)
-      !> Collection of tests.
+      ! Collection of tests.
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
@@ -395,27 +395,27 @@ contains
    end subroutine collect_cg_testsuite
 
    subroutine test_cg_full_computation_spd_matrix(error)
-      !> Error type to be returned.
+      ! Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
-      !> Linear Problem.
+      ! Linear Problem.
       real(kind=wp) :: Q(test_size, 10_wp*test_size)
       class(spd_matrix), allocatable :: A ! Linear Operator.
       class(rvector), allocatable :: b ! Right-hand side vector.
       class(rvector), allocatable :: x ! Solution vector.
       type(cg_opts)               :: opts
-      !> Information flag.
+      ! Information flag.
       integer :: info
 
-      ! --> Initialize linear problem.
+      ! Initialize linear problem.
       A = spd_matrix(); 
       call random_number(Q); 
       A%data = matmul(Q, transpose(Q)); A%data = 0.5*(A%data + transpose(A%data))
       b = rvector(); call init_rand(b)
       x = rvector(); call x%zero()
-      ! --> CG solver.
+      ! CG solver.
       opts = cg_opts(verbose=.false., atol=1e-12_wp, rtol=0.0_wp)
       call cg(A, b, x, info, options=opts)
-      ! --> Check convergence.
+      ! Check convergence.
       call check(error, norm2(matmul(A%data, x%data) - b%data)**2 < rtol)
 
       return
