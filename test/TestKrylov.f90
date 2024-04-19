@@ -1206,7 +1206,6 @@ contains
         call get_data(Vdata, V)
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
-        write(*, *) alpha, rtol_sp
         call check(error, alpha < rtol_sp)
 
         return
@@ -1343,7 +1342,6 @@ contains
         call get_data(Vdata, V)
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
-        write(*, *) alpha, rtol_dp
         call check(error, alpha < rtol_dp)
 
         return
@@ -1480,7 +1478,6 @@ contains
         call get_data(Vdata, V)
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
-        write(*, *) alpha, rtol_sp
         call check(error, alpha < rtol_sp)
 
         return
@@ -1617,7 +1614,6 @@ contains
         call get_data(Vdata, V)
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
-        write(*, *) alpha, rtol_dp
         call check(error, alpha < rtol_dp)
 
         return

@@ -3,6 +3,8 @@
 module LightKrylov
     ! --> Definitions of various constants.
     use lightkrylov_constants
+    ! -->
+    use lightkrylov_utils
     ! --> Definitions of the abstract vector types.
     use lightkrylov_AbstractVectors
     ! --> Definitions of the abstract linear operators.

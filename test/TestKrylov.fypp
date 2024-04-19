@@ -369,7 +369,6 @@ contains
         call get_data(Vdata, V)
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
-        write(*, *) alpha, rtol_${kind}$
         call check(error, alpha < rtol_${kind}$)
 
         return
