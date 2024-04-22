@@ -47,6 +47,29 @@ module lightkrylov_AbstractLinops
 
 
     #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "r"
+    !----------------------------------------------------------------------------------
+    !-----     Definition of an abstract symmetric positive definite operator     -----
+    !----------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_spd_linop_${type[0]}$${kind}$
+    contains
+    end type
+    #:else
+    !----------------------------------------------------------------------------------
+    !-----     Definition of an abstract Hermitian positive definite operator     -----
+    !----------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_hermitian_linop_${type[0]}$${kind}$
+    contains
+    end type
+ 
+   #:endif
+
+
+
+
+    #:endfor
 contains
 
     subroutine copy(out, from)

@@ -20,15 +20,19 @@ module TestIterativeSolvers
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
     public :: collect_gmres_rsp_testsuite
+    public :: collect_cg_rsp_testsuite
     public :: collect_eig_rdp_testsuite
     public :: collect_svd_rdp_testsuite
     public :: collect_gmres_rdp_testsuite
+    public :: collect_cg_rdp_testsuite
     public :: collect_eig_csp_testsuite
     public :: collect_svd_csp_testsuite
     public :: collect_gmres_csp_testsuite
+    public :: collect_cg_csp_testsuite
     public :: collect_eig_cdp_testsuite
     public :: collect_svd_cdp_testsuite
     public :: collect_gmres_cdp_testsuite
+    public :: collect_cg_cdp_testsuite
 
 contains
 
@@ -406,7 +410,8 @@ contains
     subroutine collect_gmres_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_rsp) &
+                    new_unittest("Full GMRES", test_gmres_rsp), &
+                    new_unittest("Full (SPD) GMRES", test_gmres_rsp) &
                     ]
         return
     end subroutine collect_gmres_rsp_testsuite
@@ -437,11 +442,39 @@ contains
 
         return
     end subroutine test_gmres_rsp
+    
+    subroutine test_gmres_spd_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(spd_linop_rsp) , allocatable :: A ! Linear Operator.
+        type(vector_rsp), allocatable :: b ! Right-hand side vector.
+        type(vector_rsp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_sp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = spd_linop_rsp()  ; call init_rand(A)
+        b = vector_rsp() ; call init_rand(b)
+        x = vector_rsp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+
+        return
+    end subroutine test_gmres_spd_rsp
 
     subroutine collect_gmres_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_rdp) &
+                    new_unittest("Full GMRES", test_gmres_rdp), &
+                    new_unittest("Full (SPD) GMRES", test_gmres_rdp) &
                     ]
         return
     end subroutine collect_gmres_rdp_testsuite
@@ -472,11 +505,39 @@ contains
 
         return
     end subroutine test_gmres_rdp
+    
+    subroutine test_gmres_spd_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(spd_linop_rdp) , allocatable :: A ! Linear Operator.
+        type(vector_rdp), allocatable :: b ! Right-hand side vector.
+        type(vector_rdp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_dp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = spd_linop_rdp()  ; call init_rand(A)
+        b = vector_rdp() ; call init_rand(b)
+        x = vector_rdp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+
+        return
+    end subroutine test_gmres_spd_rdp
 
     subroutine collect_gmres_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_csp) &
+                    new_unittest("Full GMRES", test_gmres_csp), &
+                    new_unittest("Full (SPD) GMRES", test_gmres_csp) &
                     ]
         return
     end subroutine collect_gmres_csp_testsuite
@@ -507,11 +568,39 @@ contains
 
         return
     end subroutine test_gmres_csp
+    
+    subroutine test_gmres_spd_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(hermitian_linop_csp), allocatable :: A
+        type(vector_csp), allocatable :: b ! Right-hand side vector.
+        type(vector_csp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_sp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = hermitian_linop_csp() ; call init_rand(A)
+        b = vector_csp() ; call init_rand(b)
+        x = vector_csp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+
+        return
+    end subroutine test_gmres_spd_csp
 
     subroutine collect_gmres_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_cdp) &
+                    new_unittest("Full GMRES", test_gmres_cdp), &
+                    new_unittest("Full (SPD) GMRES", test_gmres_cdp) &
                     ]
         return
     end subroutine collect_gmres_cdp_testsuite
@@ -542,6 +631,182 @@ contains
 
         return
     end subroutine test_gmres_cdp
+    
+    subroutine test_gmres_spd_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(hermitian_linop_cdp), allocatable :: A
+        type(vector_cdp), allocatable :: b ! Right-hand side vector.
+        type(vector_cdp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_dp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = hermitian_linop_cdp() ; call init_rand(A)
+        b = vector_cdp() ; call init_rand(b)
+        x = vector_cdp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+
+        return
+    end subroutine test_gmres_spd_cdp
+
+
+    !-----------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR CONJUGATE GRADIENT     -----
+    !-----------------------------------------------------------------------
+
+    subroutine collect_cg_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Cong. Gradient", test_cg_rsp) &
+                    ]
+        return
+    end subroutine collect_cg_rsp_testsuite
+
+    subroutine test_cg_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(spd_linop_rsp), allocatable :: A
+        type(vector_rsp), allocatable :: b
+        type(vector_rsp), allocatable :: x
+        type(cg_sp_opts) :: opts
+        !> Information flag
+        integer :: info, i
+
+        ! Initialize linear problem.
+        A = spd_linop_rsp() ; call init_rand(A)
+        b = vector_rsp() ; call init_rand(b)
+        x = vector_rsp() ; call x%zero()
+
+        ! CG solver.
+        opts = cg_sp_opts()
+        call cg(A, b, x, info, options=opts)
+
+        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_sp 
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+
+        return
+    end subroutine test_cg_rsp
+
+    subroutine collect_cg_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Cong. Gradient", test_cg_rdp) &
+                    ]
+        return
+    end subroutine collect_cg_rdp_testsuite
+
+    subroutine test_cg_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(spd_linop_rdp), allocatable :: A
+        type(vector_rdp), allocatable :: b
+        type(vector_rdp), allocatable :: x
+        type(cg_dp_opts) :: opts
+        !> Information flag
+        integer :: info, i
+
+        ! Initialize linear problem.
+        A = spd_linop_rdp() ; call init_rand(A)
+        b = vector_rdp() ; call init_rand(b)
+        x = vector_rdp() ; call x%zero()
+
+        ! CG solver.
+        opts = cg_dp_opts()
+        call cg(A, b, x, info, options=opts)
+
+        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_dp 
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+
+        return
+    end subroutine test_cg_rdp
+
+    subroutine collect_cg_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Cong. Gradient", test_cg_csp) &
+                    ]
+        return
+    end subroutine collect_cg_csp_testsuite
+
+    subroutine test_cg_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(hermitian_linop_csp), allocatable :: A
+        type(vector_csp), allocatable :: b
+        type(vector_csp), allocatable :: x
+        type(cg_sp_opts) :: opts
+        !> Information flag
+        integer :: info, i
+
+        ! Initialize linear problem.
+        A = hermitian_linop_csp() ; call init_rand(A)
+        b = vector_csp() ; call init_rand(b)
+        x = vector_csp() ; call x%zero()
+
+        ! CG solver.
+        opts = cg_sp_opts()
+        call cg(A, b, x, info, options=opts)
+
+        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_sp 
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+
+        return
+    end subroutine test_cg_csp
+
+    subroutine collect_cg_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Cong. Gradient", test_cg_cdp) &
+                    ]
+        return
+    end subroutine collect_cg_cdp_testsuite
+
+    subroutine test_cg_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(hermitian_linop_cdp), allocatable :: A
+        type(vector_cdp), allocatable :: b
+        type(vector_cdp), allocatable :: x
+        type(cg_dp_opts) :: opts
+        !> Information flag
+        integer :: info, i
+
+        ! Initialize linear problem.
+        A = hermitian_linop_cdp() ; call init_rand(A)
+        b = vector_cdp() ; call init_rand(b)
+        x = vector_cdp() ; call x%zero()
+
+        ! CG solver.
+        opts = cg_dp_opts()
+        call cg(A, b, x, info, options=opts)
+
+        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_dp 
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+
+        return
+    end subroutine test_cg_cdp
 
 
 end module TestIterativeSolvers

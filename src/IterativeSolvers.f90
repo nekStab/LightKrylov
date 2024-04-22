@@ -20,6 +20,7 @@ module lightkrylov_IterativeSolvers
     public :: eigs
     public :: svds
     public :: gmres
+    public :: cg
 
     interface save_eigenspectrum
         module procedure save_eigenspectrum_sp
@@ -45,6 +46,13 @@ module lightkrylov_IterativeSolvers
         module procedure gmres_rdp
         module procedure gmres_csp
         module procedure gmres_cdp
+    end interface
+
+    interface cg
+        module procedure cg_rsp
+        module procedure cg_rdp
+        module procedure cg_csp
+        module procedure cg_cdp
     end interface
 
     !------------------------------------------------------
@@ -1743,6 +1751,374 @@ contains
 
         return
     end subroutine gmres_cdp
+
+
+
+
+
+    !---------------------------------------------
+    !-----     CONJUGATE GRADIENT METHOD     -----
+    !---------------------------------------------
+
+    subroutine cg_rsp(A, b, x, info, preconditioner, options)
+        class(abstract_spd_linop_rsp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_rsp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_rsp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_sp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
+
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
+
+        ! Options.
+        integer :: maxiter
+        real(sp) :: tol
+        logical :: verbose
+        type(cg_sp_opts) :: opts
+
+        ! Working variables.
+        class(abstract_vector_rsp), allocatable :: r, p, Ap
+        real(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(sp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+
+        ! Deals with the optional args.
+        if (present(options)) then
+            opts = cg_sp_opts( &
+                    maxiter = options%maxiter, &
+                    atol    = options%atol   , &
+                    rtol    = options%rtol   , &
+                    verbose = options%verbose  &
+                    )
+        else
+            opts = cg_sp_opts()
+        endif
+        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
+
+        ! Compute initial residual r = b - Ax.
+        !if (x%norm() /= 0.0_sp)
+        call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+
+        ! Conjugate gradient iteration.
+        do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_rsp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_rsp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(r_dot_r_new)
+
+            if (residual < tol) then
+                exit
+            endif
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_rsp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+        enddo
+        
+        return
+    end subroutine cg_rsp
+
+    subroutine cg_rdp(A, b, x, info, preconditioner, options)
+        class(abstract_spd_linop_rdp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_rdp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_rdp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_dp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
+
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
+
+        ! Options.
+        integer :: maxiter
+        real(dp) :: tol
+        logical :: verbose
+        type(cg_dp_opts) :: opts
+
+        ! Working variables.
+        class(abstract_vector_rdp), allocatable :: r, p, Ap
+        real(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(dp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+
+        ! Deals with the optional args.
+        if (present(options)) then
+            opts = cg_dp_opts( &
+                    maxiter = options%maxiter, &
+                    atol    = options%atol   , &
+                    rtol    = options%rtol   , &
+                    verbose = options%verbose  &
+                    )
+        else
+            opts = cg_dp_opts()
+        endif
+        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
+
+        ! Compute initial residual r = b - Ax.
+        !if (x%norm() /= 0.0_dp)
+        call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+
+        ! Conjugate gradient iteration.
+        do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_rdp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_rdp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(r_dot_r_new)
+
+            if (residual < tol) then
+                exit
+            endif
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_rdp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+        enddo
+        
+        return
+    end subroutine cg_rdp
+
+    subroutine cg_csp(A, b, x, info, preconditioner, options)
+        class(abstract_hermitian_linop_csp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_csp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_csp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_precond_csp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_sp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
+
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
+
+        ! Options.
+        integer :: maxiter
+        real(sp) :: tol
+        logical :: verbose
+        type(cg_sp_opts) :: opts
+
+        ! Working variables.
+        class(abstract_vector_csp), allocatable :: r, p, Ap
+        complex(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(sp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+
+        ! Deals with the optional args.
+        if (present(options)) then
+            opts = cg_sp_opts( &
+                    maxiter = options%maxiter, &
+                    atol    = options%atol   , &
+                    rtol    = options%rtol   , &
+                    verbose = options%verbose  &
+                    )
+        else
+            opts = cg_sp_opts()
+        endif
+        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
+
+        ! Compute initial residual r = b - Ax.
+        !if (x%norm() /= 0.0_sp)
+        call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+
+        ! Conjugate gradient iteration.
+        do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_csp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_csp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(abs(r_dot_r_new))
+
+            if (residual < tol) then
+                exit
+            endif
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_csp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+        enddo
+        
+        return
+    end subroutine cg_csp
+
+    subroutine cg_cdp(A, b, x, info, preconditioner, options)
+        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_cdp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_cdp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_dp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
+
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
+
+        ! Options.
+        integer :: maxiter
+        real(dp) :: tol
+        logical :: verbose
+        type(cg_dp_opts) :: opts
+
+        ! Working variables.
+        class(abstract_vector_cdp), allocatable :: r, p, Ap
+        complex(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(dp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+
+        ! Deals with the optional args.
+        if (present(options)) then
+            opts = cg_dp_opts( &
+                    maxiter = options%maxiter, &
+                    atol    = options%atol   , &
+                    rtol    = options%rtol   , &
+                    verbose = options%verbose  &
+                    )
+        else
+            opts = cg_dp_opts()
+        endif
+        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
+
+        ! Compute initial residual r = b - Ax.
+        !if (x%norm() /= 0.0_dp)
+        call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+
+        ! Conjugate gradient iteration.
+        do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_cdp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_cdp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(abs(r_dot_r_new))
+
+            if (residual < tol) then
+                exit
+            endif
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_cdp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+        enddo
+        
+        return
+    end subroutine cg_cdp
 
 
 end module lightkrylov_IterativeSolvers

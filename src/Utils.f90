@@ -20,7 +20,9 @@ module lightkrylov_utils
 
     public :: abstract_opts
     public :: gmres_sp_opts
+    public :: cg_sp_opts
     public :: gmres_dp_opts
+    public :: cg_dp_opts
 
     interface assert_shape
         module procedure assert_shape_rsp
@@ -79,12 +81,36 @@ module lightkrylov_utils
         !! Verbosity control (default: `.false.`)
     end type
 
+    type, extends(abstract_opts), public :: cg_sp_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
+        real(sp) :: atol = atol_sp
+        !! Absolute tolerance.
+        real(sp) :: rtol = rtol_sp
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
     type, extends(abstract_opts), public :: gmres_dp_opts
         !! GMRES options.
         integer :: kdim = 30
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
+        real(dp) :: atol = atol_dp
+        !! Absolute tolerance.
+        real(dp) :: rtol = rtol_dp
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
+    type, extends(abstract_opts), public :: cg_dp_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
         real(dp) :: atol = atol_dp
         !! Absolute tolerance.
         real(dp) :: rtol = rtol_dp

@@ -26,6 +26,7 @@ module lightkrylov_utils
     public :: abstract_opts
     #:for kind in REAL_KINDS
     public :: gmres_${kind}$_opts
+    public :: cg_${kind}$_opts
     #:endfor
 
     interface assert_shape
@@ -73,6 +74,18 @@ module lightkrylov_utils
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
+        real(${kind}$) :: atol = atol_${kind}$
+        !! Absolute tolerance.
+        real(${kind}$) :: rtol = rtol_${kind}$
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
+    type, extends(abstract_opts), public :: cg_${kind}$_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
         real(${kind}$) :: atol = atol_${kind}$
         !! Absolute tolerance.
         real(${kind}$) :: rtol = rtol_${kind}$

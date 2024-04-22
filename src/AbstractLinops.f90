@@ -127,6 +127,49 @@ module lightkrylov_AbstractLinops
 
 
 
+
+    !----------------------------------------------------------------------------------
+    !-----     Definition of an abstract symmetric positive definite operator     -----
+    !----------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_rsp), public :: abstract_spd_linop_rsp
+    contains
+    end type
+
+
+
+
+    !----------------------------------------------------------------------------------
+    !-----     Definition of an abstract symmetric positive definite operator     -----
+    !----------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_rdp), public :: abstract_spd_linop_rdp
+    contains
+    end type
+
+
+
+
+    !----------------------------------------------------------------------------------
+    !-----     Definition of an abstract Hermitian positive definite operator     -----
+    !----------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_csp), public :: abstract_hermitian_linop_csp
+    contains
+    end type
+ 
+
+
+
+
+    !----------------------------------------------------------------------------------
+    !-----     Definition of an abstract Hermitian positive definite operator     -----
+    !----------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_cdp), public :: abstract_hermitian_linop_cdp
+    contains
+    end type
+ 
+
+
+
+
 contains
 
     subroutine copy(out, from)

@@ -27,6 +27,24 @@ module TestLinops
         procedure, pass(self), public :: rmatvec => rmatvec_${t1[0]}$${k1}$
     end type
 
+    #:if t1[0] == "r"
+    type, extends(abstract_spd_linop_${t1[0]}$${k1}$), public :: spd_linop_${t1[0]}$${k1}$
+        ${t1}$, dimension(test_size, test_size) :: data = 0.0_${k1}$
+    contains
+        private
+        procedure, pass(self), public :: matvec => sdp_matvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: rmatvec => sdp_matvec_${t1[0]}$${k1}$
+    end type
+    #:else
+    type, extends(abstract_hermitian_linop_${t1[0]}$${k1}$), public :: hermitian_linop_${t1[0]}$${k1}$
+        ${t1}$, dimension(test_size, test_size) :: data = 0.0_${k1}$
+    contains
+        private
+        procedure, pass(self), public :: matvec => hermitian_matvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: rmatvec => hermitian_matvec_${t1[0]}$${k1}$
+    end type
+    #:endif
+
     #:endfor
 contains
 
@@ -74,6 +92,44 @@ contains
 
         return
     end subroutine rmatvec_${t1[0]}$${k1}$
+
+    #:if t1[0] == "r"
+    subroutine sdp_matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
+        class(spd_linop_${t1[0]}$${k1}$), intent(in)  :: self
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_${t1[0]}$${k1}$)
+            select type(vec_out)
+            type is(vector_${t1[0]}$${k1}$)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine sdp_matvec_${t1[0]}$${k1}$
+    #:else
+    subroutine hermitian_matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
+        class(hermitian_linop_${t1[0]}$${k1}$), intent(in)  :: self
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_${t1[0]}$${k1}$)
+            select type(vec_out)
+            type is(vector_${t1[0]}$${k1}$)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine hermitian_matvec_${t1[0]}$${k1}$
+   #:endif
 
     #:endfor
 

@@ -23,9 +23,13 @@ module LightKrylov
 
     ! Utils exports.
     public :: gmres_sp_opts
+    public :: cg_sp_opts
     public :: gmres_dp_opts
+    public :: cg_dp_opts
     public :: gmres_sp_opts
+    public :: cg_sp_opts
     public :: gmres_dp_opts
+    public :: cg_dp_opts
 
     ! AbstractVectors exports.
     public :: abstract_vector
@@ -37,9 +41,13 @@ module LightKrylov
     ! AbstractLinops exports.
     public :: abstract_linop
     public :: abstract_linop_rsp
+    public :: abstract_spd_linop_rsp
     public :: abstract_linop_rdp
+    public :: abstract_spd_linop_rdp
     public :: abstract_linop_csp
+    public :: abstract_hermitian_linop_csp
     public :: abstract_linop_cdp
+    public :: abstract_hermitian_linop_cdp
     
     ! BaseKrylov exports.
     public :: qr
@@ -52,6 +60,7 @@ module LightKrylov
     public :: eigs, save_eigenspectrum
     public :: svds
     public :: gmres
+    public :: cg
 
 contains
 

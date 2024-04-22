@@ -26,6 +26,7 @@ module LightKrylov
     ! Utils exports.
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${kind}$_opts
+    public :: cg_${kind}$_opts
     #:endfor
 
     ! AbstractVectors exports.
@@ -38,6 +39,11 @@ module LightKrylov
     public :: abstract_linop
     #:for k1, t1 in RC_KINDS_TYPES
     public :: abstract_linop_${t1[0]}$${k1}$
+    #:if t1[0] == "r"
+    public :: abstract_spd_linop_${t1[0]}$${k1}$
+    #:else
+    public :: abstract_hermitian_linop_${t1[0]}$${k1}$
+    #:endif
     #:endfor
     
     ! BaseKrylov exports.
@@ -51,6 +57,7 @@ module LightKrylov
     public :: eigs, save_eigenspectrum
     public :: svds
     public :: gmres
+    public :: cg
 
 contains
 

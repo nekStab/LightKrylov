@@ -25,12 +25,28 @@ module TestLinops
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
     end type
 
+    type, extends(abstract_spd_linop_rsp), public :: spd_linop_rsp
+        real(sp), dimension(test_size, test_size) :: data = 0.0_sp
+    contains
+        private
+        procedure, pass(self), public :: matvec => sdp_matvec_rsp
+        procedure, pass(self), public :: rmatvec => sdp_matvec_rsp
+    end type
+
     type, extends(abstract_linop_rdp), public :: linop_rdp
         real(dp), dimension(test_size, test_size) :: data = 0.0_dp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_rdp
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
+    end type
+
+    type, extends(abstract_spd_linop_rdp), public :: spd_linop_rdp
+        real(dp), dimension(test_size, test_size) :: data = 0.0_dp
+    contains
+        private
+        procedure, pass(self), public :: matvec => sdp_matvec_rdp
+        procedure, pass(self), public :: rmatvec => sdp_matvec_rdp
     end type
 
     type, extends(abstract_linop_csp), public :: linop_csp
@@ -41,12 +57,28 @@ module TestLinops
         procedure, pass(self), public :: rmatvec => rmatvec_csp
     end type
 
+    type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
+        complex(sp), dimension(test_size, test_size) :: data = 0.0_sp
+    contains
+        private
+        procedure, pass(self), public :: matvec => hermitian_matvec_csp
+        procedure, pass(self), public :: rmatvec => hermitian_matvec_csp
+    end type
+
     type, extends(abstract_linop_cdp), public :: linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = 0.0_dp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_cdp
         procedure, pass(self), public :: rmatvec => rmatvec_cdp
+    end type
+
+    type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
+        complex(dp), dimension(test_size, test_size) :: data = 0.0_dp
+    contains
+        private
+        procedure, pass(self), public :: matvec => hermitian_matvec_cdp
+        procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
     end type
 
 contains
@@ -91,6 +123,24 @@ contains
         return
     end subroutine rmatvec_rsp
 
+    subroutine sdp_matvec_rsp(self, vec_in, vec_out)
+        class(spd_linop_rsp), intent(in)  :: self
+        class(abstract_vector_rsp)       , intent(in)  :: vec_in
+        class(abstract_vector_rsp)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_rsp)
+            select type(vec_out)
+            type is(vector_rsp)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine sdp_matvec_rsp
+
     subroutine matvec_rdp(self, vec_in, vec_out)
         class(linop_rdp), intent(in)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
@@ -126,6 +176,24 @@ contains
 
         return
     end subroutine rmatvec_rdp
+
+    subroutine sdp_matvec_rdp(self, vec_in, vec_out)
+        class(spd_linop_rdp), intent(in)  :: self
+        class(abstract_vector_rdp)       , intent(in)  :: vec_in
+        class(abstract_vector_rdp)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_rdp)
+            select type(vec_out)
+            type is(vector_rdp)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine sdp_matvec_rdp
 
     subroutine matvec_csp(self, vec_in, vec_out)
         class(linop_csp), intent(in)  :: self
@@ -163,6 +231,24 @@ contains
         return
     end subroutine rmatvec_csp
 
+    subroutine hermitian_matvec_csp(self, vec_in, vec_out)
+        class(hermitian_linop_csp), intent(in)  :: self
+        class(abstract_vector_csp)       , intent(in)  :: vec_in
+        class(abstract_vector_csp)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_csp)
+            select type(vec_out)
+            type is(vector_csp)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine hermitian_matvec_csp
+
     subroutine matvec_cdp(self, vec_in, vec_out)
         class(linop_cdp), intent(in)  :: self
         class(abstract_vector_cdp)       , intent(in)  :: vec_in
@@ -198,6 +284,24 @@ contains
 
         return
     end subroutine rmatvec_cdp
+
+    subroutine hermitian_matvec_cdp(self, vec_in, vec_out)
+        class(hermitian_linop_cdp), intent(in)  :: self
+        class(abstract_vector_cdp)       , intent(in)  :: vec_in
+        class(abstract_vector_cdp)       , intent(out) :: vec_out
+
+        select type(vec_in)
+        type is(vector_cdp)
+            select type(vec_out)
+            type is(vector_cdp)
+
+            vec_out%data = matmul(self%data, vec_in%data)
+
+            end select
+        end select
+
+        return
+    end subroutine hermitian_matvec_cdp
 
 
     !---------------------------------------------------------

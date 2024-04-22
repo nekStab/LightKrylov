@@ -1,4 +1,5 @@
 module TestUtils
+    use stdlib_io_npy, only: save_npy
     use LightKrylov
     use TestVectors
     use TestLinops
@@ -44,15 +45,19 @@ module TestUtils
         module procedure init_rand_vec_rsp
         module procedure init_rand_basis_rsp
         module procedure init_rand_linop_rsp
+        module procedure init_rand_spd_linop_rsp
         module procedure init_rand_vec_rdp
         module procedure init_rand_basis_rdp
         module procedure init_rand_linop_rdp
+        module procedure init_rand_spd_linop_rdp
         module procedure init_rand_vec_csp
         module procedure init_rand_basis_csp
         module procedure init_rand_linop_csp
+        module procedure init_rand_hermitian_linop_csp
         module procedure init_rand_vec_cdp
         module procedure init_rand_basis_cdp
         module procedure init_rand_linop_cdp
+        module procedure init_rand_hermitian_linop_cdp
     end interface
 
 contains
@@ -308,6 +313,15 @@ contains
         return
     end subroutine init_rand_linop_rsp
 
+    subroutine init_rand_spd_linop_rsp(linop)
+        type(spd_linop_rsp), intent(inout) :: linop
+        real(sp), dimension(test_size, 2*test_size) :: data
+        integer :: i
+        call random_number(data) ; data = data - 0.5_dp
+        linop%data = matmul(data, transpose(data)) / 4
+        return
+    end subroutine init_rand_spd_linop_rsp
+
     subroutine init_rand_vec_rdp(x)
         type(vector_rdp), intent(inout) :: x
         call x%rand()
@@ -328,6 +342,15 @@ contains
         call random_number(linop%data)
         return
     end subroutine init_rand_linop_rdp
+
+    subroutine init_rand_spd_linop_rdp(linop)
+        type(spd_linop_rdp), intent(inout) :: linop
+        real(dp), dimension(test_size, 2*test_size) :: data
+        integer :: i
+        call random_number(data) ; data = data - 0.5_dp
+        linop%data = matmul(data, transpose(data)) / 4
+        return
+    end subroutine init_rand_spd_linop_rdp
 
     subroutine init_rand_vec_csp(x)
         type(vector_csp), intent(inout) :: x
@@ -353,6 +376,21 @@ contains
         return
     end subroutine init_rand_linop_csp
 
+    subroutine init_rand_hermitian_linop_csp(linop)
+        type(hermitian_linop_csp), intent(inout) :: linop
+        real(sp), dimension(test_size, 2*test_size, 2) :: data
+        complex(sp), dimension(test_size, 2*test_size) :: data_c
+        complex(sp), dimension(test_size, test_size) :: matrix
+        integer :: i
+        call random_number(data)
+        data_c%re = data(:, :, 1) - 0.5_dp
+        data_c%im = data(:, :, 2) - 0.5_dp
+        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
+        linop%data = matrix
+        call save_npy("data_matrix_cdp.npy", matrix)
+        return
+    end subroutine init_rand_hermitian_linop_csp
+
     subroutine init_rand_vec_cdp(x)
         type(vector_cdp), intent(inout) :: x
         call x%rand()
@@ -376,6 +414,21 @@ contains
         linop%data%im = data(:, :, 2)
         return
     end subroutine init_rand_linop_cdp
+
+    subroutine init_rand_hermitian_linop_cdp(linop)
+        type(hermitian_linop_cdp), intent(inout) :: linop
+        real(dp), dimension(test_size, 2*test_size, 2) :: data
+        complex(dp), dimension(test_size, 2*test_size) :: data_c
+        complex(dp), dimension(test_size, test_size) :: matrix
+        integer :: i
+        call random_number(data)
+        data_c%re = data(:, :, 1) - 0.5_dp
+        data_c%im = data(:, :, 2) - 0.5_dp
+        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
+        linop%data = matrix
+        call save_npy("data_matrix_cdp.npy", matrix)
+        return
+    end subroutine init_rand_hermitian_linop_cdp
 
 
 end module

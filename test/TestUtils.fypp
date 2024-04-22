@@ -1,6 +1,7 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestUtils
+    use stdlib_io_npy, only: save_npy
     use LightKrylov
     use TestVectors
     use TestLinops
@@ -33,6 +34,11 @@ module TestUtils
         module procedure init_rand_vec_${t1[0]}$${k1}$
         module procedure init_rand_basis_${t1[0]}$${k1}$
         module procedure init_rand_linop_${t1[0]}$${k1}$
+        #:if t1[0] == "r"
+        module procedure init_rand_spd_linop_${t1[0]}$${k1}$
+        #:else
+        module procedure init_rand_hermitian_linop_${t1[0]}$${k1}$
+        #:endif
         #:endfor
     end interface
 
@@ -138,6 +144,32 @@ contains
         #:endif
         return
     end subroutine init_rand_linop_${t1[0]}$${k1}$
+
+    #:if t1[0] == "r"
+    subroutine init_rand_spd_linop_${t1[0]}$${k1}$(linop)
+        type(spd_linop_${t1[0]}$${k1}$), intent(inout) :: linop
+        ${t1}$, dimension(test_size, 2*test_size) :: data
+        integer :: i
+        call random_number(data) ; data = data - 0.5_${kind}$
+        linop%data = matmul(data, transpose(data)) / 4
+        return
+    end subroutine init_rand_spd_linop_${t1[0]}$${k1}$
+    #:else
+    subroutine init_rand_hermitian_linop_${t1[0]}$${k1}$(linop)
+        type(hermitian_linop_${t1[0]}$${k1}$), intent(inout) :: linop
+        real(${k1}$), dimension(test_size, 2*test_size, 2) :: data
+        ${t1}$, dimension(test_size, 2*test_size) :: data_c
+        ${t1}$, dimension(test_size, test_size) :: matrix
+        integer :: i
+        call random_number(data)
+        data_c%re = data(:, :, 1) - 0.5_${kind}$
+        data_c%im = data(:, :, 2) - 0.5_${kind}$
+        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
+        linop%data = matrix
+        call save_npy("data_matrix_${t1[0]}$${kind}$.npy", matrix)
+        return
+    end subroutine init_rand_hermitian_linop_${t1[0]}$${k1}$
+    #:endif
 
     #:endfor
 
