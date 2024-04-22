@@ -43,8 +43,8 @@ module LightKrylov
     public :: lanczos_bidiagonalization
 
     ! IterativeSolvers exports.
-    public :: eigs
-    public :: save_eigenspectrum
+    public :: eigs, save_eigenspectrum
+    public :: svds
 
 contains
 

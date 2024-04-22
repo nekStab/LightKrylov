@@ -33,7 +33,8 @@ program Tester
                 new_testsuite("Real QR (sp) Test Suite", collect_qr_rsp_testsuite), &
                 new_testsuite("Real Arnoldi (sp) Test Suite", collect_arnoldi_rsp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_rsp_testsuite), &
-                new_testsuite("Real EVP (sp) Test Suite", collect_eig_rsp_testsuite) &
+                new_testsuite("Real EVP (sp) Test Suite", collect_eig_rsp_testsuite), & 
+                new_testsuite("Real SVD (sp) Test Suite", collect_svd_rsp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"
@@ -70,7 +71,8 @@ program Tester
                 new_testsuite("Real QR (dp) Test Suite", collect_qr_rdp_testsuite), &
                 new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_rdp_testsuite), &
-                new_testsuite("Real EVP (sp) Test Suite", collect_eig_rsp_testsuite) &
+                new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
+                new_testsuite("Real SVD (dp) Test Suite", collect_svd_rdp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"

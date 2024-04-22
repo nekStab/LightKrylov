@@ -18,6 +18,7 @@ module lightkrylov_IterativeSolvers
 
     public :: save_eigenspectrum
     public :: eigs
+    public :: svds
 
     interface save_eigenspectrum
         module procedure save_eigenspectrum_sp
@@ -31,6 +32,12 @@ module lightkrylov_IterativeSolvers
         module procedure eigs_cdp
     end interface
 
+    interface svds
+        module procedure svds_rsp
+        module procedure svds_rdp
+        module procedure svds_csp
+        module procedure svds_cdp
+    end interface
 contains
 
     !-------------------------------------
@@ -189,6 +196,7 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
 
         ! Ritz eigenpairs computation.
+        H = 0.0_sp
         arnoldi_factorization: do k = 1, kdim_
             ! Arnoldi step.
             call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
@@ -248,6 +256,7 @@ contains
 
         return
     end subroutine eigs_rsp
+
     subroutine eigs_rdp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity, transpose)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -306,6 +315,7 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
 
         ! Ritz eigenpairs computation.
+        H = 0.0_dp
         arnoldi_factorization: do k = 1, kdim_
             ! Arnoldi step.
             call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
@@ -365,6 +375,7 @@ contains
 
         return
     end subroutine eigs_rdp
+
     subroutine eigs_csp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity, transpose)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -422,6 +433,7 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
 
         ! Ritz eigenpairs computation.
+        H = 0.0_sp
         arnoldi_factorization: do k = 1, kdim_
             ! Arnoldi step.
             call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
@@ -472,6 +484,7 @@ contains
 
         return
     end subroutine eigs_csp
+
     subroutine eigs_cdp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity, transpose)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -529,6 +542,7 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
 
         ! Ritz eigenpairs computation.
+        H = 0.0_dp
         arnoldi_factorization: do k = 1, kdim_
             ! Arnoldi step.
             call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
@@ -579,5 +593,393 @@ contains
 
         return
     end subroutine eigs_cdp
+
+
+    !------------------------------------------------
+    !-----     SINGULAR VALUE DECOMPOSITION     -----
+    !------------------------------------------------
+
+    subroutine svds_rsp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_linop_rsp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_rsp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(sp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_rsp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_rsp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        real(sp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(sp), allocatable :: svdvals_wrk(:)
+        real(sp), allocatable :: umat(:, :), vmat(:, :)
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        logical :: verbose
+        real(sp) :: tol
+        real(sp) :: beta, alpha
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        verbose = optval(verbosity, .false.)
+        tol     = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
+
+        ! Ritz singular triplets computation.
+        lanczos : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            if (info < 0) then
+                call stop_error("svds: Error in Lanczos bidiagonalization.")
+            endif
+
+            ! SVD of the k x k bidiagonal matrix.
+            svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
+            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+
+            ! Compute residuals.
+            beta = B(k+1, k)
+            residuals_wrk(1:k) = compute_residual_rsp(beta, vmat(k, 1:k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nsv) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(1:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_)
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(1.0_sp, Uwrk(j), umat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_rsp
+    subroutine svds_rdp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_linop_rdp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_rdp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(dp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_rdp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_rdp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        real(dp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(dp), allocatable :: svdvals_wrk(:)
+        real(dp), allocatable :: umat(:, :), vmat(:, :)
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        logical :: verbose
+        real(dp) :: tol
+        real(dp) :: beta, alpha
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        verbose = optval(verbosity, .false.)
+        tol     = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
+
+        ! Ritz singular triplets computation.
+        lanczos : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            if (info < 0) then
+                call stop_error("svds: Error in Lanczos bidiagonalization.")
+            endif
+
+            ! SVD of the k x k bidiagonal matrix.
+            svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
+            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+
+            ! Compute residuals.
+            beta = B(k+1, k)
+            residuals_wrk(1:k) = compute_residual_rdp(beta, vmat(k, 1:k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nsv) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(1:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_)
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(1.0_dp, Uwrk(j), umat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_rdp
+    subroutine svds_csp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_linop_csp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_csp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(sp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_csp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_csp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        complex(sp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(sp), allocatable :: svdvals_wrk(:)
+        complex(sp), allocatable :: umat(:, :), vmat(:, :)
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        logical :: verbose
+        real(sp) :: tol
+        complex(sp) :: beta, alpha
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        verbose = optval(verbosity, .false.)
+        tol     = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
+
+        ! Ritz singular triplets computation.
+        lanczos : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            if (info < 0) then
+                call stop_error("svds: Error in Lanczos bidiagonalization.")
+            endif
+
+            ! SVD of the k x k bidiagonal matrix.
+            svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
+            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+
+            ! Compute residuals.
+            beta = B(k+1, k)
+            residuals_wrk(1:k) = compute_residual_csp(beta, vmat(k, 1:k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nsv) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(1:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_)
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Uwrk(j), umat(j, i))
+                call V(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Vwrk(j), Vmat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_csp
+    subroutine svds_cdp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_linop_cdp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_cdp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(dp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_cdp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_cdp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        complex(dp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(dp), allocatable :: svdvals_wrk(:)
+        complex(dp), allocatable :: umat(:, :), vmat(:, :)
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        logical :: verbose
+        real(dp) :: tol
+        complex(dp) :: beta, alpha
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        verbose = optval(verbosity, .false.)
+        tol     = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
+
+        ! Ritz singular triplets computation.
+        lanczos : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            if (info < 0) then
+                call stop_error("svds: Error in Lanczos bidiagonalization.")
+            endif
+
+            ! SVD of the k x k bidiagonal matrix.
+            svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
+            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+
+            ! Compute residuals.
+            beta = B(k+1, k)
+            residuals_wrk(1:k) = compute_residual_cdp(beta, vmat(k, 1:k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nsv) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(1:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_)
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Uwrk(j), umat(j, i))
+                call V(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Vwrk(j), Vmat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_cdp
 
 end module lightkrylov_IterativeSolvers

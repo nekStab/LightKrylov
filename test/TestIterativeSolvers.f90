@@ -18,9 +18,13 @@ module TestIterativeSolvers
     private
 
     public :: collect_eig_rsp_testsuite
+    public :: collect_svd_rsp_testsuite
     public :: collect_eig_rdp_testsuite
+    public :: collect_svd_rdp_testsuite
     public :: collect_eig_csp_testsuite
+    public :: collect_svd_csp_testsuite
     public :: collect_eig_cdp_testsuite
+    public :: collect_svd_cdp_testsuite
 
 contains
 
@@ -210,6 +214,185 @@ contains
         return
     end subroutine test_evp_cdp
 
+
+
+    !---------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR SVDS     -----
+    !---------------------------------------------------------
+
+    subroutine collect_svd_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("SVDS computation", test_svd_rsp) &
+                    ]
+        return
+    end subroutine collect_svd_rsp_testsuite
+
+    subroutine test_svd_rsp(error)
+        !> Error type.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_rsp), allocatable :: A
+        !> Singular vectors.
+        type(vector_rsp), allocatable :: U(:), V(:)
+        !> Singular values.
+        real(sp), allocatable :: S(:)
+        !> Residuals.
+        real(sp), allocatable :: residuals(:)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        integer :: i, k, n
+        real(sp) :: true_svdvals(test_size)
+        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+
+        ! Allocate eigenvectors.
+        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
+        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        
+        ! Initialize linear operator with the Strang matrix.
+        A = linop_rsp() ; A%data = 0.0_sp ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = 2.0_sp
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = -1.0_sp
+                A%data(i+1, i) = -1.0_sp
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call svds(A, U, S, V, residuals, info)
+
+        ! Analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
+        enddo
+
+        call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
+
+        return
+    end subroutine test_svd_rsp
+
+    subroutine collect_svd_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("SVDS computation", test_svd_rdp) &
+                    ]
+        return
+    end subroutine collect_svd_rdp_testsuite
+
+    subroutine test_svd_rdp(error)
+        !> Error type.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_rdp), allocatable :: A
+        !> Singular vectors.
+        type(vector_rdp), allocatable :: U(:), V(:)
+        !> Singular values.
+        real(dp), allocatable :: S(:)
+        !> Residuals.
+        real(dp), allocatable :: residuals(:)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        integer :: i, k, n
+        real(dp) :: true_svdvals(test_size)
+        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+
+        ! Allocate eigenvectors.
+        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
+        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        
+        ! Initialize linear operator with the Strang matrix.
+        A = linop_rdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = 2.0_dp
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = -1.0_dp
+                A%data(i+1, i) = -1.0_dp
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call svds(A, U, S, V, residuals, info)
+
+        ! Analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
+        enddo
+
+        call check(error, norm2(s - true_svdvals)**2 < rtol_dp)
+
+        return
+    end subroutine test_svd_rdp
+
+    subroutine collect_svd_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("SVDS computation", test_svd_csp) &
+                    ]
+        return
+    end subroutine collect_svd_csp_testsuite
+
+    subroutine test_svd_csp(error)
+        !> Error type.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_csp), allocatable :: A
+        !> Singular vectors.
+        type(vector_csp), allocatable :: U(:), V(:)
+        !> Singular values.
+        real(sp), allocatable :: S(:)
+        !> Residuals.
+        real(sp), allocatable :: residuals(:)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        integer :: i, k, n
+        real(sp) :: true_svdvals(test_size)
+        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+
+        return
+    end subroutine test_svd_csp
+
+    subroutine collect_svd_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("SVDS computation", test_svd_cdp) &
+                    ]
+        return
+    end subroutine collect_svd_cdp_testsuite
+
+    subroutine test_svd_cdp(error)
+        !> Error type.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_cdp), allocatable :: A
+        !> Singular vectors.
+        type(vector_cdp), allocatable :: U(:), V(:)
+        !> Singular values.
+        real(dp), allocatable :: S(:)
+        !> Residuals.
+        real(dp), allocatable :: residuals(:)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        integer :: i, k, n
+        real(dp) :: true_svdvals(test_size)
+        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+
+        return
+    end subroutine test_svd_cdp
 
 end module TestIterativeSolvers
 

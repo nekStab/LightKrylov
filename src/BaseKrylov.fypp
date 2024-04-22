@@ -529,6 +529,9 @@ contains
         ${type}$ :: alpha, beta, gamma
         integer :: i, j, k, kdim
 
+
+        info = 0
+
         ! Krylov subspace dimension.
         kdim = size(U) - 1
 

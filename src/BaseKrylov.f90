@@ -1643,6 +1643,9 @@ contains
         real(sp) :: alpha, beta, gamma
         integer :: i, j, k, kdim
 
+
+        info = 0
+
         ! Krylov subspace dimension.
         kdim = size(U) - 1
 
@@ -1722,6 +1725,9 @@ contains
         real(dp) :: tolerance
         real(dp) :: alpha, beta, gamma
         integer :: i, j, k, kdim
+
+
+        info = 0
 
         ! Krylov subspace dimension.
         kdim = size(U) - 1
@@ -1803,6 +1809,9 @@ contains
         complex(sp) :: alpha, beta, gamma
         integer :: i, j, k, kdim
 
+
+        info = 0
+
         ! Krylov subspace dimension.
         kdim = size(U) - 1
 
@@ -1882,6 +1891,9 @@ contains
         real(dp) :: tolerance
         complex(dp) :: alpha, beta, gamma
         integer :: i, j, k, kdim
+
+
+        info = 0
 
         ! Krylov subspace dimension.
         kdim = size(U) - 1

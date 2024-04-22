@@ -21,6 +21,7 @@ module TestIterativeSolvers
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
+    public :: collect_svd_${type[0]}$${kind}$_testsuite
     #:endfor
 
 contains
@@ -95,5 +96,71 @@ contains
 
     #:endfor
 
+
+    !---------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR SVDS     -----
+    !---------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_svd_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("SVDS computation", test_svd_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_svd_${type[0]}$${kind}$_testsuite
+
+    subroutine test_svd_${type[0]}$${kind}$(error)
+        !> Error type.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Singular vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
+        !> Singular values.
+        real(${kind}$), allocatable :: S(:)
+        !> Residuals.
+        real(${kind}$), allocatable :: residuals(:)
+        !> Information flag.
+        integer :: info
+        !> Miscellaneous.
+        integer :: i, k, n
+        real(${kind}$) :: true_svdvals(test_size)
+        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        #:if type[0] == "r"
+
+        ! Allocate eigenvectors.
+        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
+        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        
+        ! Initialize linear operator with the Strang matrix.
+        A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = 2.0_${kind}$
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = -1.0_${kind}$
+                A%data(i+1, i) = -1.0_${kind}$
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call svds(A, U, S, V, residuals, info)
+
+        ! Analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2.0_${kind}$ * (1.0_${kind}$ + cos(i*pi/(test_size+1)))
+        enddo
+
+        call check(error, norm2(s - true_svdvals)**2 < rtol_${kind}$)
+        #:endif
+
+        return
+    end subroutine test_svd_${type[0]}$${kind}$
+
+    #:endfor
 end module TestIterativeSolvers
 
