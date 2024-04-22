@@ -21,6 +21,12 @@ module LightKrylov
     public :: sp, atol_sp, rtol_sp
     public :: dp, atol_dp, rtol_dp
 
+    ! Utils exports.
+    public :: gmres_sp_opts
+    public :: gmres_dp_opts
+    public :: gmres_sp_opts
+    public :: gmres_dp_opts
+
     ! AbstractVectors exports.
     public :: abstract_vector
     public :: abstract_vector_rsp
@@ -45,6 +51,7 @@ module LightKrylov
     ! IterativeSolvers exports.
     public :: eigs, save_eigenspectrum
     public :: svds
+    public :: gmres
 
 contains
 

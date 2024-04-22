@@ -21,6 +21,7 @@ module lightkrylov_IterativeSolvers
     public :: save_eigenspectrum
     public :: eigs
     public :: svds
+    public :: gmres
 
     interface save_eigenspectrum
         #:for kind in REAL_KINDS
@@ -39,6 +40,37 @@ module lightkrylov_IterativeSolvers
         module procedure svds_${type[0]}$${kind}$
         #:endfor
     end interface
+
+    interface gmres
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure gmres_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    !------------------------------------------------------
+    !-----     ABSTRACT PRECONDITIONER DEFINITION     -----
+    !------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    type, abstract, public :: abstract_precond_${type[0]}$${kind}$
+    contains
+        private
+        procedure(abstract_apply_${type[0]}$${kind}$), pass(self), deferred :: apply
+    end type
+
+    abstract interface
+        subroutine abstract_apply_${type[0]}$${kind}$(self, vec)
+            !! Abstract interface to apply a preconditioner in `LightKrylov`.
+            import abstract_precond_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$
+            class(abstract_precond_${type[0]}$${kind}$), intent(in) :: self
+            !! Preconditioner.
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: vec
+            !! Input/Output vector.
+        end subroutine abstract_apply_${type[0]}$${kind}$
+    end interface
+    
+    #:endfor
+
 contains
 
     !-------------------------------------
@@ -328,6 +360,182 @@ contains
 
         return
     end subroutine svds_${type[0]}$${kind}$
+
+    #:endfor
+
+    !-------------------------------------------------------
+    !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
+    !-------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine gmres_${type[0]}$${kind}$(A, b, x, info, preconditioner, options, transpose)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+        !! Preconditioner (optional).
+        type(gmres_${kind}$_opts), optional, intent(in) :: options
+        !! GMRES options.   
+        logical, optional, intent(in) :: transpose
+        !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Options.
+        integer :: kdim, maxiter
+        real(${kind}$) :: tol
+        logical :: verbose, trans
+        type(gmres_${kind}$_opts) :: opts
+
+        ! Krylov subspace
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:)
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: H(:, :)
+        ! Least-squares variables.
+        ${type}$, allocatable :: y(:), e(:)
+        ${type}$ :: beta
+
+        ! Preconditioner
+        logical :: has_precond
+        class(abstract_precond_${type[0]}$${kind}$), allocatable :: precond
+
+        ! Miscellaneous.
+        integer :: i, j, k
+        ${type}$ :: alpha
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
+
+        ! Deals with the optional args.
+        if (present(options)) then
+            opts = gmres_${kind}$_opts( &
+                        kdim    = options%kdim, &
+                        maxiter = options%maxiter, &
+                        atol    = options%atol, &
+                        rtol    = options%rtol, &
+                        verbose = options%verbose &
+                    )
+        else
+            opts = gmres_${kind}$_opts()
+        endif
+
+        kdim = opts%kdim ; maxiter = opts%maxiter
+        tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+        trans = optval(transpose, .false.)
+
+        ! Deals with the preconditioner.
+        if (present(preconditioner)) then
+            has_precond = .true.
+            allocate(precond, source=preconditioner)
+        else
+            has_precond = .false.
+        endif
+
+        ! Initialize working variables.
+        allocate(wrk, source=b) ; call wrk%zero()
+        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(H(kdim+1, kdim)) ; H = 0.0_${kind}$
+        allocate(y(kdim)) ; y = 0.0_${kind}$
+        allocate(e(kdim+1)) ; e = 0.0_${kind}$
+
+        info = 0
+
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%rmatvec(x, V(1))
+            else
+                call A%matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(1.0_${kind}$/beta)
+
+        ! Iterative solver.
+        gmres_iter : do i = 1, maxiter
+            ! Zero-out variables.
+            H = 0.0_${kind}$ ; y = 0.0_${kind}$ ; e = 0.0_${kind}$ ; e(1) = beta
+            call initialize_krylov_subspace(V(2:kdim+1))
+
+            ! Arnoldi factorization.
+            arnoldi_fact: do k = 1, kdim
+                ! Preconditioner.
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+
+                ! Matrix-vector product.
+                if (trans) then
+                    call A%rmatvec(wrk, V(k+1))
+                else
+                    call A%matvec(wrk, V(k+1))
+                endif
+
+                ! Gram-Schmid orthogonalization (twice is enough).
+                do j = 1, k
+                    alpha = V(j)%dot(V(k+1))
+                    call V(k+1)%axpby(one_${type[0]}$${kind}$, V(j), -alpha)
+                    H(j, k) = alpha
+                enddo
+                do j = 1, k
+                    alpha = V(j)%dot(V(k+1))
+                    call V(k+1)%axpby(one_${type[0]}$${kind}$, V(j), -alpha)
+                    H(j, k) = H(j, k) + alpha
+                enddo
+
+                ! Update Hessenberg matrix and normalize residual Krylov vector.
+                H(k+1, k) = V(k+1)%norm()
+                if (abs(H(k+1, k)) > tol) then
+                    call V(k+1)%scal(1.0_${kind}$ / H(k+1, k))
+                endif
+
+                ! Least-squares problem.
+                call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+
+                ! Compute residual.
+                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+
+                ! Current number of iterations performed.
+                info = info + 1
+
+                ! Check convergence.
+                if (abs(beta) <= tol) then
+                    exit arnoldi_fact
+                endif
+            enddo arnoldi_fact
+
+            ! Update solution.
+            k = min(k, kdim)
+            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
+            do j = 1, k
+                call dx%axpby(one_${type[0]}$${kind}$, V(j), y(j))
+            enddo
+            if (has_precond) call precond%apply(dx)
+            call x%add(dx)
+
+            ! Recompute residual for sanity check.
+            if (trans) then
+                call A%rmatvec(x, v(1))
+            else
+                call A%matvec(x, v(1))
+            endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(1.0_${kind}$ / beta)
+
+            ! Exit gmres if desired accuracy is reached.
+            if (abs(beta) <= tol) exit gmres_iter
+
+        enddo gmres_iter
+
+        return
+    end subroutine gmres_${type[0]}$${kind}$
+
     #:endfor
 
 end module lightkrylov_IterativeSolvers

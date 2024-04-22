@@ -19,12 +19,16 @@ module TestIterativeSolvers
 
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
+    public :: collect_gmres_rsp_testsuite
     public :: collect_eig_rdp_testsuite
     public :: collect_svd_rdp_testsuite
+    public :: collect_gmres_rdp_testsuite
     public :: collect_eig_csp_testsuite
     public :: collect_svd_csp_testsuite
+    public :: collect_gmres_csp_testsuite
     public :: collect_eig_cdp_testsuite
     public :: collect_svd_cdp_testsuite
+    public :: collect_gmres_cdp_testsuite
 
 contains
 
@@ -393,6 +397,152 @@ contains
 
         return
     end subroutine test_svd_cdp
+
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR GMRES     -----
+    !----------------------------------------------------------
+
+    subroutine collect_gmres_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full GMRES", test_gmres_rsp) &
+                    ]
+        return
+    end subroutine collect_gmres_rsp_testsuite
+
+    subroutine test_gmres_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(linop_rsp) , allocatable :: A ! Linear Operator.
+        type(vector_rsp), allocatable :: b ! Right-hand side vector.
+        type(vector_rsp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_sp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = linop_rsp()  ; call init_rand(A)
+        b = vector_rsp() ; call init_rand(b)
+        x = vector_rsp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+
+        return
+    end subroutine test_gmres_rsp
+
+    subroutine collect_gmres_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full GMRES", test_gmres_rdp) &
+                    ]
+        return
+    end subroutine collect_gmres_rdp_testsuite
+
+    subroutine test_gmres_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(linop_rdp) , allocatable :: A ! Linear Operator.
+        type(vector_rdp), allocatable :: b ! Right-hand side vector.
+        type(vector_rdp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_dp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = linop_rdp()  ; call init_rand(A)
+        b = vector_rdp() ; call init_rand(b)
+        x = vector_rdp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+
+        return
+    end subroutine test_gmres_rdp
+
+    subroutine collect_gmres_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full GMRES", test_gmres_csp) &
+                    ]
+        return
+    end subroutine collect_gmres_csp_testsuite
+
+    subroutine test_gmres_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(linop_csp) , allocatable :: A ! Linear Operator.
+        type(vector_csp), allocatable :: b ! Right-hand side vector.
+        type(vector_csp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_sp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = linop_csp()  ; call init_rand(A)
+        b = vector_csp() ; call init_rand(b)
+        x = vector_csp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+
+        return
+    end subroutine test_gmres_csp
+
+    subroutine collect_gmres_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full GMRES", test_gmres_cdp) &
+                    ]
+        return
+    end subroutine collect_gmres_cdp_testsuite
+
+    subroutine test_gmres_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(linop_cdp) , allocatable :: A ! Linear Operator.
+        type(vector_cdp), allocatable :: b ! Right-hand side vector.
+        type(vector_cdp), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_dp_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = linop_cdp()  ; call init_rand(A)
+        b = vector_cdp() ; call init_rand(b)
+        x = vector_cdp() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+
+        return
+    end subroutine test_gmres_cdp
+
 
 end module TestIterativeSolvers
 

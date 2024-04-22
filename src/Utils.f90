@@ -6,12 +6,21 @@ module lightkrylov_utils
 
     private
 
+    real(sp), parameter, public :: one_rsp = 1.0_sp
+    real(dp), parameter, public :: one_rdp = 1.0_dp
+    complex(sp), parameter, public :: one_csp = cmplx(1.0_sp, 0.0_sp, kind=sp)
+    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
+
     public :: stop_error
     public :: assert_shape
     public :: inv
     public :: svd
     public :: eig
     public :: lstsq
+
+    public :: abstract_opts
+    public :: gmres_sp_opts
+    public :: gmres_dp_opts
 
     interface assert_shape
         module procedure assert_shape_rsp
@@ -47,6 +56,43 @@ module lightkrylov_utils
         module procedure lstsq_csp
         module procedure lstsq_cdp
     end interface
+
+    !------------------------------------------------
+    !-----     OPTS TYPE FOR LINEAR SOLVERS     -----
+    !------------------------------------------------
+
+    type, abstract, public :: abstract_opts
+        !! Abstract type container for options from which all other are being extended.
+    end type
+
+    type, extends(abstract_opts), public :: gmres_sp_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+        real(sp) :: atol = atol_sp
+        !! Absolute tolerance.
+        real(sp) :: rtol = rtol_sp
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
+    type, extends(abstract_opts), public :: gmres_dp_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+        real(dp) :: atol = atol_dp
+        !! Absolute tolerance.
+        real(dp) :: rtol = rtol_dp
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
 
 contains
 
@@ -255,7 +301,7 @@ contains
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
         real(sp), intent(in) :: A(:, :)
         !! Matrix to be "pseudo-inversed".
-        real(sp), intent(in) :: b
+        real(sp), intent(in) :: b(:)
         !! Right-hand side vector.
         real(sp), intent(out) :: x(:)
         !! Solution of the least-squares problem.
@@ -269,7 +315,7 @@ contains
         ! Setup variables.
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde = b
+        a_tilde = a ; b_tilde(:, 1) = b
         allocate(work(lwork)) ; work = 0.0_sp
 
         ! Solve the least-squares problem.
@@ -402,7 +448,7 @@ contains
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
         real(dp), intent(in) :: A(:, :)
         !! Matrix to be "pseudo-inversed".
-        real(dp), intent(in) :: b
+        real(dp), intent(in) :: b(:)
         !! Right-hand side vector.
         real(dp), intent(out) :: x(:)
         !! Solution of the least-squares problem.
@@ -416,7 +462,7 @@ contains
         ! Setup variables.
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde = b
+        a_tilde = a ; b_tilde(:, 1) = b
         allocate(work(lwork)) ; work = 0.0_dp
 
         ! Solve the least-squares problem.
@@ -551,7 +597,7 @@ contains
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
         complex(sp), intent(in) :: A(:, :)
         !! Matrix to be "pseudo-inversed".
-        complex(sp), intent(in) :: b
+        complex(sp), intent(in) :: b(:)
         !! Right-hand side vector.
         complex(sp), intent(out) :: x(:)
         !! Solution of the least-squares problem.
@@ -565,7 +611,7 @@ contains
         ! Setup variables.
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde = b
+        a_tilde = a ; b_tilde(:, 1) = b
         allocate(work(lwork)) ; work = 0.0_sp
 
         ! Solve the least-squares problem.
@@ -700,7 +746,7 @@ contains
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
         complex(dp), intent(in) :: A(:, :)
         !! Matrix to be "pseudo-inversed".
-        complex(dp), intent(in) :: b
+        complex(dp), intent(in) :: b(:)
         !! Right-hand side vector.
         complex(dp), intent(out) :: x(:)
         !! Solution of the least-squares problem.
@@ -714,7 +760,7 @@ contains
         ! Setup variables.
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde = b
+        a_tilde = a ; b_tilde(:, 1) = b
         allocate(work(lwork)) ; work = 0.0_dp
 
         ! Solve the least-squares problem.

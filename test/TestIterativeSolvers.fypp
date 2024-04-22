@@ -22,6 +22,7 @@ module TestIterativeSolvers
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
     public :: collect_svd_${type[0]}$${kind}$_testsuite
+    public :: collect_gmres_${type[0]}$${kind}$_testsuite
     #:endfor
 
 contains
@@ -162,5 +163,48 @@ contains
     end subroutine test_svd_${type[0]}$${kind}$
 
     #:endfor
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR GMRES     -----
+    !----------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_gmres_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full GMRES", test_gmres_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_gmres_${type[0]}$${kind}$_testsuite
+
+    subroutine test_gmres_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Linear problem.
+        type(linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
+        type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
+        type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
+        !> GMRES options.
+        type(gmres_${kind}$_opts) :: opts
+        !> Information flag.
+        integer :: info
+
+        ! Initialize linear problem.
+        A = linop_${type[0]}$${kind}$()  ; call init_rand(A)
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        x = vector_${type[0]}$${kind}$() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
+        call gmres(A, b, x, info, options=opts)
+
+        ! Check convergence.
+        call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
+
+        return
+    end subroutine test_gmres_${type[0]}$${kind}$
+
+    #:endfor
+
 end module TestIterativeSolvers
 

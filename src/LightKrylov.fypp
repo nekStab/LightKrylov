@@ -23,6 +23,11 @@ module LightKrylov
     public :: sp, atol_sp, rtol_sp
     public :: dp, atol_dp, rtol_dp
 
+    ! Utils exports.
+    #:for kind, type in RC_KINDS_TYPES
+    public :: gmres_${kind}$_opts
+    #:endfor
+
     ! AbstractVectors exports.
     public :: abstract_vector
     #:for k1, t1 in RC_KINDS_TYPES
@@ -45,6 +50,7 @@ module LightKrylov
     ! IterativeSolvers exports.
     public :: eigs, save_eigenspectrum
     public :: svds
+    public :: gmres
 
 contains
 
