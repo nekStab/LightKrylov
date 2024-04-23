@@ -1811,8 +1811,7 @@ contains
         allocate(Ap, source=b) ; call Ap%zero()
 
         ! Compute initial residual r = b - Ax.
-        !if (x%norm() /= 0.0_sp)
-        call A%matvec(x, r)
+        if (x%norm() /= 0.0_sp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -1901,8 +1900,7 @@ contains
         allocate(Ap, source=b) ; call Ap%zero()
 
         ! Compute initial residual r = b - Ax.
-        !if (x%norm() /= 0.0_dp)
-        call A%matvec(x, r)
+        if (x%norm() /= 0.0_dp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -1991,8 +1989,7 @@ contains
         allocate(Ap, source=b) ; call Ap%zero()
 
         ! Compute initial residual r = b - Ax.
-        !if (x%norm() /= 0.0_sp)
-        call A%matvec(x, r)
+        if (x%norm() /= 0.0_sp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2081,8 +2078,7 @@ contains
         allocate(Ap, source=b) ; call Ap%zero()
 
         ! Compute initial residual r = b - Ax.
-        !if (x%norm() /= 0.0_dp)
-        call A%matvec(x, r)
+        if (x%norm() /= 0.0_dp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.

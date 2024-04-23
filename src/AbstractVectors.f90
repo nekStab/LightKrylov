@@ -1,9 +1,13 @@
 module lightkrylov_AbstractVectors
     use lightkrylov_constants
+    use lightkrylov_utils
     implicit none
     private
 
     public :: innerprod_matrix
+    public :: linear_combination
+    public :: axpby_basis
+    public :: copy_basis
 
     interface innerprod_matrix
         module procedure innerprod_matrix_rsp
@@ -12,11 +16,36 @@ module lightkrylov_AbstractVectors
         module procedure innerprod_matrix_cdp
     end interface
 
+    interface linear_combination
+        module procedure linear_combination_vector_rsp
+        module procedure linear_combination_matrix_rsp
+        module procedure linear_combination_vector_rdp
+        module procedure linear_combination_matrix_rdp
+        module procedure linear_combination_vector_csp
+        module procedure linear_combination_matrix_csp
+        module procedure linear_combination_vector_cdp
+        module procedure linear_combination_matrix_cdp
+    end interface
+
+    interface axpby_basis
+        module procedure axpby_basis_rsp
+        module procedure axpby_basis_rdp
+        module procedure axpby_basis_csp
+        module procedure axpby_basis_cdp
+    end interface
+
+    interface copy_basis
+        module procedure copy_basis_rsp
+        module procedure copy_basis_rdp
+        module procedure copy_basis_csp
+        module procedure copy_basis_cdp
+    end interface
+
 
     type, abstract, public :: abstract_vector
     contains
     private
-        procedure, pass(from), public :: copy
+        procedure, pass(from), public :: copy => copy_vec
         generic, public :: assignment(=) => copy
     end type abstract_vector
 
@@ -333,13 +362,13 @@ module lightkrylov_AbstractVectors
 
 contains
 
-    subroutine copy(out, from)
+    subroutine copy_vec(out, from)
         class(abstract_vector), intent(in)  :: from
         class(abstract_vector), allocatable, intent(out) :: out
         if (allocated(out)) deallocate(out)
         allocate(out, source=from)
         return
-    end subroutine copy
+    end subroutine copy_vec
 
     function norm_rsp(self) result(alpha)
         class(abstract_vector_rsp), intent(in) :: self
@@ -466,6 +495,71 @@ contains
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
+
+    subroutine linear_combination_vector_rsp(y, X, v)
+        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
+        !! Fortran array containing the coefficients of the linear combination.
+        class(abstract_vector_rsp), allocatable, intent(out) :: y
+        !! Ouput vector.
+        class(abstract_vector_rsp), intent(in) :: X(:)
+        !! Krylov basis.
+        real(sp), intent(in) :: v(:)
+        !! Coordinates of `y` in the Krylov basis `X`.
+
+        ! Internal variables
+        integer :: i
+
+        ! Check sizes.
+        if (size(X) /= size(v)) then
+            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+        endif
+
+        ! Initialize output vector.
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
+        ! Compute linear combination.
+        do i = 1, size(X)
+            call y%axpby(one_rsp, x(i), v(i))
+        enddo
+
+        return
+    end subroutine linear_combination_vector_rsp
+
+    subroutine linear_combination_matrix_rsp(Y, X, B)
+        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        class(abstract_vector_rsp), allocatable, intent(out) :: Y(:)
+        !! Output matrix.
+        class(abstract_vector_rsp), intent(in) :: X(:)
+        !! Krylov basis.
+        real(sp), intent(in) :: B(:, :)
+        !! Coefficients of the linear combinations.
+
+        ! Internal variables.
+        integer :: i, j
+
+        ! Check sizes.
+        if (size(X) /= size(B, 1)) then
+            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+        endif
+
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+        endif
+
+        ! Initialize output basis.
+        if (.not. allocated(Y)) allocate(Y, source=X)
+
+        do j = 1, size(Y)
+            call Y(j)%zero()
+            do i = 1, size(X)
+                call Y(j)%axpby(one_rsp, X(i), B(i, j))
+            enddo
+        enddo
+
+        return
+    end subroutine linear_combination_matrix_rsp
+
     subroutine innerprod_matrix_rsp(M, X, Y)
         class(abstract_vector_rsp), intent(in) :: X(:)
         class(abstract_vector_rsp), intent(in) :: Y(:)
@@ -483,7 +577,117 @@ contains
 
         return
     end subroutine innerprod_matrix_rsp
-    
+
+    subroutine axpby_basis_rsp(x, alpha, y, beta)
+        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(sp)
+        !! numbers.
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        !! Input/Ouput array of `abstract_vector`.
+        class(abstract_vector_rsp), intent(in) :: Y(:)
+        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        real(sp), intent(in) :: alpha, beta
+        !! Scalar multipliers.
+
+        ! Internal variable.
+        integer :: i
+
+        ! Check size.
+        if (size(X) /= size(Y)) then
+            call stop_error("add_basis: X and Y have incompatible dimensions.")
+        endif
+
+        ! Add basis.
+        do i = 1, size(X)
+            call X(i)%axpby(alpha, Y(i), beta)
+        enddo
+
+        return
+    end subroutine axpby_basis_rsp
+
+    subroutine copy_basis_rsp(out, from)
+        class(abstract_vector_rsp), intent(in) :: from(:)
+        class(abstract_vector_rsp), intent(out) :: out(:)
+        integer :: i
+
+        ! Check size.
+        if (size(out) /= size(from)) then
+            call stop_error("copy: from and out have incompatible dimensions.")
+        endif
+
+        ! Copy array.
+        do i = 1, size(out)
+            call out(i)%zero() ; call out(i)%add(from(i))
+        enddo
+
+        return
+    end subroutine copy_basis_rsp
+
+
+    subroutine linear_combination_vector_rdp(y, X, v)
+        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
+        !! Fortran array containing the coefficients of the linear combination.
+        class(abstract_vector_rdp), allocatable, intent(out) :: y
+        !! Ouput vector.
+        class(abstract_vector_rdp), intent(in) :: X(:)
+        !! Krylov basis.
+        real(dp), intent(in) :: v(:)
+        !! Coordinates of `y` in the Krylov basis `X`.
+
+        ! Internal variables
+        integer :: i
+
+        ! Check sizes.
+        if (size(X) /= size(v)) then
+            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+        endif
+
+        ! Initialize output vector.
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
+        ! Compute linear combination.
+        do i = 1, size(X)
+            call y%axpby(one_rdp, x(i), v(i))
+        enddo
+
+        return
+    end subroutine linear_combination_vector_rdp
+
+    subroutine linear_combination_matrix_rdp(Y, X, B)
+        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        class(abstract_vector_rdp), allocatable, intent(out) :: Y(:)
+        !! Output matrix.
+        class(abstract_vector_rdp), intent(in) :: X(:)
+        !! Krylov basis.
+        real(dp), intent(in) :: B(:, :)
+        !! Coefficients of the linear combinations.
+
+        ! Internal variables.
+        integer :: i, j
+
+        ! Check sizes.
+        if (size(X) /= size(B, 1)) then
+            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+        endif
+
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+        endif
+
+        ! Initialize output basis.
+        if (.not. allocated(Y)) allocate(Y, source=X)
+
+        do j = 1, size(Y)
+            call Y(j)%zero()
+            do i = 1, size(X)
+                call Y(j)%axpby(one_rdp, X(i), B(i, j))
+            enddo
+        enddo
+
+        return
+    end subroutine linear_combination_matrix_rdp
+
     subroutine innerprod_matrix_rdp(M, X, Y)
         class(abstract_vector_rdp), intent(in) :: X(:)
         class(abstract_vector_rdp), intent(in) :: Y(:)
@@ -501,7 +705,117 @@ contains
 
         return
     end subroutine innerprod_matrix_rdp
-    
+
+    subroutine axpby_basis_rdp(x, alpha, y, beta)
+        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(dp)
+        !! numbers.
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        !! Input/Ouput array of `abstract_vector`.
+        class(abstract_vector_rdp), intent(in) :: Y(:)
+        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        real(dp), intent(in) :: alpha, beta
+        !! Scalar multipliers.
+
+        ! Internal variable.
+        integer :: i
+
+        ! Check size.
+        if (size(X) /= size(Y)) then
+            call stop_error("add_basis: X and Y have incompatible dimensions.")
+        endif
+
+        ! Add basis.
+        do i = 1, size(X)
+            call X(i)%axpby(alpha, Y(i), beta)
+        enddo
+
+        return
+    end subroutine axpby_basis_rdp
+
+    subroutine copy_basis_rdp(out, from)
+        class(abstract_vector_rdp), intent(in) :: from(:)
+        class(abstract_vector_rdp), intent(out) :: out(:)
+        integer :: i
+
+        ! Check size.
+        if (size(out) /= size(from)) then
+            call stop_error("copy: from and out have incompatible dimensions.")
+        endif
+
+        ! Copy array.
+        do i = 1, size(out)
+            call out(i)%zero() ; call out(i)%add(from(i))
+        enddo
+
+        return
+    end subroutine copy_basis_rdp
+
+
+    subroutine linear_combination_vector_csp(y, X, v)
+        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
+        !! Fortran array containing the coefficients of the linear combination.
+        class(abstract_vector_csp), allocatable, intent(out) :: y
+        !! Ouput vector.
+        class(abstract_vector_csp), intent(in) :: X(:)
+        !! Krylov basis.
+        complex(sp), intent(in) :: v(:)
+        !! Coordinates of `y` in the Krylov basis `X`.
+
+        ! Internal variables
+        integer :: i
+
+        ! Check sizes.
+        if (size(X) /= size(v)) then
+            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+        endif
+
+        ! Initialize output vector.
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
+        ! Compute linear combination.
+        do i = 1, size(X)
+            call y%axpby(one_csp, x(i), v(i))
+        enddo
+
+        return
+    end subroutine linear_combination_vector_csp
+
+    subroutine linear_combination_matrix_csp(Y, X, B)
+        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        class(abstract_vector_csp), allocatable, intent(out) :: Y(:)
+        !! Output matrix.
+        class(abstract_vector_csp), intent(in) :: X(:)
+        !! Krylov basis.
+        complex(sp), intent(in) :: B(:, :)
+        !! Coefficients of the linear combinations.
+
+        ! Internal variables.
+        integer :: i, j
+
+        ! Check sizes.
+        if (size(X) /= size(B, 1)) then
+            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+        endif
+
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+        endif
+
+        ! Initialize output basis.
+        if (.not. allocated(Y)) allocate(Y, source=X)
+
+        do j = 1, size(Y)
+            call Y(j)%zero()
+            do i = 1, size(X)
+                call Y(j)%axpby(one_csp, X(i), B(i, j))
+            enddo
+        enddo
+
+        return
+    end subroutine linear_combination_matrix_csp
+
     subroutine innerprod_matrix_csp(M, X, Y)
         class(abstract_vector_csp), intent(in) :: X(:)
         class(abstract_vector_csp), intent(in) :: Y(:)
@@ -519,7 +833,117 @@ contains
 
         return
     end subroutine innerprod_matrix_csp
-    
+
+    subroutine axpby_basis_csp(x, alpha, y, beta)
+        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(sp)
+        !! numbers.
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        !! Input/Ouput array of `abstract_vector`.
+        class(abstract_vector_csp), intent(in) :: Y(:)
+        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        complex(sp), intent(in) :: alpha, beta
+        !! Scalar multipliers.
+
+        ! Internal variable.
+        integer :: i
+
+        ! Check size.
+        if (size(X) /= size(Y)) then
+            call stop_error("add_basis: X and Y have incompatible dimensions.")
+        endif
+
+        ! Add basis.
+        do i = 1, size(X)
+            call X(i)%axpby(alpha, Y(i), beta)
+        enddo
+
+        return
+    end subroutine axpby_basis_csp
+
+    subroutine copy_basis_csp(out, from)
+        class(abstract_vector_csp), intent(in) :: from(:)
+        class(abstract_vector_csp), intent(out) :: out(:)
+        integer :: i
+
+        ! Check size.
+        if (size(out) /= size(from)) then
+            call stop_error("copy: from and out have incompatible dimensions.")
+        endif
+
+        ! Copy array.
+        do i = 1, size(out)
+            call out(i)%zero() ; call out(i)%add(from(i))
+        enddo
+
+        return
+    end subroutine copy_basis_csp
+
+
+    subroutine linear_combination_vector_cdp(y, X, v)
+        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
+        !! Fortran array containing the coefficients of the linear combination.
+        class(abstract_vector_cdp), allocatable, intent(out) :: y
+        !! Ouput vector.
+        class(abstract_vector_cdp), intent(in) :: X(:)
+        !! Krylov basis.
+        complex(dp), intent(in) :: v(:)
+        !! Coordinates of `y` in the Krylov basis `X`.
+
+        ! Internal variables
+        integer :: i
+
+        ! Check sizes.
+        if (size(X) /= size(v)) then
+            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+        endif
+
+        ! Initialize output vector.
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
+        ! Compute linear combination.
+        do i = 1, size(X)
+            call y%axpby(one_cdp, x(i), v(i))
+        enddo
+
+        return
+    end subroutine linear_combination_vector_cdp
+
+    subroutine linear_combination_matrix_cdp(Y, X, B)
+        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        class(abstract_vector_cdp), allocatable, intent(out) :: Y(:)
+        !! Output matrix.
+        class(abstract_vector_cdp), intent(in) :: X(:)
+        !! Krylov basis.
+        complex(dp), intent(in) :: B(:, :)
+        !! Coefficients of the linear combinations.
+
+        ! Internal variables.
+        integer :: i, j
+
+        ! Check sizes.
+        if (size(X) /= size(B, 1)) then
+            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+        endif
+
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+        endif
+
+        ! Initialize output basis.
+        if (.not. allocated(Y)) allocate(Y, source=X)
+
+        do j = 1, size(Y)
+            call Y(j)%zero()
+            do i = 1, size(X)
+                call Y(j)%axpby(one_cdp, X(i), B(i, j))
+            enddo
+        enddo
+
+        return
+    end subroutine linear_combination_matrix_cdp
+
     subroutine innerprod_matrix_cdp(M, X, Y)
         class(abstract_vector_cdp), intent(in) :: X(:)
         class(abstract_vector_cdp), intent(in) :: Y(:)
@@ -537,6 +961,51 @@ contains
 
         return
     end subroutine innerprod_matrix_cdp
-    
+
+    subroutine axpby_basis_cdp(x, alpha, y, beta)
+        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(dp)
+        !! numbers.
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        !! Input/Ouput array of `abstract_vector`.
+        class(abstract_vector_cdp), intent(in) :: Y(:)
+        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        complex(dp), intent(in) :: alpha, beta
+        !! Scalar multipliers.
+
+        ! Internal variable.
+        integer :: i
+
+        ! Check size.
+        if (size(X) /= size(Y)) then
+            call stop_error("add_basis: X and Y have incompatible dimensions.")
+        endif
+
+        ! Add basis.
+        do i = 1, size(X)
+            call X(i)%axpby(alpha, Y(i), beta)
+        enddo
+
+        return
+    end subroutine axpby_basis_cdp
+
+    subroutine copy_basis_cdp(out, from)
+        class(abstract_vector_cdp), intent(in) :: from(:)
+        class(abstract_vector_cdp), intent(out) :: out(:)
+        integer :: i
+
+        ! Check size.
+        if (size(out) /= size(from)) then
+            call stop_error("copy: from and out have incompatible dimensions.")
+        endif
+
+        ! Copy array.
+        do i = 1, size(out)
+            call out(i)%zero() ; call out(i)%add(from(i))
+        enddo
+
+        return
+    end subroutine copy_basis_cdp
+
 
 end module lightkrylov_AbstractVectors
