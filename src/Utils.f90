@@ -1,7 +1,25 @@
 module lightkrylov_utils
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use stdlib_linalg_lapack, only : getrf, getri, gesvd, geev, syev, gels
+    ! Matrix inversion.
+    use stdlib_linalg_lapack, only: getrf, getri
+    ! Singular value decomposition.
+    use stdlib_linalg_lapack, only: gesvd
+    ! Eigenvalue problem (general + symmetric).
+    use stdlib_linalg_lapack, only: geev, syev
+    ! Least-squares solver.
+    use stdlib_linalg_lapack, only: gels
+    ! Schur factorization.
+    use stdlib_linalg_lapack, only: gees, trsen
+
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    ! Various constants.
     use lightkrylov_constants
+
     implicit none
 
     private
@@ -358,6 +376,40 @@ contains
         return
     end subroutine lstsq_rsp
 
+    subroutine schur_rsp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        real(sp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        real(sp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(sp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        real(sp), allocatable :: work(:)
+        real(sp), allocatable :: wr(:), wi(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  3*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ; 
+
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        eigvals = cmplx(wr, wi, kind=sp)
+
+        return
+    contains
+        pure function dummy_select(wr, wi) result(out)
+            real(sp), intent(in) :: wr
+            real(sp), intent(in) :: wi
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_rsp
+
     subroutine inv_rdp(A)
         !! In-place inversion of A using LAPACK.
         real(dp), intent(inout) :: A(:, :)
@@ -504,6 +556,40 @@ contains
 
         return
     end subroutine lstsq_rdp
+
+    subroutine schur_rdp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        real(dp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        real(dp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(dp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        real(dp), allocatable :: work(:)
+        real(dp), allocatable :: wr(:), wi(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  3*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ; 
+
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        eigvals = cmplx(wr, wi, kind=dp)
+
+        return
+    contains
+        pure function dummy_select(wr, wi) result(out)
+            real(dp), intent(in) :: wr
+            real(dp), intent(in) :: wi
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_rdp
 
     subroutine inv_csp(A)
         !! In-place inversion of A using LAPACK.
@@ -654,6 +740,38 @@ contains
         return
     end subroutine lstsq_csp
 
+    subroutine schur_csp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        complex(sp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(sp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(sp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        complex(sp), allocatable :: work(:)
+        real(sp), allocatable :: rwork(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  2*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
+
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+
+        return
+    contains
+        pure function dummy_select(w) result(out)
+            complex(sp), intent(in) :: w
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_csp
+
     subroutine inv_cdp(A)
         !! In-place inversion of A using LAPACK.
         complex(dp), intent(inout) :: A(:, :)
@@ -802,6 +920,38 @@ contains
 
         return
     end subroutine lstsq_cdp
+
+    subroutine schur_cdp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        complex(dp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(dp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(dp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        complex(dp), allocatable :: work(:)
+        real(dp), allocatable :: rwork(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  2*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
+
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+
+        return
+    contains
+        pure function dummy_select(w) result(out)
+            complex(dp), intent(in) :: w
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_cdp
 
 
 end module lightkrylov_utils

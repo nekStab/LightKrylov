@@ -1,9 +1,27 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_utils
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use stdlib_linalg_lapack, only : getrf, getri, gesvd, geev, syev, gels
+    ! Matrix inversion.
+    use stdlib_linalg_lapack, only: getrf, getri
+    ! Singular value decomposition.
+    use stdlib_linalg_lapack, only: gesvd
+    ! Eigenvalue problem (general + symmetric).
+    use stdlib_linalg_lapack, only: geev, syev
+    ! Least-squares solver.
+    use stdlib_linalg_lapack, only: gels
+    ! Schur factorization.
+    use stdlib_linalg_lapack, only: gees, trsen
+
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    ! Various constants.
     use lightkrylov_constants
+
     implicit none
 
     private
@@ -310,6 +328,57 @@ contains
 
         return
     end subroutine lstsq_${type[0]}$${kind}$
+
+    subroutine schur_${type[0]}$${kind}$(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        ${type}$, intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        ${type}$, intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(${kind}$), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        ${type}$, allocatable :: work(:)
+        #:if type[0] == "r"
+        ${type}$, allocatable :: wr(:), wi(:)
+        #:else
+        real(${kind}$), allocatable :: rwork(:)
+        #:endif
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork = #{if type[0] == "r"}# 3*n #{else}# 2*n #{endif}#
+        allocate(bwork(n)) ; allocate(work(lwork)) ; #{if type[0] == "c"}# allocate(rwork(n)) #{endif}#
+
+        #:if type[0] == "r"
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        eigvals = cmplx(wr, wi, kind=${kind}$)
+        #:else
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+        #:endif
+
+        return
+    contains
+        #:if type[0] == "r"
+        pure function dummy_select(wr, wi) result(out)
+            ${type}$, intent(in) :: wr
+            ${type}$, intent(in) :: wi
+            logical :: out
+            out = .false.
+            return
+        end function
+        #:else
+        pure function dummy_select(w) result(out)
+            ${type}$, intent(in) :: w
+            logical :: out
+            out = .false.
+            return
+        end function
+        #:endif
+    end subroutine schur_${type[0]}$${kind}$
 
     #:endfor
 
