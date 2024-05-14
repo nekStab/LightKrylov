@@ -143,7 +143,9 @@ contains
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_${t1[0]}$${k1}$), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${t1[0]}$${k1}$)  &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${t1[0]}$${k1}$),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${t1[0]}$${k1}$),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${t1[0]}$${k1}$) &
                     ]
         return
     end subroutine collect_linop_${t1[0]}$${k1}$_testsuite
@@ -213,6 +215,91 @@ contains
         
         return
     end subroutine test_rmatvec_${t1[0]}$${k1}$
+
+    subroutine test_adjoint_matvec_${t1[0]}$${k1}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_${t1[0]}$${k1}$), allocatable :: A
+        type(adjoint_linop_${t1[0]}$${k1}$), allocatable :: B
+
+        ! Internal variable.
+        real(${k1}$) :: alpha
+
+        ! Initialize matrix.
+        A = linop_${t1[0]}$${k1}$()
+        #:if t1[0] == "c"
+        call random_number(A%data%re) ; call random_number(A%data%im)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_${t1[0]}$${k1}$() ; call x%rand()
+        y = vector_${t1[0]}$${k1}$() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%matvec(x, y)
+
+        ! Check result.
+        #:if t1[0] == "c"
+        alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
+        #:else
+        alpha = norm2(y%data - matmul(transpose(A%data), x%data))
+        #:endif
+
+        call check(error, alpha < rtol_${k1}$)
+
+       return
+    end subroutine test_adjoint_matvec_${t1[0]}$${k1}$
+
+    subroutine test_adjoint_rmatvec_${t1[0]}$${k1}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_${t1[0]}$${k1}$), allocatable :: A
+        type(adjoint_linop_${t1[0]}$${k1}$), allocatable :: B
+
+        ! Internal variable.
+        real(${k1}$) :: alpha
+
+        ! Initialize matrix.
+        A = linop_${t1[0]}$${k1}$()
+        #:if t1[0] == "c"
+        call random_number(A%data%re) ; call random_number(A%data%im)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_${t1[0]}$${k1}$() ; call x%rand()
+        y = vector_${t1[0]}$${k1}$() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%rmatvec(x, y)
+
+        ! Check result.
+        #:if t1[0] == "c"
+        alpha = norm2(abs(y%data - matmul(A%data, x%data)))
+        #:else
+        alpha = norm2(y%data - matmul(A%data, x%data))
+        #:endif
+
+        call check(error, alpha < rtol_${k1}$)
+
+       return
+    end subroutine test_adjoint_rmatvec_${t1[0]}$${k1}$
+
 
     #:endfor
 end module TestLinops

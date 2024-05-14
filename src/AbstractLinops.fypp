@@ -42,7 +42,13 @@ module lightkrylov_AbstractLinops
         end subroutine abstract_matvec_${t1[0]}$${k1}$
     end interface
 
-
+    type, extends(abstract_linop_${t1[0]}$${k1}$), public :: adjoint_linop_${t1[0]}$${k1}$
+        class(abstract_linop_${t1[0]}$${k1}$), allocatable :: A
+    contains
+        private
+        procedure, pass(self), public :: matvec => adjoint_matvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${t1[0]}$${k1}$
+    end type
 
 
 
@@ -79,5 +85,28 @@ contains
         allocate(out, source=from)
         return
     end subroutine copy
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(adjoint_linop_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+
+        call self%A%rmatvec(vec_in, vec_out)
+
+        return
+    end subroutine adjoint_matvec_${type[0]}$${kind}$
+
+    subroutine adjoint_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(adjoint_linop_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+
+        call self%A%matvec(vec_in, vec_out)
+
+        return
+    end subroutine adjoint_rmatvec_${type[0]}$${kind}$
+
+    #:endfor
 
 end module lightkrylov_AbstractLinops

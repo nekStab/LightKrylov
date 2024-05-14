@@ -313,7 +313,9 @@ contains
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_rsp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rsp)  &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rsp),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rsp),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rsp) &
                     ]
         return
     end subroutine collect_linop_rsp_testsuite
@@ -368,12 +370,83 @@ contains
         return
     end subroutine test_rmatvec_rsp
 
+    subroutine test_adjoint_matvec_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_rsp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_rsp), allocatable :: A
+        type(adjoint_linop_rsp), allocatable :: B
+
+        ! Internal variable.
+        real(sp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_rsp()
+        call random_number(A%data)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_rsp() ; call x%rand()
+        y = vector_rsp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%matvec(x, y)
+
+        ! Check result.
+        alpha = norm2(y%data - matmul(transpose(A%data), x%data))
+
+        call check(error, alpha < rtol_sp)
+
+       return
+    end subroutine test_adjoint_matvec_rsp
+
+    subroutine test_adjoint_rmatvec_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_rsp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_rsp), allocatable :: A
+        type(adjoint_linop_rsp), allocatable :: B
+
+        ! Internal variable.
+        real(sp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_rsp()
+        call random_number(A%data)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_rsp() ; call x%rand()
+        y = vector_rsp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%rmatvec(x, y)
+
+        ! Check result.
+        alpha = norm2(y%data - matmul(A%data, x%data))
+
+        call check(error, alpha < rtol_sp)
+
+       return
+    end subroutine test_adjoint_rmatvec_rsp
+
+
     subroutine collect_linop_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_rdp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rdp)  &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rdp),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rdp),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rdp) &
                     ]
         return
     end subroutine collect_linop_rdp_testsuite
@@ -428,12 +501,83 @@ contains
         return
     end subroutine test_rmatvec_rdp
 
+    subroutine test_adjoint_matvec_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_rdp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_rdp), allocatable :: A
+        type(adjoint_linop_rdp), allocatable :: B
+
+        ! Internal variable.
+        real(dp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_rdp()
+        call random_number(A%data)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_rdp() ; call x%rand()
+        y = vector_rdp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%matvec(x, y)
+
+        ! Check result.
+        alpha = norm2(y%data - matmul(transpose(A%data), x%data))
+
+        call check(error, alpha < rtol_dp)
+
+       return
+    end subroutine test_adjoint_matvec_rdp
+
+    subroutine test_adjoint_rmatvec_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_rdp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_rdp), allocatable :: A
+        type(adjoint_linop_rdp), allocatable :: B
+
+        ! Internal variable.
+        real(dp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_rdp()
+        call random_number(A%data)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_rdp() ; call x%rand()
+        y = vector_rdp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%rmatvec(x, y)
+
+        ! Check result.
+        alpha = norm2(y%data - matmul(A%data, x%data))
+
+        call check(error, alpha < rtol_dp)
+
+       return
+    end subroutine test_adjoint_rmatvec_rdp
+
+
     subroutine collect_linop_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_csp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_csp)  &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_csp),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_csp),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_csp) &
                     ]
         return
     end subroutine collect_linop_csp_testsuite
@@ -488,12 +632,83 @@ contains
         return
     end subroutine test_rmatvec_csp
 
+    subroutine test_adjoint_matvec_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_csp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_csp), allocatable :: A
+        type(adjoint_linop_csp), allocatable :: B
+
+        ! Internal variable.
+        real(sp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_csp()
+        call random_number(A%data%re) ; call random_number(A%data%im)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_csp() ; call x%rand()
+        y = vector_csp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%matvec(x, y)
+
+        ! Check result.
+        alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
+
+        call check(error, alpha < rtol_sp)
+
+       return
+    end subroutine test_adjoint_matvec_csp
+
+    subroutine test_adjoint_rmatvec_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_csp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_csp), allocatable :: A
+        type(adjoint_linop_csp), allocatable :: B
+
+        ! Internal variable.
+        real(sp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_csp()
+        call random_number(A%data%re) ; call random_number(A%data%im)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_csp() ; call x%rand()
+        y = vector_csp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%rmatvec(x, y)
+
+        ! Check result.
+        alpha = norm2(abs(y%data - matmul(A%data, x%data)))
+
+        call check(error, alpha < rtol_sp)
+
+       return
+    end subroutine test_adjoint_rmatvec_csp
+
+
     subroutine collect_linop_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_cdp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_cdp)  &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_cdp),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_cdp),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_cdp) &
                     ]
         return
     end subroutine collect_linop_cdp_testsuite
@@ -547,6 +762,75 @@ contains
         
         return
     end subroutine test_rmatvec_cdp
+
+    subroutine test_adjoint_matvec_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_cdp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_cdp), allocatable :: A
+        type(adjoint_linop_cdp), allocatable :: B
+
+        ! Internal variable.
+        real(dp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_cdp()
+        call random_number(A%data%re) ; call random_number(A%data%im)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_cdp() ; call x%rand()
+        y = vector_cdp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%matvec(x, y)
+
+        ! Check result.
+        alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
+
+        call check(error, alpha < rtol_dp)
+
+       return
+    end subroutine test_adjoint_matvec_cdp
+
+    subroutine test_adjoint_rmatvec_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_cdp), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_cdp), allocatable :: A
+        type(adjoint_linop_cdp), allocatable :: B
+
+        ! Internal variable.
+        real(dp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_cdp()
+        call random_number(A%data%re) ; call random_number(A%data%im)
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_cdp() ; call x%rand()
+        y = vector_cdp() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%rmatvec(x, y)
+
+        ! Check result.
+        alpha = norm2(abs(y%data - matmul(A%data, x%data)))
+
+        call check(error, alpha < rtol_dp)
+
+       return
+    end subroutine test_adjoint_rmatvec_cdp
+
 
 end module TestLinops
 
