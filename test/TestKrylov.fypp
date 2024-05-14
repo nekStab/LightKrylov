@@ -22,6 +22,7 @@ module TestKrylov
     public :: collect_qr_${t1[0]}$${k1}$_testsuite
     public :: collect_arnoldi_${t1[0]}$${k1}$_testsuite
     public :: collect_lanczos_bidiag_${t1[0]}$${k1}$_testsuite
+    public :: collect_lanczos_tridiag_${t1[0]}$${k1}$_testsuite
 
     #:endfor
 
@@ -461,5 +462,131 @@ contains
     end subroutine test_lanczos_bidiag_right_orthogonality_${type[0]}$${kind}$
 
    #:endfor
+
+    !-------------------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR LANCZOS TRIDIAGONALIZATION     -----
+    !-------------------------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_lanczos_tridiag_${type[0]}$${kind}$_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_${type[0]}$${kind}$), &
+             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_${type[0]}$${kind}$) &
+                    ]
+
+        return
+    end subroutine collect_lanczos_tridiag_${type[0]}$${kind}$_testsuite
+
+    subroutine test_lanczos_tridiag_full_factorization_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        ! Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        ${type}$ :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        ${type}$ :: Xdata(test_size, kdim+1)
+        real(${kind}$) :: alpha
+        class(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_${kind}$
+
+        ! Initialize operator.
+        #:if type[0] == "r"
+        A = spd_linop_${type[0]}$${kind}$()
+        #:else
+        A = hermitian_linop_${type[0]}$${kind}$()
+        #:endif
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+
+        ! Infinity-norm check.
+        alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        call check(error, alpha < rtol_${kind}$)
+
+        return
+    end subroutine test_lanczos_tridiag_full_factorization_${type[0]}$${kind}$
+
+    subroutine test_lanczos_tridiag_orthogonality_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        ! Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        ${type}$ :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(${kind}$) :: alpha
+        ${type}$ :: Xdata(test_size, kdim+1)
+        class(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+        real(${kind}$) :: Id(kdim+1, kdim+1)
+        ${type}$ :: G(kdim+1, kdim+1)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_${kind}$
+
+        ! Initialize operator.
+        #:if type[0] == "r"
+        A = spd_linop_${type[0]}$${kind}$()
+        #:else
+        A = hermitian_linop_${type[0]}$${kind}$()
+        #:endif
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        #:if type[0] == "r"
+        G = matmul(transpose(Xdata), Xdata)
+        #:else
+        G = matmul(transpose(conjg(Xdata)), Xdata)
+        #:endif
+        Id = 0.0_${kind}$ ; Id(1:kdim, 1:kdim) = eye(kdim)
+        call check(error, norm2(abs(G-Id)) < rtol_${kind}$)
+
+        return
+    end subroutine test_lanczos_tridiag_orthogonality_${type[0]}$${kind}$
+
+    #:endfor
 
 end module TestKrylov

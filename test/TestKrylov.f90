@@ -19,18 +19,22 @@ module TestKrylov
     public :: collect_qr_rsp_testsuite
     public :: collect_arnoldi_rsp_testsuite
     public :: collect_lanczos_bidiag_rsp_testsuite
+    public :: collect_lanczos_tridiag_rsp_testsuite
 
     public :: collect_qr_rdp_testsuite
     public :: collect_arnoldi_rdp_testsuite
     public :: collect_lanczos_bidiag_rdp_testsuite
+    public :: collect_lanczos_tridiag_rdp_testsuite
 
     public :: collect_qr_csp_testsuite
     public :: collect_arnoldi_csp_testsuite
     public :: collect_lanczos_bidiag_csp_testsuite
+    public :: collect_lanczos_tridiag_csp_testsuite
 
     public :: collect_qr_cdp_testsuite
     public :: collect_arnoldi_cdp_testsuite
     public :: collect_lanczos_bidiag_cdp_testsuite
+    public :: collect_lanczos_tridiag_cdp_testsuite
 
 
 contains
@@ -1704,6 +1708,407 @@ contains
 
         return
     end subroutine test_lanczos_bidiag_right_orthogonality_cdp
+
+
+    !-------------------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR LANCZOS TRIDIAGONALIZATION     -----
+    !-------------------------------------------------------------------------------
+
+    subroutine collect_lanczos_tridiag_rsp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_rsp), &
+             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_rsp) &
+                    ]
+
+        return
+    end subroutine collect_lanczos_tridiag_rsp_testsuite
+
+    subroutine test_lanczos_tridiag_full_factorization_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_rsp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rsp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        real(sp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(sp) :: Xdata(test_size, kdim+1)
+        real(sp) :: alpha
+        class(vector_rsp), allocatable :: X0(:)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_sp
+
+        ! Initialize operator.
+        A = spd_linop_rsp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+
+        ! Infinity-norm check.
+        alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        call check(error, alpha < rtol_sp)
+
+        return
+    end subroutine test_lanczos_tridiag_full_factorization_rsp
+
+    subroutine test_lanczos_tridiag_orthogonality_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_rsp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rsp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        real(sp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(sp) :: alpha
+        real(sp) :: Xdata(test_size, kdim+1)
+        class(vector_rsp), allocatable :: X0(:)
+        real(sp) :: Id(kdim+1, kdim+1)
+        real(sp) :: G(kdim+1, kdim+1)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_sp
+
+        ! Initialize operator.
+        A = spd_linop_rsp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        G = matmul(transpose(Xdata), Xdata)
+        Id = 0.0_sp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        call check(error, norm2(abs(G-Id)) < rtol_sp)
+
+        return
+    end subroutine test_lanczos_tridiag_orthogonality_rsp
+
+    subroutine collect_lanczos_tridiag_rdp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_rdp), &
+             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_rdp) &
+                    ]
+
+        return
+    end subroutine collect_lanczos_tridiag_rdp_testsuite
+
+    subroutine test_lanczos_tridiag_full_factorization_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_rdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rdp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        real(dp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(dp) :: Xdata(test_size, kdim+1)
+        real(dp) :: alpha
+        class(vector_rdp), allocatable :: X0(:)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_dp
+
+        ! Initialize operator.
+        A = spd_linop_rdp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+
+        ! Infinity-norm check.
+        alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        call check(error, alpha < rtol_dp)
+
+        return
+    end subroutine test_lanczos_tridiag_full_factorization_rdp
+
+    subroutine test_lanczos_tridiag_orthogonality_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_rdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rdp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        real(dp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(dp) :: alpha
+        real(dp) :: Xdata(test_size, kdim+1)
+        class(vector_rdp), allocatable :: X0(:)
+        real(dp) :: Id(kdim+1, kdim+1)
+        real(dp) :: G(kdim+1, kdim+1)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_dp
+
+        ! Initialize operator.
+        A = spd_linop_rdp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        G = matmul(transpose(Xdata), Xdata)
+        Id = 0.0_dp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        call check(error, norm2(abs(G-Id)) < rtol_dp)
+
+        return
+    end subroutine test_lanczos_tridiag_orthogonality_rdp
+
+    subroutine collect_lanczos_tridiag_csp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_csp), &
+             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_csp) &
+                    ]
+
+        return
+    end subroutine collect_lanczos_tridiag_csp_testsuite
+
+    subroutine test_lanczos_tridiag_full_factorization_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_csp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_csp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        complex(sp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        complex(sp) :: Xdata(test_size, kdim+1)
+        real(sp) :: alpha
+        class(vector_csp), allocatable :: X0(:)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_sp
+
+        ! Initialize operator.
+        A = hermitian_linop_csp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+
+        ! Infinity-norm check.
+        alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        call check(error, alpha < rtol_sp)
+
+        return
+    end subroutine test_lanczos_tridiag_full_factorization_csp
+
+    subroutine test_lanczos_tridiag_orthogonality_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_csp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_csp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        complex(sp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(sp) :: alpha
+        complex(sp) :: Xdata(test_size, kdim+1)
+        class(vector_csp), allocatable :: X0(:)
+        real(sp) :: Id(kdim+1, kdim+1)
+        complex(sp) :: G(kdim+1, kdim+1)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_sp
+
+        ! Initialize operator.
+        A = hermitian_linop_csp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        G = matmul(transpose(conjg(Xdata)), Xdata)
+        Id = 0.0_sp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        call check(error, norm2(abs(G-Id)) < rtol_sp)
+
+        return
+    end subroutine test_lanczos_tridiag_orthogonality_csp
+
+    subroutine collect_lanczos_tridiag_cdp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_cdp), &
+             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_cdp) &
+                    ]
+
+        return
+    end subroutine collect_lanczos_tridiag_cdp_testsuite
+
+    subroutine test_lanczos_tridiag_full_factorization_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_cdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_cdp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        complex(dp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        complex(dp) :: Xdata(test_size, kdim+1)
+        real(dp) :: alpha
+        class(vector_cdp), allocatable :: X0(:)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_dp
+
+        ! Initialize operator.
+        A = hermitian_linop_cdp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+
+        ! Infinity-norm check.
+        alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        call check(error, alpha < rtol_dp)
+
+        return
+    end subroutine test_lanczos_tridiag_full_factorization_cdp
+
+    subroutine test_lanczos_tridiag_orthogonality_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_cdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_cdp), allocatable :: X(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        complex(dp) :: T(kdim+1, kdim)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(dp) :: alpha
+        complex(dp) :: Xdata(test_size, kdim+1)
+        class(vector_cdp), allocatable :: X0(:)
+        real(dp) :: Id(kdim+1, kdim+1)
+        complex(dp) :: G(kdim+1, kdim+1)
+
+        ! Initialize tridiagonal matrix.
+        T = 0.0_dp
+
+        ! Initialize operator.
+        A = hermitian_linop_cdp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+
+        ! Lanczos factorization.
+        call lanczos_tridiagonalization(A, X, T, info)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        G = matmul(transpose(conjg(Xdata)), Xdata)
+        Id = 0.0_dp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        call check(error, norm2(abs(G-Id)) < rtol_dp)
+
+        return
+    end subroutine test_lanczos_tridiag_orthogonality_cdp
 
 
 end module TestKrylov

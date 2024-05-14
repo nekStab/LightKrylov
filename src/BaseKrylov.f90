@@ -2,6 +2,7 @@ module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
     use lightkrylov_constants
+    use lightkrylov_utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
     implicit none
@@ -14,6 +15,7 @@ module lightkrylov_BaseKrylov
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: lanczos_bidiagonalization
+    public :: lanczos_tridiagonalization
 
     interface qr
         module procedure qr_no_pivoting_rsp
@@ -61,8 +63,14 @@ module lightkrylov_BaseKrylov
         module procedure initialize_krylov_subspace_cdp
     end interface
 
+    interface lanczos_tridiagonalization
+        module procedure lanczos_tridiagonalization_rsp
+        module procedure lanczos_tridiagonalization_rdp
+        module procedure lanczos_tridiagonalization_csp
+        module procedure lanczos_tridiagonalization_cdp
+    end interface
 
-    interface lanczos_bidiagonalization
+   interface lanczos_bidiagonalization
         module procedure lanczos_bidiagonalization_rsp
         module procedure lanczos_bidiagonalization_rdp
         module procedure lanczos_bidiagonalization_csp
@@ -1946,6 +1954,300 @@ contains
 
         return
     end subroutine lanczos_bidiagonalization_cdp
+
+
+
+    !----------------------------------------------
+    !-----     LANCZOS TRIDIAGONALIZATION     -----
+    !----------------------------------------------
+    
+    subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, verbosity, tol)
+        class(abstract_sym_linop_rsp), intent(in) :: A
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        real(sp), intent(inout) :: T(:, :)
+        integer, intent(out) :: info
+        integer, optional, intent(in) :: kstart
+        integer, optional, intent(in) :: kend
+        logical, optional, intent(in) :: verbosity
+        real(sp), optional, intent(in) :: tol
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(sp) :: tolerance
+        real(sp) :: beta
+        integer :: i, j, k, kdim
+
+        ! Deal with optional args.
+        kdim = size(X) - 1
+        k_start = optval(kstart, 1)
+        k_end = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_sp)
+
+        ! Lanczos tridiagonalization.
+        lanczos: do k = k_start, k_end
+            ! Matrix-vector product.
+            call A%matvec(X(k), X(k+1))
+            ! Update tridiagonal matrix.
+            call update_tridiag_matrix_rsp(T, X, k)
+            beta = X(k+1)%norm() ; T(k+1, k) = beta
+
+            ! Exit Lanczos loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = k
+                ! Exit the Lanczos iteration.
+                exit lanczos
+            else
+                ! Normalize the new Krylov vector.
+                call X(k+1)%scal(one_rsp / beta)
+            endif
+        enddo lanczos
+
+        return
+    end subroutine lanczos_tridiagonalization_rsp
+
+    subroutine update_tridiag_matrix_rsp(T, X, k)
+        integer, intent(in) :: k
+        real(sp), intent(inout) :: T(:, :)
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+
+        ! Internal variables.
+        class(abstract_vector_rsp), allocatable :: wrk
+        integer :: i
+        real(sp) :: alpha
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        do i = max(1, k-1), k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -alpha)
+            ! Update tridiag. matrix.
+            T(i, k) = alpha
+        enddo
+
+        ! Full re-orthogonalization.
+        do i = 1, k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -alpha)
+        enddo
+
+        return
+    end subroutine update_tridiag_matrix_rsp
+
+    subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, verbosity, tol)
+        class(abstract_sym_linop_rdp), intent(in) :: A
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        real(dp), intent(inout) :: T(:, :)
+        integer, intent(out) :: info
+        integer, optional, intent(in) :: kstart
+        integer, optional, intent(in) :: kend
+        logical, optional, intent(in) :: verbosity
+        real(dp), optional, intent(in) :: tol
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(dp) :: tolerance
+        real(dp) :: beta
+        integer :: i, j, k, kdim
+
+        ! Deal with optional args.
+        kdim = size(X) - 1
+        k_start = optval(kstart, 1)
+        k_end = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_dp)
+
+        ! Lanczos tridiagonalization.
+        lanczos: do k = k_start, k_end
+            ! Matrix-vector product.
+            call A%matvec(X(k), X(k+1))
+            ! Update tridiagonal matrix.
+            call update_tridiag_matrix_rdp(T, X, k)
+            beta = X(k+1)%norm() ; T(k+1, k) = beta
+
+            ! Exit Lanczos loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = k
+                ! Exit the Lanczos iteration.
+                exit lanczos
+            else
+                ! Normalize the new Krylov vector.
+                call X(k+1)%scal(one_rdp / beta)
+            endif
+        enddo lanczos
+
+        return
+    end subroutine lanczos_tridiagonalization_rdp
+
+    subroutine update_tridiag_matrix_rdp(T, X, k)
+        integer, intent(in) :: k
+        real(dp), intent(inout) :: T(:, :)
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+
+        ! Internal variables.
+        class(abstract_vector_rdp), allocatable :: wrk
+        integer :: i
+        real(dp) :: alpha
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        do i = max(1, k-1), k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -alpha)
+            ! Update tridiag. matrix.
+            T(i, k) = alpha
+        enddo
+
+        ! Full re-orthogonalization.
+        do i = 1, k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -alpha)
+        enddo
+
+        return
+    end subroutine update_tridiag_matrix_rdp
+
+    subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, verbosity, tol)
+        class(abstract_hermitian_linop_csp), intent(in) :: A
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        complex(sp), intent(inout) :: T(:, :)
+        integer, intent(out) :: info
+        integer, optional, intent(in) :: kstart
+        integer, optional, intent(in) :: kend
+        logical, optional, intent(in) :: verbosity
+        real(sp), optional, intent(in) :: tol
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(sp) :: tolerance
+        real(sp) :: beta
+        integer :: i, j, k, kdim
+
+        ! Deal with optional args.
+        kdim = size(X) - 1
+        k_start = optval(kstart, 1)
+        k_end = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_sp)
+
+        ! Lanczos tridiagonalization.
+        lanczos: do k = k_start, k_end
+            ! Matrix-vector product.
+            call A%matvec(X(k), X(k+1))
+            ! Update tridiagonal matrix.
+            call update_tridiag_matrix_csp(T, X, k)
+            beta = X(k+1)%norm() ; T(k+1, k) = beta
+
+            ! Exit Lanczos loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = k
+                ! Exit the Lanczos iteration.
+                exit lanczos
+            else
+                ! Normalize the new Krylov vector.
+                call X(k+1)%scal(one_csp / beta)
+            endif
+        enddo lanczos
+
+        return
+    end subroutine lanczos_tridiagonalization_csp
+
+    subroutine update_tridiag_matrix_csp(T, X, k)
+        integer, intent(in) :: k
+        complex(sp), intent(inout) :: T(:, :)
+        class(abstract_vector_csp), intent(inout) :: X(:)
+
+        ! Internal variables.
+        class(abstract_vector_csp), allocatable :: wrk
+        integer :: i
+        complex(sp) :: alpha
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        do i = max(1, k-1), k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -alpha)
+            ! Update tridiag. matrix.
+            T(i, k) = alpha
+        enddo
+
+        ! Full re-orthogonalization.
+        do i = 1, k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -alpha)
+        enddo
+
+        return
+    end subroutine update_tridiag_matrix_csp
+
+    subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, verbosity, tol)
+        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        complex(dp), intent(inout) :: T(:, :)
+        integer, intent(out) :: info
+        integer, optional, intent(in) :: kstart
+        integer, optional, intent(in) :: kend
+        logical, optional, intent(in) :: verbosity
+        real(dp), optional, intent(in) :: tol
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(dp) :: tolerance
+        real(dp) :: beta
+        integer :: i, j, k, kdim
+
+        ! Deal with optional args.
+        kdim = size(X) - 1
+        k_start = optval(kstart, 1)
+        k_end = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_dp)
+
+        ! Lanczos tridiagonalization.
+        lanczos: do k = k_start, k_end
+            ! Matrix-vector product.
+            call A%matvec(X(k), X(k+1))
+            ! Update tridiagonal matrix.
+            call update_tridiag_matrix_cdp(T, X, k)
+            beta = X(k+1)%norm() ; T(k+1, k) = beta
+
+            ! Exit Lanczos loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = k
+                ! Exit the Lanczos iteration.
+                exit lanczos
+            else
+                ! Normalize the new Krylov vector.
+                call X(k+1)%scal(one_cdp / beta)
+            endif
+        enddo lanczos
+
+        return
+    end subroutine lanczos_tridiagonalization_cdp
+
+    subroutine update_tridiag_matrix_cdp(T, X, k)
+        integer, intent(in) :: k
+        complex(dp), intent(inout) :: T(:, :)
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+
+        ! Internal variables.
+        class(abstract_vector_cdp), allocatable :: wrk
+        integer :: i
+        complex(dp) :: alpha
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        do i = max(1, k-1), k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -alpha)
+            ! Update tridiag. matrix.
+            T(i, k) = alpha
+        enddo
+
+        ! Full re-orthogonalization.
+        do i = 1, k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -alpha)
+        enddo
+
+        return
+    end subroutine update_tridiag_matrix_cdp
 
 
 end module lightkrylov_BaseKrylov

@@ -4,6 +4,7 @@ module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
     use lightkrylov_constants
+    use lightkrylov_utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
     implicit none
@@ -16,6 +17,7 @@ module lightkrylov_BaseKrylov
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: lanczos_bidiagonalization
+    public :: lanczos_tridiagonalization
 
     interface qr
         #:for k1, t1 in RC_KINDS_TYPES
@@ -54,8 +56,13 @@ module lightkrylov_BaseKrylov
         #:endfor
     end interface
 
+    interface lanczos_tridiagonalization
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure lanczos_tridiagonalization_${type[0]}$${kind}$
+        #:endfor
+    end interface
 
-    interface lanczos_bidiagonalization
+   interface lanczos_bidiagonalization
         #:for kind, type in RC_KINDS_TYPES
         module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
         #:endfor
@@ -591,6 +598,90 @@ contains
 
         return
     end subroutine lanczos_bidiagonalization_${type[0]}$${kind}$
+
+    #:endfor
+
+
+    !----------------------------------------------
+    !-----     LANCZOS TRIDIAGONALIZATION     -----
+    !----------------------------------------------
+    
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine lanczos_tridiagonalization_${type[0]}$${kind}$(A, X, T, info, kstart, kend, verbosity, tol)
+        #:if type[0] == "r"
+        class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
+        #:else
+        class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(in) :: A
+        #:endif
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        ${type}$, intent(inout) :: T(:, :)
+        integer, intent(out) :: info
+        integer, optional, intent(in) :: kstart
+        integer, optional, intent(in) :: kend
+        logical, optional, intent(in) :: verbosity
+        real(${kind}$), optional, intent(in) :: tol
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(${kind}$) :: tolerance
+        real(${kind}$) :: beta
+        integer :: i, j, k, kdim
+
+        ! Deal with optional args.
+        kdim = size(X) - 1
+        k_start = optval(kstart, 1)
+        k_end = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_${kind}$)
+
+        ! Lanczos tridiagonalization.
+        lanczos: do k = k_start, k_end
+            ! Matrix-vector product.
+            call A%matvec(X(k), X(k+1))
+            ! Update tridiagonal matrix.
+            call update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
+            beta = X(k+1)%norm() ; T(k+1, k) = beta
+
+            ! Exit Lanczos loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = k
+                ! Exit the Lanczos iteration.
+                exit lanczos
+            else
+                ! Normalize the new Krylov vector.
+                call X(k+1)%scal(one_${type[0]}$${kind}$ / beta)
+            endif
+        enddo lanczos
+
+        return
+    end subroutine lanczos_tridiagonalization_${type[0]}$${kind}$
+
+    subroutine update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
+        integer, intent(in) :: k
+        ${type}$, intent(inout) :: T(:, :)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+
+        ! Internal variables.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+        integer :: i
+        ${type}$ :: alpha
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        do i = max(1, k-1), k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_${type[0]}$${kind}$, X(i), -alpha)
+            ! Update tridiag. matrix.
+            T(i, k) = alpha
+        enddo
+
+        ! Full re-orthogonalization.
+        do i = 1, k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_${type[0]}$${kind}$, X(i), -alpha)
+        enddo
+
+        return
+    end subroutine update_tridiag_matrix_${type[0]}$${kind}$
 
     #:endfor
 

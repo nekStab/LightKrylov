@@ -33,6 +33,7 @@ program Tester
                 new_testsuite("Real QR (sp) Test Suite", collect_qr_rsp_testsuite), &
                 new_testsuite("Real Arnoldi (sp) Test Suite", collect_arnoldi_rsp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_rsp_testsuite), &
+                new_testsuite("Real Lanczos tridiagonalization (sp) Test Suite", collect_lanczos_tridiag_rsp_testsuite), &
                 new_testsuite("Real EVP (sp) Test Suite", collect_eig_rsp_testsuite), & 
                 new_testsuite("Real SVD (sp) Test Suite", collect_svd_rsp_testsuite), &
                 new_testsuite("Real GMRES (sp) Test Suite", collect_gmres_rsp_testsuite), &
@@ -73,6 +74,7 @@ program Tester
                 new_testsuite("Real QR (dp) Test Suite", collect_qr_rdp_testsuite), &
                 new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_rdp_testsuite), &
+                new_testsuite("Real Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_rdp_testsuite), &
                 new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
                 new_testsuite("Real SVD (dp) Test Suite", collect_svd_rdp_testsuite), &
                 new_testsuite("Real GMRES (dp) Test Suite", collect_gmres_rdp_testsuite), &
@@ -113,6 +115,7 @@ program Tester
                 new_testsuite("Complex QR (sp) Test Suite", collect_qr_csp_testsuite), &
                 new_testsuite("Complex Arnoldi (sp) Test Suite", collect_arnoldi_csp_testsuite), &
                 new_testsuite("Complex Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_csp_testsuite), &
+                new_testsuite("Complex Lanczos tridiagonalization (sp) Test Suite", collect_lanczos_tridiag_csp_testsuite), &
                 new_testsuite("Complex GMRES (sp) Test Suite", collect_gmres_csp_testsuite), &
                 new_testsuite("Complex CG (sp) Test Suite", collect_cg_csp_testsuite) &
                 ]
@@ -141,9 +144,9 @@ program Tester
       write (*, *)
    end if
 
-   !----------------------------------------------------
+   !-------------------------------------------------------
    !-----     COMPLEX DOUBLE-PRECISION TEST SUITE     -----
-   !----------------------------------------------------
+   !-------------------------------------------------------
 
    testsuites = [ &
                 new_testsuite("Complex Vector (dp) Test Suite", collect_vector_cdp_testsuite),  &
@@ -151,6 +154,7 @@ program Tester
                 new_testsuite("Complex QR (dp) Test Suite", collect_qr_cdp_testsuite), &
                 new_testsuite("Complex QR (dp) Test Suite", collect_arnoldi_cdp_testsuite), &
                 new_testsuite("Complex Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_cdp_testsuite), &
+                new_testsuite("Complex Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_cdp_testsuite), &
                 new_testsuite("Complex GMRES (dp) Test Suite", collect_gmres_cdp_testsuite), &
                 new_testsuite("Complex CG (dp) Test Suite", collect_cg_cdp_testsuite) &
                 ]
