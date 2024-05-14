@@ -45,13 +45,13 @@ module LightKrylov
     public :: Id_rsp
     public :: scaled_linop_rsp
     public :: axpby_linop_rsp
-    public :: abstract_spd_linop_rsp
+    public :: abstract_sym_linop_rsp
     public :: abstract_linop_rdp
     public :: adjoint_linop_rdp
     public :: Id_rdp
     public :: scaled_linop_rdp
     public :: axpby_linop_rdp
-    public :: abstract_spd_linop_rdp
+    public :: abstract_sym_linop_rdp
     public :: abstract_linop_csp
     public :: adjoint_linop_csp
     public :: Id_csp

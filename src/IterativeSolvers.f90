@@ -1761,7 +1761,7 @@ contains
     !---------------------------------------------
 
     subroutine cg_rsp(A, b, x, info, preconditioner, options)
-        class(abstract_spd_linop_rsp), intent(in) :: A
+        class(abstract_sym_linop_rsp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
@@ -1850,7 +1850,7 @@ contains
     end subroutine cg_rsp
 
     subroutine cg_rdp(A, b, x, info, preconditioner, options)
-        class(abstract_spd_linop_rdp), intent(in) :: A
+        class(abstract_sym_linop_rdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.

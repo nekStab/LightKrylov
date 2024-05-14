@@ -276,19 +276,19 @@ module lightkrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_cdp
     end type
 
-    !----------------------------------------------------------------------------------
-    !-----     Definition of an abstract symmetric positive definite operator     -----
-    !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_rsp), public :: abstract_spd_linop_rsp
+    !----------------------------------------------------------------
+    !-----     Definition of an abstract symmetric operator     -----
+    !----------------------------------------------------------------
+    type, abstract, extends(abstract_linop_rsp), public :: abstract_sym_linop_rsp
     contains
     end type
 
 
 
-    !----------------------------------------------------------------------------------
-    !-----     Definition of an abstract symmetric positive definite operator     -----
-    !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_rdp), public :: abstract_spd_linop_rdp
+    !----------------------------------------------------------------
+    !-----     Definition of an abstract symmetric operator     -----
+    !----------------------------------------------------------------
+    type, abstract, extends(abstract_linop_rdp), public :: abstract_sym_linop_rdp
     contains
     end type
 

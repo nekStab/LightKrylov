@@ -113,10 +113,10 @@ module lightkrylov_AbstractLinops
 
     #:for kind, type in RC_KINDS_TYPES
     #:if type[0] == "r"
-    !----------------------------------------------------------------------------------
-    !-----     Definition of an abstract symmetric positive definite operator     -----
-    !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_spd_linop_${type[0]}$${kind}$
+    !----------------------------------------------------------------
+    !-----     Definition of an abstract symmetric operator     -----
+    !----------------------------------------------------------------
+    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_sym_linop_${type[0]}$${kind}$
     contains
     end type
     #:else

@@ -555,7 +555,7 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     subroutine cg_${type[0]}$${kind}$(A, b, x, info, preconditioner, options)
         #:if type[0] == "r"
-        class(abstract_spd_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
         #:else
         class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(in) :: A
         #:endif

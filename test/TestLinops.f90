@@ -25,7 +25,7 @@ module TestLinops
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
     end type
 
-    type, extends(abstract_spd_linop_rsp), public :: spd_linop_rsp
+    type, extends(abstract_sym_linop_rsp), public :: spd_linop_rsp
         real(sp), dimension(test_size, test_size) :: data = 0.0_sp
     contains
         private
@@ -41,7 +41,7 @@ module TestLinops
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
     end type
 
-    type, extends(abstract_spd_linop_rdp), public :: spd_linop_rdp
+    type, extends(abstract_sym_linop_rdp), public :: spd_linop_rdp
         real(dp), dimension(test_size, test_size) :: data = 0.0_dp
     contains
         private

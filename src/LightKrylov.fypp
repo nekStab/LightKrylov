@@ -44,7 +44,7 @@ module LightKrylov
     public :: scaled_linop_${t1[0]}$${k1}$
     public :: axpby_linop_${t1[0]}$${k1}$
     #:if t1[0] == "r"
-    public :: abstract_spd_linop_${t1[0]}$${k1}$
+    public :: abstract_sym_linop_${t1[0]}$${k1}$
     #:else
     public :: abstract_hermitian_linop_${t1[0]}$${k1}$
     #:endif
