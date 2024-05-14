@@ -40,6 +40,9 @@ module LightKrylov
     #:for k1, t1 in RC_KINDS_TYPES
     public :: abstract_linop_${t1[0]}$${k1}$
     public :: adjoint_linop_${t1[0]}$${k1}$
+    public :: Id_${t1[0]}$${k1}$
+    public :: scaled_linop_${t1[0]}$${k1}$
+    public :: axpby_linop_${t1[0]}$${k1}$
     #:if t1[0] == "r"
     public :: abstract_spd_linop_${t1[0]}$${k1}$
     #:else
