@@ -2,6 +2,7 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_AbstractLinops
     use lightkrylov_constants
+    use lightkrylov_utils
     use lightkrylov_AbstractVectors
     implicit none
     private
@@ -54,6 +55,62 @@ module lightkrylov_AbstractLinops
 
     #:endfor
 
+    !--------------------------------------------------
+    !-----     Definition of the Identity map     -----
+    !--------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    type, extends(abstract_linop_${type[0]}$${kind}$), public :: Id_${type[0]}$${kind}$
+        contains
+        private
+        procedure, pass(self), public :: matvec => id_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => id_matvec_${type[0]}$${kind}$
+    end type
+
+    #:endfor
+
+    !----------------------------------------------
+    !-----     Definition of scaled linop     -----
+    !----------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    type, extends(abstract_linop_${type[0]}$${kind}$), public :: scaled_linop_${type[0]}$${kind}$
+        #:if type[0] == "r"
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \).
+        class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
+        !! Base linear operator to be scaled.
+        ${type}$ :: sigma
+        !! Scaling factor.
+        #:else
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex-valued operator and \( \sigma \in \mathbb{C} \).
+        class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
+        !! Base linear operator to be scaled.
+        ${type}$ :: sigma
+        !! Scaling factor.
+       #:endif
+    contains
+        private
+        procedure, pass(self), public :: matvec => scaled_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => scaled_rmatvec_${type[0]}$${kind}$
+    end type
+    #:endfor
+
+    !------------------------------------------------
+    !-----     Definition of axpby operator     -----
+    !------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    type, extends(abstract_linop_${type[0]}$${kind}$), public :: axpby_linop_${type[0]}$${kind}$
+        class(abstract_linop_${type[0]}$${kind}$), allocatable :: A, B
+        ${type}$ :: alpha, beta
+        logical :: transA = .false., transB = .false.
+    contains
+        private
+        procedure, pass(self), public :: matvec => axpby_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => axpby_rmatvec_${type[0]}$${kind}$
+    end type
+    #:endfor
+
     #:for kind, type in RC_KINDS_TYPES
     #:if type[0] == "r"
     !----------------------------------------------------------------------------------
@@ -74,7 +131,6 @@ module lightkrylov_AbstractLinops
 
 
 
-
     #:endfor
 contains
 
@@ -85,6 +141,101 @@ contains
         allocate(out, source=from)
         return
     end subroutine copy
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine id_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(Id_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        call vec_out%axpby(zero_${type[0]}$${kind}$, vec_in, one_${type[0]}$${kind}$)
+        return
+    end subroutine id_matvec_${type[0]}$${kind}$
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine scaled_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(scaled_linop_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+
+        call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        return
+    end subroutine scaled_matvec_${type[0]}$${kind}$
+
+    subroutine scaled_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(scaled_linop_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+
+        call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        return
+    end subroutine scaled_rmatvec_${type[0]}$${kind}$
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine axpby_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(axpby_linop_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+
+        ! Working array.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+
+        ! Allocate working array.
+        allocate(wrk, source=vec_in) ; call wrk%zero()
+
+        ! w = A @ x
+        if (self%transA) then
+            call self%A%rmatvec(vec_in, wrk)
+        else
+            call self%A%matvec(vec_in, wrk)
+        endif
+
+        ! y = B @ x
+        if (self%transB) then
+            call self%B%rmatvec(vec_in, vec_out)
+        else
+            call self%B%matvec(vec_in, vec_out)
+        endif
+
+        ! y = alpha*w + beta*y
+        call vec_out%axpby(self%beta, wrk, self%alpha)
+
+        return
+    end subroutine axpby_matvec_${type[0]}$${kind}$
+
+    subroutine axpby_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(axpby_linop_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+
+        ! Working array.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+
+        ! Allocate working array.
+        allocate(wrk, source=vec_in) ; call wrk%zero()
+
+        ! w = A @ x
+        if (self%transA) then
+            call self%A%matvec(vec_in, wrk)
+        else
+            call self%A%rmatvec(vec_in, wrk)
+        endif
+
+        ! y = B @ x
+        if (self%transB) then
+            call self%B%matvec(vec_in, vec_out)
+        else
+            call self%B%rmatvec(vec_in, vec_out)
+        endif
+
+        ! y = alpha*w + beta*y
+        call vec_out%axpby(self%beta, wrk, self%alpha)
+
+        return
+    end subroutine axpby_rmatvec_${type[0]}$${kind}$
+
+    #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
