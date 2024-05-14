@@ -40,6 +40,8 @@ module lightkrylov_utils
     public :: svd
     public :: eig
     public :: lstsq
+    public :: schur
+    public :: ordschur
 
     public :: abstract_opts
     #:for kind in REAL_KINDS
@@ -74,6 +76,18 @@ module lightkrylov_utils
     interface lstsq
         #:for kind, type in RC_KINDS_TYPES
         module procedure lstsq_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface schur
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure schur_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface ordschur
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure ordschur_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -379,6 +393,40 @@ contains
         end function
         #:endif
     end subroutine schur_${type[0]}$${kind}$
+
+    subroutine ordschur_${type[0]}$${kind}$(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        ${type}$, intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        ${type}$, intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(${kind}$) :: s, sep
+        #:if type[0] == "r"
+        integer :: iwork(size(T, 1)), liwork
+        ${type}$ :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+        #:else
+        ${type}$ :: w(size(T, 1)), work(size(T, 1))
+        #:endif
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        #:if type[0] == "r"
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        #:else
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        #:endif
+
+        return
+    end subroutine ordschur_${type[0]}$${kind}$
 
     #:endfor
 

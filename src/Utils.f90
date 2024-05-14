@@ -35,6 +35,8 @@ module lightkrylov_utils
     public :: svd
     public :: eig
     public :: lstsq
+    public :: schur
+    public :: ordschur
 
     public :: abstract_opts
     public :: gmres_sp_opts
@@ -75,6 +77,20 @@ module lightkrylov_utils
         module procedure lstsq_rdp
         module procedure lstsq_csp
         module procedure lstsq_cdp
+    end interface
+
+    interface schur
+        module procedure schur_rsp
+        module procedure schur_rdp
+        module procedure schur_csp
+        module procedure schur_cdp
+    end interface
+
+    interface ordschur
+        module procedure ordschur_rsp
+        module procedure ordschur_rdp
+        module procedure ordschur_csp
+        module procedure ordschur_cdp
     end interface
 
     !------------------------------------------------
@@ -410,6 +426,32 @@ contains
         end function
     end subroutine schur_rsp
 
+    subroutine ordschur_rsp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        real(sp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        real(sp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(sp) :: s, sep
+        integer :: iwork(size(T, 1)), liwork
+        real(sp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+
+        return
+    end subroutine ordschur_rsp
+
     subroutine inv_rdp(A)
         !! In-place inversion of A using LAPACK.
         real(dp), intent(inout) :: A(:, :)
@@ -590,6 +632,32 @@ contains
             return
         end function
     end subroutine schur_rdp
+
+    subroutine ordschur_rdp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        real(dp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        real(dp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(dp) :: s, sep
+        integer :: iwork(size(T, 1)), liwork
+        real(dp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+
+        return
+    end subroutine ordschur_rdp
 
     subroutine inv_csp(A)
         !! In-place inversion of A using LAPACK.
@@ -772,6 +840,30 @@ contains
         end function
     end subroutine schur_csp
 
+    subroutine ordschur_csp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        complex(sp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        complex(sp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(sp) :: s, sep
+        complex(sp) :: w(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+
+        return
+    end subroutine ordschur_csp
+
     subroutine inv_cdp(A)
         !! In-place inversion of A using LAPACK.
         complex(dp), intent(inout) :: A(:, :)
@@ -952,6 +1044,30 @@ contains
             return
         end function
     end subroutine schur_cdp
+
+    subroutine ordschur_cdp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        complex(dp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        complex(dp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(dp) :: s, sep
+        complex(dp) :: w(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+
+        return
+    end subroutine ordschur_cdp
 
 
 end module lightkrylov_utils
