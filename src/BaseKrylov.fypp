@@ -475,22 +475,14 @@ contains
         call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                #:if type[0] == "c"
-                call X(kp+i)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), X(j), -H(j, kpm+i))
-                #:else
-                call X(kp+i)%axpby(1.0_${kind}$, X(j), -H(j, kpm+i))
-                #:endif
+                call X(kp+i)%axpby(one_${type[0]}$${kind}$, X(j), -H(j, kpm+i))
             enddo
         enddo
 
         call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                 #:if type[0] == "c"
-                call X(kp+i)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), X(j), -wrk(j, i))
-                #:else
-                call X(kp+i)%axpby(1.0_${kind}$, X(j), -wrk(j, i))
-                #:endif
+                call X(kp+i)%axpby(one_${type[0]}$${kind}$, X(j), -wrk(j, i))
             enddo
         enddo
 
@@ -556,17 +548,13 @@ contains
             ! Full reorthogonalization of the right Krylov subspace.
             do j = 1, k-1
                 gamma = V(j)%dot(V(k))
-                #:if type[0] == "c"
-                call V(k)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), V(j), -gamma)
-                #:else
-                call V(k)%axpby(1.0_${kind}$, V(j), -gamma)
-                #:endif
+                call V(k)%axpby(one_${type[0]}$${kind}$, V(j), -gamma)
             enddo
 
             ! Normalization step.
             alpha = V(k)%norm() ; B(k, k) = alpha
             if (abs(alpha) > tolerance) then
-                call V(k)%scal(1.0_${kind}$/alpha)
+                call V(k)%scal(one_${type[0]}$${kind}$/alpha)
             else
                 info = k
                 exit lanczos
@@ -578,17 +566,13 @@ contains
             ! Full re-orthogonalization of the left Krylov subspace.
             do j = 1, k
                 gamma = U(j)%dot(U(k+1))
-                #:if type[0] == "c"
-                call U(k+1)%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), U(j), -gamma)
-                #:else
-                call U(k+1)%axpby(1.0_${kind}$, U(j), -gamma)
-                #:endif
+                call U(k+1)%axpby(one_${type[0]}$${kind}$, U(j), -gamma)
            enddo
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
             if (abs(beta) > tolerance) then
-                call U(k+1)%scal(1.0_${kind}$ / beta)
+                call U(k+1)%scal(one_${type[0]}$${kind}$ / beta)
             else
                 info = k
                 exit lanczos

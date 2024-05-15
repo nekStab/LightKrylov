@@ -10,7 +10,7 @@ module lightkrylov_utils
     ! Singular value decomposition.
     use stdlib_linalg_lapack, only: gesvd
     ! Eigenvalue problem (general + symmetric).
-    use stdlib_linalg_lapack, only: geev, syev
+    use stdlib_linalg_lapack, only: geev, syev, heev
     ! Least-squares solver.
     use stdlib_linalg_lapack, only: gels
     ! Schur factorization.
@@ -41,6 +41,7 @@ module lightkrylov_utils
     public :: inv
     public :: svd
     public :: eig
+    public :: eigh
     public :: lstsq
     public :: schur
     public :: ordschur
@@ -72,6 +73,12 @@ module lightkrylov_utils
     interface eig
         #:for kind, type in RC_KINDS_TYPES
         module procedure eig_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+   interface eigh
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure eigh_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -309,6 +316,44 @@ contains
 
         return
     end subroutine eig_${type[0]}$${kind}$
+
+    subroutine eigh_${type[0]}$${kind}$(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        ${type}$, intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        real(${kind}$), intent(out) :: vals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobz = "v", uplo = "u"
+        integer :: n, lwork, info, lda
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2))
+        ${type}$, allocatable :: work(:)
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: rwork(:)
+        #:endif
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; a_tilde = a
+        #:if type[0] == "c"
+        lwork = max(1, 2*n-1)
+        allocate(rwork(max(1, 3*n-2)))
+        #:else
+        lwork = max(1, 3*n-1)
+        #:endif
+        allocate(work(lwork))
+
+        ! Eigendecomposition.
+        #:if type[0] == "r"
+        call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
+        #:else
+        call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
+        #:endif
+
+        return
+    end subroutine eigh_${type[0]}$${kind}$
 
     subroutine lstsq_${type[0]}$${kind}$(A, b, x)
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.

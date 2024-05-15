@@ -43,8 +43,9 @@ contains
     subroutine collect_eig_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
-        testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_rsp) &
+         testsuite = [ &
+                    new_unittest("Eigs computation", test_evp_rsp), &
+                    new_unittest("Sym. eigs computation", test_sym_evp_rsp) &
                     ]
         return
     end subroutine collect_eig_rsp_testsuite
@@ -101,11 +102,65 @@ contains
         return
     end subroutine test_evp_rsp
 
+    subroutine test_sym_evp_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_rsp), allocatable :: A
+        ! Eigenvectors.
+        type(vector_rsp), allocatable :: X(:)
+        ! Eigenvalues.
+        real(sp), allocatable :: evals(:)
+        ! Residuals.
+        real(sp), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Toeplitz matrix.
+        real(sp) :: T(test_size, test_size), a_, b_
+        ! Miscellaneous.
+        integer :: i
+        real(sp) :: alpha, true_evals(test_size)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
+
+        ! Create the sym. pos. def. Toeplitz matrix.
+        call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
+        T = 0.0_sp
+        do i = 1, test_size
+            ! Diagonal entry.
+            T(i, i) = a_
+            if (i < test_size) then
+                ! Upper diagonal entry.
+                T(i, i+1) = b_
+                ! Lower diagonal entry.
+                T(i+1, i) = b_
+            endif
+        enddo
+
+        ! Allocations.
+        A = spd_linop_rsp(T)
+        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+
+        ! Spectral decomposition.
+        call eighs(A, X, evals, residuals, info, kdim=test_size)
+
+        ! Analytical eigenvalues.
+        true_evals = 0.0_sp
+        do i = 1, test_size
+            true_evals(i) = a_ + 2*abs(b_) * cos(i*pi/(test_size+1))
+        enddo
+
+        ! Check error.
+        call check(error, all_close(evals, true_evals, rtol_sp, atol_sp))
+
+        return
+    end subroutine test_sym_evp_rsp
+
     subroutine collect_eig_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
-        testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_rdp) &
+         testsuite = [ &
+                    new_unittest("Eigs computation", test_evp_rdp), &
+                    new_unittest("Sym. eigs computation", test_sym_evp_rdp) &
                     ]
         return
     end subroutine collect_eig_rdp_testsuite
@@ -162,6 +217,59 @@ contains
         return
     end subroutine test_evp_rdp
 
+    subroutine test_sym_evp_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_rdp), allocatable :: A
+        ! Eigenvectors.
+        type(vector_rdp), allocatable :: X(:)
+        ! Eigenvalues.
+        real(dp), allocatable :: evals(:)
+        ! Residuals.
+        real(dp), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Toeplitz matrix.
+        real(dp) :: T(test_size, test_size), a_, b_
+        ! Miscellaneous.
+        integer :: i
+        real(dp) :: alpha, true_evals(test_size)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
+
+        ! Create the sym. pos. def. Toeplitz matrix.
+        call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
+        T = 0.0_dp
+        do i = 1, test_size
+            ! Diagonal entry.
+            T(i, i) = a_
+            if (i < test_size) then
+                ! Upper diagonal entry.
+                T(i, i+1) = b_
+                ! Lower diagonal entry.
+                T(i+1, i) = b_
+            endif
+        enddo
+
+        ! Allocations.
+        A = spd_linop_rdp(T)
+        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+
+        ! Spectral decomposition.
+        call eighs(A, X, evals, residuals, info, kdim=test_size)
+
+        ! Analytical eigenvalues.
+        true_evals = 0.0_dp
+        do i = 1, test_size
+            true_evals(i) = a_ + 2*abs(b_) * cos(i*pi/(test_size+1))
+        enddo
+
+        ! Check error.
+        call check(error, all_close(evals, true_evals, rtol_dp, atol_dp))
+
+        return
+    end subroutine test_sym_evp_rdp
+
     subroutine collect_eig_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -192,6 +300,7 @@ contains
         return
     end subroutine test_evp_csp
 
+
     subroutine collect_eig_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -221,6 +330,7 @@ contains
 
         return
     end subroutine test_evp_cdp
+
 
 
 

@@ -1228,14 +1228,14 @@ contains
         call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(1.0_sp, X(j), -H(j, kpm+i))
+                call X(kp+i)%axpby(one_rsp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
         call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(1.0_sp, X(j), -wrk(j, i))
+                call X(kp+i)%axpby(one_rsp, X(j), -wrk(j, i))
             enddo
         enddo
 
@@ -1352,14 +1352,14 @@ contains
         call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(1.0_dp, X(j), -H(j, kpm+i))
+                call X(kp+i)%axpby(one_rdp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
         call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(1.0_dp, X(j), -wrk(j, i))
+                call X(kp+i)%axpby(one_rdp, X(j), -wrk(j, i))
             enddo
         enddo
 
@@ -1476,14 +1476,14 @@ contains
         call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), X(j), -H(j, kpm+i))
+                call X(kp+i)%axpby(one_csp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
         call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), X(j), -wrk(j, i))
+                call X(kp+i)%axpby(one_csp, X(j), -wrk(j, i))
             enddo
         enddo
 
@@ -1600,14 +1600,14 @@ contains
         call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), X(j), -H(j, kpm+i))
+                call X(kp+i)%axpby(one_cdp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
         call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
-                call X(kp+i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), X(j), -wrk(j, i))
+                call X(kp+i)%axpby(one_cdp, X(j), -wrk(j, i))
             enddo
         enddo
 
@@ -1671,13 +1671,13 @@ contains
             ! Full reorthogonalization of the right Krylov subspace.
             do j = 1, k-1
                 gamma = V(j)%dot(V(k))
-                call V(k)%axpby(1.0_sp, V(j), -gamma)
+                call V(k)%axpby(one_rsp, V(j), -gamma)
             enddo
 
             ! Normalization step.
             alpha = V(k)%norm() ; B(k, k) = alpha
             if (abs(alpha) > tolerance) then
-                call V(k)%scal(1.0_sp/alpha)
+                call V(k)%scal(one_rsp/alpha)
             else
                 info = k
                 exit lanczos
@@ -1689,13 +1689,13 @@ contains
             ! Full re-orthogonalization of the left Krylov subspace.
             do j = 1, k
                 gamma = U(j)%dot(U(k+1))
-                call U(k+1)%axpby(1.0_sp, U(j), -gamma)
+                call U(k+1)%axpby(one_rsp, U(j), -gamma)
            enddo
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
             if (abs(beta) > tolerance) then
-                call U(k+1)%scal(1.0_sp / beta)
+                call U(k+1)%scal(one_rsp / beta)
             else
                 info = k
                 exit lanczos
@@ -1754,13 +1754,13 @@ contains
             ! Full reorthogonalization of the right Krylov subspace.
             do j = 1, k-1
                 gamma = V(j)%dot(V(k))
-                call V(k)%axpby(1.0_dp, V(j), -gamma)
+                call V(k)%axpby(one_rdp, V(j), -gamma)
             enddo
 
             ! Normalization step.
             alpha = V(k)%norm() ; B(k, k) = alpha
             if (abs(alpha) > tolerance) then
-                call V(k)%scal(1.0_dp/alpha)
+                call V(k)%scal(one_rdp/alpha)
             else
                 info = k
                 exit lanczos
@@ -1772,13 +1772,13 @@ contains
             ! Full re-orthogonalization of the left Krylov subspace.
             do j = 1, k
                 gamma = U(j)%dot(U(k+1))
-                call U(k+1)%axpby(1.0_dp, U(j), -gamma)
+                call U(k+1)%axpby(one_rdp, U(j), -gamma)
            enddo
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
             if (abs(beta) > tolerance) then
-                call U(k+1)%scal(1.0_dp / beta)
+                call U(k+1)%scal(one_rdp / beta)
             else
                 info = k
                 exit lanczos
@@ -1837,13 +1837,13 @@ contains
             ! Full reorthogonalization of the right Krylov subspace.
             do j = 1, k-1
                 gamma = V(j)%dot(V(k))
-                call V(k)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), V(j), -gamma)
+                call V(k)%axpby(one_csp, V(j), -gamma)
             enddo
 
             ! Normalization step.
             alpha = V(k)%norm() ; B(k, k) = alpha
             if (abs(alpha) > tolerance) then
-                call V(k)%scal(1.0_sp/alpha)
+                call V(k)%scal(one_csp/alpha)
             else
                 info = k
                 exit lanczos
@@ -1855,13 +1855,13 @@ contains
             ! Full re-orthogonalization of the left Krylov subspace.
             do j = 1, k
                 gamma = U(j)%dot(U(k+1))
-                call U(k+1)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), U(j), -gamma)
+                call U(k+1)%axpby(one_csp, U(j), -gamma)
            enddo
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
             if (abs(beta) > tolerance) then
-                call U(k+1)%scal(1.0_sp / beta)
+                call U(k+1)%scal(one_csp / beta)
             else
                 info = k
                 exit lanczos
@@ -1920,13 +1920,13 @@ contains
             ! Full reorthogonalization of the right Krylov subspace.
             do j = 1, k-1
                 gamma = V(j)%dot(V(k))
-                call V(k)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), V(j), -gamma)
+                call V(k)%axpby(one_cdp, V(j), -gamma)
             enddo
 
             ! Normalization step.
             alpha = V(k)%norm() ; B(k, k) = alpha
             if (abs(alpha) > tolerance) then
-                call V(k)%scal(1.0_dp/alpha)
+                call V(k)%scal(one_cdp/alpha)
             else
                 info = k
                 exit lanczos
@@ -1938,13 +1938,13 @@ contains
             ! Full re-orthogonalization of the left Krylov subspace.
             do j = 1, k
                 gamma = U(j)%dot(U(k+1))
-                call U(k+1)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), U(j), -gamma)
+                call U(k+1)%axpby(one_cdp, U(j), -gamma)
            enddo
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
             if (abs(beta) > tolerance) then
-                call U(k+1)%scal(1.0_dp / beta)
+                call U(k+1)%scal(one_cdp / beta)
             else
                 info = k
                 exit lanczos

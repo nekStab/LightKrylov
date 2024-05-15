@@ -18,6 +18,7 @@ module lightkrylov_IterativeSolvers
 
     public :: save_eigenspectrum
     public :: eigs
+    public :: eighs
     public :: svds
     public :: gmres
     public :: cg
@@ -27,7 +28,14 @@ module lightkrylov_IterativeSolvers
         module procedure save_eigenspectrum_dp
     end interface
 
-    interface eigs
+    interface eighs
+        module procedure eighs_rsp
+        module procedure eighs_rdp
+        module procedure eighs_csp
+        module procedure eighs_cdp
+    end interface
+
+   interface eigs
         module procedure eigs_rsp
         module procedure eigs_rdp
         module procedure eigs_csp
@@ -252,16 +260,16 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        !> Krylov subspace and Krylov subspace dimension.
+        ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_rsp), allocatable :: Xwrk(:)
         integer :: kdim_
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         real(sp), allocatable :: H(:, :)
-        !> Working arrays for the eigenvectors and eigenvalues.
+        ! Working arrays for the eigenvectors and eigenvalues.
         real(sp), allocatable :: eigvecs_wrk(:, :)
         complex(sp), allocatable :: eigvals_wrk(:)
         real(sp), allocatable :: residuals_wrk(:)
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
         logical :: verbose, trans
@@ -340,7 +348,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(1.0_sp, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
 
@@ -371,16 +379,16 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        !> Krylov subspace and Krylov subspace dimension.
+        ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_rdp), allocatable :: Xwrk(:)
         integer :: kdim_
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         real(dp), allocatable :: H(:, :)
-        !> Working arrays for the eigenvectors and eigenvalues.
+        ! Working arrays for the eigenvectors and eigenvalues.
         real(dp), allocatable :: eigvecs_wrk(:, :)
         complex(dp), allocatable :: eigvals_wrk(:)
         real(dp), allocatable :: residuals_wrk(:)
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
         logical :: verbose, trans
@@ -459,7 +467,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(1.0_dp, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
 
@@ -490,16 +498,16 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        !> Krylov subspace and Krylov subspace dimension.
+        ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_csp), allocatable :: Xwrk(:)
         integer :: kdim_
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         complex(sp), allocatable :: H(:, :)
-        !> Working arrays for the eigenvectors and eigenvalues.
+        ! Working arrays for the eigenvectors and eigenvalues.
         complex(sp), allocatable :: eigvecs_wrk(:, :)
         complex(sp), allocatable :: eigvals_wrk(:)
         real(sp), allocatable :: residuals_wrk(:)
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
         logical :: verbose, trans
@@ -568,7 +576,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
 
@@ -599,16 +607,16 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        !> Krylov subspace and Krylov subspace dimension.
+        ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_cdp), allocatable :: Xwrk(:)
         integer :: kdim_
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         complex(dp), allocatable :: H(:, :)
-        !> Working arrays for the eigenvectors and eigenvalues.
+        ! Working arrays for the eigenvectors and eigenvalues.
         complex(dp), allocatable :: eigvecs_wrk(:, :)
         complex(dp), allocatable :: eigvals_wrk(:)
         real(dp), allocatable :: residuals_wrk(:)
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
         logical :: verbose, trans
@@ -677,12 +685,425 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
 
         return
     end subroutine eigs_cdp
+
+
+    !-----------------------------------------------------------------------------
+    !-----      EIGENVALUE COMPUTATIONS FOR SYMMETRIC/HERMITIAN MATRICES     -----
+    !-----------------------------------------------------------------------------
+
+    subroutine eighs_rsp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_sym_linop_rsp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rsp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_rsp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        real(sp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        real(sp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(sp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        logical :: verbose, trans
+        real(sp) :: tol
+        real(sp) :: beta
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        verbose = optval(verbosity, .false.)
+        tol = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_rsp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rsp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+
+        ! Ritz eigenpairs computation.
+        lanczos : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            if (info < 0) then
+                call stop_error("eighs : Error in Lanczos iteration.")
+            endif
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
+            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(1:k) = compute_residual_rsp(beta, eigvecs_wrk(k, 1:k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nev) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer(int_size) :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(1:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine eighs_rsp
+
+    subroutine eighs_rdp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_sym_linop_rdp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rdp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_rdp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        real(dp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        real(dp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(dp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        logical :: verbose, trans
+        real(dp) :: tol
+        real(dp) :: beta
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        verbose = optval(verbosity, .false.)
+        tol = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_rdp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rdp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+
+        ! Ritz eigenpairs computation.
+        lanczos : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            if (info < 0) then
+                call stop_error("eighs : Error in Lanczos iteration.")
+            endif
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
+            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(1:k) = compute_residual_rdp(beta, eigvecs_wrk(k, 1:k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nev) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer(int_size) :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(1:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine eighs_rdp
+
+    subroutine eighs_csp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_hermitian_linop_csp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_csp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_csp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        complex(sp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        complex(sp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(sp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        logical :: verbose, trans
+        real(sp) :: tol
+        complex(sp) :: beta
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        verbose = optval(verbosity, .false.)
+        tol = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_csp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_csp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+
+        ! Ritz eigenpairs computation.
+        lanczos : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            if (info < 0) then
+                call stop_error("eighs : Error in Lanczos iteration.")
+            endif
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
+            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(1:k) = compute_residual_csp(beta, eigvecs_wrk(k, 1:k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nev) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer(int_size) :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(1:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine eighs_csp
+
+    subroutine eighs_cdp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_cdp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_cdp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        complex(dp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        complex(dp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(dp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        logical :: verbose, trans
+        real(dp) :: tol
+        complex(dp) :: beta
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        verbose = optval(verbosity, .false.)
+        tol = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_cdp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_cdp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+
+        ! Ritz eigenpairs computation.
+        lanczos : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            if (info < 0) then
+                call stop_error("eighs : Error in Lanczos iteration.")
+            endif
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
+            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(1:k) = compute_residual_cdp(beta, eigvecs_wrk(k, 1:k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(1:k) < tol)
+            if (conv >= nev) then
+                exit lanczos
+            endif
+        enddo lanczos
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer(int_size) :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(1:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine eighs_cdp
 
 
     !------------------------------------------------
@@ -778,7 +1199,8 @@ contains
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
-                call U(i)%axpby(1.0_sp, Uwrk(j), umat(j, i))
+                call U(i)%axpby(one_rsp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_rsp, Vwrk(j), vmat(j, i))
             enddo
         enddo
 
@@ -874,7 +1296,8 @@ contains
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
-                call U(i)%axpby(1.0_dp, Uwrk(j), umat(j, i))
+                call U(i)%axpby(one_rdp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_rdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
 
@@ -970,8 +1393,8 @@ contains
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
-                call U(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Uwrk(j), umat(j, i))
-                call V(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Vwrk(j), Vmat(j, i))
+                call U(i)%axpby(one_csp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_csp, Vwrk(j), vmat(j, i))
             enddo
         enddo
 
@@ -1067,8 +1490,8 @@ contains
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
-                call U(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Uwrk(j), umat(j, i))
-                call V(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Vwrk(j), Vmat(j, i))
+                call U(i)%axpby(one_cdp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_cdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
 
@@ -1167,7 +1590,7 @@ contains
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(1.0_sp/beta)
+        beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -1202,7 +1625,7 @@ contains
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(1.0_sp / H(k+1, k))
+                    call V(k+1)%scal(one_rsp / H(k+1, k))
                 endif
 
                 ! Least-squares problem.
@@ -1238,7 +1661,7 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(1.0_sp / beta)
+            beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
@@ -1335,7 +1758,7 @@ contains
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(1.0_dp/beta)
+        beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -1370,7 +1793,7 @@ contains
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(1.0_dp / H(k+1, k))
+                    call V(k+1)%scal(one_rdp / H(k+1, k))
                 endif
 
                 ! Least-squares problem.
@@ -1406,7 +1829,7 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(1.0_dp / beta)
+            beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
@@ -1503,7 +1926,7 @@ contains
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(1.0_sp/beta)
+        beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -1538,7 +1961,7 @@ contains
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(1.0_sp / H(k+1, k))
+                    call V(k+1)%scal(one_csp / H(k+1, k))
                 endif
 
                 ! Least-squares problem.
@@ -1574,7 +1997,7 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(1.0_sp / beta)
+            beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
@@ -1671,7 +2094,7 @@ contains
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(1.0_dp/beta)
+        beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -1706,7 +2129,7 @@ contains
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(1.0_dp / H(k+1, k))
+                    call V(k+1)%scal(one_cdp / H(k+1, k))
                 endif
 
                 ! Least-squares problem.
@@ -1742,7 +2165,7 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(1.0_dp / beta)
+            beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter

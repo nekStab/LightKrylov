@@ -8,7 +8,7 @@ module lightkrylov_utils
     ! Singular value decomposition.
     use stdlib_linalg_lapack, only: gesvd
     ! Eigenvalue problem (general + symmetric).
-    use stdlib_linalg_lapack, only: geev, syev
+    use stdlib_linalg_lapack, only: geev, syev, heev
     ! Least-squares solver.
     use stdlib_linalg_lapack, only: gels
     ! Schur factorization.
@@ -38,6 +38,7 @@ module lightkrylov_utils
     public :: inv
     public :: svd
     public :: eig
+    public :: eigh
     public :: lstsq
     public :: schur
     public :: ordschur
@@ -69,11 +70,18 @@ module lightkrylov_utils
         module procedure svd_cdp
     end interface
 
-    interface eig
+     interface eig
         module procedure eig_rsp
         module procedure eig_rdp
         module procedure eig_csp
         module procedure eig_cdp
+    end interface
+
+   interface eigh
+        module procedure eigh_rsp
+        module procedure eigh_rdp
+        module procedure eigh_csp
+        module procedure eigh_cdp
     end interface
 
     interface lstsq
@@ -361,6 +369,32 @@ contains
         return
     end subroutine eig_rsp
 
+    subroutine eigh_rsp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
+        real(sp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        real(sp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        real(sp), intent(out) :: vals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobz = "v", uplo = "u"
+        integer :: n, lwork, info, lda
+        real(sp) :: A_tilde(size(A, 1), size(A, 2))
+        real(sp), allocatable :: work(:)
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; a_tilde = a
+        lwork = max(1, 3*n-1)
+        allocate(work(lwork))
+
+        ! Eigendecomposition.
+        call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
+
+        return
+    end subroutine eigh_rsp
+
     subroutine lstsq_rsp(A, b, x)
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
         real(sp), intent(in) :: A(:, :)
@@ -567,6 +601,32 @@ contains
 
         return
     end subroutine eig_rdp
+
+    subroutine eigh_rdp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
+        real(dp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        real(dp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        real(dp), intent(out) :: vals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobz = "v", uplo = "u"
+        integer :: n, lwork, info, lda
+        real(dp) :: A_tilde(size(A, 1), size(A, 2))
+        real(dp), allocatable :: work(:)
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; a_tilde = a
+        lwork = max(1, 3*n-1)
+        allocate(work(lwork))
+
+        ! Eigendecomposition.
+        call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
+
+        return
+    end subroutine eigh_rdp
 
     subroutine lstsq_rdp(A, b, x)
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
@@ -777,6 +837,34 @@ contains
         return
     end subroutine eig_csp
 
+    subroutine eigh_csp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
+        complex(sp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(sp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        real(sp), intent(out) :: vals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobz = "v", uplo = "u"
+        integer :: n, lwork, info, lda
+        complex(sp) :: A_tilde(size(A, 1), size(A, 2))
+        complex(sp), allocatable :: work(:)
+        real(sp), allocatable :: rwork(:)
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; a_tilde = a
+        lwork = max(1, 2*n-1)
+        allocate(rwork(max(1, 3*n-2)))
+        allocate(work(lwork))
+
+        ! Eigendecomposition.
+        call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
+
+        return
+    end subroutine eigh_csp
+
     subroutine lstsq_csp(A, b, x)
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
         complex(sp), intent(in) :: A(:, :)
@@ -981,6 +1069,34 @@ contains
 
         return
     end subroutine eig_cdp
+
+    subroutine eigh_cdp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
+        complex(dp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(dp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        real(dp), intent(out) :: vals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobz = "v", uplo = "u"
+        integer :: n, lwork, info, lda
+        complex(dp) :: A_tilde(size(A, 1), size(A, 2))
+        complex(dp), allocatable :: work(:)
+        real(dp), allocatable :: rwork(:)
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; a_tilde = a
+        lwork = max(1, 2*n-1)
+        allocate(rwork(max(1, 3*n-2)))
+        allocate(work(lwork))
+
+        ! Eigendecomposition.
+        call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
+
+        return
+    end subroutine eigh_cdp
 
     subroutine lstsq_cdp(A, b, x)
         !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.

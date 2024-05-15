@@ -74,7 +74,7 @@ module LightKrylov
     public :: lanczos_tridiagonalization
 
     ! IterativeSolvers exports.
-    public :: eigs, save_eigenspectrum
+    public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
     public :: cg
