@@ -537,18 +537,20 @@ contains
 
         ! Internal variables.
         integer :: i, j
-
+    
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
         endif
 
-        if (size(Y) /= size(B, 2)) then
-            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
-        endif
-
         ! Initialize output basis.
-        if (.not. allocated(Y)) allocate(Y, source=X)
+        if (.not. allocated(Y)) then
+            allocate(Y(size(B, 2)), source=X(1))
+        else
+            if (size(Y) /= size(B, 2)) then
+                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+            endif
+        endif
 
         do j = 1, size(Y)
             call Y(j)%zero()
@@ -665,18 +667,20 @@ contains
 
         ! Internal variables.
         integer :: i, j
-
+    
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
         endif
 
-        if (size(Y) /= size(B, 2)) then
-            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
-        endif
-
         ! Initialize output basis.
-        if (.not. allocated(Y)) allocate(Y, source=X)
+        if (.not. allocated(Y)) then
+            allocate(Y(size(B, 2)), source=X(1))
+        else
+            if (size(Y) /= size(B, 2)) then
+                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+            endif
+        endif
 
         do j = 1, size(Y)
             call Y(j)%zero()
@@ -793,18 +797,20 @@ contains
 
         ! Internal variables.
         integer :: i, j
-
+    
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
         endif
 
-        if (size(Y) /= size(B, 2)) then
-            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
-        endif
-
         ! Initialize output basis.
-        if (.not. allocated(Y)) allocate(Y, source=X)
+        if (.not. allocated(Y)) then
+            allocate(Y(size(B, 2)), source=X(1))
+        else
+            if (size(Y) /= size(B, 2)) then
+                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+            endif
+        endif
 
         do j = 1, size(Y)
             call Y(j)%zero()
@@ -921,18 +927,20 @@ contains
 
         ! Internal variables.
         integer :: i, j
-
+    
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
         endif
 
-        if (size(Y) /= size(B, 2)) then
-            call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
-        endif
-
         ! Initialize output basis.
-        if (.not. allocated(Y)) allocate(Y, source=X)
+        if (.not. allocated(Y)) then
+            allocate(Y(size(B, 2)), source=X(1))
+        else
+            if (size(Y) /= size(B, 2)) then
+                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+            endif
+        endif
 
         do j = 1, size(Y)
             call Y(j)%zero()
