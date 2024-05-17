@@ -134,7 +134,7 @@ contains
     !---------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, tolerance, verbosity, transpose)
+    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, select, tolerance, verbosity, transpose)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
@@ -146,6 +146,14 @@ contains
         integer, intent(out) :: info
         !! Information flag.
         integer, optional, intent(in) :: kdim
+        interface
+            function selector(lambda) result(out) 
+                import ${kind}$
+                complex(${kind}$), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector), optional :: select
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -160,7 +168,7 @@ contains
 
         ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
-        integer :: kdim_
+        integer :: kdim_, kstart
         ! Hessenberg matrix.
         ${type}$, allocatable :: H(:, :)
         ! Working arrays for the eigenvectors and eigenvalues.
@@ -199,41 +207,55 @@ contains
 
         ! Ritz eigenpairs computation.
         H = 0.0_${kind}$
-        arnoldi_factorization: do k = 1, kdim_
-            ! Arnoldi step.
-            call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-            if (info < 0) then
-                call stop_error("eigs: Error in Arnoldi iteration.")
-            endif
 
-            ! Spectral decomposition of the k x k Hessenberg matrix.
-            eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = 0.0_${kind}$
-            call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+        kstart = 1
+        krylovschur: do while (conv < nev)
 
-            ! Compute residuals.
-            beta = H(k+1, k)
-            #:if type[0] == "c"
-            residuals_wrk(1:k) = compute_residual_${type[0]}$${kind}$(beta, eigvecs_wrk(k,1:k))
-            #:else
-            do i = 1, k
-                if (eigvals_wrk(i)%im > 0) then
-                    alpha = abs(cmplx(eigvecs_wrk(k, i), eigvecs_wrk(k, i+1), kind=${kind}$))
-                else if (eigvals_wrk(i)%im < 0) then
-                    alpha = abs(cmplx(eigvecs_wrk(k, i-1), eigvecs_wrk(k, i), kind=${kind}$))
-                else
-                    alpha = abs(eigvecs_wrk(k, i))
+           arnoldi_factorization: do k = kstart, kdim_
+                ! Arnoldi step.
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+                if (info < 0) then
+                    call stop_error("eigs: Error in Arnoldi iteration.")
                 endif
-                residuals_wrk(i) = compute_residual_${type[0]}$${kind}$(beta, alpha)
-            enddo
-            #:endif
 
-            ! Check convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nev) then
-                exit arnoldi_factorization
+                ! Spectral decomposition of the k x k Hessenberg matrix.
+                eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = 0.0_${kind}$
+                call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+
+                ! Compute residuals.
+                beta = H(k+1, k)
+                #:if type[0] == "c"
+                residuals_wrk(1:k) = compute_residual_${type[0]}$${kind}$(beta, eigvecs_wrk(k,1:k))
+                #:else
+                do i = 1, k
+                    if (eigvals_wrk(i)%im > 0) then
+                        alpha = abs(cmplx(eigvecs_wrk(k, i), eigvecs_wrk(k, i+1), kind=${kind}$))
+                    else if (eigvals_wrk(i)%im < 0) then
+                        alpha = abs(cmplx(eigvecs_wrk(k, i-1), eigvecs_wrk(k, i), kind=${kind}$))
+                    else
+                        alpha = abs(eigvecs_wrk(k, i))
+                    endif
+                    residuals_wrk(i) = compute_residual_${type[0]}$${kind}$(beta, alpha)
+                enddo
+                #:endif
+
+                ! Check convergence.
+                conv = count(residuals_wrk(1:k) < tol)
+                if (conv >= nev) then
+                    exit arnoldi_factorization
+                endif
+
+            enddo arnoldi_factorization
+
+            ! Krylov-Schur restarting procedure.
+            if (present(select)) then
+                call krylov_schur(kstart, Xwrk, H, select)
+                kstart = kstart + 1
+            else
+                exit krylovschur
             endif
 
-        enddo arnoldi_factorization
+        end do krylovschur
 
         !--------------------------------
         !-----     POST-PROCESS     -----
