@@ -415,6 +415,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ; #{if type[0] == "c"}# allocate(rwork(n)) #{endif}#
 
         #:if type[0] == "r"
+        allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
         eigvals = cmplx(wr, wi, kind=${kind}$)
         #:else
