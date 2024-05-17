@@ -72,6 +72,7 @@ module LightKrylov
     public :: initialize_krylov_subspace
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
+    public :: krylov_schur
 
     ! IterativeSolvers exports.
     public :: eigs, eighs, save_eigenspectrum

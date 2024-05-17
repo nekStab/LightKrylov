@@ -70,7 +70,7 @@ module lightkrylov_utils
         module procedure svd_cdp
     end interface
 
-     interface eig
+    interface eig
         module procedure eig_rsp
         module procedure eig_rdp
         module procedure eig_csp
@@ -450,6 +450,7 @@ contains
         n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  3*n 
         allocate(bwork(n)) ; allocate(work(lwork)) ; 
 
+        allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
         eigvals = cmplx(wr, wi, kind=sp)
 
@@ -683,6 +684,7 @@ contains
         n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  3*n 
         allocate(bwork(n)) ; allocate(work(lwork)) ; 
 
+        allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
         eigvals = cmplx(wr, wi, kind=dp)
 

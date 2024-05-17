@@ -16,6 +16,7 @@ module lightkrylov_BaseKrylov
     public :: initialize_krylov_subspace
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
+    public :: krylov_schur
 
     interface qr
         module procedure qr_no_pivoting_rsp
@@ -70,11 +71,18 @@ module lightkrylov_BaseKrylov
         module procedure lanczos_tridiagonalization_cdp
     end interface
 
-   interface lanczos_bidiagonalization
+    interface lanczos_bidiagonalization
         module procedure lanczos_bidiagonalization_rsp
         module procedure lanczos_bidiagonalization_rdp
         module procedure lanczos_bidiagonalization_csp
         module procedure lanczos_bidiagonalization_cdp
+    end interface
+
+    interface krylov_schur
+        module procedure krylov_schur_rsp
+        module procedure krylov_schur_rdp
+        module procedure krylov_schur_csp
+        module procedure krylov_schur_cdp
     end interface
 
 contains
@@ -2248,6 +2256,303 @@ contains
 
         return
     end subroutine update_tridiag_matrix_cdp
+
+
+    !----------------------------------------
+    !-----     KRYLOV-SCHUR RESTART     -----
+    !----------------------------------------
+
+    subroutine krylov_schur_rsp(n, X, H, select_eigs)
+        integer, intent(out) :: n
+        !! Number eigenvalues that have been moved to the upper
+        !! left block of the Schur factorization of `H`.
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        !! Krylov basis.
+        real(sp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        interface
+            function selector(lambda) result(out)
+                import sp
+                complex(sp), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector) :: select_eigs
+        !! Procedure to select the eigenvalues to move in the upper left-block.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        integer :: i, j, kdim
+        
+        ! Schur-related.
+        real(sp) :: Z(size(H, 2), size(H, 2))
+        complex(sp) :: eigvals(size(H, 2))
+        logical :: selected(size(H, 2))
+       
+        ! Krylov subspace dimension.
+        kdim = size(X)-1
+
+        ! Allocate and initializes variables.
+        eigvals = zero_rsp ; Z = zero_rsp
+        selected = .false.
+
+        ! Schur decomposition of the Hessenberg matrix.
+        call schur(H(:size(H, 2), :), Z, eigvals)
+
+        ! Eigenvalue selection of the upper left block.
+        selected = select_eigs(eigvals) ; n = count(selected)
+
+        ! Re-order the Schur decomposition and Schur basis.
+        call ordschur(H(:kdim, :), Z, selected)
+
+        ! Update the Hessenberg matrix and Krylov basis.
+        block
+        real(sp) :: b(size(H, 2))
+        class(abstract_vector_rsp), allocatable :: Xwrk(:)
+        
+        ! Update the Krylov basis.
+        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+
+        do i = 1, n
+            call X(i)%axpby(zero_rsp, Xwrk(i), one_rsp)
+        enddo
+
+        call X(n+1)%axpby(zero_rsp, X(kdim+1), one_rsp)
+
+        do i = n+2, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Update the Hessenberg matrix.
+        b = matmul(H(kdim+1, :), Z)
+        H(n+1, :) = b
+        H(n+2:, :) = zero_rsp
+        H(:, n+1:) = zero_rsp
+        end block
+
+        return
+    end subroutine krylov_schur_rsp
+
+    subroutine krylov_schur_rdp(n, X, H, select_eigs)
+        integer, intent(out) :: n
+        !! Number eigenvalues that have been moved to the upper
+        !! left block of the Schur factorization of `H`.
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        !! Krylov basis.
+        real(dp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        interface
+            function selector(lambda) result(out)
+                import dp
+                complex(dp), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector) :: select_eigs
+        !! Procedure to select the eigenvalues to move in the upper left-block.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        integer :: i, j, kdim
+        
+        ! Schur-related.
+        real(dp) :: Z(size(H, 2), size(H, 2))
+        complex(dp) :: eigvals(size(H, 2))
+        logical :: selected(size(H, 2))
+       
+        ! Krylov subspace dimension.
+        kdim = size(X)-1
+
+        ! Allocate and initializes variables.
+        eigvals = zero_rdp ; Z = zero_rdp
+        selected = .false.
+
+        ! Schur decomposition of the Hessenberg matrix.
+        call schur(H(:size(H, 2), :), Z, eigvals)
+
+        ! Eigenvalue selection of the upper left block.
+        selected = select_eigs(eigvals) ; n = count(selected)
+
+        ! Re-order the Schur decomposition and Schur basis.
+        call ordschur(H(:kdim, :), Z, selected)
+
+        ! Update the Hessenberg matrix and Krylov basis.
+        block
+        real(dp) :: b(size(H, 2))
+        class(abstract_vector_rdp), allocatable :: Xwrk(:)
+        
+        ! Update the Krylov basis.
+        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+
+        do i = 1, n
+            call X(i)%axpby(zero_rdp, Xwrk(i), one_rdp)
+        enddo
+
+        call X(n+1)%axpby(zero_rdp, X(kdim+1), one_rdp)
+
+        do i = n+2, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Update the Hessenberg matrix.
+        b = matmul(H(kdim+1, :), Z)
+        H(n+1, :) = b
+        H(n+2:, :) = zero_rdp
+        H(:, n+1:) = zero_rdp
+        end block
+
+        return
+    end subroutine krylov_schur_rdp
+
+    subroutine krylov_schur_csp(n, X, H, select_eigs)
+        integer, intent(out) :: n
+        !! Number eigenvalues that have been moved to the upper
+        !! left block of the Schur factorization of `H`.
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        !! Krylov basis.
+        complex(sp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        interface
+            function selector(lambda) result(out)
+                import sp
+                complex(sp), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector) :: select_eigs
+        !! Procedure to select the eigenvalues to move in the upper left-block.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        integer :: i, j, kdim
+        
+        ! Schur-related.
+        complex(sp) :: Z(size(H, 2), size(H, 2))
+        complex(sp) :: eigvals(size(H, 2))
+        logical :: selected(size(H, 2))
+       
+        ! Krylov subspace dimension.
+        kdim = size(X)-1
+
+        ! Allocate and initializes variables.
+        eigvals = zero_csp ; Z = zero_csp
+        selected = .false.
+
+        ! Schur decomposition of the Hessenberg matrix.
+        call schur(H(:size(H, 2), :), Z, eigvals)
+
+        ! Eigenvalue selection of the upper left block.
+        selected = select_eigs(eigvals) ; n = count(selected)
+
+        ! Re-order the Schur decomposition and Schur basis.
+        call ordschur(H(:kdim, :), Z, selected)
+
+        ! Update the Hessenberg matrix and Krylov basis.
+        block
+        complex(sp) :: b(size(H, 2))
+        class(abstract_vector_csp), allocatable :: Xwrk(:)
+        
+        ! Update the Krylov basis.
+        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+
+        do i = 1, n
+            call X(i)%axpby(zero_csp, Xwrk(i), one_csp)
+        enddo
+
+        call X(n+1)%axpby(zero_csp, X(kdim+1), one_csp)
+
+        do i = n+2, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Update the Hessenberg matrix.
+        b = matmul(H(kdim+1, :), Z)
+        H(n+1, :) = b
+        H(n+2:, :) = zero_csp
+        H(:, n+1:) = zero_csp
+        end block
+
+        return
+    end subroutine krylov_schur_csp
+
+    subroutine krylov_schur_cdp(n, X, H, select_eigs)
+        integer, intent(out) :: n
+        !! Number eigenvalues that have been moved to the upper
+        !! left block of the Schur factorization of `H`.
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        !! Krylov basis.
+        complex(dp), intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        interface
+            function selector(lambda) result(out)
+                import dp
+                complex(dp), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector) :: select_eigs
+        !! Procedure to select the eigenvalues to move in the upper left-block.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        integer :: i, j, kdim
+        
+        ! Schur-related.
+        complex(dp) :: Z(size(H, 2), size(H, 2))
+        complex(dp) :: eigvals(size(H, 2))
+        logical :: selected(size(H, 2))
+       
+        ! Krylov subspace dimension.
+        kdim = size(X)-1
+
+        ! Allocate and initializes variables.
+        eigvals = zero_cdp ; Z = zero_cdp
+        selected = .false.
+
+        ! Schur decomposition of the Hessenberg matrix.
+        call schur(H(:size(H, 2), :), Z, eigvals)
+
+        ! Eigenvalue selection of the upper left block.
+        selected = select_eigs(eigvals) ; n = count(selected)
+
+        ! Re-order the Schur decomposition and Schur basis.
+        call ordschur(H(:kdim, :), Z, selected)
+
+        ! Update the Hessenberg matrix and Krylov basis.
+        block
+        complex(dp) :: b(size(H, 2))
+        class(abstract_vector_cdp), allocatable :: Xwrk(:)
+        
+        ! Update the Krylov basis.
+        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+
+        do i = 1, n
+            call X(i)%axpby(zero_cdp, Xwrk(i), one_cdp)
+        enddo
+
+        call X(n+1)%axpby(zero_cdp, X(kdim+1), one_cdp)
+
+        do i = n+2, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Update the Hessenberg matrix.
+        b = matmul(H(kdim+1, :), Z)
+        H(n+1, :) = b
+        H(n+2:, :) = zero_cdp
+        H(:, n+1:) = zero_cdp
+        end block
+
+        return
+    end subroutine krylov_schur_cdp
 
 
 end module lightkrylov_BaseKrylov

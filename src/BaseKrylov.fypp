@@ -18,6 +18,7 @@ module lightkrylov_BaseKrylov
     public :: initialize_krylov_subspace
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
+    public :: krylov_schur
 
     interface qr
         #:for k1, t1 in RC_KINDS_TYPES
@@ -62,9 +63,15 @@ module lightkrylov_BaseKrylov
         #:endfor
     end interface
 
-   interface lanczos_bidiagonalization
+    interface lanczos_bidiagonalization
         #:for kind, type in RC_KINDS_TYPES
         module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface krylov_schur
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure krylov_schur_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -666,6 +673,86 @@ contains
 
         return
     end subroutine update_tridiag_matrix_${type[0]}$${kind}$
+
+    #:endfor
+
+    !----------------------------------------
+    !-----     KRYLOV-SCHUR RESTART     -----
+    !----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine krylov_schur_${type[0]}$${kind}$(n, X, H, select_eigs)
+        integer, intent(out) :: n
+        !! Number eigenvalues that have been moved to the upper
+        !! left block of the Schur factorization of `H`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        !! Krylov basis.
+        ${type}$, intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        interface
+            function selector(lambda) result(out)
+                import ${kind}$
+                complex(${kind}$), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector) :: select_eigs
+        !! Procedure to select the eigenvalues to move in the upper left-block.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        integer :: i, j, kdim
+        
+        ! Schur-related.
+        ${type}$ :: Z(size(H, 2), size(H, 2))
+        complex(${kind}$) :: eigvals(size(H, 2))
+        logical :: selected(size(H, 2))
+       
+        ! Krylov subspace dimension.
+        kdim = size(X)-1
+
+        ! Allocate and initializes variables.
+        eigvals = zero_${type[0]}$${kind}$ ; Z = zero_${type[0]}$${kind}$
+        selected = .false.
+
+        ! Schur decomposition of the Hessenberg matrix.
+        call schur(H(:size(H, 2), :), Z, eigvals)
+
+        ! Eigenvalue selection of the upper left block.
+        selected = select_eigs(eigvals) ; n = count(selected)
+
+        ! Re-order the Schur decomposition and Schur basis.
+        call ordschur(H(:kdim, :), Z, selected)
+
+        ! Update the Hessenberg matrix and Krylov basis.
+        block
+        ${type}$ :: b(size(H, 2))
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+        
+        ! Update the Krylov basis.
+        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+
+        do i = 1, n
+            call X(i)%axpby(zero_${type[0]}$${kind}$, Xwrk(i), one_${type[0]}$${kind}$)
+        enddo
+
+        call X(n+1)%axpby(zero_${type[0]}$${kind}$, X(kdim+1), one_${type[0]}$${kind}$)
+
+        do i = n+2, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Update the Hessenberg matrix.
+        b = matmul(H(kdim+1, :), Z)
+        H(n+1, :) = b
+        H(n+2:, :) = zero_${type[0]}$${kind}$
+        H(:, n+1:) = zero_${type[0]}$${kind}$
+        end block
+
+        return
+    end subroutine krylov_schur_${type[0]}$${kind}$
 
     #:endfor
 
