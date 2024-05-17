@@ -136,7 +136,7 @@ contains
         type(linop_${t1[0]}$${k1}$), intent(inout) :: linop
         #:if t1[0] == "c"
         real(${k1}$), dimension(test_size, test_size, 2) :: data
-        call random_number(data)
+        call random_number(data) ; data = data - 0.5_${kind}$
         linop%data%re = data(:, :, 1)
         linop%data%im = data(:, :, 2)
         #:else

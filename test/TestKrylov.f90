@@ -3,6 +3,7 @@ module TestKrylov
     use iso_fortran_env
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye
+    use stdlib_stats, only: median
 
     ! LightKrylov
     use LightKrylov
@@ -447,7 +448,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_rsp), &
             new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_rsp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rsp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_rsp) &
+            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_rsp), &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_rsp) &
                     ]
         return
     end subroutine collect_arnoldi_rsp_testsuite
@@ -620,6 +622,56 @@ contains
         return
     end subroutine test_block_arnoldi_basis_orthogonality_rsp
 
+    subroutine test_krylov_schur_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test operator.
+        type(linop_rsp), allocatable :: A
+        !> Krylov subspace.
+        type(vector_rsp), allocatable :: X(:), X0(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 100
+        !> Hessenberg matrix.
+        real(sp) :: H(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+
+        ! Miscellaneous.
+        integer :: n
+        real(sp) :: Xdata(test_size, kdim+1)
+        real(sp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_rsp() ; call init_rand(A)
+        A%data = A%data / norm2(abs(A%data))
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_sp
+
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! Krylov-Schur condensation.
+        call krylov_schur(n, X, H, select_eigs)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
+        call check(error, alpha < rtol_sp)
+
+        return
+    contains
+        function select_eigs(eigvals) result(selected)
+            complex(sp), intent(in) :: eigvals(:)
+            logical                       :: selected(size(eigvals))
+           
+            selected = abs(eigvals) > median(abs(eigvals))
+            return
+        end function select_eigs
+    end subroutine test_krylov_schur_rsp
+
     subroutine collect_arnoldi_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -627,7 +679,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_rdp), &
             new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_rdp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rdp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_rdp) &
+            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_rdp), &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_rdp) &
                     ]
         return
     end subroutine collect_arnoldi_rdp_testsuite
@@ -800,6 +853,56 @@ contains
         return
     end subroutine test_block_arnoldi_basis_orthogonality_rdp
 
+    subroutine test_krylov_schur_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test operator.
+        type(linop_rdp), allocatable :: A
+        !> Krylov subspace.
+        type(vector_rdp), allocatable :: X(:), X0(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 100
+        !> Hessenberg matrix.
+        real(dp) :: H(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+
+        ! Miscellaneous.
+        integer :: n
+        real(dp) :: Xdata(test_size, kdim+1)
+        real(dp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_rdp() ; call init_rand(A)
+        A%data = A%data / norm2(abs(A%data))
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_dp
+
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! Krylov-Schur condensation.
+        call krylov_schur(n, X, H, select_eigs)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
+        call check(error, alpha < rtol_dp)
+
+        return
+    contains
+        function select_eigs(eigvals) result(selected)
+            complex(dp), intent(in) :: eigvals(:)
+            logical                       :: selected(size(eigvals))
+           
+            selected = abs(eigvals) > median(abs(eigvals))
+            return
+        end function select_eigs
+    end subroutine test_krylov_schur_rdp
+
     subroutine collect_arnoldi_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -807,7 +910,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_csp), &
             new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_csp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_csp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_csp) &
+            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_csp), &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_csp) &
                     ]
         return
     end subroutine collect_arnoldi_csp_testsuite
@@ -980,6 +1084,56 @@ contains
         return
     end subroutine test_block_arnoldi_basis_orthogonality_csp
 
+    subroutine test_krylov_schur_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test operator.
+        type(linop_csp), allocatable :: A
+        !> Krylov subspace.
+        type(vector_csp), allocatable :: X(:), X0(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 100
+        !> Hessenberg matrix.
+        complex(sp) :: H(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+
+        ! Miscellaneous.
+        integer :: n
+        complex(sp) :: Xdata(test_size, kdim+1)
+        real(sp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_csp() ; call init_rand(A)
+        A%data = A%data / norm2(abs(A%data))
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_sp
+
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! Krylov-Schur condensation.
+        call krylov_schur(n, X, H, select_eigs)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
+        call check(error, alpha < rtol_sp)
+
+        return
+    contains
+        function select_eigs(eigvals) result(selected)
+            complex(sp), intent(in) :: eigvals(:)
+            logical                       :: selected(size(eigvals))
+           
+            selected = abs(eigvals) > median(abs(eigvals))
+            return
+        end function select_eigs
+    end subroutine test_krylov_schur_csp
+
     subroutine collect_arnoldi_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -987,7 +1141,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_cdp), &
             new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_cdp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_cdp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_cdp) &
+            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_cdp), &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_cdp) &
                     ]
         return
     end subroutine collect_arnoldi_cdp_testsuite
@@ -1159,6 +1314,56 @@ contains
 
         return
     end subroutine test_block_arnoldi_basis_orthogonality_cdp
+
+    subroutine test_krylov_schur_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test operator.
+        type(linop_cdp), allocatable :: A
+        !> Krylov subspace.
+        type(vector_cdp), allocatable :: X(:), X0(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 100
+        !> Hessenberg matrix.
+        complex(dp) :: H(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+
+        ! Miscellaneous.
+        integer :: n
+        complex(dp) :: Xdata(test_size, kdim+1)
+        real(dp) :: alpha
+
+        ! Initialize matrix.
+        A = linop_cdp() ; call init_rand(A)
+        A%data = A%data / norm2(abs(A%data))
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_dp
+
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! Krylov-Schur condensation.
+        call krylov_schur(n, X, H, select_eigs)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
+        call check(error, alpha < rtol_dp)
+
+        return
+    contains
+        function select_eigs(eigvals) result(selected)
+            complex(dp), intent(in) :: eigvals(:)
+            logical                       :: selected(size(eigvals))
+           
+            selected = abs(eigvals) > median(abs(eigvals))
+            return
+        end function select_eigs
+    end subroutine test_krylov_schur_cdp
 
 
     !------------------------------------------------------------------------------

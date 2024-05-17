@@ -5,6 +5,7 @@ module TestKrylov
     use iso_fortran_env
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye
+    use stdlib_stats, only: median
 
     ! LightKrylov
     use LightKrylov
@@ -145,7 +146,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_${type[0]}$${kind}$), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$) &
+            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$), &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
@@ -317,6 +319,56 @@ contains
 
         return
     end subroutine test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$
+
+    subroutine test_krylov_schur_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:), X0(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = 100
+        !> Hessenberg matrix.
+        ${type}$ :: H(kdim+1, kdim)
+        !> Information flag.
+        integer :: info
+
+        ! Miscellaneous.
+        integer :: n
+        ${type}$ :: Xdata(test_size, kdim+1)
+        real(${kind}$) :: alpha
+
+        ! Initialize matrix.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        A%data = A%data / norm2(abs(A%data))
+
+        ! Initialize Krylov subspace.
+        allocate(X(kdim+1)) ; allocate(X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        H = 0.0_${kind}$
+
+        ! Arnoldi factorization.
+        call arnoldi(A, X, H, info)
+
+        ! Krylov-Schur condensation.
+        call krylov_schur(n, X, H, select_eigs)
+
+        ! Check correctness.
+        call get_data(Xdata, X)
+        alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
+        call check(error, alpha < rtol_${kind}$)
+
+        return
+    contains
+        function select_eigs(eigvals) result(selected)
+            complex(${kind}$), intent(in) :: eigvals(:)
+            logical                       :: selected(size(eigvals))
+           
+            selected = abs(eigvals) > median(abs(eigvals))
+            return
+        end function select_eigs
+    end subroutine test_krylov_schur_${type[0]}$${kind}$
 
     #:endfor
 
