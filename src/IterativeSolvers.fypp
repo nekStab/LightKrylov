@@ -208,7 +208,7 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_${kind}$
 
-        kstart = 1
+        kstart = 1 ; conv = 0
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
