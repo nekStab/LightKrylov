@@ -387,7 +387,6 @@ contains
         data_c%im = data(:, :, 2) - 0.5_dp
         matrix = matmul(data_c, transpose(conjg(data_c))) / 4
         linop%data = matrix
-        call save_npy("data_matrix_cdp.npy", matrix)
         return
     end subroutine init_rand_hermitian_linop_csp
 
@@ -426,7 +425,6 @@ contains
         data_c%im = data(:, :, 2) - 0.5_dp
         matrix = matmul(data_c, transpose(conjg(data_c))) / 4
         linop%data = matrix
-        call save_npy("data_matrix_cdp.npy", matrix)
         return
     end subroutine init_rand_hermitian_linop_cdp
 

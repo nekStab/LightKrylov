@@ -166,7 +166,6 @@ contains
         data_c%im = data(:, :, 2) - 0.5_${kind}$
         matrix = matmul(data_c, transpose(conjg(data_c))) / 4
         linop%data = matrix
-        call save_npy("data_matrix_${t1[0]}$${kind}$.npy", matrix)
         return
     end subroutine init_rand_hermitian_linop_${t1[0]}$${k1}$
     #:endif
