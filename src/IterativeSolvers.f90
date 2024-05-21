@@ -304,7 +304,7 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_sp
 
-        kstart = 1
+        kstart = 1 ; conv = 0
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
@@ -445,7 +445,7 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_dp
 
-        kstart = 1
+        kstart = 1 ; conv = 0
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
@@ -585,7 +585,7 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_sp
 
-        kstart = 1
+        kstart = 1 ; conv = 0
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
@@ -716,7 +716,7 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_dp
 
-        kstart = 1
+        kstart = 1 ; conv = 0
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
