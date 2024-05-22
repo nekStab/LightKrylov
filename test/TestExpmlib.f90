@@ -30,7 +30,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("Dense expm.", test_dense_expm_rsp) &
+                        new_unittest("Dense expm.", test_dense_expm_rsp), &
+                        new_unittest("Krylov expm.", test_kexptA_rsp) &
                     ]
 
         return
@@ -68,11 +69,57 @@ contains
         return
     end subroutine test_dense_expm_rsp
 
+    subroutine test_kexptA_rsp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        class(linop_rsp), allocatable :: A
+        !> Basis vectors.
+        class(vector_rsp), allocatable :: Q, Xref, Xkryl
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+    
+        ! ----- Internal variables -----
+        real(sp) :: E(kdim, kdim)
+        real(sp), parameter :: tau = 0.1_sp
+        logical, parameter :: verb = .true.
+        integer, parameter :: nkmax = 64
+        real(sp) :: err
+        integer :: info
+        
+        ! Initialize data.
+        A = linop_rsp() ; call init_rand(A)
+        allocate(Q) ; call init_rand(Q)
+        allocate(Xref) ; call Xref%zero()
+        allocate(XKryl) ; call Xkryl%zero()
+
+        ! Dense computation.
+        call expm(E, tau*A%data)
+        Xref%data = matmul(E, Q%data)
+
+        ! Krylov exponential.
+        call kexpm(Xkryl, A, Q, tau, atol_sp, info, verbosity=verb, kdim=nkmax)
+
+        call save_npy("test_krylov_expm_operator.npy", A%data)
+        call save_npy("test_krylov_expm_rhs.npy", Q%data)
+        call save_npy("test_krylov_expm_ref.npy", Xref%data)
+        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
+ 
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
+
+       call check(error, err < rtol_sp)
+
+        return
+    end subroutine test_kexptA_rsp
+
     subroutine collect_expm_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("Dense expm.", test_dense_expm_rdp) &
+                        new_unittest("Dense expm.", test_dense_expm_rdp), &
+                        new_unittest("Krylov expm.", test_kexptA_rdp) &
                     ]
 
         return
@@ -110,11 +157,57 @@ contains
         return
     end subroutine test_dense_expm_rdp
 
+    subroutine test_kexptA_rdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        class(linop_rdp), allocatable :: A
+        !> Basis vectors.
+        class(vector_rdp), allocatable :: Q, Xref, Xkryl
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+    
+        ! ----- Internal variables -----
+        real(dp) :: E(kdim, kdim)
+        real(dp), parameter :: tau = 0.1_dp
+        logical, parameter :: verb = .true.
+        integer, parameter :: nkmax = 64
+        real(dp) :: err
+        integer :: info
+        
+        ! Initialize data.
+        A = linop_rdp() ; call init_rand(A)
+        allocate(Q) ; call init_rand(Q)
+        allocate(Xref) ; call Xref%zero()
+        allocate(XKryl) ; call Xkryl%zero()
+
+        ! Dense computation.
+        call expm(E, tau*A%data)
+        Xref%data = matmul(E, Q%data)
+
+        ! Krylov exponential.
+        call kexpm(Xkryl, A, Q, tau, atol_dp, info, verbosity=verb, kdim=nkmax)
+
+        call save_npy("test_krylov_expm_operator.npy", A%data)
+        call save_npy("test_krylov_expm_rhs.npy", Q%data)
+        call save_npy("test_krylov_expm_ref.npy", Xref%data)
+        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
+ 
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
+
+       call check(error, err < rtol_dp)
+
+        return
+    end subroutine test_kexptA_rdp
+
     subroutine collect_expm_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("Dense expm.", test_dense_expm_csp) &
+                        new_unittest("Dense expm.", test_dense_expm_csp), &
+                        new_unittest("Krylov expm.", test_kexptA_csp) &
                     ]
 
         return
@@ -152,11 +245,57 @@ contains
         return
     end subroutine test_dense_expm_csp
 
+    subroutine test_kexptA_csp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        class(linop_csp), allocatable :: A
+        !> Basis vectors.
+        class(vector_csp), allocatable :: Q, Xref, Xkryl
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+    
+        ! ----- Internal variables -----
+        complex(sp) :: E(kdim, kdim)
+        real(sp), parameter :: tau = 0.1_sp
+        logical, parameter :: verb = .true.
+        integer, parameter :: nkmax = 64
+        real(sp) :: err
+        integer :: info
+        
+        ! Initialize data.
+        A = linop_csp() ; call init_rand(A)
+        allocate(Q) ; call init_rand(Q)
+        allocate(Xref) ; call Xref%zero()
+        allocate(XKryl) ; call Xkryl%zero()
+
+        ! Dense computation.
+        call expm(E, tau*A%data)
+        Xref%data = matmul(E, Q%data)
+
+        ! Krylov exponential.
+        call kexpm(Xkryl, A, Q, tau, atol_sp, info, verbosity=verb, kdim=nkmax)
+
+        call save_npy("test_krylov_expm_operator.npy", A%data)
+        call save_npy("test_krylov_expm_rhs.npy", Q%data)
+        call save_npy("test_krylov_expm_ref.npy", Xref%data)
+        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
+ 
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
+
+       call check(error, err < rtol_sp)
+
+        return
+    end subroutine test_kexptA_csp
+
     subroutine collect_expm_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("Dense expm.", test_dense_expm_cdp) &
+                        new_unittest("Dense expm.", test_dense_expm_cdp), &
+                        new_unittest("Krylov expm.", test_kexptA_cdp) &
                     ]
 
         return
@@ -193,6 +332,51 @@ contains
 
         return
     end subroutine test_dense_expm_cdp
+
+    subroutine test_kexptA_cdp(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        class(linop_cdp), allocatable :: A
+        !> Basis vectors.
+        class(vector_cdp), allocatable :: Q, Xref, Xkryl
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+    
+        ! ----- Internal variables -----
+        complex(dp) :: E(kdim, kdim)
+        real(dp), parameter :: tau = 0.1_dp
+        logical, parameter :: verb = .true.
+        integer, parameter :: nkmax = 64
+        real(dp) :: err
+        integer :: info
+        
+        ! Initialize data.
+        A = linop_cdp() ; call init_rand(A)
+        allocate(Q) ; call init_rand(Q)
+        allocate(Xref) ; call Xref%zero()
+        allocate(XKryl) ; call Xkryl%zero()
+
+        ! Dense computation.
+        call expm(E, tau*A%data)
+        Xref%data = matmul(E, Q%data)
+
+        ! Krylov exponential.
+        call kexpm(Xkryl, A, Q, tau, atol_dp, info, verbosity=verb, kdim=nkmax)
+
+        call save_npy("test_krylov_expm_operator.npy", A%data)
+        call save_npy("test_krylov_expm_rhs.npy", Q%data)
+        call save_npy("test_krylov_expm_ref.npy", Xref%data)
+        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
+ 
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
+
+       call check(error, err < rtol_dp)
+
+        return
+    end subroutine test_kexptA_cdp
 
 
 end module

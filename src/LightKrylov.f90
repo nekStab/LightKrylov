@@ -83,7 +83,13 @@ module LightKrylov
     public :: cg
 
     ! ExpmLib exports.
+    public :: abstract_exptA_rsp
+    public :: abstract_exptA_rdp
+    public :: abstract_exptA_csp
+    public :: abstract_exptA_cdp
     public :: expm
+    public :: kexpm
+    public :: k_exptA
 
 contains
 

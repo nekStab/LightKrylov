@@ -68,7 +68,12 @@ module LightKrylov
     public :: cg
 
     ! ExpmLib exports.
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_exptA_${type[0]}$${kind}$
+    #:endfor
     public :: expm
+    public :: kexpm
+    public :: k_exptA
 
 contains
 

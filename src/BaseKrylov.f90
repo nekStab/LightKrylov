@@ -1201,7 +1201,7 @@ contains
                 res(i) = H(kp+i, kpm+i)
             enddo
             beta = minval(abs(res))
-            info = kp
+
             ! Exit Arnoldi loop if needed.
             if (beta < tolerance) then
                 ! Dimension of the computed invariant subspace.
@@ -1325,7 +1325,7 @@ contains
                 res(i) = H(kp+i, kpm+i)
             enddo
             beta = minval(abs(res))
-            info = kp
+
             ! Exit Arnoldi loop if needed.
             if (beta < tolerance) then
                 ! Dimension of the computed invariant subspace.
@@ -1449,7 +1449,7 @@ contains
                 res(i) = H(kp+i, kpm+i)
             enddo
             beta = minval(abs(res))
-            info = kp
+
             ! Exit Arnoldi loop if needed.
             if (beta < tolerance) then
                 ! Dimension of the computed invariant subspace.
@@ -1573,7 +1573,7 @@ contains
                 res(i) = H(kp+i, kpm+i)
             enddo
             beta = minval(abs(res))
-            info = kp
+
             ! Exit Arnoldi loop if needed.
             if (beta < tolerance) then
                 ! Dimension of the computed invariant subspace.

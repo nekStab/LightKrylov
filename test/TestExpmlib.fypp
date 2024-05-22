@@ -32,7 +32,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("Dense expm.", test_dense_expm_${type[0]}$${kind}$) &
+                        new_unittest("Dense expm.", test_dense_expm_${type[0]}$${kind}$), &
+                        new_unittest("Krylov expm.", test_kexptA_${type[0]}$${kind}$) &
                     ]
 
         return
@@ -69,6 +70,51 @@ contains
 
         return
     end subroutine test_dense_expm_${type[0]}$${kind}$
+
+    subroutine test_kexptA_${type[0]}$${kind}$(error)
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        !> Test matrix.
+        class(linop_${type[0]}$${kind}$), allocatable :: A
+        !> Basis vectors.
+        class(vector_${type[0]}$${kind}$), allocatable :: Q, Xref, Xkryl
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+    
+        ! ----- Internal variables -----
+        ${type}$ :: E(kdim, kdim)
+        real(${kind}$), parameter :: tau = 0.1_${kind}$
+        logical, parameter :: verb = .true.
+        integer, parameter :: nkmax = 64
+        real(${kind}$) :: err
+        integer :: info
+        
+        ! Initialize data.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        allocate(Q) ; call init_rand(Q)
+        allocate(Xref) ; call Xref%zero()
+        allocate(XKryl) ; call Xkryl%zero()
+
+        ! Dense computation.
+        call expm(E, tau*A%data)
+        Xref%data = matmul(E, Q%data)
+
+        ! Krylov exponential.
+        call kexpm(Xkryl, A, Q, tau, atol_${kind}$, info, verbosity=verb, kdim=nkmax)
+
+        call save_npy("test_krylov_expm_operator.npy", A%data)
+        call save_npy("test_krylov_expm_rhs.npy", Q%data)
+        call save_npy("test_krylov_expm_ref.npy", Xref%data)
+        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
+ 
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
+
+       call check(error, err < rtol_${kind}$)
+
+        return
+    end subroutine test_kexptA_${type[0]}$${kind}$
 
     #:endfor
 
