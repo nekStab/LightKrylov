@@ -23,10 +23,14 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract ${t1}$ operator with kind=${k1}$     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_${t1[0]}$${k1}$
+        !! Base type to define an abstract linear operator. All other types defined in
+        !! `LightKrylov` derive from this fundamental one.
     contains
         private
         procedure(abstract_matvec_${t1[0]}$${k1}$), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_${t1[0]}$${k1}$), pass(self), deferred, public :: rmatvec
+        !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
     end type
 
     abstract interface
@@ -44,7 +48,12 @@ module lightkrylov_AbstractLinops
     end interface
 
     type, extends(abstract_linop_${t1[0]}$${k1}$), public :: adjoint_linop_${t1[0]}$${k1}$
+        !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
+        !! are directly inherited from those used to define `A`. Note that this utility does not
+        !! compute the adjoint for you. It simply provides a utility to define a new operator
+        !! with `matvec` and `rmatvec` being switched.
         class(abstract_linop_${t1[0]}$${k1}$), allocatable :: A
+        !! Linear operator whose adjoint needs to be defined.
     contains
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_${t1[0]}$${k1}$
@@ -61,6 +70,8 @@ module lightkrylov_AbstractLinops
 
     #:for kind, type in RC_KINDS_TYPES
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: Id_${type[0]}$${kind}$
+        !! Utility type to define the Identity operator. Note that the type-bound procedures
+        !! for `matvec` and `rmatvec` do not have to be defined by the user.
         contains
         private
         procedure, pass(self), public :: matvec => id_matvec_${type[0]}$${kind}$
@@ -76,7 +87,9 @@ module lightkrylov_AbstractLinops
     #:for kind, type in RC_KINDS_TYPES
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: scaled_linop_${type[0]}$${kind}$
         #:if type[0] == "r"
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \).
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \). The definitions of `matvec`
+        !! and `rmatvec` are directly inherited from those used to define `A` and do not have to
+        !! be defined by the user.
         class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
         !! Base linear operator to be scaled.
         ${type}$ :: sigma
@@ -101,9 +114,15 @@ module lightkrylov_AbstractLinops
 
     #:for kind, type in RC_KINDS_TYPES
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: axpby_linop_${type[0]}$${kind}$
+        !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
+        !! define `A` and `B`.
         class(abstract_linop_${type[0]}$${kind}$), allocatable :: A, B
+        !! Underlying linear operators.
         ${type}$ :: alpha, beta
+        !! Scaling factors.
         logical :: transA = .false., transB = .false.
+        !! Logical flag to control whether \( \mathbf{A} \) and/or \( \mathbf{B} \) need to be transposed.
     contains
         private
         procedure, pass(self), public :: matvec => axpby_matvec_${type[0]}$${kind}$
@@ -117,6 +136,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
     type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_sym_linop_${type[0]}$${kind}$
+        !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
     end type
     #:else
@@ -124,6 +144,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_hermitian_linop_${type[0]}$${kind}$
+        !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
     end type
  
@@ -157,7 +178,6 @@ contains
         class(scaled_linop_${type[0]}$${kind}$), intent(in) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
-
         call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_${type[0]}$${kind}$
@@ -166,7 +186,6 @@ contains
         class(scaled_linop_${type[0]}$${kind}$), intent(in) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
-
         call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_${type[0]}$${kind}$

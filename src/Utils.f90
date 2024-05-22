@@ -35,12 +35,19 @@ module lightkrylov_utils
 
     public :: stop_error
     public :: assert_shape
+    ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
+    ! Compute USV^T = svd(A) for dense matrices.
     public :: svd
+    ! Compute AX = XD for general dense matrices.
     public :: eig
+    ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
+    ! Solve min || Ax - b ||_2^2.
     public :: lstsq
+    ! Compute AX = XS where S is in Schur form.
     public :: schur
+    ! Re-orders the Schur factorization of A.
     public :: ordschur
 
     public :: abstract_opts

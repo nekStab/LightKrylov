@@ -20,10 +20,14 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract real(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_rsp
+        !! Base type to define an abstract linear operator. All other types defined in
+        !! `LightKrylov` derive from this fundamental one.
     contains
         private
         procedure(abstract_matvec_rsp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_rsp), pass(self), deferred, public :: rmatvec
+        !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
     end type
 
     abstract interface
@@ -41,7 +45,12 @@ module lightkrylov_AbstractLinops
     end interface
 
     type, extends(abstract_linop_rsp), public :: adjoint_linop_rsp
+        !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
+        !! are directly inherited from those used to define `A`. Note that this utility does not
+        !! compute the adjoint for you. It simply provides a utility to define a new operator
+        !! with `matvec` and `rmatvec` being switched.
         class(abstract_linop_rsp), allocatable :: A
+        !! Linear operator whose adjoint needs to be defined.
     contains
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_rsp
@@ -54,10 +63,14 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract real(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_rdp
+        !! Base type to define an abstract linear operator. All other types defined in
+        !! `LightKrylov` derive from this fundamental one.
     contains
         private
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: rmatvec
+        !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
     end type
 
     abstract interface
@@ -75,7 +88,12 @@ module lightkrylov_AbstractLinops
     end interface
 
     type, extends(abstract_linop_rdp), public :: adjoint_linop_rdp
+        !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
+        !! are directly inherited from those used to define `A`. Note that this utility does not
+        !! compute the adjoint for you. It simply provides a utility to define a new operator
+        !! with `matvec` and `rmatvec` being switched.
         class(abstract_linop_rdp), allocatable :: A
+        !! Linear operator whose adjoint needs to be defined.
     contains
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_rdp
@@ -88,10 +106,14 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract complex(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_csp
+        !! Base type to define an abstract linear operator. All other types defined in
+        !! `LightKrylov` derive from this fundamental one.
     contains
         private
         procedure(abstract_matvec_csp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_csp), pass(self), deferred, public :: rmatvec
+        !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
     end type
 
     abstract interface
@@ -109,7 +131,12 @@ module lightkrylov_AbstractLinops
     end interface
 
     type, extends(abstract_linop_csp), public :: adjoint_linop_csp
+        !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
+        !! are directly inherited from those used to define `A`. Note that this utility does not
+        !! compute the adjoint for you. It simply provides a utility to define a new operator
+        !! with `matvec` and `rmatvec` being switched.
         class(abstract_linop_csp), allocatable :: A
+        !! Linear operator whose adjoint needs to be defined.
     contains
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_csp
@@ -122,10 +149,14 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract complex(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_cdp
+        !! Base type to define an abstract linear operator. All other types defined in
+        !! `LightKrylov` derive from this fundamental one.
     contains
         private
         procedure(abstract_matvec_cdp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_cdp), pass(self), deferred, public :: rmatvec
+        !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
     end type
 
     abstract interface
@@ -143,7 +174,12 @@ module lightkrylov_AbstractLinops
     end interface
 
     type, extends(abstract_linop_cdp), public :: adjoint_linop_cdp
+        !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
+        !! are directly inherited from those used to define `A`. Note that this utility does not
+        !! compute the adjoint for you. It simply provides a utility to define a new operator
+        !! with `matvec` and `rmatvec` being switched.
         class(abstract_linop_cdp), allocatable :: A
+        !! Linear operator whose adjoint needs to be defined.
     contains
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_cdp
@@ -158,6 +194,8 @@ module lightkrylov_AbstractLinops
     !--------------------------------------------------
 
     type, extends(abstract_linop_rsp), public :: Id_rsp
+        !! Utility type to define the Identity operator. Note that the type-bound procedures
+        !! for `matvec` and `rmatvec` do not have to be defined by the user.
         contains
         private
         procedure, pass(self), public :: matvec => id_matvec_rsp
@@ -165,6 +203,8 @@ module lightkrylov_AbstractLinops
     end type
 
     type, extends(abstract_linop_rdp), public :: Id_rdp
+        !! Utility type to define the Identity operator. Note that the type-bound procedures
+        !! for `matvec` and `rmatvec` do not have to be defined by the user.
         contains
         private
         procedure, pass(self), public :: matvec => id_matvec_rdp
@@ -172,6 +212,8 @@ module lightkrylov_AbstractLinops
     end type
 
     type, extends(abstract_linop_csp), public :: Id_csp
+        !! Utility type to define the Identity operator. Note that the type-bound procedures
+        !! for `matvec` and `rmatvec` do not have to be defined by the user.
         contains
         private
         procedure, pass(self), public :: matvec => id_matvec_csp
@@ -179,6 +221,8 @@ module lightkrylov_AbstractLinops
     end type
 
     type, extends(abstract_linop_cdp), public :: Id_cdp
+        !! Utility type to define the Identity operator. Note that the type-bound procedures
+        !! for `matvec` and `rmatvec` do not have to be defined by the user.
         contains
         private
         procedure, pass(self), public :: matvec => id_matvec_cdp
@@ -191,7 +235,9 @@ module lightkrylov_AbstractLinops
     !----------------------------------------------
 
     type, extends(abstract_linop_rsp), public :: scaled_linop_rsp
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \).
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \). The definitions of `matvec`
+        !! and `rmatvec` are directly inherited from those used to define `A` and do not have to
+        !! be defined by the user.
         class(abstract_linop_rsp), allocatable :: A
         !! Base linear operator to be scaled.
         real(sp) :: sigma
@@ -202,7 +248,9 @@ module lightkrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_rsp
     end type
     type, extends(abstract_linop_rdp), public :: scaled_linop_rdp
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \).
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \). The definitions of `matvec`
+        !! and `rmatvec` are directly inherited from those used to define `A` and do not have to
+        !! be defined by the user.
         class(abstract_linop_rdp), allocatable :: A
         !! Base linear operator to be scaled.
         real(dp) :: sigma
@@ -240,36 +288,60 @@ module lightkrylov_AbstractLinops
     !------------------------------------------------
 
     type, extends(abstract_linop_rsp), public :: axpby_linop_rsp
+        !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
+        !! define `A` and `B`.
         class(abstract_linop_rsp), allocatable :: A, B
+        !! Underlying linear operators.
         real(sp) :: alpha, beta
+        !! Scaling factors.
         logical :: transA = .false., transB = .false.
+        !! Logical flag to control whether \( \mathbf{A} \) and/or \( \mathbf{B} \) need to be transposed.
     contains
         private
         procedure, pass(self), public :: matvec => axpby_matvec_rsp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_rsp
     end type
     type, extends(abstract_linop_rdp), public :: axpby_linop_rdp
+        !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
+        !! define `A` and `B`.
         class(abstract_linop_rdp), allocatable :: A, B
+        !! Underlying linear operators.
         real(dp) :: alpha, beta
+        !! Scaling factors.
         logical :: transA = .false., transB = .false.
+        !! Logical flag to control whether \( \mathbf{A} \) and/or \( \mathbf{B} \) need to be transposed.
     contains
         private
         procedure, pass(self), public :: matvec => axpby_matvec_rdp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_rdp
     end type
     type, extends(abstract_linop_csp), public :: axpby_linop_csp
+        !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
+        !! define `A` and `B`.
         class(abstract_linop_csp), allocatable :: A, B
+        !! Underlying linear operators.
         complex(sp) :: alpha, beta
+        !! Scaling factors.
         logical :: transA = .false., transB = .false.
+        !! Logical flag to control whether \( \mathbf{A} \) and/or \( \mathbf{B} \) need to be transposed.
     contains
         private
         procedure, pass(self), public :: matvec => axpby_matvec_csp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_csp
     end type
     type, extends(abstract_linop_cdp), public :: axpby_linop_cdp
+        !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
+        !! define `A` and `B`.
         class(abstract_linop_cdp), allocatable :: A, B
+        !! Underlying linear operators.
         complex(dp) :: alpha, beta
+        !! Scaling factors.
         logical :: transA = .false., transB = .false.
+        !! Logical flag to control whether \( \mathbf{A} \) and/or \( \mathbf{B} \) need to be transposed.
     contains
         private
         procedure, pass(self), public :: matvec => axpby_matvec_cdp
@@ -280,6 +352,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
     type, abstract, extends(abstract_linop_rsp), public :: abstract_sym_linop_rsp
+        !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
     end type
 
@@ -289,6 +362,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
     type, abstract, extends(abstract_linop_rdp), public :: abstract_sym_linop_rdp
+        !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
     end type
 
@@ -298,6 +372,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_csp), public :: abstract_hermitian_linop_csp
+        !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
     end type
  
@@ -308,6 +383,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_cdp), public :: abstract_hermitian_linop_cdp
+        !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
     end type
  
@@ -357,7 +433,6 @@ contains
         class(scaled_linop_rsp), intent(in) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-
         call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_rsp
@@ -366,7 +441,6 @@ contains
         class(scaled_linop_rsp), intent(in) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-
         call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_rsp
@@ -374,7 +448,6 @@ contains
         class(scaled_linop_rdp), intent(in) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-
         call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_rdp
@@ -383,7 +456,6 @@ contains
         class(scaled_linop_rdp), intent(in) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-
         call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_rdp
@@ -391,7 +463,6 @@ contains
         class(scaled_linop_csp), intent(in) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-
         call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_csp
@@ -400,7 +471,6 @@ contains
         class(scaled_linop_csp), intent(in) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-
         call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_csp
@@ -408,7 +478,6 @@ contains
         class(scaled_linop_cdp), intent(in) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-
         call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_cdp
@@ -417,7 +486,6 @@ contains
         class(scaled_linop_cdp), intent(in) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-
         call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_cdp

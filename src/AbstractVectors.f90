@@ -82,7 +82,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_zero_rsp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_rsp, sp
-
             class(abstract_vector_rsp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_rsp
@@ -90,7 +89,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_rand_rsp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_rsp, sp
-
             class(abstract_vector_rsp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rsp
@@ -98,16 +96,15 @@ module lightkrylov_AbstractVectors
         subroutine abstract_scal_rsp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_rsp, sp
-
             class(abstract_vector_rsp), intent(inout) :: self
             !! Input/Output vector.
             real(sp), intent(in) :: alpha
+            !! Scaling factor.
         end subroutine abstract_scal_rsp
 
         subroutine abstract_axpby_rsp(self, alpha, vec, beta)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rsp, sp
-
             class(abstract_vector_rsp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_rsp), intent(in) :: vec
@@ -118,10 +115,10 @@ module lightkrylov_AbstractVectors
         function abstract_dot_rsp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_rsp, sp
-
             class(abstract_vector_rsp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             real(sp) :: alpha
+            !! Result of the dot product.
         end function abstract_dot_rsp
     end interface
 
@@ -159,7 +156,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_zero_rdp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_rdp, dp
-
             class(abstract_vector_rdp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_rdp
@@ -167,7 +163,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_rand_rdp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_rdp, dp
-
             class(abstract_vector_rdp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rdp
@@ -175,16 +170,15 @@ module lightkrylov_AbstractVectors
         subroutine abstract_scal_rdp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_rdp, dp
-
             class(abstract_vector_rdp), intent(inout) :: self
             !! Input/Output vector.
             real(dp), intent(in) :: alpha
+            !! Scaling factor.
         end subroutine abstract_scal_rdp
 
         subroutine abstract_axpby_rdp(self, alpha, vec, beta)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rdp, dp
-
             class(abstract_vector_rdp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_rdp), intent(in) :: vec
@@ -195,10 +189,10 @@ module lightkrylov_AbstractVectors
         function abstract_dot_rdp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_rdp, dp
-
             class(abstract_vector_rdp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             real(dp) :: alpha
+            !! Result of the dot product.
         end function abstract_dot_rdp
     end interface
 
@@ -236,7 +230,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_zero_csp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_csp, sp
-
             class(abstract_vector_csp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_csp
@@ -244,7 +237,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_rand_csp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_csp, sp
-
             class(abstract_vector_csp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_csp
@@ -252,16 +244,15 @@ module lightkrylov_AbstractVectors
         subroutine abstract_scal_csp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_csp, sp
-
             class(abstract_vector_csp), intent(inout) :: self
             !! Input/Output vector.
             complex(sp), intent(in) :: alpha
+            !! Scaling factor.
         end subroutine abstract_scal_csp
 
         subroutine abstract_axpby_csp(self, alpha, vec, beta)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_csp, sp
-
             class(abstract_vector_csp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_csp), intent(in) :: vec
@@ -272,10 +263,10 @@ module lightkrylov_AbstractVectors
         function abstract_dot_csp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_csp, sp
-
             class(abstract_vector_csp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             complex(sp) :: alpha
+            !! Result of the dot product.
         end function abstract_dot_csp
     end interface
 
@@ -313,7 +304,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_zero_cdp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_cdp, dp
-
             class(abstract_vector_cdp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_cdp
@@ -321,7 +311,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_rand_cdp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_cdp, dp
-
             class(abstract_vector_cdp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_cdp
@@ -329,16 +318,15 @@ module lightkrylov_AbstractVectors
         subroutine abstract_scal_cdp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_cdp, dp
-
             class(abstract_vector_cdp), intent(inout) :: self
             !! Input/Output vector.
             complex(dp), intent(in) :: alpha
+            !! Scaling factor.
         end subroutine abstract_scal_cdp
 
         subroutine abstract_axpby_cdp(self, alpha, vec, beta)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_cdp, dp
-
             class(abstract_vector_cdp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_cdp), intent(in) :: vec
@@ -349,10 +337,10 @@ module lightkrylov_AbstractVectors
         function abstract_dot_cdp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_cdp, dp
-
             class(abstract_vector_cdp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             complex(dp) :: alpha
+            !! Result of the dot product.
         end function abstract_dot_cdp
     end interface
 
@@ -371,8 +359,11 @@ contains
     end subroutine copy_vec
 
     function norm_rsp(self) result(alpha)
+        !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_rsp), intent(in) :: self
+        !! Vector whose norm needs to be computed.
         real(sp) :: alpha
+        !! Norm of the vector.
         alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
     end function norm_rsp
 
@@ -397,12 +388,16 @@ contains
     subroutine chsgn_rsp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rsp), intent(inout) :: self
+        !! Vector whose entries need to change sign.
         call self%scal(-1.0_sp)
     end subroutine chsgn_rsp
 
     function norm_rdp(self) result(alpha)
+        !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_rdp), intent(in) :: self
+        !! Vector whose norm needs to be computed.
         real(dp) :: alpha
+        !! Norm of the vector.
         alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
     end function norm_rdp
 
@@ -427,12 +422,16 @@ contains
     subroutine chsgn_rdp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rdp), intent(inout) :: self
+        !! Vector whose entries need to change sign.
         call self%scal(-1.0_dp)
     end subroutine chsgn_rdp
 
     function norm_csp(self) result(alpha)
+        !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_csp), intent(in) :: self
+        !! Vector whose norm needs to be computed.
         real(sp) :: alpha
+        !! Norm of the vector.
         alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
     end function norm_csp
 
@@ -457,12 +456,16 @@ contains
     subroutine chsgn_csp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_csp), intent(inout) :: self
+        !! Vector whose entries need to change sign.
         call self%scal(cmplx(-1.0_sp, 0.0_sp, kind=sp))
     end subroutine chsgn_csp
 
     function norm_cdp(self) result(alpha)
+        !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_cdp), intent(in) :: self
+        !! Vector whose norm needs to be computed.
         real(dp) :: alpha
+        !! Norm of the vector.
         alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
     end function norm_cdp
 
@@ -487,6 +490,7 @@ contains
     subroutine chsgn_cdp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_cdp), intent(inout) :: self
+        !! Vector whose entries need to change sign.
         call self%scal(cmplx(-1.0_dp, 0.0_dp, kind=dp))
     end subroutine chsgn_cdp
 
@@ -563,9 +567,12 @@ contains
     end subroutine linear_combination_matrix_rsp
 
     subroutine innerprod_matrix_rsp(M, X, Y)
-        class(abstract_vector_rsp), intent(in) :: X(:)
-        class(abstract_vector_rsp), intent(in) :: Y(:)
+        !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
+        !! two bases of `abstract_vector`.
+        class(abstract_vector_rsp), intent(in) :: X(:), Y(:)
+        !! Bases of `abstract_vector` whose inner products need to be computed.
         real(sp), intent(out) :: M(size(X), size(Y))
+        !! Resulting inner-product matrix.
 
         ! Local variables.
         integer :: i, j
@@ -693,9 +700,12 @@ contains
     end subroutine linear_combination_matrix_rdp
 
     subroutine innerprod_matrix_rdp(M, X, Y)
-        class(abstract_vector_rdp), intent(in) :: X(:)
-        class(abstract_vector_rdp), intent(in) :: Y(:)
+        !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
+        !! two bases of `abstract_vector`.
+        class(abstract_vector_rdp), intent(in) :: X(:), Y(:)
+        !! Bases of `abstract_vector` whose inner products need to be computed.
         real(dp), intent(out) :: M(size(X), size(Y))
+        !! Resulting inner-product matrix.
 
         ! Local variables.
         integer :: i, j
@@ -823,9 +833,12 @@ contains
     end subroutine linear_combination_matrix_csp
 
     subroutine innerprod_matrix_csp(M, X, Y)
-        class(abstract_vector_csp), intent(in) :: X(:)
-        class(abstract_vector_csp), intent(in) :: Y(:)
+        !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
+        !! two bases of `abstract_vector`.
+        class(abstract_vector_csp), intent(in) :: X(:), Y(:)
+        !! Bases of `abstract_vector` whose inner products need to be computed.
         complex(sp), intent(out) :: M(size(X), size(Y))
+        !! Resulting inner-product matrix.
 
         ! Local variables.
         integer :: i, j
@@ -953,9 +966,12 @@ contains
     end subroutine linear_combination_matrix_cdp
 
     subroutine innerprod_matrix_cdp(M, X, Y)
-        class(abstract_vector_cdp), intent(in) :: X(:)
-        class(abstract_vector_cdp), intent(in) :: Y(:)
+        !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
+        !! two bases of `abstract_vector`.
+        class(abstract_vector_cdp), intent(in) :: X(:), Y(:)
+        !! Bases of `abstract_vector` whose inner products need to be computed.
         complex(dp), intent(out) :: M(size(X), size(Y))
+        !! Resulting inner-product matrix.
 
         ! Local variables.
         integer :: i, j

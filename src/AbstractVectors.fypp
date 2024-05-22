@@ -78,7 +78,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_zero_${t1[0]}$${k1}$(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-
             class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_${t1[0]}$${k1}$
@@ -86,7 +85,6 @@ module lightkrylov_AbstractVectors
         subroutine abstract_rand_${t1[0]}$${k1}$(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-
             class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_${t1[0]}$${k1}$
@@ -94,16 +92,15 @@ module lightkrylov_AbstractVectors
         subroutine abstract_scal_${t1[0]}$${k1}$(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-
             class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
             !! Input/Output vector.
             ${t1}$, intent(in) :: alpha
+            !! Scaling factor.
         end subroutine abstract_scal_${t1[0]}$${k1}$
 
         subroutine abstract_axpby_${t1[0]}$${k1}$(self, alpha, vec, beta)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-
             class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: vec
@@ -114,10 +111,10 @@ module lightkrylov_AbstractVectors
         function abstract_dot_${t1[0]}$${k1}$(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-
             class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             ${t1}$ :: alpha
+            !! Result of the dot product.
         end function abstract_dot_${t1[0]}$${k1}$
     end interface
 
@@ -138,8 +135,11 @@ contains
 
     #:for k1, t1 in RC_KINDS_TYPES
     function norm_${t1[0]}$${k1}$(self) result(alpha)
+        !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: self
+        !! Vector whose norm needs to be computed.
         real(${k1}$) :: alpha
+        !! Norm of the vector.
         alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
     end function norm_${t1[0]}$${k1}$
 
@@ -172,6 +172,7 @@ contains
     subroutine chsgn_${t1[0]}$${k1}$(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+        !! Vector whose entries need to change sign.
         #:if t1[0] == "c"
         call self%scal(cmplx(-1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
         #:else
@@ -254,9 +255,12 @@ contains
     end subroutine linear_combination_matrix_${type[0]}$${kind}$
 
     subroutine innerprod_matrix_${type[0]}$${kind}$(M, X, Y)
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: Y(:)
+        !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
+        !! two bases of `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), Y(:)
+        !! Bases of `abstract_vector` whose inner products need to be computed.
         ${type}$, intent(out) :: M(size(X), size(Y))
+        !! Resulting inner-product matrix.
 
         ! Local variables.
         integer :: i, j
