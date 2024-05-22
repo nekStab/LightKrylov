@@ -49,6 +49,13 @@ module lightkrylov_utils
     public :: gmres_dp_opts
     public :: cg_dp_opts
 
+    public :: log2_rsp
+    public :: norml_rsp
+    public :: log2_rdp
+    public :: norml_rdp
+    public :: norml_csp
+    public :: norml_cdp
+
     interface assert_shape
         module procedure assert_shape_rsp
         module procedure assert_shape_rdp
@@ -1190,6 +1197,75 @@ contains
 
         return
     end subroutine ordschur_cdp
+
+
+    !---------------------------------
+    !-----     MISCELLANEOUS     -----
+    !---------------------------------
+
+    real(sp) function log2_rsp(x) result(y)
+        real(sp), intent(in) :: x
+        y = log(x) / log(2.0_sp)
+    end function
+
+    real(sp) function norml_rsp(A) result(norm)
+        real(sp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(sp) :: row_sum
+
+        norm = 0.0_sp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+    real(dp) function log2_rdp(x) result(y)
+        real(dp), intent(in) :: x
+        y = log(x) / log(2.0_dp)
+    end function
+
+    real(dp) function norml_rdp(A) result(norm)
+        real(dp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(dp) :: row_sum
+
+        norm = 0.0_dp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+
+    real(sp) function norml_csp(A) result(norm)
+        complex(sp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(sp) :: row_sum
+
+        norm = 0.0_sp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+
+    real(dp) function norml_cdp(A) result(norm)
+        complex(dp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(dp) :: row_sum
+
+        norm = 0.0_dp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
 
 
 end module lightkrylov_utils

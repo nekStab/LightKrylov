@@ -52,6 +52,13 @@ module lightkrylov_utils
     public :: cg_${kind}$_opts
     #:endfor
 
+    #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "r"
+    public :: log2_${type[0]}$${kind}$
+    #:endif
+    public :: norml_${type[0]}$${kind}$
+    #:endfor
+
     interface assert_shape
     #:for kind, type in RC_KINDS_TYPES
         module procedure assert_shape_${type[0]}$${kind}$
@@ -475,6 +482,33 @@ contains
 
         return
     end subroutine ordschur_${type[0]}$${kind}$
+
+    #:endfor
+
+    !---------------------------------
+    !-----     MISCELLANEOUS     -----
+    !---------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "r"
+    real(${kind}$) function log2_${type[0]}$${kind}$(x) result(y)
+        ${type}$, intent(in) :: x
+        y = log(x) / log(2.0_${kind}$)
+    end function
+    #:endif
+
+    real(${kind}$) function norml_${type[0]}$${kind}$(A) result(norm)
+        ${type}$, intent(in) :: A(:, :)
+        integer :: i, n
+        real(${kind}$) :: row_sum
+
+        norm = 0.0_${kind}$
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
 
     #:endfor
 

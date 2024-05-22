@@ -7,6 +7,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
+    use stdlib_linalg, only: eye
 
     ! LightKrylov.
     use lightkrylov_constants
@@ -21,6 +22,7 @@ module lightkrylov_expmlib
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_exptA_${type[0]}$${kind}$
     #:endfor
+    public :: expm
 
     abstract interface
         #:for kind, type in RC_KINDS_TYPES
@@ -46,6 +48,12 @@ module lightkrylov_expmlib
         #:endfor
     end interface
 
+    interface expm
+    #:for kind, type in RC_KINDS_TYPES
+        module procedure expm_${type[0]}$${kind}$
+    #:endfor
+    end interface
+
 contains
 
     !--------------------------------------------
@@ -53,16 +61,71 @@ contains
     !--------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    function expm_${type[0]}$${kind}$(A, order) result(E)
+    subroutine expm_${type[0]}$${kind}$(E, A, order)
         ${type}$, intent(in) :: A(:, :)
         !! Matrix to be exponentiated.
+        ${type}$, intent(out) :: E(:, :)
+        !! Output matrix E = exp(tA).
         integer, optional :: order
         !! Order of the Pade approximation.
-        ${type}$, allocatable :: E(:, :)
-        !! Output matrix E = exp(tA).
+
+        !----- Internal variables -----
+        ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        real(${kind}$) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n))
+        allocate(Q(n, n)) ; allocate(invQ(n, n))
+        allocate(wrk(n))
+
+        ! Compute the L-infinity norm.
+        a_norm = norml_${type[0]}$${kind}$(A)
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2_r${kind}$(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_${kind}$**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_${kind}$
+        E = eye(n) ; E = E + c*A2
+
+        Q = eye(n) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        invQ = Q ; call inv(invQ)
+        E = matmul(invQ, E)
+
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
 
         return
-    end function expm_${type[0]}$${kind}$
+    end subroutine expm_${type[0]}$${kind}$
     #:endfor
 
 end module lightkrylov_expmlib

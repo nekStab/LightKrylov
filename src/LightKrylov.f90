@@ -11,6 +11,8 @@ module LightKrylov
     use lightkrylov_BaseKrylov
     ! --> Iterative solvers.
     use lightkrylov_IterativeSolvers
+    ! --> Expmlib
+    use lightkrylov_expmlib
     implicit none
     private
 
@@ -79,6 +81,9 @@ module LightKrylov
     public :: svds
     public :: gmres
     public :: cg
+
+    ! ExpmLib exports.
+    public :: expm
 
 contains
 
