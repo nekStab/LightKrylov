@@ -242,9 +242,8 @@ contains
       ! Optional: size of blocks, default = 1
       integer, optional, intent(in) :: block_size
       ! Internal variables.
-      class(abstract_vector), allocatable :: Xwrk(:)
       real(wp), allocatable :: wrk(:, :)
-      integer :: p, kpm, kp, kpp
+      integer :: p, kpm, kp, kpp, i, j
 
       ! Deals with optional non-unity block size
       p = optval(block_size, 1)
@@ -253,22 +252,24 @@ contains
       kp = kpm + p
       kpp = kp + p
       allocate (wrk(1:kp, 1:p)); wrk = 0.0_wp
-      allocate (Xwrk(1:kp), source=X(1:kp)); call mat_zero(Xwrk)
       ! Orthogonalize residual w.r.t to previously computed Krylov vectors.
       ! - Pass 1
       call mat_mult(H(1:kp, kpm + 1:kp), X(1:kp), X(kp + 1:kpp))
-      call mat_mult(Xwrk(1:p), X(1:kp), H(1:kp, kpm + 1:kp))
-      ! Project out existing vectors
-      call mat_axpby(X(kp + 1:kpp), 1.0_wp, Xwrk(1:p), -1.0_wp)
+      do i = 1, p
+         do j = 1, kp
+            call X(kp+i)%axpby(1.0_wp, X(j), -H(j, kpm+i))
+         enddo
+      enddo
       ! - Pass 2
       call mat_mult(wrk, X(1:kp), X(kp + 1:kpp))
-      call mat_mult(Xwrk(1:p), X(1:kp), wrk)
-      ! Project out existing vectors
-      call mat_axpby(X(kp + 1:kpp), 1.0_wp, Xwrk(1:p), -1.0_wp)
+      do i = 1, p
+         do j = 1, kp
+            call X(kp+i)%axpby(1.0_wp, X(j), -wrk(j, i))
+         enddo
+      enddo
 
       ! Update Hessenberg matrix with data from second pass
       call mat_axpby(H(1:kp, kpm + 1:kp), 1.0_wp, wrk, 1.0_wp)
-      deallocate (wrk)
 
       return
    end subroutine update_hessenberg_matrix

@@ -4,35 +4,37 @@ module TestExpm
    use TestMatrices
    use TestUtils
    use LightKrylov_expmlib
+   use LightKrylov_utils
    use testdrive  , only : new_unittest, unittest_type, error_type, check
+   use stdlib_linalg, only: diag
    use stdlib_math, only : all_close
    use stdlib_io_npy, only : save_npy
    implicit none
  
    private
  
-   public :: collect_expm_testsuite
+   public :: collect_dense_matrix_functions_testsuite, collect_kexpm_testsuite
 
-  contains
- 
+contains
+
    !---------------------------------------------------------
    !-----                                               -----
-   !-----     TEST SUITE FOR THE MATRIX EXPONENTIAL     -----
+   !-----     TEST SUITE FOR DENSE MATRIX FUNCTIONS     -----
    !-----                                               -----
    !---------------------------------------------------------
  
-   subroutine collect_expm_testsuite(testsuite)
+  subroutine collect_dense_matrix_functions_testsuite(testsuite)
      !> Collection of tests.
      type(unittest_type), allocatable, intent(out) :: testsuite(:)
- 
-     testsuite = [&
-          new_unittest("Dense Matrix Exponential", test_dense_matrix_exponential), &
-          new_unittest("Krylov Matrix Exponential", test_krylov_matrix_exponential), &
-          new_unittest("Block Krylov Matrix Exponential", test_block_krylov_matrix_exponential) &
-          ]
- 
-     return
-   end subroutine collect_expm_testsuite
+
+      testsuite = [&
+           new_unittest("Dense Matrix Exponential", test_dense_matrix_exponential), &
+           new_unittest("Dense Matrix Square Root - SPD", test_dense_sqrtm_SPD), &
+           new_unittest("Dense Matrix Square Root - symmetric positive semi-definite", test_dense_sqrtm_pos_semidefinite) &
+           ]
+
+      return
+   end subroutine collect_dense_matrix_functions_testsuite
 
    subroutine test_dense_matrix_exponential(error)
       !> This function tests the scaling and squaring followed by rational Pade approximation
@@ -68,15 +70,99 @@ module TestExpm
       call expm(E, A)
 
       call check(error, maxval(E-Eref) < rtol)
-      
+
       return
    end subroutine test_dense_matrix_exponential
+
+   subroutine test_dense_sqrtm_SPD(error)
+      !> This function tests the matrix version of the sqrt function for the case of
+      ! a SPD matrix
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Problem dimension.
+      integer, parameter :: n = 5
+      !> Test matrix.
+      real(kind=wp) :: A(n, n)
+      real(kind=wp) :: sqrtmA(n, n)
+      complex(kind=wp) :: lambda(n)
+      integer :: i, j
+
+      ! --> Initialize matrix.
+      call random_number(A)
+      ! make SPD
+      A = 0.5_wp*(A + transpose(A))
+      call eig(A, sqrtmA, lambda)
+      do i = 1,n
+         lambda(i) = abs(lambda(i)) + 0.1_wp
+      end do
+      ! reconstruct matrix
+      A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+      
+      ! compute matrix square root
+      call sqrtm(sqrtmA, A)
+
+      call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < 10*atol)
+
+      return
+   end subroutine test_dense_sqrtm_SPD
+
+   subroutine test_dense_sqrtm_pos_semidefinite(error)
+      !> This function tests the matrix version of the sqrt function for the case 
+      ! of a symmetric semi-definite matrix
+
+      !> Error type to be returned.
+      type(error_type), allocatable, intent(out) :: error
+      !> Problem dimension.
+      integer, parameter :: n = 5
+      !> Test matrix.
+      real(kind=wp) :: A(n, n)
+      real(kind=wp) :: sqrtmA(n, n)
+      complex(kind=wp) :: lambda(n)
+      integer :: i, j
+
+      ! --> Initialize matrix.
+      call random_number(A)
+      ! make positive semi-definite
+      A = 0.5_wp*(A + transpose(A))
+      call eig(A, sqrtmA, lambda)
+      do i = 1,n-1
+         lambda(i) = abs(lambda(i)) + 0.1_wp
+      end do
+      lambda(n) = 0.0_wp
+      ! reconstruct matrix
+      A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+
+      ! compute matrix square root
+      call sqrtm(sqrtmA, A)
+
+      call check(error, abs(maxval(matmul(sqrtmA, sqrtmA) - A)) < 10*atol)
+
+      return
+   end subroutine test_dense_sqrtm_pos_semidefinite
+   
+   !---------------------------------------------------------
+   !-----                                               -----
+   !-----     TEST SUITE FOR THE MATRIX EXPONENTIAL     -----
+   !-----                                               -----
+   !---------------------------------------------------------
+
+   subroutine collect_kexpm_testsuite(testsuite)
+      !> Collection of tests.
+      type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+      testsuite = [&
+            new_unittest("Krylov Matrix Exponential", test_krylov_matrix_exponential), &
+            new_unittest("Block Krylov Matrix Exponential", test_block_krylov_matrix_exponential) &
+            ]
+
+       return
+   end subroutine collect_kexpm_testsuite
 
    subroutine test_krylov_matrix_exponential(error)
       !> This function tests the Krylov based approximation of the action of the exponential
       ! propagator against the dense computation for a random operator, a random RHS and a 
       ! typical value of tau.
-
       !> Error type to be returned.
       type(error_type), allocatable, intent(out) :: error
       class(rmatrix), allocatable :: A
@@ -118,14 +204,14 @@ module TestExpm
       ! --> Initialize rhs.
       call init_rand(Q)
       call get_data(Qdata, Q)
-      
+
       !> Comparison is dense computation (10th order Pade approximation)
       call expm(Edata, tau*Adata)
       Xdata = matmul(Edata,Qdata)
-     
+
       !> Copy reference data into Krylov vector
       call put_data(Xref, Xdata)
-      
+
       !> Compute Krylov matrix exponential using the arnoldi method
       call kexpm(Xkryl, A, Q, tau, tol, info, verbosity = verb, kdim = nkmax)
 
@@ -140,13 +226,13 @@ module TestExpm
 #undef DEBUG
 
       call Xkryl%axpby(1.0_wp, Xref, -1.0_wp)
-      
+
       !> Compute 2-norm of the error
       err = Xkryl%norm()
       if (verb) write(*, *) '    true error:          ||error||_2 = ', err
-     
+
       call check(error, err < rtol)
-      
+
       return
    end subroutine test_krylov_matrix_exponential
 
@@ -200,7 +286,7 @@ module TestExpm
       allocate(Q(1:p))
       call init_rand(Q) 
       call get_data(Qdata, Q)
-      
+
       !> Comparison is dense computation (10th order Pade approximation)
       call expm(Edata, tau*Adata)
       Xdata = matmul(Edata,Qdata)
@@ -244,9 +330,9 @@ module TestExpm
       call mat_mult(err,Xkryl_block(1:p),Xkryl_block(1:p))
       alpha = sqrt(norm2(err))
       if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
-     
+
       call check(error, alpha < rtol)
-      
+
       return
    end subroutine test_block_krylov_matrix_exponential
 

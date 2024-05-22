@@ -39,17 +39,17 @@ module LightKrylov_expmlib
       subroutine abstract_exptA(vec_out, A, vec_in, tau, info, trans)
          import abstract_linop, abstract_vector, abstract_opts, wp
          !! Abstract interface to use a user-defined exponential propagator  in `LightKrylov`
-         class(abstract_vector),         intent(out) :: vec_out
+         class(abstract_vector),         intent(out)   :: vec_out
          !! Solution vector
-         class(abstract_linop),          intent(in)  :: A
+         class(abstract_linop),          intent(inout)    :: A
          !! Linear operator
-         class(abstract_vector),         intent(in)  :: vec_in
+         class(abstract_vector),         intent(in)    :: vec_in
          !! Input vector
-         real(kind=wp),                  intent(in)  :: tau
+         real(kind=wp),                  intent(in)    :: tau
          !! Time horizon for integration
-         integer,                        intent(out) :: info
+         integer,                        intent(out)   :: info
          !! Information flag
-         logical, optional,              intent(in)  :: trans
+         logical, optional,              intent(in)    :: trans
          !! Use transpose?
       end subroutine abstract_exptA
    end interface
@@ -63,24 +63,24 @@ contains
 
    subroutine k_exptA(vec_out, A, vec_in, tau, info, trans)
       
-      class(abstract_vector),         intent(out) :: vec_out
+      class(abstract_vector),         intent(out)   :: vec_out
       !! Solution vector
-      class(abstract_linop),          intent(in)  :: A
+      class(abstract_linop),          intent(inout)    :: A
       !! Linear problem
-      class(abstract_vector),         intent(in)  :: vec_in
+      class(abstract_vector),         intent(in)    :: vec_in
       !! Input vector
-      real(kind=wp),                  intent(in)  :: tau
+      real(kind=wp),                  intent(in)    :: tau
       !! Time horizon for integration
-      integer,                        intent(out) :: info
+      integer,                        intent(out)   :: info
       !! Information flag
-      logical, optional,              intent(in)  :: trans
+      logical, optional,              intent(in)    :: trans
       !! Use transpose?
 
       ! Internals
-      real(kind=wp)                               :: tol
-      integer                                     :: kdim
-      logical                                     :: verbose
-      logical                                     :: transpose
+      real(kind=wp)                                 :: tol
+      integer                                       :: kdim
+      logical                                       :: verbose
+      logical                                       :: transpose
 
       tol     = atol
       verbose = .false.
@@ -97,40 +97,40 @@ contains
       !! on the projection of the operator on a (small) Krylov subspace.
       !! 
       !! Matrix version of the subroutine `kexpm_vec`.
-      class(abstract_vector), intent(out) :: C(:)
+      class(abstract_vector), intent(out)   :: C(:)
       !! Best approximation of the value of \( e^{\tau \mathbf{A} } \mathbf{B} \) in the computed Krylov subspace
-      class(abstract_linop),  intent(in)  :: A
+      class(abstract_linop),  intent(inout) :: A
       !! Linear operator to be exponentiated
-      class(abstract_vector), intent(in)  :: B(:)
+      class(abstract_vector), intent(in)    :: B(:)
       !! Input matrix on which to apply \( e^{\tau \mathbf{A} } \)
-      real(kind=wp),          intent(in)  :: tau
+      real(kind=wp),          intent(in)    :: tau
       !! Time horizon for exponentiation
-      real(kind=wp),          intent(in)  :: tol
+      real(kind=wp),          intent(in)    :: tol
       !! Solution tolerance based on error estimates
-      integer,                intent(out) :: info
+      integer,                intent(out)   :: info
       !! Information flag
-      logical, optional,      intent(in)  :: trans
+      logical, optional,      intent(in)    :: trans
       !! Use transpose?
-      logical, optional,      intent(in)  :: verbosity
+      logical, optional,      intent(in)    :: verbosity
       !! Verbosity control (default `.false.`)
-      integer, optional,      intent(in)  :: kdim
+      integer, optional,      intent(in)    :: kdim
       !! Maximum size of the Krylov subspace (default `kdim = 100`)
       
       ! Internal variables
       integer, parameter :: kmax = 100
       integer :: i, k, p, kpm, kp, kpp, nk
       ! Arnoldi factorisation
-      class(abstract_vector), allocatable :: X(:)
-      real(kind=wp), allocatable          :: H(:,:)
+      class(abstract_vector), allocatable   :: X(:)
+      real(kind=wp), allocatable            :: H(:,:)
       ! Normalisation & temp arrays
-      real(kind=wp), allocatable          :: R(:,:), E(:,:), em(:,:)
-      integer, allocatable                :: perm(:), ptrans(:)
-      class(abstract_vector), allocatable :: Xwrk(:), Cwrk(:)
+      real(kind=wp), allocatable            :: R(:,:), E(:,:), em(:,:)
+      integer, allocatable                  :: perm(:), ptrans(:)
+      class(abstract_vector), allocatable   :: Xwrk(:), Cwrk(:)
       real(kind=wp) :: err_est
       ! Optional arguments
-      logical                             :: transpose
-      logical                             :: verbose
-      integer                             :: nstep
+      logical                               :: transpose
+      logical                               :: verbose
+      integer                               :: nstep
 
       ! Determine block size
       p = size(B)
@@ -310,39 +310,39 @@ contains
       !!  - C. Moler & C. VanLoan, "Nineteen Dubious Ways to Compute the Exponential of a 
       !!    Matrix, Twenty-Five Years Later", SIAM Review, Volume 45, Number 1, March 2003, 
       !!    pages 3-49.
-      class(abstract_vector), intent(out) :: c
+      class(abstract_vector), intent(out)   :: c
       !! Best approximation of the value of \( e^{\tau \mathbf{A} } \mathbf{b} \) in the computed Krylov subspace
-      class(abstract_linop),  intent(in)  :: A
+      class(abstract_linop),  intent(inout) :: A
       !! Linear operator to be exponentiated
-      class(abstract_vector), intent(in)  :: b
+      class(abstract_vector), intent(in)    :: b
       !! Input vector on which to apply \( \mbox{exp}(\tau \mathbf{A}) \)
-      real(kind=wp),          intent(in)  :: tau
+      real(kind=wp),          intent(in)    :: tau
       !! Time horizon for exponentiation
-      real(kind=wp),          intent(in)  :: tol
+      real(kind=wp),          intent(in)    :: tol
       !! Solution tolerance based on error estimates
-      integer,                intent(out) :: info
+      integer,                intent(out)   :: info
       !! Information flag
-      logical, optional,      intent(in)  :: trans
+      logical, optional,      intent(in)    :: trans
       !! Use transpose?
-      logical, optional,      intent(in)  :: verbosity
+      logical, optional,      intent(in)    :: verbosity
       !! Verbosity control (default `.false.`)
-      integer, optional,      intent(in)  :: kdim
+      integer, optional,      intent(in)    :: kdim
       !! Maximum size of the Krylov subspace (default `kdim = 100`)
          
       ! Internal variables
       integer, parameter :: kmax = 100
       integer :: i, k, p, km, kp, nk
       ! Arnoldi factorisation
-      class(abstract_vector), allocatable :: X(:)
-      real(kind=wp), allocatable          :: H(:,:)
+      class(abstract_vector), allocatable   :: X(:)
+      real(kind=wp), allocatable            :: H(:,:)
       ! Normalisation & temp arrays
-      real(kind=wp), allocatable          :: E(:,:)
-      class(abstract_vector), allocatable :: xwrk
-      real(kind=wp)                       :: err_est, beta
+      real(kind=wp), allocatable            :: E(:,:)
+      class(abstract_vector), allocatable   :: xwrk
+      real(kind=wp)                         :: err_est, beta
       ! Optinal arguments
-      logical                             :: transpose
-      logical                             :: verbose
-      integer                             :: nstep
+      logical                               :: transpose
+      logical                               :: verbose
+      integer                               :: nstep
       
       ! Deal with optional arguemnts
       transpose = optval(trans, .false.)

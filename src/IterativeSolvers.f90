@@ -320,7 +320,16 @@ contains
 
          ! Compute residuals.
          beta = H(k + 1, k) ! Get Krylov residual vector norm.
-         residuals(1:k) = compute_residual(beta, abs(eigvecs(k, 1:k)))
+         do i = 1, k
+            if (eigvals(i)%im > 0.0_wp) then
+               alpha = abs(cmplx(eigvecs(k, i), eigvecs(k, i+1), kind=wp))
+            else if (eigvals(i)%im < 0.0_wp) then
+               alpha = abs(cmplx(eigvecs(k, i-1), -eigvecs(k, i), kind=wp))
+            else
+               alpha = abs(eigvecs(k, i))
+            endif
+            residuals(i) = compute_residual(beta, alpha)
+         end do
 
          ! Check convergence.
          conv = count(residuals(1:k) < tol)
