@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>gmres &ndash; LightKrylov</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="../lists/files.html">Source Files</a></li>
+            <li><a href="../lists/modules.html">Modules</a></li>
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+            <li><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                   <li><a href="../lists/types.html">Derived Types</a></li>
+       
+            </ul>
+        
+            </li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                             <li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+          </ul>
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+  <div class="row">
+    <h1>gmres
+      <small>Subroutine</small>
+      
+    </h1>
+      <div class="row" id="info-bar">
+    <div class="col-lg-12">
+      <div class="well well-sm">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+          <li id="statements"><i class="fa fa-list-ol"></i>
+            <a data-toggle="tooltip"
+               data-placement="bottom" data-html="true"
+               title=" 9.1% of total for procedures.">126 statements</a>
+          </li>
+
+            <li id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/IterativeSolvers.f90"> Source File</a>
+            </li>
+        </ul>
+        <ol class="breadcrumb in-well text-right">
+              <li><a href='../sourcefile/iterativesolvers.f90.html'>IterativeSolvers.f90</a></li>
+              <li><a href='../module/lightkrylov_iterativesolvers.html'>lightkrylov_IterativeSolvers</a></li>
+          <li class="active">gmres</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+    })
+  </script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+      <div id="sidebar">
+      <h3>Contents</h3>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+  </div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    <h2>public  subroutine gmres(A, b, x, info, preconditioner, options, transpose)  
+</h2>
+    
+
+    <p>Implements the classic, unpreconditioned Generalized Minimal Residual (GMRES) algorithm
+for solving nonsymmetric linear systems of equations <script type="math/tex"> \mathbf{Ax} = \mathbf{b}</script>.</p>
+<p><strong>Algorithmic Features</strong></p>
+<ul>
+<li>Constructs a size-m Krylov subspace.</li>
+<li>Utilizes Arnoldi factorization to generate an orthonormal basis for the Krylov subspace.</li>
+<li>Employs a least-squares solve to determine the optimal linear combination of the Krylov vectors.</li>
+<li>Updates the approximate solution based on the least-squares solution.</li>
+</ul>
+<p>*<em>Advantages</em></p>
+<ul>
+<li>Suitable for nonsymmetric and ill-conditioned matrices.</li>
+<li>Produces monotonically decreasing residuals.</li>
+</ul>
+<p><strong>Limitations</strong></p>
+<ul>
+<li>Original gmres uses Givens rotations to update the least-squares solution. For the
+  sake of simplicity, we use directly the lstsq solver from LAPACK.</li>
+</ul>
+<p><strong>References</strong></p>
+<ul>
+<li>Saad, Y., and Schultz, M. H. (1986). "GMRES: A Generalized Minimal Residual Algorithm
+  for Solving Nonsymmetric Linear Systems," SIAM Journal on Scientific and Statistical
+  Computing, 7(3), 856–869.</li>
+</ul>
+
+    <h3>Arguments</h3>
+        <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-a~10"></span>
+              class(<a href='../type/abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+                <p>Linear operator to be inverted.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-b~3"></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>b</strong></td>
+            <td>
+                <p>Right-hand side vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-x~5"></span>
+              class(<a href='../type/abstract_vector.html'>abstract_vector</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+                <p>Solution vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-info~9"></span>
+              integer,
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+                <p>Information flag.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-preconditioner~2"></span>
+              class(<a href='../type/abstract_preconditioner.html'>abstract_preconditioner</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>preconditioner</strong></td>
+            <td>
+                <p>Preconditioner.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-options~2"></span>
+              class(<a href='../type/abstract_opts.html'>abstract_opts</a>),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>options</strong></td>
+            <td>
+                <p>Options.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-transpose~3"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>transpose</strong></td>
+            <td>
+                <p>Whether <script type="math/tex">\mathbf{A}</script> (<code>.false.</code>) or <script type="math/tex">\mathbf{A}^T</script> (<code>.true.</code>) is used.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <br>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Calls</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: proc~~gmres~~CallsGraph Pages: 1 -->
+<svg id="procgmresCallsGraph" width="487pt" height="214pt"
+ viewBox="0.00 0.00 487.00 214.08" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~gmres~~CallsGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 210.08)">
+<title>proc~~gmres~~CallsGraph</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-210.08 483,-210.08 483,4 -4,4"/>
+<!-- proc~gmres -->
+<g id="proc~~gmres~~CallsGraph_node1" class="node">
+<title>proc~gmres</title>
+<polygon fill="none" stroke="black" points="54,-98 0,-98 0,-74 54,-74 54,-98"/>
+<text text-anchor="middle" x="27" y="-83.6" font-family="Helvetica,sans-Serif" font-size="10.50">gmres</text>
+</g>
+<!-- optval -->
+<g id="proc~~gmres~~CallsGraph_node2" class="node">
+<title>optval</title>
+<polygon fill="#777777" stroke="#777777" points="470.5,-191 416.5,-191 416.5,-167 470.5,-167 470.5,-191"/>
+<text text-anchor="middle" x="443.5" y="-176.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">optval</text>
+</g>
+<!-- proc~gmres&#45;&gt;optval -->
+<g id="proc~~gmres~~CallsGraph_edge1" class="edge">
+<title>proc~gmres&#45;&gt;optval</title>
+<path fill="none" stroke="#000000" d="M39.8,-98.24C51.57,-109.86 70.65,-127.12 90,-138 166.08,-180.78 189.88,-186.81 276,-201 318.1,-207.94 329.82,-207.43 372,-201 383.55,-199.24 395.81,-195.95 406.81,-192.43"/>
+<polygon fill="#000000" stroke="#000000" points="408.13,-195.68 416.5,-189.18 405.9,-189.04 408.13,-195.68"/>
+</g>
+<!-- proc~initialize_krylov_subspace -->
+<g id="proc~~gmres~~CallsGraph_node3" class="node">
+<title>proc~initialize_krylov_subspace</title>
+<g id="a_proc~~gmres~~CallsGraph_node3"><a xlink:href=".././proc/initialize_krylov_subspace.html" xlink:title="initialize_krylov_subspace">
+<polygon fill="#d9534f" stroke="#d9534f" points="240,-129 90,-129 90,-105 240,-105 240,-129"/>
+<text text-anchor="middle" x="165" y="-114.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initialize_krylov_subspace</text>
+</a>
+</g>
+</g>
+<!-- proc~gmres&#45;&gt;proc~initialize_krylov_subspace -->
+<g id="proc~~gmres~~CallsGraph_edge2" class="edge">
+<title>proc~gmres&#45;&gt;proc~initialize_krylov_subspace</title>
+<path fill="none" stroke="#000000" d="M54.22,-91.98C67.58,-95.02 84.45,-98.87 100.94,-102.63"/>
+<polygon fill="#000000" stroke="#000000" points="100.59,-106.14 111.11,-104.95 102.14,-99.31 100.59,-106.14"/>
+</g>
+<!-- proc~lstsq -->
+<g id="proc~~gmres~~CallsGraph_node4" class="node">
+<title>proc~lstsq</title>
+<g id="a_proc~~gmres~~CallsGraph_node4"><a xlink:href=".././proc/lstsq.html" xlink:title="lstsq">
+<polygon fill="#d9534f" stroke="#d9534f" points="192,-77 138,-77 138,-53 192,-53 192,-77"/>
+<text text-anchor="middle" x="165" y="-62.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lstsq</text>
+</a>
+</g>
+</g>
+<!-- proc~gmres&#45;&gt;proc~lstsq -->
+<g id="proc~~gmres~~CallsGraph_edge3" class="edge">
+<title>proc~gmres&#45;&gt;proc~lstsq</title>
+<path fill="none" stroke="#000000" d="M54.22,-81.95C75.11,-78.73 104.57,-74.18 127.72,-70.6"/>
+<polygon fill="#000000" stroke="#000000" points="128.51,-74.02 137.86,-69.04 127.44,-67.1 128.51,-74.02"/>
+</g>
+<!-- proc~get_vec -->
+<g id="proc~~gmres~~CallsGraph_node5" class="node">
+<title>proc~get_vec</title>
+<g id="a_proc~~gmres~~CallsGraph_node5"><a xlink:href=".././proc/get_vec.html" xlink:title="get_vec">
+<polygon fill="#d9534f" stroke="#d9534f" points="192,-35 138,-35 138,-11 192,-11 192,-35"/>
+<text text-anchor="middle" x="165" y="-20.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">get_vec</text>
+</a>
+</g>
+</g>
+<!-- proc~gmres&#45;&gt;proc~get_vec -->
+<g id="proc~~gmres~~CallsGraph_edge4" class="edge">
+<title>proc~gmres&#45;&gt;proc~get_vec</title>
+<path fill="none" stroke="#000000" d="M42.97,-73.84C55.05,-64.55 72.79,-52.02 90,-44 101.92,-38.45 115.61,-34.06 127.95,-30.76"/>
+<polygon fill="#000000" stroke="#000000" points="129.09,-34.09 137.93,-28.25 127.38,-27.3 129.09,-34.09"/>
+</g>
+<!-- proc~mat_zero -->
+<g id="proc~~gmres~~CallsGraph_node6" class="node">
+<title>proc~mat_zero</title>
+<g id="a_proc~~gmres~~CallsGraph_node6"><a xlink:href=".././proc/mat_zero.html" xlink:title="mat_zero">
+<polygon fill="#d9534f" stroke="#d9534f" points="354.5,-192 293.5,-192 293.5,-168 354.5,-168 354.5,-192"/>
+<text text-anchor="middle" x="324" y="-177.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">mat_zero</text>
+</a>
+</g>
+</g>
+<!-- proc~initialize_krylov_subspace&#45;&gt;proc~mat_zero -->
+<g id="proc~~gmres~~CallsGraph_edge5" class="edge">
+<title>proc~initialize_krylov_subspace&#45;&gt;proc~mat_zero</title>
+<path fill="none" stroke="#000000" d="M196.27,-129.15C221.19,-139.15 256.7,-153.39 283.79,-164.27"/>
+<polygon fill="#000000" stroke="#000000" points="282.77,-167.63 293.35,-168.1 285.38,-161.13 282.77,-167.63"/>
+</g>
+<!-- proc~qr_factorization -->
+<g id="proc~~gmres~~CallsGraph_node8" class="node">
+<title>proc~qr_factorization</title>
+<g id="a_proc~~gmres~~CallsGraph_node8"><a xlink:href=".././proc/qr_factorization.html" xlink:title="qr_factorization">
+<polygon fill="#d9534f" stroke="#d9534f" points="372,-150 276,-150 276,-126 372,-126 372,-150"/>
+<text text-anchor="middle" x="324" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">qr_factorization</text>
+</a>
+</g>
+</g>
+<!-- proc~initialize_krylov_subspace&#45;&gt;proc~qr_factorization -->
+<g id="proc~~gmres~~CallsGraph_edge6" class="edge">
+<title>proc~initialize_krylov_subspace&#45;&gt;proc~qr_factorization</title>
+<path fill="none" stroke="#000000" d="M240.36,-126.95C248.83,-128.08 257.37,-129.22 265.57,-130.32"/>
+<polygon fill="#000000" stroke="#000000" points="265.38,-133.82 275.76,-131.68 266.31,-126.89 265.38,-133.82"/>
+</g>
+<!-- proc~mat_copy -->
+<g id="proc~~gmres~~CallsGraph_node9" class="node">
+<title>proc~mat_copy</title>
+<g id="a_proc~~gmres~~CallsGraph_node9"><a xlink:href=".././proc/mat_copy.html" xlink:title="mat_copy">
+<polygon fill="#d9534f" stroke="#d9534f" points="356,-108 292,-108 292,-84 356,-84 356,-108"/>
+<text text-anchor="middle" x="324" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">mat_copy</text>
+</a>
+</g>
+</g>
+<!-- proc~initialize_krylov_subspace&#45;&gt;proc~mat_copy -->
+<g id="proc~~gmres~~CallsGraph_edge7" class="edge">
+<title>proc~initialize_krylov_subspace&#45;&gt;proc~mat_copy</title>
+<path fill="none" stroke="#000000" d="M240.36,-107.05C254.6,-105.15 269.03,-103.22 281.75,-101.52"/>
+<polygon fill="#000000" stroke="#000000" points="282.55,-104.94 292,-100.15 281.62,-98 282.55,-104.94"/>
+</g>
+<!-- proc~stop_error -->
+<g id="proc~~gmres~~CallsGraph_node7" class="node">
+<title>proc~stop_error</title>
+<g id="a_proc~~gmres~~CallsGraph_node7"><a xlink:href=".././proc/stop_error.html" xlink:title="stop_error">
+<polygon fill="#d9534f" stroke="#d9534f" points="357.5,-66 290.5,-66 290.5,-42 357.5,-42 357.5,-66"/>
+<text text-anchor="middle" x="324" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stop_error</text>
+</a>
+</g>
+</g>
+<!-- proc~lstsq&#45;&gt;proc~stop_error -->
+<g id="proc~~gmres~~CallsGraph_edge9" class="edge">
+<title>proc~lstsq&#45;&gt;proc~stop_error</title>
+<path fill="none" stroke="#000000" d="M192.28,-63.16C216.2,-61.48 251.95,-58.98 280.02,-57.01"/>
+<polygon fill="#000000" stroke="#000000" points="280.64,-60.48 290.37,-56.29 280.15,-53.49 280.64,-60.48"/>
+</g>
+<!-- dgels -->
+<g id="proc~~gmres~~CallsGraph_node10" class="node">
+<title>dgels</title>
+<polygon fill="#777777" stroke="#777777" points="351,-24 297,-24 297,0 351,0 351,-24"/>
+<text text-anchor="middle" x="324" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">dgels</text>
+</g>
+<!-- proc~lstsq&#45;&gt;dgels -->
+<g id="proc~~gmres~~CallsGraph_edge8" class="edge">
+<title>proc~lstsq&#45;&gt;dgels</title>
+<path fill="none" stroke="#000000" d="M192.21,-58.19C206.44,-54.34 224.29,-49.24 240,-44 255.59,-38.79 272.57,-32.39 287.08,-26.67"/>
+<polygon fill="#000000" stroke="#000000" points="288.68,-29.8 296.68,-22.85 286.1,-23.3 288.68,-29.8"/>
+</g>
+<!-- proc~qr_factorization&#45;&gt;optval -->
+<g id="proc~~gmres~~CallsGraph_edge10" class="edge">
+<title>proc~qr_factorization&#45;&gt;optval</title>
+<path fill="none" stroke="#000000" d="M359.62,-150.08C374.5,-155.27 391.88,-161.34 406.88,-166.57"/>
+<polygon fill="#000000" stroke="#000000" points="405.74,-169.88 416.33,-169.87 408.04,-163.27 405.74,-169.88"/>
+</g>
+<!-- interface~mat_axpby -->
+<g id="proc~~gmres~~CallsGraph_node11" class="node">
+<title>interface~mat_axpby</title>
+<g id="a_proc~~gmres~~CallsGraph_node11"><a xlink:href=".././interface/mat_axpby.html" xlink:title="mat_axpby">
+<polygon fill="#a7506f" stroke="#a7506f" points="479,-108 408,-108 408,-84 479,-84 479,-108"/>
+<text text-anchor="middle" x="443.5" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">mat_axpby</text>
+</a>
+</g>
+</g>
+<!-- proc~mat_copy&#45;&gt;interface~mat_axpby -->
+<g id="proc~~gmres~~CallsGraph_edge11" class="edge">
+<title>proc~mat_copy&#45;&gt;interface~mat_axpby</title>
+<path fill="none" stroke="#000000" d="M356.18,-96C368.86,-96 383.75,-96 397.56,-96"/>
+<polygon fill="#000000" stroke="#000000" points="397.86,-99.5 407.86,-96 397.86,-92.5 397.86,-99.5"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="597pt" height="32pt"
+ viewBox="0.00 0.00 596.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-28 592.5,-28 592.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="70,-24 0,-24 0,0 70,0 70,-24"/>
+<text text-anchor="middle" x="35" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="146,-24 88,-24 88,0 146,0 146,-24"/>
+<text text-anchor="middle" x="117" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node">
+<title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="225.5,-24 164.5,-24 164.5,0 225.5,0 225.5,-24"/>
+<text text-anchor="middle" x="195" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node">
+<title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="388.5,-24 243.5,-24 243.5,0 388.5,0 388.5,-24"/>
+<text text-anchor="middle" x="316" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="465,-24 407,-24 407,0 465,0 465,-24"/>
+<text text-anchor="middle" x="436" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="588.5,-24 483.5,-24 483.5,0 588.5,0 588.5,-24"/>
+<text text-anchor="middle" x="536" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+        <h3>Contents</h3>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+
+    
+    
+
+    
+    
+
+
+    
+    
+    </div>
+  </div>
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>LightKrylov was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>&copy; 2024 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+  </body>
+</html>

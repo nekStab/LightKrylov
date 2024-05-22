@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>lightkrylov_utils &ndash; LightKrylov</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="../lists/files.html">Source Files</a></li>
+            <li><a href="../lists/modules.html">Modules</a></li>
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+            <li><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                   <li><a href="../lists/types.html">Derived Types</a></li>
+       
+            </ul>
+        
+            </li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/absint.html">Abstract Interfaces</a></li>
+                             <li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+          </ul>
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+  <div class="row">
+    <h1>lightkrylov_utils 
+    <small>Module</small>
+    
+    </h1>
+      <div class="row" id="info-bar">
+    <div class="col-lg-12">
+      <div class="well well-sm">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+          <li id="statements"><i class="fa fa-list-ol"></i>
+            <a data-toggle="tooltip"
+               data-placement="bottom" data-html="true"
+               title="20.3% of total for modules and submodules.">486 statements</a>
+          </li>
+
+            <li id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/Utils.f90"> Source File</a>
+            </li>
+        </ul>
+        <ol class="breadcrumb in-well text-right">
+              <li><a href='../sourcefile/utils.f90.html'>Utils.f90</a></li>
+          <li class="active">lightkrylov_utils</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+    })
+  </script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+      <div id="sidebar">
+      <h3>Contents</h3>
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#vars-0">Variables</a>
+        </h3>
+      </div>
+      <div id="vars-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#variable-wp~4">wp</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#variable-atol~6">atol</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#variable-rtol~6">rtol</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#inters-0">Interfaces</a>
+        </h3>
+      </div>
+      <div id="inters-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-assert_shape">assert_shape</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-inv">inv</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-svd">svd</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-eig">eig</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-eigh">eigh</a>
+        </div>
+      </div>
+    </div>
+
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#types-0">Derived Types</a>
+        </h3>
+      </div>
+      <div id="types-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#type-abstract_opts">abstract_opts</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#type-gmres_opts">gmres_opts</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#type-cg_opts">cg_opts</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#funcs-0">Functions</a>
+        </h3>
+      </div>
+      <div id="funcs-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-log2">log2</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-norml">norml</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-iargsort">iargsort</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#subs-0">Subroutines</a>
+        </h3>
+      </div>
+      <div id="subs-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-stop_error">stop_error</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-print_mat">print_mat</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-lstsq">lstsq</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-schur">schur</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-ordschur">ordschur</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-sqrtm">sqrtm</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+
+
+  </div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    <p>This module provides a set of utilities used throughout <code>LightKrylov</code>.
+It also provides a selection wrapper around LAPACK to perform standard linear algebra computations.</p>
+<br>        <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Uses</h3>
+      </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+            <ul class="list-inline">
+                <li><a href="http://fortranwiki.org/fortran/show/iso_fortran_env">iso_fortran_env</a></li>
+                <li>stdlib_linalg</li>
+            </ul>
+          </li>
+          <li class="list-group-item">
+            <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: module~~lightkrylov_utils~~UsesGraph Pages: 1 -->
+<svg id="modulelightkrylov_utilsUsesGraph" width="233pt" height="74pt"
+ viewBox="0.00 0.00 233.00 74.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~lightkrylov_utils~~UsesGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 70)">
+<title>module~~lightkrylov_utils~~UsesGraph</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-70 229,-70 229,4 -4,4"/>
+<!-- module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsesGraph_node1" class="node">
+<title>module~lightkrylov_utils</title>
+<polygon fill="none" stroke="black" points="225,-45 130,-45 130,-21 225,-21 225,-45"/>
+<text text-anchor="middle" x="177.5" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50">lightkrylov_utils</text>
+</g>
+<!-- iso_fortran_env -->
+<g id="module~~lightkrylov_utils~~UsesGraph_node2" class="node">
+<title>iso_fortran_env</title>
+<g id="a_module~~lightkrylov_utils~~UsesGraph_node2"><a xlink:href="http://fortranwiki.org/fortran/show/iso_fortran_env" xlink:title="iso_fortran_env">
+<polygon fill="#337ab7" stroke="#337ab7" points="94,-66 0,-66 0,-42 94,-42 94,-66"/>
+<text text-anchor="middle" x="47" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">iso_fortran_env</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_utils&#45;&gt;iso_fortran_env -->
+<g id="module~~lightkrylov_utils~~UsesGraph_edge1" class="edge">
+<title>module~lightkrylov_utils&#45;&gt;iso_fortran_env</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M129.75,-40.64C121.39,-42.01 112.61,-43.44 104.02,-44.84"/>
+<polygon fill="#000000" stroke="#000000" points="103.38,-41.4 94.08,-46.47 104.51,-48.31 103.38,-41.4"/>
+</g>
+<!-- stdlib_linalg -->
+<g id="module~~lightkrylov_utils~~UsesGraph_node3" class="node">
+<title>stdlib_linalg</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="85,-24 9,-24 9,0 85,0 85,-24"/>
+<text text-anchor="middle" x="47" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stdlib_linalg</text>
+</g>
+<!-- module~lightkrylov_utils&#45;&gt;stdlib_linalg -->
+<g id="module~~lightkrylov_utils~~UsesGraph_edge2" class="edge">
+<title>module~lightkrylov_utils&#45;&gt;stdlib_linalg</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M129.75,-25.36C118.54,-23.53 106.56,-21.57 95.33,-19.73"/>
+<polygon fill="#000000" stroke="#000000" points="95.7,-16.25 85.26,-18.09 94.57,-23.16 95.7,-16.25"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="518pt" height="32pt"
+ viewBox="0.00 0.00 517.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-28 513.5,-28 513.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234,-24 164,-24 164,0 234,0 234,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="310,-24 252,-24 252,0 310,0 310,-24"/>
+<text text-anchor="middle" x="281" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="386,-24 328,-24 328,0 386,0 386,-24"/>
+<text text-anchor="middle" x="357" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="509.5,-24 404.5,-24 404.5,0 509.5,0 509.5,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+          </li>
+      </ul>
+    </div>
+
+        <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Used by</h3>
+      </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+            <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: module~~lightkrylov_utils~~UsedByGraph Pages: 1 -->
+<svg id="modulelightkrylov_utilsUsedByGraph" width="641pt" height="79pt"
+ viewBox="0.00 0.00 641.00 78.56" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~lightkrylov_utils~~UsedByGraph" class="graph" transform="scale(1.43 1.43) rotate(0) translate(4 108.01)">
+<title>module~~lightkrylov_utils~~UsedByGraph</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-108.01 910,-108.01 910,4 -4,4"/>
+<!-- module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_node1" class="node">
+<title>module~lightkrylov_utils</title>
+<polygon fill="none" stroke="black" points="95,-93.7 0,-93.7 0,-69.7 95,-69.7 95,-93.7"/>
+<text text-anchor="middle" x="47.5" y="-79.3" font-family="Helvetica,sans-Serif" font-size="10.50">lightkrylov_utils</text>
+</g>
+<!-- module~lightkrylov_rationalkrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_node2" class="node">
+<title>module~lightkrylov_rationalkrylov</title>
+<g id="a_module~~lightkrylov_utils~~UsedByGraph_node2"><a xlink:href=".././module/lightkrylov_rationalkrylov.html" xlink:title="lightkrylov_RationalKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="643,-73.7 493,-73.7 493,-49.7 643,-49.7 643,-73.7"/>
+<text text-anchor="middle" x="568" y="-59.3" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_RationalKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge1" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M527.98,-73.78C490.38,-84.53 431.68,-98.95 379.5,-101.7"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.5,-101.7C298.05,-105.88 278.05,-102.59 198.5,-101.7"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_node3" class="node">
+<title>module~lightkrylov_iterativesolvers</title>
+<g id="a_module~~lightkrylov_utils~~UsedByGraph_node3"><a xlink:href=".././module/lightkrylov_iterativesolvers.html" xlink:title="lightkrylov_IterativeSolvers">
+<polygon fill="#337ab7" stroke="#337ab7" points="457,-73.7 300,-73.7 300,-49.7 457,-49.7 457,-73.7"/>
+<text text-anchor="middle" x="378.5" y="-59.3" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_IterativeSolvers</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge7" class="edge">
+<title>module~lightkrylov_rationalkrylov&#45;&gt;module~lightkrylov_iterativesolvers</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M492.9,-61.7C484.43,-61.7 475.75,-61.7 467.13,-61.7"/>
+<polygon fill="#000000" stroke="#000000" points="467.07,-58.2 457.07,-61.7 467.07,-65.2 467.07,-58.2"/>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge3" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M344.99,-73.71C309.49,-85.7 250.72,-102.28 198.5,-101.7"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M196.5,-101.7C166.27,-101.36 132.87,-97.18 105.47,-92.73"/>
+<polygon fill="#000000" stroke="#000000" points="105.72,-89.22 95.27,-91.02 104.56,-96.12 105.72,-89.22"/>
+</g>
+<!-- module~lightkrylov_basekrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_node5" class="node">
+<title>module~lightkrylov_basekrylov</title>
+<g id="a_module~~lightkrylov_utils~~UsedByGraph_node5"><a xlink:href=".././module/lightkrylov_basekrylov.html" xlink:title="lightkrylov_BaseKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="264,-73.7 131,-73.7 131,-49.7 264,-49.7 264,-73.7"/>
+<text text-anchor="middle" x="197.5" y="-59.3" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">lightkrylov_BaseKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_basekrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge10" class="edge">
+<title>module~lightkrylov_iterativesolvers&#45;&gt;module~lightkrylov_basekrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M299.77,-61.7C291.32,-61.7 282.72,-61.7 274.3,-61.7"/>
+<polygon fill="#000000" stroke="#000000" points="274.12,-58.2 264.12,-61.7 274.12,-65.2 274.12,-58.2"/>
+</g>
+<!-- module~lightkrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_node4" class="node">
+<title>module~lightkrylov</title>
+<g id="a_module~~lightkrylov_utils~~UsedByGraph_node4"><a xlink:href=".././module/lightkrylov.html" xlink:title="LightKrylov">
+<polygon fill="#337ab7" stroke="#337ab7" points="751,-73.7 679,-73.7 679,-49.7 751,-49.7 751,-73.7"/>
+<text text-anchor="middle" x="715" y="-59.3" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">LightKrylov</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge2" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M684.07,-73.77C655.17,-84.51 609.91,-98.93 569,-101.7"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M567,-101.7C483.86,-107.33 462.72,-97.32 379.5,-101.7"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_rationalkrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge6" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_rationalkrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M678.9,-61.7C670.98,-61.7 662.25,-61.7 653.26,-61.7"/>
+<polygon fill="#000000" stroke="#000000" points="653.05,-58.2 643.05,-61.7 653.05,-65.2 653.05,-58.2"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_iterativesolvers -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge8" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_iterativesolvers</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M567,-21.7C541.27,-19.63 477.88,-34.75 431.91,-46.99"/>
+<polygon fill="#000000" stroke="#000000" points="430.85,-43.66 422.1,-49.63 432.67,-50.42 430.85,-43.66"/>
+</g>
+<!-- module~lightkrylov&#45;&gt;module~lightkrylov_basekrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge11" class="edge">
+<title>module~lightkrylov&#45;&gt;module~lightkrylov_basekrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M683.5,-49.65C654.57,-39.1 609.61,-24.96 569,-21.7"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M567,-21.7C483.93,-15.02 461.79,-8.53 379.5,-21.7"/>
+</g>
+<!-- module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge4" class="edge">
+<title>module~lightkrylov_basekrylov&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M130.72,-70.59C122.16,-71.74 113.45,-72.92 105.06,-74.05"/>
+<polygon fill="#000000" stroke="#000000" points="104.45,-70.6 95.01,-75.41 105.39,-77.54 104.45,-70.6"/>
+</g>
+<!-- module~lightkrylov_expmlib -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_node6" class="node">
+<title>module~lightkrylov_expmlib</title>
+<g id="a_module~~lightkrylov_utils~~UsedByGraph_node6"><a xlink:href=".././module/lightkrylov_expmlib.html" xlink:title="LightKrylov_expmlib">
+<polygon fill="#337ab7" stroke="#337ab7" points="906,-73.7 787,-73.7 787,-49.7 906,-49.7 906,-73.7"/>
+<text text-anchor="middle" x="846.5" y="-59.3" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">LightKrylov_expmlib</text>
+</a>
+</g>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;module~lightkrylov_utils -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge5" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;module~lightkrylov_utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M796.17,-73.78C781.68,-77.02 765.76,-80.29 751,-82.7 670.73,-95.76 650.14,-96.2 569,-101.7"/>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;module~lightkrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge9" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;module~lightkrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M786.81,-61.7C778.25,-61.7 769.54,-61.7 761.3,-61.7"/>
+<polygon fill="#000000" stroke="#000000" points="761.15,-58.2 751.15,-61.7 761.15,-65.2 761.15,-58.2"/>
+</g>
+<!-- module~lightkrylov_expmlib&#45;&gt;module~lightkrylov_basekrylov -->
+<g id="module~~lightkrylov_utils~~UsedByGraph_edge12" class="edge">
+<title>module~lightkrylov_expmlib&#45;&gt;module~lightkrylov_basekrylov</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M811.3,-49.64C771.47,-36.29 703.43,-15.62 643,-7.7 526.72,7.54 495.3,-3.16 379.5,-21.7"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.5,-21.7C334.98,-27.31 287.64,-38.09 252.34,-47.05"/>
+<polygon fill="#000000" stroke="#000000" points="251.06,-43.76 242.25,-49.64 252.8,-50.54 251.06,-43.76"/>
+</g>
+</g>
+</svg>
+</div><script>var panmodulelightkrylov_utilsUsedByGraph = svgPanZoom('#modulelightkrylov_utilsUsedByGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="518pt" height="32pt"
+ viewBox="0.00 0.00 517.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-28 513.5,-28 513.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234,-24 164,-24 164,0 234,0 234,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="310,-24 252,-24 252,0 310,0 310,-24"/>
+<text text-anchor="middle" x="281" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="386,-24 328,-24 328,0 386,0 386,-24"/>
+<text text-anchor="middle" x="357" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="509.5,-24 404.5,-24 404.5,0 509.5,0 509.5,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+          </li>
+      </ul>
+    </div>
+
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+        <h3>Contents</h3>
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#vars-1">Variables</a>
+        </h3>
+      </div>
+      <div id="vars-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#variable-wp~4">wp</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#variable-atol~6">atol</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#variable-rtol~6">rtol</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#inters-1">Interfaces</a>
+        </h3>
+      </div>
+      <div id="inters-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-assert_shape">assert_shape</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-inv">inv</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-svd">svd</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-eig">eig</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#interface-eigh">eigh</a>
+        </div>
+      </div>
+    </div>
+
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#types-1">Derived Types</a>
+        </h3>
+      </div>
+      <div id="types-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#type-abstract_opts">abstract_opts</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#type-gmres_opts">gmres_opts</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#type-cg_opts">cg_opts</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#funcs-1">Functions</a>
+        </h3>
+      </div>
+      <div id="funcs-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-log2">log2</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-norml">norml</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-iargsort">iargsort</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#subs-1">Subroutines</a>
+        </h3>
+      </div>
+      <div id="subs-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-stop_error">stop_error</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-print_mat">print_mat</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-lstsq">lstsq</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-schur">schur</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-ordschur">ordschur</a>
+            <a class="list-group-item" href="../module/lightkrylov_utils.html#proc-sqrtm">sqrtm</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+
+    <section>
+    <h2>Variables</h2>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Visibility</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+<th></th><th>Initial</th>        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-wp~4"></span>
+              integer,
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>wp</strong></td>
+<td> =</td>
+                <td>selected_real_kind(15, 307)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-atol~6"></span>
+              real(kind=wp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>atol</strong></td>
+<td> =</td>
+                <td>epsilon(1.0_wp)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rtol~6"></span>
+              real(kind=wp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>rtol</strong></td>
+<td> =</td>
+                <td>sqrt(atol)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    </section>
+    <br>
+    
+    
+    <section>
+   <h2>Interfaces</h2>
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="interface-assert_shape"></span>
+      <h3>public        interface <a href='../interface/assert_shape.html'>assert_shape</a> 
+      </h3>
+    </div>
+      <div class="panel-body">
+        <p>Interface to assert the shape of a matrix.</p>
+      </div>
+    <ul class="list-group">
+          <li class="list-group-item">
+                <h3>
+    private  subroutine dassert_shape(A, size, routine, matname)  
+
+    </h3>
+  <p>Utility function to assert the shape of a real-valued matrix.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix whose dimensions need to be asserted.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>size</strong>(:)</td>
+            <td>
+                <p>Expected dimensions of A.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>routine</strong></td>
+            <td>
+                <p>Name of the routine where assertion is done.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>matname</strong></td>
+            <td>
+                <p>Name of the asserted matrix.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+          <li class="list-group-item">
+                <h3>
+    private  subroutine zassert_shape(A, size, routine, matname)  
+
+    </h3>
+  <p>Utility function to assert the shape of a complex-valued matrix.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix whose dimensions need to be asserted.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>size</strong>(:)</td>
+            <td>
+                <p>Expected dimensions of A.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>routine</strong></td>
+            <td>
+                <p>Name of the routine where assertion is done.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>matname</strong></td>
+            <td>
+                <p>Name of the asserted matrix.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+    </ul>
+  </div>
+
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="interface-inv"></span>
+      <h3>public        interface <a href='../interface/inv.html'>inv</a> 
+      </h3>
+    </div>
+      <div class="panel-body">
+        <p>Interface to compute the inverse of a matrix (in-place).</p>
+      </div>
+    <ul class="list-group">
+          <li class="list-group-item">
+                <h3>
+    private  subroutine dinv(A)  
+
+    </h3>
+  <p>In-place inversion of a real-valued matrix A using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix to be inverted (in-place).</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+          <li class="list-group-item">
+                <h3>
+    private  subroutine zinv(A)  
+
+    </h3>
+  <p>In-place inversion of a complex-valued matrix using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix be inverted (in-place).</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+    </ul>
+  </div>
+
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="interface-svd"></span>
+      <h3>public        interface <a href='../interface/svd.html'>svd</a> 
+      </h3>
+    </div>
+      <div class="panel-body">
+        <p>Interface to compute the SVD of a matrix.</p>
+      </div>
+    <ul class="list-group">
+          <li class="list-group-item">
+                <h3>
+    private  subroutine dsvd(A, U, S, V)  
+
+    </h3>
+  <p>Singular Value Decomposition of a real-valued matrix using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix to be factorized.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>U</strong>(:,:)</td>
+            <td>
+                <p>Left singular vectors.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>S</strong>(:)</td>
+            <td>
+                <p>Singular values.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>V</strong>(:,:)</td>
+            <td>
+                <p>Right singular vectors.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+          <li class="list-group-item">
+                <h3>
+    private  subroutine zsvd(A, U, S, V)  
+
+    </h3>
+  <p>Singular Value Decomposition of a complex-valued matrix using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix to be factorized.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>U</strong>(:,:)</td>
+            <td>
+                <p>Left singular vectors.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>S</strong>(:)</td>
+            <td>
+                <p>Singular values.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>V</strong>(:,:)</td>
+            <td>
+                <p>Right singular vectors.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+    </ul>
+  </div>
+
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="interface-eig"></span>
+      <h3>public        interface <a href='../interface/eig.html'>eig</a> 
+      </h3>
+    </div>
+      <div class="panel-body">
+        <p>Interface to compute the EVD of a matrix.</p>
+      </div>
+    <ul class="list-group">
+          <li class="list-group-item">
+                <h3>
+    private  subroutine deig(A, vecs, vals)  
+
+    </h3>
+  <p>Eigenvalue decomposition of a real-valued matrix using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix to be factorized.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vecs</strong>(:,:)</td>
+            <td>
+                <p>Eigenvectors.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vals</strong>(:)</td>
+            <td>
+                <p>Eigenvalues.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+    </ul>
+  </div>
+
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="interface-eigh"></span>
+      <h3>public        interface <a href='../interface/eigh.html'>eigh</a> 
+      </h3>
+    </div>
+      <div class="panel-body">
+        <p>Interface to compute the EVD of a sym. pos. def. matrix.</p>
+      </div>
+    <ul class="list-group">
+          <li class="list-group-item">
+                <h3>
+    private  subroutine deigh(A, vecs, vals)  
+
+    </h3>
+  <p>Eigenvalue decomposition of a real-valued sym. pos. def. matrix using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+                <p>Matrix to be factorized.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vecs</strong>(:,:)</td>
+            <td>
+                <p>Eigenvectors.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vals</strong>(:)</td>
+            <td>
+                <p>Eigenvalues.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+    </ul>
+  </div>
+
+    </section>
+  <br>
+
+    
+    <section>
+     <h2>Derived Types</h2>
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="type-abstract_opts"></span>
+      <h3>
+        type, public&nbsp;::&nbsp;
+        <a href='../type/abstract_opts.html'>abstract_opts</a>
+        
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>Abstract type container for options to be passed to the various iterative solvers.</p>
+
+
+
+
+    </div>
+  </div>
+
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="type-gmres_opts"></span>
+      <h3>
+        type, public, extends(<a href='../type/abstract_opts.html'>abstract_opts</a>)&nbsp;::&nbsp;
+        <a href='../type/gmres_opts.html'>gmres_opts</a>
+        
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>Extended <code>abstract_opts</code> type to pass options to the <code>gmres</code> solver.</p>
+
+        <h4>Components</h4>
+          <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Visibility</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+<th></th><th>Initial</th>        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-kdim~4"></span>
+              integer,
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>kdim</strong></td>
+<td> =</td>
+                <td>30</td>
+            <td>
+<p>Dimension of the Krylov subspace (default: 30).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-maxiter"></span>
+              integer,
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>maxiter</strong></td>
+<td> =</td>
+                <td>10</td>
+            <td>
+<p>Maximum number of <code>gmres</code> restarts (default: 10)</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-atol"></span>
+              real(kind=wp),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>atol</strong></td>
+<td> =</td>
+                <td>atol</td>
+            <td>
+<p>Absolute tolerance (default: <code>epsilon(1.0_wp)</code>).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rtol"></span>
+              real(kind=wp),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>rtol</strong></td>
+<td> =</td>
+                <td>rtol</td>
+            <td>
+<p>Relative tolerance (default: <code>sqrt(atol)</code>).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-verbose~2"></span>
+              logical,
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>verbose</strong></td>
+<td> =</td>
+                <td>.false.</td>
+            <td>
+<p>Verbosity control (default: <code>.false.</code>).</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+
+    </div>
+  </div>
+
+       <div class="panel panel-default">
+    <div class="panel-heading codesum">
+      <span class="anchor" id="type-cg_opts"></span>
+      <h3>
+        type, public, extends(<a href='../type/abstract_opts.html'>abstract_opts</a>)&nbsp;::&nbsp;
+        <a href='../type/cg_opts.html'>cg_opts</a>
+        
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>Extended <code>abstract_opts</code> type to pass options to the <code>cg</code> solver.</p>
+
+        <h4>Components</h4>
+          <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Visibility</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+<th></th><th>Initial</th>        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-maxiter~2"></span>
+              integer,
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>maxiter</strong></td>
+<td> =</td>
+                <td>100</td>
+            <td>
+<p>Maximum number of <code>cg</code> iterations (default: 100).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rtol~2"></span>
+              real(kind=wp),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>rtol</strong></td>
+<td> =</td>
+                <td>rtol</td>
+            <td>
+<p>Relative tolerance (default: <code>sqrt(atol)</code>).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-atol~2"></span>
+              real(kind=wp),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>atol</strong></td>
+<td> =</td>
+                <td>atol</td>
+            <td>
+<p>Absolute tolerance (default: <code>epsilon(1.0_wp)</code>).</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-verbose~3"></span>
+              logical,
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>verbose</strong></td>
+<td> =</td>
+                <td>.false.</td>
+            <td>
+<p>Verbosity control (default: <code>.false.</code>).</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+
+    </div>
+  </div>
+
+    </section>
+  <br>
+    
+ 
+    <section>
+    <h2>Functions</h2>
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-log2"></span><h3>public  function <a href='../proc/log2.html'>log2</a>(x) result(y)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>compute the base-2 logarithm of the input</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=wp)</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-norml"></span><h3>public  function <a href='../proc/norml.html'>norml</a>(A) result(norm)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>compute the infinity norm of the real-valued input matrix A</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=wp)</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-iargsort"></span><h3>public  function <a href='../proc/iargsort.html'>iargsort</a>(a) result(idx)  
+</h3></div>
+    <div class="panel-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>a</strong>(:)</td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>integer, (size(a))</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+    </section>
+    <br>
+
+    <section>
+    <h2>Subroutines</h2>
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-stop_error"></span><h3>public  subroutine <a href='../proc/stop_error.html'>stop_error</a>(msg)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Utility function to print an error message.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>Error message.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-print_mat"></span><h3>public  subroutine <a href='../proc/print_mat.html'>print_mat</a>(m, n, a, name)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Utility function to print a m-by-n matrix with a title</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>m</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>n</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>a</strong>(m,n)</td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>name</strong></td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-lstsq"></span><h3>public  subroutine <a href='../proc/lstsq.html'>lstsq</a>(A, b, x)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Solves a linear least-squares problem <script type="math/tex"> \min~\| \mathbf{Ax} - \mathbf{b} \|_2^2 </script> using LAPACK.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in),</td>
+              <td></td>            <td>
+              dimension(:, :)
+            </td>
+            <td>::</td>
+            <td><strong>A</strong></td>
+            <td>
+<p>Matrix to be "pseudo-inverted".</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in),</td>
+              <td></td>            <td>
+              dimension(:)
+            </td>
+            <td>::</td>
+            <td><strong>b</strong></td>
+            <td>
+<p>Right-hand side vector.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              dimension(:)
+            </td>
+            <td>::</td>
+            <td><strong>x</strong></td>
+            <td>
+<p>Solution of the least-squares problem.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-schur"></span><h3>public  subroutine <a href='../proc/schur.html'>schur</a>(A, Z, eigvals)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Compute the Schur form (in-place) and Schur vectors of a real-valued matrix.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+<p>Matrix to be factorized.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>Z</strong>(:,:)</td>
+            <td>
+<p>Schur basis.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              complex(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>eigvals</strong>(:)</td>
+            <td>
+<p>Eigenvalues.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-ordschur"></span><h3>public  subroutine <a href='../proc/ordschur.html'>ordschur</a>(T, Q, selected)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Re-order the Schur factorization of a real-valued matrix by moving the selected eigenvalues
+in the upper-left block.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>T</strong>(:,:)</td>
+            <td>
+<p>Schur matrix to be reordered.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>Q</strong>(:,:)</td>
+            <td>
+<p>Schur vectors to be reordered.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>selected</strong>(:)</td>
+            <td>
+<p>Boolean array defining the selected eigenvalues.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-sqrtm"></span><h3>public  subroutine <a href='../proc/sqrtm.html'>sqrtm</a>(sqrtmA, A)  
+</h3></div>
+    <div class="panel-body">
+          
+  <p>Compute the matrix square root of a small dense positive semi-definite matrix via eigenvalues</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>sqrtmA</strong>(:,:)</td>
+            <td>
+<p>Result</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=wp),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>A</strong>(:,:)</td>
+            <td>
+<p>Matrix of which to compute sqrtm</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+    </section>
+    <br>
+
+
+
+    </div>
+  </div>
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>LightKrylov was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>&copy; 2024 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+  </body>
+</html>

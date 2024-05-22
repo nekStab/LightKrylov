@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="./favicon.png">
+
+    <title> LightKrylov </title>
+
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/pygments.css" rel="stylesheet">
+    <link href="./css/font-awesome.min.css" rel="stylesheet">
+    <link href="./css/local.css" rel="stylesheet">
+    <link  href="./tipuesearch/tipuesearch.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="./js/jquery-2.1.3.min.js"></script>
+    <script src="./js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="./index.html">LightKrylov </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="./lists/files.html">Source Files</a></li>
+            <li><a href="./lists/modules.html">Modules</a></li>
+            <li><a href="./lists/procedures.html">Procedures</a></li>
+            <li><a href="./lists/absint.html">Abstract Interfaces</a></li>
+                   <li><a href="./lists/types.html">Derived Types</a></li>
+       
+            </ul>
+        
+            </li>
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/files.html">Source Files</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/modules.html">Modules</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/procedures.html">Procedures</a></li>
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/absint.html">Abstract Interfaces</a></li>
+                             <li class="visible-xs hidden-sm visible-lg"><a href="./lists/types.html">Derived Types</a></li>
+          </ul>
+        <form action="./search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+      <!-- Main component for a primary marketing message or call to action -->
+      <div class="jumbotron">
+        <p>Lightweight implementation of Krylov methods using modern Fortran.</p>
+	<p> Find us on&hellip;</p>
+        <p>
+          <a class="btn btn-lg btn-primary" href="https://github.com/nekStab/LightKrylov" role="button">GitHub</a>
+        </p>
+      </div>
+
+      <div class="row" id='text'>
+        <div class="col-md-8">
+          <h1>LightKrylov</h1>
+          <p></p><div class="alert alert-info" role="alert"><h4>Note</h4><p>This documentation still is work in progress.
+</p></div>
+<p>
+<p>Targeting large-scale linear algebra applications where the matrix <script type="math/tex">\mathbf{A}</script> is only defined implicitly (e.g. through a call to a <code>matvec</code> subroutine), this package provides lightweight Fortran implementations of certain of the most useful Krylov methods to solve a variety of problems, among which:</p>
+<ol>
+<li>
+<p>Eigenvalue Decomposition
+   <script type="math/tex; mode=display">\mathbf{A} \mathbf{x} = \lambda \mathbf{x}</script>
+</p>
+</li>
+<li>
+<p>Singular Value Decomposition
+   <script type="math/tex; mode=display">\mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T</script>
+</p>
+</li>
+<li>
+<p>Linear system of equations
+   <script type="math/tex; mode=display">\mathbf{Ax} = \mathbf{b}</script>
+</p>
+</li>
+</ol>
+<p>Krylov methods are particularly appropriate in situations where such problems must be solved but factorizing the matrix $\mathbf{A}$ is not possible because:</p>
+<ul>
+<li>
+<script type="math/tex">\mathbf{A}</script> is not available explicitly but only implicitly through a <code>matvec</code> subroutine computing the matrix-vector product <script type="math/tex">\mathbf{Ax}</script>.</li>
+<li>
+<script type="math/tex">\mathbf{A}</script> or its factors (e.g. <code>LU</code> or <code>Cholesky</code>) are dense and would consume an excessive amount of memory.</li>
+</ul>
+<p>Krylov methods are <em>iterative methods</em>, i.e. they iteratively refine the solution of the problem until a desired accuracy is reached. While they are not recommended when a machine-precision solution is needed, they can nonetheless provide highly accurate approximations of the solution after a relatively small number of iterations. Krylov methods form the workhorses of large-scale numerical linear algebra.</p>
+<h2>Capabilities</h2>
+<p><code>LightKrylov</code> leverages Fortran's <code>abstract type</code> feature to provide generic implementations of the various Krylov methods.
+The only requirement from the user to benefit from the capabilities of <code>LightKrylov</code> is to extend the <code>abstract_vector</code> and <code>abstract_linop</code> types to define their notion of vectors and linear operators. <code>LightKrylov</code> then provides the following functionalities:</p>
+<ul>
+<li>Krylov factorizations : <code>arnoldi_factorization</code>, <code>lanczos_tridiagonalization</code>, <code>lanczos_bidiagonalization</code>.</li>
+<li>Spectral analysis : <code>eigs</code>, <code>eighs</code>, <code>svds</code>.</li>
+<li>Linear systems : <code>gmres</code>, <code>cg</code>.</li>
+</ul>
+<p>At the present time, none of the algorithms support Krylov-Schur restarting procedure although this is part of our plan for <code>LightKrylov v2.0</code>.</p>
+<h3>Known limitations</h3>
+<p>For the sake of simplicity, <code>LightKrylov</code> only works with <code>real</code> or <code>double precision</code> data. While this might seem restrictive at first, consider that a complex-valued <script type="math/tex">n \times n</script> linear system <script type="math/tex">\mathbf{Ax} = \mathbf{b}</script> can always be rewritten using only real arithmetic as a <script type="math/tex">2n \times 2n</script> real-valued system.
+The primary reason to develop <code>LightKrylov</code> is to couple it with high-performance solvers in computational mechanics which often use exclusively real-valued data types. As such, we do not have any plan to natively support complex-valued linear operators or vectors.</p>
+<h2>Installation</h2>
+<p>Provided you have <code>git</code> installed, getting the code is as simple as:</p>
+<div class="codehilite"><pre><span></span><code>git clone https://github.com/nekStab/LightKrylov
+</code></pre></div>
+
+<p>Alternatively, using <code>gh-cli</code>, you can type</p>
+<div class="codehilite"><pre><span></span><code>gh repo clone nekStab/LightKrylov
+</code></pre></div>
+
+<h3>Dependencies</h3>
+<p><code>LightKrylov</code> has a very minimal set of dependencies. These only include:</p>
+<ul>
+<li>a Fortran compiler,</li>
+<li><a href="">LAPACK</a> (or similar),</li>
+<li><a href="https://github.com/fortran-lang/fpm"><code>fpm</code></a> or <code>make</code> for building the code.</li>
+</ul>
+<p>And that's all of it. To date, the tested compilers include:</p>
+<ul>
+<li><code>gfortran 12.0.3</code></li>
+</ul>
+<h3>Building with <code>fpm</code></h3>
+<p>Provided you have cloned the repo, installing <code>LightKrylov</code> with <code>fpm</code> is as simple as</p>
+<div class="codehilite"><pre><span></span><code>fpm build --profile release
+</code></pre></div>
+
+<p>Please refer to the <code>fpm</code> documentation to see how to link <code>LightKrylov</code> with your application.</p>
+<h3>Building with <code>make</code></h3>
+<p>N/A</p>
+<h3>Running the tests</h3>
+<p>To see if the library has been compiled correctly, a set of unit tests are provided in <a href="">test</a>. If you use <code>fpm</code>, running these tests is as simple as</p>
+<div class="codehilite"><pre><span></span><code>fpm test
+</code></pre></div>
+
+<p>If everything went fine, you should see</p>
+<div class="codehilite"><pre><span></span><code>All tests successfully passed!
+</code></pre></div>
+
+<p>If not, please feel free to open an Issue.</p>
+<h3>Running the examples</h3>
+<p>To run the examples:</p>
+<div class="codehilite"><pre><span></span><code>fpm run --example
+</code></pre></div>
+
+<p>This command will run all of the examples sequentially. You can alternatively run a specific example using e.g.</p>
+<div class="codehilite"><pre><span></span><code>fpm run --example Ginzburg-Landau
+</code></pre></div>
+
+<p>For more details, please refer to each of the examples.</p>
+<h3>Documentation</h3>
+<p>Online documentation is available <a href="https://nekstab.github.io/LightKrylov/">here</a>.
+If you want to generate the documentation locally, you can do so by using <a href="https://github.com/Fortran-FOSS-Programmers/ford"><code>ford</code></a>, an automatic documentation generator for modern Fortran programs.
+Provided you have <code>ford</code> installed, you can build the documentation locally by running</p>
+<div class="codehilite"><pre><span></span><code>ford project-file.md
+</code></pre></div>
+
+<p>Using Github Actions, the online documentation is automatically updated on every pull request to the <code>main</code> branch.
+Documentation related to features included in the <code>dev</code> branch is only available in the source code.</p>
+<h2>Contributing</h2>
+<h3>Current developers</h3>
+<p><code>LightKrylov</code> is currently developed and maintained by a team of three:</p>
+<ul>
+<li><a href="https://loiseaujc.github.io/">Jean-Christophe Loiseau</a> : Assistant Professor of Applied maths and Fluid dynamics at <a href="https://dynfluid.ensam.eu/">DynFluid</a>, Arts et Métiers Institute of Technology, Paris, France.</li>
+<li><a href="https://github.com/ricardofrantz">Ricardo Frantz</a> : PhD in Fluid dynamics (Arts et Métiers, France, 2022) and currently postdoctoral researcher at DynFluid.</li>
+<li><a href="https://github.com/Simkern/">Simon Kern</a> : PhD in Fluid dynamics (KTH, Sweden, 2023) and currently postdoctoral researcher at DynFluid.</li>
+</ul>
+<p>Anyone else interested in contributing is obviously most welcomed!</p>
+<h2>Acknowledgment</h2>
+<p>The development of <code>LightKrylov</code> is part of an on-going research project funded by <a href="https://anr.fr/en/">Agence Nationale pour la Recherche</a> (ANR) under the grant agreement ANR-22-CE46-0008.</p>
+<h3>Related projects</h3>
+<p><code>LightKrylov</code> is the base package of our ecosystem. If you like it, you may also be interested in :</p>
+<ul>
+<li><a href="https://github.com/nekStab/LightROM"><code>LightROM</code></a> : a lightweight Fortran package providing a set of functions for reduced-order modeling, control and estimation of large-scale linear time invariant dynamical systems.</li>
+<li><a href=""><code>neklab</code></a> : a bifurcation and stability analysis toolbox based on <code>LightKrylov</code> for the massively parallel spectral element solver <a href=""><code>Nek5000</code></a>.</li>
+</ul>
+        </div>
+        <div class="col-md-4">
+	  <div class="well">
+          <h2>Developer Info</h2>
+          <h4>Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz</h4>
+          
+       </div>
+       </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-6 col-sm-3">
+              <h3>Source Files</h3>
+              <ul>                    <li><a href='./sourcefile/abstractvector.f90.html'>AbstractVector.f90</a></li>
+                    <li><a href='./sourcefile/basekrylov.f90.html'>BaseKrylov.f90</a></li>
+                    <li><a href='./sourcefile/expmlib.f90.html'>expmlib.f90</a></li>
+                    <li><a href='./sourcefile/iterativesolvers.f90.html'>IterativeSolvers.f90</a></li>
+                    <li><a href='./sourcefile/lightkrylov.f90.html'>LightKrylov.f90</a></li>
+                    <li><a href='./sourcefile/linearoperator.f90.html'>LinearOperator.f90</a></li>
+                    <li><a href='./sourcefile/rationalkrylov.f90.html'>RationalKrylov.f90</a></li>
+                    <li><a href='./sourcefile/utils.f90.html'>Utils.f90</a></li>
+</ul>
+          </div>
+		  <div class="col-xs-6 col-sm-3">
+              <h3>Modules</h3>
+              <ul>                    <li><a href='./module/lightkrylov.html'>LightKrylov</a></li>
+                    <li><a href='./module/lightkrylov_abstractvector.html'>lightkrylov_AbstractVector</a></li>
+                    <li><a href='./module/lightkrylov_basekrylov.html'>lightkrylov_BaseKrylov</a></li>
+                    <li><a href='./module/lightkrylov_expmlib.html'>LightKrylov_expmlib</a></li>
+                    <li><a href='./module/lightkrylov_iterativesolvers.html'>lightkrylov_IterativeSolvers</a></li>
+                    <li><a href='./module/lightkrylov_linearoperator.html'>lightkrylov_LinearOperator</a></li>
+                    <li><a href='./module/lightkrylov_rationalkrylov.html'>lightkrylov_RationalKrylov</a></li>
+                    <li><a href='./module/lightkrylov_utils.html'>lightkrylov_utils</a></li>
+</ul>
+          </div>
+		  <div class="col-xs-6 col-sm-3">
+              <h3>Procedures</h3>
+              <ul>                    <li><a href='./interface/apply_permutation.html'>apply_permutation</a></li>
+                    <li><a href='./proc/arnoldi_factorization.html'>arnoldi_factorization</a></li>
+                    <li><a href='./interface/assert_shape.html'>assert_shape</a></li>
+                    <li><a href='./proc/cg.html'>cg</a></li>
+                    <li><a href='./interface/eig.html'>eig</a></li>
+                    <li><a href='./interface/eigh.html'>eigh</a></li>
+                    <li><a href='./proc/eighs.html'>eighs</a></li>
+                    <li><a href='./proc/eigs.html'>eigs</a></li>
+                    <li><a href='./proc/expm.html'>expm</a></li>
+                    <li><a href='./proc/get_vec.html'>get_vec</a></li>
+</ul>
+          </div>
+		  <div class="col-xs-6 col-sm-3">
+              <h3>Derived Types</h3>
+              <ul>                    <li><a href='./type/abstract_linop.html'>abstract_linop</a></li>
+                    <li><a href='./type/abstract_lowrank_linop.html'>abstract_lowrank_linop</a></li>
+                    <li><a href='./type/abstract_opts.html'>abstract_opts</a></li>
+                    <li><a href='./type/abstract_preconditioner.html'>abstract_preconditioner</a></li>
+                    <li><a href='./type/abstract_spd_linop.html'>abstract_spd_linop</a></li>
+                    <li><a href='./type/abstract_vector.html'>abstract_vector</a></li>
+                    <li><a href='./type/axpby_linop.html'>axpby_linop</a></li>
+                    <li><a href='./type/cg_opts.html'>cg_opts</a></li>
+                    <li><a href='./type/gmres_opts.html'>gmres_opts</a></li>
+                    <li><a href='./type/identity_linop.html'>identity_linop</a></li>
+</ul>
+          </div>
+      </div>
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>LightKrylov was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>&copy; 2024 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="./js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="./js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script src="./tipuesearch/tipuesearch_content.js"></script>
+    <script src="./tipuesearch/tipuesearch_set.js"></script>
+    <script src="./tipuesearch/tipuesearch.js"></script>
+    
+  </body>
+</html>
