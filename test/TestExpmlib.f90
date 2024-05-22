@@ -98,7 +98,7 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        call kexpm(Xkryl, A, Q, tau, atol_sp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
 
         call save_npy("test_krylov_expm_operator.npy", A%data)
         call save_npy("test_krylov_expm_rhs.npy", Q%data)
@@ -186,7 +186,7 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        call kexpm(Xkryl, A, Q, tau, atol_dp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
 
         call save_npy("test_krylov_expm_operator.npy", A%data)
         call save_npy("test_krylov_expm_rhs.npy", Q%data)
@@ -274,7 +274,7 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        call kexpm(Xkryl, A, Q, tau, atol_sp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
 
         call save_npy("test_krylov_expm_operator.npy", A%data)
         call save_npy("test_krylov_expm_rhs.npy", Q%data)
@@ -362,7 +362,7 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        call kexpm(Xkryl, A, Q, tau, atol_dp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
 
         call save_npy("test_krylov_expm_operator.npy", A%data)
         call save_npy("test_krylov_expm_rhs.npy", Q%data)
