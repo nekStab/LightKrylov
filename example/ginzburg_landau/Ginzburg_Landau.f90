@@ -17,10 +17,10 @@ module Ginzburg_Landau
   !-----     PARAMETERS     -----
   !------------------------------
 
-  ! --> Mesh related parameters.
-  real(kind=wp), parameter :: L  = 200.0_wp !> Domain length
-  integer      , parameter :: nx = 512      !> Number of grid points (excluding boundaries).
-  real(kind=wp), parameter :: dx = L/(nx+1)    !> Grid size.
+  ! Mesh related parameters.
+  real(kind=wp), parameter :: L  = 200.0_wp ! Domain length
+  integer      , parameter :: nx = 512      ! Number of grid points (excluding boundaries).
+  real(kind=wp), parameter :: dx = L/(nx+1) ! Grid size.
 
   ! Physical parameters.
   complex(kind=wp), parameter :: nu    = cmplx(2.0_wp, 0.2_wp, kind=wp)
