@@ -108,12 +108,13 @@ contains
       write (*, *) "              |___/                     |___/              "
 
       write (*, *)
-      write (*, *) "Developped by: Jean-Christophe Loiseau."
+      write (*, *) "Developped by: Jean-Christophe Loiseau"
+      write (*, *) "               J. Simon Kern"
       write (*, *) "               Arts & Métiers Institute of Technology, 2023."
       write (*, *) "               jean-christophe.loiseau@ensam.eu"
       write (*, *)
 
-      write (*, *) "Version -- 0.1.0"
+      write (*, *) "Version -- beta 0.1.0"
       write (*, *) "License -- BSD 3-Clause"
       write (*, *)
 
