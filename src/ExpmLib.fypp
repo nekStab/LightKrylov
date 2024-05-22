@@ -1,0 +1,70 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_expmlib
+
+    ! Iso Fortran.
+    use iso_fortran_env, only: output_unit
+
+    ! Fortran standard library.
+    use stdlib_optval, only: optval
+
+    ! LightKrylov.
+    use lightkrylov_constants
+    use lightkrylov_utils
+    use lightkrylov_AbstractVectors
+    use lightkrylov_AbstractLinops
+    use lightkrylov_BaseKrylov
+
+    implicit none
+    private
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_exptA_${type[0]}$${kind}$
+    #:endfor
+
+    abstract interface
+        #:for kind, type in RC_KINDS_TYPES
+        subroutine abstract_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+            import ${kind}$
+            import abstract_vector_${type[0]}$${kind}$
+            import abstract_linop_${type[0]}$${kind}$
+            !! Abstract interface to define the matrix exponential-vector product.
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+            !! Solution vector.
+            class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+            !! Linear operator to be exponentiated.
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+            !! Input vector.
+            real(${kind}$), intent(in) :: tau
+            !! Time horizon for integration.
+            integer, intent(out) :: info
+            !! Information flag.
+            logical, optional, intent(in) :: trans
+            !! Use transpose ?
+        end subroutine abstract_exptA_${type[0]}$${kind}$
+
+        #:endfor
+    end interface
+
+contains
+
+    !--------------------------------------------
+    !-----     DENSE MATRIX EXPONENTIAL     -----
+    !--------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    function expm_${type[0]}$${kind}$(A, order) result(E)
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be exponentiated.
+        integer, optional :: order
+        !! Order of the Pade approximation.
+        ${type}$, allocatable :: E(:, :)
+        !! Output matrix E = exp(tA).
+
+        return
+    end function expm_${type[0]}$${kind}$
+    #:endfor
+
+end module lightkrylov_expmlib
+
+

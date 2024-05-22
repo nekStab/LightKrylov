@@ -360,9 +360,10 @@ contains
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev)
+        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -501,9 +502,10 @@ contains
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev)
+        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -632,9 +634,10 @@ contains
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev)
+        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -763,9 +766,10 @@ contains
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev)
+        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
