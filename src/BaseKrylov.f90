@@ -38,16 +38,24 @@ module lightkrylov_BaseKrylov
 
     interface apply_permutation_matrix
         module procedure apply_permutation_matrix_rsp
+        module procedure apply_permutation_matrix_array_rsp
         module procedure apply_permutation_matrix_rdp
+        module procedure apply_permutation_matrix_array_rdp
         module procedure apply_permutation_matrix_csp
+        module procedure apply_permutation_matrix_array_csp
         module procedure apply_permutation_matrix_cdp
+        module procedure apply_permutation_matrix_array_cdp
     end interface
 
     interface apply_inverse_permutation_matrix
         module procedure apply_inverse_permutation_matrix_rsp
+        module procedure apply_inverse_permutation_matrix_array_rsp
         module procedure apply_inverse_permutation_matrix_rdp
+        module procedure apply_inverse_permutation_matrix_array_rdp
         module procedure apply_inverse_permutation_matrix_csp
+        module procedure apply_inverse_permutation_matrix_array_csp
         module procedure apply_inverse_permutation_matrix_cdp
+        module procedure apply_inverse_permutation_matrix_array_cdp
     end interface
 
     interface arnoldi
@@ -435,7 +443,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(perm(i)))
+            call Q(i)%axpby(zero_rsp, Qwrk(perm(i)), one_rsp)
         enddo
 
         return
@@ -461,11 +469,56 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(inv_perm(i)))
+            call Q(i)%axpby(zero_rsp, Qwrk(inv_perm(i)), one_rsp)
         enddo
 
         return
     end subroutine apply_inverse_permutation_matrix_rsp
+
+    subroutine apply_permutation_matrix_array_rsp(Q, perm)
+        real(sp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        real(sp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, perm(i))
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_array_rsp
+
+    subroutine apply_inverse_permutation_matrix_array_rsp(Q, perm)
+        real(sp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        real(sp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, inv_perm(i))
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_array_rsp
+
 
     subroutine qr_no_pivoting_rdp(Q, R, info, verbosity, tol)
         class(abstract_vector_rdp), intent(inout) :: Q(:)
@@ -654,7 +707,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(perm(i)))
+            call Q(i)%axpby(zero_rdp, Qwrk(perm(i)), one_rdp)
         enddo
 
         return
@@ -680,11 +733,56 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(inv_perm(i)))
+            call Q(i)%axpby(zero_rdp, Qwrk(inv_perm(i)), one_rdp)
         enddo
 
         return
     end subroutine apply_inverse_permutation_matrix_rdp
+
+    subroutine apply_permutation_matrix_array_rdp(Q, perm)
+        real(dp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        real(dp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, perm(i))
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_array_rdp
+
+    subroutine apply_inverse_permutation_matrix_array_rdp(Q, perm)
+        real(dp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        real(dp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, inv_perm(i))
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_array_rdp
+
 
     subroutine qr_no_pivoting_csp(Q, R, info, verbosity, tol)
         class(abstract_vector_csp), intent(inout) :: Q(:)
@@ -873,7 +971,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(perm(i)))
+            call Q(i)%axpby(zero_csp, Qwrk(perm(i)), one_csp)
         enddo
 
         return
@@ -899,11 +997,56 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(inv_perm(i)))
+            call Q(i)%axpby(zero_csp, Qwrk(inv_perm(i)), one_csp)
         enddo
 
         return
     end subroutine apply_inverse_permutation_matrix_csp
+
+    subroutine apply_permutation_matrix_array_csp(Q, perm)
+        complex(sp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        complex(sp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, perm(i))
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_array_csp
+
+    subroutine apply_inverse_permutation_matrix_array_csp(Q, perm)
+        complex(sp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        complex(sp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, inv_perm(i))
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_array_csp
+
 
     subroutine qr_no_pivoting_cdp(Q, R, info, verbosity, tol)
         class(abstract_vector_cdp), intent(inout) :: Q(:)
@@ -1092,7 +1235,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(perm(i)))
+            call Q(i)%axpby(zero_cdp, Qwrk(perm(i)), one_cdp)
         enddo
 
         return
@@ -1118,11 +1261,56 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(inv_perm(i)))
+            call Q(i)%axpby(zero_cdp, Qwrk(inv_perm(i)), one_cdp)
         enddo
 
         return
     end subroutine apply_inverse_permutation_matrix_cdp
+
+    subroutine apply_permutation_matrix_array_cdp(Q, perm)
+        complex(dp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        complex(dp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, perm(i))
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_array_cdp
+
+    subroutine apply_inverse_permutation_matrix_array_cdp(Q, perm)
+        complex(dp), intent(inout) :: Q(:, :)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        complex(dp), allocatable :: Qwrk(:, :)
+
+        Qwrk = Q ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, inv_perm(i))
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_array_cdp
+
 
 
     !-----------------------------------------

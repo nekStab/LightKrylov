@@ -36,12 +36,14 @@ module lightkrylov_BaseKrylov
     interface apply_permutation_matrix
         #: for k1, t1 in RC_KINDS_TYPES
         module procedure apply_permutation_matrix_${t1[0]}$${k1}$
+        module procedure apply_permutation_matrix_array_${t1[0]}$${k1}$
         #:endfor
     end interface
 
     interface apply_inverse_permutation_matrix
         #:for k1, t1 in RC_KINDS_TYPES
         module procedure apply_inverse_permutation_matrix_${t1[0]}$${k1}$
+        module procedure apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$
         #:endfor
     end interface
 
@@ -336,7 +338,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(perm(i)))
+            call Q(i)%axpby(zero_${t1[0]}$${k1}$, Qwrk(perm(i)), one_${t1[0]}$${k1}$)
         enddo
 
         return
@@ -362,11 +364,56 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%zero() ; call Q(i)%add(Qwrk(inv_perm(i)))
+            call Q(i)%axpby(zero_${t1[0]}$${k1}$, Qwrk(inv_perm(i)), one_${t1[0]}$${k1}$)
         enddo
 
         return
     end subroutine apply_inverse_permutation_matrix_${t1[0]}$${k1}$
+
+    subroutine apply_permutation_matrix_array_${t1[0]}$${k1}$(Q, perm)
+        ${t1}$, intent(inout) :: Q(:, :)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        ${t1}$, allocatable :: Qwrk(:, :)
+
+        Qwrk = Q
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, perm(i))
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_array_${t1[0]}$${k1}$
+
+    subroutine apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$(Q, perm)
+        ${t1}$, intent(inout) :: Q(:, :)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        ${t1}$, allocatable :: Qwrk(:, :)
+
+        Qwrk = Q ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, inv_perm(i))
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$
+
 
     #:endfor
 
