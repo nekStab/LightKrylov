@@ -95,8 +95,8 @@ contains
         type(vector_${t1[0]}$${k1}$), intent(out) :: basis_out(:)
         ${t1}$, intent(in) :: basis_in(:, :)
         ! Internal variables.
-        integer :: k, kdim
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_out)
             basis_out(k)%data = basis_in(:, k)
         enddo
         return

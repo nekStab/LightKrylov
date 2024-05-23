@@ -194,8 +194,8 @@ contains
         type(vector_rsp), intent(out) :: basis_out(:)
         real(sp), intent(in) :: basis_in(:, :)
         ! Internal variables.
-        integer :: k, kdim
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_out)
             basis_out(k)%data = basis_in(:, k)
         enddo
         return
@@ -220,8 +220,8 @@ contains
         type(vector_rdp), intent(out) :: basis_out(:)
         real(dp), intent(in) :: basis_in(:, :)
         ! Internal variables.
-        integer :: k, kdim
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_out)
             basis_out(k)%data = basis_in(:, k)
         enddo
         return
@@ -246,8 +246,8 @@ contains
         type(vector_csp), intent(out) :: basis_out(:)
         complex(sp), intent(in) :: basis_in(:, :)
         ! Internal variables.
-        integer :: k, kdim
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_out)
             basis_out(k)%data = basis_in(:, k)
         enddo
         return
@@ -272,8 +272,8 @@ contains
         type(vector_cdp), intent(out) :: basis_out(:)
         complex(dp), intent(in) :: basis_in(:, :)
         ! Internal variables.
-        integer :: k, kdim
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_out)
             basis_out(k)%data = basis_in(:, k)
         enddo
         return
