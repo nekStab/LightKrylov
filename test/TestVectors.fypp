@@ -113,9 +113,9 @@ contains
     end subroutine collect_vector_${t1[0]}$${k1}$_testsuite
 
     subroutine test_vector_${t1[0]}$${k1}$_norm(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vector.
+        ! Test vector.
         type(vector_${t1[0]}$${k1}$), allocatable :: x
         real(${k1}$) :: alpha
 
@@ -136,10 +136,10 @@ contains
     end subroutine test_vector_${t1[0]}$${k1}$_norm
 
     subroutine test_vector_${t1[0]}$${k1}$_add(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_${t1[0]}$${k1}$), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -161,10 +161,10 @@ contains
     end subroutine test_vector_${t1[0]}$${k1}$_add
  
     subroutine test_vector_${t1[0]}$${k1}$_sub(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_${t1[0]}$${k1}$), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -186,10 +186,10 @@ contains
     end subroutine test_vector_${t1[0]}$${k1}$_sub
 
     subroutine test_vector_${t1[0]}$${k1}$_dot(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_${t1[0]}$${k1}$), allocatable :: x, y
         ${t1}$ :: alpha
 
@@ -207,10 +207,10 @@ contains
     end subroutine test_vector_${t1[0]}$${k1}$_dot
 
     subroutine test_vector_${t1[0]}$${k1}$_scal(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vector.
+        ! Test vector.
         type(vector_${t1[0]}$${k1}$), allocatable :: x, y
         ${t1}$ :: alpha
         #:if t1[0] == "c"

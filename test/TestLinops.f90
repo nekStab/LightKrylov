@@ -321,11 +321,11 @@ contains
     end subroutine collect_linop_rsp_testsuite
 
     subroutine test_matvec_rsp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rsp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_rsp), allocatable :: A
 
         ! Initialize vectors.
@@ -346,11 +346,11 @@ contains
     end subroutine test_matvec_rsp
 
     subroutine test_rmatvec_rsp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rsp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_rsp), allocatable :: A
 
         ! Initialize vectors.
@@ -452,11 +452,11 @@ contains
     end subroutine collect_linop_rdp_testsuite
 
     subroutine test_matvec_rdp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rdp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_rdp), allocatable :: A
 
         ! Initialize vectors.
@@ -477,11 +477,11 @@ contains
     end subroutine test_matvec_rdp
 
     subroutine test_rmatvec_rdp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rdp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_rdp), allocatable :: A
 
         ! Initialize vectors.
@@ -583,11 +583,11 @@ contains
     end subroutine collect_linop_csp_testsuite
 
     subroutine test_matvec_csp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_csp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_csp), allocatable :: A
 
         ! Initialize vectors.
@@ -608,11 +608,11 @@ contains
     end subroutine test_matvec_csp
 
     subroutine test_rmatvec_csp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_csp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_csp), allocatable :: A
 
         ! Initialize vectors.
@@ -714,11 +714,11 @@ contains
     end subroutine collect_linop_cdp_testsuite
 
     subroutine test_matvec_cdp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_cdp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_cdp), allocatable :: A
 
         ! Initialize vectors.
@@ -739,11 +739,11 @@ contains
     end subroutine test_matvec_cdp
 
     subroutine test_rmatvec_cdp(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_cdp), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_cdp), allocatable :: A
 
         ! Initialize vectors.
