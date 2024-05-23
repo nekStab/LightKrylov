@@ -40,11 +40,11 @@ contains
     end subroutine collect_expm_${type[0]}$${kind}$_testsuite
 
     subroutine test_dense_expm_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Problem dimension.
+        ! Problem dimension.
         integer, parameter :: n = 5, m = 6
-        !> Test matrix.
+        ! Test matrix.
         ${type}$ :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
 
@@ -72,13 +72,13 @@ contains
     end subroutine test_dense_expm_${type[0]}$${kind}$
 
     subroutine test_kexptA_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test matrix.
+        ! Test matrix.
         class(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Basis vectors.
+        ! Basis vectors.
         class(vector_${type[0]}$${kind}$), allocatable :: Q, Xref, Xkryl
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
     
         ! ----- Internal variables -----
@@ -112,34 +112,34 @@ contains
     end subroutine test_kexptA_${type[0]}$${kind}$
 
     subroutine test_block_kexptA_${type[0]}$${kind}$(error)
-        !> This function tests the Krylov based approximation of the action of the exponential
-        ! propagator against the dense computation for a random operator, a random RHS and a 
-        ! typical value of tau.
+        !! This function tests the Krylov based approximation of the action of the exponential
+        !! propagator against the dense computation for a random operator, a random RHS and a 
+        !! typical value of tau.
 
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         class(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Basis vectors.
+        ! Basis vectors.
         class(vector_${type[0]}$${kind}$), allocatable :: B(:)
         class(vector_${type[0]}$${kind}$), allocatable :: Cref(:)
         class(vector_${type[0]}$${kind}$), allocatable :: C(:), Cblk(:)
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-        !> Test matrix.
+        ! Test matrix.
         ${type}$ :: Adata(kdim, kdim)
         ${type}$ :: Edata(kdim, kdim)
-        !> GS factors.
+        ! GS factors.
         ${type}$ :: R(kdim, kdim)
         ${type}$ :: Id(kdim, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Test parameters
+        ! Test parameters
         integer       , parameter :: nkmax = 15
         integer       , parameter :: p = 3
         real(${kind}$), parameter :: tau = 0.1_${kind}$
         real(${kind}$), parameter :: tol = rtol_${kind}$
         logical       , parameter :: verb = .true.
-        !> Misc.
+        ! Misc.
         integer  :: i, j, k
         ${type}$ :: Xdata(test_size,p), Qdata(test_size,p)
         real(${kind}$) :: alpha
@@ -157,17 +157,17 @@ contains
         ! --> Initialize rhs.
         allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
 
-        !> Comparison is dense computation (10th order Pade approximation)
+        ! Comparison is dense computation (10th order Pade approximation)
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
-        !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
         end do
         
-        !> Compute Krylov matrix exponential using block-arnoldi method
+        ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
         do i = 1, p
@@ -175,7 +175,7 @@ contains
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
-        !> Compute 2-norm of the error
+        ! Compute 2-norm of the error
         if (verb) then
             do i = 1, size(C)
                 do j = 1, size(C)

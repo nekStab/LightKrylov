@@ -290,9 +290,9 @@ contains
     end subroutine collect_vector_rsp_testsuite
 
     subroutine test_vector_rsp_norm(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vector.
+        ! Test vector.
         type(vector_rsp), allocatable :: x
         real(sp) :: alpha
 
@@ -309,10 +309,10 @@ contains
     end subroutine test_vector_rsp_norm
 
     subroutine test_vector_rsp_add(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rsp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -330,10 +330,10 @@ contains
     end subroutine test_vector_rsp_add
  
     subroutine test_vector_rsp_sub(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rsp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -351,10 +351,10 @@ contains
     end subroutine test_vector_rsp_sub
 
     subroutine test_vector_rsp_dot(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rsp), allocatable :: x, y
         real(sp) :: alpha
 
@@ -372,10 +372,10 @@ contains
     end subroutine test_vector_rsp_dot
 
     subroutine test_vector_rsp_scal(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vector.
+        ! Test vector.
         type(vector_rsp), allocatable :: x, y
         real(sp) :: alpha
 
@@ -407,9 +407,9 @@ contains
     end subroutine collect_vector_rdp_testsuite
 
     subroutine test_vector_rdp_norm(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vector.
+        ! Test vector.
         type(vector_rdp), allocatable :: x
         real(dp) :: alpha
 
@@ -426,10 +426,10 @@ contains
     end subroutine test_vector_rdp_norm
 
     subroutine test_vector_rdp_add(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rdp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -447,10 +447,10 @@ contains
     end subroutine test_vector_rdp_add
  
     subroutine test_vector_rdp_sub(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rdp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -468,10 +468,10 @@ contains
     end subroutine test_vector_rdp_sub
 
     subroutine test_vector_rdp_dot(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_rdp), allocatable :: x, y
         real(dp) :: alpha
 
@@ -489,10 +489,10 @@ contains
     end subroutine test_vector_rdp_dot
 
     subroutine test_vector_rdp_scal(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vector.
+        ! Test vector.
         type(vector_rdp), allocatable :: x, y
         real(dp) :: alpha
 
@@ -524,9 +524,9 @@ contains
     end subroutine collect_vector_csp_testsuite
 
     subroutine test_vector_csp_norm(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vector.
+        ! Test vector.
         type(vector_csp), allocatable :: x
         real(sp) :: alpha
 
@@ -543,10 +543,10 @@ contains
     end subroutine test_vector_csp_norm
 
     subroutine test_vector_csp_add(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_csp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -564,10 +564,10 @@ contains
     end subroutine test_vector_csp_add
  
     subroutine test_vector_csp_sub(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_csp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -585,10 +585,10 @@ contains
     end subroutine test_vector_csp_sub
 
     subroutine test_vector_csp_dot(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_csp), allocatable :: x, y
         complex(sp) :: alpha
 
@@ -606,10 +606,10 @@ contains
     end subroutine test_vector_csp_dot
 
     subroutine test_vector_csp_scal(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vector.
+        ! Test vector.
         type(vector_csp), allocatable :: x, y
         complex(sp) :: alpha
         complex(sp) :: tmp(test_size)
@@ -643,9 +643,9 @@ contains
     end subroutine collect_vector_cdp_testsuite
 
     subroutine test_vector_cdp_norm(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vector.
+        ! Test vector.
         type(vector_cdp), allocatable :: x
         real(dp) :: alpha
 
@@ -662,10 +662,10 @@ contains
     end subroutine test_vector_cdp_norm
 
     subroutine test_vector_cdp_add(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_cdp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -683,10 +683,10 @@ contains
     end subroutine test_vector_cdp_add
  
     subroutine test_vector_cdp_sub(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_cdp), allocatable :: x, y, z
 
         ! Initialize vectors.
@@ -704,10 +704,10 @@ contains
     end subroutine test_vector_cdp_sub
 
     subroutine test_vector_cdp_dot(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vectors.
+        ! Test vectors.
         type(vector_cdp), allocatable :: x, y
         complex(dp) :: alpha
 
@@ -725,10 +725,10 @@ contains
     end subroutine test_vector_cdp_dot
 
     subroutine test_vector_cdp_scal(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
 
-        !> Test vector.
+        ! Test vector.
         type(vector_cdp), allocatable :: x, y
         complex(dp) :: alpha
         complex(dp) :: tmp(test_size)

@@ -53,19 +53,19 @@ contains
     end subroutine collect_eig_rsp_testsuite
 
    subroutine test_ks_evp_rsp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_rsp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_rsp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(sp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(sp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
         complex(sp) :: true_eigvals(test_size)
@@ -114,19 +114,19 @@ contains
     end subroutine test_ks_evp_rsp
 
    subroutine test_evp_rsp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_rsp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_rsp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(sp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(sp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
@@ -230,19 +230,19 @@ contains
     end subroutine collect_eig_rdp_testsuite
 
    subroutine test_ks_evp_rdp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_rdp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_rdp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(dp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(dp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
         complex(dp) :: true_eigvals(test_size)
@@ -291,19 +291,19 @@ contains
     end subroutine test_ks_evp_rdp
 
    subroutine test_evp_rdp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_rdp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_rdp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(dp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(dp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
@@ -406,19 +406,19 @@ contains
     end subroutine collect_eig_csp_testsuite
 
    subroutine test_ks_evp_csp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_csp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_csp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(sp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(sp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
         complex(sp) :: true_eigvals(test_size)
@@ -436,19 +436,19 @@ contains
     end subroutine test_ks_evp_csp
 
    subroutine test_evp_csp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_csp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_csp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(sp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(sp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
@@ -468,19 +468,19 @@ contains
     end subroutine collect_eig_cdp_testsuite
 
    subroutine test_ks_evp_cdp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_cdp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_cdp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(dp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(dp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
         complex(dp) :: true_eigvals(test_size)
@@ -498,19 +498,19 @@ contains
     end subroutine test_ks_evp_cdp
 
    subroutine test_evp_cdp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_cdp), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_cdp), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(dp), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(dp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
@@ -535,19 +535,19 @@ contains
     end subroutine collect_svd_rsp_testsuite
 
     subroutine test_svd_rsp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_rsp), allocatable :: A
-        !> Singular vectors.
+        ! Singular vectors.
         type(vector_rsp), allocatable :: U(:), V(:)
-        !> Singular values.
+        ! Singular values.
         real(sp), allocatable :: S(:)
-        !> Residuals.
+        ! Residuals.
         real(sp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
@@ -592,19 +592,19 @@ contains
     end subroutine collect_svd_rdp_testsuite
 
     subroutine test_svd_rdp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_rdp), allocatable :: A
-        !> Singular vectors.
+        ! Singular vectors.
         type(vector_rdp), allocatable :: U(:), V(:)
-        !> Singular values.
+        ! Singular values.
         real(dp), allocatable :: S(:)
-        !> Residuals.
+        ! Residuals.
         real(dp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
@@ -649,19 +649,19 @@ contains
     end subroutine collect_svd_csp_testsuite
 
     subroutine test_svd_csp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_csp), allocatable :: A
-        !> Singular vectors.
+        ! Singular vectors.
         type(vector_csp), allocatable :: U(:), V(:)
-        !> Singular values.
+        ! Singular values.
         real(sp), allocatable :: S(:)
-        !> Residuals.
+        ! Residuals.
         real(sp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
@@ -679,19 +679,19 @@ contains
     end subroutine collect_svd_cdp_testsuite
 
     subroutine test_svd_cdp(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_cdp), allocatable :: A
-        !> Singular vectors.
+        ! Singular vectors.
         type(vector_cdp), allocatable :: U(:), V(:)
-        !> Singular values.
+        ! Singular values.
         real(dp), allocatable :: S(:)
-        !> Residuals.
+        ! Residuals.
         real(dp), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
@@ -714,15 +714,15 @@ contains
     end subroutine collect_gmres_rsp_testsuite
 
     subroutine test_gmres_rsp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(linop_rsp) , allocatable :: A ! Linear Operator.
         type(vector_rsp), allocatable :: b ! Right-hand side vector.
         type(vector_rsp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_sp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -741,15 +741,15 @@ contains
     end subroutine test_gmres_rsp
     
     subroutine test_gmres_spd_rsp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(spd_linop_rsp) , allocatable :: A ! Linear Operator.
         type(vector_rsp), allocatable :: b ! Right-hand side vector.
         type(vector_rsp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_sp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -777,15 +777,15 @@ contains
     end subroutine collect_gmres_rdp_testsuite
 
     subroutine test_gmres_rdp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(linop_rdp) , allocatable :: A ! Linear Operator.
         type(vector_rdp), allocatable :: b ! Right-hand side vector.
         type(vector_rdp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_dp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -804,15 +804,15 @@ contains
     end subroutine test_gmres_rdp
     
     subroutine test_gmres_spd_rdp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(spd_linop_rdp) , allocatable :: A ! Linear Operator.
         type(vector_rdp), allocatable :: b ! Right-hand side vector.
         type(vector_rdp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_dp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -840,15 +840,15 @@ contains
     end subroutine collect_gmres_csp_testsuite
 
     subroutine test_gmres_csp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(linop_csp) , allocatable :: A ! Linear Operator.
         type(vector_csp), allocatable :: b ! Right-hand side vector.
         type(vector_csp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_sp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -867,15 +867,15 @@ contains
     end subroutine test_gmres_csp
     
     subroutine test_gmres_spd_csp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(hermitian_linop_csp), allocatable :: A
         type(vector_csp), allocatable :: b ! Right-hand side vector.
         type(vector_csp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_sp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -903,15 +903,15 @@ contains
     end subroutine collect_gmres_cdp_testsuite
 
     subroutine test_gmres_cdp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(linop_cdp) , allocatable :: A ! Linear Operator.
         type(vector_cdp), allocatable :: b ! Right-hand side vector.
         type(vector_cdp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_dp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -930,15 +930,15 @@ contains
     end subroutine test_gmres_cdp
     
     subroutine test_gmres_spd_cdp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(hermitian_linop_cdp), allocatable :: A
         type(vector_cdp), allocatable :: b ! Right-hand side vector.
         type(vector_cdp), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_dp_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -970,14 +970,14 @@ contains
     end subroutine collect_cg_rsp_testsuite
 
     subroutine test_cg_rsp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(spd_linop_rsp), allocatable :: A
         type(vector_rsp), allocatable :: b
         type(vector_rsp), allocatable :: x
         type(cg_sp_opts) :: opts
-        !> Information flag
+        ! Information flag
         integer :: info, i
 
         ! Initialize linear problem.
@@ -1006,14 +1006,14 @@ contains
     end subroutine collect_cg_rdp_testsuite
 
     subroutine test_cg_rdp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(spd_linop_rdp), allocatable :: A
         type(vector_rdp), allocatable :: b
         type(vector_rdp), allocatable :: x
         type(cg_dp_opts) :: opts
-        !> Information flag
+        ! Information flag
         integer :: info, i
 
         ! Initialize linear problem.
@@ -1042,14 +1042,14 @@ contains
     end subroutine collect_cg_csp_testsuite
 
     subroutine test_cg_csp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(hermitian_linop_csp), allocatable :: A
         type(vector_csp), allocatable :: b
         type(vector_csp), allocatable :: x
         type(cg_sp_opts) :: opts
-        !> Information flag
+        ! Information flag
         integer :: info, i
 
         ! Initialize linear problem.
@@ -1078,14 +1078,14 @@ contains
     end subroutine collect_cg_cdp_testsuite
 
     subroutine test_cg_cdp(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(hermitian_linop_cdp), allocatable :: A
         type(vector_cdp), allocatable :: b
         type(vector_cdp), allocatable :: x
         type(cg_dp_opts) :: opts
-        !> Information flag
+        ! Information flag
         integer :: info, i
 
         ! Initialize linear problem.

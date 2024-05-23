@@ -1,11 +1,11 @@
 program Tester
-   !> Fortran best practice.
+   ! Fortran best practice.
    use, intrinsic :: iso_fortran_env, only: error_unit, output_unit
-   !> Unit-test utility.
+   ! Unit-test utility.
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type
-   !> Abstract implementation of Krylov-based techniques.
+   ! Abstract implementation of Krylov-based techniques.
    use LightKrylov
-   !> Implementation of the vector types and associated matrices.
+   ! Implementation of the vector types and associated matrices.
    use TestVectors
    use TestLinops
    use TestKrylov
@@ -14,12 +14,12 @@ program Tester
 
    implicit none
 
-   !> Unit-test related.
+   ! Unit-test related.
    integer :: status, is, num_tests
    type(testsuite_type), allocatable :: testsuites(:)
    character(len=*), parameter :: fmt = '("+", *(1x, a))'
 
-   ! --> Display information about the version of LightKrylov being tested.
+   ! Display information about the version of LightKrylov being tested.
    call greetings()
 
    status = 0
