@@ -100,11 +100,6 @@ contains
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
 
-        call save_npy("test_krylov_expm_operator.npy", A%data)
-        call save_npy("test_krylov_expm_rhs.npy", Q%data)
-        call save_npy("test_krylov_expm_ref.npy", Xref%data)
-        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
- 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
@@ -113,6 +108,96 @@ contains
 
         return
     end subroutine test_kexptA_rsp
+
+    subroutine test_block_kexptA_rsp(error)
+        !> This function tests the Krylov based approximation of the action of the exponential
+        ! propagator against the dense computation for a random operator, a random RHS and a 
+        ! typical value of tau.
+
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        class(linop_rsp), allocatable :: A
+        !> Basis vectors.
+        class(vector_rsp), allocatable :: B(:)
+        class(vector_rsp), allocatable :: Cref(:)
+        class(vector_rsp), allocatable :: C(:), Cblk(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Test matrix.
+        real(sp) :: Adata(kdim, kdim)
+        real(sp) :: Edata(kdim, kdim)
+        !> GS factors.
+        real(sp) :: R(kdim, kdim)
+        real(sp) :: Id(kdim, kdim)
+        !> Information flag.
+        integer :: info
+        !> Test parameters
+        integer       , parameter :: nkmax = 15
+        integer       , parameter :: p = 3
+        real(sp), parameter :: tau = 0.1_sp
+        real(sp), parameter :: tol = rtol_sp
+        logical       , parameter :: verb = .true.
+        !> Misc.
+        integer  :: i, j, k
+        real(sp) :: Xdata(test_size,p), Qdata(test_size,p)
+        real(sp) :: alpha
+        real(sp) :: err(p, p)
+
+        Adata = 0.0_sp ; Edata = 0.0_sp ; Xdata = 0.0_sp
+
+        allocate(Cref(p)) ; call initialize_krylov_subspace(Cref)
+        allocate(C(p))    ; call initialize_krylov_subspace(C)
+        allocate(Cblk(p)) ; call initialize_krylov_subspace(Cblk)
+
+        ! --> Initialize operator.
+        A = linop_rsp() ; call init_rand(A) ; call get_data(Adata, A)
+       
+        ! --> Initialize rhs.
+        allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
+
+        !> Comparison is dense computation (10th order Pade approximation)
+        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+
+        !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
+        do i = 1,p
+            if (verb) write(*,*) '    column',i
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+        end do
+        
+        !> Compute Krylov matrix exponential using block-arnoldi method
+        if (verb) write(*,*) 'BLOCK-ARNOLDI'
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        do i = 1, p
+            write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
+            call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
+        end do
+
+        !> Compute 2-norm of the error
+        if (verb) then
+            do i = 1, size(C)
+                do j = 1, size(C)
+                    err(i, j) = C(i)%dot(C(j))
+                enddo
+            enddo
+            alpha = sqrt(norm2(abs(err)))
+            write(*,*) '--------------------------------------------------------------------'
+            write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+        endif
+ 
+        do i = 1, size(Cblk)
+            do j = 1, size(Cblk)
+                err(i, j) = Cblk(i)%dot(Cblk(j))
+            enddo
+        enddo
+        
+        alpha = sqrt(norm2(abs(err)))
+        if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
+
+        call check(error, alpha < rtol_sp)
+
+        return
+    end subroutine test_block_kexptA_rsp
 
     subroutine collect_expm_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -188,11 +273,6 @@ contains
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
 
-        call save_npy("test_krylov_expm_operator.npy", A%data)
-        call save_npy("test_krylov_expm_rhs.npy", Q%data)
-        call save_npy("test_krylov_expm_ref.npy", Xref%data)
-        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
- 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
@@ -201,6 +281,96 @@ contains
 
         return
     end subroutine test_kexptA_rdp
+
+    subroutine test_block_kexptA_rdp(error)
+        !> This function tests the Krylov based approximation of the action of the exponential
+        ! propagator against the dense computation for a random operator, a random RHS and a 
+        ! typical value of tau.
+
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        class(linop_rdp), allocatable :: A
+        !> Basis vectors.
+        class(vector_rdp), allocatable :: B(:)
+        class(vector_rdp), allocatable :: Cref(:)
+        class(vector_rdp), allocatable :: C(:), Cblk(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Test matrix.
+        real(dp) :: Adata(kdim, kdim)
+        real(dp) :: Edata(kdim, kdim)
+        !> GS factors.
+        real(dp) :: R(kdim, kdim)
+        real(dp) :: Id(kdim, kdim)
+        !> Information flag.
+        integer :: info
+        !> Test parameters
+        integer       , parameter :: nkmax = 15
+        integer       , parameter :: p = 3
+        real(dp), parameter :: tau = 0.1_dp
+        real(dp), parameter :: tol = rtol_dp
+        logical       , parameter :: verb = .true.
+        !> Misc.
+        integer  :: i, j, k
+        real(dp) :: Xdata(test_size,p), Qdata(test_size,p)
+        real(dp) :: alpha
+        real(dp) :: err(p, p)
+
+        Adata = 0.0_dp ; Edata = 0.0_dp ; Xdata = 0.0_dp
+
+        allocate(Cref(p)) ; call initialize_krylov_subspace(Cref)
+        allocate(C(p))    ; call initialize_krylov_subspace(C)
+        allocate(Cblk(p)) ; call initialize_krylov_subspace(Cblk)
+
+        ! --> Initialize operator.
+        A = linop_rdp() ; call init_rand(A) ; call get_data(Adata, A)
+       
+        ! --> Initialize rhs.
+        allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
+
+        !> Comparison is dense computation (10th order Pade approximation)
+        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+
+        !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
+        do i = 1,p
+            if (verb) write(*,*) '    column',i
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+        end do
+        
+        !> Compute Krylov matrix exponential using block-arnoldi method
+        if (verb) write(*,*) 'BLOCK-ARNOLDI'
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        do i = 1, p
+            write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
+            call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
+        end do
+
+        !> Compute 2-norm of the error
+        if (verb) then
+            do i = 1, size(C)
+                do j = 1, size(C)
+                    err(i, j) = C(i)%dot(C(j))
+                enddo
+            enddo
+            alpha = sqrt(norm2(abs(err)))
+            write(*,*) '--------------------------------------------------------------------'
+            write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+        endif
+ 
+        do i = 1, size(Cblk)
+            do j = 1, size(Cblk)
+                err(i, j) = Cblk(i)%dot(Cblk(j))
+            enddo
+        enddo
+        
+        alpha = sqrt(norm2(abs(err)))
+        if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
+
+        call check(error, alpha < rtol_dp)
+
+        return
+    end subroutine test_block_kexptA_rdp
 
     subroutine collect_expm_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -276,11 +446,6 @@ contains
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
 
-        call save_npy("test_krylov_expm_operator.npy", A%data)
-        call save_npy("test_krylov_expm_rhs.npy", Q%data)
-        call save_npy("test_krylov_expm_ref.npy", Xref%data)
-        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
- 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
@@ -289,6 +454,96 @@ contains
 
         return
     end subroutine test_kexptA_csp
+
+    subroutine test_block_kexptA_csp(error)
+        !> This function tests the Krylov based approximation of the action of the exponential
+        ! propagator against the dense computation for a random operator, a random RHS and a 
+        ! typical value of tau.
+
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        class(linop_csp), allocatable :: A
+        !> Basis vectors.
+        class(vector_csp), allocatable :: B(:)
+        class(vector_csp), allocatable :: Cref(:)
+        class(vector_csp), allocatable :: C(:), Cblk(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Test matrix.
+        complex(sp) :: Adata(kdim, kdim)
+        complex(sp) :: Edata(kdim, kdim)
+        !> GS factors.
+        complex(sp) :: R(kdim, kdim)
+        complex(sp) :: Id(kdim, kdim)
+        !> Information flag.
+        integer :: info
+        !> Test parameters
+        integer       , parameter :: nkmax = 15
+        integer       , parameter :: p = 3
+        real(sp), parameter :: tau = 0.1_sp
+        real(sp), parameter :: tol = rtol_sp
+        logical       , parameter :: verb = .true.
+        !> Misc.
+        integer  :: i, j, k
+        complex(sp) :: Xdata(test_size,p), Qdata(test_size,p)
+        real(sp) :: alpha
+        complex(sp) :: err(p, p)
+
+        Adata = 0.0_sp ; Edata = 0.0_sp ; Xdata = 0.0_sp
+
+        allocate(Cref(p)) ; call initialize_krylov_subspace(Cref)
+        allocate(C(p))    ; call initialize_krylov_subspace(C)
+        allocate(Cblk(p)) ; call initialize_krylov_subspace(Cblk)
+
+        ! --> Initialize operator.
+        A = linop_csp() ; call init_rand(A) ; call get_data(Adata, A)
+       
+        ! --> Initialize rhs.
+        allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
+
+        !> Comparison is dense computation (10th order Pade approximation)
+        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+
+        !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
+        do i = 1,p
+            if (verb) write(*,*) '    column',i
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+        end do
+        
+        !> Compute Krylov matrix exponential using block-arnoldi method
+        if (verb) write(*,*) 'BLOCK-ARNOLDI'
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        do i = 1, p
+            write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
+            call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
+        end do
+
+        !> Compute 2-norm of the error
+        if (verb) then
+            do i = 1, size(C)
+                do j = 1, size(C)
+                    err(i, j) = C(i)%dot(C(j))
+                enddo
+            enddo
+            alpha = sqrt(norm2(abs(err)))
+            write(*,*) '--------------------------------------------------------------------'
+            write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+        endif
+ 
+        do i = 1, size(Cblk)
+            do j = 1, size(Cblk)
+                err(i, j) = Cblk(i)%dot(Cblk(j))
+            enddo
+        enddo
+        
+        alpha = sqrt(norm2(abs(err)))
+        if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
+
+        call check(error, alpha < rtol_sp)
+
+        return
+    end subroutine test_block_kexptA_csp
 
     subroutine collect_expm_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -364,11 +619,6 @@ contains
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
 
-        call save_npy("test_krylov_expm_operator.npy", A%data)
-        call save_npy("test_krylov_expm_rhs.npy", Q%data)
-        call save_npy("test_krylov_expm_ref.npy", Xref%data)
-        call save_npy("test_krylov_expm_kexpm.npy", Xkryl%data)
- 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
@@ -377,6 +627,96 @@ contains
 
         return
     end subroutine test_kexptA_cdp
+
+    subroutine test_block_kexptA_cdp(error)
+        !> This function tests the Krylov based approximation of the action of the exponential
+        ! propagator against the dense computation for a random operator, a random RHS and a 
+        ! typical value of tau.
+
+        !> Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        class(linop_cdp), allocatable :: A
+        !> Basis vectors.
+        class(vector_cdp), allocatable :: B(:)
+        class(vector_cdp), allocatable :: Cref(:)
+        class(vector_cdp), allocatable :: C(:), Cblk(:)
+        !> Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        !> Test matrix.
+        complex(dp) :: Adata(kdim, kdim)
+        complex(dp) :: Edata(kdim, kdim)
+        !> GS factors.
+        complex(dp) :: R(kdim, kdim)
+        complex(dp) :: Id(kdim, kdim)
+        !> Information flag.
+        integer :: info
+        !> Test parameters
+        integer       , parameter :: nkmax = 15
+        integer       , parameter :: p = 3
+        real(dp), parameter :: tau = 0.1_dp
+        real(dp), parameter :: tol = rtol_dp
+        logical       , parameter :: verb = .true.
+        !> Misc.
+        integer  :: i, j, k
+        complex(dp) :: Xdata(test_size,p), Qdata(test_size,p)
+        real(dp) :: alpha
+        complex(dp) :: err(p, p)
+
+        Adata = 0.0_dp ; Edata = 0.0_dp ; Xdata = 0.0_dp
+
+        allocate(Cref(p)) ; call initialize_krylov_subspace(Cref)
+        allocate(C(p))    ; call initialize_krylov_subspace(C)
+        allocate(Cblk(p)) ; call initialize_krylov_subspace(Cblk)
+
+        ! --> Initialize operator.
+        A = linop_cdp() ; call init_rand(A) ; call get_data(Adata, A)
+       
+        ! --> Initialize rhs.
+        allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
+
+        !> Comparison is dense computation (10th order Pade approximation)
+        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+
+        !> Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
+        do i = 1,p
+            if (verb) write(*,*) '    column',i
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+        end do
+        
+        !> Compute Krylov matrix exponential using block-arnoldi method
+        if (verb) write(*,*) 'BLOCK-ARNOLDI'
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        do i = 1, p
+            write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
+            call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
+        end do
+
+        !> Compute 2-norm of the error
+        if (verb) then
+            do i = 1, size(C)
+                do j = 1, size(C)
+                    err(i, j) = C(i)%dot(C(j))
+                enddo
+            enddo
+            alpha = sqrt(norm2(abs(err)))
+            write(*,*) '--------------------------------------------------------------------'
+            write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
+        endif
+ 
+        do i = 1, size(Cblk)
+            do j = 1, size(Cblk)
+                err(i, j) = Cblk(i)%dot(Cblk(j))
+            enddo
+        enddo
+        
+        alpha = sqrt(norm2(abs(err)))
+        if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
+
+        call check(error, alpha < rtol_dp)
+
+        return
+    end subroutine test_block_kexptA_cdp
 
 
 end module
