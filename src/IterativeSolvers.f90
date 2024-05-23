@@ -2,7 +2,7 @@ module lightkrylov_IterativeSolvers
 
     use iso_fortran_env, only: output_unit
     
-    use stdlib_sorting, only: sort_index, int_size
+    use stdlib_sorting, only: sort_index, int_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
 
@@ -354,7 +354,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_size) :: indices(kdim_)
+        integer(int_index) :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -496,7 +496,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_size) :: indices(kdim_)
+        integer(int_index) :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -628,7 +628,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_size) :: indices(kdim_)
+        integer(int_index) :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -760,7 +760,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_size) :: indices(kdim_)
+        integer(int_index) :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -871,7 +871,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_size) :: indices(kdim_)
+            integer(int_index) :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -973,7 +973,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_size) :: indices(kdim_)
+            integer(int_index) :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -1075,7 +1075,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_size) :: indices(kdim_)
+            integer(int_index) :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -1177,7 +1177,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_size) :: indices(kdim_)
+            integer(int_index) :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
