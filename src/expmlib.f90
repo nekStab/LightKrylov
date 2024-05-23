@@ -41,7 +41,7 @@ module LightKrylov_expmlib
          !! Abstract interface to use a user-defined exponential propagator  in `LightKrylov`
          class(abstract_vector),         intent(out)   :: vec_out
          !! Solution vector
-         class(abstract_linop),          intent(inout)    :: A
+         class(abstract_linop),          intent(inout) :: A
          !! Linear operator
          class(abstract_vector),         intent(in)    :: vec_in
          !! Input vector
@@ -65,7 +65,7 @@ contains
       
       class(abstract_vector),         intent(out)   :: vec_out
       !! Solution vector
-      class(abstract_linop),          intent(inout)    :: A
+      class(abstract_linop),          intent(inout) :: A
       !! Linear problem
       class(abstract_vector),         intent(in)    :: vec_in
       !! Input vector
@@ -84,7 +84,7 @@ contains
 
       tol     = atol
       verbose = .false.
-      kdim    = 30
+      kdim    = 200
       transpose = optval(trans, .false.)
 
       call kexpm(vec_out, A, vec_in, tau, tol, info, trans=transpose, verbosity = verbose, kdim =kdim)

@@ -12,7 +12,7 @@ module lightkrylov_utils
    ! Print matrices
    public :: print_mat
    ! Linear Algebra Utilities.
-   public :: inv, svd, eig, eigh, lstsq, schur, ordschur, sqrtm
+   public :: inv, svd, eig, eigh, lstsq, schur, ordschur, sqrtm, dsval
 
    !-------------------------------------------------------
    !-----                                             -----
@@ -483,6 +483,42 @@ contains
       return
    end subroutine zsvd
 
+   subroutine dsval(A, S)
+      !! Singular Value Decomposition of a real-valued matrix using LAPACK.
+       real(kind=wp), intent(in)  :: A(:, :)
+       !! Matrix to be factorized.
+       real(kind=wp), intent(out) :: S(:)
+       !! Singular values.
+ 
+       ! Lapack-related.
+       character :: jobu = "N", jobvt = "N"
+       integer   :: m, n, lda, ldu, ldvt, lwork, info
+       real(kind=wp), allocatable :: work(:)
+       real(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), u(1,1), vt(1,1) 
+ 
+       ! Setup variables.
+       m = size(A, 1); n = size(A, 2)
+       lda = m; ldu = 1; ldvt = 1
+       lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)); allocate (work(lwork))
+ 
+       ! SVD computation.
+       a_tilde = a
+       call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, info)
+       if (info /= 0) then
+          write (output_unit, *) "DGESVD returned info = ", info
+          if (info < 0) then
+             write (output_unit, *) "The ", -info, "-th argument has an illegal value."
+          else
+             write (output_unit, *) "DBSQR did not converge. There are ", info, "superdiagonals"
+             write (output_unit, *) "of an intermediate bidiagonal matrix form B which did not"
+             write (output_unit, *) "converge to zero. See Lapack documentation for more details."
+          end if
+          call stop_error("svd: dgesvd error")
+       end if
+ 
+       return
+    end subroutine dsval
+  
    !-------------------------------------------
    !-----                                 -----
    !-----     LAPACK EVD COMPUTATIONS     -----
@@ -708,7 +744,7 @@ contains
       rk = size(A,1)
       call assert_shape(A, [rk, rk], "sqrmt", "A")
       call assert_shape(sqrtmA, [rk, rk], "sqrmt", "sqrtmA")
-      if (maxval(A - transpose(A)) .gt. atol) then
+      if (norm2(A - transpose(A))/rk**2 .gt. 100*atol) then
          write(*,*) 'sqrtm: Input matrix is not symmetric. Abort.'
          STOP 1
       end if
@@ -720,7 +756,7 @@ contains
          if (abs(lambda(i)) .lt. atol) then
             lambda(i) = 0.0_wp       ! deal with positive semi-definite matrices in eig
          else if (lambda(i) .lt. 0.0) then
-            write(*,*) 'sqrtm: Input matrix is not SPD. Abort.'
+            write(*,*) 'sqrtm: Input matrix is not PD. Abort.'
             STOP 1
          else
             lambda(i) = sqrt(lambda(i))
