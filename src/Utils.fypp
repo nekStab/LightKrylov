@@ -1,0 +1,522 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_utils
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
+    use iso_fortran_env, only: output_unit
+    ! Matrix inversion.
+    use stdlib_linalg_lapack, only: getrf, getri
+    ! Singular value decomposition.
+    use stdlib_linalg_lapack, only: gesvd
+    ! Eigenvalue problem (general + symmetric).
+    use stdlib_linalg_lapack, only: geev, syev, heev
+    ! Least-squares solver.
+    use stdlib_linalg_lapack, only: gels
+    ! Schur factorization.
+    use stdlib_linalg_lapack, only: gees, trsen
+
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    ! Various constants.
+    use lightkrylov_constants
+
+    implicit none
+
+    private
+
+    #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "c"
+    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+    #:else
+    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = 1.0_${kind}$
+    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = 0.0_${kind}$
+    #:endif
+    #:endfor
+
+    public :: stop_error
+    public :: assert_shape
+    ! Compute B = inv(A) in-place for dense matrices.
+    public :: inv
+    ! Compute USV^T = svd(A) for dense matrices.
+    public :: svd
+    ! Compute AX = XD for general dense matrices.
+    public :: eig
+    ! Compute AX = XD for symmetric/hermitian matrices.
+    public :: eigh
+    ! Solve min || Ax - b ||_2^2.
+    public :: lstsq
+    ! Compute AX = XS where S is in Schur form.
+    public :: schur
+    ! Re-orders the Schur factorization of A.
+    public :: ordschur
+
+    public :: abstract_opts
+    #:for kind in REAL_KINDS
+    public :: gmres_${kind}$_opts
+    public :: cg_${kind}$_opts
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "r"
+    public :: log2_${type[0]}$${kind}$
+    #:endif
+    public :: norml_${type[0]}$${kind}$
+    #:endfor
+
+    interface assert_shape
+    #:for kind, type in RC_KINDS_TYPES
+        module procedure assert_shape_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface inv
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure inv_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface svd
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure svd_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface eig
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure eig_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+   interface eigh
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure eigh_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface lstsq
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure lstsq_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface schur
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure schur_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface ordschur
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure ordschur_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    !------------------------------------------------
+    !-----     OPTS TYPE FOR LINEAR SOLVERS     -----
+    !------------------------------------------------
+
+    type, abstract, public :: abstract_opts
+        !! Abstract type container for options from which all other are being extended.
+    end type
+
+    #:for kind in REAL_KINDS
+    type, extends(abstract_opts), public :: gmres_${kind}$_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+        real(${kind}$) :: atol = atol_${kind}$
+        !! Absolute tolerance.
+        real(${kind}$) :: rtol = rtol_${kind}$
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
+    type, extends(abstract_opts), public :: cg_${kind}$_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
+        real(${kind}$) :: atol = atol_${kind}$
+        !! Absolute tolerance.
+        real(${kind}$) :: rtol = rtol_${kind}$
+        !! Relative tolerance.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+
+    #:endfor
+
+contains
+
+    !-------------------------------------
+    !-----     VARIOUS UTILITIES     -----
+    !-------------------------------------
+
+    subroutine stop_error(msg)
+        !! Utility function to print an error message.
+        character(len=*), intent(in) :: msg
+        !! Error message.
+        write(output_unit, *) msg; stop 1
+        return
+    end subroutine stop_error
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine assert_shape_${type[0]}$${kind}$(A, size, routine, matname)
+        !! Utility function to assert the shape of a matrix.
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of A.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted matrix.
+
+        if(any(shape(A) /= size)) then
+            write(output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
+            write(output_unit, *) "Expected shape is ", size
+            call stop_error("Aborting due to illegal matrix size.")
+        endif
+        return
+    end subroutine assert_shape_${type[0]}$${kind}$
+    #:endfor
+
+    !-------------------------------------------
+    !-----     LAPACK MATRIX INVERSION     -----
+    !-------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine inv_${type[0]}$${kind}$(A)
+        !! In-place inversion of A using LAPACK.
+        ${type}$, intent(inout) :: A(:, :)
+        !! Matrix to be inverted (in-place).
+
+        ! Internal variables.
+        integer :: n, info
+        ${type}$ :: work(size(A, 1))
+        integer  :: ipiv(size(A, 1))
+
+        ! Compute A = LU (in-place).
+        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        call getrf(n, n, A, n, ipiv, info)
+        if (info /= 0) then
+            write(output_unit, *) "GETRF return info =", info
+            if (info<0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
+                write(output_unit, *) "has been completed but the factor U is exactly singular."
+                write(output_unit, *) "Division by zero will occur if used to solve Ax=b."
+            endif
+            call stop_error("inv: GETREF error")
+        endif
+
+        ! Compute inv(A) (in-place).
+        call getri(n, A, n, ipiv, work, n, info)
+        if (info /= 0) then
+            write(output_unit, *) "GETRI return info = ", info
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has an illegal value."
+            else
+                write(output_unit, *) "U(", info, ",", info, ") is exactly zero."
+                write(output_unit, *) "The matrix is singular and its inverse cannot be computed."
+            endif
+            call stop_error("in: GETRI error.")
+        endif
+
+        return
+    end subroutine inv_${type[0]}$${kind}$
+
+    subroutine svd_${type[0]}$${kind}$(A, U, S, V)
+        !! Singular value decomposition of a dense matrix.
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        ${type}$, intent(out) :: U(:, :)
+        !! Left singular vectors.
+        real(${kind}$), intent(out) :: S(:)
+        !! Singular values.
+        ${type}$, intent(out) :: V(:, :)
+        !! Right singular vectors.
+
+        ! Internal variables.
+        character :: jobu = "S", jobvt = "S"
+        integer :: m, n, lda, ldu, ldvt, lwork, info
+        ${type}$, allocatable :: work(:)
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: rwork(:)
+        #:endif
+
+        ! Setup variables.
+        m = size(A, 1) ; n = size(A, 2)
+        lda = m ; ldu = m ; ldvt = n
+        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
+
+        ! Shape assertion.
+        call assert_shape(U, [m, m], "svd", "U")
+        call assert_shape(V, [n, n], "svd", "V")
+
+        ! SVD computation.
+        A_tilde = A
+        #:if type[0] == "c"
+        allocate(rwork(5*min(m, n)))
+        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
+        #:else
+        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
+        #:endif
+
+        return
+    end subroutine svd_${type[0]}$${kind}$
+
+    subroutine eig_${type[0]}$${kind}$(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense matrix using LAPACK.
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        #:if type[0] == "c"
+        ${type}$, intent(out) :: vecs(:, :)
+        #:else
+        real(${kind}$), intent(out) :: vecs(:, :)
+        #:endif
+        !! Eigenvectors.
+        complex(${kind}$), intent(out) :: vals(:)
+
+        ! Internal variables
+        character :: jobvl = "n", jobvr = "v"
+        integer :: n, lwork, info, lda, ldvl, ldvr
+        #:if type[0] == "c"
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 1))
+        ${type}$ :: work(2*size(A, 1)), w(size(A, 1))
+        real(${kind}$) :: rwork(2*size(A, 1))
+        #:else
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        ${type}$ :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
+        #:endif
+        integer :: i, idx(size(A, 1))
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
+        #:if type[0] == "c"
+        lwork = 2*n
+        #:else
+        lwork = 4*n
+        #:endif
+
+        ! Eigendecomposition.
+        #:if type[0] == "c"
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        #:else
+        call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
+        #:endif
+
+        if (info /= 0) then
+            write(output_unit, *) "GEEV returned info =", info
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "The QR alg. failed to compute all of the eigenvalues."
+                write(output_unit, *) "No eigenvector has been computed."
+            endif
+            call stop_error("eig: geev error.")
+        endif
+
+        #:if type[0] == "r"
+        vals = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)*wr + cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)*wi
+        #:endif
+
+        return
+    end subroutine eig_${type[0]}$${kind}$
+
+    subroutine eigh_${type[0]}$${kind}$(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        ${type}$, intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        real(${kind}$), intent(out) :: vals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobz = "v", uplo = "u"
+        integer :: n, lwork, info, lda
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2))
+        ${type}$, allocatable :: work(:)
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: rwork(:)
+        #:endif
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; a_tilde = a
+        #:if type[0] == "c"
+        lwork = max(1, 2*n-1)
+        allocate(rwork(max(1, 3*n-2)))
+        #:else
+        lwork = max(1, 3*n-1)
+        #:endif
+        allocate(work(lwork))
+
+        ! Eigendecomposition.
+        #:if type[0] == "r"
+        call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
+        #:else
+        call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
+        #:endif
+
+        return
+    end subroutine eigh_${type[0]}$${kind}$
+
+    subroutine lstsq_${type[0]}$${kind}$(A, b, x)
+        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be "pseudo-inversed".
+        ${type}$, intent(in) :: b(:)
+        !! Right-hand side vector.
+        ${type}$, intent(out) :: x(:)
+        !! Solution of the least-squares problem.
+
+        ! Internal variables.
+        character :: trans="n"
+        integer :: m, n, nrhs, lda, ldb, lwork, info
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
+        ${type}$, allocatable :: work(:)
+
+        ! Setup variables.
+        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
+        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
+        a_tilde = a ; b_tilde(:, 1) = b
+        allocate(work(lwork)) ; work = 0.0_${kind}$
+
+        ! Solve the least-squares problem.
+        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
+
+        if (info /= 0) then
+            write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            call stop_error("lstsq: dgels error")
+        endif
+
+        ! Return solution.
+        x = b_tilde(1:n, 1)
+
+        return
+    end subroutine lstsq_${type[0]}$${kind}$
+
+    subroutine schur_${type[0]}$${kind}$(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        ${type}$, intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        ${type}$, intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(${kind}$), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        ${type}$, allocatable :: work(:)
+        #:if type[0] == "r"
+        ${type}$, allocatable :: wr(:), wi(:)
+        #:else
+        real(${kind}$), allocatable :: rwork(:)
+        #:endif
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork = #{if type[0] == "r"}# 3*n #{else}# 2*n #{endif}#
+        allocate(bwork(n)) ; allocate(work(lwork)) ; #{if type[0] == "c"}# allocate(rwork(n)) #{endif}#
+
+        #:if type[0] == "r"
+        allocate(wr(size(eigvals)), wi(size(eigvals)))
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        eigvals = cmplx(wr, wi, kind=${kind}$)
+        #:else
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+        #:endif
+
+        return
+    contains
+        #:if type[0] == "r"
+        pure function dummy_select(wr, wi) result(out)
+            ${type}$, intent(in) :: wr
+            ${type}$, intent(in) :: wi
+            logical :: out
+            out = .false.
+            return
+        end function
+        #:else
+        pure function dummy_select(w) result(out)
+            ${type}$, intent(in) :: w
+            logical :: out
+            out = .false.
+            return
+        end function
+        #:endif
+    end subroutine schur_${type[0]}$${kind}$
+
+    subroutine ordschur_${type[0]}$${kind}$(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        ${type}$, intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        ${type}$, intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(${kind}$) :: s, sep
+        #:if type[0] == "r"
+        integer :: iwork(size(T, 1)), liwork
+        ${type}$ :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+        #:else
+        ${type}$ :: w(size(T, 1)), work(size(T, 1))
+        #:endif
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        #:if type[0] == "r"
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        #:else
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        #:endif
+
+        return
+    end subroutine ordschur_${type[0]}$${kind}$
+
+    #:endfor
+
+    !---------------------------------
+    !-----     MISCELLANEOUS     -----
+    !---------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "r"
+    real(${kind}$) function log2_${type[0]}$${kind}$(x) result(y)
+        ${type}$, intent(in) :: x
+        y = log(x) / log(2.0_${kind}$)
+    end function
+    #:endif
+
+    real(${kind}$) function norml_${type[0]}$${kind}$(A) result(norm)
+        ${type}$, intent(in) :: A(:, :)
+        integer :: i, n
+        real(${kind}$) :: row_sum
+
+        norm = 0.0_${kind}$
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+    #:endfor
+
+end module lightkrylov_utils

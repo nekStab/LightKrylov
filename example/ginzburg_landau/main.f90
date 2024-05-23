@@ -1,5 +1,6 @@
 program demo
   use LightKrylov
+  use LightKrylov, only: wp => dp
   use Ginzburg_Landau
   use stdlib_io_npy, only : save_npy
   implicit none
@@ -11,30 +12,27 @@ program demo
   !> Exponential propagator.
   type(exponential_prop), allocatable :: A
   !> Sampling time.
-  real(kind=wp), parameter :: tau = 1.0_wp
+  real(kind=wp), parameter :: tau = 0.1_wp
 
   !---------------------------------------------------
   !-----     KRYLOV-BASED EIGENDECOMPOSITION     -----
   !---------------------------------------------------
 
   !> Number of eigenvalues we wish to converge.
-  integer, parameter :: nev = 128
-  !> Krylov subspace dimension.
-  integer, parameter :: kdim = 2*nx
+  integer, parameter :: nev = 32
   !> Krylov subspace.
   type(state_vector), allocatable :: X(:)
   !> Eigenvalues.
-  complex(kind=wp) :: lambda(kdim)
+  complex(kind=wp), allocatable :: lambda(:)
   !> Residual.
-  real(kind=wp)    :: residuals(kdim)
+  real(kind=wp), allocatable    :: residuals(:)
   !> Information flag.
   integer          :: info
 
   !> Miscellaneous.
   integer       :: i, j, k
   real(kind=wp) :: alpha
-  class(abstract_vector), allocatable :: wrk
-  complex(kind=wp)                    :: eigenvectors(nx, nev)
+  complex(wp) :: eigenvectors(nx, nev)
 
   !=============================================================================
 
@@ -49,17 +47,14 @@ program demo
   A = exponential_prop(tau)
 
   !> Initialize Krylov subspace.
-  allocate(X(1:kdim+1)) ; call initialize_krylov_subspace(X)
-
-  !> Random initial Krylov vector.
-  call random_number(X(1)%state) ; alpha = X(1)%norm() ; call X(1)%scal(1.0_wp / alpha)
+  allocate(X(nev)) ; call initialize_krylov_subspace(X)
 
   !------------------------------------------
   !-----     EIGENVALUE COMPUTATION     -----
   !------------------------------------------
 
   !> Call to LightKrylov.
-  call eigs(A, X, lambda, residuals, info, nev=nev)
+  call eigs(A, X, lambda, residuals, info)
 
   !> Transform eigenspectrum from unit-disk to standard complex plane.
   lambda = log(lambda) / tau
@@ -69,14 +64,11 @@ program demo
   !--------------------------------
 
   !> Save the eigenspectrum.
-  call save_eigenspectrum(lambda%re, lambda%im, residuals, "example/ginzburg_landau/eigenspectrum.npy")
+  call save_eigenspectrum(lambda, residuals, "example/ginzburg_landau/eigenspectrum.npy")
 
   !> Reconstruct the leading eigenvectors from the Krylov basis.
   do i = 1, nev
-     !> Real part.
-     eigenvectors(:, i)%re = X(i)%state(1:nx)
-     !> Imaginary part.
-     eigenvectors(:, i)%im = X(i+1)%state(1:nx)
+    eigenvectors(:, i) = X(i)%state
   enddo
 
   !> Save eigenvectors to disk.
