@@ -1,3 +1,5 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module LightKrylov
     ! --> Definitions of various constants.
     use lightkrylov_constants
@@ -24,48 +26,31 @@ module LightKrylov
     public :: dp, atol_dp, rtol_dp
 
     ! Utils exports.
-    public :: gmres_sp_opts
-    public :: cg_sp_opts
-    public :: gmres_dp_opts
-    public :: cg_dp_opts
-    public :: gmres_sp_opts
-    public :: cg_sp_opts
-    public :: gmres_dp_opts
-    public :: cg_dp_opts
+    #:for kind, type in RC_KINDS_TYPES
+    public :: gmres_${kind}$_opts
+    public :: cg_${kind}$_opts
+    #:endfor
 
     ! AbstractVectors exports.
     public :: abstract_vector
-    public :: abstract_vector_rsp
-    public :: abstract_vector_rdp
-    public :: abstract_vector_csp
-    public :: abstract_vector_cdp
+    #:for k1, t1 in RC_KINDS_TYPES
+    public :: abstract_vector_${t1[0]}$${k1}$
+    #:endfor
     
     ! AbstractLinops exports.
     public :: abstract_linop
-    public :: abstract_linop_rsp
-    public :: adjoint_linop_rsp
-    public :: Id_rsp
-    public :: scaled_linop_rsp
-    public :: axpby_linop_rsp
-    public :: abstract_sym_linop_rsp
-    public :: abstract_linop_rdp
-    public :: adjoint_linop_rdp
-    public :: Id_rdp
-    public :: scaled_linop_rdp
-    public :: axpby_linop_rdp
-    public :: abstract_sym_linop_rdp
-    public :: abstract_linop_csp
-    public :: adjoint_linop_csp
-    public :: Id_csp
-    public :: scaled_linop_csp
-    public :: axpby_linop_csp
-    public :: abstract_hermitian_linop_csp
-    public :: abstract_linop_cdp
-    public :: adjoint_linop_cdp
-    public :: Id_cdp
-    public :: scaled_linop_cdp
-    public :: axpby_linop_cdp
-    public :: abstract_hermitian_linop_cdp
+    #:for k1, t1 in RC_KINDS_TYPES
+    public :: abstract_linop_${t1[0]}$${k1}$
+    public :: adjoint_linop_${t1[0]}$${k1}$
+    public :: Id_${t1[0]}$${k1}$
+    public :: scaled_linop_${t1[0]}$${k1}$
+    public :: axpby_linop_${t1[0]}$${k1}$
+    #:if t1[0] == "r"
+    public :: abstract_sym_linop_${t1[0]}$${k1}$
+    #:else
+    public :: abstract_hermitian_linop_${t1[0]}$${k1}$
+    #:endif
+    #:endfor
     
     ! BaseKrylov exports.
     public :: qr
@@ -83,10 +68,9 @@ module LightKrylov
     public :: cg
 
     ! ExpmLib exports.
-    public :: abstract_exptA_rsp
-    public :: abstract_exptA_rdp
-    public :: abstract_exptA_csp
-    public :: abstract_exptA_cdp
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_exptA_${type[0]}$${kind}$
+    #:endfor
     public :: expm
     public :: kexpm
     public :: k_exptA

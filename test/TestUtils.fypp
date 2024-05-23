@@ -1,0 +1,175 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestUtils
+    use stdlib_io_npy, only: save_npy
+    use LightKrylov
+    use TestVectors
+    use TestLinops
+    implicit none
+    
+    private
+
+    public :: get_data
+    public :: put_data
+    public :: init_rand
+
+    interface get_data
+        #:for k1, t1 in RC_KINDS_TYPES
+        module procedure get_data_vec_${t1[0]}$${k1}$
+        module procedure get_data_vec_basis_${t1[0]}$${k1}$
+        module procedure get_data_linop_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface put_data
+        #:for k1, t1 in RC_KINDS_TYPES
+        module procedure put_data_vec_${t1[0]}$${k1}$
+        module procedure put_data_vec_basis_${t1[0]}$${k1}$
+        module procedure put_data_linop_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface init_rand
+        #:for k1, t1 in RC_KINDS_TYPES
+        module procedure init_rand_vec_${t1[0]}$${k1}$
+        module procedure init_rand_basis_${t1[0]}$${k1}$
+        module procedure init_rand_linop_${t1[0]}$${k1}$
+        #:if t1[0] == "r"
+        module procedure init_rand_spd_linop_${t1[0]}$${k1}$
+        #:else
+        module procedure init_rand_hermitian_linop_${t1[0]}$${k1}$
+        #:endif
+        #:endfor
+    end interface
+
+contains
+
+    !----------------------------------------------------
+    !-----     EXTRACT DATA FROM ABSTRACT TYPES     -----
+    !----------------------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine get_data_vec_${t1[0]}$${k1}$(vec_out, vec_in)
+        ${t1}$, intent(out) :: vec_out(:)
+        type(vector_${t1[0]}$${k1}$), intent(in) :: vec_in
+        ! Internal variables.
+        integer :: k, kdim
+        vec_out = vec_in%data
+        return
+    end subroutine get_data_vec_${t1[0]}$${k1}$
+
+    subroutine get_data_vec_basis_${t1[0]}$${k1}$(basis_out, basis_in)
+        ${t1}$, intent(out) :: basis_out(:, :)
+        type(vector_${t1[0]}$${k1}$), intent(in) :: basis_in(:)
+        ! Internal variables.
+        integer :: k, kdim
+        kdim = size(basis_in)
+        do k = 1, kdim
+            basis_out(:, k) = basis_in(k)%data
+        enddo
+        return
+    end subroutine get_data_vec_basis_${t1[0]}$${k1}$
+
+    subroutine get_data_linop_${t1[0]}$${k1}$(mat_out, linop_in)
+        ${t1}$, intent(out) :: mat_out(:, :)
+        type(linop_${t1[0]}$${k1}$), intent(in) :: linop_in
+        mat_out = linop_in%data
+        return
+    end subroutine get_data_linop_${t1[0]}$${k1}$
+
+    #:endfor
+
+    !----------------------------------------------
+    !-----     PUT DATA TO ABSTRACT TYPES     -----
+    !----------------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine put_data_vec_${t1[0]}$${k1}$(vec_out, vec_in)
+        type(vector_${t1[0]}$${k1}$), intent(out) :: vec_out
+        ${t1}$, intent(in) :: vec_in
+        vec_out%data = vec_in
+        return
+    end subroutine put_data_vec_${t1[0]}$${k1}$
+
+    subroutine put_data_vec_basis_${t1[0]}$${k1}$(basis_out, basis_in)
+        type(vector_${t1[0]}$${k1}$), intent(out) :: basis_out(:)
+        ${t1}$, intent(in) :: basis_in(:, :)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_out)
+            basis_out(k)%data = basis_in(:, k)
+        enddo
+        return
+    end subroutine put_data_vec_basis_${t1[0]}$${k1}$
+
+    subroutine put_data_linop_${t1[0]}$${k1}$(linop_out, mat_in)
+        type(linop_${t1[0]}$${k1}$), intent(out) :: linop_out
+        ${t1}$, intent(in) :: mat_in(:, :)
+        ! Internal variables.
+        linop_out%data = mat_in
+        return
+    end subroutine put_data_linop_${t1[0]}$${k1}$
+
+    #:endfor
+
+    !--------------------------------------------------------------
+    !-----     INITIALIZE ABSTRACT TYPES WITH RANDOM DATA     -----
+    !--------------------------------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine init_rand_vec_${t1[0]}$${k1}$(x)
+        type(vector_${t1[0]}$${k1}$), intent(inout) :: x
+        call x%rand()
+        return
+    end subroutine init_rand_vec_${t1[0]}$${k1}$
+
+    subroutine init_rand_basis_${t1[0]}$${k1}$(X)
+        type(vector_${t1[0]}$${k1}$), intent(inout) :: X(:)
+        integer :: i
+        do i = 1, size(X)
+            call X(i)%rand()
+        enddo
+        return
+    end subroutine init_rand_basis_${t1[0]}$${k1}$
+
+    subroutine init_rand_linop_${t1[0]}$${k1}$(linop)
+        type(linop_${t1[0]}$${k1}$), intent(inout) :: linop
+        #:if t1[0] == "c"
+        real(${k1}$), dimension(test_size, test_size, 2) :: data
+        call random_number(data) ; data = data - 0.5_${kind}$
+        linop%data%re = data(:, :, 1)
+        linop%data%im = data(:, :, 2)
+        #:else
+        call random_number(linop%data)
+        #:endif
+        return
+    end subroutine init_rand_linop_${t1[0]}$${k1}$
+
+    #:if t1[0] == "r"
+    subroutine init_rand_spd_linop_${t1[0]}$${k1}$(linop)
+        type(spd_linop_${t1[0]}$${k1}$), intent(inout) :: linop
+        ${t1}$, dimension(test_size, 2*test_size) :: data
+        integer :: i
+        call random_number(data) ; data = data - 0.5_${kind}$
+        linop%data = matmul(data, transpose(data)) / 4
+        return
+    end subroutine init_rand_spd_linop_${t1[0]}$${k1}$
+    #:else
+    subroutine init_rand_hermitian_linop_${t1[0]}$${k1}$(linop)
+        type(hermitian_linop_${t1[0]}$${k1}$), intent(inout) :: linop
+        real(${k1}$), dimension(test_size, 2*test_size, 2) :: data
+        ${t1}$, dimension(test_size, 2*test_size) :: data_c
+        ${t1}$, dimension(test_size, test_size) :: matrix
+        integer :: i
+        call random_number(data)
+        data_c%re = data(:, :, 1) - 0.5_${kind}$
+        data_c%im = data(:, :, 2) - 0.5_${kind}$
+        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
+        linop%data = matrix
+        return
+    end subroutine init_rand_hermitian_linop_${t1[0]}$${k1}$
+    #:endif
+
+    #:endfor
+
+end module

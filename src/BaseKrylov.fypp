@@ -1,0 +1,806 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_BaseKrylov
+    use iso_fortran_env
+    use stdlib_optval, only: optval
+    use lightkrylov_constants
+    use lightkrylov_utils
+    use lightkrylov_AbstractVectors
+    use lightkrylov_AbstractLinops
+    implicit none
+    
+    private
+
+    public :: qr
+    public :: apply_permutation_matrix
+    public :: apply_inverse_permutation_matrix
+    public :: arnoldi
+    public :: initialize_krylov_subspace
+    public :: lanczos_bidiagonalization
+    public :: lanczos_tridiagonalization
+    public :: krylov_schur
+
+    interface qr
+        #:for k1, t1 in RC_KINDS_TYPES
+        module procedure qr_no_pivoting_${t1[0]}$${k1}$
+        module procedure qr_with_pivoting_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface swap_columns
+        #: for k1, t1 in RC_KINDS_TYPES
+        module procedure swap_columns_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface apply_permutation_matrix
+        #: for k1, t1 in RC_KINDS_TYPES
+        module procedure apply_permutation_matrix_${t1[0]}$${k1}$
+        module procedure apply_permutation_matrix_array_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface apply_inverse_permutation_matrix
+        #:for k1, t1 in RC_KINDS_TYPES
+        module procedure apply_inverse_permutation_matrix_${t1[0]}$${k1}$
+        module procedure apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$
+        #:endfor
+    end interface
+
+    interface arnoldi
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure arnoldi_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface initialize_krylov_subspace
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure initialize_krylov_subspace_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface lanczos_tridiagonalization
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure lanczos_tridiagonalization_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface lanczos_bidiagonalization
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface krylov_schur
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure krylov_schur_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+contains
+
+    !-------------------------------------
+    !-----     UTILITY FUNCTIONS     -----
+    !-------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine initialize_krylov_subspace_${t1[0]}$${k1}$(X, X0)
+        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: X(:)
+        class(abstract_vector_${t1[0]}$${k1}$), optional, intent(in) :: X0(:)
+
+        ! Internal variables.
+        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Q(:)
+        ${t1}$, allocatable :: R(:, :)
+        integer, allocatable :: perm(:)
+        integer :: i, p, info
+
+        ! Zero-out X.
+        do i = 1, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Deals with optional args.
+        if(present(X0)) then
+            p = size(X0)
+
+            ! Initialize.
+            allocate(Q(1:p), source=X0(1:p))
+            do i = 1, p
+                call Q(i)%zero()
+                call Q(i)%add(X0(i))
+            enddo
+    
+            ! Orthonormalize.
+            allocate(R(1:p, 1:p)) ; R = 0.0_${k1}$
+            allocate(perm(1:p)) ; perm = 0
+            call qr(Q, R, perm, info)
+            do i = 1, p
+                call X(i)%add(Q(i))
+            enddo
+        endif
+
+        return
+    end subroutine initialize_krylov_subspace_${t1[0]}$${k1}$
+
+    #:endfor
+
+    !------------------------------------
+    !-----     QR FACTORIZATION     -----
+    !------------------------------------
+
+    #:for k1, t1 in RC_KINDS_TYPES
+    subroutine qr_no_pivoting_${t1[0]}$${k1}$(Q, R, info, verbosity, tol)
+        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+        !! Array of `abstract_vector` to be orthonormalized.
+        ${t1}$, intent(out) :: R(:, :)
+        !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
+        integer, intent(out) :: info
+        !! Information flag.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical                       :: verbose
+        real(${k1}$), optional, intent(in) :: tol
+        !! Tolerance to determine colinearity.
+        real(${k1}$)                       :: tolerance
+
+        ! Internal variables.
+        ${t1}$ :: beta
+        integer :: idx, i, j, k, kdim, iwrk
+
+        ! Deals with the optional args.
+        verbose   = optval(verbosity, .true.)
+        tolerance = optval(tol, rtol_${k1}$)
+
+        info = 0 ; R = 0.0_${k1}$
+        do j = 1, size(Q)
+            ! First pass
+            do i = 1, j-1
+                beta = Q(i)%dot(Q(j))
+                #:if t1[0] == "c"
+                call Q(j)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), -beta)
+                #:else
+                call Q(j)%axpby(1.0_${k1}$, Q(i), -beta)
+                #:endif
+                R(i, j) = beta
+            enddo
+
+            ! Second pass
+            do i = 1, j-1
+                beta = Q(i)%dot(Q(j))
+                #:if t1[0] == "c"
+                call Q(j)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), -beta)
+                #:else
+                call Q(j)%axpby(1.0_${k1}$, Q(i), -beta)
+                #:endif
+                R(i, j) = R(i, j) + beta
+            enddo
+
+            ! Normalize column.
+            beta = Q(j)%norm()
+
+            ! Check for breakdown.
+            if (abs(beta) < tolerance) then
+                if(verbose) then
+                    write(output_unit, *) "INFO: Colinear columns detected."
+                    write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
+                endif
+                R(i, j) = 0.0_${k1}$ ; call Q(j)%zero()
+            else
+                call Q(j)%scal(1.0_${k1}$ / beta) ; R(j, j) = beta
+            endif
+        enddo
+
+        return
+    end subroutine qr_no_pivoting_${t1[0]}$${k1}$
+
+    subroutine qr_with_pivoting_${t1[0]}$${k1}$(Q, R, perm, info, verbosity, tol)
+        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+        !! Array of `abstract_vector` to be orthonormalized.
+        ${t1}$, intent(out) :: R(:, :)
+        !! Upper triangular matrix resulting from the QR factorization.
+        integer, intent(out) :: perm(size(Q))
+        !! Permutation matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical :: verbose
+        real(${k1}$), optional, intent(in) :: tol
+
+        !! Tolerance to detect colinearity.
+        real(${k1}$) :: tolerance
+
+        ! Internal variables
+        ${t1}$ :: beta
+        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idxv(1)
+        ${t1}$  :: Rii(size(Q))
+
+        info = 0 ; kdim = size(Q)
+        R = 0.0_${k1}$ ; Rii = 0.0_${k1}$
+        
+        ! Deals with the optional arguments.
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, rtol_${k1}$)
+
+        ! Initialize diagonal entries.
+        do i = 1, kdim
+            perm(i) = i
+            Rii(i) = Q(i)%dot(Q(i))
+        enddo
+
+        qr_step: do j = 1, kdim
+            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
+            if (abs(Rii(idx)) < tolerance) then
+                do i = j, kdim
+                    call Q(i)%rand(.false.)
+                    ! Orthogonalize against existing columns
+                    do k = 1, i-1
+                        beta = Q(i)%dot(Q(k))
+                        #:if t1[0] == "c"
+                        call Q(i)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(k), -beta)
+                        #:else
+                        call Q(i)%axpby(1.0_${k1}$, Q(k), -beta)
+                        #:endif
+                    enddo
+                    beta = Q(i)%norm() ; call Q(i)%scal(1.0_${k1}$ / beta)
+                enddo
+                exit qr_step
+            endif
+
+            call swap_columns(Q, R, Rii, perm, j, idx)
+
+            ! Normalize column.
+            beta = Q(j)%norm()
+
+            if (abs(beta) < tolerance) then
+                R(j, j) = 0.0_${k1}$ ; call Q(j)%zero()
+            else
+                R(j, j) = beta ; call Q(j)%scal(1.0_${k1}$ / beta)
+            endif
+
+            ! Orthonormalize all columns against new vector (MGS)
+            do i = j+1, kdim
+                beta = Q(j)%dot(Q(i))
+                #:if t1[0] == "c"
+                call Q(i)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(j), -beta)
+                #:else
+                call Q(i)%axpby(1.0_${k1}$, Q(j), -beta)
+                #:endif
+                R(j, i) = beta
+            enddo
+
+            ! Update Rii
+            Rii(j) = 0.0_${k1}$
+            do i = j+1, kdim
+                Rii(i) = Rii(i) - R(j, i)**2
+            enddo
+
+        enddo qr_step
+
+        return
+    end subroutine qr_with_pivoting_${t1[0]}$${k1}$
+
+    subroutine swap_columns_${t1[0]}$${k1}$(Q, R, Rii, perm, i, j)
+        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+        !! Vector basis whose i-th and j-th columns need swapping.
+        ${t1}$, intent(inout) :: R(:, :)
+        !! Upper triangular matrix resulting from QR.
+        ${t1}$, intent(inout) :: Rii(:)
+        !! Diagonal entries of R.
+        integer, intent(inout) :: perm(:)
+        !! Column ordering.
+        integer, intent(in) :: i, j
+        !! Index of the columns to be swapped.
+
+        ! Internal variables.
+        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Qwrk
+        ${t1}$, allocatable :: Rwrk(:)
+        integer :: iwrk, m, n
+
+        ! Sanity checks.
+        m = size(Q) ; n = min(i, j) - 1
+
+        ! Allocations.
+        allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
+        allocate(Rwrk(1:max(1, n))) ; Rwrk = 0.0_${k1}$
+
+        ! Swap columns.
+        #:if t1[0] == "c"
+        call Qwrk%axpby(cmplx(0.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(j), cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
+        call Q(j)%axpby(cmplx(0.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
+        call Q(i)%axpby(cmplx(0.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Qwrk, cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
+        #:else
+        call Qwrk%axpby(0.0_${k1}$, Q(j), 1.0_${k1}$)
+        call Q(j)%axpby(0.0_${k1}$, Q(i), 1.0_${k1}$)
+        call Q(i)%axpby(0.0_${k1}$, Qwrk, 1.0_${k1}$)
+        #:endif
+        
+        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
+        iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
+
+        if (n > 0) then
+            Rwrk = R(1:n, j) ; R(1:n, j) = R(1:n, i) ; R(1:n, i) = Rwrk
+        endif
+
+        return
+    end subroutine swap_columns_${t1[0]}$${k1}$
+
+    subroutine apply_permutation_matrix_${t1[0]}$${k1}$(Q, perm)
+        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Qwrk(:)
+
+        allocate(Qwrk, source=Q)
+        do i = 1, size(perm)
+            call Q(i)%axpby(zero_${t1[0]}$${k1}$, Qwrk(perm(i)), one_${t1[0]}$${k1}$)
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_${t1[0]}$${k1}$
+
+    subroutine apply_inverse_permutation_matrix_${t1[0]}$${k1}$(Q, perm)
+        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Qwrk(:)
+
+        allocate(Qwrk, source=Q) ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            call Q(i)%axpby(zero_${t1[0]}$${k1}$, Qwrk(inv_perm(i)), one_${t1[0]}$${k1}$)
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_${t1[0]}$${k1}$
+
+    subroutine apply_permutation_matrix_array_${t1[0]}$${k1}$(Q, perm)
+        ${t1}$, intent(inout) :: Q(:, :)
+        !! Basis vectors to be permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        ${t1}$, allocatable :: Qwrk(:, :)
+
+        Qwrk = Q
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, perm(i))
+        enddo
+
+        return
+    end subroutine apply_permutation_matrix_array_${t1[0]}$${k1}$
+
+    subroutine apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$(Q, perm)
+        ${t1}$, intent(inout) :: Q(:, :)
+        !! Basis vectors to be (un-) permuted.
+        integer, intent(in) :: perm(:)
+        !! Permutation matrix (vector representation).
+
+        ! Internal variables.
+        integer :: i
+        integer :: inv_perm(size(perm))
+        ${t1}$, allocatable :: Qwrk(:, :)
+
+        Qwrk = Q ; inv_perm = 0
+
+        ! Inverse permutation vector.
+        do i = 1, size(perm)
+            inv_perm(perm(i)) = i
+        enddo
+
+        ! Undo permutation.
+        do i = 1, size(perm)
+            Q(:, i) = Qwrk(:, inv_perm(i))
+        enddo
+
+        return
+    end subroutine apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$
+
+
+    #:endfor
+
+    !-----------------------------------------
+    !-----     ARNOLDI FACTORIZATION     -----
+    !-----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine arnoldi_${type[0]}$${kind}$(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        !! Orthogonal basis for the generated Krylov subspace.
+        ${type}$, intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Arnoldi factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Arnoldi factorization (default `size(X)-1`)
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control.
+        logical, optional, intent(in) :: transpose
+        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+        real(${kind}$), optional, intent(in) :: tol
+        !! Tolerance to determine whether an invariant subspace has been computed or not.
+        integer, optional, intent(in) :: blksize
+        !! Block size for block Arnoldi (default 1).
+
+        ! Internal variables.
+        integer :: k_start, k_end, p
+        logical :: verbose, trans
+        real(${kind}$) :: tolerance
+        real(${kind}$) :: beta
+        ${type}$, allocatable :: res(:)
+        integer, allocatable :: perm(:)
+        integer :: k, i, kdim, kpm, kp, kpp
+
+        ! Deals with optional non-unity blksize and allocations.
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_${kind}$
+        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+
+        ! Check dimensions.
+        kdim = (size(X) - p) / p
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        verbose   = optval(verbosity, .false.)
+        tolerance = optval (tol, atol_${kind}$)
+        trans     = optval(transpose, .false.)
+
+        ! Arnoldi factorization.
+        blk_arnoldi: do k = k_start, k_end
+            ! Counters
+            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+            ! Matrix-vector product.
+            if (trans) then
+                do i = 1, p
+                    call A%rmatvec(X(kpm+i), X(kp+i))
+                enddo
+            else
+                do i = 1, p
+                    call A%matvec(X(kpm+i), X(kp+i))
+                enddo
+            endif
+
+            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
+            call update_hessenberg_matrix_${type[0]}$${kind}$(H, X, k, p)
+
+            ! Orthogonalize current blk vectors.
+            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+
+            ! Extract residual norm (smallest diagonal element of H matrix).
+            res = 0.0_${kind}$
+            do i = 1, p
+                res(i) = H(kp+i, kpm+i)
+            enddo
+            beta = minval(abs(res))
+
+            ! Exit Arnoldi loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = kp
+                ! Exit the Arnoldi iteration.
+                exit blk_arnoldi
+            endif
+
+        enddo blk_arnoldi
+
+        return
+    end subroutine arnoldi_${type[0]}$${kind}$
+
+    subroutine update_hessenberg_matrix_${type[0]}$${kind}$(H, X, k, blksize)
+        integer, intent(in) :: k
+        ${type}$, intent(inout) :: H(:, :)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        integer, optional, intent(in) :: blksize
+
+        ! Internal variables.
+        ${type}$, allocatable :: wrk(:, :)
+        integer :: p, kpm, kp, kpp, i, j
+
+        ! Deals with optional non-unity block size.
+        p = optval(blksize, 1)
+
+        ! Counters and allocations.
+        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_${kind}$
+
+        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
+        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(one_${type[0]}$${kind}$, X(j), -H(j, kpm+i))
+            enddo
+        enddo
+
+        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        do i = 1, p
+            do j = 1, kp
+                call X(kp+i)%axpby(one_${type[0]}$${kind}$, X(j), -wrk(j, i))
+            enddo
+        enddo
+
+        ! Update Hessenberg matrix with the second pass correction.
+        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
+
+        return
+    end subroutine update_hessenberg_matrix_${type[0]}$${kind}$
+
+    #:endfor
+
+
+    !---------------------------------------------
+    !-----     LANCZOS BIDIAGONALIZATION     -----
+    !---------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine lanczos_bidiagonalization_${type[0]}$${kind}$(A, U, V, B, info, kstart, kend, verbosity, tol)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
+        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
+        !! the starting Krylov vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: V(:)
+        !! Orthonormal basis for the row span of \(\mathbf{A}\).
+        ${type}$, intent(inout) :: B(:, :)
+        !! Bidiagonal matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the Lanczos factorization (default 1).
+        integer, optional, intent(in) :: kend
+        !! Final index for the Lanczos factorization (default 1).
+        logical, optional, intent(in) :: verbosity
+        !! Verbosity control (default `.false.`)
+        real(${kind}$), optional, intent(in) :: tol
+        !! Tolerance to determine whether invariant subspaces have been computed or not.
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(${kind}$) :: tolerance
+        ${type}$ :: alpha, beta, gamma
+        integer :: i, j, k, kdim
+
+
+        info = 0
+
+        ! Krylov subspace dimension.
+        kdim = size(U) - 1
+
+        ! Deals with the optional args.
+        k_start = optval(kstart, 1)
+        k_end   = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_${kind}$)
+
+        ! Lanczos bidiagonalization.
+        lanczos : do k = k_start, k_end
+            ! Transpose matrix-vector product.
+            call A%rmatvec(U(k), V(k))
+
+            ! Full reorthogonalization of the right Krylov subspace.
+            do j = 1, k-1
+                gamma = V(j)%dot(V(k))
+                call V(k)%axpby(one_${type[0]}$${kind}$, V(j), -gamma)
+            enddo
+
+            ! Normalization step.
+            alpha = V(k)%norm() ; B(k, k) = alpha
+            if (abs(alpha) > tolerance) then
+                call V(k)%scal(one_${type[0]}$${kind}$/alpha)
+            else
+                info = k
+                exit lanczos
+            endif
+
+            ! Matrix-vector product.
+            call A%matvec(V(k), U(k+1))
+
+            ! Full re-orthogonalization of the left Krylov subspace.
+            do j = 1, k
+                gamma = U(j)%dot(U(k+1))
+                call U(k+1)%axpby(one_${type[0]}$${kind}$, U(j), -gamma)
+           enddo
+
+            ! Normalization step
+            beta = U(k+1)%norm() ; B(k+1, k) = beta
+            if (abs(beta) > tolerance) then
+                call U(k+1)%scal(one_${type[0]}$${kind}$ / beta)
+            else
+                info = k
+                exit lanczos
+            endif
+
+        enddo lanczos
+
+        return
+    end subroutine lanczos_bidiagonalization_${type[0]}$${kind}$
+
+    #:endfor
+
+
+    !----------------------------------------------
+    !-----     LANCZOS TRIDIAGONALIZATION     -----
+    !----------------------------------------------
+    
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine lanczos_tridiagonalization_${type[0]}$${kind}$(A, X, T, info, kstart, kend, verbosity, tol)
+        #:if type[0] == "r"
+        class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
+        #:else
+        class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(in) :: A
+        #:endif
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        ${type}$, intent(inout) :: T(:, :)
+        integer, intent(out) :: info
+        integer, optional, intent(in) :: kstart
+        integer, optional, intent(in) :: kend
+        logical, optional, intent(in) :: verbosity
+        real(${kind}$), optional, intent(in) :: tol
+
+        ! Internal variables.
+        integer :: k_start, k_end
+        logical :: verbose
+        real(${kind}$) :: tolerance
+        real(${kind}$) :: beta
+        integer :: i, j, k, kdim
+
+        ! Deal with optional args.
+        kdim = size(X) - 1
+        k_start = optval(kstart, 1)
+        k_end = optval(kend, kdim)
+        verbose = optval(verbosity, .false.)
+        tolerance = optval(tol, atol_${kind}$)
+
+        ! Lanczos tridiagonalization.
+        lanczos: do k = k_start, k_end
+            ! Matrix-vector product.
+            call A%matvec(X(k), X(k+1))
+            ! Update tridiagonal matrix.
+            call update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
+            beta = X(k+1)%norm() ; T(k+1, k) = beta
+
+            ! Exit Lanczos loop if needed.
+            if (beta < tolerance) then
+                ! Dimension of the computed invariant subspace.
+                info = k
+                ! Exit the Lanczos iteration.
+                exit lanczos
+            else
+                ! Normalize the new Krylov vector.
+                call X(k+1)%scal(one_${type[0]}$${kind}$ / beta)
+            endif
+        enddo lanczos
+
+        return
+    end subroutine lanczos_tridiagonalization_${type[0]}$${kind}$
+
+    subroutine update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
+        integer, intent(in) :: k
+        ${type}$, intent(inout) :: T(:, :)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+
+        ! Internal variables.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+        integer :: i
+        ${type}$ :: alpha
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        do i = max(1, k-1), k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_${type[0]}$${kind}$, X(i), -alpha)
+            ! Update tridiag. matrix.
+            T(i, k) = alpha
+        enddo
+
+        ! Full re-orthogonalization.
+        do i = 1, k
+            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_${type[0]}$${kind}$, X(i), -alpha)
+        enddo
+
+        return
+    end subroutine update_tridiag_matrix_${type[0]}$${kind}$
+
+    #:endfor
+
+    !----------------------------------------
+    !-----     KRYLOV-SCHUR RESTART     -----
+    !----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine krylov_schur_${type[0]}$${kind}$(n, X, H, select_eigs)
+        integer, intent(out) :: n
+        !! Number eigenvalues that have been moved to the upper
+        !! left block of the Schur factorization of `H`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        !! Krylov basis.
+        ${type}$, intent(inout) :: H(:, :)
+        !! Upper Hessenberg matrix.
+        interface
+            function selector(lambda) result(out)
+                import ${kind}$
+                complex(${kind}$), intent(in) :: lambda(:)
+                logical                       :: out(size(lambda))
+            end function selector
+        end interface
+        procedure(selector) :: select_eigs
+        !! Procedure to select the eigenvalues to move in the upper left-block.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        integer :: i, j, kdim
+        
+        ! Schur-related.
+        ${type}$ :: Z(size(H, 2), size(H, 2))
+        complex(${kind}$) :: eigvals(size(H, 2))
+        logical :: selected(size(H, 2))
+       
+        ! Krylov subspace dimension.
+        kdim = size(X)-1
+
+        ! Allocate and initializes variables.
+        eigvals = zero_${type[0]}$${kind}$ ; Z = zero_${type[0]}$${kind}$
+        selected = .false.
+
+        ! Schur decomposition of the Hessenberg matrix.
+        call schur(H(:size(H, 2), :), Z, eigvals)
+
+        ! Eigenvalue selection of the upper left block.
+        selected = select_eigs(eigvals) ; n = count(selected)
+
+        ! Re-order the Schur decomposition and Schur basis.
+        call ordschur(H(:kdim, :), Z, selected)
+
+        ! Update the Hessenberg matrix and Krylov basis.
+        block
+        ${type}$ :: b(size(H, 2))
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+        
+        ! Update the Krylov basis.
+        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+
+        do i = 1, n
+            call X(i)%axpby(zero_${type[0]}$${kind}$, Xwrk(i), one_${type[0]}$${kind}$)
+        enddo
+
+        call X(n+1)%axpby(zero_${type[0]}$${kind}$, X(kdim+1), one_${type[0]}$${kind}$)
+
+        do i = n+2, size(X)
+            call X(i)%zero()
+        enddo
+
+        ! Update the Hessenberg matrix.
+        b = matmul(H(kdim+1, :), Z)
+        H(n+1, :) = b
+        H(n+2:, :) = zero_${type[0]}$${kind}$
+        H(:, n+1:) = zero_${type[0]}$${kind}$
+        end block
+
+        return
+    end subroutine krylov_schur_${type[0]}$${kind}$
+
+    #:endfor
+
+end module lightkrylov_BaseKrylov

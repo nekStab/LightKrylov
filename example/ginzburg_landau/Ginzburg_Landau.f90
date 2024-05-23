@@ -3,6 +3,7 @@ module Ginzburg_Landau
   use rklib_module
   ! LightKrylov for linear algebra.
   use LightKrylov
+  use LightKrylov, only: wp => dp
   ! Standard Library.
   use stdlib_math, only : linspace
   use stdlib_optval, only : optval
@@ -19,7 +20,7 @@ module Ginzburg_Landau
   ! Mesh related parameters.
   real(kind=wp), parameter :: L  = 200.0_wp ! Domain length
   integer      , parameter :: nx = 512      ! Number of grid points (excluding boundaries).
-  real(kind=wp)            :: dx            ! Grid size.
+  real(kind=wp), parameter :: dx = L/(nx+1) ! Grid size.
 
   ! Physical parameters.
   complex(kind=wp), parameter :: nu    = cmplx(2.0_wp, 0.2_wp, kind=wp)
@@ -33,8 +34,8 @@ module Ginzburg_Landau
   !-----     LIGHTKRYLOV VECTOR TYPE     -----
   !-------------------------------------------
 
-  type, extends(abstract_vector), public :: state_vector
-     real(kind=wp) :: state(2*nx) = 0.0_wp
+  type, extends(abstract_vector_cdp), public :: state_vector
+     complex(kind=wp) :: state(nx) = 0.0_wp
    contains
      private
      procedure, pass(self), public :: zero
@@ -48,7 +49,7 @@ module Ginzburg_Landau
   !-----     EXPONENTIAL PROPAGATOR     -----
   !------------------------------------------
 
-  type, extends(abstract_linop), public :: exponential_prop
+  type, extends(abstract_linop_cdp), public :: exponential_prop
      real(kind=wp) :: tau ! Integration time.
    contains
      private
@@ -77,7 +78,6 @@ contains
 
     ! Construct mesh.
     x = linspace(-L/2, L/2, nx+2)
-    dx = x(2) - x(1)
 
     ! Construct mu(x)
     mu(:) = (mu_0 - c_mu**2) + (mu_2 / 2.0_wp) * x(2:nx+1)**2
@@ -264,9 +264,9 @@ contains
     return
   end subroutine zero
 
-  real(kind=wp) function dot(self, vec) result(alpha)
+  complex(kind=wp) function dot(self, vec) result(alpha)
     class(state_vector)   , intent(in) :: self
-    class(abstract_vector), intent(in) :: vec
+    class(abstract_vector_cdp), intent(in) :: vec
     select type(vec)
     type is(state_vector)
        alpha = dot_product(self%state, vec%state)
@@ -276,15 +276,15 @@ contains
 
   subroutine scal(self, alpha)
     class(state_vector), intent(inout) :: self
-    real(kind=wp)      , intent(in)    :: alpha
+    complex(kind=wp)      , intent(in)    :: alpha
     self%state = self%state * alpha
     return
   end subroutine scal
 
   subroutine axpby(self, alpha, vec, beta)
     class(state_vector)   , intent(inout) :: self
-    class(abstract_vector), intent(in)    :: vec
-    real(kind=wp)         , intent(in)    :: alpha, beta
+    class(abstract_vector_cdp), intent(in)    :: vec
+    complex(kind=wp)         , intent(in)    :: alpha, beta
     select type(vec)
     type is(state_vector)
        self%state = alpha*self%state + beta*vec%state
@@ -295,14 +295,16 @@ contains
   subroutine rand(self, ifnorm)
     class(state_vector), intent(inout) :: self
     logical, optional,   intent(in)    :: ifnorm
+    real(kind=wp) :: tmp(nx, 2)
     ! internals
     logical :: normalize
     real(kind=wp) :: alpha
     normalize = optval(ifnorm,.true.)
-    call random_number(self%state)
+    call random_number(tmp)
+    self%state%re = tmp(:, 1) ; self%state%im = tmp(:, 2)
     if (normalize) then
       alpha = self%norm()
-      call self%scal(1.0/alpha)
+      call self%scal(cmplx(1.0_wp, 0.0_wp, kind=wp)/alpha)
     endif
     return
   end subroutine rand
@@ -315,24 +317,29 @@ contains
     ! Linear Operator.
     class(exponential_prop), intent(in)  :: self
     ! Input vector.
-    class(abstract_vector) , intent(in)  :: vec_in
+    class(abstract_vector_cdp) , intent(in)  :: vec_in
     ! Output vector.
-    class(abstract_vector) , intent(out) :: vec_out
+    class(abstract_vector_cdp) , intent(out) :: vec_out
 
     ! Time-integrator.
     type(rks54_class) :: prop
     real(kind=wp)     :: dt = 1.0_wp
+    real(kind=wp)     :: state_ic(2*nx), state_fc(2*nx)
 
     select type(vec_in)
     type is(state_vector)
        select type(vec_out)
        type is(state_vector)
-
+          ! Get state vector.
+          state_ic(:nx) = vec_in%state%re
+          state_ic(nx+1:) = vec_in%state%im
           ! Initialize propagator.
           call prop%initialize(n=2*nx, f=rhs)
           ! Integrate forward in time.
-          call prop%integrate(0.0_wp, vec_in%state, dt, self%tau, vec_out%state)
-
+          call prop%integrate(0.0_wp, state_ic, dt, self%tau, state_fc)
+          ! Pass-back the state vector.
+          vec_out%state%re = state_fc(:nx)
+          vec_out%state%im = state_fc(nx+1:)
        end select
     end select
     return
@@ -342,24 +349,29 @@ contains
     ! Linear Operator.
     class(exponential_prop), intent(in)  :: self
     ! Input vector.
-    class(abstract_vector) , intent(in)  :: vec_in
+    class(abstract_vector_cdp) , intent(in)  :: vec_in
     ! Output vector.
-    class(abstract_vector) , intent(out) :: vec_out
+    class(abstract_vector_cdp) , intent(out) :: vec_out
 
     ! Time-integrator.
     type(rks54_class) :: prop
     real(kind=wp)     :: dt = 1.0_wp
+    real(kind=wp)     :: state_ic(2*nx), state_fc(2*nx)
 
     select type(vec_in)
     type is(state_vector)
        select type(vec_out)
        type is(state_vector)
-
+          ! Get the state.
+          state_ic(:nx) = vec_in%state%re
+          state_fc(nx+1:) = vec_in%state%im
           ! Initialize propagator.
           call prop%initialize(n=2*nx, f=adjoint_rhs)
           ! Integrate forward in time.
-          call prop%integrate(0.0_wp, vec_in%state, dt, self%tau, vec_out%state)
-
+          call prop%integrate(0.0_wp, state_ic, dt, self%tau, state_fc)
+          ! Pass-back the state.
+          vec_out%state%re = state_fc(:nx)
+          vec_out%state%im = state_fc(nx+1:)
        end select
     end select
     return
