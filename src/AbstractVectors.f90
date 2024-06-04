@@ -34,6 +34,13 @@ module lightkrylov_AbstractVectors
         module procedure axpby_basis_cdp
     end interface
 
+    interface zero_basis
+        module procedure zero_basis_rsp
+        module procedure zero_basis_rdp
+        module procedure zero_basis_csp
+        module procedure zero_basis_cdp
+    end interface
+
     interface copy_basis
         module procedure copy_basis_rsp
         module procedure copy_basis_rdp
@@ -614,6 +621,17 @@ contains
         return
     end subroutine axpby_basis_rsp
 
+    subroutine zero_basis_rsp(X)
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%zero()
+        end do
+
+        return
+    end subroutine zero_basis_rsp
+
     subroutine copy_basis_rsp(out, from)
         class(abstract_vector_rsp), intent(in) :: from(:)
         class(abstract_vector_rsp), intent(out) :: out(:)
@@ -746,6 +764,17 @@ contains
 
         return
     end subroutine axpby_basis_rdp
+
+    subroutine zero_basis_rdp(X)
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%zero()
+        end do
+
+        return
+    end subroutine zero_basis_rdp
 
     subroutine copy_basis_rdp(out, from)
         class(abstract_vector_rdp), intent(in) :: from(:)
@@ -880,6 +909,17 @@ contains
         return
     end subroutine axpby_basis_csp
 
+    subroutine zero_basis_csp(X)
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%zero()
+        end do
+
+        return
+    end subroutine zero_basis_csp
+
     subroutine copy_basis_csp(out, from)
         class(abstract_vector_csp), intent(in) :: from(:)
         class(abstract_vector_csp), intent(out) :: out(:)
@@ -1012,6 +1052,17 @@ contains
 
         return
     end subroutine axpby_basis_cdp
+
+    subroutine zero_basis_cdp(X)
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%zero()
+        end do
+
+        return
+    end subroutine zero_basis_cdp
 
     subroutine copy_basis_cdp(out, from)
         class(abstract_vector_cdp), intent(in) :: from(:)

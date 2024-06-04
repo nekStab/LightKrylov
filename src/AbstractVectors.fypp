@@ -30,6 +30,12 @@ module lightkrylov_AbstractVectors
         #:endfor
     end interface
 
+    interface zero_basis
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure zero_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
     interface copy_basis
         #:for kind, type in RC_KINDS_TYPES
         module procedure copy_basis_${type[0]}$${kind}$
@@ -301,6 +307,17 @@ contains
 
         return
     end subroutine axpby_basis_${type[0]}$${kind}$
+
+    subroutine zero_basis_${type[0]}$${kind}$(X)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%zero()
+        end do
+
+        return
+    end subroutine zero_basis_${type[0]}$${kind}$
 
     subroutine copy_basis_${type[0]}$${kind}$(out, from)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from(:)
