@@ -5,6 +5,8 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
+    ! Check symmetry
+    use stdlib_linalg, only: is_symmetric
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Singular value decomposition.
@@ -46,6 +48,8 @@ module lightkrylov_utils
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
+    ! Compute matrix sqrt of input SPD matrix A
+    public :: sqrtm
     ! Solve min || Ax - b ||_2^2.
     public :: lstsq
     ! Compute AX = XS where S is in Schur form.
@@ -111,6 +115,12 @@ module lightkrylov_utils
     interface ordschur
         #:for kind, type in RC_KINDS_TYPES
         module procedure ordschur_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface sqrtm
+        #:for kind, type in REAL_KINDS_TYPES
+        module procedure sqrtm_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -490,6 +500,51 @@ contains
         return
     end subroutine ordschur_${type[0]}$${kind}$
 
+    #:endfor
+
+    #:for kind, type in REAL_KINDS_TYPES
+    subroutine sqrtm_${type[0]}$${kind}$(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense SPD matrices
+      ${type}$, intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      ${type}$, intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+
+      ! internals
+      ${type}$ :: lambda(size(X,1))
+      ${type}$ :: V(size(X,1), size(X,1))
+      logical :: symmetric
+      integer :: i
+
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(output_unit,*) "Error: Input matrix is not symmetric"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_${kind}$ ) then
+            if (lambda(i) .gt. zero_${kind}$) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = sqrt(abs(lambda(i)))
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))  
+
+      return
+    end subroutine
     #:endfor
 
     !---------------------------------
