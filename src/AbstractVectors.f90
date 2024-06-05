@@ -8,6 +8,7 @@ module lightkrylov_AbstractVectors
     public :: linear_combination
     public :: axpby_basis
     public :: copy_basis
+    public :: zero_basis
 
     interface innerprod_matrix
         module procedure innerprod_matrix_rsp
