@@ -4,7 +4,7 @@ module lightkrylov_utils
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
     ! Check symmetry
-    use stdlib_linalg, only: is_symmetric
+    use stdlib_linalg, only: diag, is_symmetric
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Singular value decomposition.
@@ -1240,7 +1240,7 @@ contains
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
          if (abs(lambda(i)) .gt. 10*atol_sp ) then
-            if (lambda(i) .gt. zero_sp) then
+            if (lambda(i) .gt. zero_rsp) then
                lambda(i) = sqrt(lambda(i))
             else
                write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
@@ -1282,7 +1282,7 @@ contains
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
          if (abs(lambda(i)) .gt. 10*atol_dp ) then
-            if (lambda(i) .gt. zero_dp) then
+            if (lambda(i) .gt. zero_rdp) then
                lambda(i) = sqrt(lambda(i))
             else
                write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
