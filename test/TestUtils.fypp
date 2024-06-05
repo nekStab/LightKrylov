@@ -136,7 +136,7 @@ contains
         type(linop_${t1[0]}$${k1}$), intent(inout) :: linop
         #:if t1[0] == "c"
         real(${k1}$), dimension(test_size, test_size, 2) :: data
-        call random_number(data) ; data = data - 0.5_${kind}$
+        call random_number(data) ; data = data - 0.5_${k1}$
         linop%data%re = data(:, :, 1)
         linop%data%im = data(:, :, 2)
         #:else
@@ -150,7 +150,7 @@ contains
         type(spd_linop_${t1[0]}$${k1}$), intent(inout) :: linop
         ${t1}$, dimension(test_size, 2*test_size) :: data
         integer :: i
-        call random_number(data) ; data = data - 0.5_${kind}$
+        call random_number(data) ; data = data - 0.5_${k1}$
         linop%data = matmul(data, transpose(data)) / 4
         return
     end subroutine init_rand_spd_linop_${t1[0]}$${k1}$
@@ -162,8 +162,8 @@ contains
         ${t1}$, dimension(test_size, test_size) :: matrix
         integer :: i
         call random_number(data)
-        data_c%re = data(:, :, 1) - 0.5_${kind}$
-        data_c%im = data(:, :, 2) - 0.5_${kind}$
+        data_c%re = data(:, :, 1) - 0.5_${k1}$
+        data_c%im = data(:, :, 2) - 0.5_${k1}$
         matrix = matmul(data_c, transpose(conjg(data_c))) / 4
         linop%data = matrix
         return
