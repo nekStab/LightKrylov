@@ -77,6 +77,10 @@ module LightKrylov
     public :: krylov_schur
 
     ! IterativeSolvers exports.
+    public :: abstract_precond_rsp
+    public :: abstract_precond_rdp
+    public :: abstract_precond_csp
+    public :: abstract_precond_cdp
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres

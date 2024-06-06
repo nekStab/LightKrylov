@@ -151,11 +151,11 @@ contains
     end subroutine collect_linop_${t1[0]}$${k1}$_testsuite
 
     subroutine test_matvec_${t1[0]}$${k1}$(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_${t1[0]}$${k1}$), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_${t1[0]}$${k1}$), allocatable :: A
 
         ! Initialize vectors.
@@ -184,11 +184,11 @@ contains
     end subroutine test_matvec_${t1[0]}$${k1}$
 
     subroutine test_rmatvec_${t1[0]}$${k1}$(error)
-        !> Error to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test vectors.
+        ! Test vectors.
         type(vector_${t1[0]}$${k1}$), allocatable :: x, y
-        !> Test LinOp.
+        ! Test LinOp.
         type(linop_${t1[0]}$${k1}$), allocatable :: A
 
         ! Initialize vectors.

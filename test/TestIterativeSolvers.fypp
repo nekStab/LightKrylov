@@ -48,19 +48,19 @@ contains
     end subroutine collect_eig_${type[0]}$${kind}$_testsuite
 
    subroutine test_ks_evp_${type[0]}$${kind}$(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_${type[0]}$${kind}$), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(${kind}$), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(${kind}$), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
         complex(${kind}$) :: true_eigvals(test_size)
@@ -111,19 +111,19 @@ contains
     end subroutine test_ks_evp_${type[0]}$${kind}$
 
    subroutine test_evp_${type[0]}$${kind}$(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Eigenvectors.
+        ! Eigenvectors.
         type(vector_${type[0]}$${kind}$), allocatable :: X(:)
-        !> Eigenvalues.
+        ! Eigenvalues.
         complex(${kind}$), allocatable :: eigvals(:)
-        !> Residuals.
+        ! Residuals.
         real(${kind}$), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
@@ -237,19 +237,19 @@ contains
     end subroutine collect_svd_${type[0]}$${kind}$_testsuite
 
     subroutine test_svd_${type[0]}$${kind}$(error)
-        !> Error type.
+        ! Error type.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Singular vectors.
+        ! Singular vectors.
         type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
-        !> Singular values.
+        ! Singular values.
         real(${kind}$), allocatable :: S(:)
-        !> Residuals.
+        ! Residuals.
         real(${kind}$), allocatable :: residuals(:)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: i, k, n
         real(${kind}$) :: true_svdvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
@@ -303,15 +303,15 @@ contains
     end subroutine collect_gmres_${type[0]}$${kind}$_testsuite
 
     subroutine test_gmres_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         type(linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
         type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
         type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_${kind}$_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -330,9 +330,9 @@ contains
     end subroutine test_gmres_${type[0]}$${kind}$
     
     subroutine test_gmres_spd_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         #:if type[0] == "r"
         type(spd_linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
         #:else
@@ -340,9 +340,9 @@ contains
         #:endif
         type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
         type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
-        !> GMRES options.
+        ! GMRES options.
         type(gmres_${kind}$_opts) :: opts
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Initialize linear problem.
@@ -380,9 +380,9 @@ contains
     end subroutine collect_cg_${type[0]}$${kind}$_testsuite
 
     subroutine test_cg_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Linear problem.
+        ! Linear problem.
         #:if type[0] == "r"
         type(spd_linop_${type[0]}$${kind}$), allocatable :: A
         #:else
@@ -391,7 +391,7 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: b
         type(vector_${type[0]}$${kind}$), allocatable :: x
         type(cg_${kind}$_opts) :: opts
-        !> Information flag
+        ! Information flag
         integer :: info, i
 
         ! Initialize linear problem.

@@ -70,7 +70,7 @@ module lightkrylov_IterativeSolvers
     type, abstract, public :: abstract_precond_rsp
     contains
         private
-        procedure(abstract_apply_rsp), pass(self), deferred :: apply
+        procedure(abstract_apply_rsp), pass(self), public, deferred :: apply
     end type
 
     abstract interface
@@ -87,7 +87,7 @@ module lightkrylov_IterativeSolvers
     type, abstract, public :: abstract_precond_rdp
     contains
         private
-        procedure(abstract_apply_rdp), pass(self), deferred :: apply
+        procedure(abstract_apply_rdp), pass(self), public, deferred :: apply
     end type
 
     abstract interface
@@ -104,7 +104,7 @@ module lightkrylov_IterativeSolvers
     type, abstract, public :: abstract_precond_csp
     contains
         private
-        procedure(abstract_apply_csp), pass(self), deferred :: apply
+        procedure(abstract_apply_csp), pass(self), public, deferred :: apply
     end type
 
     abstract interface
@@ -121,7 +121,7 @@ module lightkrylov_IterativeSolvers
     type, abstract, public :: abstract_precond_cdp
     contains
         private
-        procedure(abstract_apply_cdp), pass(self), deferred :: apply
+        procedure(abstract_apply_cdp), pass(self), public, deferred :: apply
     end type
 
     abstract interface
@@ -354,7 +354,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -496,7 +496,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -628,7 +628,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -760,7 +760,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.

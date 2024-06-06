@@ -45,16 +45,16 @@ contains
     end subroutine collect_qr_${t1[0]}$${k1}$_testsuite
 
     subroutine test_qr_factorization_${t1[0]}$${k1}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test Vectors.
+        ! Test Vectors.
         integer, parameter :: kdim = test_size
         type(vector_${t1[0]}$${k1}$), allocatable :: A(:)
-        !> Upper triangular matrix.
+        ! Upper triangular matrix.
         ${t1}$ :: R(kdim, kdim) = 0.0_${k1}$
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         ${t1}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
 
         ! Initiliaze matrix.
@@ -76,23 +76,23 @@ contains
     end subroutine test_qr_factorization_${t1[0]}$${k1}$
 
     subroutine test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test basis.
+        ! Test basis.
         type(vector_${t1[0]}$${k1}$), allocatable :: A(:)
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = 20
-        !> Number of zero columns.
+        ! Number of zero columns.
         integer, parameter :: nzero = 5
-        !> Upper triangular matrix.
+        ! Upper triangular matrix.
         ${t1}$ :: R(kdim, kdim)
-        !> Permutation vector.
+        ! Permutation vector.
         integer :: perm(kdim)
         ${t1}$ :: Id(kdim, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
        
-        !> Miscellaneous.
+        ! Miscellaneous.
         integer :: k, idx, rk
         ${t1}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
         real(${k1}$) :: alpha
@@ -153,18 +153,18 @@ contains
     end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
 
     subroutine test_arnoldi_factorization_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test linear operator.
+        ! Test linear operator.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Krylov subspace.
+        ! Krylov subspace.
         type(vector_${type[0]}$${kind}$), allocatable :: X(:)
         integer, parameter :: kdim = test_size
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         ${type}$ :: H(kdim+1, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         ${type}$ :: Xdata(test_size, kdim+1), alpha
     
         ! Initialize linear operator.
@@ -187,34 +187,34 @@ contains
     end subroutine test_arnoldi_factorization_${type[0]}$${kind}$
 
     subroutine test_arnoldi_basis_orthogonality_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test matrix.
+        ! Test matrix.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Krylov subspace.
+        ! Krylov subspace.
         type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X
         type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X0
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         ${type}$, dimension(kdim + 1, kdim) :: H
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Misc.
+        ! Misc.
         ${type}$, dimension(kdim, kdim) :: G, Id
         integer :: i, j
 
-        ! --> Initialize random matrix.
+        ! Initialize random matrix.
         A = linop_${type[0]}$${kind}$(); call init_rand(A)
-        ! --> Initialize Krylov subspace.
+        ! Initialize Krylov subspace.
         allocate (X(1:kdim + 1)); allocate (X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = 0.0_${kind}$
 
-        ! --> Arnoldi factorization.
+        ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
 
-        ! --> Compute Gram matrix associated to the Krylov basis.
+        ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_${kind}$
         do j = 1, kdim
             do i = 1, kdim
@@ -223,7 +223,7 @@ contains
         enddo
         ! call innerprod_matrix(G, X(1:kdim), X(1:kdim))
 
-        ! --> Check result.
+        ! Check result.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
 
@@ -231,19 +231,19 @@ contains
     end subroutine test_arnoldi_basis_orthogonality_${type[0]}$${kind}$
 
     subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test Linear operator.
+        ! Test Linear operator.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Krylov subspace.
+        ! Krylov subspace.
         type(vector_${type[0]}$${kind}$), allocatable :: X(:)
         integer, parameter :: p = 2
         integer, parameter :: kdim = test_size/2
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         ${type}$ :: H(p*(kdim+1), p*kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         ${type}$ :: Xdata(test_size, p*(kdim+1)), G(p*(kdim+1), p*(kdim+1))
         integer :: i, j
@@ -275,37 +275,37 @@ contains
     end subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$
 
     subroutine test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test matrix.
+        ! Test matrix.
         class(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Krylov subspace.
+        ! Krylov subspace.
         type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X
         type(vector_${type[0]}$${kind}$), dimension(:), allocatable :: X0
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: p = 2
         integer, parameter :: kdim = test_size/2
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         ${type}$, dimension(p*(kdim + 1), p*kdim) :: H
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Misc.
+        ! Misc.
         ${type}$, dimension(p*kdim, p*kdim) :: G, Id
         integer :: i, j
 
-        ! --> Initialize random matrix.
+        ! Initialize random matrix.
         A = linop_${type[0]}$${kind}$(); call init_rand(A)
 
-        ! --> Initialize Krylov subspace.
+        ! Initialize Krylov subspace.
         allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
         call init_rand(X0)
         call initialize_krylov_subspace(X, X0)
         H = 0.0_${kind}$
 
-        ! --> Arnoldi factorization.
+        ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
 
-        ! --> Compute Gram matrix associated to the Krylov basis.
+        ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_${kind}$
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
@@ -313,7 +313,7 @@ contains
             enddo
         enddo
 
-        ! --> Check result.
+        ! Check result.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
 
@@ -321,17 +321,17 @@ contains
     end subroutine test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$
 
     subroutine test_krylov_schur_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test operator.
+        ! Test operator.
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Krylov subspace.
+        ! Krylov subspace.
         type(vector_${type[0]}$${kind}$), allocatable :: X(:), X0(:)
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = 100
-        !> Hessenberg matrix.
+        ! Hessenberg matrix.
         ${type}$ :: H(kdim+1, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
 
         ! Miscellaneous.
@@ -389,19 +389,19 @@ contains
     end subroutine collect_lanczos_bidiag_${type[0]}$${kind}$_testsuite
 
     subroutine test_lanczos_bidiag_factorization_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test Linear Operator
+        ! Test Linear Operator
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Left and right Krylov bases.
+        ! Left and right Krylov bases.
         type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-        !> Bidiagonal matrix.
+        ! Bidiagonal matrix.
         ${type}$ :: B(kdim+1, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         real(${kind}$) :: alpha
         ${type}$ :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
@@ -428,19 +428,19 @@ contains
     end subroutine test_lanczos_bidiag_factorization_${type[0]}$${kind}$
 
     subroutine test_lanczos_bidiag_left_orthogonality_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test Linear Operator
+        ! Test Linear Operator
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Left and right Krylov bases.
+        ! Left and right Krylov bases.
         type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = 3!test_size
-        !> Bidiagonal matrix.
+        ! Bidiagonal matrix.
         ${type}$ :: B(kdim+1, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         real(${kind}$) :: Id(kdim, kdim), G(kdim, kdim)
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         integer :: i, j
@@ -471,19 +471,19 @@ contains
     end subroutine test_lanczos_bidiag_left_orthogonality_${type[0]}$${kind}$
 
     subroutine test_lanczos_bidiag_right_orthogonality_${type[0]}$${kind}$(error)
-        !> Error type to be returned.
+        ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
-        !> Test Linear Operator
+        ! Test Linear Operator
         type(linop_${type[0]}$${kind}$), allocatable :: A
-        !> Left and right Krylov bases.
+        ! Left and right Krylov bases.
         type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
-        !> Krylov subspace dimension.
+        ! Krylov subspace dimension.
         integer, parameter :: kdim = 3!test_size
-        !> Bidiagonal matrix.
+        ! Bidiagonal matrix.
         ${type}$ :: B(kdim+1, kdim)
-        !> Information flag.
+        ! Information flag.
         integer :: info
-        !> Miscellaneous.
+        ! Miscellaneous.
         real(${kind}$) :: Id(kdim, kdim), G(kdim, kdim)
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         integer :: i, j
