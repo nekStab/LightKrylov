@@ -35,7 +35,7 @@ module lightkrylov_expmlib
             !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
             !! Solution vector.
-            class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+            class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
             !! Linear operator to be exponentiated.
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
             !! Input vector.

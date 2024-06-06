@@ -317,7 +317,7 @@ contains
         type(spd_linop_rsp), intent(inout) :: linop
         real(sp), dimension(test_size, 2*test_size) :: data
         integer :: i
-        call random_number(data) ; data = data - 0.5_dp
+        call random_number(data) ; data = data - 0.5_sp
         linop%data = matmul(data, transpose(data)) / 4
         return
     end subroutine init_rand_spd_linop_rsp
@@ -370,7 +370,7 @@ contains
     subroutine init_rand_linop_csp(linop)
         type(linop_csp), intent(inout) :: linop
         real(sp), dimension(test_size, test_size, 2) :: data
-        call random_number(data) ; data = data - 0.5_dp
+        call random_number(data) ; data = data - 0.5_sp
         linop%data%re = data(:, :, 1)
         linop%data%im = data(:, :, 2)
         return
@@ -383,8 +383,8 @@ contains
         complex(sp), dimension(test_size, test_size) :: matrix
         integer :: i
         call random_number(data)
-        data_c%re = data(:, :, 1) - 0.5_dp
-        data_c%im = data(:, :, 2) - 0.5_dp
+        data_c%re = data(:, :, 1) - 0.5_sp
+        data_c%im = data(:, :, 2) - 0.5_sp
         matrix = matmul(data_c, transpose(conjg(data_c))) / 4
         linop%data = matrix
         return
