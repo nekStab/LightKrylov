@@ -567,12 +567,12 @@ contains
       end if
 
       ! Perform eigenvalue decomposition
-      call eigh(X, V, lambda)
+      call eig(X, V, lambda)
 
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
          if (abs(lambda(i)) .gt. 10*atol_${kind}$ ) then
-            if (lambda(i) .gt. zero_${type[0]}$${kind}$) then
+            if (abs(lambda(i)) .gt. abs(zero_${type[0]}$${kind}$)) then
                lambda(i) = sqrt(lambda(i))
             else
                write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
