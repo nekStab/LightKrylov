@@ -283,9 +283,9 @@ contains
     end subroutine test_kexptA_rdp
 
     subroutine test_block_kexptA_rdp(error)
-        ! This function tests the Krylov based approximation of the action of the exponential
-        ! propagator against the dense computation for a random operator, a random RHS and a 
-        ! typical value of tau.
+        !! This function tests the Krylov based approximation of the action of the exponential
+        !! propagator against the dense computation for a random operator, a random RHS and a 
+        !! typical value of tau.
 
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -456,9 +456,9 @@ contains
     end subroutine test_kexptA_csp
 
     subroutine test_block_kexptA_csp(error)
-        ! This function tests the Krylov based approximation of the action of the exponential
-        ! propagator against the dense computation for a random operator, a random RHS and a 
-        ! typical value of tau.
+        !! This function tests the Krylov based approximation of the action of the exponential
+        !! propagator against the dense computation for a random operator, a random RHS and a 
+        !! typical value of tau.
 
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -629,9 +629,9 @@ contains
     end subroutine test_kexptA_cdp
 
     subroutine test_block_kexptA_cdp(error)
-        ! This function tests the Krylov based approximation of the action of the exponential
-        ! propagator against the dense computation for a random operator, a random RHS and a 
-        ! typical value of tau.
+        !! This function tests the Krylov based approximation of the action of the exponential
+        !! propagator against the dense computation for a random operator, a random RHS and a 
+        !! typical value of tau.
 
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
