@@ -2,11 +2,12 @@ module TestExpmlib
     ! Fortran Standard Library.
     use iso_fortran_env
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, diag
     use stdlib_io_npy, only: save_npy
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Utils, only : eig, sqrtm
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -15,10 +16,24 @@ module TestExpmlib
     use TestUtils
     use TestKrylov
 
+    real(sp), parameter, public :: one_rsp = 1.0_sp
+    real(sp), parameter, public :: zero_rsp = 0.0_sp
+    real(dp), parameter, public :: one_rdp = 1.0_dp
+    real(dp), parameter, public :: zero_rdp = 0.0_dp
+    complex(sp), parameter, public :: one_csp = cmplx(1.0_sp, 0.0_sp, kind=sp)
+    complex(sp), parameter, public :: zero_csp = cmplx(0.0_sp, 0.0_sp, kind=sp)
+    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
+    complex(dp), parameter, public :: zero_cdp = cmplx(0.0_dp, 0.0_dp, kind=dp)
+
     public :: collect_expm_rsp_testsuite
     public :: collect_expm_rdp_testsuite
     public :: collect_expm_csp_testsuite
     public :: collect_expm_cdp_testsuite
+
+    public :: collect_sqrtm_rsp_testsuite
+    public :: collect_sqrtm_rdp_testsuite
+    public :: collect_sqrtm_csp_testsuite
+    public :: collect_sqrtm_cdp_testsuite
 
 contains
 
@@ -717,6 +732,350 @@ contains
 
         return
     end subroutine test_block_kexptA_cdp
+
+    !-----------------------------------------------------------
+    !-----     UNIT TESTS FOR DENSE MATRIX SQUARE ROOT     -----
+    !-----------------------------------------------------------
+
+    subroutine collect_sqrtm_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                        new_unittest("Dense sqrtm for positive definite matrices.", test_dense_sqrtm_pos_def_rsp), &
+                        new_unittest("Dense sqrtm for positive semi-definite matrices.", test_dense_sqrtm_pos_semi_def_rsp) &
+                    ]
+
+        return
+    end subroutine collect_sqrtm_rsp_testsuite
+
+    subroutine test_dense_sqrtm_pos_def_rsp(error)
+       !> This function tests the matrix version of the sqrt function for the case of
+       ! a symmetric/hermitian positive definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       real(sp) :: A(n, n)
+       real(sp) :: sqrtmA(n, n)
+       complex(sp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A)
+       ! make symmetric/hermitian positive definite
+       A = 0.5_sp*(A + transpose(A))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n
+          lambda(i) = abs(lambda(i)) + 0.1_sp
+       end do
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_sp*(A + transpose(A))
+     
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
+       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_def_rsp
+    
+    subroutine test_dense_sqrtm_pos_semi_def_rsp(error)
+       !> This function tests the matrix version of the sqrt function for the case 
+       ! of a symmetric semi-definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       real(sp) :: A(n, n)
+       real(sp) :: sqrtmA(n, n)
+       complex(sp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A)
+       ! make symmetric/hermitian positive semi-definite
+       A = 0.5_sp*(A + transpose(A))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n-1
+          lambda(i) = abs(lambda(i)) + 0.1_sp
+       end do
+       lambda(n) = zero_rsp
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_sp*(A + transpose(A))
+    
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
+       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_semi_def_rsp
+
+    subroutine collect_sqrtm_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                        new_unittest("Dense sqrtm for positive definite matrices.", test_dense_sqrtm_pos_def_rdp), &
+                        new_unittest("Dense sqrtm for positive semi-definite matrices.", test_dense_sqrtm_pos_semi_def_rdp) &
+                    ]
+
+        return
+    end subroutine collect_sqrtm_rdp_testsuite
+
+    subroutine test_dense_sqrtm_pos_def_rdp(error)
+       !> This function tests the matrix version of the sqrt function for the case of
+       ! a symmetric/hermitian positive definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       real(dp) :: A(n, n)
+       real(dp) :: sqrtmA(n, n)
+       complex(dp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A)
+       ! make symmetric/hermitian positive definite
+       A = 0.5_dp*(A + transpose(A))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n
+          lambda(i) = abs(lambda(i)) + 0.1_dp
+       end do
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_dp*(A + transpose(A))
+     
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
+       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_def_rdp
+    
+    subroutine test_dense_sqrtm_pos_semi_def_rdp(error)
+       !> This function tests the matrix version of the sqrt function for the case 
+       ! of a symmetric semi-definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       real(dp) :: A(n, n)
+       real(dp) :: sqrtmA(n, n)
+       complex(dp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A)
+       ! make symmetric/hermitian positive semi-definite
+       A = 0.5_dp*(A + transpose(A))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n-1
+          lambda(i) = abs(lambda(i)) + 0.1_dp
+       end do
+       lambda(n) = zero_rdp
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_dp*(A + transpose(A))
+    
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
+       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_semi_def_rdp
+
+    subroutine collect_sqrtm_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                        new_unittest("Dense sqrtm for positive definite matrices.", test_dense_sqrtm_pos_def_csp), &
+                        new_unittest("Dense sqrtm for positive semi-definite matrices.", test_dense_sqrtm_pos_semi_def_csp) &
+                    ]
+
+        return
+    end subroutine collect_sqrtm_csp_testsuite
+
+    subroutine test_dense_sqrtm_pos_def_csp(error)
+       !> This function tests the matrix version of the sqrt function for the case of
+       ! a symmetric/hermitian positive definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       complex(sp) :: A(n, n)
+       complex(sp) :: sqrtmA(n, n)
+       complex(sp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A%re)
+       call random_number(A%im)
+       ! make symmetric/hermitian positive definite
+       A = 0.5_sp*(A + conjg(transpose(A)))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n
+          lambda(i) = abs(lambda(i)) + 0.1_sp
+       end do
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_sp*(A + conjg(transpose(A)))
+     
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_def_csp
+    
+    subroutine test_dense_sqrtm_pos_semi_def_csp(error)
+       !> This function tests the matrix version of the sqrt function for the case 
+       ! of a symmetric semi-definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       complex(sp) :: A(n, n)
+       complex(sp) :: sqrtmA(n, n)
+       complex(sp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A%re)
+       call random_number(A%im)
+       ! make symmetric/hermitian positive semi-definite
+       A = 0.5_sp*(A + conjg(transpose(A)))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n-1
+          lambda(i) = abs(lambda(i)) + 0.1_sp
+       end do
+       lambda(n) = zero_rsp
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_sp*(A + conjg(transpose(A)))
+    
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_semi_def_csp
+
+    subroutine collect_sqrtm_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                        new_unittest("Dense sqrtm for positive definite matrices.", test_dense_sqrtm_pos_def_cdp), &
+                        new_unittest("Dense sqrtm for positive semi-definite matrices.", test_dense_sqrtm_pos_semi_def_cdp) &
+                    ]
+
+        return
+    end subroutine collect_sqrtm_cdp_testsuite
+
+    subroutine test_dense_sqrtm_pos_def_cdp(error)
+       !> This function tests the matrix version of the sqrt function for the case of
+       ! a symmetric/hermitian positive definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       complex(dp) :: A(n, n)
+       complex(dp) :: sqrtmA(n, n)
+       complex(dp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A%re)
+       call random_number(A%im)
+       ! make symmetric/hermitian positive definite
+       A = 0.5_dp*(A + conjg(transpose(A)))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n
+          lambda(i) = abs(lambda(i)) + 0.1_dp
+       end do
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_dp*(A + conjg(transpose(A)))
+     
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_def_cdp
+    
+    subroutine test_dense_sqrtm_pos_semi_def_cdp(error)
+       !> This function tests the matrix version of the sqrt function for the case 
+       ! of a symmetric semi-definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       complex(dp) :: A(n, n)
+       complex(dp) :: sqrtmA(n, n)
+       complex(dp) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       call random_number(A%re)
+       call random_number(A%im)
+       ! make symmetric/hermitian positive semi-definite
+       A = 0.5_dp*(A + conjg(transpose(A)))
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n-1
+          lambda(i) = abs(lambda(i)) + 0.1_dp
+       end do
+       lambda(n) = zero_rdp
+       ! reconstruct matrix
+       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_dp*(A + conjg(transpose(A)))
+    
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
+    
+       return
+    end subroutine test_dense_sqrtm_pos_semi_def_cdp
 
 
 end module
