@@ -341,6 +341,7 @@ contains
         ! SVD computation.
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
+        v = transpose(vt)
 
         return
     end subroutine svd_rsp
@@ -575,6 +576,7 @@ contains
         ! SVD computation.
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
+        v = transpose(vt)
 
         return
     end subroutine svd_rdp
@@ -811,6 +813,7 @@ contains
         A_tilde = A
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
+        v = transpose(conjg(vt))
 
         return
     end subroutine svd_csp
@@ -1044,6 +1047,7 @@ contains
         A_tilde = A
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
+        v = transpose(conjg(vt))
 
         return
     end subroutine svd_cdp
