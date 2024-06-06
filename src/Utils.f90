@@ -4,7 +4,7 @@ module lightkrylov_utils
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
     ! Check symmetry
-    use stdlib_linalg, only: diag, is_symmetric
+    use stdlib_linalg, only: diag, is_symmetric, is_hermitian
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Singular value decomposition.
@@ -1214,7 +1214,6 @@ contains
         return
     end subroutine ordschur_cdp
 
-
     subroutine sqrtm_rsp(X, sqrtmX)
       !! Matrix-valued sqrt function for dense SPD matrices
       real(sp), intent(in)  :: X(:,:)
@@ -1257,6 +1256,7 @@ contains
 
       return
     end subroutine
+
     subroutine sqrtm_rdp(X, sqrtmX)
       !! Matrix-valued sqrt function for dense SPD matrices
       real(dp), intent(in)  :: X(:,:)
@@ -1299,6 +1299,93 @@ contains
 
       return
     end subroutine
+
+    subroutine sqrtm_csp(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense hermitian positive definite matrices
+      complex(sp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+
+      ! internals
+      complex(sp) :: lambda(size(X,1))
+      complex(sp) :: V(size(X,1), size(X,1))
+      logical :: hermitian
+      integer :: i
+
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(output_unit,*) "Error: Input matrix is not hermitian"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_sp ) then
+            if (lambda(i) .gt. zero_csp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = sqrt(abs(lambda(i)))
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))  
+
+      return
+    end subroutine
+
+    subroutine sqrtm_cdp(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense hermitian positive definite matrices
+      complex(dp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+
+      ! internals
+      complex(dp) :: lambda(size(X,1))
+      complex(dp) :: V(size(X,1), size(X,1))
+      logical :: hermitian
+      integer :: i
+
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(output_unit,*) "Error: Input matrix is not hermitian"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_dp ) then
+            if (lambda(i) .gt. zero_cdp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = sqrt(abs(lambda(i)))
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))  
+
+      return
+    end subroutine
+
 
     !---------------------------------
     !-----     MISCELLANEOUS     -----
