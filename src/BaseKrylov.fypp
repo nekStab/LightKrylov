@@ -148,7 +148,7 @@ contains
         integer :: idx, i, j, k, kdim, iwrk
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .true.)
+        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_${k1}$)
 
         info = 0 ; R = 0.0_${k1}$

@@ -275,7 +275,7 @@ contains
         integer :: idx, i, j, k, kdim, iwrk
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .true.)
+        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
         info = 0 ; R = 0.0_sp
@@ -539,7 +539,7 @@ contains
         integer :: idx, i, j, k, kdim, iwrk
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .true.)
+        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
         info = 0 ; R = 0.0_dp
@@ -803,7 +803,7 @@ contains
         integer :: idx, i, j, k, kdim, iwrk
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .true.)
+        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
         info = 0 ; R = 0.0_sp
@@ -1067,7 +1067,7 @@ contains
         integer :: idx, i, j, k, kdim, iwrk
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .true.)
+        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
         info = 0 ; R = 0.0_dp
