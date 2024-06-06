@@ -62,6 +62,9 @@ module LightKrylov
     public :: krylov_schur
 
     ! IterativeSolvers exports.
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_precond_${type[0]}$${kind}$
+    #:endfor
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
