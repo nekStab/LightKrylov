@@ -354,7 +354,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -496,7 +496,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -628,7 +628,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
@@ -760,7 +760,7 @@ contains
         !--------------------------------
 
         block
-        integer(int_index) :: indices(kdim_)
+        integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
         ! Sort eigenvalues.
