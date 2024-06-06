@@ -69,7 +69,7 @@ module lightkrylov_IterativeSolvers
     type, abstract, public :: abstract_precond_${type[0]}$${kind}$
     contains
         private
-        procedure(abstract_apply_${type[0]}$${kind}$), pass(self), deferred :: apply
+        procedure(abstract_apply_${type[0]}$${kind}$), pass(self), public, deferred :: apply
     end type
 
     abstract interface
