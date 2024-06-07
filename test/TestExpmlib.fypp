@@ -9,6 +9,7 @@ module TestExpmlib
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
 
     ! Testdrive
@@ -116,6 +117,7 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_${kind}$, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_kexptA_${type[0]}$${kind}$')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
@@ -180,11 +182,14 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+            !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_${type[0]}$${kind}$, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_${type[0]}$${kind}$, 2')
+    
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
@@ -245,7 +250,7 @@ contains
        ${type}$ :: A(n, n)
        ${type}$ :: sqrtmA(n, n)
        complex(${kind}$) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        #:if type[0] == "r"
@@ -276,7 +281,8 @@ contains
        #:endif
      
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_def_${type[0]}$${kind}$')
     
        #:if type[0] == "r"
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
@@ -301,7 +307,7 @@ contains
        ${type}$ :: A(n, n)
        ${type}$ :: sqrtmA(n, n)
        complex(${kind}$) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        #:if type[0] == "r"
@@ -333,7 +339,8 @@ contains
        #:endif
     
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$')
     
        #:if type[0] == "r"
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)

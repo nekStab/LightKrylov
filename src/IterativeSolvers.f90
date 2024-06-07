@@ -7,6 +7,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_io_npy, only: save_npy
 
     use lightkrylov_constants
+    Use LightKrylov_Logger
     use lightkrylov_Utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
@@ -310,9 +311,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                if (info < 0) then
-                    call stop_error("eigs: Error in Arnoldi iteration.")
-                endif
+                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_rsp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -452,9 +451,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                if (info < 0) then
-                    call stop_error("eigs: Error in Arnoldi iteration.")
-                endif
+                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_rdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -593,9 +590,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                if (info < 0) then
-                    call stop_error("eigs: Error in Arnoldi iteration.")
-                endif
+                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_csp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -725,9 +720,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                if (info < 0) then
-                    call stop_error("eigs: Error in Arnoldi iteration.")
-                endif
+                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_cdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -847,9 +840,8 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            if (info < 0) then
-                call stop_error("eighs : Error in Lanczos iteration.")
-            endif
+            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_rsp')
+
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
@@ -949,9 +941,8 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            if (info < 0) then
-                call stop_error("eighs : Error in Lanczos iteration.")
-            endif
+            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_rdp')
+
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
@@ -1051,9 +1042,8 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            if (info < 0) then
-                call stop_error("eighs : Error in Lanczos iteration.")
-            endif
+            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_csp')
+
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
@@ -1153,9 +1143,8 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            if (info < 0) then
-                call stop_error("eighs : Error in Lanczos iteration.")
-            endif
+            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_cdp')
+
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
@@ -1256,13 +1245,13 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
         allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
 
+        info = 0
+
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            if (info < 0) then
-                call stop_error("svds: Error in Lanczos bidiagonalization.")
-            endif
+            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1353,13 +1342,13 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
         allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
 
+        info = 0
+
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            if (info < 0) then
-                call stop_error("svds: Error in Lanczos bidiagonalization.")
-            endif
+            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1450,13 +1439,13 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
         allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
 
+        info = 0
+
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            if (info < 0) then
-                call stop_error("svds: Error in Lanczos bidiagonalization.")
-            endif
+            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1547,13 +1536,13 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
         allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
 
+        info = 0
+
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            if (info < 0) then
-                call stop_error("svds: Error in Lanczos bidiagonalization.")
-            endif
+            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -2325,6 +2314,8 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+        info = 0
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() /= 0.0_sp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -2349,6 +2340,8 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(r_dot_r_new)
+            ! Current number of iterations performed.
+            info = info + 1
 
             if (residual < tol) then
                 exit
@@ -2414,6 +2407,8 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+        info = 0
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() /= 0.0_dp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -2438,6 +2433,8 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(r_dot_r_new)
+            ! Current number of iterations performed.
+            info = info + 1
 
             if (residual < tol) then
                 exit
@@ -2503,6 +2500,8 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+        info = 0
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() /= 0.0_sp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -2527,6 +2526,8 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(abs(r_dot_r_new))
+            ! Current number of iterations performed.
+            info = info + 1
 
             if (residual < tol) then
                 exit
@@ -2592,6 +2593,8 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+        info = 0
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() /= 0.0_dp) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -2616,6 +2619,8 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(abs(r_dot_r_new))
+            ! Current number of iterations performed.
+            info = info + 1
 
             if (residual < tol) then
                 exit

@@ -3,8 +3,8 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    ! Check symmetry
-    use stdlib_linalg, only: diag, is_symmetric, is_hermitian
+    use LightKrylov_Logger
+    use stdlib_linalg, only: is_hermitian, is_symmetric, diag
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Singular value decomposition.
@@ -295,30 +295,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRF return info =", info
-            if (info<0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
-                write(output_unit, *) "has been completed but the factor U is exactly singular."
-                write(output_unit, *) "Division by zero will occur if used to solve Ax=b."
-            endif
-            call stop_error("inv: GETREF error")
-        endif
+        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_rsp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRI return info = ", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has an illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero."
-                write(output_unit, *) "The matrix is singular and its inverse cannot be computed."
-            endif
-            call stop_error("in: GETRI error.")
-        endif
+        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_rsp')
 
         return
     end subroutine inv_rsp
@@ -352,6 +333,7 @@ contains
         ! SVD computation.
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rsp')
 
         return
     end subroutine svd_rsp
@@ -377,22 +359,10 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
+        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_rsp')
 
-        if (info /= 0) then
-            write(output_unit, *) "GEEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The QR alg. failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: geev error.")
-        endif
-
-        ! Construct eigenvalues
+        ! Reconstruct eigenvalues
         vals = cmplx(1.0_sp, 0.0_sp, kind=sp)*wr + cmplx(0.0_sp, 1.0_sp, kind=sp)*wi
-        ! Extract eigenvectors
-        vecs = a_tilde
 
         return
     end subroutine eig_rsp
@@ -419,17 +389,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "SYEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: syev error.")
-        endif
+        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_rsp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -460,11 +420,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            call stop_error("lstsq: dgels error")
-        endif
+        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_rsp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -494,6 +450,9 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_rsp')
+
+        ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=sp)
 
         return
@@ -529,26 +488,31 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_rsp')
 
         return
     end subroutine ordschur_rsp
 
-    subroutine sqrtm_rsp(X, sqrtmX)
+    subroutine sqrtm_rsp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       real(sp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       real(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
 
       ! internals
       real(sp) :: lambda(size(X,1))
       real(sp) :: V(size(X,1), size(X,1))
       integer :: i
 
+      info = 0
+
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
         write(output_unit,*) "Error: Input matrix is not symmetric"
-        STOP
+        call stop_error("Aborting.")
       end if
 
       ! Perform eigenvalue decomposition
@@ -560,12 +524,12 @@ contains
             if (lambda(i) .gt. zero_rsp) then
                lambda(i) = sqrt(lambda(i))
             else
-               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
-               STOP
+               lambda(i) = zero_rsp
+               info = -1
             end if
          else
             lambda(i) = zero_rsp
-            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+            info = 1
          end if
       end do
 
@@ -588,30 +552,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRF return info =", info
-            if (info<0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
-                write(output_unit, *) "has been completed but the factor U is exactly singular."
-                write(output_unit, *) "Division by zero will occur if used to solve Ax=b."
-            endif
-            call stop_error("inv: GETREF error")
-        endif
+        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_rdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRI return info = ", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has an illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero."
-                write(output_unit, *) "The matrix is singular and its inverse cannot be computed."
-            endif
-            call stop_error("in: GETRI error.")
-        endif
+        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_rdp')
 
         return
     end subroutine inv_rdp
@@ -645,6 +590,7 @@ contains
         ! SVD computation.
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rdp')
 
         return
     end subroutine svd_rdp
@@ -670,22 +616,10 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
+        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_rdp')
 
-        if (info /= 0) then
-            write(output_unit, *) "GEEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The QR alg. failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: geev error.")
-        endif
-
-        ! Construct eigenvalues
+        ! Reconstruct eigenvalues
         vals = cmplx(1.0_dp, 0.0_dp, kind=dp)*wr + cmplx(0.0_dp, 1.0_dp, kind=dp)*wi
-        ! Extract eigenvectors
-        vecs = a_tilde
 
         return
     end subroutine eig_rdp
@@ -712,17 +646,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "SYEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: syev error.")
-        endif
+        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_rdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -753,11 +677,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            call stop_error("lstsq: dgels error")
-        endif
+        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_rdp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -787,6 +707,9 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_rdp')
+
+        ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=dp)
 
         return
@@ -822,26 +745,31 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_rdp')
 
         return
     end subroutine ordschur_rdp
 
-    subroutine sqrtm_rdp(X, sqrtmX)
+    subroutine sqrtm_rdp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       real(dp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       real(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
 
       ! internals
       real(dp) :: lambda(size(X,1))
       real(dp) :: V(size(X,1), size(X,1))
       integer :: i
 
+      info = 0
+
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
         write(output_unit,*) "Error: Input matrix is not symmetric"
-        STOP
+        call stop_error("Aborting.")
       end if
 
       ! Perform eigenvalue decomposition
@@ -853,12 +781,12 @@ contains
             if (lambda(i) .gt. zero_rdp) then
                lambda(i) = sqrt(lambda(i))
             else
-               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
-               STOP
+               lambda(i) = zero_rdp
+               info = -1
             end if
          else
             lambda(i) = zero_rdp
-            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+            info = 1
          end if
       end do
 
@@ -881,30 +809,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRF return info =", info
-            if (info<0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
-                write(output_unit, *) "has been completed but the factor U is exactly singular."
-                write(output_unit, *) "Division by zero will occur if used to solve Ax=b."
-            endif
-            call stop_error("inv: GETREF error")
-        endif
+        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_csp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRI return info = ", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has an illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero."
-                write(output_unit, *) "The matrix is singular and its inverse cannot be computed."
-            endif
-            call stop_error("in: GETRI error.")
-        endif
+        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_csp')
 
         return
     end subroutine inv_csp
@@ -940,6 +849,7 @@ contains
         A_tilde = A
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_csp')
 
         return
     end subroutine svd_csp
@@ -966,20 +876,8 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_csp')
 
-        if (info /= 0) then
-            write(output_unit, *) "GEEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The QR alg. failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: geev error.")
-        endif
-
-        ! Extract eigenvectors
-        vecs = a_tilde
 
         return
     end subroutine eig_csp
@@ -1008,17 +906,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "HEEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: heev error.")
-        endif
+        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_csp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -1049,11 +937,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            call stop_error("lstsq: dgels error")
-        endif
+        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_csp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -1082,6 +966,8 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_csp')
+
 
         return
     contains
@@ -1113,26 +999,31 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_csp')
 
         return
     end subroutine ordschur_csp
 
-    subroutine sqrtm_csp(X, sqrtmX)
+    subroutine sqrtm_csp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       complex(sp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
 
       ! internals
       real(sp) :: lambda(size(X,1))
       complex(sp) :: V(size(X,1), size(X,1))
       integer :: i
 
+      info = 0
+
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
         write(output_unit,*) "Error: Input matrix is not hermitian"
-        STOP
+        call stop_error("Aborting.")
       end if
 
       ! Perform eigenvalue decomposition
@@ -1144,12 +1035,12 @@ contains
             if (lambda(i) .gt. zero_rsp) then
                lambda(i) = sqrt(lambda(i))
             else
-               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
-               STOP
+               lambda(i) = zero_rsp
+               info = -1
             end if
          else
             lambda(i) = zero_rsp
-            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+            info = 1
          end if
       end do
 
@@ -1172,30 +1063,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRF return info =", info
-            if (info<0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
-                write(output_unit, *) "has been completed but the factor U is exactly singular."
-                write(output_unit, *) "Division by zero will occur if used to solve Ax=b."
-            endif
-            call stop_error("inv: GETREF error")
-        endif
+        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_cdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (info /= 0) then
-            write(output_unit, *) "GETRI return info = ", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has an illegal value."
-            else
-                write(output_unit, *) "U(", info, ",", info, ") is exactly zero."
-                write(output_unit, *) "The matrix is singular and its inverse cannot be computed."
-            endif
-            call stop_error("in: GETRI error.")
-        endif
+        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_cdp')
 
         return
     end subroutine inv_cdp
@@ -1231,6 +1103,7 @@ contains
         A_tilde = A
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_cdp')
 
         return
     end subroutine svd_cdp
@@ -1257,20 +1130,8 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_cdp')
 
-        if (info /= 0) then
-            write(output_unit, *) "GEEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The QR alg. failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: geev error.")
-        endif
-
-        ! Extract eigenvectors
-        vecs = a_tilde
 
         return
     end subroutine eig_cdp
@@ -1299,17 +1160,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "HEEV returned info =", info
-            if (info < 0) then
-                write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            else
-                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
-                write(output_unit, *) "No eigenvector has been computed."
-            endif
-            call stop_error("eig: heev error.")
-        endif
+        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_cdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -1340,11 +1191,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-        if (info /= 0) then
-            write(output_unit, *) "The ", -info, "-th argument has illegal value."
-            call stop_error("lstsq: dgels error")
-        endif
+        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_cdp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -1373,6 +1220,8 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_cdp')
+
 
         return
     contains
@@ -1404,26 +1253,31 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_cdp')
 
         return
     end subroutine ordschur_cdp
 
-    subroutine sqrtm_cdp(X, sqrtmX)
+    subroutine sqrtm_cdp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       complex(dp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
 
       ! internals
       real(dp) :: lambda(size(X,1))
       complex(dp) :: V(size(X,1), size(X,1))
       integer :: i
 
+      info = 0
+
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
         write(output_unit,*) "Error: Input matrix is not hermitian"
-        STOP
+        call stop_error("Aborting.")
       end if
 
       ! Perform eigenvalue decomposition
@@ -1435,12 +1289,12 @@ contains
             if (lambda(i) .gt. zero_rdp) then
                lambda(i) = sqrt(lambda(i))
             else
-               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
-               STOP
+               lambda(i) = zero_rdp
+               info = -1
             end if
          else
             lambda(i) = zero_rdp
-            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+            info = 1
          end if
       end do
 
@@ -1450,7 +1304,7 @@ contains
       return
     end subroutine
 
-    
+
     !---------------------------------
     !-----     MISCELLANEOUS     -----
     !---------------------------------

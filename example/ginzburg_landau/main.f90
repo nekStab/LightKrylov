@@ -1,8 +1,9 @@
 program demo
+  use stdlib_io_npy, only : save_npy
   use LightKrylov
   use LightKrylov, only: wp => dp
+  use LightKrylov_Logger
   use Ginzburg_Landau
-  use stdlib_io_npy, only : save_npy
   implicit none
 
   !------------------------------------------------
@@ -55,6 +56,7 @@ program demo
 
   !> Call to LightKrylov.
   call eigs(A, X, lambda, residuals, info)
+  call check_info(info, 'eigs', module='example Ginzburg-Landau', procedure='main')
 
   !> Transform eigenspectrum from unit-disk to standard complex plane.
   lambda = log(lambda) / tau
