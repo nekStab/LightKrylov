@@ -25,9 +25,9 @@ contains
 
       ierr = 0
       if (info == 0) then
-         ! Successful exit --> only written to debug log
+         ! Successful exit
          write(msg, *) 'The subroutine "'//trim(origin)//'" returned successfully.'
-         call logger%log_debug(trim(msg), module=module, procedure=procedure)
+         call logger%log_information(trim(msg), module=module, procedure=procedure)
       else
          !
          !   LAPACK
