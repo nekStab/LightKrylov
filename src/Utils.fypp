@@ -257,8 +257,10 @@ contains
         #:if type[0] == "c"
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
+        v = transpose(conjg(vt))
         #:else
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
+        v = transpose(vt)
         #:endif
         call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_${type[0]}$${kind}$')
 
