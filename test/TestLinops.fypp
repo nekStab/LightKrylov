@@ -11,8 +11,9 @@ module TestLinops
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use TestVectors
 
-    implicit none
-    private
+    !implicit none
+   
+    !character*128, parameter, private :: this_module = 'LightKrylov_TestLinops'
 
     #:for k1, t1 in RC_KINDS_TYPES
     public :: collect_linop_${t1[0]}$${k1}$_testsuite

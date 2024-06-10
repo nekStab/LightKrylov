@@ -19,7 +19,8 @@ module TestIterativeSolvers
     use TestKrylov
 
     implicit none
-    private
+   
+    character*128, parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
@@ -88,7 +89,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, select=select_eigs)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_ks_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
@@ -151,7 +152,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
@@ -208,7 +209,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
-        call check_info(info, 'eighs', module='LightKrylov_TestIterativeSolvers', procedure='test_sym_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_${kind}$
@@ -278,7 +279,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info)
-        call check_info(info, 'svds', module='LightKrylov_TestIterativeSolvers', procedure='test_svd_${type[0]}$${kind}$')
+        call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
 
         ! Analytical singular values.
         do i = 1, test_size
@@ -327,7 +328,7 @@ contains
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_${type[0]}$${kind}$')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
@@ -363,7 +364,7 @@ contains
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_spd_${type[0]}$${kind}$')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
@@ -413,7 +414,7 @@ contains
         ! CG solver.
         opts = cg_${kind}$_opts()
         call cg(A, b, x, info, options=opts)
-        call check_info(info, 'cg', module='LightKrylov_TestIterativeSolvers', procedure='test_cg_${type[0]}$${kind}$')
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
 
         write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_${kind}$ 
 
