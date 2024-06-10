@@ -3,10 +3,8 @@ module TestVectors
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use stdlib_math, only: is_close, all_close
     use stdlib_optval, only: optval
-    
-    !implicit none
-   
-    !character*128, parameter, private :: this_module = 'LightKrylov_TestVectors'
+    implicit none
+    private
 
     integer, parameter, public :: test_size = 128
 

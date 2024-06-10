@@ -9,9 +9,8 @@ module TestLinops
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use TestVectors
 
-    !implicit none
-   
-    !character*128, parameter, private :: this_module = 'LightKrylov_TestLinops'
+    implicit none
+    private
 
     public :: collect_linop_rsp_testsuite
     public :: collect_linop_rdp_testsuite

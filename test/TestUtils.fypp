@@ -5,10 +5,9 @@ module TestUtils
     use LightKrylov
     use TestVectors
     use TestLinops
+    implicit none
     
-    !implicit none
-   
-    !character*128, parameter, private :: this_module = 'LightKrylov_TestUtils'
+    private
 
     public :: get_data
     public :: put_data
