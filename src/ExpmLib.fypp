@@ -420,7 +420,7 @@ contains
     subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).

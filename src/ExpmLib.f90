@@ -479,7 +479,7 @@ contains
     subroutine k_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rsp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -847,7 +847,7 @@ contains
     subroutine k_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rdp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -1215,7 +1215,7 @@ contains
     subroutine k_exptA_csp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_csp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -1583,7 +1583,7 @@ contains
     subroutine k_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_cdp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
