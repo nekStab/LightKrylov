@@ -17,7 +17,10 @@ module TestIterativeSolvers
     use TestKrylov
 
     implicit none
+    
     private
+
+    character*128, parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
 
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
@@ -92,7 +95,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, select=select_eigs)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_ks_evp_rsp')
+        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rsp')
 
         ! Analytical eigenvalues.
         true_eigvals = cmplx(0.0_sp, 0.0_sp, kind=sp) ; k = 1
@@ -153,7 +156,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_evp_rsp')
+        call check_info(info, 'eigs', module=this_module, procedure='test_evp_rsp')
 
         ! Analytical eigenvalues.
         true_eigvals = cmplx(0.0_sp, 0.0_sp, kind=sp) ; k = 1
@@ -208,7 +211,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
-        call check_info(info, 'eighs', module='LightKrylov_TestIterativeSolvers', procedure='test_sym_evp_rsp')
+        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rsp')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_sp
@@ -272,7 +275,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, select=select_eigs)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_ks_evp_rdp')
+        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rdp')
 
         ! Analytical eigenvalues.
         true_eigvals = cmplx(0.0_dp, 0.0_dp, kind=dp) ; k = 1
@@ -333,7 +336,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_evp_rdp')
+        call check_info(info, 'eigs', module=this_module, procedure='test_evp_rdp')
 
         ! Analytical eigenvalues.
         true_eigvals = cmplx(0.0_dp, 0.0_dp, kind=dp) ; k = 1
@@ -388,7 +391,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
-        call check_info(info, 'eighs', module='LightKrylov_TestIterativeSolvers', procedure='test_sym_evp_rdp')
+        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rdp')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_dp
@@ -578,7 +581,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info)
-        call check_info(info, 'svds', module='LightKrylov_TestIterativeSolvers', procedure='test_svd_rsp')
+        call check_info(info, 'svds', module=this_module, procedure='test_svd_rsp')
 
         ! Analytical singular values.
         do i = 1, test_size
@@ -636,7 +639,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info)
-        call check_info(info, 'svds', module='LightKrylov_TestIterativeSolvers', procedure='test_svd_rdp')
+        call check_info(info, 'svds', module=this_module, procedure='test_svd_rdp')
 
         ! Analytical singular values.
         do i = 1, test_size
@@ -742,7 +745,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_rsp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rsp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -770,7 +773,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_spd_rsp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -807,7 +810,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_rdp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rdp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
@@ -835,7 +838,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_spd_rdp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
@@ -872,7 +875,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_csp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_csp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -900,7 +903,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_spd_csp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -937,7 +940,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_cdp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_cdp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
@@ -965,7 +968,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_spd_cdp')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
@@ -1005,7 +1008,7 @@ contains
         ! CG solver.
         opts = cg_sp_opts()
         call cg(A, b, x, info, options=opts)
-        call check_info(info, 'cg', module='LightKrylov_TestIterativeSolvers', procedure='test_cg_rsp')
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
 
         write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_sp 
 
@@ -1042,7 +1045,7 @@ contains
         ! CG solver.
         opts = cg_dp_opts()
         call cg(A, b, x, info, options=opts)
-        call check_info(info, 'cg', module='LightKrylov_TestIterativeSolvers', procedure='test_cg_rdp')
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
 
         write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_dp 
 
@@ -1079,7 +1082,7 @@ contains
         ! CG solver.
         opts = cg_sp_opts()
         call cg(A, b, x, info, options=opts)
-        call check_info(info, 'cg', module='LightKrylov_TestIterativeSolvers', procedure='test_cg_csp')
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
 
         write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_sp 
 
@@ -1116,7 +1119,7 @@ contains
         ! CG solver.
         opts = cg_dp_opts()
         call cg(A, b, x, info, options=opts)
-        call check_info(info, 'cg', module='LightKrylov_TestIterativeSolvers', procedure='test_cg_cdp')
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
 
         write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_dp 
 
