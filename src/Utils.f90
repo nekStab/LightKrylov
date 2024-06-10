@@ -333,8 +333,8 @@ contains
         ! SVD computation.
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rsp')
         v = transpose(vt)
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rsp')
 
         return
     end subroutine svd_rsp
@@ -591,8 +591,8 @@ contains
         ! SVD computation.
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rdp')
         v = transpose(vt)
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rdp')
 
         return
     end subroutine svd_rdp
@@ -851,8 +851,8 @@ contains
         A_tilde = A
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_csp')
         v = transpose(conjg(vt))
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_csp')
 
         return
     end subroutine svd_csp
@@ -1106,8 +1106,8 @@ contains
         A_tilde = A
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_cdp')
         v = transpose(conjg(vt))
+        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_cdp')
 
         return
     end subroutine svd_cdp
