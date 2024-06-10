@@ -5,6 +5,8 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
+    ! Check symmetry
+    use stdlib_linalg, only: diag, is_symmetric, is_hermitian
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Singular value decomposition.
@@ -46,6 +48,8 @@ module lightkrylov_utils
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
+    ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
+    public :: sqrtm
     ! Solve min || Ax - b ||_2^2.
     public :: lstsq
     ! Compute AX = XS where S is in Schur form.
@@ -111,6 +115,12 @@ module lightkrylov_utils
     interface ordschur
         #:for kind, type in RC_KINDS_TYPES
         module procedure ordschur_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface sqrtm
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure sqrtm_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -327,8 +337,11 @@ contains
         endif
 
         #:if type[0] == "r"
+        ! Construct eigenvalues
         vals = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)*wr + cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)*wi
         #:endif
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eig_${type[0]}$${kind}$
@@ -367,6 +380,28 @@ contains
         #:else
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
         #:endif
+
+        if (info /= 0) then
+            #:if type[0] == "r"
+            write(output_unit, *) "SYEV returned info =", info
+            #:else
+            write(output_unit, *) "HEEV returned info =", info
+            #:endif
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
+                write(output_unit, *) "No eigenvector has been computed."
+            endif
+            #:if type[0] == "r"
+            call stop_error("eig: syev error.")
+            #:else
+            call stop_error("eig: heev error.")
+            #:endif
+        endif
+
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eigh_${type[0]}$${kind}$
@@ -492,8 +527,62 @@ contains
         return
     end subroutine ordschur_${type[0]}$${kind}$
 
-    #:endfor
+    subroutine sqrtm_${type[0]}$${kind}$(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      ${type}$, intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      ${type}$, intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
 
+      ! internals
+      real(${kind}$) :: lambda(size(X,1))
+      ${type}$ :: V(size(X,1), size(X,1))
+      integer :: i
+
+      #:if type[0] == "r"
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(output_unit,*) "Error: Input matrix is not symmetric"
+        STOP
+      end if
+      #:else
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(output_unit,*) "Error: Input matrix is not hermitian"
+        STOP
+      end if
+      #:endif
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_${kind}$ ) then
+            if (lambda(i) .gt. zero_r${kind}$) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = zero_r${kind}$
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      #:if type[0] == "r"
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))
+      #:else
+      sqrtmX = matmul(V, matmul(diag(lambda), conjg(transpose(V))))
+      #:endif
+
+      return
+    end subroutine
+
+    #:endfor
+    
     !---------------------------------
     !-----     MISCELLANEOUS     -----
     !---------------------------------

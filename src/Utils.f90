@@ -3,6 +3,8 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
+    ! Check symmetry
+    use stdlib_linalg, only: diag, is_symmetric, is_hermitian
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Singular value decomposition.
@@ -43,6 +45,8 @@ module lightkrylov_utils
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
+    ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
+    public :: sqrtm
     ! Solve min || Ax - b ||_2^2.
     public :: lstsq
     ! Compute AX = XS where S is in Schur form.
@@ -117,6 +121,13 @@ module lightkrylov_utils
         module procedure ordschur_rdp
         module procedure ordschur_csp
         module procedure ordschur_cdp
+    end interface
+
+    interface sqrtm
+        module procedure sqrtm_rsp
+        module procedure sqrtm_rdp
+        module procedure sqrtm_csp
+        module procedure sqrtm_cdp
     end interface
 
     !------------------------------------------------
@@ -379,7 +390,10 @@ contains
             call stop_error("eig: geev error.")
         endif
 
+        ! Construct eigenvalues
         vals = cmplx(1.0_sp, 0.0_sp, kind=sp)*wr + cmplx(0.0_sp, 1.0_sp, kind=sp)*wi
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eig_rsp
@@ -406,6 +420,20 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
+
+        if (info /= 0) then
+            write(output_unit, *) "SYEV returned info =", info
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
+                write(output_unit, *) "No eigenvector has been computed."
+            endif
+            call stop_error("eig: syev error.")
+        endif
+
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eigh_rsp
@@ -505,6 +533,48 @@ contains
 
         return
     end subroutine ordschur_rsp
+
+    subroutine sqrtm_rsp(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(sp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+
+      ! internals
+      real(sp) :: lambda(size(X,1))
+      real(sp) :: V(size(X,1), size(X,1))
+      integer :: i
+
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(output_unit,*) "Error: Input matrix is not symmetric"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_sp ) then
+            if (lambda(i) .gt. zero_rsp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = zero_rsp
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))
+
+      return
+    end subroutine
 
     subroutine inv_rdp(A)
         !! In-place inversion of A using LAPACK.
@@ -614,7 +684,10 @@ contains
             call stop_error("eig: geev error.")
         endif
 
+        ! Construct eigenvalues
         vals = cmplx(1.0_dp, 0.0_dp, kind=dp)*wr + cmplx(0.0_dp, 1.0_dp, kind=dp)*wi
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eig_rdp
@@ -641,6 +714,20 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
+
+        if (info /= 0) then
+            write(output_unit, *) "SYEV returned info =", info
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
+                write(output_unit, *) "No eigenvector has been computed."
+            endif
+            call stop_error("eig: syev error.")
+        endif
+
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eigh_rdp
@@ -740,6 +827,48 @@ contains
 
         return
     end subroutine ordschur_rdp
+
+    subroutine sqrtm_rdp(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(dp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+
+      ! internals
+      real(dp) :: lambda(size(X,1))
+      real(dp) :: V(size(X,1), size(X,1))
+      integer :: i
+
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(output_unit,*) "Error: Input matrix is not symmetric"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_dp ) then
+            if (lambda(i) .gt. zero_rdp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = zero_rdp
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))
+
+      return
+    end subroutine
 
     subroutine inv_csp(A)
         !! In-place inversion of A using LAPACK.
@@ -852,6 +981,8 @@ contains
             call stop_error("eig: geev error.")
         endif
 
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eig_csp
@@ -880,6 +1011,20 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
+
+        if (info /= 0) then
+            write(output_unit, *) "HEEV returned info =", info
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
+                write(output_unit, *) "No eigenvector has been computed."
+            endif
+            call stop_error("eig: heev error.")
+        endif
+
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eigh_csp
@@ -974,6 +1119,48 @@ contains
 
         return
     end subroutine ordschur_csp
+
+    subroutine sqrtm_csp(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(sp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+
+      ! internals
+      real(sp) :: lambda(size(X,1))
+      complex(sp) :: V(size(X,1), size(X,1))
+      integer :: i
+
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(output_unit,*) "Error: Input matrix is not hermitian"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_sp ) then
+            if (lambda(i) .gt. zero_rsp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = zero_rsp
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), conjg(transpose(V))))
+
+      return
+    end subroutine
 
     subroutine inv_cdp(A)
         !! In-place inversion of A using LAPACK.
@@ -1086,6 +1273,8 @@ contains
             call stop_error("eig: geev error.")
         endif
 
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eig_cdp
@@ -1114,6 +1303,20 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
+
+        if (info /= 0) then
+            write(output_unit, *) "HEEV returned info =", info
+            if (info < 0) then
+                write(output_unit, *) "The ", -info, "-th argument has illegal value."
+            else
+                write(output_unit, *) "The algorithm failed to compute all of the eigenvalues."
+                write(output_unit, *) "No eigenvector has been computed."
+            endif
+            call stop_error("eig: heev error.")
+        endif
+
+        ! Extract eigenvectors
+        vecs = a_tilde
 
         return
     end subroutine eigh_cdp
@@ -1209,7 +1412,49 @@ contains
         return
     end subroutine ordschur_cdp
 
+    subroutine sqrtm_cdp(X, sqrtmX)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(dp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
 
+      ! internals
+      real(dp) :: lambda(size(X,1))
+      complex(dp) :: V(size(X,1), size(X,1))
+      integer :: i
+
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(output_unit,*) "Error: Input matrix is not hermitian"
+        STOP
+      end if
+
+      ! Perform eigenvalue decomposition
+      call eigh(X, V, lambda)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_dp ) then
+            if (lambda(i) .gt. zero_rdp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               write(output_unit,*) "Error: Input matrix is not positive definite to tolerance"
+               STOP
+            end if
+         else
+            lambda(i) = zero_rdp
+            write(output_unit,*) "Warning: Input matrix is singular to tolerance"
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), conjg(transpose(V))))
+
+      return
+    end subroutine
+
+    
     !---------------------------------
     !-----     MISCELLANEOUS     -----
     !---------------------------------

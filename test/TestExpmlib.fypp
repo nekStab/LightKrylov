@@ -4,11 +4,12 @@ module TestExpmlib
     ! Fortran Standard Library.
     use iso_fortran_env
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, diag
     use stdlib_io_npy, only: save_npy
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Utils, only : eig, sqrtm
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -18,7 +19,21 @@ module TestExpmlib
     use TestKrylov
 
     #:for kind, type in RC_KINDS_TYPES
+    #:if type[0] == "c"
+    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+    #:else
+    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = 1.0_${kind}$
+    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = 0.0_${kind}$
+    #:endif
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
     public :: collect_expm_${type[0]}$${kind}$_testsuite
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_sqrtm_${type[0]}$${kind}$_testsuite
     #:endfor
 
 contains
@@ -200,6 +215,136 @@ contains
 
         return
     end subroutine test_block_kexptA_${type[0]}$${kind}$
+
+    #:endfor
+    !-----------------------------------------------------------
+    !-----     UNIT TESTS FOR DENSE MATRIX SQUARE ROOT     -----
+    !-----------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_sqrtm_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                        new_unittest("Dense sqrtm for positive definite matrices.", test_dense_sqrtm_pos_def_${type[0]}$${kind}$), &
+                        new_unittest("Dense sqrtm for positive semi-definite matrices.", test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$) &
+                    ]
+
+        return
+    end subroutine collect_sqrtm_${type[0]}$${kind}$_testsuite
+
+    subroutine test_dense_sqrtm_pos_def_${type[0]}$${kind}$(error)
+       !> This function tests the matrix version of the sqrt function for the case of
+       ! a symmetric/hermitian positive definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       ${type}$ :: A(n, n)
+       ${type}$ :: sqrtmA(n, n)
+       complex(${kind}$) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       #:if type[0] == "r"
+       call random_number(A)
+       #:else
+       call random_number(A%re)
+       call random_number(A%im)
+       #:endif
+       ! make symmetric/hermitian positive definite
+       #:if type[0] == "r"
+       A = 0.5_${kind}$*(A + transpose(A))
+       #:else
+       A = 0.5_${kind}$*(A + conjg(transpose(A)))
+       #:endif
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n
+          lambda(i) = abs(lambda(i)) + 0.1_${kind}$
+       end do
+       ! reconstruct matrix
+       #:if type[0] == "r"
+       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_${kind}$*(A + transpose(A))
+       #:else
+       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_${kind}$*(A + conjg(transpose(A)))
+       #:endif
+     
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       #:if type[0] == "r"
+       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
+       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_${kind}$)
+       #:else
+       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_${kind}$)
+       #:endif
+    
+       return
+    end subroutine test_dense_sqrtm_pos_def_${type[0]}$${kind}$
+    
+    subroutine test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$(error)
+       !> This function tests the matrix version of the sqrt function for the case 
+       ! of a symmetric semi-definite matrix
+    
+       !> Error type to be returned.
+       type(error_type), allocatable, intent(out) :: error
+       !> Problem dimension.
+       integer, parameter :: n = 5
+       !> Test matrix.
+       ${type}$ :: A(n, n)
+       ${type}$ :: sqrtmA(n, n)
+       complex(${kind}$) :: lambda(n)
+       integer :: i
+    
+       ! --> Initialize matrix.
+       #:if type[0] == "r"
+       call random_number(A)
+       #:else
+       call random_number(A%re)
+       call random_number(A%im)
+       #:endif
+       ! make symmetric/hermitian positive semi-definite
+       #:if type[0] == "r"
+       A = 0.5_${kind}$*(A + transpose(A))
+       #:else
+       A = 0.5_${kind}$*(A + conjg(transpose(A)))
+       #:endif
+       call eig(A, sqrtmA, lambda)
+       do i = 1,n-1
+          lambda(i) = abs(lambda(i)) + 0.1_${kind}$
+       end do
+       lambda(n) = zero_r${kind}$
+       ! reconstruct matrix
+       #:if type[0] == "r"
+       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_${kind}$*(A + transpose(A))
+       #:else
+       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       ! ensure it is exactly symmetric/hermitian
+       A = 0.5_${kind}$*(A + conjg(transpose(A)))
+       #:endif
+    
+       ! compute matrix square root
+       call sqrtm(A, sqrtmA)
+    
+       #:if type[0] == "r"
+       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
+       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_${kind}$)
+       #:else
+       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_${kind}$)
+       #:endif
+    
+       return
+    end subroutine test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$
 
     #:endfor
 

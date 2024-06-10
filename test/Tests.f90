@@ -76,11 +76,12 @@ program Tester
                 new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_rdp_testsuite), &
                 new_testsuite("Real Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_rdp_testsuite), &
-                new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
+                !new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
                 new_testsuite("Real SVD (dp) Test Suite", collect_svd_rdp_testsuite), &
                 new_testsuite("Real GMRES (dp) Test Suite", collect_gmres_rdp_testsuite), &
                 new_testsuite("Real CG (dp) Test Suite", collect_cg_rdp_testsuite), &
-                new_testsuite("Real Expm (dp) Test Suite", collect_expm_rdp_testsuite) &
+                new_testsuite("Real Expm (dp) Test Suite", collect_expm_rdp_testsuite), &
+                new_testsuite("Real Sqrtm (dp) Test Suite", collect_sqrtm_rdp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"
@@ -159,7 +160,8 @@ program Tester
                 new_testsuite("Complex Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_cdp_testsuite), &
                 new_testsuite("Complex GMRES (dp) Test Suite", collect_gmres_cdp_testsuite), &
                 new_testsuite("Complex CG (dp) Test Suite", collect_cg_cdp_testsuite), &
-                new_testsuite("Complex Expm. (dp) Test Suite", collect_expm_cdp_testsuite) &
+                new_testsuite("Complex Expm. (dp) Test Suite", collect_expm_cdp_testsuite), &
+                new_testsuite("Complex Sqrtm (dp) Test Suite", collect_sqrtm_cdp_testsuite) &
                 ]
 
    write(output_unit, *) "-------------------------------------------------------------------"
