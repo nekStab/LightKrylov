@@ -24,7 +24,7 @@ module lightkrylov_utils
 
     implicit none
 
-    private
+    character*128, parameter, private :: this_module = 'LightKrylov_Utils'
 
     real(sp), parameter, public :: one_rsp = 1.0_sp
     real(sp), parameter, public :: zero_rsp = 0.0_sp
@@ -295,11 +295,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_rsp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_rsp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_rsp')
 
         return
     end subroutine inv_rsp
@@ -334,7 +334,7 @@ contains
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
         v = transpose(vt)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rsp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_rsp')
 
         return
     end subroutine svd_rsp
@@ -360,7 +360,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_rsp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rsp')
 
         ! Reconstruct eigenvalues
         vals = cmplx(1.0_sp, 0.0_sp, kind=sp)*wr + cmplx(0.0_sp, 1.0_sp, kind=sp)*wi
@@ -390,7 +390,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_rsp')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rsp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -421,7 +421,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_rsp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rsp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -451,7 +451,7 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_rsp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rsp')
 
         ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=sp)
@@ -489,7 +489,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_rsp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rsp')
 
         return
     end subroutine ordschur_rsp
@@ -553,11 +553,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_rdp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_rdp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_rdp')
 
         return
     end subroutine inv_rdp
@@ -592,7 +592,7 @@ contains
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
         v = transpose(vt)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rdp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_rdp')
 
         return
     end subroutine svd_rdp
@@ -618,7 +618,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_rdp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rdp')
 
         ! Reconstruct eigenvalues
         vals = cmplx(1.0_dp, 0.0_dp, kind=dp)*wr + cmplx(0.0_dp, 1.0_dp, kind=dp)*wi
@@ -648,7 +648,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_rdp')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -679,7 +679,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_rdp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rdp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -709,7 +709,7 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_rdp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rdp')
 
         ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=dp)
@@ -747,7 +747,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_rdp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rdp')
 
         return
     end subroutine ordschur_rdp
@@ -811,11 +811,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_csp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_csp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_csp')
 
         return
     end subroutine inv_csp
@@ -852,7 +852,7 @@ contains
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
         v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_csp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_csp')
 
         return
     end subroutine svd_csp
@@ -879,7 +879,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_csp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_csp')
 
 
         return
@@ -909,7 +909,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_csp')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_csp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -940,7 +940,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_csp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_csp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -969,7 +969,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_csp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_csp')
 
 
         return
@@ -1002,7 +1002,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_csp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_csp')
 
         return
     end subroutine ordschur_csp
@@ -1066,11 +1066,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_cdp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_cdp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_cdp')
 
         return
     end subroutine inv_cdp
@@ -1107,7 +1107,7 @@ contains
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
         v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_cdp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_cdp')
 
         return
     end subroutine svd_cdp
@@ -1134,7 +1134,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_cdp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_cdp')
 
 
         return
@@ -1164,7 +1164,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_cdp')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_cdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -1195,7 +1195,7 @@ contains
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_cdp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_cdp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -1224,7 +1224,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_cdp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_cdp')
 
 
         return
@@ -1257,7 +1257,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_cdp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_cdp')
 
         return
     end subroutine ordschur_cdp

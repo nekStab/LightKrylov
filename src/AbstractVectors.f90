@@ -2,7 +2,8 @@ module lightkrylov_AbstractVectors
     use lightkrylov_constants
     use lightkrylov_utils
     implicit none
-    private
+
+    character*128, parameter, private :: this_module = 'Lightkrylov_AbstractVectors'
 
     public :: innerprod_matrix
     public :: linear_combination

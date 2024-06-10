@@ -8,7 +8,7 @@ module lightkrylov_BaseKrylov
     use lightkrylov_AbstractLinops
     implicit none
     
-    private
+    character*128, parameter, private :: this_module = 'LightKrylov_BaseKrylov'
 
     public :: qr
     public :: apply_permutation_matrix
@@ -1395,7 +1395,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_rsp')
+            call check_info(info, 'qr', module=this_module, procedure='arnoldi_rsp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_sp
@@ -1520,7 +1520,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_rdp')
+            call check_info(info, 'qr', module=this_module, procedure='arnoldi_rdp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_dp
@@ -1645,7 +1645,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_csp')
+            call check_info(info, 'qr', module=this_module, procedure='arnoldi_csp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_sp
@@ -1770,7 +1770,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_cdp')
+            call check_info(info, 'qr', module=this_module, procedure='arnoldi_cdp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_dp

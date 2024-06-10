@@ -6,6 +6,8 @@ program demo
   use Ginzburg_Landau
   implicit none
 
+  character*128, parameter :: this_module = 'Example Ginzburg_Landau'
+
   !------------------------------------------------
   !-----     LINEAR OPERATOR INVESTIGATED     -----
   !------------------------------------------------
@@ -56,7 +58,7 @@ program demo
 
   !> Call to LightKrylov.
   call eigs(A, X, lambda, residuals, info)
-  call check_info(info, 'eigs', module='example Ginzburg-Landau', procedure='main')
+  call check_info(info, 'eigs', module=this_module, procedure='main')
 
   !> Transform eigenspectrum from unit-disk to standard complex plane.
   lambda = log(lambda) / tau

@@ -15,7 +15,7 @@ module lightkrylov_IterativeSolvers
 
     implicit none
 
-    private
+    character*128, parameter, private :: this_module = 'LightKrylov_IterativeSolvers'
 
     public :: save_eigenspectrum
     public :: eigs
@@ -311,7 +311,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_rsp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -451,7 +451,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_rdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -590,7 +590,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_csp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -720,7 +720,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_cdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -840,7 +840,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_rsp')
+            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_rsp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -941,7 +941,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_rdp')
+            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_rdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1042,7 +1042,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_csp')
+            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_csp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1143,7 +1143,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_cdp')
+            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_cdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1251,7 +1251,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_rsp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1348,7 +1348,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_rdp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1445,7 +1445,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_csp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1542,7 +1542,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_cdp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
