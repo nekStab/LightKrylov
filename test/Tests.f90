@@ -5,6 +5,7 @@ program Tester
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type
    ! Abstract implementation of Krylov-based techniques.
    use LightKrylov
+   use LightKrylov_Logger
    ! Implementation of the vector types and associated matrices.
    use TestVectors
    use TestLinops
@@ -21,6 +22,10 @@ program Tester
 
    ! Display information about the version of LightKrylov being tested.
    call greetings()
+
+   ! Turn off logging during tests (unless you REALLY want it)
+   !call logger%configure(level=debug_level); write(*,*) 'Logging set to debug mode.'; write(*,*) ""; write(*,*) ""
+   call logger%configure(level=error_level); write(*,*) 'Logging set to error_level.'; write(*,*) ""; write(*,*) ""
 
    status = 0
 

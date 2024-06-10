@@ -9,6 +9,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_io_npy, only: save_npy
 
     use lightkrylov_constants
+    Use LightKrylov_Logger
     use lightkrylov_Utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
@@ -214,9 +215,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                if (info < 0) then
-                    call stop_error("eigs: Error in Arnoldi iteration.")
-                endif
+                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_${type[0]}$${kind}$')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = 0.0_${kind}$
@@ -355,9 +354,8 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            if (info < 0) then
-                call stop_error("eighs : Error in Lanczos iteration.")
-            endif
+            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_${type[0]}$${kind}$')
+
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
@@ -460,13 +458,13 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
         allocate(B(kdim_+1, kdim_)) ; B = 0.0_${kind}$
 
+        info = 0
+
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            if (info < 0) then
-                call stop_error("svds: Error in Lanczos bidiagonalization.")
-            endif
+            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_${type[0]}$${kind}$')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
@@ -742,6 +740,8 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+        info = 0
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() /= 0.0_${kind}$) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -770,6 +770,8 @@ contains
             #:else
             residual = sqrt(r_dot_r_new)
             #:endif
+            ! Current number of iterations performed.
+            info = info + 1
 
             if (residual < tol) then
                 exit

@@ -9,6 +9,7 @@ module TestKrylov
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Logger
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -65,6 +66,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
+        call check_info(info, 'qr', module='LightKrylov_TestKrylov', procedure='test_qr_factorization_${type[0]}$${kind}$')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -121,6 +123,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
+        call check_info(info, 'qr_pivot', module='LightKrylov_TestKrylov', procedure='test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -177,6 +180,7 @@ contains
         H = 0.0_${kind}$
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
+        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
@@ -213,6 +217,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
+        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_basis_orthogonality_${type[0]}$${kind}$')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_${kind}$
@@ -258,6 +263,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
+        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
 
         G = 0.0_${kind}$
         do j = 1, size(G, 2)
@@ -304,6 +310,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
+        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_${kind}$
@@ -350,6 +357,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
+        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_krylov_schur_${type[0]}$${kind}$')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -416,6 +424,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
+        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov', procedure='test_lanczos_bidiag_factorization_${type[0]}$${kind}$')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -455,6 +464,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
+        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov', procedure='test_lanczos_bidiag_left_orthogonality_${type[0]}$${kind}$')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -498,6 +508,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
+        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov', procedure='test_lanczos_bidiag_right_orthogonality_${type[0]}$${kind}$')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -572,6 +583,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
+        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov', procedure='test_lanczos_tridiag_full_factorization_${type[0]}$${kind}$')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -625,6 +637,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
+        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov', procedure='test_lanczos_tridiag_orthogonality_${type[0]}$${kind}$')
 
         ! Check correctness.
         call get_data(Xdata, X)

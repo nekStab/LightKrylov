@@ -4,6 +4,7 @@ module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
     use lightkrylov_constants
+    use LightKrylov_Logger
     use lightkrylov_utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
@@ -184,6 +185,7 @@ contains
                     write(output_unit, *) "INFO: Colinear columns detected."
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
+                info = j
                 R(i, j) = 0.0_${k1}$ ; call Q(j)%zero()
             else
                 call Q(j)%scal(1.0_${k1}$ / beta) ; R(j, j) = beta
@@ -245,6 +247,7 @@ contains
                     enddo
                     beta = Q(i)%norm() ; call Q(i)%scal(1.0_${k1}$ / beta)
                 enddo
+                info = j
                 exit qr_step
             endif
 
@@ -254,6 +257,7 @@ contains
             beta = Q(j)%norm()
 
             if (abs(beta) < tolerance) then
+               info = j
                 R(j, j) = 0.0_${k1}$ ; call Q(j)%zero()
             else
                 R(j, j) = beta ; call Q(j)%scal(1.0_${k1}$ / beta)
@@ -487,6 +491,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_${type[0]}$${kind}$')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_${kind}$

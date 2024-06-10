@@ -9,6 +9,7 @@ module lightkrylov_expmlib
 
     ! LightKrylov.
     use lightkrylov_constants
+    use LightKrylov_Logger
     use lightkrylov_utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
@@ -268,11 +269,13 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_rsp')
 
                 ! Compute approximation.
                 if (info == k) then
                     ! Arnoldi breakdown, do not consider extended matrix.
                     kp = k
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -298,6 +301,7 @@ contains
         endif
 
         if (err_est <= tol) then
+            info = kp
             if (verbose) then
                 write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
                 write(output_unit, *) "     n° of vectors     :", kp
@@ -399,10 +403,13 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_rsp')
+
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
                     kpp = kp
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -438,6 +445,7 @@ contains
         endif
 
         if (err_est .le. tol) then
+            info = kpp
             if (verbose) then
                 if (p.eq.1) then
                     write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
@@ -491,6 +499,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_rsp')
 
         return
     end subroutine k_exptA_rsp
@@ -628,11 +637,13 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_rdp')
 
                 ! Compute approximation.
                 if (info == k) then
                     ! Arnoldi breakdown, do not consider extended matrix.
                     kp = k
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -658,6 +669,7 @@ contains
         endif
 
         if (err_est <= tol) then
+            info = kp
             if (verbose) then
                 write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
                 write(output_unit, *) "     n° of vectors     :", kp
@@ -759,10 +771,13 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_rdp')
+
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
                     kpp = kp
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -798,6 +813,7 @@ contains
         endif
 
         if (err_est .le. tol) then
+            info = kpp
             if (verbose) then
                 if (p.eq.1) then
                     write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
@@ -851,6 +867,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_rdp')
 
         return
     end subroutine k_exptA_rdp
@@ -988,11 +1005,13 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_csp')
 
                 ! Compute approximation.
                 if (info == k) then
                     ! Arnoldi breakdown, do not consider extended matrix.
                     kp = k
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -1018,6 +1037,7 @@ contains
         endif
 
         if (err_est <= tol) then
+            info = kp
             if (verbose) then
                 write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
                 write(output_unit, *) "     n° of vectors     :", kp
@@ -1119,10 +1139,13 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_csp')
+
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
                     kpp = kp
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -1158,6 +1181,7 @@ contains
         endif
 
         if (err_est .le. tol) then
+            info = kpp
             if (verbose) then
                 if (p.eq.1) then
                     write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
@@ -1211,6 +1235,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_csp')
 
         return
     end subroutine k_exptA_csp
@@ -1348,11 +1373,13 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_cdp')
 
                 ! Compute approximation.
                 if (info == k) then
                     ! Arnoldi breakdown, do not consider extended matrix.
                     kp = k
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -1378,6 +1405,7 @@ contains
         endif
 
         if (err_est <= tol) then
+            info = kp
             if (verbose) then
                 write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
                 write(output_unit, *) "     n° of vectors     :", kp
@@ -1479,10 +1507,13 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
+                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_cdp')
+
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
                     kpp = kp
+                    info = -2
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
@@ -1518,6 +1549,7 @@ contains
         endif
 
         if (err_est .le. tol) then
+            info = kpp
             if (verbose) then
                 if (p.eq.1) then
                     write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
@@ -1571,11 +1603,10 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_cdp')
 
         return
     end subroutine k_exptA_cdp
 
 
 end module lightkrylov_expmlib
-
-

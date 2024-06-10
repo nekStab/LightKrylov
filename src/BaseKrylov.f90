@@ -2,6 +2,7 @@ module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
     use lightkrylov_constants
+    use LightKrylov_Logger
     use lightkrylov_utils
     use lightkrylov_AbstractVectors
     use lightkrylov_AbstractLinops
@@ -303,6 +304,7 @@ contains
                     write(output_unit, *) "INFO: Colinear columns detected."
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
+                info = j
                 R(i, j) = 0.0_sp ; call Q(j)%zero()
             else
                 call Q(j)%scal(1.0_sp / beta) ; R(j, j) = beta
@@ -360,6 +362,7 @@ contains
                     enddo
                     beta = Q(i)%norm() ; call Q(i)%scal(1.0_sp / beta)
                 enddo
+                info = j
                 exit qr_step
             endif
 
@@ -369,6 +372,7 @@ contains
             beta = Q(j)%norm()
 
             if (abs(beta) < tolerance) then
+               info = j
                 R(j, j) = 0.0_sp ; call Q(j)%zero()
             else
                 R(j, j) = beta ; call Q(j)%scal(1.0_sp / beta)
@@ -567,6 +571,7 @@ contains
                     write(output_unit, *) "INFO: Colinear columns detected."
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
+                info = j
                 R(i, j) = 0.0_dp ; call Q(j)%zero()
             else
                 call Q(j)%scal(1.0_dp / beta) ; R(j, j) = beta
@@ -624,6 +629,7 @@ contains
                     enddo
                     beta = Q(i)%norm() ; call Q(i)%scal(1.0_dp / beta)
                 enddo
+                info = j
                 exit qr_step
             endif
 
@@ -633,6 +639,7 @@ contains
             beta = Q(j)%norm()
 
             if (abs(beta) < tolerance) then
+               info = j
                 R(j, j) = 0.0_dp ; call Q(j)%zero()
             else
                 R(j, j) = beta ; call Q(j)%scal(1.0_dp / beta)
@@ -831,6 +838,7 @@ contains
                     write(output_unit, *) "INFO: Colinear columns detected."
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
+                info = j
                 R(i, j) = 0.0_sp ; call Q(j)%zero()
             else
                 call Q(j)%scal(1.0_sp / beta) ; R(j, j) = beta
@@ -888,6 +896,7 @@ contains
                     enddo
                     beta = Q(i)%norm() ; call Q(i)%scal(1.0_sp / beta)
                 enddo
+                info = j
                 exit qr_step
             endif
 
@@ -897,6 +906,7 @@ contains
             beta = Q(j)%norm()
 
             if (abs(beta) < tolerance) then
+               info = j
                 R(j, j) = 0.0_sp ; call Q(j)%zero()
             else
                 R(j, j) = beta ; call Q(j)%scal(1.0_sp / beta)
@@ -1095,6 +1105,7 @@ contains
                     write(output_unit, *) "INFO: Colinear columns detected."
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
+                info = j
                 R(i, j) = 0.0_dp ; call Q(j)%zero()
             else
                 call Q(j)%scal(1.0_dp / beta) ; R(j, j) = beta
@@ -1152,6 +1163,7 @@ contains
                     enddo
                     beta = Q(i)%norm() ; call Q(i)%scal(1.0_dp / beta)
                 enddo
+                info = j
                 exit qr_step
             endif
 
@@ -1161,6 +1173,7 @@ contains
             beta = Q(j)%norm()
 
             if (abs(beta) < tolerance) then
+               info = j
                 R(j, j) = 0.0_dp ; call Q(j)%zero()
             else
                 R(j, j) = beta ; call Q(j)%scal(1.0_dp / beta)
@@ -1382,6 +1395,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_rsp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_sp
@@ -1506,6 +1520,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_rdp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_dp
@@ -1630,6 +1645,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_csp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_sp
@@ -1754,6 +1770,7 @@ contains
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+            call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='arnoldi_cdp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = 0.0_dp

@@ -7,6 +7,7 @@ module TestExpmlib
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
 
     ! Testdrive
@@ -114,6 +115,7 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_kexptA_rsp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
@@ -178,11 +180,14 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+            !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_rsp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_rsp, 2')
+    
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
@@ -287,6 +292,7 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_kexptA_rdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
@@ -351,11 +357,14 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+            !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_rdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_rdp, 2')
+    
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
@@ -460,6 +469,7 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_kexptA_csp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
@@ -524,11 +534,14 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+            !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_csp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_csp, 2')
+    
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
@@ -633,6 +646,7 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_kexptA_cdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
@@ -697,11 +711,14 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
+            !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_cdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
+        !call check_info(info, 'kexpm', module='LightKrylov_TestExpmLib', procedure='test_block_kexptA_cdp, 2')
+    
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
@@ -760,7 +777,7 @@ contains
        real(sp) :: A(n, n)
        real(sp) :: sqrtmA(n, n)
        complex(sp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -776,7 +793,8 @@ contains
        A = 0.5_sp*(A + transpose(A))
      
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_def_rsp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
@@ -796,7 +814,7 @@ contains
        real(sp) :: A(n, n)
        real(sp) :: sqrtmA(n, n)
        complex(sp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -813,7 +831,8 @@ contains
        A = 0.5_sp*(A + transpose(A))
     
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_semi_def_rsp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
@@ -844,7 +863,7 @@ contains
        real(dp) :: A(n, n)
        real(dp) :: sqrtmA(n, n)
        complex(dp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -860,7 +879,8 @@ contains
        A = 0.5_dp*(A + transpose(A))
      
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_def_rdp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
@@ -880,7 +900,7 @@ contains
        real(dp) :: A(n, n)
        real(dp) :: sqrtmA(n, n)
        complex(dp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -897,7 +917,8 @@ contains
        A = 0.5_dp*(A + transpose(A))
     
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_semi_def_rdp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
@@ -928,7 +949,7 @@ contains
        complex(sp) :: A(n, n)
        complex(sp) :: sqrtmA(n, n)
        complex(sp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -945,7 +966,8 @@ contains
        A = 0.5_sp*(A + conjg(transpose(A)))
      
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_def_csp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
@@ -965,7 +987,7 @@ contains
        complex(sp) :: A(n, n)
        complex(sp) :: sqrtmA(n, n)
        complex(sp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -983,7 +1005,8 @@ contains
        A = 0.5_sp*(A + conjg(transpose(A)))
     
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_semi_def_csp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
@@ -1014,7 +1037,7 @@ contains
        complex(dp) :: A(n, n)
        complex(dp) :: sqrtmA(n, n)
        complex(dp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -1031,7 +1054,8 @@ contains
        A = 0.5_dp*(A + conjg(transpose(A)))
      
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_def_cdp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
@@ -1051,7 +1075,7 @@ contains
        complex(dp) :: A(n, n)
        complex(dp) :: sqrtmA(n, n)
        complex(dp) :: lambda(n)
-       integer :: i
+       integer :: i, info
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -1069,7 +1093,8 @@ contains
        A = 0.5_dp*(A + conjg(transpose(A)))
     
        ! compute matrix square root
-       call sqrtm(A, sqrtmA)
+       call sqrtm(A, sqrtmA, info)
+       !call check_info(info, 'sqrtm', module='LightKrylov_TestExpmLib', procedure='test_dense_sqrtm_pos_semi_def_cdp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
