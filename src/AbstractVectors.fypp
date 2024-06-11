@@ -6,14 +6,15 @@ module lightkrylov_AbstractVectors
     implicit none
     private
 
-    public :: innerprod_matrix
+    public :: innerprod
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
 
-    interface innerprod_matrix
+    interface innerprod
         #:for kind, type in RC_KINDS_TYPES
+        module procedure innerprod_vector_${type[0]}$${kind}$
         module procedure innerprod_matrix_${type[0]}$${kind}$
         #:endfor
     end interface
@@ -260,6 +261,25 @@ contains
 
         return
     end subroutine linear_combination_matrix_${type[0]}$${kind}$
+
+    subroutine innerprod_vector_${type[0]}$${kind}$(v, X, y)
+        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+        !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), y
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        ${type}$, intent(out) :: v(size(X))
+        !! Resulting inner-product vector.
+
+        ! Local variables.
+        integer :: i
+
+        v = 0.0_${kind}$
+        do i = 1, size(X)
+            v(i) = X(i)%dot(y)
+        enddo
+        
+        return
+    end subroutine innerprod_vector_${type[0]}$${kind}$
 
     subroutine innerprod_matrix_${type[0]}$${kind}$(M, X, Y)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
