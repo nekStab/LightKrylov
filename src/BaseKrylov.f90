@@ -15,6 +15,7 @@ module lightkrylov_BaseKrylov
     public :: apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: orthonormalize
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
     public :: krylov_schur
@@ -71,6 +72,17 @@ module lightkrylov_BaseKrylov
         module procedure initialize_krylov_subspace_rdp
         module procedure initialize_krylov_subspace_csp
         module procedure initialize_krylov_subspace_cdp
+    end interface
+
+    interface orthonormalize
+        module procedure orthonormalize_vector_rsp
+        module procedure orthonormalize_basis_rsp
+        module procedure orthonormalize_vector_rdp
+        module procedure orthonormalize_basis_rdp
+        module procedure orthonormalize_vector_csp
+        module procedure orthonormalize_basis_csp
+        module procedure orthonormalize_vector_cdp
+        module procedure orthonormalize_basis_cdp
     end interface
 
     interface lanczos_tridiagonalization
@@ -138,6 +150,104 @@ contains
         return
     end subroutine initialize_krylov_subspace_rsp
 
+    subroutine orthonormalize_vector_rsp(y, X, info)
+      !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_rsp), intent(inout) :: y
+      !! Input `abstract_vector` to orthonormalize
+      class(abstract_vector_rsp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      real(sp) :: coef(size(X))
+      real(sp) :: alpha
+
+      info = 0
+
+      if (y%norm() < atol_dp) then
+         info = -1
+         return
+      end if
+
+      call innerprod(coef, X, y)
+      block
+         class(abstract_vector_rsp), allocatable :: proj
+         call linear_combination(proj, X, coef)
+         call y%sub(proj)
+      end block
+      alpha = y%norm()
+      call y%scal(one_rsp / alpha)
+      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+         call innerprod(coef, X, y)
+         block
+            class(abstract_vector_rsp), allocatable :: proj
+            call linear_combination(proj, X, coef)
+            call y%sub(proj)
+         end block
+         alpha = y%norm()
+         call y%scal(one_rsp / alpha)
+         info = 1
+      end if
+      
+      return
+    end subroutine orthonormalize_vector_rsp
+
+    subroutine orthonormalize_basis_rsp(Y, X, info)
+      !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_rsp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthonormalize
+      class(abstract_vector_rsp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      real(sp) :: coef(size(X), size(Y))
+      real(sp) :: R(size(Y), size(Y))
+      integer :: i
+      logical :: repeat
+
+      info = 0
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then
+            info = -2
+            return
+         end if
+      end do
+
+      call innerprod(coef, X, Y)
+      block
+         class(abstract_vector_rsp), allocatable :: proj(:)
+         call linear_combination(proj, X, coef)
+         call axpby_basis(Y, one_rsp, proj, -one_rsp)
+      end block
+      R = 0.0_sp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
+            info = 1
+         end if
+      end do
+
+      if (info == 1) then
+         call innerprod(coef, X, Y)
+         block
+            class(abstract_vector_rsp), allocatable :: proj(:)
+            call linear_combination(proj, X, coef)
+            call axpby_basis(Y, one_rsp, proj, -one_rsp)
+         end block
+         R = 0.0_sp
+         call qr(Y, R, info)
+         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
+      end if
+      
+      return
+    end subroutine orthonormalize_basis_rsp
+
     subroutine initialize_krylov_subspace_rdp(X, X0)
         class(abstract_vector_rdp), intent(inout) :: X(:)
         class(abstract_vector_rdp), optional, intent(in) :: X0(:)
@@ -175,6 +285,104 @@ contains
 
         return
     end subroutine initialize_krylov_subspace_rdp
+
+    subroutine orthonormalize_vector_rdp(y, X, info)
+      !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_rdp), intent(inout) :: y
+      !! Input `abstract_vector` to orthonormalize
+      class(abstract_vector_rdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      real(dp) :: coef(size(X))
+      real(dp) :: alpha
+
+      info = 0
+
+      if (y%norm() < atol_dp) then
+         info = -1
+         return
+      end if
+
+      call innerprod(coef, X, y)
+      block
+         class(abstract_vector_rdp), allocatable :: proj
+         call linear_combination(proj, X, coef)
+         call y%sub(proj)
+      end block
+      alpha = y%norm()
+      call y%scal(one_rdp / alpha)
+      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+         call innerprod(coef, X, y)
+         block
+            class(abstract_vector_rdp), allocatable :: proj
+            call linear_combination(proj, X, coef)
+            call y%sub(proj)
+         end block
+         alpha = y%norm()
+         call y%scal(one_rdp / alpha)
+         info = 1
+      end if
+      
+      return
+    end subroutine orthonormalize_vector_rdp
+
+    subroutine orthonormalize_basis_rdp(Y, X, info)
+      !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_rdp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthonormalize
+      class(abstract_vector_rdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      real(dp) :: coef(size(X), size(Y))
+      real(dp) :: R(size(Y), size(Y))
+      integer :: i
+      logical :: repeat
+
+      info = 0
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then
+            info = -2
+            return
+         end if
+      end do
+
+      call innerprod(coef, X, Y)
+      block
+         class(abstract_vector_rdp), allocatable :: proj(:)
+         call linear_combination(proj, X, coef)
+         call axpby_basis(Y, one_rdp, proj, -one_rdp)
+      end block
+      R = 0.0_dp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
+            info = 1
+         end if
+      end do
+
+      if (info == 1) then
+         call innerprod(coef, X, Y)
+         block
+            class(abstract_vector_rdp), allocatable :: proj(:)
+            call linear_combination(proj, X, coef)
+            call axpby_basis(Y, one_rdp, proj, -one_rdp)
+         end block
+         R = 0.0_dp
+         call qr(Y, R, info)
+         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
+      end if
+      
+      return
+    end subroutine orthonormalize_basis_rdp
 
     subroutine initialize_krylov_subspace_csp(X, X0)
         class(abstract_vector_csp), intent(inout) :: X(:)
@@ -214,6 +422,104 @@ contains
         return
     end subroutine initialize_krylov_subspace_csp
 
+    subroutine orthonormalize_vector_csp(y, X, info)
+      !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_csp), intent(inout) :: y
+      !! Input `abstract_vector` to orthonormalize
+      class(abstract_vector_csp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      complex(sp) :: coef(size(X))
+      real(sp) :: alpha
+
+      info = 0
+
+      if (y%norm() < atol_dp) then
+         info = -1
+         return
+      end if
+
+      call innerprod(coef, X, y)
+      block
+         class(abstract_vector_csp), allocatable :: proj
+         call linear_combination(proj, X, coef)
+         call y%sub(proj)
+      end block
+      alpha = y%norm()
+      call y%scal(one_csp / alpha)
+      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+         call innerprod(coef, X, y)
+         block
+            class(abstract_vector_csp), allocatable :: proj
+            call linear_combination(proj, X, coef)
+            call y%sub(proj)
+         end block
+         alpha = y%norm()
+         call y%scal(one_csp / alpha)
+         info = 1
+      end if
+      
+      return
+    end subroutine orthonormalize_vector_csp
+
+    subroutine orthonormalize_basis_csp(Y, X, info)
+      !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_csp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthonormalize
+      class(abstract_vector_csp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      complex(sp) :: coef(size(X), size(Y))
+      complex(sp) :: R(size(Y), size(Y))
+      integer :: i
+      logical :: repeat
+
+      info = 0
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then
+            info = -2
+            return
+         end if
+      end do
+
+      call innerprod(coef, X, Y)
+      block
+         class(abstract_vector_csp), allocatable :: proj(:)
+         call linear_combination(proj, X, coef)
+         call axpby_basis(Y, one_csp, proj, -one_csp)
+      end block
+      R = 0.0_sp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
+            info = 1
+         end if
+      end do
+
+      if (info == 1) then
+         call innerprod(coef, X, Y)
+         block
+            class(abstract_vector_csp), allocatable :: proj(:)
+            call linear_combination(proj, X, coef)
+            call axpby_basis(Y, one_csp, proj, -one_csp)
+         end block
+         R = 0.0_sp
+         call qr(Y, R, info)
+         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
+      end if
+      
+      return
+    end subroutine orthonormalize_basis_csp
+
     subroutine initialize_krylov_subspace_cdp(X, X0)
         class(abstract_vector_cdp), intent(inout) :: X(:)
         class(abstract_vector_cdp), optional, intent(in) :: X0(:)
@@ -251,6 +557,104 @@ contains
 
         return
     end subroutine initialize_krylov_subspace_cdp
+
+    subroutine orthonormalize_vector_cdp(y, X, info)
+      !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_cdp), intent(inout) :: y
+      !! Input `abstract_vector` to orthonormalize
+      class(abstract_vector_cdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      complex(dp) :: coef(size(X))
+      real(dp) :: alpha
+
+      info = 0
+
+      if (y%norm() < atol_dp) then
+         info = -1
+         return
+      end if
+
+      call innerprod(coef, X, y)
+      block
+         class(abstract_vector_cdp), allocatable :: proj
+         call linear_combination(proj, X, coef)
+         call y%sub(proj)
+      end block
+      alpha = y%norm()
+      call y%scal(one_cdp / alpha)
+      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+         call innerprod(coef, X, y)
+         block
+            class(abstract_vector_cdp), allocatable :: proj
+            call linear_combination(proj, X, coef)
+            call y%sub(proj)
+         end block
+         alpha = y%norm()
+         call y%scal(one_cdp / alpha)
+         info = 1
+      end if
+      
+      return
+    end subroutine orthonormalize_vector_cdp
+
+    subroutine orthonormalize_basis_cdp(Y, X, info)
+      !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
+      class(abstract_vector_cdp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthonormalize
+      class(abstract_vector_cdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthonormalize against
+      integer,                    intent(out)   :: info
+      !! Information flag
+
+      ! internals
+      complex(dp) :: coef(size(X), size(Y))
+      complex(dp) :: R(size(Y), size(Y))
+      integer :: i
+      logical :: repeat
+
+      info = 0
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then
+            info = -2
+            return
+         end if
+      end do
+
+      call innerprod(coef, X, Y)
+      block
+         class(abstract_vector_cdp), allocatable :: proj(:)
+         call linear_combination(proj, X, coef)
+         call axpby_basis(Y, one_cdp, proj, -one_cdp)
+      end block
+      R = 0.0_dp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
+
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
+            info = 1
+         end if
+      end do
+
+      if (info == 1) then
+         call innerprod(coef, X, Y)
+         block
+            class(abstract_vector_cdp), allocatable :: proj(:)
+            call linear_combination(proj, X, coef)
+            call axpby_basis(Y, one_cdp, proj, -one_cdp)
+         end block
+         R = 0.0_dp
+         call qr(Y, R, info)
+         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
+      end if
+      
+      return
+    end subroutine orthonormalize_basis_cdp
 
 
     !------------------------------------
@@ -1435,14 +1839,14 @@ contains
         allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_sp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_rsp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
-        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        call innerprod(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_rsp, X(j), -wrk(j, i))
@@ -1560,14 +1964,14 @@ contains
         allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_dp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_rdp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
-        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        call innerprod(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_rdp, X(j), -wrk(j, i))
@@ -1685,14 +2089,14 @@ contains
         allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_sp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_csp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
-        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        call innerprod(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_csp, X(j), -wrk(j, i))
@@ -1810,14 +2214,14 @@ contains
         allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_dp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        call innerprod_matrix(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
+        call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_cdp, X(j), -H(j, kpm+i))
             enddo
         enddo
 
-        call innerprod_matrix(wrk, X(1:kp), X(kp+1:kpp))
+        call innerprod(wrk, X(1:kp), X(kp+1:kpp))
         do i = 1, p
             do j = 1, kp
                 call X(kp+i)%axpby(one_cdp, X(j), -wrk(j, i))
