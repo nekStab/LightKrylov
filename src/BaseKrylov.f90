@@ -150,7 +150,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_rsp
 
-    subroutine orthogonalize_vector_against_basis_rsp(y, X, info, beta, ifnorm)
+    subroutine orthogonalize_vector_against_basis_rsp(y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -160,30 +160,14 @@ contains
       !! Information flag.
       real(sp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output?
 
       ! internals
-      character*128 :: msg
       real(sp) :: proj_coefficients(size(X))
-      real(sp) :: proj_coefficients_2(size(X))
-      real(sp) :: alpha
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
       ! check for zero vector
-      if (y%norm() < atol_sp) then
-         if (normalize) then
-            info = -1
-            return
-         else
-            info = 1
-         end if
-      end if
+      if (y%norm() < atol_sp) info = 1
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -192,26 +176,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call y%sub(proj)
       end block
-
-      ! normalize
-      if (normalize) then
-         alpha = y%norm()
-         if (alpha < atol_sp) then ! error
-            info = -2
-            return
-         else if (alpha < rtol_sp) then ! repeat to avoid floating point errors
-            info = 2
-            call innerprod(proj_coefficients_2, X, y)
-            block
-               class(abstract_vector_rsp), allocatable :: proj
-               call linear_combination(proj, X, proj_coefficients_2)
-               call y%sub(proj)
-            end block
-            proj_coefficients = proj_coefficients + proj_coefficients_2 ! for output
-         end if
-         alpha = y%norm()
-         call y%scal(one_rsp / alpha)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -222,7 +186,7 @@ contains
       return
     end subroutine orthogonalize_vector_against_basis_rsp
 
-    subroutine orthogonalize_basis_against_basis_rsp(Y, X, info, beta, ifnorm)
+    subroutine orthogonalize_basis_against_basis_rsp(Y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -232,46 +196,19 @@ contains
       !! Information flag.
       real(sp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output ?
 
       ! internals
-      character*128 :: msg
       real(sp) :: proj_coefficients(size(X), size(Y))
       real(sp) :: R(size(Y), size(Y))
       integer :: i
-      logical :: repeat
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
-      if (normalize) then
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_sp) then
-               info = -1
-               return
-            end if
-         end do
+      ! check for zero vector
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_sp) info = i
+      end do
       
-         ! check for colinear vectors
-         R = zero_rsp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_rsp')
-         if (info > 0 .and. normalize) then ! colinear vectors!
-            info = -3
-            return
-         end if
-      else
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_sp) info = 1
-         end do
-      end if
-
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
       block
@@ -279,21 +216,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call axpby_basis(Y, one_rsp, proj, -one_rsp)
       end block
-         
-      ! normalize
-      if (normalize) then
-         ! check if Y is in the span of X
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_sp) then ! error
-               info = -2
-               return
-            end if
-         end do
-         R = zero_rsp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_rsp')
-         proj_coefficients = matmul(proj_coefficients, R)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -342,7 +264,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_rdp
 
-    subroutine orthogonalize_vector_against_basis_rdp(y, X, info, beta, ifnorm)
+    subroutine orthogonalize_vector_against_basis_rdp(y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -352,30 +274,14 @@ contains
       !! Information flag.
       real(dp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output?
 
       ! internals
-      character*128 :: msg
       real(dp) :: proj_coefficients(size(X))
-      real(dp) :: proj_coefficients_2(size(X))
-      real(dp) :: alpha
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
       ! check for zero vector
-      if (y%norm() < atol_dp) then
-         if (normalize) then
-            info = -1
-            return
-         else
-            info = 1
-         end if
-      end if
+      if (y%norm() < atol_dp) info = 1
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -384,26 +290,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call y%sub(proj)
       end block
-
-      ! normalize
-      if (normalize) then
-         alpha = y%norm()
-         if (alpha < atol_dp) then ! error
-            info = -2
-            return
-         else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
-            info = 2
-            call innerprod(proj_coefficients_2, X, y)
-            block
-               class(abstract_vector_rdp), allocatable :: proj
-               call linear_combination(proj, X, proj_coefficients_2)
-               call y%sub(proj)
-            end block
-            proj_coefficients = proj_coefficients + proj_coefficients_2 ! for output
-         end if
-         alpha = y%norm()
-         call y%scal(one_rdp / alpha)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -414,7 +300,7 @@ contains
       return
     end subroutine orthogonalize_vector_against_basis_rdp
 
-    subroutine orthogonalize_basis_against_basis_rdp(Y, X, info, beta, ifnorm)
+    subroutine orthogonalize_basis_against_basis_rdp(Y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -424,46 +310,19 @@ contains
       !! Information flag.
       real(dp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output ?
 
       ! internals
-      character*128 :: msg
       real(dp) :: proj_coefficients(size(X), size(Y))
       real(dp) :: R(size(Y), size(Y))
       integer :: i
-      logical :: repeat
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
-      if (normalize) then
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_dp) then
-               info = -1
-               return
-            end if
-         end do
+      ! check for zero vector
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) info = i
+      end do
       
-         ! check for colinear vectors
-         R = zero_rdp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_rdp')
-         if (info > 0 .and. normalize) then ! colinear vectors!
-            info = -3
-            return
-         end if
-      else
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_dp) info = 1
-         end do
-      end if
-
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
       block
@@ -471,21 +330,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call axpby_basis(Y, one_rdp, proj, -one_rdp)
       end block
-         
-      ! normalize
-      if (normalize) then
-         ! check if Y is in the span of X
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_dp) then ! error
-               info = -2
-               return
-            end if
-         end do
-         R = zero_rdp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_rdp')
-         proj_coefficients = matmul(proj_coefficients, R)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -534,7 +378,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_csp
 
-    subroutine orthogonalize_vector_against_basis_csp(y, X, info, beta, ifnorm)
+    subroutine orthogonalize_vector_against_basis_csp(y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -544,30 +388,14 @@ contains
       !! Information flag.
       complex(sp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output?
 
       ! internals
-      character*128 :: msg
       complex(sp) :: proj_coefficients(size(X))
-      complex(sp) :: proj_coefficients_2(size(X))
-      real(sp) :: alpha
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
       ! check for zero vector
-      if (y%norm() < atol_sp) then
-         if (normalize) then
-            info = -1
-            return
-         else
-            info = 1
-         end if
-      end if
+      if (y%norm() < atol_sp) info = 1
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -576,26 +404,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call y%sub(proj)
       end block
-
-      ! normalize
-      if (normalize) then
-         alpha = y%norm()
-         if (alpha < atol_sp) then ! error
-            info = -2
-            return
-         else if (alpha < rtol_sp) then ! repeat to avoid floating point errors
-            info = 2
-            call innerprod(proj_coefficients_2, X, y)
-            block
-               class(abstract_vector_csp), allocatable :: proj
-               call linear_combination(proj, X, proj_coefficients_2)
-               call y%sub(proj)
-            end block
-            proj_coefficients = proj_coefficients + proj_coefficients_2 ! for output
-         end if
-         alpha = y%norm()
-         call y%scal(one_csp / alpha)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -606,7 +414,7 @@ contains
       return
     end subroutine orthogonalize_vector_against_basis_csp
 
-    subroutine orthogonalize_basis_against_basis_csp(Y, X, info, beta, ifnorm)
+    subroutine orthogonalize_basis_against_basis_csp(Y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -616,46 +424,19 @@ contains
       !! Information flag.
       complex(sp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output ?
 
       ! internals
-      character*128 :: msg
       complex(sp) :: proj_coefficients(size(X), size(Y))
       complex(sp) :: R(size(Y), size(Y))
       integer :: i
-      logical :: repeat
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
-      if (normalize) then
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_sp) then
-               info = -1
-               return
-            end if
-         end do
+      ! check for zero vector
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_sp) info = i
+      end do
       
-         ! check for colinear vectors
-         R = zero_rsp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_csp')
-         if (info > 0 .and. normalize) then ! colinear vectors!
-            info = -3
-            return
-         end if
-      else
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_sp) info = 1
-         end do
-      end if
-
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
       block
@@ -663,21 +444,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call axpby_basis(Y, one_csp, proj, -one_csp)
       end block
-         
-      ! normalize
-      if (normalize) then
-         ! check if Y is in the span of X
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_sp) then ! error
-               info = -2
-               return
-            end if
-         end do
-         R = zero_rsp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_csp')
-         proj_coefficients = matmul(proj_coefficients, R)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -726,7 +492,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_cdp
 
-    subroutine orthogonalize_vector_against_basis_cdp(y, X, info, beta, ifnorm)
+    subroutine orthogonalize_vector_against_basis_cdp(y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -736,30 +502,14 @@ contains
       !! Information flag.
       complex(dp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output?
 
       ! internals
-      character*128 :: msg
       complex(dp) :: proj_coefficients(size(X))
-      complex(dp) :: proj_coefficients_2(size(X))
-      real(dp) :: alpha
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
       ! check for zero vector
-      if (y%norm() < atol_dp) then
-         if (normalize) then
-            info = -1
-            return
-         else
-            info = 1
-         end if
-      end if
+      if (y%norm() < atol_dp) info = 1
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -768,26 +518,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call y%sub(proj)
       end block
-
-      ! normalize
-      if (normalize) then
-         alpha = y%norm()
-         if (alpha < atol_dp) then ! error
-            info = -2
-            return
-         else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
-            info = 2
-            call innerprod(proj_coefficients_2, X, y)
-            block
-               class(abstract_vector_cdp), allocatable :: proj
-               call linear_combination(proj, X, proj_coefficients_2)
-               call y%sub(proj)
-            end block
-            proj_coefficients = proj_coefficients + proj_coefficients_2 ! for output
-         end if
-         alpha = y%norm()
-         call y%scal(one_cdp / alpha)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -798,7 +528,7 @@ contains
       return
     end subroutine orthogonalize_vector_against_basis_cdp
 
-    subroutine orthogonalize_basis_against_basis_cdp(Y, X, info, beta, ifnorm)
+    subroutine orthogonalize_basis_against_basis_cdp(Y, X, info, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -808,46 +538,19 @@ contains
       !! Information flag.
       complex(dp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
-      logical,                          optional, intent(in)    :: ifnorm
-      logical                                                   :: normalize
-      !! Normalize output ?
 
       ! internals
-      character*128 :: msg
       complex(dp) :: proj_coefficients(size(X), size(Y))
       complex(dp) :: R(size(Y), size(Y))
       integer :: i
-      logical :: repeat
-
-      ! optional argument
-      normalize = optval(ifnorm, .false.)
 
       info = 0
 
-      if (normalize) then
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_dp) then
-               info = -1
-               return
-            end if
-         end do
+      ! check for zero vector
+      do i = 1, size(Y)
+         if ( Y(i)%norm() < atol_dp) info = i
+      end do
       
-         ! check for colinear vectors
-         R = zero_rdp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_cdp')
-         if (info > 0 .and. normalize) then ! colinear vectors!
-            info = -3
-            return
-         end if
-      else
-         ! check for zero vector
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_dp) info = 1
-         end do
-      end if
-
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
       block
@@ -855,21 +558,6 @@ contains
          call linear_combination(proj, X, proj_coefficients)
          call axpby_basis(Y, one_cdp, proj, -one_cdp)
       end block
-         
-      ! normalize
-      if (normalize) then
-         ! check if Y is in the span of X
-         do i = 1, size(Y)
-            if ( Y(i)%norm() < atol_dp) then ! error
-               info = -2
-               return
-            end if
-         end do
-         R = zero_rdp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module=this_module, procedure='orthogonalize_basis_against_basis_cdp')
-         proj_coefficients = matmul(proj_coefficients, R)
-      end if
 
       if (present(beta)) then
          ! check size
@@ -902,7 +590,7 @@ contains
         ! Internal variables.
         real(sp) :: alpha
         real(sp) :: beta(size(Q))
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, j, kdim, iwrk
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -962,7 +650,7 @@ contains
 
         ! Internal variables
         real(sp) :: beta
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, i, j, kdim, iwrk
         integer :: idxv(1)
         real(sp)  :: Rii(size(Q))
 
@@ -984,9 +672,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, ifnorm=.true.)
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
                     call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='qr_with_pivoting_rsp')
+                    beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -1167,7 +856,7 @@ contains
         ! Internal variables.
         real(dp) :: alpha
         real(dp) :: beta(size(Q))
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, j, kdim, iwrk
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1227,7 +916,7 @@ contains
 
         ! Internal variables
         real(dp) :: beta
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, i, j, kdim, iwrk
         integer :: idxv(1)
         real(dp)  :: Rii(size(Q))
 
@@ -1249,9 +938,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, ifnorm=.true.)
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
                     call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='qr_with_pivoting_rdp')
+                    beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -1432,7 +1122,7 @@ contains
         ! Internal variables.
         complex(sp) :: alpha
         complex(sp) :: beta(size(Q))
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, j, kdim, iwrk
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1492,7 +1182,7 @@ contains
 
         ! Internal variables
         complex(sp) :: beta
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, i, j, kdim, iwrk
         integer :: idxv(1)
         complex(sp)  :: Rii(size(Q))
 
@@ -1514,9 +1204,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, ifnorm=.true.)
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
                     call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='qr_with_pivoting_csp')
+                    beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -1697,7 +1388,7 @@ contains
         ! Internal variables.
         complex(dp) :: alpha
         complex(dp) :: beta(size(Q))
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, j, kdim, iwrk
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1757,7 +1448,7 @@ contains
 
         ! Internal variables
         complex(dp) :: beta
-        integer :: idx, i, j, k, kdim, iwrk
+        integer :: idx, i, j, kdim, iwrk
         integer :: idxv(1)
         complex(dp)  :: Rii(size(Q))
 
@@ -1779,9 +1470,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, ifnorm=.true.)
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
                     call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='qr_with_pivoting_cdp')
+                    beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
                 enddo
                 info = j
                 exit qr_step

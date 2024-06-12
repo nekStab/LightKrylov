@@ -170,23 +170,8 @@ contains
          else if (trim(to_lower(origin)) == 'orthogonalize_against_basis') then
             ! orthogonalization
             if (info == 1) then
-               write(msg, *) 'One or more of the input vectors is numerically zero.'
+               write(msg, *) 'Othogonalization: The ', info, 'th input vector is numerically zero.'
                call logger%log_information(trim(msg), module=module, procedure=procedure)
-            else if (info == 2) then
-               write(msg, *) 'One or more of the input vectors is nearly in the span of X. Repeating orthonormalization.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
-            else if (info == -1) then
-               write(msg, *) 'One or more of the input vectors is numerically zero. Cannot orthonormalize.'
-               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
-               ierr = -1
-            else if (info == -2) then
-               write(msg, *) 'One or more of the input vectors is numerically in the span of X. Cannot orthonormalize.'
-               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
-               ierr = -1
-            else if (info == -3) then
-               write(msg, *) 'Colinear vectors detected in the input basis. Cannot orthonormalize.'
-               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
-               ierr = -1
             else
                write(msg, *) "Undocumented error."
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
