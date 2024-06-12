@@ -15,7 +15,7 @@ module lightkrylov_BaseKrylov
     public :: apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
-    public :: orthonormalize
+    public :: orthonormalize_against_basis
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
     public :: krylov_schur
@@ -74,15 +74,15 @@ module lightkrylov_BaseKrylov
         module procedure initialize_krylov_subspace_cdp
     end interface
 
-    interface orthonormalize
-        module procedure orthonormalize_vector_rsp
-        module procedure orthonormalize_basis_rsp
-        module procedure orthonormalize_vector_rdp
-        module procedure orthonormalize_basis_rdp
-        module procedure orthonormalize_vector_csp
-        module procedure orthonormalize_basis_csp
-        module procedure orthonormalize_vector_cdp
-        module procedure orthonormalize_basis_cdp
+    interface orthonormalize_against_basis
+        module procedure orthonormalize_vector_against_basis_rsp
+        module procedure orthonormalize_basis_against_basis_rsp
+        module procedure orthonormalize_vector_against_basis_rdp
+        module procedure orthonormalize_basis_against_basis_rdp
+        module procedure orthonormalize_vector_against_basis_csp
+        module procedure orthonormalize_basis_against_basis_csp
+        module procedure orthonormalize_vector_against_basis_cdp
+        module procedure orthonormalize_basis_against_basis_cdp
     end interface
 
     interface lanczos_tridiagonalization
@@ -150,35 +150,46 @@ contains
         return
     end subroutine initialize_krylov_subspace_rsp
 
-    subroutine orthonormalize_vector_rsp(y, X, info)
+    subroutine orthonormalize_vector_against_basis_rsp(y, X)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: y
       !! Input `abstract_vector` to orthonormalize
       class(abstract_vector_rsp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       real(sp) :: coef(size(X))
       real(sp) :: alpha
 
-      info = 0
-
+      ! check for zero vector
       if (y%norm() < atol_dp) then
-         info = -1
-         return
+         write(msg, *) 'The input vector is (numerically) zero.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rsp', &
+                              & stat=-1, errmsg='Cannot orthonormalize.')
       end if
 
+      ! orthogonalize
       call innerprod(coef, X, y)
       block
          class(abstract_vector_rsp), allocatable :: proj
          call linear_combination(proj, X, coef)
          call y%sub(proj)
       end block
+
+      ! normalize
       alpha = y%norm()
       call y%scal(one_rsp / alpha)
-      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+
+      if (alpha < atol_dp) then ! error
+         write(msg, *) 'The input vector is in the span of X.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rsp', & 
+                              & stat=-2, errmsg='Cannot orthonormalize.')
+      else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
+         write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
+                        & alpha, ': The input vector is nearly in the span of X. ', &
+                        & 'Repeating orthonormalisation.'
+         call logger%log_warning(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rsp')
          call innerprod(coef, X, y)
          block
             class(abstract_vector_rsp), allocatable :: proj
@@ -187,66 +198,70 @@ contains
          end block
          alpha = y%norm()
          call y%scal(one_rsp / alpha)
-         info = 1
       end if
       
       return
-    end subroutine orthonormalize_vector_rsp
+    end subroutine orthonormalize_vector_against_basis_rsp
 
-    subroutine orthonormalize_basis_rsp(Y, X, info)
+    subroutine orthonormalize_basis_against_basis_rsp(Y, X)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthonormalize
       class(abstract_vector_rsp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       real(sp) :: coef(size(X), size(Y))
       real(sp) :: R(size(Y), size(Y))
-      integer :: i
+      integer :: i, info
       logical :: repeat
 
-      info = 0
-
+      ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_dp) then
-            info = -2
-            return
+            write(msg, *) 'Zero vector detected in input basis, column ', i
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_rsp', & 
+                                 & stat=-1, errmsg='Cannot orthonormalize.')
          end if
       end do
 
+      ! check for colinear vectors
+      R = 0.0_sp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rsp')
+      if (info > 0) then ! colinear vectors!
+         write(msg, *) 'Colinear vectors detected in input basis'
+         call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_rsp', & 
+                                 & stat=-2, errmsg='Cannot orthonormalize.')
+      end if
+
+      ! orthogonalize
       call innerprod(coef, X, Y)
       block
          class(abstract_vector_rsp), allocatable :: proj(:)
          call linear_combination(proj, X, coef)
          call axpby_basis(Y, one_rsp, proj, -one_rsp)
       end block
-      R = 0.0_sp
-      call qr(Y, R, info)
-      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
 
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
-            info = 1
+         if ( Y(i)%norm() < atol_dp) then ! error
+            write(msg, *) 'The input vector', i, 'is in the span of X.'
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_rsp', & 
+                                 & stat=-3, errmsg='Cannot orthonormalize.')
          end if
       end do
-
-      if (info == 1) then
-         call innerprod(coef, X, Y)
-         block
-            class(abstract_vector_rsp), allocatable :: proj(:)
-            call linear_combination(proj, X, coef)
-            call axpby_basis(Y, one_rsp, proj, -one_rsp)
-         end block
-         R = 0.0_sp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
-      end if
+         
+      ! normalize
+      R = 0.0_sp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rsp')
       
       return
-    end subroutine orthonormalize_basis_rsp
+    end subroutine orthonormalize_basis_against_basis_rsp
 
     subroutine initialize_krylov_subspace_rdp(X, X0)
         class(abstract_vector_rdp), intent(inout) :: X(:)
@@ -286,35 +301,46 @@ contains
         return
     end subroutine initialize_krylov_subspace_rdp
 
-    subroutine orthonormalize_vector_rdp(y, X, info)
+    subroutine orthonormalize_vector_against_basis_rdp(y, X)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: y
       !! Input `abstract_vector` to orthonormalize
       class(abstract_vector_rdp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       real(dp) :: coef(size(X))
       real(dp) :: alpha
 
-      info = 0
-
+      ! check for zero vector
       if (y%norm() < atol_dp) then
-         info = -1
-         return
+         write(msg, *) 'The input vector is (numerically) zero.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rdp', &
+                              & stat=-1, errmsg='Cannot orthonormalize.')
       end if
 
+      ! orthogonalize
       call innerprod(coef, X, y)
       block
          class(abstract_vector_rdp), allocatable :: proj
          call linear_combination(proj, X, coef)
          call y%sub(proj)
       end block
+
+      ! normalize
       alpha = y%norm()
       call y%scal(one_rdp / alpha)
-      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+
+      if (alpha < atol_dp) then ! error
+         write(msg, *) 'The input vector is in the span of X.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rdp', & 
+                              & stat=-2, errmsg='Cannot orthonormalize.')
+      else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
+         write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
+                        & alpha, ': The input vector is nearly in the span of X. ', &
+                        & 'Repeating orthonormalisation.'
+         call logger%log_warning(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rdp')
          call innerprod(coef, X, y)
          block
             class(abstract_vector_rdp), allocatable :: proj
@@ -323,66 +349,70 @@ contains
          end block
          alpha = y%norm()
          call y%scal(one_rdp / alpha)
-         info = 1
       end if
       
       return
-    end subroutine orthonormalize_vector_rdp
+    end subroutine orthonormalize_vector_against_basis_rdp
 
-    subroutine orthonormalize_basis_rdp(Y, X, info)
+    subroutine orthonormalize_basis_against_basis_rdp(Y, X)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthonormalize
       class(abstract_vector_rdp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       real(dp) :: coef(size(X), size(Y))
       real(dp) :: R(size(Y), size(Y))
-      integer :: i
+      integer :: i, info
       logical :: repeat
 
-      info = 0
-
+      ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_dp) then
-            info = -2
-            return
+            write(msg, *) 'Zero vector detected in input basis, column ', i
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_rdp', & 
+                                 & stat=-1, errmsg='Cannot orthonormalize.')
          end if
       end do
 
+      ! check for colinear vectors
+      R = 0.0_dp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rdp')
+      if (info > 0) then ! colinear vectors!
+         write(msg, *) 'Colinear vectors detected in input basis'
+         call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_rdp', & 
+                                 & stat=-2, errmsg='Cannot orthonormalize.')
+      end if
+
+      ! orthogonalize
       call innerprod(coef, X, Y)
       block
          class(abstract_vector_rdp), allocatable :: proj(:)
          call linear_combination(proj, X, coef)
          call axpby_basis(Y, one_rdp, proj, -one_rdp)
       end block
-      R = 0.0_dp
-      call qr(Y, R, info)
-      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
 
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
-            info = 1
+         if ( Y(i)%norm() < atol_dp) then ! error
+            write(msg, *) 'The input vector', i, 'is in the span of X.'
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_rdp', & 
+                                 & stat=-3, errmsg='Cannot orthonormalize.')
          end if
       end do
-
-      if (info == 1) then
-         call innerprod(coef, X, Y)
-         block
-            class(abstract_vector_rdp), allocatable :: proj(:)
-            call linear_combination(proj, X, coef)
-            call axpby_basis(Y, one_rdp, proj, -one_rdp)
-         end block
-         R = 0.0_dp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
-      end if
+         
+      ! normalize
+      R = 0.0_dp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rdp')
       
       return
-    end subroutine orthonormalize_basis_rdp
+    end subroutine orthonormalize_basis_against_basis_rdp
 
     subroutine initialize_krylov_subspace_csp(X, X0)
         class(abstract_vector_csp), intent(inout) :: X(:)
@@ -422,35 +452,46 @@ contains
         return
     end subroutine initialize_krylov_subspace_csp
 
-    subroutine orthonormalize_vector_csp(y, X, info)
+    subroutine orthonormalize_vector_against_basis_csp(y, X)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: y
       !! Input `abstract_vector` to orthonormalize
       class(abstract_vector_csp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       complex(sp) :: coef(size(X))
       real(sp) :: alpha
 
-      info = 0
-
+      ! check for zero vector
       if (y%norm() < atol_dp) then
-         info = -1
-         return
+         write(msg, *) 'The input vector is (numerically) zero.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_csp', &
+                              & stat=-1, errmsg='Cannot orthonormalize.')
       end if
 
+      ! orthogonalize
       call innerprod(coef, X, y)
       block
          class(abstract_vector_csp), allocatable :: proj
          call linear_combination(proj, X, coef)
          call y%sub(proj)
       end block
+
+      ! normalize
       alpha = y%norm()
       call y%scal(one_csp / alpha)
-      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+
+      if (alpha < atol_dp) then ! error
+         write(msg, *) 'The input vector is in the span of X.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_csp', & 
+                              & stat=-2, errmsg='Cannot orthonormalize.')
+      else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
+         write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
+                        & alpha, ': The input vector is nearly in the span of X. ', &
+                        & 'Repeating orthonormalisation.'
+         call logger%log_warning(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_csp')
          call innerprod(coef, X, y)
          block
             class(abstract_vector_csp), allocatable :: proj
@@ -459,66 +500,70 @@ contains
          end block
          alpha = y%norm()
          call y%scal(one_csp / alpha)
-         info = 1
       end if
       
       return
-    end subroutine orthonormalize_vector_csp
+    end subroutine orthonormalize_vector_against_basis_csp
 
-    subroutine orthonormalize_basis_csp(Y, X, info)
+    subroutine orthonormalize_basis_against_basis_csp(Y, X)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthonormalize
       class(abstract_vector_csp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       complex(sp) :: coef(size(X), size(Y))
       complex(sp) :: R(size(Y), size(Y))
-      integer :: i
+      integer :: i, info
       logical :: repeat
 
-      info = 0
-
+      ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_dp) then
-            info = -2
-            return
+            write(msg, *) 'Zero vector detected in input basis, column ', i
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_csp', & 
+                                 & stat=-1, errmsg='Cannot orthonormalize.')
          end if
       end do
 
+      ! check for colinear vectors
+      R = 0.0_sp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_csp')
+      if (info > 0) then ! colinear vectors!
+         write(msg, *) 'Colinear vectors detected in input basis'
+         call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_csp', & 
+                                 & stat=-2, errmsg='Cannot orthonormalize.')
+      end if
+
+      ! orthogonalize
       call innerprod(coef, X, Y)
       block
          class(abstract_vector_csp), allocatable :: proj(:)
          call linear_combination(proj, X, coef)
          call axpby_basis(Y, one_csp, proj, -one_csp)
       end block
-      R = 0.0_sp
-      call qr(Y, R, info)
-      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
 
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
-            info = 1
+         if ( Y(i)%norm() < atol_dp) then ! error
+            write(msg, *) 'The input vector', i, 'is in the span of X.'
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_csp', & 
+                                 & stat=-3, errmsg='Cannot orthonormalize.')
          end if
       end do
-
-      if (info == 1) then
-         call innerprod(coef, X, Y)
-         block
-            class(abstract_vector_csp), allocatable :: proj(:)
-            call linear_combination(proj, X, coef)
-            call axpby_basis(Y, one_csp, proj, -one_csp)
-         end block
-         R = 0.0_sp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
-      end if
+         
+      ! normalize
+      R = 0.0_sp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_csp')
       
       return
-    end subroutine orthonormalize_basis_csp
+    end subroutine orthonormalize_basis_against_basis_csp
 
     subroutine initialize_krylov_subspace_cdp(X, X0)
         class(abstract_vector_cdp), intent(inout) :: X(:)
@@ -558,35 +603,46 @@ contains
         return
     end subroutine initialize_krylov_subspace_cdp
 
-    subroutine orthonormalize_vector_cdp(y, X, info)
+    subroutine orthonormalize_vector_against_basis_cdp(y, X)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: y
       !! Input `abstract_vector` to orthonormalize
       class(abstract_vector_cdp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       complex(dp) :: coef(size(X))
       real(dp) :: alpha
 
-      info = 0
-
+      ! check for zero vector
       if (y%norm() < atol_dp) then
-         info = -1
-         return
+         write(msg, *) 'The input vector is (numerically) zero.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_cdp', &
+                              & stat=-1, errmsg='Cannot orthonormalize.')
       end if
 
+      ! orthogonalize
       call innerprod(coef, X, y)
       block
          class(abstract_vector_cdp), allocatable :: proj
          call linear_combination(proj, X, coef)
          call y%sub(proj)
       end block
+
+      ! normalize
       alpha = y%norm()
       call y%scal(one_cdp / alpha)
-      if (alpha < 10*atol_dp) then ! repeat to avoid floating point errors
+
+      if (alpha < atol_dp) then ! error
+         write(msg, *) 'The input vector is in the span of X.'
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_cdp', & 
+                              & stat=-2, errmsg='Cannot orthonormalize.')
+      else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
+         write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
+                        & alpha, ': The input vector is nearly in the span of X. ', &
+                        & 'Repeating orthonormalisation.'
+         call logger%log_warning(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_cdp')
          call innerprod(coef, X, y)
          block
             class(abstract_vector_cdp), allocatable :: proj
@@ -595,66 +651,70 @@ contains
          end block
          alpha = y%norm()
          call y%scal(one_cdp / alpha)
-         info = 1
       end if
       
       return
-    end subroutine orthonormalize_vector_cdp
+    end subroutine orthonormalize_vector_against_basis_cdp
 
-    subroutine orthonormalize_basis_cdp(Y, X, info)
+    subroutine orthonormalize_basis_against_basis_cdp(Y, X)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthonormalize
       class(abstract_vector_cdp), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
-      integer,                    intent(out)   :: info
-      !! Information flag
 
       ! internals
+      character*128 :: msg
       complex(dp) :: coef(size(X), size(Y))
       complex(dp) :: R(size(Y), size(Y))
-      integer :: i
+      integer :: i, info
       logical :: repeat
 
-      info = 0
-
+      ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_dp) then
-            info = -2
-            return
+            write(msg, *) 'Zero vector detected in input basis, column ', i
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_cdp', & 
+                                 & stat=-1, errmsg='Cannot orthonormalize.')
          end if
       end do
 
+      ! check for colinear vectors
+      R = 0.0_dp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_cdp')
+      if (info > 0) then ! colinear vectors!
+         write(msg, *) 'Colinear vectors detected in input basis'
+         call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_cdp', & 
+                                 & stat=-2, errmsg='Cannot orthonormalize.')
+      end if
+
+      ! orthogonalize
       call innerprod(coef, X, Y)
       block
          class(abstract_vector_cdp), allocatable :: proj(:)
          call linear_combination(proj, X, coef)
          call axpby_basis(Y, one_cdp, proj, -one_cdp)
       end block
-      R = 0.0_dp
-      call qr(Y, R, info)
-      call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp')
 
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then ! repeat to avoid floating point errors
-            info = 1
+         if ( Y(i)%norm() < atol_dp) then ! error
+            write(msg, *) 'The input vector', i, 'is in the span of X.'
+            call logger%log_error(trim(msg), module=this_module, &
+                                 & procedure='orthonormalize_basis_against_basis_cdp', & 
+                                 & stat=-3, errmsg='Cannot orthonormalize.')
          end if
       end do
-
-      if (info == 1) then
-         call innerprod(coef, X, Y)
-         block
-            class(abstract_vector_cdp), allocatable :: proj(:)
-            call linear_combination(proj, X, coef)
-            call axpby_basis(Y, one_cdp, proj, -one_cdp)
-         end block
-         R = 0.0_dp
-         call qr(Y, R, info)
-         call check_info(info, 'qr', module='LightKrylov_BaseKrylov', procedure='orthonormalize_basis_rdp, second pass.')
-      end if
+         
+      ! normalize
+      R = 0.0_dp
+      call qr(Y, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_cdp')
       
       return
-    end subroutine orthonormalize_basis_cdp
+    end subroutine orthonormalize_basis_against_basis_cdp
 
 
     !------------------------------------
