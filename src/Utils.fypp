@@ -61,8 +61,9 @@ module lightkrylov_utils
     #:endfor
 
     interface assert_shape
-    #:for kind, type in RC_KINDS_TYPES
-        module procedure assert_shape_${type[0]}$${kind}$
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure assert_shape_vector_${type[0]}$${kind}$
+        module procedure assert_shape_matrix_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -166,7 +167,26 @@ contains
     end subroutine stop_error
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine assert_shape_${type[0]}$${kind}$(A, size, routine, matname)
+    subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, routine, matname)
+        !! Utility function to assert the shape of a vector.
+        ${type}$, intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted vector.
+
+        if(any(shape(v) /= size)) then
+            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
+            write(output_unit, *) "Expected length is ", size
+            call stop_error("Aborting due to illegal vector length.")
+        endif
+        return
+    end subroutine assert_shape_vector_${type[0]}$${kind}$
+
+    subroutine assert_shape_matrix_${type[0]}$${kind}$(A, size, routine, matname)
         !! Utility function to assert the shape of a matrix.
         ${type}$, intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
@@ -183,7 +203,7 @@ contains
             call stop_error("Aborting due to illegal matrix size.")
         endif
         return
-    end subroutine assert_shape_${type[0]}$${kind}$
+    end subroutine assert_shape_matrix_${type[0]}$${kind}$
     #:endfor
 
     !-------------------------------------------
