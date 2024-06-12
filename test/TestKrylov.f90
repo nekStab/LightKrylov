@@ -7,6 +7,7 @@ module TestKrylov
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
 
     ! Testdrive
@@ -65,7 +66,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_rsp), allocatable :: A(:)
         ! Upper triangular matrix.
-        real(sp) :: R(kdim, kdim) = 0.0_sp
+        real(sp) :: R(kdim, kdim) = zero_rsp
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -79,7 +80,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_rsp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -125,7 +126,7 @@ contains
             call random_number(alpha)
             idx = 1 + floor(kdim*alpha)
             if (mask(idx)) then
-                A(idx)%data = 0.0_sp
+                A(idx)%data = zero_rsp
                 mask(idx) = .false.
                 k = k-1
             endif
@@ -136,7 +137,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_rsp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -165,7 +166,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_rdp), allocatable :: A(:)
         ! Upper triangular matrix.
-        real(dp) :: R(kdim, kdim) = 0.0_dp
+        real(dp) :: R(kdim, kdim) = zero_rdp
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -179,7 +180,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_rdp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -225,7 +226,7 @@ contains
             call random_number(alpha)
             idx = 1 + floor(kdim*alpha)
             if (mask(idx)) then
-                A(idx)%data = 0.0_dp
+                A(idx)%data = zero_rdp
                 mask(idx) = .false.
                 k = k-1
             endif
@@ -236,7 +237,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_rdp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -265,7 +266,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_csp), allocatable :: A(:)
         ! Upper triangular matrix.
-        complex(sp) :: R(kdim, kdim) = 0.0_sp
+        complex(sp) :: R(kdim, kdim) = zero_csp
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -279,7 +280,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_csp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -325,7 +326,7 @@ contains
             call random_number(alpha)
             idx = 1 + floor(kdim*alpha)
             if (mask(idx)) then
-                A(idx)%data = 0.0_sp
+                A(idx)%data = zero_csp
                 mask(idx) = .false.
                 k = k-1
             endif
@@ -336,7 +337,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_csp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -365,7 +366,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_cdp), allocatable :: A(:)
         ! Upper triangular matrix.
-        complex(dp) :: R(kdim, kdim) = 0.0_dp
+        complex(dp) :: R(kdim, kdim) = zero_cdp
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -425,7 +426,7 @@ contains
             call random_number(alpha)
             idx = 1 + floor(kdim*alpha)
             if (mask(idx)) then
-                A(idx)%data = 0.0_dp
+                A(idx)%data = zero_cdp
                 mask(idx) = .false.
                 k = k-1
             endif
@@ -487,8 +488,8 @@ contains
         allocate(X(1:kdim+1)) ;
         call initialize_krylov_subspace(X)
         call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(1.0_sp / alpha)
-        H = 0.0_sp
+        call X(1)%scal(one_rsp / alpha)
+        H = zero_rsp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rsp')
@@ -524,14 +525,14 @@ contains
         ! Initialize Krylov subspace.
         allocate (X(1:kdim + 1)); allocate (X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_rsp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_rsp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_sp
+        G = zero_rsp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = X(i)%dot(X(j))
@@ -570,13 +571,13 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_rsp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rsp')
 
-        G = 0.0_sp
+        G = zero_rsp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -617,14 +618,14 @@ contains
         allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
         call init_rand(X0)
         call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_rsp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_rsp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_sp
+        G = zero_rsp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -664,7 +665,7 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_rsptest/Tests.f90
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -723,8 +724,8 @@ contains
         allocate(X(1:kdim+1)) ;
         call initialize_krylov_subspace(X)
         call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(1.0_dp / alpha)
-        H = 0.0_dp
+        call X(1)%scal(one_rdp / alpha)
+        H = zero_rdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rdp')
@@ -760,14 +761,14 @@ contains
         ! Initialize Krylov subspace.
         allocate (X(1:kdim + 1)); allocate (X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_rdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_rdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_dp
+        G = zero_rdp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = X(i)%dot(X(j))
@@ -806,13 +807,13 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_rdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rdp')
 
-        G = 0.0_dp
+        G = zero_rdp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -853,14 +854,14 @@ contains
         allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
         call init_rand(X0)
         call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_rdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_rdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_dp
+        G = zero_rdp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -900,7 +901,7 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_rdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -959,8 +960,8 @@ contains
         allocate(X(1:kdim+1)) ;
         call initialize_krylov_subspace(X)
         call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(1.0_sp / alpha)
-        H = 0.0_sp
+        call X(1)%scal(one_csp / alpha)
+        H = zero_csp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_csp')
@@ -996,14 +997,14 @@ contains
         ! Initialize Krylov subspace.
         allocate (X(1:kdim + 1)); allocate (X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_csp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_csp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_sp
+        G = zero_csp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = X(i)%dot(X(j))
@@ -1042,13 +1043,13 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_csp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_csp')
 
-        G = 0.0_sp
+        G = zero_csp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -1089,14 +1090,14 @@ contains
         allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
         call init_rand(X0)
         call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_csp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_csp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_sp
+        G = zero_csp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -1136,7 +1137,7 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_sp
+        H = zero_csp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -1195,8 +1196,8 @@ contains
         allocate(X(1:kdim+1)) ;
         call initialize_krylov_subspace(X)
         call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(1.0_dp / alpha)
-        H = 0.0_dp
+        call X(1)%scal(one_cdp / alpha)
+        H = zero_cdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_cdp')
@@ -1232,14 +1233,14 @@ contains
         ! Initialize Krylov subspace.
         allocate (X(1:kdim + 1)); allocate (X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_cdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_cdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_dp
+        G = zero_cdp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = X(i)%dot(X(j))
@@ -1278,13 +1279,13 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_cdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_cdp')
 
-        G = 0.0_dp
+        G = zero_cdp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -1325,14 +1326,14 @@ contains
         allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
         call init_rand(X0)
         call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_cdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_cdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_dp
+        G = zero_cdp
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -1372,7 +1373,7 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_dp
+        H = zero_cdp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -1437,7 +1438,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_sp
+        call initialize_krylov_subspace(V) ; B = zero_rsp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1477,7 +1478,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_sp
+        call initialize_krylov_subspace(V) ; B = zero_rsp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1486,7 +1487,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_sp
+        G = zero_rsp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = U(i)%dot(U(j))
@@ -1522,7 +1523,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_sp
+        call initialize_krylov_subspace(V) ; B = zero_rsp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1531,7 +1532,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_sp
+        G = zero_rsp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = V(i)%dot(V(j))
@@ -1578,7 +1579,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_dp
+        call initialize_krylov_subspace(V) ; B = zero_rdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1618,7 +1619,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_dp
+        call initialize_krylov_subspace(V) ; B = zero_rdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1627,7 +1628,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_dp
+        G = zero_rdp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = U(i)%dot(U(j))
@@ -1663,7 +1664,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_dp
+        call initialize_krylov_subspace(V) ; B = zero_rdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1672,7 +1673,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_dp
+        G = zero_rdp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = V(i)%dot(V(j))
@@ -1719,7 +1720,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_sp
+        call initialize_krylov_subspace(V) ; B = zero_csp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1759,7 +1760,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_sp
+        call initialize_krylov_subspace(V) ; B = zero_csp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1768,7 +1769,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_sp
+        G = zero_csp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = U(i)%dot(U(j))
@@ -1804,7 +1805,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_sp
+        call initialize_krylov_subspace(V) ; B = zero_csp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1813,7 +1814,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_sp
+        G = zero_csp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = V(i)%dot(V(j))
@@ -1860,7 +1861,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_dp
+        call initialize_krylov_subspace(V) ; B = zero_cdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1900,7 +1901,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_dp
+        call initialize_krylov_subspace(V) ; B = zero_cdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1909,7 +1910,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_dp
+        G = zero_cdp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = U(i)%dot(U(j))
@@ -1945,7 +1946,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_dp
+        call initialize_krylov_subspace(V) ; B = zero_cdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -1954,7 +1955,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_dp
+        G = zero_cdp
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = V(i)%dot(V(j))
@@ -2003,7 +2004,7 @@ contains
         class(vector_rsp), allocatable :: X0(:)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_sp
+        T = zero_rsp
 
         ! Initialize operator.
         A = spd_linop_rsp()
@@ -2050,7 +2051,7 @@ contains
         real(sp) :: G(kdim+1, kdim+1)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_sp
+        T = zero_rsp
 
         ! Initialize operator.
         A = spd_linop_rsp()
@@ -2067,7 +2068,7 @@ contains
         ! Check correctness.
         call get_data(Xdata, X)
         G = matmul(transpose(Xdata), Xdata)
-        Id = 0.0_sp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        Id = zero_rsp ; Id(1:kdim, 1:kdim) = eye(kdim)
         call check(error, norm2(abs(G-Id)) < rtol_sp)
 
         return
@@ -2105,7 +2106,7 @@ contains
         class(vector_rdp), allocatable :: X0(:)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_dp
+        T = zero_rdp
 
         ! Initialize operator.
         A = spd_linop_rdp()
@@ -2152,7 +2153,7 @@ contains
         real(dp) :: G(kdim+1, kdim+1)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_dp
+        T = zero_rdp
 
         ! Initialize operator.
         A = spd_linop_rdp()
@@ -2169,7 +2170,7 @@ contains
         ! Check correctness.
         call get_data(Xdata, X)
         G = matmul(transpose(Xdata), Xdata)
-        Id = 0.0_dp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        Id = zero_rdp ; Id(1:kdim, 1:kdim) = eye(kdim)
         call check(error, norm2(abs(G-Id)) < rtol_dp)
 
         return
@@ -2207,7 +2208,7 @@ contains
         class(vector_csp), allocatable :: X0(:)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_sp
+        T = zero_csp
 
         ! Initialize operator.
         A = hermitian_linop_csp()
@@ -2254,7 +2255,7 @@ contains
         complex(sp) :: G(kdim+1, kdim+1)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_sp
+        T = zero_csp
 
         ! Initialize operator.
         A = hermitian_linop_csp()
@@ -2271,7 +2272,7 @@ contains
         ! Check correctness.
         call get_data(Xdata, X)
         G = matmul(transpose(conjg(Xdata)), Xdata)
-        Id = 0.0_sp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        Id = zero_csp ; Id(1:kdim, 1:kdim) = eye(kdim)
         call check(error, norm2(abs(G-Id)) < rtol_sp)
 
         return
@@ -2309,7 +2310,7 @@ contains
         class(vector_cdp), allocatable :: X0(:)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_dp
+        T = zero_cdp
 
         ! Initialize operator.
         A = hermitian_linop_cdp()
@@ -2356,7 +2357,7 @@ contains
         complex(dp) :: G(kdim+1, kdim+1)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_dp
+        T = zero_cdp
 
         ! Initialize operator.
         A = hermitian_linop_cdp()
@@ -2373,7 +2374,7 @@ contains
         ! Check correctness.
         call get_data(Xdata, X)
         G = matmul(transpose(conjg(Xdata)), Xdata)
-        Id = 0.0_dp ; Id(1:kdim, 1:kdim) = eye(kdim)
+        Id = zero_cdp ; Id(1:kdim, 1:kdim) = eye(kdim)
         call check(error, norm2(abs(G-Id)) < rtol_dp)
 
         return

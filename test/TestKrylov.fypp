@@ -9,6 +9,7 @@ module TestKrylov
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
 
     ! Testdrive
@@ -23,11 +24,11 @@ module TestKrylov
 
     character*128, parameter, private :: this_module = 'LightKrylov_TestKrylov'
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    public :: collect_qr_${t1[0]}$${k1}$_testsuite
-    public :: collect_arnoldi_${t1[0]}$${k1}$_testsuite
-    public :: collect_lanczos_bidiag_${t1[0]}$${k1}$_testsuite
-    public :: collect_lanczos_tridiag_${t1[0]}$${k1}$_testsuite
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_qr_${type[0]}$${kind}$_testsuite
+    public :: collect_arnoldi_${type[0]}$${kind}$_testsuite
+    public :: collect_lanczos_bidiag_${type[0]}$${kind}$_testsuite
+    public :: collect_lanczos_tridiag_${type[0]}$${kind}$_testsuite
 
     #:endfor
 
@@ -37,29 +38,29 @@ contains
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS FOR QR     -----
     !----------------------------------------------------------------
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    subroutine collect_qr_${t1[0]}$${k1}$_testsuite(testsuite)
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_qr_${type[0]}$${kind}$_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_${t1[0]}$${k1}$), &
-                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$) &
+                        new_unittest("QR factorization", test_qr_factorization_${type[0]}$${kind}$), &
+                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$) &
                     ]
         return
-    end subroutine collect_qr_${t1[0]}$${k1}$_testsuite
+    end subroutine collect_qr_${type[0]}$${kind}$_testsuite
 
-    subroutine test_qr_factorization_${t1[0]}$${k1}$(error)
+    subroutine test_qr_factorization_${type[0]}$${kind}$(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test Vectors.
         integer, parameter :: kdim = test_size
-        type(vector_${t1[0]}$${k1}$), allocatable :: A(:)
+        type(vector_${type[0]}$${kind}$), allocatable :: A(:)
         ! Upper triangular matrix.
-        ${t1}$ :: R(kdim, kdim) = 0.0_${k1}$
+        ${type}$ :: R(kdim, kdim) = zero_${type[0]}$${kind}$
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        ${t1}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        ${type}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -75,32 +76,32 @@ contains
         call get_data(Qdata, A)
 
         ! Check correctness.
-        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${k1}$)
+        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${kind}$)
 
         return
-    end subroutine test_qr_factorization_${t1[0]}$${k1}$
+    end subroutine test_qr_factorization_${type[0]}$${kind}$
 
-    subroutine test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$(error)
+    subroutine test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test basis.
-        type(vector_${t1[0]}$${k1}$), allocatable :: A(:)
+        type(vector_${type[0]}$${kind}$), allocatable :: A(:)
         ! Krylov subspace dimension.
         integer, parameter :: kdim = 20
         ! Number of zero columns.
         integer, parameter :: nzero = 5
         ! Upper triangular matrix.
-        ${t1}$ :: R(kdim, kdim)
+        ${type}$ :: R(kdim, kdim)
         ! Permutation vector.
         integer :: perm(kdim)
-        ${t1}$ :: Id(kdim, kdim)
+        ${type}$ :: Id(kdim, kdim)
         ! Information flag.
         integer :: info
        
         ! Miscellaneous.
         integer :: k, idx, rk
-        ${t1}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
-        real(${k1}$) :: alpha
+        ${type}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        real(${kind}$) :: alpha
         logical :: mask(kdim)
 
         ! Effective rank.
@@ -115,7 +116,7 @@ contains
             call random_number(alpha)
             idx = 1 + floor(kdim*alpha)
             if (mask(idx)) then
-                A(idx)%data = 0.0_${k1}$
+                A(idx)%data = zero_${type[0]}$${kind}$
                 mask(idx) = .false.
                 k = k-1
             endif
@@ -133,10 +134,10 @@ contains
         Adata = Adata(:, perm)
 
         ! Check correctness.
-        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${k1}$)
+        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${kind}$)
 
         return
-    end subroutine test_pivoting_qr_exact_rank_deficiency_${t1[0]}$${k1}$
+    end subroutine test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$
 
     #:endfor
     
@@ -179,8 +180,8 @@ contains
         allocate(X(1:kdim+1)) ;
         call initialize_krylov_subspace(X)
         call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(1.0_${kind}$ / alpha)
-        H = 0.0_${kind}$
+        call X(1)%scal(one_${type[0]}$${kind}$ / alpha)
+        H = zero_${type[0]}$${kind}$
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
@@ -216,14 +217,14 @@ contains
         ! Initialize Krylov subspace.
         allocate (X(1:kdim + 1)); allocate (X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_${kind}$
+        H = zero_${type[0]}$${kind}$
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_${type[0]}$${kind}$')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_${kind}$
+        G = zero_${type[0]}$${kind}$
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = X(i)%dot(X(j))
@@ -262,13 +263,13 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_${kind}$
+        H = zero_${type[0]}$${kind}$
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
 
-        G = 0.0_${kind}$
+        G = zero_${type[0]}$${kind}$
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -309,14 +310,14 @@ contains
         allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
         call init_rand(X0)
         call initialize_krylov_subspace(X, X0)
-        H = 0.0_${kind}$
+        H = zero_${type[0]}$${kind}$
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_${type[0]}$${kind}$')
 
         ! Compute Gram matrix associated to the Krylov basis.
-        G = 0.0_${kind}$
+        G = zero_${type[0]}$${kind}$
         do j = 1, size(G, 2)
             do i = 1, size(G, 1)
                 G(i, j) = X(i)%dot(X(j))
@@ -356,7 +357,7 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = 0.0_${kind}$
+        H = zero_${type[0]}$${kind}$
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -423,7 +424,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_${kind}$
+        call initialize_krylov_subspace(V) ; B = zero_${type[0]}$${kind}$
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -463,7 +464,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_${kind}$
+        call initialize_krylov_subspace(V) ; B = zero_${type[0]}$${kind}$
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -471,7 +472,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_${kind}$
+        G = zero_${type[0]}$${kind}$
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = U(i)%dot(U(j))
@@ -507,7 +508,7 @@ contains
         ! Initialize Krylov subspaces.
         allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = 0.0_${kind}$
+        call initialize_krylov_subspace(V) ; B = zero_${type[0]}$${kind}$
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
@@ -515,7 +516,7 @@ contains
 
         ! Check correctness.
         Id = eye(kdim)
-        G = 0.0_${kind}$
+        G = zero_${type[0]}$${kind}$
         do j = 1, kdim
             do i = 1, kdim
                 G(i, j) = V(i)%dot(V(j))
@@ -570,7 +571,7 @@ contains
         class(vector_${type[0]}$${kind}$), allocatable :: X0(:)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_${kind}$
+        T = zero_${type[0]}$${kind}$
 
         ! Initialize operator.
         #:if type[0] == "r"
@@ -624,7 +625,7 @@ contains
         ${type}$ :: G(kdim+1, kdim+1)
 
         ! Initialize tridiagonal matrix.
-        T = 0.0_${kind}$
+        T = zero_${type[0]}$${kind}$
 
         ! Initialize operator.
         #:if type[0] == "r"
@@ -649,7 +650,7 @@ contains
         #:else
         G = matmul(transpose(conjg(Xdata)), Xdata)
         #:endif
-        Id = 0.0_${kind}$ ; Id(1:kdim, 1:kdim) = eye(kdim)
+        Id = zero_${type[0]}$${kind}$ ; Id(1:kdim, 1:kdim) = eye(kdim)
         call check(error, norm2(abs(G-Id)) < rtol_${kind}$)
 
         return
