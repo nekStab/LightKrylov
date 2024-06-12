@@ -230,6 +230,16 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=msg)
                ierr = -1
             end if
+         else if (trim(to_lower(origin)) == 'eighs') then
+            ! GMRES
+            if (info > 0) then
+               write(msg, *) 'eigs iteration converged after', info, 'iterations'
+               call logger%log_information(trim(msg), module=module, procedure=procedure)
+            else
+               write(msg, *) "Undocumented error."
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=msg)
+               ierr = -1
+            end if
          else if (trim(to_lower(origin)) == 'svds') then
             ! GMRES
             if (info > 0) then
@@ -283,7 +293,7 @@ contains
          !   Default
          !
          else 
-            write(msg,'(A,I2)') 'subroutine "'//trim(origin)//'" returned with flag: ', info
+            write(msg,*) 'subroutine "'//trim(origin)//'" returned with flag: ', info
             call logger%log_error(trim(msg), module=module, procedure=procedure)
             ierr = -1
          end if
