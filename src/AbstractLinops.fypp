@@ -19,46 +19,46 @@ module lightkrylov_AbstractLinops
 
 
 
-    #:for k1, t1 in RC_KINDS_TYPES
+    #:for kind, type in RC_KINDS_TYPES
     !------------------------------------------------------------------------------
-    !-----     Definition of an abstract ${t1}$ operator with kind=${k1}$     -----
+    !-----     Definition of an abstract ${type}$ operator with kind=${kind}$     -----
     !------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop), public :: abstract_linop_${t1[0]}$${k1}$
+    type, abstract, extends(abstract_linop), public :: abstract_linop_${type[0]}$${kind}$
         !! Base type to define an abstract linear operator. All other types defined in
         !! `LightKrylov` derive from this fundamental one.
     contains
         private
-        procedure(abstract_matvec_${t1[0]}$${k1}$), pass(self), deferred, public :: matvec
+        procedure(abstract_matvec_${type[0]}$${kind}$), pass(self), deferred, public :: matvec
         !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
-        procedure(abstract_matvec_${t1[0]}$${k1}$), pass(self), deferred, public :: rmatvec
+        procedure(abstract_matvec_${type[0]}$${kind}$), pass(self), deferred, public :: rmatvec
         !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
     end type
 
     abstract interface
-        subroutine abstract_matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
+        subroutine abstract_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
-            import abstract_linop_${t1[0]}$${k1}$
-            class(abstract_linop_${t1[0]}$${k1}$) , intent(in)  :: self
+            import abstract_linop_${type[0]}$${kind}$
+            class(abstract_linop_${type[0]}$${kind}$) , intent(in)  :: self
             !! Linear operator \(\mathbf{A}\).
-            class(abstract_vector_${t1[0]}$${k1}$), intent(in)  :: vec_in
+            class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_${t1[0]}$${k1}$), intent(out) :: vec_out
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
             !! Result of the matrix-vector product.
-        end subroutine abstract_matvec_${t1[0]}$${k1}$
+        end subroutine abstract_matvec_${type[0]}$${kind}$
     end interface
 
-    type, extends(abstract_linop_${t1[0]}$${k1}$), public :: adjoint_linop_${t1[0]}$${k1}$
+    type, extends(abstract_linop_${type[0]}$${kind}$), public :: adjoint_linop_${type[0]}$${kind}$
         !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
         !! are directly inherited from those used to define `A`. Note that this utility does not
         !! compute the adjoint for you. It simply provides a utility to define a new operator
         !! with `matvec` and `rmatvec` being switched.
-        class(abstract_linop_${t1[0]}$${k1}$), allocatable :: A
+        class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
         !! Linear operator whose adjoint needs to be defined.
     contains
         private
-        procedure, pass(self), public :: matvec => adjoint_matvec_${t1[0]}$${k1}$
-        procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: matvec => adjoint_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${type[0]}$${kind}$
     end type
 
 

@@ -56,75 +56,75 @@ module lightkrylov_AbstractVectors
 
 
 
-    #:for k1, t1 in RC_KINDS_TYPES
+    #:for kind, type in RC_KINDS_TYPES
     !----------------------------------------------------------------------------
-    !-----     Definition of an abstract ${t1}$ vector with kind=${k1}$     -----
+    !-----     Definition of an abstract ${type}$ vector with kind=${kind}$     -----
     !----------------------------------------------------------------------------
 
-    type, abstract, extends(abstract_vector), public :: abstract_vector_${t1[0]}$${k1}$
+    type, abstract, extends(abstract_vector), public :: abstract_vector_${type[0]}$${kind}$
     contains
         private
-        procedure(abstract_zero_${t1[0]}$${k1}$), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_${t1[0]}$${k1}$` to zero.
-        procedure(abstract_rand_${t1[0]}$${k1}$), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_${t1[0]}$${k1}$.
-        procedure(abstract_scal_${t1[0]}$${k1}$), pass(self), deferred, public :: scal
+        procedure(abstract_zero_${type[0]}$${kind}$), pass(self), deferred, public :: zero
+        !! Sets and `abstract_vector_${type[0]}$${kind}$` to zero.
+        procedure(abstract_rand_${type[0]}$${kind}$), pass(self), deferred, public :: rand
+        !! Creates a random `abstract_vector_${type[0]}$${kind}$.
+        procedure(abstract_scal_${type[0]}$${kind}$), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
-        procedure(abstract_axpby_${t1[0]}$${k1}$), pass(self), deferred, public :: axpby
+        procedure(abstract_axpby_${type[0]}$${kind}$), pass(self), deferred, public :: axpby
         !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
-        procedure(abstract_dot_${t1[0]}$${k1}$), pass(self), deferred, public :: dot
-        !! Computes the dot product between two `abstract_vector_${t1[0]}$${k1}$`.
-        procedure, pass(self), public :: norm => norm_${t1[0]}$${k1}$
+        procedure(abstract_dot_${type[0]}$${kind}$), pass(self), deferred, public :: dot
+        !! Computes the dot product between two `abstract_vector_${type[0]}$${kind}$`.
+        procedure, pass(self), public :: norm => norm_${type[0]}$${kind}$
         !! Computes the norm of the `abstract_vector`.
-        procedure, pass(self), public :: add => add_${t1[0]}$${k1}$
+        procedure, pass(self), public :: add => add_${type[0]}$${kind}$
         !! Adds two `abstract_vector`.
-        procedure, pass(self), public :: sub => sub_${t1[0]}$${k1}$
+        procedure, pass(self), public :: sub => sub_${type[0]}$${kind}$
         !! Subtracts two `abstract_vector`.
-        procedure, pass(self), public :: chsgn => chsgn_${t1[0]}$${k1}$
+        procedure, pass(self), public :: chsgn => chsgn_${type[0]}$${kind}$
     end type
 
     abstract interface
-        subroutine abstract_zero_${t1[0]}$${k1}$(self)
+        subroutine abstract_zero_${type[0]}$${kind}$(self)
             !! Abstract interface to zero-out a vector in-place.
-            import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-            class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Vector to be zeroed-out.
-        end subroutine abstract_zero_${t1[0]}$${k1}$
+        end subroutine abstract_zero_${type[0]}$${kind}$
 
-        subroutine abstract_rand_${t1[0]}$${k1}$(self, ifnorm)
+        subroutine abstract_rand_${type[0]}$${kind}$(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
-            import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-            class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
-        end subroutine abstract_rand_${t1[0]}$${k1}$
+        end subroutine abstract_rand_${type[0]}$${kind}$
 
-        subroutine abstract_scal_${t1[0]}$${k1}$(self, alpha)
+        subroutine abstract_scal_${type[0]}$${kind}$(self, alpha)
             !! Abstract interface to scale a vector.
-            import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-            class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Input/Output vector.
-            ${t1}$, intent(in) :: alpha
+            ${type}$, intent(in) :: alpha
             !! Scaling factor.
-        end subroutine abstract_scal_${t1[0]}$${k1}$
+        end subroutine abstract_scal_${type[0]}$${kind}$
 
-        subroutine abstract_axpby_${t1[0]}$${k1}$(self, alpha, vec, beta)
+        subroutine abstract_axpby_${type[0]}$${kind}$(self, alpha, vec, beta)
             !! Abstract interface to add/scale two vectors in-place.
-            import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-            class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Input/Output vector.
-            class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: vec
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
             !! Vector to be added/subtracted.
-            ${t1}$, intent(in) :: alpha, beta
-        end subroutine abstract_axpby_${t1[0]}$${k1}$
+            ${type}$, intent(in) :: alpha, beta
+        end subroutine abstract_axpby_${type[0]}$${kind}$
 
-        function abstract_dot_${t1[0]}$${k1}$(self, vec) result(alpha)
+        function abstract_dot_${type[0]}$${kind}$(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
-            import abstract_vector_${t1[0]}$${k1}$, ${k1}$
-            class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: self, vec
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
-            ${t1}$ :: alpha
+            ${type}$ :: alpha
             !! Result of the dot product.
-        end function abstract_dot_${t1[0]}$${k1}$
+        end function abstract_dot_${type[0]}$${kind}$
     end interface
 
 
@@ -142,52 +142,52 @@ contains
         return
     end subroutine copy_vec
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    function norm_${t1[0]}$${k1}$(self) result(alpha)
+    #:for kind, type in RC_KINDS_TYPES
+    function norm_${type[0]}$${kind}$(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
-        class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
         !! Vector whose norm needs to be computed.
-        real(${k1}$) :: alpha
+        real(${kind}$) :: alpha
         !! Norm of the vector.
         alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
-    end function norm_${t1[0]}$${k1}$
+    end function norm_${type[0]}$${kind}$
 
-    subroutine sub_${t1[0]}$${k1}$(self, vec)
+    subroutine sub_${type[0]}$${kind}$(self, vec)
         !! Subtract two `abstract_vector` in-place.
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Input/Output vector.
-        class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: vec
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         !! Vector to be added.
-        #:if t1[0] == "c"
-        call self%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), vec, cmplx(-1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
+        #:if type[0] == "c"
+        call self%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), vec, cmplx(-1.0_${kind}$, 0.0_${kind}$, kind=${kind}$))
         #:else
-        call self%axpby(1.0_${k1}$, vec, -1.0_${k1}$)
+        call self%axpby(1.0_${kind}$, vec, -1.0_${kind}$)
         #:endif
-    end subroutine sub_${t1[0]}$${k1}$
+    end subroutine sub_${type[0]}$${kind}$
 
-    subroutine add_${t1[0]}$${k1}$(self, vec)
+    subroutine add_${type[0]}$${kind}$(self, vec)
         !! Add two `abstract_vector` in-place.
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Input/Output vector.
-        class(abstract_vector_${t1[0]}$${k1}$), intent(in) :: vec
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         !! Vector to be added.
-        #:if t1[0] == "c"
-        call self%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), vec, cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
+        #:if type[0] == "c"
+        call self%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), vec, cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$))
         #:else
-        call self%axpby(1.0_${k1}$, vec, 1.0_${k1}$)
+        call self%axpby(1.0_${kind}$, vec, 1.0_${kind}$)
         #:endif
-    end subroutine add_${t1[0]}$${k1}$
+    end subroutine add_${type[0]}$${kind}$
 
-    subroutine chsgn_${t1[0]}$${k1}$(self)
+    subroutine chsgn_${type[0]}$${kind}$(self)
         !! Changes the sign of the `abstract_vector`.
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        #:if t1[0] == "c"
-        call self%scal(cmplx(-1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
+        #:if type[0] == "c"
+        call self%scal(cmplx(-1.0_${kind}$, 0.0_${kind}$, kind=${kind}$))
         #:else
-        call self%scal(-1.0_${k1}$)
+        call self%scal(-1.0_${kind}$)
         #:endif
-    end subroutine chsgn_${t1[0]}$${k1}$
+    end subroutine chsgn_${type[0]}$${kind}$
 
     #:endfor
     
