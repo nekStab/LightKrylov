@@ -22,21 +22,11 @@ module lightkrylov_utils
     !-----     LightKrylov     -----
     !-------------------------------
     ! Various constants.
-    use lightkrylov_constants
+    use LightKrylov_Constants
 
     implicit none
 
     character*128, parameter, private :: this_module = 'LightKrylov_Utils'
-
-    #:for kind, type in RC_KINDS_TYPES
-    #:if type[0] == "c"
-    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-    #:else
-    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = 1.0_${kind}$
-    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = 0.0_${kind}$
-    #:endif
-    #:endfor
 
     public :: stop_error
     public :: assert_shape
@@ -310,7 +300,7 @@ contains
 
         #:if type[0] == "r"
         ! Reconstruct eigenvalues
-        vals = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)*wr + cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)*wi
+        vals = one_c${kind}$*wr + one_im_c${kind}$*wi
         #:endif
 
         return
@@ -378,7 +368,7 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_${kind}$
+        allocate(work(lwork)) ; work = zero_${type[0]}$${kind}$
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
@@ -559,7 +549,7 @@ contains
         integer :: i, n
         real(${kind}$) :: row_sum
 
-        norm = 0.0_${kind}$
+        norm = zero_r${kind}$
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))

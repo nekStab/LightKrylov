@@ -16,4 +16,15 @@ module lightkrylov_constants
     real(dp), parameter, public :: rtol_dp = sqrt(atol_dp)
     !! Definition of the relative tolerance for double precision computations.
 
+    real(sp), parameter, public :: one_rsp = 1.0_sp
+    real(sp), parameter, public :: zero_rsp = 0.0_sp
+    real(dp), parameter, public :: one_rdp = 1.0_dp
+    real(dp), parameter, public :: zero_rdp = 0.0_dp
+    complex(sp), parameter, public :: one_csp = cmplx(1.0_sp, 0.0_sp, kind=sp)
+    complex(sp), parameter, public :: one_im_csp = cmplx(0.0_sp, 1.0_sp, kind=sp)
+    complex(sp), parameter, public :: zero_csp = cmplx(0.0_sp, 0.0_sp, kind=sp)
+    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
+    complex(sp), parameter, public :: one_im_cdp = cmplx(0.0_dp, 1.0_dp, kind=dp)
+    complex(dp), parameter, public :: zero_cdp = cmplx(0.0_dp, 0.0_dp, kind=dp)
+
 end module lightkrylov_constants

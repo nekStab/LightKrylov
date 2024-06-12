@@ -20,20 +20,11 @@ module lightkrylov_utils
     !-----     LightKrylov     -----
     !-------------------------------
     ! Various constants.
-    use lightkrylov_constants
+    use LightKrylov_Constants
 
     implicit none
 
     character*128, parameter, private :: this_module = 'LightKrylov_Utils'
-
-    real(sp), parameter, public :: one_rsp = 1.0_sp
-    real(sp), parameter, public :: zero_rsp = 0.0_sp
-    real(dp), parameter, public :: one_rdp = 1.0_dp
-    real(dp), parameter, public :: zero_rdp = 0.0_dp
-    complex(sp), parameter, public :: one_csp = cmplx(1.0_sp, 0.0_sp, kind=sp)
-    complex(sp), parameter, public :: zero_csp = cmplx(0.0_sp, 0.0_sp, kind=sp)
-    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
-    complex(dp), parameter, public :: zero_cdp = cmplx(0.0_dp, 0.0_dp, kind=dp)
 
     public :: stop_error
     public :: assert_shape
@@ -363,7 +354,7 @@ contains
         call check_info(info, 'GEEV', module=this_module, procedure='eig_rsp')
 
         ! Reconstruct eigenvalues
-        vals = cmplx(1.0_sp, 0.0_sp, kind=sp)*wr + cmplx(0.0_sp, 1.0_sp, kind=sp)*wi
+        vals = one_csp*wr + one_im_csp*wi
 
         return
     end subroutine eig_rsp
@@ -417,7 +408,7 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_sp
+        allocate(work(lwork)) ; work = zero_rsp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
@@ -621,7 +612,7 @@ contains
         call check_info(info, 'GEEV', module=this_module, procedure='eig_rdp')
 
         ! Reconstruct eigenvalues
-        vals = cmplx(1.0_dp, 0.0_dp, kind=dp)*wr + cmplx(0.0_dp, 1.0_dp, kind=dp)*wi
+        vals = one_cdp*wr + one_im_cdp*wi
 
         return
     end subroutine eig_rdp
@@ -675,7 +666,7 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_dp
+        allocate(work(lwork)) ; work = zero_rdp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
@@ -936,7 +927,7 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_sp
+        allocate(work(lwork)) ; work = zero_csp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
@@ -1191,7 +1182,7 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_dp
+        allocate(work(lwork)) ; work = zero_cdp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
@@ -1323,7 +1314,7 @@ contains
         integer :: i, n
         real(sp) :: row_sum
 
-        norm = 0.0_sp
+        norm = zero_rsp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
@@ -1341,7 +1332,7 @@ contains
         integer :: i, n
         real(dp) :: row_sum
 
-        norm = 0.0_dp
+        norm = zero_rdp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
@@ -1355,7 +1346,7 @@ contains
         integer :: i, n
         real(sp) :: row_sum
 
-        norm = 0.0_sp
+        norm = zero_rsp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
@@ -1369,7 +1360,7 @@ contains
         integer :: i, n
         real(dp) :: row_sum
 
-        norm = 0.0_dp
+        norm = zero_rdp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
