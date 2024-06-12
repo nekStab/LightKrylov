@@ -9,6 +9,7 @@ module TestIterativeSolvers
     use LightKrylov
     use LightKrylov_Constants
     use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -50,9 +51,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_rsp), &
-                    new_unittest("Sym. eigs computation", test_sym_evp_rsp), &
-                    new_unittest("KS eigs computation", test_ks_evp_rsp) &
+                    new_unittest("Eigs computation (eigvals & eigvecs)", test_evp_rsp), &
+                    new_unittest("Sym. eigs computation (eigvals, eigvecs & eigvec orthonormality)", test_sym_evp_rsp), &
+                    new_unittest("KS eigs computation (eigvals & eigvecs)", test_ks_evp_rsp) &
                     ]
         return
     end subroutine collect_eig_rsp_testsuite
@@ -183,15 +184,16 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_sp)
-        !if (allocated(error)) return
-        ! check eigenvectors
-        !allocate(AX(test_size))
-        !allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
-        !do i = 1, test_size
-        !    call A%matvec(X(i), AX(i))
-        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-        !end do
-        !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+!        if (allocated(error)) return
+!
+!        ! check eigenvectors
+!        allocate(AX(test_size))
+!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
+!        do i = 1, test_size
+!            call A%matvec(X(i), AX(i))
+!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+!        end do
+!        call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
 
         return
     end subroutine test_evp_rsp
@@ -215,6 +217,9 @@ contains
         integer :: i
         real(sp) :: alpha, true_evals(test_size)
         real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
+        type(vector_rsp), allocatable :: AX(:)
+        complex(sp), allocatable :: eigvec_residuals(:,:)
+        real(sp), allocatable, dimension(:,:) :: G, Id
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -246,6 +251,26 @@ contains
 
         ! Check error.
         call check(error, all_close(evals, true_evals, rtol_sp, atol_sp))
+        if (allocated(error)) return
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
+        G = zero_rsp
+        call innerprod(G, X, X)
+
+        ! Check orthonormality of the eigenvectors.
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_sym_evp_rsp
@@ -254,9 +279,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_rdp), &
-                    new_unittest("Sym. eigs computation", test_sym_evp_rdp), &
-                    new_unittest("KS eigs computation", test_ks_evp_rdp) &
+                    new_unittest("Eigs computation (eigvals & eigvecs)", test_evp_rdp), &
+                    new_unittest("Sym. eigs computation (eigvals, eigvecs & eigvec orthonormality)", test_sym_evp_rdp), &
+                    new_unittest("KS eigs computation (eigvals & eigvecs)", test_ks_evp_rdp) &
                     ]
         return
     end subroutine collect_eig_rdp_testsuite
@@ -387,15 +412,16 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_dp)
-        !if (allocated(error)) return
-        ! check eigenvectors
-        !allocate(AX(test_size))
-        !allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
-        !do i = 1, test_size
-        !    call A%matvec(X(i), AX(i))
-        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-        !end do
-        !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+!        if (allocated(error)) return
+!
+!        ! check eigenvectors
+!        allocate(AX(test_size))
+!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
+!        do i = 1, test_size
+!            call A%matvec(X(i), AX(i))
+!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+!        end do
+!        call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
 
         return
     end subroutine test_evp_rdp
@@ -419,6 +445,9 @@ contains
         integer :: i
         real(dp) :: alpha, true_evals(test_size)
         real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
+        type(vector_rdp), allocatable :: AX(:)
+        complex(dp), allocatable :: eigvec_residuals(:,:)
+        real(dp), allocatable, dimension(:,:) :: G, Id
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -450,6 +479,26 @@ contains
 
         ! Check error.
         call check(error, all_close(evals, true_evals, rtol_dp, atol_dp))
+        if (allocated(error)) return
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
+        G = zero_rdp
+        call innerprod(G, X, X)
+
+        ! Check orthonormality of the eigenvectors.
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_sym_evp_rdp
@@ -458,8 +507,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_csp), &
-                    new_unittest("KS eigs computation", test_ks_evp_csp) &
+                    new_unittest("Eigs computation (eigvals & eigvecs)", test_evp_csp), &
+                    new_unittest("KS eigs computation (eigvals & eigvecs)", test_ks_evp_csp) &
                     ]
         return
     end subroutine collect_eig_csp_testsuite
@@ -524,8 +573,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_cdp), &
-                    new_unittest("KS eigs computation", test_ks_evp_cdp) &
+                    new_unittest("Eigs computation (eigvals & eigvecs)", test_evp_cdp), &
+                    new_unittest("KS eigs computation (eigvals & eigvecs)", test_ks_evp_cdp) &
                     ]
         return
     end subroutine collect_eig_cdp_testsuite
@@ -596,7 +645,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("SVDS computation", test_svd_rsp) &
+                    new_unittest("SVDS computation (factorization correctness, singular values, left/right orthonormality)",&
+                        & test_svd_rsp) &
                     ]
         return
     end subroutine collect_svd_rsp_testsuite
@@ -618,6 +668,8 @@ contains
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), dimension(test_size, test_size) :: G, Id
+        real(sp), dimension(test_size, test_size) :: Udata, Vdata
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call initialize_krylov_subspace(U)
@@ -646,6 +698,29 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        G = zero_rsp
+        call innerprod(G, U(1:test_size), U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = zero_rsp
+        call innerprod(G, V(1:test_size), V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Check correctness of full factorization.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+        call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_sp)
 
         return
     end subroutine test_svd_rsp
@@ -654,7 +729,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("SVDS computation", test_svd_rdp) &
+                    new_unittest("SVDS computation (factorization correctness, singular values, left/right orthonormality)",&
+                        & test_svd_rdp) &
                     ]
         return
     end subroutine collect_svd_rdp_testsuite
@@ -676,6 +752,8 @@ contains
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), dimension(test_size, test_size) :: G, Id
+        real(dp), dimension(test_size, test_size) :: Udata, Vdata
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call initialize_krylov_subspace(U)
@@ -704,6 +782,29 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        G = zero_rdp
+        call innerprod(G, U(1:test_size), U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = zero_rdp
+        call innerprod(G, V(1:test_size), V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Check correctness of full factorization.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+        call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_dp)
 
         return
     end subroutine test_svd_rdp
@@ -712,7 +813,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("SVDS computation", test_svd_csp) &
+                    new_unittest("SVDS computation (factorization correctness, singular values, left/right orthonormality)",&
+                        & test_svd_csp) &
                     ]
         return
     end subroutine collect_svd_csp_testsuite
@@ -734,6 +836,8 @@ contains
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        complex(sp), dimension(test_size, test_size) :: G, Id
+        complex(sp), dimension(test_size, test_size) :: Udata, Vdata
 
         return
     end subroutine test_svd_csp
@@ -742,7 +846,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("SVDS computation", test_svd_cdp) &
+                    new_unittest("SVDS computation (factorization correctness, singular values, left/right orthonormality)",&
+                        & test_svd_cdp) &
                     ]
         return
     end subroutine collect_svd_cdp_testsuite
@@ -764,6 +869,8 @@ contains
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        complex(dp), dimension(test_size, test_size) :: G, Id
+        complex(dp), dimension(test_size, test_size) :: Udata, Vdata
 
         return
     end subroutine test_svd_cdp

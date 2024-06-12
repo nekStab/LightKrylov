@@ -11,6 +11,7 @@ module TestIterativeSolvers
     use LightKrylov
     use LightKrylov_Constants
     use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -43,11 +44,11 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_${type[0]}$${kind}$), &
+                    new_unittest("Eigs computation (eigvals & eigvecs)", test_evp_${type[0]}$${kind}$), &
                     #:if type[0] == "r"
-                    new_unittest("Sym. eigs computation", test_sym_evp_${type[0]}$${kind}$), &
+                    new_unittest("Sym. eigs computation (eigvals, eigvecs & eigvec orthonormality)", test_sym_evp_${type[0]}$${kind}$), &
                     #:endif
-                    new_unittest("KS eigs computation", test_ks_evp_${type[0]}$${kind}$) &
+                    new_unittest("KS eigs computation (eigvals & eigvecs)", test_ks_evp_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_eig_${type[0]}$${kind}$_testsuite
@@ -181,15 +182,16 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_${kind}$)
-        !if (allocated(error)) return
-        ! check eigenvectors
-        !allocate(AX(test_size))
-        !allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
-        !do i = 1, test_size
-        !    call A%matvec(X(i), AX(i))
-        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-        !end do
-        !call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
+!        if (allocated(error)) return
+!
+!        ! check eigenvectors
+!        allocate(AX(test_size))
+!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+!        do i = 1, test_size
+!            call A%matvec(X(i), AX(i))
+!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+!        end do
+!        call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
         #:endif
 
         return
@@ -215,6 +217,9 @@ contains
         integer :: i
         ${type}$ :: alpha, true_evals(test_size)
         ${type}$, parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
+        ${type}$, allocatable, dimension(:,:) :: G, Id
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -246,6 +251,26 @@ contains
 
         ! Check error.
         call check(error, all_close(evals, true_evals, rtol_${kind}$, atol_${kind}$))
+        if (allocated(error)) return
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, X, X)
+
+        ! Check orthonormality of the eigenvectors.
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_sym_evp_${type[0]}$${kind}$
@@ -263,7 +288,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("SVDS computation", test_svd_${type[0]}$${kind}$) &
+                    new_unittest("SVDS computation (factorization correctness, singular values, left/right orthonormality)", test_svd_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_svd_${type[0]}$${kind}$_testsuite
@@ -285,6 +310,8 @@ contains
         integer :: i, k, n
         real(${kind}$) :: true_svdvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        ${type}$, dimension(test_size, test_size) :: G, Id
+        ${type}$, dimension(test_size, test_size) :: Udata, Vdata
         #:if type[0] == "r"
 
         ! Allocate eigenvectors.
@@ -314,6 +341,29 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, U(1:test_size), U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, V(1:test_size), V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Check correctness of full factorization.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+        call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_${kind}$)
         #:endif
 
         return
