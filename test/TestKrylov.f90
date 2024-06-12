@@ -9,6 +9,7 @@ module TestKrylov
     use LightKrylov
     use LightKrylov_Constants
     use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -458,10 +459,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization", test_arnoldi_factorization_rsp), &
-            new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_rsp), &
-            new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rsp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_rsp), &
+            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_rsp), &
+            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
+                & test_block_arnoldi_factorization_rsp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_rsp) &
                     ]
         return
@@ -474,21 +474,21 @@ contains
         type(linop_rsp), allocatable :: A
         ! Krylov subspace.
         type(vector_rsp), allocatable :: X(:)
+        type(vector_rsp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         real(sp) :: H(kdim+1, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(sp) :: Xdata(test_size, kdim+1), alpha
-    
+        real(sp) :: Xdata(test_size, kdim+1)
+        real(sp), dimension(kdim, kdim) :: G, Id
+           
         ! Initialize linear operator.
         A = linop_rsp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ;
-        call initialize_krylov_subspace(X)
-        call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(one_rsp / alpha)
+        allocate(X(1:kdim+1)) ; allocate (X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_rsp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -496,56 +496,19 @@ contains
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
-
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_sp)
-
-        return
-    end subroutine test_arnoldi_factorization_rsp
-
-    subroutine test_arnoldi_basis_orthogonality_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(linop_rsp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_rsp), dimension(:), allocatable :: X
-        type(vector_rsp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Hessenberg matrix.
-        real(sp), dimension(kdim + 1, kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        real(sp), dimension(kdim, kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_rsp(); call init_rand(A)
-        ! Initialize Krylov subspace.
-        allocate (X(1:kdim + 1)); allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = zero_rsp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_rsp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rsp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-        ! call innerprod_matrix(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(1:kdim), X(1:kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
-    end subroutine test_arnoldi_basis_orthogonality_rsp
+    end subroutine test_arnoldi_factorization_rsp
 
     subroutine test_block_arnoldi_factorization_rsp(error)
         ! Error type to be returned.
@@ -562,8 +525,9 @@ contains
         integer :: info
         ! Miscellaneous.
         type(vector_rsp), allocatable :: X0(:)
-        real(sp) :: Xdata(test_size, p*(kdim+1)), G(p*(kdim+1), p*(kdim+1))
-        integer :: i, j
+        real(sp), dimension(test_size, p*(kdim+1)) :: Xdata
+        real(sp), dimension(p*kdim, p*kdim) :: G
+        real(sp), dimension(p*kdim, p*kdim) :: Id
 
         ! Initialize linear operator.
         A = linop_rsp() ; call init_rand(A)
@@ -577,67 +541,21 @@ contains
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rsp')
 
-        G = zero_rsp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-
-        ! Check correctness.
+        ! Check correctness of full factorization.
         call get_data(Xdata, X)
-        
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_sp)
-
-        return
-    end subroutine test_block_arnoldi_factorization_rsp
-
-    subroutine test_block_arnoldi_basis_orthogonality_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        class(linop_rsp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_rsp), dimension(:), allocatable :: X
-        type(vector_rsp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: p = 2
-        integer, parameter :: kdim = test_size/2
-        ! Hessenberg matrix.
-        real(sp), dimension(p*(kdim + 1), p*kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        real(sp), dimension(p*kdim, p*kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_rsp(); call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
-        call init_rand(X0)
-        call initialize_krylov_subspace(X, X0)
-        H = zero_rsp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_rsp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rsp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
+        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
-    end subroutine test_block_arnoldi_basis_orthogonality_rsp
+    end subroutine test_block_arnoldi_factorization_rsp
 
     subroutine test_krylov_schur_rsp(error)
         ! Error type to be returned.
@@ -694,10 +612,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization", test_arnoldi_factorization_rdp), &
-            new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_rdp), &
-            new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rdp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_rdp), &
+            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_rdp), &
+            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
+                & test_block_arnoldi_factorization_rdp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_rdp) &
                     ]
         return
@@ -710,21 +627,21 @@ contains
         type(linop_rdp), allocatable :: A
         ! Krylov subspace.
         type(vector_rdp), allocatable :: X(:)
+        type(vector_rdp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         real(dp) :: H(kdim+1, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(dp) :: Xdata(test_size, kdim+1), alpha
-    
+        real(dp) :: Xdata(test_size, kdim+1)
+        real(dp), dimension(kdim, kdim) :: G, Id
+           
         ! Initialize linear operator.
         A = linop_rdp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ;
-        call initialize_krylov_subspace(X)
-        call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(one_rdp / alpha)
+        allocate(X(1:kdim+1)) ; allocate (X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_rdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -732,56 +649,19 @@ contains
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
-
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_dp)
-
-        return
-    end subroutine test_arnoldi_factorization_rdp
-
-    subroutine test_arnoldi_basis_orthogonality_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(linop_rdp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_rdp), dimension(:), allocatable :: X
-        type(vector_rdp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Hessenberg matrix.
-        real(dp), dimension(kdim + 1, kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        real(dp), dimension(kdim, kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_rdp(); call init_rand(A)
-        ! Initialize Krylov subspace.
-        allocate (X(1:kdim + 1)); allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = zero_rdp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_rdp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rdp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-        ! call innerprod_matrix(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(1:kdim), X(1:kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
-    end subroutine test_arnoldi_basis_orthogonality_rdp
+    end subroutine test_arnoldi_factorization_rdp
 
     subroutine test_block_arnoldi_factorization_rdp(error)
         ! Error type to be returned.
@@ -798,8 +678,9 @@ contains
         integer :: info
         ! Miscellaneous.
         type(vector_rdp), allocatable :: X0(:)
-        real(dp) :: Xdata(test_size, p*(kdim+1)), G(p*(kdim+1), p*(kdim+1))
-        integer :: i, j
+        real(dp), dimension(test_size, p*(kdim+1)) :: Xdata
+        real(dp), dimension(p*kdim, p*kdim) :: G
+        real(dp), dimension(p*kdim, p*kdim) :: Id
 
         ! Initialize linear operator.
         A = linop_rdp() ; call init_rand(A)
@@ -813,67 +694,21 @@ contains
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rdp')
 
-        G = zero_rdp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-
-        ! Check correctness.
+        ! Check correctness of full factorization.
         call get_data(Xdata, X)
-        
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_dp)
-
-        return
-    end subroutine test_block_arnoldi_factorization_rdp
-
-    subroutine test_block_arnoldi_basis_orthogonality_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        class(linop_rdp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_rdp), dimension(:), allocatable :: X
-        type(vector_rdp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: p = 2
-        integer, parameter :: kdim = test_size/2
-        ! Hessenberg matrix.
-        real(dp), dimension(p*(kdim + 1), p*kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        real(dp), dimension(p*kdim, p*kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_rdp(); call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
-        call init_rand(X0)
-        call initialize_krylov_subspace(X, X0)
-        H = zero_rdp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_rdp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rdp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
+        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
-    end subroutine test_block_arnoldi_basis_orthogonality_rdp
+    end subroutine test_block_arnoldi_factorization_rdp
 
     subroutine test_krylov_schur_rdp(error)
         ! Error type to be returned.
@@ -930,10 +765,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization", test_arnoldi_factorization_csp), &
-            new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_csp), &
-            new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_csp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_csp), &
+            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_csp), &
+            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
+                & test_block_arnoldi_factorization_csp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_csp) &
                     ]
         return
@@ -946,21 +780,21 @@ contains
         type(linop_csp), allocatable :: A
         ! Krylov subspace.
         type(vector_csp), allocatable :: X(:)
+        type(vector_csp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         complex(sp) :: H(kdim+1, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        complex(sp) :: Xdata(test_size, kdim+1), alpha
-    
+        complex(sp) :: Xdata(test_size, kdim+1)
+        complex(sp), dimension(kdim, kdim) :: G, Id
+           
         ! Initialize linear operator.
         A = linop_csp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ;
-        call initialize_krylov_subspace(X)
-        call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(one_csp / alpha)
+        allocate(X(1:kdim+1)) ; allocate (X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_csp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -968,56 +802,19 @@ contains
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
-
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_sp)
-
-        return
-    end subroutine test_arnoldi_factorization_csp
-
-    subroutine test_arnoldi_basis_orthogonality_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(linop_csp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_csp), dimension(:), allocatable :: X
-        type(vector_csp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Hessenberg matrix.
-        complex(sp), dimension(kdim + 1, kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        complex(sp), dimension(kdim, kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_csp(); call init_rand(A)
-        ! Initialize Krylov subspace.
-        allocate (X(1:kdim + 1)); allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = zero_csp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_csp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_csp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-        ! call innerprod_matrix(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(1:kdim), X(1:kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
-    end subroutine test_arnoldi_basis_orthogonality_csp
+    end subroutine test_arnoldi_factorization_csp
 
     subroutine test_block_arnoldi_factorization_csp(error)
         ! Error type to be returned.
@@ -1034,8 +831,9 @@ contains
         integer :: info
         ! Miscellaneous.
         type(vector_csp), allocatable :: X0(:)
-        complex(sp) :: Xdata(test_size, p*(kdim+1)), G(p*(kdim+1), p*(kdim+1))
-        integer :: i, j
+        complex(sp), dimension(test_size, p*(kdim+1)) :: Xdata
+        complex(sp), dimension(p*kdim, p*kdim) :: G
+        real(sp), dimension(p*kdim, p*kdim) :: Id
 
         ! Initialize linear operator.
         A = linop_csp() ; call init_rand(A)
@@ -1049,67 +847,21 @@ contains
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_csp')
 
-        G = zero_csp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-
-        ! Check correctness.
+        ! Check correctness of full factorization.
         call get_data(Xdata, X)
-        
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_sp)
-
-        return
-    end subroutine test_block_arnoldi_factorization_csp
-
-    subroutine test_block_arnoldi_basis_orthogonality_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        class(linop_csp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_csp), dimension(:), allocatable :: X
-        type(vector_csp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: p = 2
-        integer, parameter :: kdim = test_size/2
-        ! Hessenberg matrix.
-        complex(sp), dimension(p*(kdim + 1), p*kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        complex(sp), dimension(p*kdim, p*kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_csp(); call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
-        call init_rand(X0)
-        call initialize_krylov_subspace(X, X0)
-        H = zero_csp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_csp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_csp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
+        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
-    end subroutine test_block_arnoldi_basis_orthogonality_csp
+    end subroutine test_block_arnoldi_factorization_csp
 
     subroutine test_krylov_schur_csp(error)
         ! Error type to be returned.
@@ -1166,10 +918,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization", test_arnoldi_factorization_cdp), &
-            new_unittest("Arnoldi orthogonality", test_arnoldi_basis_orthogonality_cdp), &
-            new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_cdp), &
-            new_unittest("Block Arnoldi orthogonality", test_block_arnoldi_basis_orthogonality_cdp), &
+            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_cdp), &
+            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
+                & test_block_arnoldi_factorization_cdp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_cdp) &
                     ]
         return
@@ -1182,21 +933,21 @@ contains
         type(linop_cdp), allocatable :: A
         ! Krylov subspace.
         type(vector_cdp), allocatable :: X(:)
+        type(vector_cdp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         complex(dp) :: H(kdim+1, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        complex(dp) :: Xdata(test_size, kdim+1), alpha
-    
+        complex(dp) :: Xdata(test_size, kdim+1)
+        complex(dp), dimension(kdim, kdim) :: G, Id
+           
         ! Initialize linear operator.
         A = linop_cdp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ;
-        call initialize_krylov_subspace(X)
-        call X(1)%rand(ifnorm=.true.) ; alpha = X(1)%norm()
-        call X(1)%scal(one_cdp / alpha)
+        allocate(X(1:kdim+1)) ; allocate (X0(1))
+        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_cdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
@@ -1204,56 +955,19 @@ contains
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
-
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_dp)
-
-        return
-    end subroutine test_arnoldi_factorization_cdp
-
-    subroutine test_arnoldi_basis_orthogonality_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(linop_cdp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_cdp), dimension(:), allocatable :: X
-        type(vector_cdp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Hessenberg matrix.
-        complex(dp), dimension(kdim + 1, kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        complex(dp), dimension(kdim, kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_cdp(); call init_rand(A)
-        ! Initialize Krylov subspace.
-        allocate (X(1:kdim + 1)); allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = zero_cdp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_cdp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_cdp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-        ! call innerprod_matrix(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(1:kdim), X(1:kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
-    end subroutine test_arnoldi_basis_orthogonality_cdp
+    end subroutine test_arnoldi_factorization_cdp
 
     subroutine test_block_arnoldi_factorization_cdp(error)
         ! Error type to be returned.
@@ -1270,8 +984,9 @@ contains
         integer :: info
         ! Miscellaneous.
         type(vector_cdp), allocatable :: X0(:)
-        complex(dp) :: Xdata(test_size, p*(kdim+1)), G(p*(kdim+1), p*(kdim+1))
-        integer :: i, j
+        complex(dp), dimension(test_size, p*(kdim+1)) :: Xdata
+        complex(dp), dimension(p*kdim, p*kdim) :: G
+        real(dp), dimension(p*kdim, p*kdim) :: Id
 
         ! Initialize linear operator.
         A = linop_cdp() ; call init_rand(A)
@@ -1285,67 +1000,21 @@ contains
         call arnoldi(A, X, H, info, blksize=p)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_cdp')
 
-        G = zero_cdp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
-
-        ! Check correctness.
+        ! Check correctness of full factorization.
         call get_data(Xdata, X)
-        
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_dp)
-
-        return
-    end subroutine test_block_arnoldi_factorization_cdp
-
-    subroutine test_block_arnoldi_basis_orthogonality_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        class(linop_cdp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_cdp), dimension(:), allocatable :: X
-        type(vector_cdp), dimension(:), allocatable :: X0
-        ! Krylov subspace dimension.
-        integer, parameter :: p = 2
-        integer, parameter :: kdim = test_size/2
-        ! Hessenberg matrix.
-        complex(dp), dimension(p*(kdim + 1), p*kdim) :: H
-        ! Information flag.
-        integer :: info
-        ! Misc.
-        complex(dp), dimension(p*kdim, p*kdim) :: G, Id
-        integer :: i, j
-
-        ! Initialize random matrix.
-        A = linop_cdp(); call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate (X(1:p*(kdim + 1))); allocate (X0(1:p)); 
-        call init_rand(X0)
-        call initialize_krylov_subspace(X, X0)
-        H = zero_cdp
-
-        ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_cdp')
+        if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_cdp
-        do j = 1, size(G, 2)
-            do i = 1, size(G, 1)
-                G(i, j) = X(i)%dot(X(j))
-            enddo
-        enddo
+        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
 
-        ! Check result.
+        ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
-    end subroutine test_block_arnoldi_basis_orthogonality_cdp
+    end subroutine test_block_arnoldi_factorization_cdp
 
     subroutine test_krylov_schur_cdp(error)
         ! Error type to be returned.
@@ -1407,9 +1076,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_rsp), &
-            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_rsp), &
-            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_rsp) &
+            new_unittest("Lanczos Bidiagonalization (correctness and left/right orthonormality)",&
+                & test_lanczos_bidiag_factorization_rsp) &
                 ]
         return
     end subroutine collect_lanczos_bidiag_rsp_testsuite
@@ -1429,7 +1097,8 @@ contains
         integer :: info
         ! Miscellaneous.
         real(sp) :: alpha
-        real(sp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        real(sp), dimension(test_size, kdim+1) :: Udata, Vdata
+        real(sp), dimension(kdim, kdim) :: G, Id
         type(vector_rsp), allocatable :: X0(:)
 
         ! Initialize linear operator.
@@ -1442,7 +1111,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_rsp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+                        & procedure='test_lanczos_bidiag_factorization_rsp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1450,107 +1120,33 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the left Krylov basis.
+        G = zero_rsp
+        call innerprod(G, U(1:kdim), U(1:kdim))
+
+        ! Check orthonormality of the left basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_rsp
+        call innerprod(G, V(1:kdim), V(1:kdim))
+
+        ! Check orthonormality of the right basis.
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_rsp
-
-    subroutine test_lanczos_bidiag_left_orthogonality_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_rsp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_rsp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        real(sp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_rsp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_rsp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_rsp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_rs&
-            &p')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_rsp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = U(i)%dot(U(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_sp)
-
-        return
-    end subroutine test_lanczos_bidiag_left_orthogonality_rsp
-
-    subroutine test_lanczos_bidiag_right_orthogonality_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_rsp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_rsp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        real(sp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_rsp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_rsp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_rsp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_r&
-            &sp')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_rsp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = V(i)%dot(V(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_sp)
-
-        return
-    end subroutine test_lanczos_bidiag_right_orthogonality_rsp
 
     subroutine collect_lanczos_bidiag_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_rdp), &
-            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_rdp), &
-            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_rdp) &
+            new_unittest("Lanczos Bidiagonalization (correctness and left/right orthonormality)",&
+                & test_lanczos_bidiag_factorization_rdp) &
                 ]
         return
     end subroutine collect_lanczos_bidiag_rdp_testsuite
@@ -1570,7 +1166,8 @@ contains
         integer :: info
         ! Miscellaneous.
         real(dp) :: alpha
-        real(dp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        real(dp), dimension(test_size, kdim+1) :: Udata, Vdata
+        real(dp), dimension(kdim, kdim) :: G, Id
         type(vector_rdp), allocatable :: X0(:)
 
         ! Initialize linear operator.
@@ -1583,7 +1180,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_rdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+                        & procedure='test_lanczos_bidiag_factorization_rdp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1591,107 +1189,33 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the left Krylov basis.
+        G = zero_rdp
+        call innerprod(G, U(1:kdim), U(1:kdim))
+
+        ! Check orthonormality of the left basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_rdp
+        call innerprod(G, V(1:kdim), V(1:kdim))
+
+        ! Check orthonormality of the right basis.
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_rdp
-
-    subroutine test_lanczos_bidiag_left_orthogonality_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_rdp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_rdp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        real(dp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_rdp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_rdp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_rdp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_rd&
-            &p')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_rdp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = U(i)%dot(U(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_dp)
-
-        return
-    end subroutine test_lanczos_bidiag_left_orthogonality_rdp
-
-    subroutine test_lanczos_bidiag_right_orthogonality_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_rdp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_rdp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        real(dp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_rdp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_rdp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_rdp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_r&
-            &dp')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_rdp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = V(i)%dot(V(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_dp)
-
-        return
-    end subroutine test_lanczos_bidiag_right_orthogonality_rdp
 
     subroutine collect_lanczos_bidiag_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_csp), &
-            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_csp), &
-            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_csp) &
+            new_unittest("Lanczos Bidiagonalization (correctness and left/right orthonormality)",&
+                & test_lanczos_bidiag_factorization_csp) &
                 ]
         return
     end subroutine collect_lanczos_bidiag_csp_testsuite
@@ -1711,7 +1235,8 @@ contains
         integer :: info
         ! Miscellaneous.
         real(sp) :: alpha
-        complex(sp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        complex(sp), dimension(test_size, kdim+1) :: Udata, Vdata
+        complex(sp), dimension(kdim, kdim) :: G, Id
         type(vector_csp), allocatable :: X0(:)
 
         ! Initialize linear operator.
@@ -1724,7 +1249,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_csp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+                        & procedure='test_lanczos_bidiag_factorization_csp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1732,107 +1258,33 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the left Krylov basis.
+        G = zero_csp
+        call innerprod(G, U(1:kdim), U(1:kdim))
+
+        ! Check orthonormality of the left basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_csp
+        call innerprod(G, V(1:kdim), V(1:kdim))
+
+        ! Check orthonormality of the right basis.
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_csp
-
-    subroutine test_lanczos_bidiag_left_orthogonality_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_csp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_csp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        complex(sp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_csp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_csp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_csp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_cs&
-            &p')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_csp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = U(i)%dot(U(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_sp)
-
-        return
-    end subroutine test_lanczos_bidiag_left_orthogonality_csp
-
-    subroutine test_lanczos_bidiag_right_orthogonality_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_csp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_csp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        complex(sp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(sp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_csp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_csp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_csp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_c&
-            &sp')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_csp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = V(i)%dot(V(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_sp)
-
-        return
-    end subroutine test_lanczos_bidiag_right_orthogonality_csp
 
     subroutine collect_lanczos_bidiag_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_cdp), &
-            new_unittest("Lanczos left orthogonality", test_lanczos_bidiag_left_orthogonality_cdp), &
-            new_unittest("Lanczos right orthogonality", test_lanczos_bidiag_right_orthogonality_cdp) &
+            new_unittest("Lanczos Bidiagonalization (correctness and left/right orthonormality)",&
+                & test_lanczos_bidiag_factorization_cdp) &
                 ]
         return
     end subroutine collect_lanczos_bidiag_cdp_testsuite
@@ -1852,7 +1304,8 @@ contains
         integer :: info
         ! Miscellaneous.
         real(dp) :: alpha
-        complex(dp) :: Udata(test_size, kdim+1), Vdata(test_size, kdim+1)
+        complex(dp), dimension(test_size, kdim+1) :: Udata, Vdata
+        complex(dp), dimension(kdim, kdim) :: G, Id
         type(vector_cdp), allocatable :: X0(:)
 
         ! Initialize linear operator.
@@ -1865,7 +1318,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_cdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+                        & procedure='test_lanczos_bidiag_factorization_cdp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1873,99 +1327,26 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the left Krylov basis.
+        G = zero_cdp
+        call innerprod(G, U(1:kdim), U(1:kdim))
+
+        ! Check orthonormality of the left basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_cdp
+        call innerprod(G, V(1:kdim), V(1:kdim))
+
+        ! Check orthonormality of the right basis.
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_cdp
-
-    subroutine test_lanczos_bidiag_left_orthogonality_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_cdp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_cdp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        complex(dp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_cdp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_cdp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_cdp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_cd&
-            &p')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_cdp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = U(i)%dot(U(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_dp)
-
-        return
-    end subroutine test_lanczos_bidiag_left_orthogonality_cdp
-
-    subroutine test_lanczos_bidiag_right_orthogonality_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Linear Operator
-        type(linop_cdp), allocatable :: A
-        ! Left and right Krylov bases.
-        type(vector_cdp), allocatable :: U(:), V(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 3!test_size
-        ! Bidiagonal matrix.
-        complex(dp) :: B(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(dp) :: Id(kdim, kdim), G(kdim, kdim)
-        type(vector_cdp), allocatable :: X0(:)
-        integer :: i, j
-
-        ! Initialize linear operator.
-        A = linop_cdp() ; call init_rand(A)
-
-        ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call initialize_krylov_subspace(V) ; B = zero_cdp
-
-        ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_c&
-            &dp')
-
-        ! Check correctness.
-        Id = eye(kdim)
-        G = zero_cdp
-        do j = 1, kdim
-            do i = 1, kdim
-                G(i, j) = V(i)%dot(V(j))
-            enddo
-        enddo
-
-        call check(error, maxval(abs(Id - G)) < rtol_dp)
-
-        return
-    end subroutine test_lanczos_bidiag_right_orthogonality_cdp
 
 
     !-------------------------------------------------------------------------------
@@ -1977,14 +1358,14 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_rsp), &
-             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_rsp) &
-                    ]
+             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
+                 & test_lanczos_tridiag_factorization_rsp) &
+            ]
 
         return
     end subroutine collect_lanczos_tridiag_rsp_testsuite
 
-    subroutine test_lanczos_tridiag_full_factorization_rsp(error)
+    subroutine test_lanczos_tridiag_factorization_rsp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test matrix.
@@ -2002,6 +1383,7 @@ contains
         real(sp) :: Xdata(test_size, kdim+1)
         real(sp) :: alpha
         class(vector_rsp), allocatable :: X0(:)
+        real(sp), dimension(kdim, kdim) :: G, Id
 
         ! Initialize tridiagonal matrix.
         T = zero_rsp
@@ -2016,8 +1398,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
-            &rsp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+                        & procedure='test_lanczos_tridiag_full_factorization_rsp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2025,68 +1407,32 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_rsp
+        call innerprod(G, X(1:kdim), X(1:kdim))
+
+        ! Check orthonormality of the Krylov basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
-    end subroutine test_lanczos_tridiag_full_factorization_rsp
-
-    subroutine test_lanczos_tridiag_orthogonality_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(spd_linop_rsp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_rsp), allocatable :: X(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Tridiagonal matrix.
-        real(sp) :: T(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-
-        ! Internal variables.
-        real(sp) :: alpha
-        real(sp) :: Xdata(test_size, kdim+1)
-        class(vector_rsp), allocatable :: X0(:)
-        real(sp) :: Id(kdim+1, kdim+1)
-        real(sp) :: G(kdim+1, kdim+1)
-
-        ! Initialize tridiagonal matrix.
-        T = zero_rsp
-
-        ! Initialize operator.
-        A = spd_linop_rsp()
-        call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-
-        ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_rsp')
-
-        ! Check correctness.
-        call get_data(Xdata, X)
-        G = matmul(transpose(Xdata), Xdata)
-        Id = zero_rsp ; Id(1:kdim, 1:kdim) = eye(kdim)
-        call check(error, norm2(abs(G-Id)) < rtol_sp)
-
-        return
-    end subroutine test_lanczos_tridiag_orthogonality_rsp
+    end subroutine test_lanczos_tridiag_factorization_rsp
 
     subroutine collect_lanczos_tridiag_rdp_testsuite(testsuite)
         ! Collection of unit tests.
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_rdp), &
-             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_rdp) &
-                    ]
+             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
+                 & test_lanczos_tridiag_factorization_rdp) &
+            ]
 
         return
     end subroutine collect_lanczos_tridiag_rdp_testsuite
 
-    subroutine test_lanczos_tridiag_full_factorization_rdp(error)
+    subroutine test_lanczos_tridiag_factorization_rdp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test matrix.
@@ -2104,6 +1450,7 @@ contains
         real(dp) :: Xdata(test_size, kdim+1)
         real(dp) :: alpha
         class(vector_rdp), allocatable :: X0(:)
+        real(dp), dimension(kdim, kdim) :: G, Id
 
         ! Initialize tridiagonal matrix.
         T = zero_rdp
@@ -2118,8 +1465,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
-            &rdp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+                        & procedure='test_lanczos_tridiag_full_factorization_rdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2127,68 +1474,32 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_rdp
+        call innerprod(G, X(1:kdim), X(1:kdim))
+
+        ! Check orthonormality of the Krylov basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
-    end subroutine test_lanczos_tridiag_full_factorization_rdp
-
-    subroutine test_lanczos_tridiag_orthogonality_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(spd_linop_rdp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_rdp), allocatable :: X(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Tridiagonal matrix.
-        real(dp) :: T(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-
-        ! Internal variables.
-        real(dp) :: alpha
-        real(dp) :: Xdata(test_size, kdim+1)
-        class(vector_rdp), allocatable :: X0(:)
-        real(dp) :: Id(kdim+1, kdim+1)
-        real(dp) :: G(kdim+1, kdim+1)
-
-        ! Initialize tridiagonal matrix.
-        T = zero_rdp
-
-        ! Initialize operator.
-        A = spd_linop_rdp()
-        call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-
-        ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_rdp')
-
-        ! Check correctness.
-        call get_data(Xdata, X)
-        G = matmul(transpose(Xdata), Xdata)
-        Id = zero_rdp ; Id(1:kdim, 1:kdim) = eye(kdim)
-        call check(error, norm2(abs(G-Id)) < rtol_dp)
-
-        return
-    end subroutine test_lanczos_tridiag_orthogonality_rdp
+    end subroutine test_lanczos_tridiag_factorization_rdp
 
     subroutine collect_lanczos_tridiag_csp_testsuite(testsuite)
         ! Collection of unit tests.
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_csp), &
-             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_csp) &
-                    ]
+             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
+                 & test_lanczos_tridiag_factorization_csp) &
+            ]
 
         return
     end subroutine collect_lanczos_tridiag_csp_testsuite
 
-    subroutine test_lanczos_tridiag_full_factorization_csp(error)
+    subroutine test_lanczos_tridiag_factorization_csp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test matrix.
@@ -2206,6 +1517,7 @@ contains
         complex(sp) :: Xdata(test_size, kdim+1)
         real(sp) :: alpha
         class(vector_csp), allocatable :: X0(:)
+        complex(sp), dimension(kdim, kdim) :: G, Id
 
         ! Initialize tridiagonal matrix.
         T = zero_csp
@@ -2220,8 +1532,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
-            &csp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+                        & procedure='test_lanczos_tridiag_full_factorization_csp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2229,68 +1541,32 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_csp
+        call innerprod(G, X(1:kdim), X(1:kdim))
+
+        ! Check orthonormality of the Krylov basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
-    end subroutine test_lanczos_tridiag_full_factorization_csp
-
-    subroutine test_lanczos_tridiag_orthogonality_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(hermitian_linop_csp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_csp), allocatable :: X(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Tridiagonal matrix.
-        complex(sp) :: T(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-
-        ! Internal variables.
-        real(sp) :: alpha
-        complex(sp) :: Xdata(test_size, kdim+1)
-        class(vector_csp), allocatable :: X0(:)
-        real(sp) :: Id(kdim+1, kdim+1)
-        complex(sp) :: G(kdim+1, kdim+1)
-
-        ! Initialize tridiagonal matrix.
-        T = zero_csp
-
-        ! Initialize operator.
-        A = hermitian_linop_csp()
-        call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-
-        ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_csp')
-
-        ! Check correctness.
-        call get_data(Xdata, X)
-        G = matmul(transpose(conjg(Xdata)), Xdata)
-        Id = zero_csp ; Id(1:kdim, 1:kdim) = eye(kdim)
-        call check(error, norm2(abs(G-Id)) < rtol_sp)
-
-        return
-    end subroutine test_lanczos_tridiag_orthogonality_csp
+    end subroutine test_lanczos_tridiag_factorization_csp
 
     subroutine collect_lanczos_tridiag_cdp_testsuite(testsuite)
         ! Collection of unit tests.
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_full_factorization_cdp), &
-             new_unittest("Lanczos Tridiagonalization orthogonality", test_lanczos_tridiag_orthogonality_cdp) &
-                    ]
+             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
+                 & test_lanczos_tridiag_factorization_cdp) &
+            ]
 
         return
     end subroutine collect_lanczos_tridiag_cdp_testsuite
 
-    subroutine test_lanczos_tridiag_full_factorization_cdp(error)
+    subroutine test_lanczos_tridiag_factorization_cdp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test matrix.
@@ -2308,6 +1584,7 @@ contains
         complex(dp) :: Xdata(test_size, kdim+1)
         real(dp) :: alpha
         class(vector_cdp), allocatable :: X0(:)
+        complex(dp), dimension(kdim, kdim) :: G, Id
 
         ! Initialize tridiagonal matrix.
         T = zero_cdp
@@ -2322,8 +1599,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
-            &cdp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+                        & procedure='test_lanczos_tridiag_full_factorization_cdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2331,54 +1608,17 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the right Krylov basis.
+        G = zero_cdp
+        call innerprod(G, X(1:kdim), X(1:kdim))
+
+        ! Check orthonormality of the Krylov basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
-    end subroutine test_lanczos_tridiag_full_factorization_cdp
-
-    subroutine test_lanczos_tridiag_orthogonality_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test matrix.
-        type(hermitian_linop_cdp), allocatable :: A
-        ! Krylov subspace.
-        type(vector_cdp), allocatable :: X(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = test_size
-        ! Tridiagonal matrix.
-        complex(dp) :: T(kdim+1, kdim)
-        ! Information flag.
-        integer :: info
-
-        ! Internal variables.
-        real(dp) :: alpha
-        complex(dp) :: Xdata(test_size, kdim+1)
-        class(vector_cdp), allocatable :: X0(:)
-        real(dp) :: Id(kdim+1, kdim+1)
-        complex(dp) :: G(kdim+1, kdim+1)
-
-        ! Initialize tridiagonal matrix.
-        T = zero_cdp
-
-        ! Initialize operator.
-        A = hermitian_linop_cdp()
-        call init_rand(A)
-
-        ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-
-        ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_cdp')
-
-        ! Check correctness.
-        call get_data(Xdata, X)
-        G = matmul(transpose(conjg(Xdata)), Xdata)
-        Id = zero_cdp ; Id(1:kdim, 1:kdim) = eye(kdim)
-        call check(error, norm2(abs(G-Id)) < rtol_dp)
-
-        return
-    end subroutine test_lanczos_tridiag_orthogonality_cdp
-
+    end subroutine test_lanczos_tridiag_factorization_cdp
 
 end module TestKrylov
