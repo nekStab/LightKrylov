@@ -7,6 +7,7 @@ module TestIterativeSolvers
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
 
     ! Testdrive
@@ -72,6 +73,8 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
+        type(vector_rsp), allocatable :: AX(:)
+        complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: a_, b_
@@ -98,20 +101,31 @@ contains
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rsp')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_sp, 0.0_sp, kind=sp) ; k = 1
+        true_eigvals = zero_csp; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_sp, 0.0_sp, kind=sp) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_sp, 1.0_sp, kind=sp)
-            true_eigvals(i+1) = a_*cmplx(1.0_sp, 0.0_sp, kind=sp) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_sp, 1.0_sp, kind=sp)
+            true_eigvals(i) = a_*one_csp + (2*b_*cos(k*pi/(test_size+1)))*one_im_csp
+            true_eigvals(i+1) = a_*one_csp - (2*b_*cos(k*pi/(test_size+1)))*one_im_csp
             k = k+1
         enddo
 
+        ! check eigenvalues
         call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_sp)
+        !if (allocated(error)) return
+        !! check eigenvectors
+        !allocate(AX(nev))
+        !allocate(eigvec_residuals(test_size, nev))
+        !do i = 1, nev
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !print *, norm2(abs(eigvec_residuals))
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
 
         return
         contains
         function select_eigs(lambda) result(selected)
             complex(sp), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical :: selected(size(lambda))
 
             selected = abs(lambda) > median(abs(lambda))
             return
@@ -133,6 +147,8 @@ contains
         integer :: info
         ! Miscellaneous.
         integer :: i, k, n
+        type(vector_rsp), allocatable :: AX(:)
+        complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: a_, b_
@@ -159,14 +175,23 @@ contains
         call check_info(info, 'eigs', module=this_module, procedure='test_evp_rsp')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_sp, 0.0_sp, kind=sp) ; k = 1
+        true_eigvals = zero_csp; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_sp, 0.0_sp, kind=sp) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_sp, 1.0_sp, kind=sp)
-            true_eigvals(i+1) = a_*cmplx(1.0_sp, 0.0_sp, kind=sp) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_sp, 1.0_sp, kind=sp)
+            true_eigvals(i) = a_*one_csp + (2*b_*cos(k*pi/(test_size+1)))*one_im_csp
+            true_eigvals(i+1) = a_*one_csp - (2*b_*cos(k*pi/(test_size+1)))*one_im_csp
             k = k+1
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_sp)
+        !if (allocated(error)) return
+        ! check eigenvectors
+        !allocate(AX(test_size))
+        !allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
+        !do i = 1, test_size
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
 
         return
     end subroutine test_evp_rsp
@@ -252,6 +277,8 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
+        type(vector_rdp), allocatable :: AX(:)
+        complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: a_, b_
@@ -278,20 +305,31 @@ contains
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rdp')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_dp, 0.0_dp, kind=dp) ; k = 1
+        true_eigvals = zero_cdp; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_dp, 0.0_dp, kind=dp) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_dp, 1.0_dp, kind=dp)
-            true_eigvals(i+1) = a_*cmplx(1.0_dp, 0.0_dp, kind=dp) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_dp, 1.0_dp, kind=dp)
+            true_eigvals(i) = a_*one_cdp + (2*b_*cos(k*pi/(test_size+1)))*one_im_cdp
+            true_eigvals(i+1) = a_*one_cdp - (2*b_*cos(k*pi/(test_size+1)))*one_im_cdp
             k = k+1
         enddo
 
+        ! check eigenvalues
         call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_dp)
+        !if (allocated(error)) return
+        !! check eigenvectors
+        !allocate(AX(nev))
+        !allocate(eigvec_residuals(test_size, nev))
+        !do i = 1, nev
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !print *, norm2(abs(eigvec_residuals))
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
 
         return
         contains
         function select_eigs(lambda) result(selected)
             complex(dp), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical :: selected(size(lambda))
 
             selected = abs(lambda) > median(abs(lambda))
             return
@@ -313,6 +351,8 @@ contains
         integer :: info
         ! Miscellaneous.
         integer :: i, k, n
+        type(vector_rdp), allocatable :: AX(:)
+        complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: a_, b_
@@ -339,14 +379,23 @@ contains
         call check_info(info, 'eigs', module=this_module, procedure='test_evp_rdp')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_dp, 0.0_dp, kind=dp) ; k = 1
+        true_eigvals = zero_cdp; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_dp, 0.0_dp, kind=dp) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_dp, 1.0_dp, kind=dp)
-            true_eigvals(i+1) = a_*cmplx(1.0_dp, 0.0_dp, kind=dp) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_dp, 1.0_dp, kind=dp)
+            true_eigvals(i) = a_*one_cdp + (2*b_*cos(k*pi/(test_size+1)))*one_im_cdp
+            true_eigvals(i+1) = a_*one_cdp - (2*b_*cos(k*pi/(test_size+1)))*one_im_cdp
             k = k+1
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_dp)
+        !if (allocated(error)) return
+        ! check eigenvectors
+        !allocate(AX(test_size))
+        !allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
+        !do i = 1, test_size
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
 
         return
     end subroutine test_evp_rdp
@@ -431,6 +480,8 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
+        type(vector_csp), allocatable :: AX(:)
+        complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
 
@@ -438,7 +489,7 @@ contains
         contains
         function select_eigs(lambda) result(selected)
             complex(sp), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical :: selected(size(lambda))
 
             selected = abs(lambda) > median(abs(lambda))
             return
@@ -460,6 +511,8 @@ contains
         integer :: info
         ! Miscellaneous.
         integer :: i, k, n
+        type(vector_csp), allocatable :: AX(:)
+        complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
 
@@ -493,6 +546,8 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
+        type(vector_cdp), allocatable :: AX(:)
+        complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
 
@@ -500,7 +555,7 @@ contains
         contains
         function select_eigs(lambda) result(selected)
             complex(dp), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical :: selected(size(lambda))
 
             selected = abs(lambda) > median(abs(lambda))
             return
@@ -522,6 +577,8 @@ contains
         integer :: info
         ! Miscellaneous.
         integer :: i, k, n
+        type(vector_cdp), allocatable :: AX(:)
+        complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
 
@@ -574,8 +631,8 @@ contains
             A%data(i, i) = 2.0_sp
             ! Upper diagonal entry.
             if (i < n) then
-                A%data(i, i+1) = -1.0_sp
-                A%data(i+1, i) = -1.0_sp
+                A%data(i, i+1) = -one_rsp
+                A%data(i+1, i) = -one_rsp
             endif
         enddo
 
@@ -585,7 +642,7 @@ contains
 
         ! Analytical singular values.
         do i = 1, test_size
-            true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
+            true_svdvals(i) = 2.0_sp * (one_rsp + cos(i*pi/(test_size+1)))
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
@@ -632,8 +689,8 @@ contains
             A%data(i, i) = 2.0_dp
             ! Upper diagonal entry.
             if (i < n) then
-                A%data(i, i+1) = -1.0_dp
-                A%data(i+1, i) = -1.0_dp
+                A%data(i, i+1) = -one_rdp
+                A%data(i+1, i) = -one_rdp
             endif
         enddo
 
@@ -643,7 +700,7 @@ contains
 
         ! Analytical singular values.
         do i = 1, test_size
-            true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
+            true_svdvals(i) = 2.0_dp * (one_rdp + cos(i*pi/(test_size+1)))
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_dp)

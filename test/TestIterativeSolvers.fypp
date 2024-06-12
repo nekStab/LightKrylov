@@ -9,6 +9,7 @@ module TestIterativeSolvers
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
 
     ! Testdrive
@@ -67,6 +68,8 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         #:if type[0] == "r"
@@ -94,21 +97,32 @@ contains
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
+        true_eigvals = zero_c${kind}$; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
-            true_eigvals(i+1) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+            true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             k = k+1
         enddo
 
+        ! check eigenvalues
         call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
+        !if (allocated(error)) return
+        !! check eigenvectors
+        !allocate(AX(nev))
+        !allocate(eigvec_residuals(test_size, nev))
+        !do i = 1, nev
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !print *, norm2(abs(eigvec_residuals))
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
         #:endif
 
         return
         contains
         function select_eigs(lambda) result(selected)
             complex(${kind}$), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical :: selected(size(lambda))
 
             selected = abs(lambda) > median(abs(lambda))
             return
@@ -130,6 +144,8 @@ contains
         integer :: info
         ! Miscellaneous.
         integer :: i, k, n
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         #:if type[0] == "r"
@@ -157,14 +173,23 @@ contains
         call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
+        true_eigvals = zero_c${kind}$; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
-            true_eigvals(i+1) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+            true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             k = k+1
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_${kind}$)
+        !if (allocated(error)) return
+        ! check eigenvectors
+        !allocate(AX(test_size))
+        !allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        !do i = 1, test_size
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
         #:endif
 
         return
@@ -274,8 +299,8 @@ contains
             A%data(i, i) = 2.0_${kind}$
             ! Upper diagonal entry.
             if (i < n) then
-                A%data(i, i+1) = -1.0_${kind}$
-                A%data(i+1, i) = -1.0_${kind}$
+                A%data(i, i+1) = -one_r${kind}$
+                A%data(i+1, i) = -one_r${kind}$
             endif
         enddo
 
