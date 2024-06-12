@@ -10,7 +10,10 @@ module TestLinops
     use TestVectors
 
     implicit none
+    
     private
+
+    character*128, parameter, private :: this_module = 'LightKrylov_TestLinops'
 
     public :: collect_linop_rsp_testsuite
     public :: collect_linop_rdp_testsuite

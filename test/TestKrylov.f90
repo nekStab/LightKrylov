@@ -16,7 +16,10 @@ module TestKrylov
     use TestUtils
 
     implicit none
+    
     private
+
+    character*128, parameter, private :: this_module = 'LightKrylov_TestKrylov'
 
     public :: collect_qr_rsp_testsuite
     public :: collect_arnoldi_rsp_testsuite
@@ -76,7 +79,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module='LightKrylov_TestKrylov', procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -133,7 +136,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module='LightKrylov_TestKrylov', procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -176,7 +179,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module='LightKrylov_TestKrylov', procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -233,7 +236,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module='LightKrylov_TestKrylov', procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -276,7 +279,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module='LightKrylov_TestKrylov', procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -333,7 +336,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module='LightKrylov_TestKrylov', procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -376,7 +379,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info)
-        call check_info(info, 'qr', module='LightKrylov_TestKrylov', procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
 
         ! Get data.
         call get_data(Qdata, A)
@@ -433,7 +436,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info)
-        call check_info(info, 'qr_pivot', module='LightKrylov_TestKrylov', procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
 
         ! Extract data
         call get_data(Qdata, A)
@@ -488,7 +491,7 @@ contains
         H = 0.0_sp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_factorization_rsp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rsp')
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
@@ -525,7 +528,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_basis_orthogonality_rsp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_rsp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_sp
@@ -571,7 +574,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_factorization_rsp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rsp')
 
         G = 0.0_sp
         do j = 1, size(G, 2)
@@ -618,7 +621,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_basis_orthogonality_rsp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_rsp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_sp
@@ -665,7 +668,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_krylov_schur_rsp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_rsp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -724,7 +727,7 @@ contains
         H = 0.0_dp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_factorization_rdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rdp')
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
@@ -761,7 +764,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_basis_orthogonality_rdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_rdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_dp
@@ -807,7 +810,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_factorization_rdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rdp')
 
         G = 0.0_dp
         do j = 1, size(G, 2)
@@ -854,7 +857,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_basis_orthogonality_rdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_rdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_dp
@@ -901,7 +904,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_krylov_schur_rdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_rdp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -960,7 +963,7 @@ contains
         H = 0.0_sp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_factorization_csp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_csp')
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
@@ -997,7 +1000,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_basis_orthogonality_csp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_csp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_sp
@@ -1043,7 +1046,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_factorization_csp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_csp')
 
         G = 0.0_sp
         do j = 1, size(G, 2)
@@ -1090,7 +1093,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_basis_orthogonality_csp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_csp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_sp
@@ -1137,7 +1140,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_krylov_schur_csp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_csp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -1196,7 +1199,7 @@ contains
         H = 0.0_dp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_factorization_cdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_cdp')
 
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
@@ -1233,7 +1236,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_arnoldi_basis_orthogonality_cdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_basis_orthogonality_cdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_dp
@@ -1279,7 +1282,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_factorization_cdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_cdp')
 
         G = 0.0_dp
         do j = 1, size(G, 2)
@@ -1326,7 +1329,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_block_arnoldi_basis_orthogonality_cdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_basis_orthogonality_cdp')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = 0.0_dp
@@ -1373,7 +1376,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
-        call check_info(info, 'arnoldi', module='LightKrylov_TestKrylov', procedure='test_krylov_schur_cdp')
+        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_cdp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -1438,8 +1441,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_factorization_rsp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_rsp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1479,8 +1481,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_left_orthogonality_rsp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_rs&
+            &p')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1524,8 +1526,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_right_orthogonality_rsp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_r&
+            &sp')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1580,8 +1582,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_factorization_rdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_rdp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1621,8 +1622,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_left_orthogonality_rdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_rd&
+            &p')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1666,8 +1667,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_right_orthogonality_rdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_r&
+            &dp')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1722,8 +1723,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_factorization_csp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_csp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1763,8 +1763,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_left_orthogonality_csp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_cs&
+            &p')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1808,8 +1808,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_right_orthogonality_csp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_c&
+            &sp')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1864,8 +1864,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_factorization_cdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_factorization_cdp')
 
         ! Check correctness.
         call get_data(Udata, U)
@@ -1905,8 +1904,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_left_orthogonality_cdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_left_orthogonality_cd&
+            &p')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -1950,8 +1949,8 @@ contains
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info)
-        call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_bidiag_right_orthogonality_cdp')
+        call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='test_lanczos_bidiag_right_orthogonality_c&
+            &dp')
 
         ! Check correctness.
         Id = eye(kdim)
@@ -2016,8 +2015,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_full_factorization_rsp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
+            &rsp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2063,8 +2062,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_orthogonality_rsp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_rsp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2119,8 +2117,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_full_factorization_rdp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
+            &rdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2166,8 +2164,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_orthogonality_rdp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_rdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2222,8 +2219,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_full_factorization_csp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
+            &csp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2269,8 +2266,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_orthogonality_csp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_csp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2325,8 +2321,8 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_full_factorization_cdp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_full_factorization_&
+            &cdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -2372,8 +2368,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
-        call check_info(info, 'lanczos_tridiagonalization', module='LightKrylov_TestKrylov',&
-            & procedure='test_lanczos_tridiag_orthogonality_cdp')
+        call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='test_lanczos_tridiag_orthogonality_cdp')
 
         ! Check correctness.
         call get_data(Xdata, X)

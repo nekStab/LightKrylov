@@ -9,7 +9,8 @@ module Ginzburg_Landau
   use stdlib_optval, only : optval
   implicit none
 
-  private
+  character*128, parameter, private :: this_module = 'Ginzburg_Landau'
+
   public :: nx
   public :: initialize_parameters
 

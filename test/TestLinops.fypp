@@ -12,7 +12,10 @@ module TestLinops
     use TestVectors
 
     implicit none
+    
     private
+
+    character*128, parameter, private :: this_module = 'LightKrylov_TestLinops'
 
     #:for k1, t1 in RC_KINDS_TYPES
     public :: collect_linop_${t1[0]}$${k1}$_testsuite

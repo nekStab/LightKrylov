@@ -5,7 +5,8 @@ module lightkrylov_AbstractLinops
     use lightkrylov_utils
     use lightkrylov_AbstractVectors
     implicit none
-    private
+
+    character*128, parameter, private :: this_module = 'Lightkrylov_AbstractLinops'
 
     type, abstract, public :: abstract_linop
     contains
