@@ -665,7 +665,7 @@ contains
         ! Initialize Krylov subspace.
         allocate(X(kdim+1)) ; allocate(X0(1))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
-        H = zero_rsptest/Tests.f90
+        H = zero_rsp
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info)
