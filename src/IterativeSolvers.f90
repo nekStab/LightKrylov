@@ -840,7 +840,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_rsp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -941,7 +941,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_rdp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1042,7 +1042,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_csp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1143,7 +1143,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_cdp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.

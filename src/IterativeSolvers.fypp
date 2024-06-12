@@ -354,7 +354,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module=this_module, procedure='eighs_${type[0]}$${kind}$')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_${type[0]}$${kind}$')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
