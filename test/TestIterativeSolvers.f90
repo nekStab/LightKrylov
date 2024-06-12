@@ -642,7 +642,7 @@ contains
 
         ! Analytical singular values.
         do i = 1, test_size
-            true_svdvals(i) = 2.0_sp * (one_rsp + cos(i*pi/(test_size+1)))
+            true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
@@ -700,7 +700,7 @@ contains
 
         ! Analytical singular values.
         do i = 1, test_size
-            true_svdvals(i) = 2.0_dp * (one_rdp + cos(i*pi/(test_size+1)))
+            true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_dp)

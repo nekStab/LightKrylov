@@ -9,6 +9,7 @@ module TestExpmlib
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
 
@@ -24,16 +25,6 @@ module TestExpmlib
     private
 
     character*128, parameter, private :: this_module = 'LightKrylov_TestExpmLib'
-
-    #:for kind, type in RC_KINDS_TYPES
-    #:if type[0] == "c"
-    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-    #:else
-    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = 1.0_${kind}$
-    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = 0.0_${kind}$
-    #:endif
-    #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_expm_${type[0]}$${kind}$_testsuite

@@ -1,6 +1,7 @@
 module TestUtils
     use stdlib_io_npy, only: save_npy
     use LightKrylov
+    use LightKrylov_Constants
     use TestVectors
     use TestLinops
     

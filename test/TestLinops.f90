@@ -4,6 +4,7 @@ module TestLinops
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -21,7 +22,7 @@ module TestLinops
     public :: collect_linop_cdp_testsuite
 
     type, extends(abstract_linop_rsp), public :: linop_rsp
-        real(sp), dimension(test_size, test_size) :: data = 0.0_sp
+        real(sp), dimension(test_size, test_size) :: data = zero_rsp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_rsp
@@ -29,7 +30,7 @@ module TestLinops
     end type
 
     type, extends(abstract_sym_linop_rsp), public :: spd_linop_rsp
-        real(sp), dimension(test_size, test_size) :: data = 0.0_sp
+        real(sp), dimension(test_size, test_size) :: data = zero_rsp
     contains
         private
         procedure, pass(self), public :: matvec => sdp_matvec_rsp
@@ -37,7 +38,7 @@ module TestLinops
     end type
 
     type, extends(abstract_linop_rdp), public :: linop_rdp
-        real(dp), dimension(test_size, test_size) :: data = 0.0_dp
+        real(dp), dimension(test_size, test_size) :: data = zero_rdp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_rdp
@@ -45,7 +46,7 @@ module TestLinops
     end type
 
     type, extends(abstract_sym_linop_rdp), public :: spd_linop_rdp
-        real(dp), dimension(test_size, test_size) :: data = 0.0_dp
+        real(dp), dimension(test_size, test_size) :: data = zero_rdp
     contains
         private
         procedure, pass(self), public :: matvec => sdp_matvec_rdp
@@ -53,7 +54,7 @@ module TestLinops
     end type
 
     type, extends(abstract_linop_csp), public :: linop_csp
-        complex(sp), dimension(test_size, test_size) :: data = 0.0_sp
+        complex(sp), dimension(test_size, test_size) :: data = zero_csp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_csp
@@ -61,7 +62,7 @@ module TestLinops
     end type
 
     type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
-        complex(sp), dimension(test_size, test_size) :: data = 0.0_sp
+        complex(sp), dimension(test_size, test_size) :: data = zero_csp
     contains
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_csp
@@ -69,7 +70,7 @@ module TestLinops
     end type
 
     type, extends(abstract_linop_cdp), public :: linop_cdp
-        complex(dp), dimension(test_size, test_size) :: data = 0.0_dp
+        complex(dp), dimension(test_size, test_size) :: data = zero_cdp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_cdp
@@ -77,7 +78,7 @@ module TestLinops
     end type
 
     type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
-        complex(dp), dimension(test_size, test_size) :: data = 0.0_dp
+        complex(dp), dimension(test_size, test_size) :: data = zero_cdp
     contains
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_cdp

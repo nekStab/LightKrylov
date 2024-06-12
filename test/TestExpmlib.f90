@@ -7,6 +7,7 @@ module TestExpmlib
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
 
@@ -22,15 +23,6 @@ module TestExpmlib
     private
 
     character*128, parameter, private :: this_module = 'LightKrylov_TestExpmLib'
-
-    real(sp), parameter, public :: one_rsp = 1.0_sp
-    real(sp), parameter, public :: zero_rsp = 0.0_sp
-    real(dp), parameter, public :: one_rdp = 1.0_dp
-    real(dp), parameter, public :: zero_rdp = 0.0_dp
-    complex(sp), parameter, public :: one_csp = cmplx(1.0_sp, 0.0_sp, kind=sp)
-    complex(sp), parameter, public :: zero_csp = cmplx(0.0_sp, 0.0_sp, kind=sp)
-    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
-    complex(dp), parameter, public :: zero_cdp = cmplx(0.0_dp, 0.0_dp, kind=dp)
 
     public :: collect_expm_rsp_testsuite
     public :: collect_expm_rdp_testsuite
