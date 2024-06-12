@@ -23,29 +23,29 @@ module lightkrylov_BaseKrylov
     public :: krylov_schur
 
     interface qr
-        #:for k1, t1 in RC_KINDS_TYPES
-        module procedure qr_no_pivoting_${t1[0]}$${k1}$
-        module procedure qr_with_pivoting_${t1[0]}$${k1}$
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure qr_no_pivoting_${type[0]}$${kind}$
+        module procedure qr_with_pivoting_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface swap_columns
-        #: for k1, t1 in RC_KINDS_TYPES
-        module procedure swap_columns_${t1[0]}$${k1}$
+        #: for kind, type in RC_KINDS_TYPES
+        module procedure swap_columns_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface apply_permutation_matrix
-        #: for k1, t1 in RC_KINDS_TYPES
-        module procedure apply_permutation_matrix_${t1[0]}$${k1}$
-        module procedure apply_permutation_matrix_array_${t1[0]}$${k1}$
+        #: for kind, type in RC_KINDS_TYPES
+        module procedure apply_permutation_matrix_${type[0]}$${kind}$
+        module procedure apply_permutation_matrix_array_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface apply_inverse_permutation_matrix
-        #:for k1, t1 in RC_KINDS_TYPES
-        module procedure apply_inverse_permutation_matrix_${t1[0]}$${k1}$
-        module procedure apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure apply_inverse_permutation_matrix_${type[0]}$${kind}$
+        module procedure apply_inverse_permutation_matrix_array_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -92,14 +92,14 @@ contains
     !-----     UTILITY FUNCTIONS     -----
     !-------------------------------------
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    subroutine initialize_krylov_subspace_${t1[0]}$${k1}$(X, X0)
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: X(:)
-        class(abstract_vector_${t1[0]}$${k1}$), optional, intent(in) :: X0(:)
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine initialize_krylov_subspace_${type[0]}$${kind}$(X, X0)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: X0(:)
 
         ! Internal variables.
-        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Q(:)
-        ${t1}$, allocatable :: R(:, :)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Q(:)
+        ${type}$, allocatable :: R(:, :)
         integer, allocatable :: perm(:)
         integer :: i, p, info
 
@@ -120,7 +120,7 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = 0.0_${k1}$
+            allocate(R(1:p, 1:p)) ; R = zero_r${kind}$
             allocate(perm(1:p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
@@ -129,72 +129,72 @@ contains
         endif
 
         return
-    end subroutine initialize_krylov_subspace_${t1[0]}$${k1}$
+    end subroutine initialize_krylov_subspace_${type[0]}$${kind}$
 
-    subroutine orthonormalize_vector_against_basis_${t1[0]}$${k1}$(y, X)
+    subroutine orthonormalize_vector_against_basis_${type[0]}$${kind}$(y, X)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
-      class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: y
+      class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: y
       !! Input `abstract_vector` to orthonormalize
-      class(abstract_vector_${t1[0]}$${k1}$), intent(in)    :: X(:)
+      class(abstract_vector_${type[0]}$${kind}$), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
 
       ! internals
       character*128 :: msg
-      ${t1}$ :: coef(size(X))
-      real(${k1}$) :: alpha
+      ${type}$ :: coef(size(X))
+      real(${kind}$) :: alpha
 
       ! check for zero vector
       if (y%norm() < atol_${kind}$) then
          write(msg, *) 'The input vector is (numerically) zero.'
-         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_${t1[0]}$${k1}$', &
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_${type[0]}$${kind}$', &
                               & stat=-1, errmsg='Cannot orthonormalize.')
       end if
 
       ! orthogonalize
       call innerprod(coef, X, y)
       block
-         class(abstract_vector_${t1[0]}$${k1}$), allocatable :: proj
+         class(abstract_vector_${type[0]}$${kind}$), allocatable :: proj
          call linear_combination(proj, X, coef)
          call y%sub(proj)
       end block
 
       ! normalize
       alpha = y%norm()
-      call y%scal(one_${t1[0]}$${k1}$ / alpha)
+      call y%scal(one_${type[0]}$${kind}$ / alpha)
 
       if (alpha < atol_${kind}$) then ! error
          write(msg, *) 'The input vector is in the span of X.'
-         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_${t1[0]}$${k1}$', & 
+         call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_${type[0]}$${kind}$', & 
                               & stat=-2, errmsg='Cannot orthonormalize.')
       else if (alpha < rtol_${kind}$) then ! repeat to avoid floating point errors
          write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
                         & alpha, ': The input vector is nearly in the span of X. ', &
                         & 'Repeating orthonormalisation.'
-         call logger%log_warning(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_${t1[0]}$${k1}$')
+         call logger%log_warning(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_${type[0]}$${kind}$')
          call innerprod(coef, X, y)
          block
-            class(abstract_vector_${t1[0]}$${k1}$), allocatable :: proj
+            class(abstract_vector_${type[0]}$${kind}$), allocatable :: proj
             call linear_combination(proj, X, coef)
             call y%sub(proj)
          end block
          alpha = y%norm()
-         call y%scal(one_${t1[0]}$${k1}$ / alpha)
+         call y%scal(one_${type[0]}$${kind}$ / alpha)
       end if
       
       return
-    end subroutine orthonormalize_vector_against_basis_${t1[0]}$${k1}$
+    end subroutine orthonormalize_vector_against_basis_${type[0]}$${kind}$
 
-    subroutine orthonormalize_basis_against_basis_${t1[0]}$${k1}$(Y, X)
+    subroutine orthonormalize_basis_against_basis_${type[0]}$${kind}$(Y, X)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
-      class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Y(:)
+      class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthonormalize
-      class(abstract_vector_${t1[0]}$${k1}$), intent(in)    :: X(:)
+      class(abstract_vector_${type[0]}$${kind}$), intent(in)    :: X(:)
       !! Input `abstract_vector` basis to orthonormalize against
 
       ! internals
       character*128 :: msg
-      ${t1}$ :: coef(size(X), size(Y))
-      ${t1}$ :: R(size(Y), size(Y))
+      ${type}$ :: coef(size(X), size(Y))
+      ${type}$ :: R(size(Y), size(Y))
       integer :: i, info
       logical :: repeat
 
@@ -203,46 +203,46 @@ contains
          if ( Y(i)%norm() < atol_${kind}$) then
             write(msg, *) 'Zero vector detected in input basis, column ', i
             call logger%log_error(trim(msg), module=this_module, &
-                                 & procedure='orthonormalize_basis_against_basis_${t1[0]}$${k1}$', & 
+                                 & procedure='orthonormalize_basis_against_basis_${type[0]}$${kind}$', & 
                                  & stat=-1, errmsg='Cannot orthonormalize.')
          end if
       end do
 
       ! check for colinear vectors
-      R = 0.0_${k1}$
+      R = zero_r${kind}$
       call qr(Y, R, info)
-      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_${t1[0]}$${k1}$')
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_${type[0]}$${kind}$')
       if (info > 0) then ! colinear vectors!
          write(msg, *) 'Colinear vectors detected in input basis'
          call logger%log_error(trim(msg), module=this_module, &
-                                 & procedure='orthonormalize_basis_against_basis_${t1[0]}$${k1}$', & 
+                                 & procedure='orthonormalize_basis_against_basis_${type[0]}$${kind}$', & 
                                  & stat=-2, errmsg='Cannot orthonormalize.')
       end if
 
       ! orthogonalize
       call innerprod(coef, X, Y)
       block
-         class(abstract_vector_${t1[0]}$${k1}$), allocatable :: proj(:)
+         class(abstract_vector_${type[0]}$${kind}$), allocatable :: proj(:)
          call linear_combination(proj, X, coef)
-         call axpby_basis(Y, one_${t1[0]}$${k1}$, proj, -one_${t1[0]}$${k1}$)
+         call axpby_basis(Y, one_${type[0]}$${kind}$, proj, -one_${type[0]}$${kind}$)
       end block
 
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_${kind}$) then ! error
             write(msg, *) 'The input vector', i, 'is in the span of X.'
             call logger%log_error(trim(msg), module=this_module, &
-                                 & procedure='orthonormalize_basis_against_basis_${t1[0]}$${k1}$', & 
+                                 & procedure='orthonormalize_basis_against_basis_${type[0]}$${kind}$', & 
                                  & stat=-3, errmsg='Cannot orthonormalize.')
          end if
       end do
          
       ! normalize
-      R = 0.0_${k1}$
+      R = zero_r${kind}$
       call qr(Y, R, info)
-      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_${t1[0]}$${k1}$')
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_${type[0]}$${kind}$')
       
       return
-    end subroutine orthonormalize_basis_against_basis_${t1[0]}$${k1}$
+    end subroutine orthonormalize_basis_against_basis_${type[0]}$${kind}$
 
     #:endfor
 
@@ -250,50 +250,42 @@ contains
     !-----     QR FACTORIZATION     -----
     !------------------------------------
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    subroutine qr_no_pivoting_${t1[0]}$${k1}$(Q, R, info, verbosity, tol)
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine qr_no_pivoting_${type[0]}$${kind}$(Q, R, info, verbosity, tol)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthonormalized.
-        ${t1}$, intent(out) :: R(:, :)
+        ${type}$, intent(out) :: R(:, :)
         !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: verbosity
         !! Verbosity control.
         logical                       :: verbose
-        real(${k1}$), optional, intent(in) :: tol
+        real(${kind}$), optional, intent(in) :: tol
         !! Tolerance to determine colinearity.
-        real(${k1}$)                       :: tolerance
+        real(${kind}$)                       :: tolerance
 
         ! Internal variables.
-        ${t1}$ :: beta
+        ${type}$ :: beta
         integer :: idx, i, j, k, kdim, iwrk
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
-        tolerance = optval(tol, rtol_${k1}$)
+        tolerance = optval(tol, rtol_${kind}$)
 
-        info = 0 ; R = 0.0_${k1}$
+        info = 0 ; R = zero_r${kind}$
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                #:if t1[0] == "c"
-                call Q(j)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), -beta)
-                #:else
-                call Q(j)%axpby(1.0_${k1}$, Q(i), -beta)
-                #:endif
+                call Q(j)%axpby(one_${type[0]}$${kind}$, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                #:if t1[0] == "c"
-                call Q(j)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), -beta)
-                #:else
-                call Q(j)%axpby(1.0_${k1}$, Q(i), -beta)
-                #:endif
+                call Q(j)%axpby(one_${type[0]}$${kind}$, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
 
@@ -307,19 +299,19 @@ contains
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
                 info = j
-                R(i, j) = 0.0_${k1}$ ; call Q(j)%zero()
+                R(i, j) = zero_r${kind}$ ; call Q(j)%zero()
             else
-                call Q(j)%scal(1.0_${k1}$ / beta) ; R(j, j) = beta
+                call Q(j)%scal(one_r${kind}$ / beta) ; R(j, j) = beta
             endif
         enddo
 
         return
-    end subroutine qr_no_pivoting_${t1[0]}$${k1}$
+    end subroutine qr_no_pivoting_${type[0]}$${kind}$
 
-    subroutine qr_with_pivoting_${t1[0]}$${k1}$(Q, R, perm, info, verbosity, tol)
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+    subroutine qr_with_pivoting_${type[0]}$${kind}$(Q, R, perm, info, verbosity, tol)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthonormalized.
-        ${t1}$, intent(out) :: R(:, :)
+        ${type}$, intent(out) :: R(:, :)
         !! Upper triangular matrix resulting from the QR factorization.
         integer, intent(out) :: perm(size(Q))
         !! Permutation matrix.
@@ -328,23 +320,23 @@ contains
         logical, optional, intent(in) :: verbosity
         !! Verbosity control.
         logical :: verbose
-        real(${k1}$), optional, intent(in) :: tol
+        real(${kind}$), optional, intent(in) :: tol
 
         !! Tolerance to detect colinearity.
-        real(${k1}$) :: tolerance
+        real(${kind}$) :: tolerance
 
         ! Internal variables
-        ${t1}$ :: beta
+        ${type}$ :: beta
         integer :: idx, i, j, k, kdim, iwrk
         integer :: idxv(1)
-        ${t1}$  :: Rii(size(Q))
+        ${type}$  :: Rii(size(Q))
 
         info = 0 ; kdim = size(Q)
-        R = 0.0_${k1}$ ; Rii = 0.0_${k1}$
+        R = zero_r${kind}$ ; Rii = zero_r${kind}$
         
         ! Deals with the optional arguments.
         verbose = optval(verbosity, .false.)
-        tolerance = optval(tol, rtol_${k1}$)
+        tolerance = optval(tol, rtol_${kind}$)
 
         ! Initialize diagonal entries.
         do i = 1, kdim
@@ -360,13 +352,9 @@ contains
                     ! Orthogonalize against existing columns
                     do k = 1, i-1
                         beta = Q(i)%dot(Q(k))
-                        #:if t1[0] == "c"
-                        call Q(i)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(k), -beta)
-                        #:else
-                        call Q(i)%axpby(1.0_${k1}$, Q(k), -beta)
-                        #:endif
+                        call Q(i)%axpby(one_${type[0]}$${kind}$, Q(k), -beta)
                     enddo
-                    beta = Q(i)%norm() ; call Q(i)%scal(1.0_${k1}$ / beta)
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_r${kind}$ / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -379,24 +367,20 @@ contains
 
             if (abs(beta) < tolerance) then
                info = j
-                R(j, j) = 0.0_${k1}$ ; call Q(j)%zero()
+                R(j, j) = zero_r${kind}$ ; call Q(j)%zero()
             else
-                R(j, j) = beta ; call Q(j)%scal(1.0_${k1}$ / beta)
+                R(j, j) = beta ; call Q(j)%scal(one_r${kind}$ / beta)
             endif
 
             ! Orthonormalize all columns against new vector (MGS)
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                #:if t1[0] == "c"
-                call Q(i)%axpby(cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(j), -beta)
-                #:else
-                call Q(i)%axpby(1.0_${k1}$, Q(j), -beta)
-                #:endif
+                call Q(i)%axpby(one_${type[0]}$${kind}$, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
             ! Update Rii
-            Rii(j) = 0.0_${k1}$
+            Rii(j) = zero_r${kind}$
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
             enddo
@@ -404,14 +388,14 @@ contains
         enddo qr_step
 
         return
-    end subroutine qr_with_pivoting_${t1[0]}$${k1}$
+    end subroutine qr_with_pivoting_${type[0]}$${kind}$
 
-    subroutine swap_columns_${t1[0]}$${k1}$(Q, R, Rii, perm, i, j)
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+    subroutine swap_columns_${type[0]}$${kind}$(Q, R, Rii, perm, i, j)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Vector basis whose i-th and j-th columns need swapping.
-        ${t1}$, intent(inout) :: R(:, :)
+        ${type}$, intent(inout) :: R(:, :)
         !! Upper triangular matrix resulting from QR.
-        ${t1}$, intent(inout) :: Rii(:)
+        ${type}$, intent(inout) :: Rii(:)
         !! Diagonal entries of R.
         integer, intent(inout) :: perm(:)
         !! Column ordering.
@@ -419,8 +403,8 @@ contains
         !! Index of the columns to be swapped.
 
         ! Internal variables.
-        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Qwrk
-        ${t1}$, allocatable :: Rwrk(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk
+        ${type}$, allocatable :: Rwrk(:)
         integer :: iwrk, m, n
 
         ! Sanity checks.
@@ -428,18 +412,12 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = 0.0_${k1}$
+        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_r${kind}$
 
         ! Swap columns.
-        #:if t1[0] == "c"
-        call Qwrk%axpby(cmplx(0.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(j), cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
-        call Q(j)%axpby(cmplx(0.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Q(i), cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
-        call Q(i)%axpby(cmplx(0.0_${k1}$, 0.0_${k1}$, kind=${k1}$), Qwrk, cmplx(1.0_${k1}$, 0.0_${k1}$, kind=${k1}$))
-        #:else
-        call Qwrk%axpby(0.0_${k1}$, Q(j), 1.0_${k1}$)
-        call Q(j)%axpby(0.0_${k1}$, Q(i), 1.0_${k1}$)
-        call Q(i)%axpby(0.0_${k1}$, Qwrk, 1.0_${k1}$)
-        #:endif
+        call Qwrk%axpby(zero_${type[0]}$${kind}$, Q(j), one_${type[0]}$${kind}$)
+        call Q(j)%axpby(zero_${type[0]}$${kind}$, Q(i), one_${type[0]}$${kind}$)
+        call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk, one_${type[0]}$${kind}$)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -449,28 +427,28 @@ contains
         endif
 
         return
-    end subroutine swap_columns_${t1[0]}$${k1}$
+    end subroutine swap_columns_${type[0]}$${kind}$
 
-    subroutine apply_permutation_matrix_${t1[0]}$${k1}$(Q, perm)
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+    subroutine apply_permutation_matrix_${type[0]}$${kind}$(Q, perm)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Basis vectors to be permuted.
         integer, intent(in) :: perm(:)
         !! Permutation matrix (vector representation).
 
         ! Internal variables.
         integer :: i
-        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Qwrk(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk(:)
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_${t1[0]}$${k1}$, Qwrk(perm(i)), one_${t1[0]}$${k1}$)
+            call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk(perm(i)), one_${type[0]}$${kind}$)
         enddo
 
         return
-    end subroutine apply_permutation_matrix_${t1[0]}$${k1}$
+    end subroutine apply_permutation_matrix_${type[0]}$${kind}$
 
-    subroutine apply_inverse_permutation_matrix_${t1[0]}$${k1}$(Q, perm)
-        class(abstract_vector_${t1[0]}$${k1}$), intent(inout) :: Q(:)
+    subroutine apply_inverse_permutation_matrix_${type[0]}$${kind}$(Q, perm)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Basis vectors to be (un-) permuted.
         integer, intent(in) :: perm(:)
         !! Permutation matrix (vector representation).
@@ -478,7 +456,7 @@ contains
         ! Internal variables.
         integer :: i
         integer :: inv_perm(size(perm))
-        class(abstract_vector_${t1[0]}$${k1}$), allocatable :: Qwrk(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk(:)
 
         allocate(Qwrk, source=Q) ; inv_perm = 0
 
@@ -489,21 +467,21 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_${t1[0]}$${k1}$, Qwrk(inv_perm(i)), one_${t1[0]}$${k1}$)
+            call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk(inv_perm(i)), one_${type[0]}$${kind}$)
         enddo
 
         return
-    end subroutine apply_inverse_permutation_matrix_${t1[0]}$${k1}$
+    end subroutine apply_inverse_permutation_matrix_${type[0]}$${kind}$
 
-    subroutine apply_permutation_matrix_array_${t1[0]}$${k1}$(Q, perm)
-        ${t1}$, intent(inout) :: Q(:, :)
+    subroutine apply_permutation_matrix_array_${type[0]}$${kind}$(Q, perm)
+        ${type}$, intent(inout) :: Q(:, :)
         !! Basis vectors to be permuted.
         integer, intent(in) :: perm(:)
         !! Permutation matrix (vector representation).
 
         ! Internal variables.
         integer :: i
-        ${t1}$, allocatable :: Qwrk(:, :)
+        ${type}$, allocatable :: Qwrk(:, :)
 
         Qwrk = Q
         do i = 1, size(perm)
@@ -511,10 +489,10 @@ contains
         enddo
 
         return
-    end subroutine apply_permutation_matrix_array_${t1[0]}$${k1}$
+    end subroutine apply_permutation_matrix_array_${type[0]}$${kind}$
 
-    subroutine apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$(Q, perm)
-        ${t1}$, intent(inout) :: Q(:, :)
+    subroutine apply_inverse_permutation_matrix_array_${type[0]}$${kind}$(Q, perm)
+        ${type}$, intent(inout) :: Q(:, :)
         !! Basis vectors to be (un-) permuted.
         integer, intent(in) :: perm(:)
         !! Permutation matrix (vector representation).
@@ -522,7 +500,7 @@ contains
         ! Internal variables.
         integer :: i
         integer :: inv_perm(size(perm))
-        ${t1}$, allocatable :: Qwrk(:, :)
+        ${type}$, allocatable :: Qwrk(:, :)
 
         Qwrk = Q ; inv_perm = 0
 
@@ -537,7 +515,7 @@ contains
         enddo
 
         return
-    end subroutine apply_inverse_permutation_matrix_array_${t1[0]}$${k1}$
+    end subroutine apply_inverse_permutation_matrix_array_${type[0]}$${kind}$
 
 
     #:endfor
@@ -579,7 +557,7 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_${kind}$
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_r${kind}$
         allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
@@ -615,7 +593,7 @@ contains
             call check_info(info, 'qr', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
-            res = 0.0_${kind}$
+            res = zero_r${kind}$
             do i = 1, p
                 res(i) = H(kp+i, kpm+i)
             enddo
@@ -649,7 +627,7 @@ contains
 
         ! Counters and allocations.
         kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_${kind}$
+        allocate(wrk(1:kp, 1:p)) ; wrk = zero_r${kind}$
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
         call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))

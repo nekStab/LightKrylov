@@ -139,7 +139,7 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = 0.0_sp
+            allocate(R(1:p, 1:p)) ; R = zero_rsp
             allocate(perm(1:p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
@@ -163,7 +163,7 @@ contains
       real(sp) :: alpha
 
       ! check for zero vector
-      if (y%norm() < atol_dp) then
+      if (y%norm() < atol_sp) then
          write(msg, *) 'The input vector is (numerically) zero.'
          call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rsp', &
                               & stat=-1, errmsg='Cannot orthonormalize.')
@@ -181,11 +181,11 @@ contains
       alpha = y%norm()
       call y%scal(one_rsp / alpha)
 
-      if (alpha < atol_dp) then ! error
+      if (alpha < atol_sp) then ! error
          write(msg, *) 'The input vector is in the span of X.'
          call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_rsp', & 
                               & stat=-2, errmsg='Cannot orthonormalize.')
-      else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
+      else if (alpha < rtol_sp) then ! repeat to avoid floating point errors
          write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
                         & alpha, ': The input vector is nearly in the span of X. ', &
                         & 'Repeating orthonormalisation.'
@@ -219,7 +219,7 @@ contains
 
       ! check for zero vector
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then
+         if ( Y(i)%norm() < atol_sp) then
             write(msg, *) 'Zero vector detected in input basis, column ', i
             call logger%log_error(trim(msg), module=this_module, &
                                  & procedure='orthonormalize_basis_against_basis_rsp', & 
@@ -228,7 +228,7 @@ contains
       end do
 
       ! check for colinear vectors
-      R = 0.0_sp
+      R = zero_rsp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rsp')
       if (info > 0) then ! colinear vectors!
@@ -247,7 +247,7 @@ contains
       end block
 
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then ! error
+         if ( Y(i)%norm() < atol_sp) then ! error
             write(msg, *) 'The input vector', i, 'is in the span of X.'
             call logger%log_error(trim(msg), module=this_module, &
                                  & procedure='orthonormalize_basis_against_basis_rsp', & 
@@ -256,7 +256,7 @@ contains
       end do
          
       ! normalize
-      R = 0.0_sp
+      R = zero_rsp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rsp')
       
@@ -290,7 +290,7 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = 0.0_dp
+            allocate(R(1:p, 1:p)) ; R = zero_rdp
             allocate(perm(1:p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
@@ -379,7 +379,7 @@ contains
       end do
 
       ! check for colinear vectors
-      R = 0.0_dp
+      R = zero_rdp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rdp')
       if (info > 0) then ! colinear vectors!
@@ -407,7 +407,7 @@ contains
       end do
          
       ! normalize
-      R = 0.0_dp
+      R = zero_rdp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_rdp')
       
@@ -441,7 +441,7 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = 0.0_sp
+            allocate(R(1:p, 1:p)) ; R = zero_rsp
             allocate(perm(1:p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
@@ -465,7 +465,7 @@ contains
       real(sp) :: alpha
 
       ! check for zero vector
-      if (y%norm() < atol_dp) then
+      if (y%norm() < atol_sp) then
          write(msg, *) 'The input vector is (numerically) zero.'
          call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_csp', &
                               & stat=-1, errmsg='Cannot orthonormalize.')
@@ -483,11 +483,11 @@ contains
       alpha = y%norm()
       call y%scal(one_csp / alpha)
 
-      if (alpha < atol_dp) then ! error
+      if (alpha < atol_sp) then ! error
          write(msg, *) 'The input vector is in the span of X.'
          call logger%log_error(trim(msg), module=this_module, procedure='orthonormalize_vector_against_basis_csp', & 
                               & stat=-2, errmsg='Cannot orthonormalize.')
-      else if (alpha < rtol_dp) then ! repeat to avoid floating point errors
+      else if (alpha < rtol_sp) then ! repeat to avoid floating point errors
          write(msg, *) 'The norm of the component of y in the orthogonal complement of X is ||y||_orth = ', &
                         & alpha, ': The input vector is nearly in the span of X. ', &
                         & 'Repeating orthonormalisation.'
@@ -521,7 +521,7 @@ contains
 
       ! check for zero vector
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then
+         if ( Y(i)%norm() < atol_sp) then
             write(msg, *) 'Zero vector detected in input basis, column ', i
             call logger%log_error(trim(msg), module=this_module, &
                                  & procedure='orthonormalize_basis_against_basis_csp', & 
@@ -530,7 +530,7 @@ contains
       end do
 
       ! check for colinear vectors
-      R = 0.0_sp
+      R = zero_rsp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_csp')
       if (info > 0) then ! colinear vectors!
@@ -549,7 +549,7 @@ contains
       end block
 
       do i = 1, size(Y)
-         if ( Y(i)%norm() < atol_dp) then ! error
+         if ( Y(i)%norm() < atol_sp) then ! error
             write(msg, *) 'The input vector', i, 'is in the span of X.'
             call logger%log_error(trim(msg), module=this_module, &
                                  & procedure='orthonormalize_basis_against_basis_csp', & 
@@ -558,7 +558,7 @@ contains
       end do
          
       ! normalize
-      R = 0.0_sp
+      R = zero_rsp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_csp')
       
@@ -592,7 +592,7 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = 0.0_dp
+            allocate(R(1:p, 1:p)) ; R = zero_rdp
             allocate(perm(1:p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
@@ -681,7 +681,7 @@ contains
       end do
 
       ! check for colinear vectors
-      R = 0.0_dp
+      R = zero_rdp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_cdp')
       if (info > 0) then ! colinear vectors!
@@ -709,7 +709,7 @@ contains
       end do
          
       ! normalize
-      R = 0.0_dp
+      R = zero_rdp
       call qr(Y, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_against_basis_cdp')
       
@@ -743,19 +743,19 @@ contains
         verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
-        info = 0 ; R = 0.0_sp
+        info = 0 ; R = zero_rsp
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(1.0_sp, Q(i), -beta)
+                call Q(j)%axpby(one_rsp, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(1.0_sp, Q(i), -beta)
+                call Q(j)%axpby(one_rsp, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
 
@@ -769,9 +769,9 @@ contains
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
                 info = j
-                R(i, j) = 0.0_sp ; call Q(j)%zero()
+                R(i, j) = zero_rsp ; call Q(j)%zero()
             else
-                call Q(j)%scal(1.0_sp / beta) ; R(j, j) = beta
+                call Q(j)%scal(one_rsp / beta) ; R(j, j) = beta
             endif
         enddo
 
@@ -802,7 +802,7 @@ contains
         real(sp)  :: Rii(size(Q))
 
         info = 0 ; kdim = size(Q)
-        R = 0.0_sp ; Rii = 0.0_sp
+        R = zero_rsp ; Rii = zero_rsp
         
         ! Deals with the optional arguments.
         verbose = optval(verbosity, .false.)
@@ -822,9 +822,9 @@ contains
                     ! Orthogonalize against existing columns
                     do k = 1, i-1
                         beta = Q(i)%dot(Q(k))
-                        call Q(i)%axpby(1.0_sp, Q(k), -beta)
+                        call Q(i)%axpby(one_rsp, Q(k), -beta)
                     enddo
-                    beta = Q(i)%norm() ; call Q(i)%scal(1.0_sp / beta)
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -837,20 +837,20 @@ contains
 
             if (abs(beta) < tolerance) then
                info = j
-                R(j, j) = 0.0_sp ; call Q(j)%zero()
+                R(j, j) = zero_rsp ; call Q(j)%zero()
             else
-                R(j, j) = beta ; call Q(j)%scal(1.0_sp / beta)
+                R(j, j) = beta ; call Q(j)%scal(one_rsp / beta)
             endif
 
             ! Orthonormalize all columns against new vector (MGS)
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(1.0_sp, Q(j), -beta)
+                call Q(i)%axpby(one_rsp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
             ! Update Rii
-            Rii(j) = 0.0_sp
+            Rii(j) = zero_rsp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
             enddo
@@ -882,12 +882,12 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = 0.0_sp
+        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
-        call Qwrk%axpby(0.0_sp, Q(j), 1.0_sp)
-        call Q(j)%axpby(0.0_sp, Q(i), 1.0_sp)
-        call Q(i)%axpby(0.0_sp, Qwrk, 1.0_sp)
+        call Qwrk%axpby(zero_rsp, Q(j), one_rsp)
+        call Q(j)%axpby(zero_rsp, Q(i), one_rsp)
+        call Q(i)%axpby(zero_rsp, Qwrk, one_rsp)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1010,19 +1010,19 @@ contains
         verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
-        info = 0 ; R = 0.0_dp
+        info = 0 ; R = zero_rdp
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(1.0_dp, Q(i), -beta)
+                call Q(j)%axpby(one_rdp, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(1.0_dp, Q(i), -beta)
+                call Q(j)%axpby(one_rdp, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
 
@@ -1036,9 +1036,9 @@ contains
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
                 info = j
-                R(i, j) = 0.0_dp ; call Q(j)%zero()
+                R(i, j) = zero_rdp ; call Q(j)%zero()
             else
-                call Q(j)%scal(1.0_dp / beta) ; R(j, j) = beta
+                call Q(j)%scal(one_rdp / beta) ; R(j, j) = beta
             endif
         enddo
 
@@ -1069,7 +1069,7 @@ contains
         real(dp)  :: Rii(size(Q))
 
         info = 0 ; kdim = size(Q)
-        R = 0.0_dp ; Rii = 0.0_dp
+        R = zero_rdp ; Rii = zero_rdp
         
         ! Deals with the optional arguments.
         verbose = optval(verbosity, .false.)
@@ -1089,9 +1089,9 @@ contains
                     ! Orthogonalize against existing columns
                     do k = 1, i-1
                         beta = Q(i)%dot(Q(k))
-                        call Q(i)%axpby(1.0_dp, Q(k), -beta)
+                        call Q(i)%axpby(one_rdp, Q(k), -beta)
                     enddo
-                    beta = Q(i)%norm() ; call Q(i)%scal(1.0_dp / beta)
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -1104,20 +1104,20 @@ contains
 
             if (abs(beta) < tolerance) then
                info = j
-                R(j, j) = 0.0_dp ; call Q(j)%zero()
+                R(j, j) = zero_rdp ; call Q(j)%zero()
             else
-                R(j, j) = beta ; call Q(j)%scal(1.0_dp / beta)
+                R(j, j) = beta ; call Q(j)%scal(one_rdp / beta)
             endif
 
             ! Orthonormalize all columns against new vector (MGS)
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(1.0_dp, Q(j), -beta)
+                call Q(i)%axpby(one_rdp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
             ! Update Rii
-            Rii(j) = 0.0_dp
+            Rii(j) = zero_rdp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
             enddo
@@ -1149,12 +1149,12 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = 0.0_dp
+        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
-        call Qwrk%axpby(0.0_dp, Q(j), 1.0_dp)
-        call Q(j)%axpby(0.0_dp, Q(i), 1.0_dp)
-        call Q(i)%axpby(0.0_dp, Qwrk, 1.0_dp)
+        call Qwrk%axpby(zero_rdp, Q(j), one_rdp)
+        call Q(j)%axpby(zero_rdp, Q(i), one_rdp)
+        call Q(i)%axpby(zero_rdp, Qwrk, one_rdp)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1277,19 +1277,19 @@ contains
         verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
-        info = 0 ; R = 0.0_sp
+        info = 0 ; R = zero_rsp
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Q(i), -beta)
+                call Q(j)%axpby(one_csp, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Q(i), -beta)
+                call Q(j)%axpby(one_csp, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
 
@@ -1303,9 +1303,9 @@ contains
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
                 info = j
-                R(i, j) = 0.0_sp ; call Q(j)%zero()
+                R(i, j) = zero_rsp ; call Q(j)%zero()
             else
-                call Q(j)%scal(1.0_sp / beta) ; R(j, j) = beta
+                call Q(j)%scal(one_rsp / beta) ; R(j, j) = beta
             endif
         enddo
 
@@ -1336,7 +1336,7 @@ contains
         complex(sp)  :: Rii(size(Q))
 
         info = 0 ; kdim = size(Q)
-        R = 0.0_sp ; Rii = 0.0_sp
+        R = zero_rsp ; Rii = zero_rsp
         
         ! Deals with the optional arguments.
         verbose = optval(verbosity, .false.)
@@ -1356,9 +1356,9 @@ contains
                     ! Orthogonalize against existing columns
                     do k = 1, i-1
                         beta = Q(i)%dot(Q(k))
-                        call Q(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Q(k), -beta)
+                        call Q(i)%axpby(one_csp, Q(k), -beta)
                     enddo
-                    beta = Q(i)%norm() ; call Q(i)%scal(1.0_sp / beta)
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -1371,20 +1371,20 @@ contains
 
             if (abs(beta) < tolerance) then
                info = j
-                R(j, j) = 0.0_sp ; call Q(j)%zero()
+                R(j, j) = zero_rsp ; call Q(j)%zero()
             else
-                R(j, j) = beta ; call Q(j)%scal(1.0_sp / beta)
+                R(j, j) = beta ; call Q(j)%scal(one_rsp / beta)
             endif
 
             ! Orthonormalize all columns against new vector (MGS)
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), Q(j), -beta)
+                call Q(i)%axpby(one_csp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
             ! Update Rii
-            Rii(j) = 0.0_sp
+            Rii(j) = zero_rsp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
             enddo
@@ -1416,12 +1416,12 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = 0.0_sp
+        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
-        call Qwrk%axpby(cmplx(0.0_sp, 0.0_sp, kind=sp), Q(j), cmplx(1.0_sp, 0.0_sp, kind=sp))
-        call Q(j)%axpby(cmplx(0.0_sp, 0.0_sp, kind=sp), Q(i), cmplx(1.0_sp, 0.0_sp, kind=sp))
-        call Q(i)%axpby(cmplx(0.0_sp, 0.0_sp, kind=sp), Qwrk, cmplx(1.0_sp, 0.0_sp, kind=sp))
+        call Qwrk%axpby(zero_csp, Q(j), one_csp)
+        call Q(j)%axpby(zero_csp, Q(i), one_csp)
+        call Q(i)%axpby(zero_csp, Qwrk, one_csp)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1544,19 +1544,19 @@ contains
         verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
-        info = 0 ; R = 0.0_dp
+        info = 0 ; R = zero_rdp
         do j = 1, size(Q)
             ! First pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Q(i), -beta)
+                call Q(j)%axpby(one_cdp, Q(i), -beta)
                 R(i, j) = beta
             enddo
 
             ! Second pass
             do i = 1, j-1
                 beta = Q(i)%dot(Q(j))
-                call Q(j)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Q(i), -beta)
+                call Q(j)%axpby(one_cdp, Q(i), -beta)
                 R(i, j) = R(i, j) + beta
             enddo
 
@@ -1570,9 +1570,9 @@ contains
                     write(output_unit, *) "      (j, beta) = (", j, ", ", beta, ")"
                 endif
                 info = j
-                R(i, j) = 0.0_dp ; call Q(j)%zero()
+                R(i, j) = zero_rdp ; call Q(j)%zero()
             else
-                call Q(j)%scal(1.0_dp / beta) ; R(j, j) = beta
+                call Q(j)%scal(one_rdp / beta) ; R(j, j) = beta
             endif
         enddo
 
@@ -1603,7 +1603,7 @@ contains
         complex(dp)  :: Rii(size(Q))
 
         info = 0 ; kdim = size(Q)
-        R = 0.0_dp ; Rii = 0.0_dp
+        R = zero_rdp ; Rii = zero_rdp
         
         ! Deals with the optional arguments.
         verbose = optval(verbosity, .false.)
@@ -1623,9 +1623,9 @@ contains
                     ! Orthogonalize against existing columns
                     do k = 1, i-1
                         beta = Q(i)%dot(Q(k))
-                        call Q(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Q(k), -beta)
+                        call Q(i)%axpby(one_cdp, Q(k), -beta)
                     enddo
-                    beta = Q(i)%norm() ; call Q(i)%scal(1.0_dp / beta)
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
                 exit qr_step
@@ -1638,20 +1638,20 @@ contains
 
             if (abs(beta) < tolerance) then
                info = j
-                R(j, j) = 0.0_dp ; call Q(j)%zero()
+                R(j, j) = zero_rdp ; call Q(j)%zero()
             else
-                R(j, j) = beta ; call Q(j)%scal(1.0_dp / beta)
+                R(j, j) = beta ; call Q(j)%scal(one_rdp / beta)
             endif
 
             ! Orthonormalize all columns against new vector (MGS)
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), Q(j), -beta)
+                call Q(i)%axpby(one_cdp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
             ! Update Rii
-            Rii(j) = 0.0_dp
+            Rii(j) = zero_rdp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
             enddo
@@ -1683,12 +1683,12 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = 0.0_dp
+        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
-        call Qwrk%axpby(cmplx(0.0_dp, 0.0_dp, kind=dp), Q(j), cmplx(1.0_dp, 0.0_dp, kind=dp))
-        call Q(j)%axpby(cmplx(0.0_dp, 0.0_dp, kind=dp), Q(i), cmplx(1.0_dp, 0.0_dp, kind=dp))
-        call Q(i)%axpby(cmplx(0.0_dp, 0.0_dp, kind=dp), Qwrk, cmplx(1.0_dp, 0.0_dp, kind=dp))
+        call Qwrk%axpby(zero_cdp, Q(j), one_cdp)
+        call Q(j)%axpby(zero_cdp, Q(i), one_cdp)
+        call Q(i)%axpby(zero_cdp, Qwrk, one_cdp)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1826,7 +1826,7 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_sp
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rsp
         allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
@@ -1862,7 +1862,7 @@ contains
             call check_info(info, 'qr', module=this_module, procedure='arnoldi_rsp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
-            res = 0.0_sp
+            res = zero_rsp
             do i = 1, p
                 res(i) = H(kp+i, kpm+i)
             enddo
@@ -1896,7 +1896,7 @@ contains
 
         ! Counters and allocations.
         kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_sp
+        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rsp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
         call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
@@ -1951,7 +1951,7 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_dp
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rdp
         allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
@@ -1987,7 +1987,7 @@ contains
             call check_info(info, 'qr', module=this_module, procedure='arnoldi_rdp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
-            res = 0.0_dp
+            res = zero_rdp
             do i = 1, p
                 res(i) = H(kp+i, kpm+i)
             enddo
@@ -2021,7 +2021,7 @@ contains
 
         ! Counters and allocations.
         kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_dp
+        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rdp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
         call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
@@ -2076,7 +2076,7 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_sp
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rsp
         allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
@@ -2112,7 +2112,7 @@ contains
             call check_info(info, 'qr', module=this_module, procedure='arnoldi_csp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
-            res = 0.0_sp
+            res = zero_rsp
             do i = 1, p
                 res(i) = H(kp+i, kpm+i)
             enddo
@@ -2146,7 +2146,7 @@ contains
 
         ! Counters and allocations.
         kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_sp
+        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rsp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
         call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
@@ -2201,7 +2201,7 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = 0.0_dp
+        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rdp
         allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
@@ -2237,7 +2237,7 @@ contains
             call check_info(info, 'qr', module=this_module, procedure='arnoldi_cdp')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
-            res = 0.0_dp
+            res = zero_rdp
             do i = 1, p
                 res(i) = H(kp+i, kpm+i)
             enddo
@@ -2271,7 +2271,7 @@ contains
 
         ! Counters and allocations.
         kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = 0.0_dp
+        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rdp
 
         ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
         call innerprod(H(1:kp, kpm+1:kp), X(1:kp), X(kp+1:kpp))
