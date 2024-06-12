@@ -54,8 +54,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_rsp), &
-                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_rsp) &
+                        new_unittest("QR factorization (correctness & orthonormality)", test_qr_factorization_rsp), &
+                        new_unittest("Pivoting QR for a rank deficient matrix (correctness & orthonormality))",&
+                            & test_pivoting_qr_exact_rank_deficiency_rsp) &
                     ]
         return
     end subroutine collect_qr_rsp_testsuite
@@ -71,7 +72,8 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(sp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        real(sp), dimension(test_size, kdim) :: Adata, Qdata
+        real(sp), dimension(kdim, kdim) :: G, Id
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -88,6 +90,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_rsp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_qr_factorization_rsp
@@ -105,15 +116,15 @@ contains
         real(sp) :: R(kdim, kdim)
         ! Permutation vector.
         integer :: perm(kdim)
-        real(sp) :: Id(kdim, kdim)
         ! Information flag.
         integer :: info
        
         ! Miscellaneous.
         integer :: k, idx, rk
-        real(sp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
         real(sp) :: alpha
         logical :: mask(kdim)
+        real(sp), dimension(test_size, kdim) :: Adata, Qdata
+        real(sp), dimension(kdim, kdim) :: G, Id
 
         ! Effective rank.
         rk = kdim - nzero
@@ -146,6 +157,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_rsp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rsp
@@ -154,8 +174,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_rdp), &
-                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_rdp) &
+                        new_unittest("QR factorization (correctness & orthonormality)", test_qr_factorization_rdp), &
+                        new_unittest("Pivoting QR for a rank deficient matrix (correctness & orthonormality))",&
+                            & test_pivoting_qr_exact_rank_deficiency_rdp) &
                     ]
         return
     end subroutine collect_qr_rdp_testsuite
@@ -171,7 +192,8 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(dp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        real(dp), dimension(test_size, kdim) :: Adata, Qdata
+        real(dp), dimension(kdim, kdim) :: G, Id
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -188,6 +210,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_rdp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_qr_factorization_rdp
@@ -205,15 +236,15 @@ contains
         real(dp) :: R(kdim, kdim)
         ! Permutation vector.
         integer :: perm(kdim)
-        real(dp) :: Id(kdim, kdim)
         ! Information flag.
         integer :: info
        
         ! Miscellaneous.
         integer :: k, idx, rk
-        real(dp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
         real(dp) :: alpha
         logical :: mask(kdim)
+        real(dp), dimension(test_size, kdim) :: Adata, Qdata
+        real(dp), dimension(kdim, kdim) :: G, Id
 
         ! Effective rank.
         rk = kdim - nzero
@@ -246,6 +277,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_rdp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rdp
@@ -254,8 +294,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_csp), &
-                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_csp) &
+                        new_unittest("QR factorization (correctness & orthonormality)", test_qr_factorization_csp), &
+                        new_unittest("Pivoting QR for a rank deficient matrix (correctness & orthonormality))",&
+                            & test_pivoting_qr_exact_rank_deficiency_csp) &
                     ]
         return
     end subroutine collect_qr_csp_testsuite
@@ -271,7 +312,8 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        complex(sp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        complex(sp), dimension(test_size, kdim) :: Adata, Qdata
+        complex(sp), dimension(kdim, kdim) :: G, Id
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -288,6 +330,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_csp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_qr_factorization_csp
@@ -305,15 +356,15 @@ contains
         complex(sp) :: R(kdim, kdim)
         ! Permutation vector.
         integer :: perm(kdim)
-        complex(sp) :: Id(kdim, kdim)
         ! Information flag.
         integer :: info
        
         ! Miscellaneous.
         integer :: k, idx, rk
-        complex(sp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
         real(sp) :: alpha
         logical :: mask(kdim)
+        complex(sp), dimension(test_size, kdim) :: Adata, Qdata
+        complex(sp), dimension(kdim, kdim) :: G, Id
 
         ! Effective rank.
         rk = kdim - nzero
@@ -346,6 +397,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_csp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_csp
@@ -354,8 +414,9 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_cdp), &
-                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_cdp) &
+                        new_unittest("QR factorization (correctness & orthonormality)", test_qr_factorization_cdp), &
+                        new_unittest("Pivoting QR for a rank deficient matrix (correctness & orthonormality))",&
+                            & test_pivoting_qr_exact_rank_deficiency_cdp) &
                     ]
         return
     end subroutine collect_qr_cdp_testsuite
@@ -371,7 +432,8 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        complex(dp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        complex(dp), dimension(test_size, kdim) :: Adata, Qdata
+        complex(dp), dimension(kdim, kdim) :: G, Id
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -388,6 +450,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_cdp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_qr_factorization_cdp
@@ -405,15 +476,15 @@ contains
         complex(dp) :: R(kdim, kdim)
         ! Permutation vector.
         integer :: perm(kdim)
-        complex(dp) :: Id(kdim, kdim)
         ! Information flag.
         integer :: info
        
         ! Miscellaneous.
         integer :: k, idx, rk
-        complex(dp) :: Adata(test_size, kdim), Qdata(test_size, kdim)
         real(dp) :: alpha
         logical :: mask(kdim)
+        complex(dp), dimension(test_size, kdim) :: Adata, Qdata
+        complex(dp), dimension(kdim, kdim) :: G, Id
 
         ! Effective rank.
         rk = kdim - nzero
@@ -446,6 +517,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_cdp
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_cdp
@@ -459,9 +539,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_rsp), &
-            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
-                & test_block_arnoldi_factorization_rsp), &
+            new_unittest("Arnoldi factorization (correctness & orthonormality)", test_arnoldi_factorization_rsp), &
+            new_unittest("Block Arnoldi factorization (correctness & orthonormality)", test_block_arnoldi_factorization_rsp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_rsp) &
                     ]
         return
@@ -612,9 +691,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_rdp), &
-            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
-                & test_block_arnoldi_factorization_rdp), &
+            new_unittest("Arnoldi factorization (correctness & orthonormality)", test_arnoldi_factorization_rdp), &
+            new_unittest("Block Arnoldi factorization (correctness & orthonormality)", test_block_arnoldi_factorization_rdp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_rdp) &
                     ]
         return
@@ -765,9 +843,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_csp), &
-            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
-                & test_block_arnoldi_factorization_csp), &
+            new_unittest("Arnoldi factorization (correctness & orthonormality)", test_arnoldi_factorization_csp), &
+            new_unittest("Block Arnoldi factorization (correctness & orthonormality)", test_block_arnoldi_factorization_csp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_csp) &
                     ]
         return
@@ -918,9 +995,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_cdp), &
-            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)",&
-                & test_block_arnoldi_factorization_cdp), &
+            new_unittest("Arnoldi factorization (correctness & orthonormality)", test_arnoldi_factorization_cdp), &
+            new_unittest("Block Arnoldi factorization (correctness & orthonormality)", test_block_arnoldi_factorization_cdp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_cdp) &
                     ]
         return
@@ -1358,8 +1434,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
-                 & test_lanczos_tridiag_factorization_rsp) &
+             new_unittest("Lanczos Tridiagonalization (correctness & orthonormality)", test_lanczos_tridiag_factorization_rsp) &
             ]
 
         return
@@ -1425,8 +1500,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
-                 & test_lanczos_tridiag_factorization_rdp) &
+             new_unittest("Lanczos Tridiagonalization (correctness & orthonormality)", test_lanczos_tridiag_factorization_rdp) &
             ]
 
         return
@@ -1492,8 +1566,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
-                 & test_lanczos_tridiag_factorization_csp) &
+             new_unittest("Lanczos Tridiagonalization (correctness & orthonormality)", test_lanczos_tridiag_factorization_csp) &
             ]
 
         return
@@ -1559,8 +1632,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)",&
-                 & test_lanczos_tridiag_factorization_cdp) &
+             new_unittest("Lanczos Tridiagonalization (correctness & orthonormality)", test_lanczos_tridiag_factorization_cdp) &
             ]
 
         return

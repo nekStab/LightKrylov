@@ -44,8 +44,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_${type[0]}$${kind}$), &
-                        new_unittest("Pivoting QR (exact rank def.)", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$) &
+                        new_unittest("QR factorization (correctness & orthonormality)", test_qr_factorization_${type[0]}$${kind}$), &
+                        new_unittest("Pivoting QR for a rank deficient matrix (correctness & orthonormality))", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_qr_${type[0]}$${kind}$_testsuite
@@ -61,7 +61,8 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        ${type}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
+        ${type}$, dimension(test_size, kdim) :: Adata, Qdata
+        ${type}$, dimension(kdim, kdim) :: G, Id
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -78,6 +79,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_qr_factorization_${type[0]}$${kind}$
@@ -95,15 +105,15 @@ contains
         ${type}$ :: R(kdim, kdim)
         ! Permutation vector.
         integer :: perm(kdim)
-        ${type}$ :: Id(kdim, kdim)
         ! Information flag.
         integer :: info
        
         ! Miscellaneous.
         integer :: k, idx, rk
-        ${type}$ :: Adata(test_size, kdim), Qdata(test_size, kdim)
         real(${kind}$) :: alpha
         logical :: mask(kdim)
+        ${type}$, dimension(test_size, kdim) :: Adata, Qdata
+        ${type}$, dimension(kdim, kdim) :: G, Id
 
         ! Effective rank.
         rk = kdim - nzero
@@ -136,6 +146,15 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, A(1:kdim), A(1:kdim))
+
+        ! Check orthonormality of the computed basis.
+        Id = eye(kdim)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$
@@ -151,8 +170,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization (correctness and basis orthonormality)", test_arnoldi_factorization_${type[0]}$${kind}$), &
-            new_unittest("Block Arnoldi factorization (correctness and basis orthonormality)", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi factorization (correctness & orthonormality)", test_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Block Arnoldi factorization (correctness & orthonormality)", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$) &
                     ]
         return
@@ -386,7 +405,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization (correctness and basis orthonormality)", test_lanczos_tridiag_factorization_${type[0]}$${kind}$) &
+             new_unittest("Lanczos Tridiagonalization (correctness & orthonormality)", test_lanczos_tridiag_factorization_${type[0]}$${kind}$) &
             ]
 
         return
