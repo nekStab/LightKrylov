@@ -581,7 +581,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_${kind}$
         allocate(y(kdim)) ; y = 0.0_${kind}$
-        allocate(alpha(kdim)) ; y = 0.0_${kind}$
+        allocate(alpha(kdim)) ; alpha = 0.0_${kind}$
         allocate(e(kdim+1)) ; e = 0.0_${kind}$
 
         info = 0

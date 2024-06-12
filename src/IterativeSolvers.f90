@@ -1657,7 +1657,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
-        allocate(alpha(kdim)) ; y = 0.0_sp
+        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         info = 0
@@ -1693,20 +1693,10 @@ contains
                 endif
 
                 ! Gram-Schmid orthogonalization (twice is enough).
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_rsp, V(j), -alpha)
-                !    H(j, k) = alpha
-                !enddo
                 ! first pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                             & procedure='update_hessenberg_matrix_rsp, first pass')
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_rsp, V(j), -alpha)
-                !    H(j, k) = H(j, k) + alpha
-                !enddo
                 ! second pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
@@ -1835,7 +1825,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
-        allocate(alpha(kdim)) ; y = 0.0_dp
+        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         info = 0
@@ -1871,20 +1861,10 @@ contains
                 endif
 
                 ! Gram-Schmid orthogonalization (twice is enough).
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_rdp, V(j), -alpha)
-                !    H(j, k) = alpha
-                !enddo
                 ! first pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                             & procedure='update_hessenberg_matrix_rdp, first pass')
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_rdp, V(j), -alpha)
-                !    H(j, k) = H(j, k) + alpha
-                !enddo
                 ! second pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
@@ -2013,7 +1993,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
-        allocate(alpha(kdim)) ; y = 0.0_sp
+        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         info = 0
@@ -2049,20 +2029,10 @@ contains
                 endif
 
                 ! Gram-Schmid orthogonalization (twice is enough).
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_csp, V(j), -alpha)
-                !    H(j, k) = alpha
-                !enddo
                 ! first pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                             & procedure='update_hessenberg_matrix_csp, first pass')
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_csp, V(j), -alpha)
-                !    H(j, k) = H(j, k) + alpha
-                !enddo
                 ! second pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
@@ -2191,7 +2161,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
-        allocate(alpha(kdim)) ; y = 0.0_dp
+        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         info = 0
@@ -2227,20 +2197,10 @@ contains
                 endif
 
                 ! Gram-Schmid orthogonalization (twice is enough).
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_cdp, V(j), -alpha)
-                !    H(j, k) = alpha
-                !enddo
                 ! first pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                             & procedure='update_hessenberg_matrix_cdp, first pass')
-                !do j = 1, k
-                !    alpha = V(j)%dot(V(k+1))
-                !    call V(k+1)%axpby(one_cdp, V(j), -alpha)
-                !    H(j, k) = H(j, k) + alpha
-                !enddo
                 ! second pass
                 call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
                 call check_info(info, 'orthogonalize_against_basis', module=this_module, &
