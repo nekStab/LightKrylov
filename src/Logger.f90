@@ -170,8 +170,32 @@ contains
          else if (trim(to_lower(origin)) == 'orthogonalize_against_basis') then
             ! orthogonalization
             if (info == 1) then
-               write(msg, *) 'Othogonalization: The ', info, 'th input vector is numerically zero.'
+               write(msg, *) 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
                call logger%log_information(trim(msg), module=module, procedure=procedure)
+            else if (info == -1) then
+               write(msg, *) 'The input Krylov basis is not orthonormal.'
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -2) then
+               write(msg, *) 'Orthogonalization: The last column of the input basis is zero.'
+               call logger%log_warning(trim(msg), module=module, procedure=procedure)
+            else
+               write(msg, *) "Undocumented error."
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
+         else if (trim(to_lower(origin)) == 'double_gram_schmidt_step') then
+            ! orthogonalization
+            if (info == 1) then
+               write(msg, *) 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
+               call logger%log_information(trim(msg), module=module, procedure=procedure)
+            else if (info == -1) then
+               write(msg, *) 'The input Krylov basis is not orthonormal.'
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -2) then
+               write(msg, *) 'Orthogonalization: The last column of the input basis is zero.'
+               call logger%log_warning(trim(msg), module=module, procedure=procedure)
             else
                write(msg, *) "Undocumented error."
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
