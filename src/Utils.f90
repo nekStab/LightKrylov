@@ -11,8 +11,6 @@ module lightkrylov_utils
     use stdlib_linalg_lapack, only: gesvd
     ! Eigenvalue problem (general + symmetric).
     use stdlib_linalg_lapack, only: geev, syev, heev
-    ! Least-squares solver.
-    use stdlib_linalg_lapack, only: gels
     ! Schur factorization.
     use stdlib_linalg_lapack, only: gees, trsen
 
@@ -38,8 +36,6 @@ module lightkrylov_utils
     public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
-    ! Solve min || Ax - b ||_2^2.
-    public :: lstsq
     ! Compute AX = XS where S is in Schur form.
     public :: schur
     ! Re-orders the Schur factorization of A.
@@ -95,13 +91,6 @@ module lightkrylov_utils
         module procedure eigh_rdp
         module procedure eigh_csp
         module procedure eigh_cdp
-    end interface
-
-    interface lstsq
-        module procedure lstsq_rsp
-        module procedure lstsq_rdp
-        module procedure lstsq_csp
-        module procedure lstsq_cdp
     end interface
 
     interface schur
@@ -469,37 +458,6 @@ contains
         return
     end subroutine eigh_rsp
 
-    subroutine lstsq_rsp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        real(sp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        real(sp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        real(sp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        real(sp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        real(sp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_rsp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rsp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_rsp
-
     subroutine schur_rsp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
         real(sp), intent(inout) :: A(:, :)
@@ -726,37 +684,6 @@ contains
 
         return
     end subroutine eigh_rdp
-
-    subroutine lstsq_rdp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        real(dp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        real(dp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        real(dp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        real(dp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        real(dp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_rdp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rdp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_rdp
 
     subroutine schur_rdp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -988,37 +915,6 @@ contains
         return
     end subroutine eigh_csp
 
-    subroutine lstsq_csp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        complex(sp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        complex(sp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        complex(sp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        complex(sp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_csp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_csp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_csp
-
     subroutine schur_csp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
         complex(sp), intent(inout) :: A(:, :)
@@ -1242,37 +1138,6 @@ contains
 
         return
     end subroutine eigh_cdp
-
-    subroutine lstsq_cdp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        complex(dp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        complex(dp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        complex(dp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        complex(dp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_cdp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_cdp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_cdp
 
     subroutine schur_cdp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
