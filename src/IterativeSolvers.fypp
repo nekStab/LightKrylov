@@ -514,7 +514,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: x
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.

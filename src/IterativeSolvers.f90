@@ -1590,7 +1590,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_rsp), intent(out) :: x
+        class(abstract_vector_rsp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -1655,7 +1655,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
         allocate(alpha(kdim)) ; alpha = 0.0_sp
@@ -1694,7 +1694,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -1707,7 +1707,7 @@ contains
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -1719,10 +1719,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            call linear_combination(dx, V(:k), y(:k))
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -1748,7 +1746,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_rdp), intent(out) :: x
+        class(abstract_vector_rdp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -1813,7 +1811,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
         allocate(alpha(kdim)) ; alpha = 0.0_dp
@@ -1852,7 +1850,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -1865,7 +1863,7 @@ contains
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -1877,10 +1875,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            call linear_combination(dx, V(:k), y(:k))
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -1906,7 +1902,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_csp), intent(out) :: x
+        class(abstract_vector_csp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -1971,7 +1967,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
         allocate(alpha(kdim)) ; alpha = 0.0_sp
@@ -2010,7 +2006,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -2023,7 +2019,7 @@ contains
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -2035,10 +2031,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            call linear_combination(dx, V(:k), y(:k))
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -2064,7 +2058,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_cdp), intent(out) :: x
+        class(abstract_vector_cdp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -2129,7 +2123,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
         allocate(alpha(kdim)) ; alpha = 0.0_dp
@@ -2168,7 +2162,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -2181,7 +2175,7 @@ contains
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -2193,10 +2187,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            call linear_combination(dx, V(:k), y(:k))
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
