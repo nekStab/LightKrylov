@@ -1720,10 +1720,11 @@ contains
 
             ! Update solution.
             k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_rsp, V(j), y(j))
-            enddo
+            call linear_combination(dx, V(:k), y(:k))
+            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
+            ! do j = 1, k
+            !     call dx%axpby(one_rsp, V(j), y(j))
+            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
@@ -1881,10 +1882,11 @@ contains
 
             ! Update solution.
             k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_rdp, V(j), y(j))
-            enddo
+            call linear_combination(dx, V(:k), y(:k))
+            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
+            ! do j = 1, k
+            !     call dx%axpby(one_rdp, V(j), y(j))
+            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
@@ -2042,10 +2044,11 @@ contains
 
             ! Update solution.
             k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_csp, V(j), y(j))
-            enddo
+            call linear_combination(dx, V(:k), y(:k))
+            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
+            ! do j = 1, k
+            !     call dx%axpby(one_csp, V(j), y(j))
+            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
@@ -2203,10 +2206,11 @@ contains
 
             ! Update solution.
             k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_cdp, V(j), y(j))
-            enddo
+            call linear_combination(dx, V(:k), y(:k))
+            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
+            ! do j = 1, k
+            !     call dx%axpby(one_cdp, V(j), y(j))
+            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 

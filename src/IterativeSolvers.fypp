@@ -644,10 +644,7 @@ contains
 
             ! Update solution.
             k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_${type[0]}$${kind}$, V(j), y(j))
-            enddo
+            call linear_combination(dx, V(:k), y(:k))
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
