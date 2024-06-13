@@ -1655,7 +1655,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
         allocate(alpha(kdim)) ; alpha = 0.0_sp
@@ -1679,7 +1679,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -1721,10 +1721,6 @@ contains
             ! Update solution.
             k = min(k, kdim)
             call linear_combination(dx, V(:k), y(:k))
-            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            ! do j = 1, k
-            !     call dx%axpby(one_rsp, V(j), y(j))
-            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
@@ -1817,7 +1813,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
         allocate(alpha(kdim)) ; alpha = 0.0_dp
@@ -1841,7 +1837,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -1883,10 +1879,6 @@ contains
             ! Update solution.
             k = min(k, kdim)
             call linear_combination(dx, V(:k), y(:k))
-            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            ! do j = 1, k
-            !     call dx%axpby(one_rdp, V(j), y(j))
-            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
@@ -1979,7 +1971,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
         allocate(alpha(kdim)) ; alpha = 0.0_sp
@@ -2003,7 +1995,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2045,10 +2037,6 @@ contains
             ! Update solution.
             k = min(k, kdim)
             call linear_combination(dx, V(:k), y(:k))
-            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            ! do j = 1, k
-            !     call dx%axpby(one_csp, V(j), y(j))
-            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
@@ -2141,7 +2129,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(1:kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
         allocate(alpha(kdim)) ; alpha = 0.0_dp
@@ -2165,7 +2153,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2207,10 +2195,6 @@ contains
             ! Update solution.
             k = min(k, kdim)
             call linear_combination(dx, V(:k), y(:k))
-            ! if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            ! do j = 1, k
-            !     call dx%axpby(one_cdp, V(j), y(j))
-            ! enddo
             if (has_precond) call precond%apply(dx)
             call x%add(dx)
 
