@@ -1,6 +1,7 @@
 module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
+    use stdlib_linalg, only: eye
     use LightKrylov_constants
     use LightKrylov_Logger
     use LightKrylov_Utils
@@ -85,6 +86,17 @@ module lightkrylov_BaseKrylov
         module procedure orthogonalize_basis_against_basis_cdp
     end interface
 
+    interface double_gram_schmidt_step
+        module procedure DGS_vector_against_basis_rsp
+        module procedure DGS_basis_against_basis_rsp
+        module procedure DGS_vector_against_basis_rdp
+        module procedure DGS_basis_against_basis_rdp
+        module procedure DGS_vector_against_basis_csp
+        module procedure DGS_basis_against_basis_csp
+        module procedure DGS_vector_against_basis_cdp
+        module procedure DGS_basis_against_basis_cdp
+    end interface
+
     interface lanczos_tridiagonalization
         module procedure lanczos_tridiagonalization_rsp
         module procedure lanczos_tridiagonalization_rdp
@@ -150,7 +162,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_rsp
 
-    subroutine orthogonalize_vector_against_basis_rsp(y, X, info, beta)
+    subroutine orthogonalize_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -158,6 +170,9 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       real(sp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
 
@@ -166,8 +181,26 @@ contains
 
       info = 0
 
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
       ! check for zero vector
       if (y%norm() < atol_sp) info = 1
+
+      if (chk_X_orthonormality) then
+         block 
+            real(sp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_sp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -179,14 +212,14 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X) ], 'orthogonalize_vector_against_basis_rsp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_rsp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_vector_against_basis_rsp
 
-    subroutine orthogonalize_basis_against_basis_rsp(Y, X, info, beta)
+    subroutine orthogonalize_basis_against_basis_rsp(Y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -194,20 +227,40 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       real(sp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
 
       ! internals
       real(sp) :: proj_coefficients(size(X), size(Y))
-      real(sp) :: R(size(Y), size(Y))
       integer :: i
 
       info = 0
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_sp) info = i
       end do
+
+      if (chk_X_orthonormality) then
+         block 
+            real(sp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_sp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
       
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
@@ -219,12 +272,99 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X), size(Y) ], 'orthogonalize_basis_against_basis_rsp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_rsp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_basis_against_basis_rsp
+
+    subroutine DGS_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_rsp), intent(inout) :: y
+      !! Input `abstract_vector` to orthogonalize
+      class(abstract_vector_rsp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      real(sp),                         optional, intent(out)   :: beta(:)
+      !! Projection coefficients if requested
+
+      ! internals
+      real(sp), dimension(size(X)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_rsp; wrk = zero_rsp
+
+      ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      ! second pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_rsp, second&
+          & pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_rsp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_vector_against_basis_rsp
+
+    subroutine DGS_basis_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_rsp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthogonalize
+      class(abstract_vector_rsp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      real(sp),                         optional, intent(out)   :: beta(:,:)
+      !! Projection coefficients if requested
+
+      ! internals
+      real(sp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_rsp; wrk = zero_rsp
+
+      ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rsp, first pass')
+      ! second pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rsp, second pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_rsp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_basis_against_basis_rsp  
 
     subroutine initialize_krylov_subspace_rdp(X, X0)
         class(abstract_vector_rdp), intent(inout) :: X(:)
@@ -264,7 +404,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_rdp
 
-    subroutine orthogonalize_vector_against_basis_rdp(y, X, info, beta)
+    subroutine orthogonalize_vector_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -272,6 +412,9 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       real(dp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
 
@@ -280,8 +423,26 @@ contains
 
       info = 0
 
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
       ! check for zero vector
       if (y%norm() < atol_dp) info = 1
+
+      if (chk_X_orthonormality) then
+         block 
+            real(dp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_dp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -293,14 +454,14 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X) ], 'orthogonalize_vector_against_basis_rdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_rdp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_vector_against_basis_rdp
 
-    subroutine orthogonalize_basis_against_basis_rdp(Y, X, info, beta)
+    subroutine orthogonalize_basis_against_basis_rdp(Y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -308,20 +469,40 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       real(dp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
 
       ! internals
       real(dp) :: proj_coefficients(size(X), size(Y))
-      real(dp) :: R(size(Y), size(Y))
       integer :: i
 
       info = 0
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_dp) info = i
       end do
+
+      if (chk_X_orthonormality) then
+         block 
+            real(dp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_dp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
       
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
@@ -333,12 +514,99 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X), size(Y) ], 'orthogonalize_basis_against_basis_rdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_rdp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_basis_against_basis_rdp
+
+    subroutine DGS_vector_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_rdp), intent(inout) :: y
+      !! Input `abstract_vector` to orthogonalize
+      class(abstract_vector_rdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      real(dp),                         optional, intent(out)   :: beta(:)
+      !! Projection coefficients if requested
+
+      ! internals
+      real(dp), dimension(size(X)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_rdp; wrk = zero_rdp
+
+      ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      ! second pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_rdp, second&
+          & pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_rdp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_vector_against_basis_rdp
+
+    subroutine DGS_basis_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_rdp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthogonalize
+      class(abstract_vector_rdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      real(dp),                         optional, intent(out)   :: beta(:,:)
+      !! Projection coefficients if requested
+
+      ! internals
+      real(dp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_rdp; wrk = zero_rdp
+
+      ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rdp, first pass')
+      ! second pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rdp, second pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_rdp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_basis_against_basis_rdp  
 
     subroutine initialize_krylov_subspace_csp(X, X0)
         class(abstract_vector_csp), intent(inout) :: X(:)
@@ -378,7 +646,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_csp
 
-    subroutine orthogonalize_vector_against_basis_csp(y, X, info, beta)
+    subroutine orthogonalize_vector_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -386,6 +654,9 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       complex(sp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
 
@@ -394,8 +665,26 @@ contains
 
       info = 0
 
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
       ! check for zero vector
       if (y%norm() < atol_sp) info = 1
+
+      if (chk_X_orthonormality) then
+         block 
+            complex(sp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_sp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -407,14 +696,14 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X) ], 'orthogonalize_vector_against_basis_csp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_csp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_vector_against_basis_csp
 
-    subroutine orthogonalize_basis_against_basis_csp(Y, X, info, beta)
+    subroutine orthogonalize_basis_against_basis_csp(Y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -422,20 +711,40 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       complex(sp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
 
       ! internals
       complex(sp) :: proj_coefficients(size(X), size(Y))
-      complex(sp) :: R(size(Y), size(Y))
       integer :: i
 
       info = 0
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_sp) info = i
       end do
+
+      if (chk_X_orthonormality) then
+         block 
+            complex(sp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_sp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
       
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
@@ -447,12 +756,99 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X), size(Y) ], 'orthogonalize_basis_against_basis_csp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_csp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_basis_against_basis_csp
+
+    subroutine DGS_vector_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_csp), intent(inout) :: y
+      !! Input `abstract_vector` to orthogonalize
+      class(abstract_vector_csp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      complex(sp),                         optional, intent(out)   :: beta(:)
+      !! Projection coefficients if requested
+
+      ! internals
+      complex(sp), dimension(size(X)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_csp; wrk = zero_csp
+
+      ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      ! second pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_csp, second&
+          & pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_csp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_vector_against_basis_csp
+
+    subroutine DGS_basis_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_csp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthogonalize
+      class(abstract_vector_csp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      complex(sp),                         optional, intent(out)   :: beta(:,:)
+      !! Projection coefficients if requested
+
+      ! internals
+      complex(sp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_csp; wrk = zero_csp
+
+      ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_csp, first pass')
+      ! second pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_csp, second pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_csp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_basis_against_basis_csp  
 
     subroutine initialize_krylov_subspace_cdp(X, X0)
         class(abstract_vector_cdp), intent(inout) :: X(:)
@@ -492,7 +888,7 @@ contains
         return
     end subroutine initialize_krylov_subspace_cdp
 
-    subroutine orthogonalize_vector_against_basis_cdp(y, X, info, beta)
+    subroutine orthogonalize_vector_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: y
       !! Input `abstract_vector` to orthogonalize
@@ -500,6 +896,9 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       complex(dp),                         optional, intent(out)   :: beta(:)
       !! Projection coefficients if requested
 
@@ -508,8 +907,26 @@ contains
 
       info = 0
 
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
       ! check for zero vector
       if (y%norm() < atol_dp) info = 1
+
+      if (chk_X_orthonormality) then
+         block 
+            complex(dp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_dp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
 
       ! orthogonalize
       call innerprod(proj_coefficients, X, y)
@@ -521,14 +938,14 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X) ], 'orthogonalize_vector_against_basis_cdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_cdp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_vector_against_basis_cdp
 
-    subroutine orthogonalize_basis_against_basis_cdp(Y, X, info, beta)
+    subroutine orthogonalize_basis_against_basis_cdp(Y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: Y(:)
       !! Input `abstract_vector` basis to orthogonalize
@@ -536,20 +953,40 @@ contains
       !! Input `abstract_vector` basis to orthogonalize against
       integer, intent(out) :: info
       !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
       complex(dp),                         optional, intent(out)   :: beta(:,:)
       !! Projection coefficients if requested
 
       ! internals
       complex(dp) :: proj_coefficients(size(X), size(Y))
-      complex(dp) :: R(size(Y), size(Y))
       integer :: i
 
       info = 0
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       ! check for zero vector
       do i = 1, size(Y)
          if ( Y(i)%norm() < atol_dp) info = i
       end do
+
+      if (chk_X_orthonormality) then
+         block 
+            complex(dp), dimension(size(X), size(X)) :: G
+            call innerprod(G, X, X)
+            if (abs(G(size(X),size(X))) < rtol_dp) then
+               ! The last vector in X is zero, it does not impact orthogonalisation
+               info = -2
+            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+               ! The basis is not orthonormal. Cannot orthonormalize.
+               info = -1
+               return
+            end if
+         end block
+      end if
       
       ! orthogonalize
       call innerprod(proj_coefficients, X, Y)
@@ -561,12 +998,99 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, [ size(X), size(Y) ], 'orthogonalize_basis_against_basis_cdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_cdp', 'beta')
          beta = proj_coefficients
       end if
       
       return
     end subroutine orthogonalize_basis_against_basis_cdp
+
+    subroutine DGS_vector_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_cdp), intent(inout) :: y
+      !! Input `abstract_vector` to orthogonalize
+      class(abstract_vector_cdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      complex(dp),                         optional, intent(out)   :: beta(:)
+      !! Projection coefficients if requested
+
+      ! internals
+      complex(dp), dimension(size(X)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_cdp; wrk = zero_cdp
+
+      ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      ! second pass
+      call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_cdp, second&
+          & pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_cdp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_vector_against_basis_cdp
+
+    subroutine DGS_basis_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
+      !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+      !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+      class(abstract_vector_cdp), intent(inout) :: Y(:)
+      !! Input `abstract_vector` basis to orthogonalize
+      class(abstract_vector_cdp), intent(in)    :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      integer, intent(out) :: info
+      !! Information flag.
+      logical,                          optional, intent(in)    :: if_chk_orthonormal
+      logical                                                   :: chk_X_orthonormality
+      !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+      complex(dp),                         optional, intent(out)   :: beta(:,:)
+      !! Projection coefficients if requested
+
+      ! internals
+      complex(dp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
+
+      ! optional input argument
+      chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
+
+      info = 0
+
+      proj_coefficients = zero_cdp; wrk = zero_cdp
+
+      ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
+      ! first pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_cdp, first pass')
+      ! second pass
+      call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_cdp, second pass')
+      ! combine passes
+      proj_coefficients = proj_coefficients + wrk
+
+      if (present(beta)) then
+         ! check size
+         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_cdp', 'beta')
+         beta = proj_coefficients
+      end if
+
+    end subroutine DGS_basis_against_basis_cdp  
 
 
     !------------------------------------
@@ -599,17 +1123,9 @@ contains
         info = 0 ; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
-               ! First pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_rsp, first pass')
-               R(1:j-1,j) = beta(1:j-1)
-
-               ! Second pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_rsp, second pass')
-               R(1:j-1,j) = R(1:j-1,j) + beta(1:j-1)
+                ! Double Gram-Schmidt orthogonalization
+                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rsp')
             end if
 
             ! Normalize column.
@@ -672,9 +1188,8 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_with_pivoting_rsp')
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_rsp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
@@ -865,17 +1380,9 @@ contains
         info = 0 ; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
-               ! First pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_rdp, first pass')
-               R(1:j-1,j) = beta(1:j-1)
-
-               ! Second pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_rdp, second pass')
-               R(1:j-1,j) = R(1:j-1,j) + beta(1:j-1)
+                ! Double Gram-Schmidt orthogonalization
+                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rdp')
             end if
 
             ! Normalize column.
@@ -938,9 +1445,8 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_with_pivoting_rdp')
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_rdp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
@@ -1131,17 +1637,9 @@ contains
         info = 0 ; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
-               ! First pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_csp, first pass')
-               R(1:j-1,j) = beta(1:j-1)
-
-               ! Second pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_csp, second pass')
-               R(1:j-1,j) = R(1:j-1,j) + beta(1:j-1)
+                ! Double Gram-Schmidt orthogonalization
+                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_csp')
             end if
 
             ! Normalize column.
@@ -1204,9 +1702,8 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_with_pivoting_csp')
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_csp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
                 enddo
                 info = j
@@ -1397,17 +1894,9 @@ contains
         info = 0 ; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
-               ! First pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_cdp, first pass')
-               R(1:j-1,j) = beta(1:j-1)
-
-               ! Second pass
-               call orthogonalize_against_basis(Q(j), Q(1:j-1), info, beta(1:j-1))
-               call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_no_pivoting_cdp, second pass')
-               R(1:j-1,j) = R(1:j-1,j) + beta(1:j-1)
+                ! Double Gram-Schmidt orthogonalization
+                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_cdp')
             end if
 
             ! Normalize column.
@@ -1470,9 +1959,8 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='qr_with_pivoting_cdp')
+                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_cdp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
                 enddo
                 info = j
@@ -1702,8 +2190,9 @@ contains
                 enddo
             endif
 
-            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
-            call update_hessenberg_matrix_rsp(H, X, k, p)
+            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rsp')
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
@@ -1728,40 +2217,6 @@ contains
 
         return
     end subroutine arnoldi_rsp
-
-    subroutine update_hessenberg_matrix_rsp(H, X, k, blksize)
-        integer, intent(in) :: k
-        real(sp), intent(inout) :: H(:, :)
-        class(abstract_vector_rsp), intent(inout) :: X(:)
-        integer, optional, intent(in) :: blksize
-
-        ! Internal variables.
-        real(sp), allocatable :: wrk(:, :)
-        integer :: p, kpm, kp, kpp, i, j, info
-
-        ! Deals with optional non-unity block size.
-        p = optval(blksize, 1)
-
-        ! Counters and allocations.
-        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rsp
-
-        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        ! first pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, H(1:kp, kpm+1:kp))
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_rsp, first pass')
-
-        ! second pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, wrk)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_rsp, second pass')
-
-        ! combine passes
-        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
-
-        return
-    end subroutine update_hessenberg_matrix_rsp
 
     subroutine arnoldi_rdp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
         class(abstract_linop_rdp), intent(in) :: A
@@ -1823,8 +2278,9 @@ contains
                 enddo
             endif
 
-            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
-            call update_hessenberg_matrix_rdp(H, X, k, p)
+            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rdp')
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
@@ -1849,40 +2305,6 @@ contains
 
         return
     end subroutine arnoldi_rdp
-
-    subroutine update_hessenberg_matrix_rdp(H, X, k, blksize)
-        integer, intent(in) :: k
-        real(dp), intent(inout) :: H(:, :)
-        class(abstract_vector_rdp), intent(inout) :: X(:)
-        integer, optional, intent(in) :: blksize
-
-        ! Internal variables.
-        real(dp), allocatable :: wrk(:, :)
-        integer :: p, kpm, kp, kpp, i, j, info
-
-        ! Deals with optional non-unity block size.
-        p = optval(blksize, 1)
-
-        ! Counters and allocations.
-        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rdp
-
-        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        ! first pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, H(1:kp, kpm+1:kp))
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_rdp, first pass')
-
-        ! second pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, wrk)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_rdp, second pass')
-
-        ! combine passes
-        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
-
-        return
-    end subroutine update_hessenberg_matrix_rdp
 
     subroutine arnoldi_csp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
         class(abstract_linop_csp), intent(in) :: A
@@ -1944,8 +2366,9 @@ contains
                 enddo
             endif
 
-            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
-            call update_hessenberg_matrix_csp(H, X, k, p)
+            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_csp')
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
@@ -1970,40 +2393,6 @@ contains
 
         return
     end subroutine arnoldi_csp
-
-    subroutine update_hessenberg_matrix_csp(H, X, k, blksize)
-        integer, intent(in) :: k
-        complex(sp), intent(inout) :: H(:, :)
-        class(abstract_vector_csp), intent(inout) :: X(:)
-        integer, optional, intent(in) :: blksize
-
-        ! Internal variables.
-        complex(sp), allocatable :: wrk(:, :)
-        integer :: p, kpm, kp, kpp, i, j, info
-
-        ! Deals with optional non-unity block size.
-        p = optval(blksize, 1)
-
-        ! Counters and allocations.
-        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rsp
-
-        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        ! first pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, H(1:kp, kpm+1:kp))
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_csp, first pass')
-
-        ! second pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, wrk)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_csp, second pass')
-
-        ! combine passes
-        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
-
-        return
-    end subroutine update_hessenberg_matrix_csp
 
     subroutine arnoldi_cdp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
         class(abstract_linop_cdp), intent(in) :: A
@@ -2065,8 +2454,9 @@ contains
                 enddo
             endif
 
-            ! Update Hessenberg matrix and orthogonalize w.r.t. previous vectors.
-            call update_hessenberg_matrix_cdp(H, X, k, p)
+            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_cdp')
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
@@ -2091,40 +2481,6 @@ contains
 
         return
     end subroutine arnoldi_cdp
-
-    subroutine update_hessenberg_matrix_cdp(H, X, k, blksize)
-        integer, intent(in) :: k
-        complex(dp), intent(inout) :: H(:, :)
-        class(abstract_vector_cdp), intent(inout) :: X(:)
-        integer, optional, intent(in) :: blksize
-
-        ! Internal variables.
-        complex(dp), allocatable :: wrk(:, :)
-        integer :: p, kpm, kp, kpp, i, j, info
-
-        ! Deals with optional non-unity block size.
-        p = optval(blksize, 1)
-
-        ! Counters and allocations.
-        kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-        allocate(wrk(1:kp, 1:p)) ; wrk = zero_rdp
-
-        ! Orthogonalize residual vector w.r.t. to previous computed Krylov vectors.
-        ! first pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, H(1:kp, kpm+1:kp))
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_cdp, first pass')
-
-        ! second pass
-        call orthogonalize_against_basis(X(kp+1:kpp), X(1:kp), info, wrk)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='update_hessenberg_matrix_cdp, second pass')
-
-        ! combine passes
-        H(1:kp, kpm+1:kp) = H(1:kp, kpm+1:kp) + wrk
-
-        return
-    end subroutine update_hessenberg_matrix_cdp
 
 
 
@@ -2177,9 +2533,9 @@ contains
             ! Transpose matrix-vector product.
             call A%rmatvec(U(k), V(k))
 
-            ! Full reorthogonalization of the right Krylov subspace.
+            ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-               call orthogonalize_against_basis(V(k), V(1:k-1), info)
+               call orthogonalize_against_basis(V(k), V(1:k-1), info, if_chk_orthonormal=.false.)
                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rsp, first pass')
             end if
@@ -2197,7 +2553,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call orthogonalize_against_basis(U(k+1), U(1:k), info)
+            call orthogonalize_against_basis(U(k+1), U(1:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rsp, second pass')
 
@@ -2260,9 +2616,9 @@ contains
             ! Transpose matrix-vector product.
             call A%rmatvec(U(k), V(k))
 
-            ! Full reorthogonalization of the right Krylov subspace.
+            ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-               call orthogonalize_against_basis(V(k), V(1:k-1), info)
+               call orthogonalize_against_basis(V(k), V(1:k-1), info, if_chk_orthonormal=.false.)
                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rdp, first pass')
             end if
@@ -2280,7 +2636,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call orthogonalize_against_basis(U(k+1), U(1:k), info)
+            call orthogonalize_against_basis(U(k+1), U(1:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rdp, second pass')
 
@@ -2343,9 +2699,9 @@ contains
             ! Transpose matrix-vector product.
             call A%rmatvec(U(k), V(k))
 
-            ! Full reorthogonalization of the right Krylov subspace.
+            ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-               call orthogonalize_against_basis(V(k), V(1:k-1), info)
+               call orthogonalize_against_basis(V(k), V(1:k-1), info, if_chk_orthonormal=.false.)
                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_csp, first pass')
             end if
@@ -2363,7 +2719,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call orthogonalize_against_basis(U(k+1), U(1:k), info)
+            call orthogonalize_against_basis(U(k+1), U(1:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_csp, second pass')
 
@@ -2426,9 +2782,9 @@ contains
             ! Transpose matrix-vector product.
             call A%rmatvec(U(k), V(k))
 
-            ! Full reorthogonalization of the right Krylov subspace.
+            ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-               call orthogonalize_against_basis(V(k), V(1:k-1), info)
+               call orthogonalize_against_basis(V(k), V(1:k-1), info, if_chk_orthonormal=.false.)
                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_cdp, first pass')
             end if
@@ -2446,7 +2802,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call orthogonalize_against_basis(U(k+1), U(1:k), info)
+            call orthogonalize_against_basis(U(k+1), U(1:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_cdp, second pass')
 
@@ -2524,20 +2880,18 @@ contains
 
         ! Internal variables.
         class(abstract_vector_rsp), allocatable :: wrk
-        integer :: i
-        real(sp) :: alpha
+        integer :: i, info
 
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        info = 0
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -alpha)
-            ! Update tridiag. matrix.
-            T(i, k) = alpha
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -T(i, k))
         enddo
 
-        ! Full re-orthogonalization.
-        do i = 1, k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -alpha)
-        enddo
+        ! Full re-orthogonalization against existing basis
+        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rsp')
 
         return
     end subroutine update_tridiag_matrix_rsp
@@ -2596,20 +2950,18 @@ contains
 
         ! Internal variables.
         class(abstract_vector_rdp), allocatable :: wrk
-        integer :: i
-        real(dp) :: alpha
+        integer :: i, info
 
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        info = 0
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -alpha)
-            ! Update tridiag. matrix.
-            T(i, k) = alpha
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -T(i, k))
         enddo
 
-        ! Full re-orthogonalization.
-        do i = 1, k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -alpha)
-        enddo
+        ! Full re-orthogonalization against existing basis
+        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rdp')
 
         return
     end subroutine update_tridiag_matrix_rdp
@@ -2668,20 +3020,18 @@ contains
 
         ! Internal variables.
         class(abstract_vector_csp), allocatable :: wrk
-        integer :: i
-        complex(sp) :: alpha
+        integer :: i, info
 
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        info = 0
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -alpha)
-            ! Update tridiag. matrix.
-            T(i, k) = alpha
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -T(i, k))
         enddo
 
-        ! Full re-orthogonalization.
-        do i = 1, k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -alpha)
-        enddo
+        ! Full re-orthogonalization against existing basis
+        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_csp')
 
         return
     end subroutine update_tridiag_matrix_csp
@@ -2740,20 +3090,18 @@ contains
 
         ! Internal variables.
         class(abstract_vector_cdp), allocatable :: wrk
-        integer :: i
-        complex(dp) :: alpha
+        integer :: i, info
 
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors.
+        info = 0
+
+        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -alpha)
-            ! Update tridiag. matrix.
-            T(i, k) = alpha
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -T(i, k))
         enddo
 
-        ! Full re-orthogonalization.
-        do i = 1, k
-            alpha = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -alpha)
-        enddo
+        ! Full re-orthogonalization against existing basis
+        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_cdp')
 
         return
     end subroutine update_tridiag_matrix_cdp

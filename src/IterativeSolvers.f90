@@ -1692,16 +1692,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                ! first pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_rsp, first pass')
-                ! second pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_rsp, first pass')
-                H(1:k, k) = H(1:k, k) + alpha(1:k)
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -1860,16 +1853,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                ! first pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_rdp, first pass')
-                ! second pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_rdp, first pass')
-                H(1:k, k) = H(1:k, k) + alpha(1:k)
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -2028,16 +2014,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                ! first pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_csp, first pass')
-                ! second pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_csp, first pass')
-                H(1:k, k) = H(1:k, k) + alpha(1:k)
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -2196,16 +2175,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                ! first pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, H(1:k, k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_cdp, first pass')
-                ! second pass
-                call orthogonalize_against_basis(V(k+1), V(1:k), info, alpha(1:k))
-                call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                            & procedure='update_hessenberg_matrix_cdp, first pass')
-                H(1:k, k) = H(1:k, k) + alpha(1:k)
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
