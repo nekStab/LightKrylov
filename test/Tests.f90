@@ -81,7 +81,7 @@ program Tester
                 new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_rdp_testsuite), &
                 new_testsuite("Real Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_rdp_testsuite), &
-                !new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
+                new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
                 new_testsuite("Real SVD (dp) Test Suite", collect_svd_rdp_testsuite), &
                 new_testsuite("Real GMRES (dp) Test Suite", collect_gmres_rdp_testsuite), &
                 new_testsuite("Real CG (dp) Test Suite", collect_cg_rdp_testsuite), &

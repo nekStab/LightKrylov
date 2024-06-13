@@ -1,11 +1,15 @@
 module TestUtils
     use stdlib_io_npy, only: save_npy
     use LightKrylov
+    use LightKrylov_Constants
     use TestVectors
     use TestLinops
+    
     implicit none
     
     private
+
+    character*128, parameter, private :: this_module = 'LightKrylov_TestUtils'
 
     public :: get_data
     public :: put_data

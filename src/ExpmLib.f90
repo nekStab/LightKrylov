@@ -16,7 +16,8 @@ module lightkrylov_expmlib
     use lightkrylov_BaseKrylov
 
     implicit none
-    private
+    
+    character*128, parameter, private :: this_module = 'LightKrylov_ExpmLib'
 
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
@@ -269,7 +270,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_rsp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rsp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -403,7 +404,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_rsp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rsp')
 
 
                 if (info == kp) then
@@ -478,7 +479,7 @@ contains
     subroutine k_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rsp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -499,7 +500,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_rsp')
+        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rsp')
 
         return
     end subroutine k_exptA_rsp
@@ -637,7 +638,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_rdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rdp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -771,7 +772,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_rdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rdp')
 
 
                 if (info == kp) then
@@ -846,7 +847,7 @@ contains
     subroutine k_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rdp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -867,7 +868,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_rdp')
+        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rdp')
 
         return
     end subroutine k_exptA_rdp
@@ -1005,7 +1006,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_csp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_csp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -1139,7 +1140,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_csp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_csp')
 
 
                 if (info == kp) then
@@ -1214,7 +1215,7 @@ contains
     subroutine k_exptA_csp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_csp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -1235,7 +1236,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_csp')
+        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_csp')
 
         return
     end subroutine k_exptA_csp
@@ -1373,7 +1374,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_vec_cdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_cdp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -1507,7 +1508,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module='LightKrylov_ExpmLib', procedure='kexpm_mat_cdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_cdp')
 
 
                 if (info == kp) then
@@ -1582,7 +1583,7 @@ contains
     subroutine k_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_cdp), intent(out) :: vec_out
         !! Solution vector.
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: vec_in
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
@@ -1603,7 +1604,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module='LightKrylov_ExpmLib', procedure='k_exptA_cdp')
+        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_cdp')
 
         return
     end subroutine k_exptA_cdp

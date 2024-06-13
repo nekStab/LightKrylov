@@ -20,20 +20,11 @@ module lightkrylov_utils
     !-----     LightKrylov     -----
     !-------------------------------
     ! Various constants.
-    use lightkrylov_constants
+    use LightKrylov_Constants
 
     implicit none
 
-    private
-
-    real(sp), parameter, public :: one_rsp = 1.0_sp
-    real(sp), parameter, public :: zero_rsp = 0.0_sp
-    real(dp), parameter, public :: one_rdp = 1.0_dp
-    real(dp), parameter, public :: zero_rdp = 0.0_dp
-    complex(sp), parameter, public :: one_csp = cmplx(1.0_sp, 0.0_sp, kind=sp)
-    complex(sp), parameter, public :: zero_csp = cmplx(0.0_sp, 0.0_sp, kind=sp)
-    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
-    complex(dp), parameter, public :: zero_cdp = cmplx(0.0_dp, 0.0_dp, kind=dp)
+    character*128, parameter, private :: this_module = 'LightKrylov_Utils'
 
     public :: stop_error
     public :: assert_shape
@@ -68,10 +59,14 @@ module lightkrylov_utils
     public :: norml_cdp
 
     interface assert_shape
-        module procedure assert_shape_rsp
-        module procedure assert_shape_rdp
-        module procedure assert_shape_csp
-        module procedure assert_shape_cdp
+        module procedure assert_shape_vector_rsp
+        module procedure assert_shape_matrix_rsp
+        module procedure assert_shape_vector_rdp
+        module procedure assert_shape_matrix_rdp
+        module procedure assert_shape_vector_csp
+        module procedure assert_shape_matrix_csp
+        module procedure assert_shape_vector_cdp
+        module procedure assert_shape_matrix_cdp
     end interface
 
     interface inv
@@ -205,7 +200,26 @@ contains
         return
     end subroutine stop_error
 
-    subroutine assert_shape_rsp(A, size, routine, matname)
+    subroutine assert_shape_vector_rsp(v, size, routine, matname)
+        !! Utility function to assert the shape of a vector.
+        real(sp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted vector.
+
+        if(any(shape(v) /= size)) then
+            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
+            write(output_unit, *) "Expected length is ", size
+            call stop_error("Aborting due to illegal vector length.")
+        endif
+        return
+    end subroutine assert_shape_vector_rsp
+
+    subroutine assert_shape_matrix_rsp(A, size, routine, matname)
         !! Utility function to assert the shape of a matrix.
         real(sp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
@@ -222,8 +236,27 @@ contains
             call stop_error("Aborting due to illegal matrix size.")
         endif
         return
-    end subroutine assert_shape_rsp
-    subroutine assert_shape_rdp(A, size, routine, matname)
+    end subroutine assert_shape_matrix_rsp
+    subroutine assert_shape_vector_rdp(v, size, routine, matname)
+        !! Utility function to assert the shape of a vector.
+        real(dp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted vector.
+
+        if(any(shape(v) /= size)) then
+            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
+            write(output_unit, *) "Expected length is ", size
+            call stop_error("Aborting due to illegal vector length.")
+        endif
+        return
+    end subroutine assert_shape_vector_rdp
+
+    subroutine assert_shape_matrix_rdp(A, size, routine, matname)
         !! Utility function to assert the shape of a matrix.
         real(dp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
@@ -240,8 +273,27 @@ contains
             call stop_error("Aborting due to illegal matrix size.")
         endif
         return
-    end subroutine assert_shape_rdp
-    subroutine assert_shape_csp(A, size, routine, matname)
+    end subroutine assert_shape_matrix_rdp
+    subroutine assert_shape_vector_csp(v, size, routine, matname)
+        !! Utility function to assert the shape of a vector.
+        complex(sp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted vector.
+
+        if(any(shape(v) /= size)) then
+            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
+            write(output_unit, *) "Expected length is ", size
+            call stop_error("Aborting due to illegal vector length.")
+        endif
+        return
+    end subroutine assert_shape_vector_csp
+
+    subroutine assert_shape_matrix_csp(A, size, routine, matname)
         !! Utility function to assert the shape of a matrix.
         complex(sp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
@@ -258,8 +310,27 @@ contains
             call stop_error("Aborting due to illegal matrix size.")
         endif
         return
-    end subroutine assert_shape_csp
-    subroutine assert_shape_cdp(A, size, routine, matname)
+    end subroutine assert_shape_matrix_csp
+    subroutine assert_shape_vector_cdp(v, size, routine, matname)
+        !! Utility function to assert the shape of a vector.
+        complex(dp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted vector.
+
+        if(any(shape(v) /= size)) then
+            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
+            write(output_unit, *) "Expected length is ", size
+            call stop_error("Aborting due to illegal vector length.")
+        endif
+        return
+    end subroutine assert_shape_vector_cdp
+
+    subroutine assert_shape_matrix_cdp(A, size, routine, matname)
         !! Utility function to assert the shape of a matrix.
         complex(dp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
@@ -276,7 +347,7 @@ contains
             call stop_error("Aborting due to illegal matrix size.")
         endif
         return
-    end subroutine assert_shape_cdp
+    end subroutine assert_shape_matrix_cdp
 
     !-------------------------------------------
     !-----     LAPACK MATRIX INVERSION     -----
@@ -295,11 +366,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_rsp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_rsp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_rsp')
 
         return
     end subroutine inv_rsp
@@ -334,7 +405,7 @@ contains
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
         v = transpose(vt)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rsp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_rsp')
 
         return
     end subroutine svd_rsp
@@ -360,10 +431,10 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_rsp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rsp')
 
         ! Reconstruct eigenvalues
-        vals = cmplx(1.0_sp, 0.0_sp, kind=sp)*wr + cmplx(0.0_sp, 1.0_sp, kind=sp)*wi
+        vals = one_csp*wr + one_im_csp*wi
 
         return
     end subroutine eig_rsp
@@ -390,7 +461,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_rsp')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rsp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -417,11 +488,11 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_sp
+        allocate(work(lwork)) ; work = zero_rsp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_rsp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rsp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -451,7 +522,7 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_rsp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rsp')
 
         ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=sp)
@@ -489,7 +560,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_rsp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rsp')
 
         return
     end subroutine ordschur_rsp
@@ -553,11 +624,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_rdp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_rdp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_rdp')
 
         return
     end subroutine inv_rdp
@@ -592,7 +663,7 @@ contains
         A_tilde = A
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
         v = transpose(vt)
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_rdp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_rdp')
 
         return
     end subroutine svd_rdp
@@ -618,10 +689,10 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_rdp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rdp')
 
         ! Reconstruct eigenvalues
-        vals = cmplx(1.0_dp, 0.0_dp, kind=dp)*wr + cmplx(0.0_dp, 1.0_dp, kind=dp)*wi
+        vals = one_cdp*wr + one_im_cdp*wi
 
         return
     end subroutine eig_rdp
@@ -648,7 +719,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_rdp')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -675,11 +746,11 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_dp
+        allocate(work(lwork)) ; work = zero_rdp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_rdp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rdp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -709,7 +780,7 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_rdp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rdp')
 
         ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=dp)
@@ -747,7 +818,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_rdp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rdp')
 
         return
     end subroutine ordschur_rdp
@@ -811,11 +882,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_csp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_csp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_csp')
 
         return
     end subroutine inv_csp
@@ -852,7 +923,7 @@ contains
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
         v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_csp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_csp')
 
         return
     end subroutine svd_csp
@@ -879,7 +950,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_csp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_csp')
 
 
         return
@@ -909,7 +980,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_csp')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_csp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -936,11 +1007,11 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_sp
+        allocate(work(lwork)) ; work = zero_csp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_csp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_csp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -969,7 +1040,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_csp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_csp')
 
 
         return
@@ -1002,7 +1073,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_csp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_csp')
 
         return
     end subroutine ordschur_csp
@@ -1066,11 +1137,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_cdp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_cdp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_cdp')
 
         return
     end subroutine inv_cdp
@@ -1107,7 +1178,7 @@ contains
         allocate(rwork(5*min(m, n)))
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
         v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_cdp')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_cdp')
 
         return
     end subroutine svd_cdp
@@ -1134,7 +1205,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_cdp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_cdp')
 
 
         return
@@ -1164,7 +1235,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_cdp')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_cdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -1191,11 +1262,11 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_dp
+        allocate(work(lwork)) ; work = zero_cdp
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_cdp')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_cdp')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -1224,7 +1295,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_cdp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_cdp')
 
 
         return
@@ -1257,7 +1328,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_cdp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_cdp')
 
         return
     end subroutine ordschur_cdp
@@ -1323,7 +1394,7 @@ contains
         integer :: i, n
         real(sp) :: row_sum
 
-        norm = 0.0_sp
+        norm = zero_rsp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
@@ -1341,7 +1412,7 @@ contains
         integer :: i, n
         real(dp) :: row_sum
 
-        norm = 0.0_dp
+        norm = zero_rdp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
@@ -1355,7 +1426,7 @@ contains
         integer :: i, n
         real(sp) :: row_sum
 
-        norm = 0.0_sp
+        norm = zero_rsp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))
@@ -1369,7 +1440,7 @@ contains
         integer :: i, n
         real(dp) :: row_sum
 
-        norm = 0.0_dp
+        norm = zero_rdp
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))

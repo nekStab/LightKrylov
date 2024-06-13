@@ -22,21 +22,11 @@ module lightkrylov_utils
     !-----     LightKrylov     -----
     !-------------------------------
     ! Various constants.
-    use lightkrylov_constants
+    use LightKrylov_Constants
 
     implicit none
 
-    private
-
-    #:for kind, type in RC_KINDS_TYPES
-    #:if type[0] == "c"
-    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-    #:else
-    ${type}$, parameter, public :: one_${type[0]}$${kind}$ = 1.0_${kind}$
-    ${type}$, parameter, public :: zero_${type[0]}$${kind}$ = 0.0_${kind}$
-    #:endif
-    #:endfor
+    character*128, parameter, private :: this_module = 'LightKrylov_Utils'
 
     public :: stop_error
     public :: assert_shape
@@ -71,8 +61,9 @@ module lightkrylov_utils
     #:endfor
 
     interface assert_shape
-    #:for kind, type in RC_KINDS_TYPES
-        module procedure assert_shape_${type[0]}$${kind}$
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure assert_shape_vector_${type[0]}$${kind}$
+        module procedure assert_shape_matrix_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -176,7 +167,26 @@ contains
     end subroutine stop_error
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine assert_shape_${type[0]}$${kind}$(A, size, routine, matname)
+    subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, routine, matname)
+        !! Utility function to assert the shape of a vector.
+        ${type}$, intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: routine
+        !! Name of the routine where assertion is done.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted vector.
+
+        if(any(shape(v) /= size)) then
+            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
+            write(output_unit, *) "Expected length is ", size
+            call stop_error("Aborting due to illegal vector length.")
+        endif
+        return
+    end subroutine assert_shape_vector_${type[0]}$${kind}$
+
+    subroutine assert_shape_matrix_${type[0]}$${kind}$(A, size, routine, matname)
         !! Utility function to assert the shape of a matrix.
         ${type}$, intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
@@ -193,7 +203,7 @@ contains
             call stop_error("Aborting due to illegal matrix size.")
         endif
         return
-    end subroutine assert_shape_${type[0]}$${kind}$
+    end subroutine assert_shape_matrix_${type[0]}$${kind}$
     #:endfor
 
     !-------------------------------------------
@@ -214,11 +224,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module='LightKrylov_Utils', procedure='inv_${type[0]}$${kind}$')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_${type[0]}$${kind}$')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module='LightKrylov_Utils', procedure='inv_${type[0]}$${kind}$')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_${type[0]}$${kind}$')
 
         return
     end subroutine inv_${type[0]}$${kind}$
@@ -262,7 +272,7 @@ contains
         call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
         v = transpose(vt)
         #:endif
-        call check_info(info, 'GESVD', module='LightKrylov_Utils', procedure='svd_${type[0]}$${kind}$')
+        call check_info(info, 'GESVD', module=this_module, procedure='svd_${type[0]}$${kind}$')
 
         return
     end subroutine svd_${type[0]}$${kind}$
@@ -306,11 +316,11 @@ contains
         #:else
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
         #:endif
-        call check_info(info, 'GEEV', module='LightKrylov_Utils', procedure='eig_${type[0]}$${kind}$')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_${type[0]}$${kind}$')
 
         #:if type[0] == "r"
         ! Reconstruct eigenvalues
-        vals = cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$)*wr + cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)*wi
+        vals = one_c${kind}$*wr + one_im_c${kind}$*wi
         #:endif
 
         return
@@ -347,10 +357,10 @@ contains
         ! Eigendecomposition.
         #:if type[0] == "r"
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module='LightKrylov_Utils', procedure='eigh_${type[0]}$${kind}$')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_${type[0]}$${kind}$')
         #:else
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module='LightKrylov_Utils', procedure='eigh_${type[0]}$${kind}$')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_${type[0]}$${kind}$')
         #:endif
 
         ! Extract eigenvectors
@@ -378,11 +388,11 @@ contains
         m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
         lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
         a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = 0.0_${kind}$
+        allocate(work(lwork)) ; work = zero_${type[0]}$${kind}$
 
         ! Solve the least-squares problem.
         call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module='LightKrylov_Utils', procedure='lstsq_${type[0]}$${kind}$')
+        call check_info(info, 'GELS', module=this_module, procedure='lstsq_${type[0]}$${kind}$')
 
         ! Return solution.
         x = b_tilde(1:n, 1)
@@ -420,7 +430,7 @@ contains
         #:else
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
         #:endif
-        call check_info(info, 'GEES', module='LightKrylov_Utils', procedure='schur_${type[0]}$${kind}$')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_${type[0]}$${kind}$')
 
         #:if type[0] == "r"
         ! Reconstruct eigenvalues
@@ -477,7 +487,7 @@ contains
         #:else
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
-        call check_info(info, 'TRSEN', module='LightKrylov_Utils', procedure='ordschur_${type[0]}$${kind}$')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_${type[0]}$${kind}$')
 
         return
     end subroutine ordschur_${type[0]}$${kind}$
@@ -559,7 +569,7 @@ contains
         integer :: i, n
         real(${kind}$) :: row_sum
 
-        norm = 0.0_${kind}$
+        norm = zero_r${kind}$
         n = size(A, 1)
         do i = 1, n
             row_sum = sum(abs(A(i, :)))

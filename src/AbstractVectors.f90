@@ -2,18 +2,23 @@ module lightkrylov_AbstractVectors
     use lightkrylov_constants
     use lightkrylov_utils
     implicit none
-    private
 
-    public :: innerprod_matrix
+    character*128, parameter, private :: this_module = 'Lightkrylov_AbstractVectors'
+
+    public :: innerprod
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
 
-    interface innerprod_matrix
+    interface innerprod
+        module procedure innerprod_vector_rsp
         module procedure innerprod_matrix_rsp
+        module procedure innerprod_vector_rdp
         module procedure innerprod_matrix_rdp
+        module procedure innerprod_vector_csp
         module procedure innerprod_matrix_csp
+        module procedure innerprod_vector_cdp
         module procedure innerprod_matrix_cdp
     end interface
 
@@ -574,6 +579,25 @@ contains
         return
     end subroutine linear_combination_matrix_rsp
 
+    subroutine innerprod_vector_rsp(v, X, y)
+        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+        !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        class(abstract_vector_rsp), intent(in) :: X(:), y
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        real(sp), intent(out) :: v(size(X))
+        !! Resulting inner-product vector.
+
+        ! Local variables.
+        integer :: i
+
+        v = 0.0_sp
+        do i = 1, size(X)
+            v(i) = X(i)%dot(y)
+        enddo
+        
+        return
+    end subroutine innerprod_vector_rsp
+
     subroutine innerprod_matrix_rsp(M, X, Y)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
@@ -717,6 +741,25 @@ contains
 
         return
     end subroutine linear_combination_matrix_rdp
+
+    subroutine innerprod_vector_rdp(v, X, y)
+        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+        !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        class(abstract_vector_rdp), intent(in) :: X(:), y
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        real(dp), intent(out) :: v(size(X))
+        !! Resulting inner-product vector.
+
+        ! Local variables.
+        integer :: i
+
+        v = 0.0_dp
+        do i = 1, size(X)
+            v(i) = X(i)%dot(y)
+        enddo
+        
+        return
+    end subroutine innerprod_vector_rdp
 
     subroutine innerprod_matrix_rdp(M, X, Y)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
@@ -862,6 +905,25 @@ contains
         return
     end subroutine linear_combination_matrix_csp
 
+    subroutine innerprod_vector_csp(v, X, y)
+        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+        !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        class(abstract_vector_csp), intent(in) :: X(:), y
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        complex(sp), intent(out) :: v(size(X))
+        !! Resulting inner-product vector.
+
+        ! Local variables.
+        integer :: i
+
+        v = 0.0_sp
+        do i = 1, size(X)
+            v(i) = X(i)%dot(y)
+        enddo
+        
+        return
+    end subroutine innerprod_vector_csp
+
     subroutine innerprod_matrix_csp(M, X, Y)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
@@ -1005,6 +1067,25 @@ contains
 
         return
     end subroutine linear_combination_matrix_cdp
+
+    subroutine innerprod_vector_cdp(v, X, y)
+        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+        !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        class(abstract_vector_cdp), intent(in) :: X(:), y
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        complex(dp), intent(out) :: v(size(X))
+        !! Resulting inner-product vector.
+
+        ! Local variables.
+        integer :: i
+
+        v = 0.0_dp
+        do i = 1, size(X)
+            v(i) = X(i)%dot(y)
+        enddo
+        
+        return
+    end subroutine innerprod_vector_cdp
 
     subroutine innerprod_matrix_cdp(M, X, Y)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between

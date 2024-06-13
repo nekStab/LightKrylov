@@ -15,7 +15,7 @@ module lightkrylov_IterativeSolvers
 
     implicit none
 
-    private
+    character*128, parameter, private :: this_module = 'LightKrylov_IterativeSolvers'
 
     public :: save_eigenspectrum
     public :: eigs
@@ -311,7 +311,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_rsp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -451,7 +451,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_rdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -590,7 +590,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_csp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -720,7 +720,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
-                call check_info(info, 'arnoldi', module='LightKrylov_IterativeSolvers', procedure='eigs_cdp')
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -840,7 +840,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_rsp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -941,7 +941,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_rdp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1042,7 +1042,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_csp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1143,7 +1143,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalisation', module='LightKrylov_IterativeSolvers', procedure='eighs_cdp')
+            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1251,7 +1251,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_rsp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1348,7 +1348,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_rdp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1445,7 +1445,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_csp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1542,7 +1542,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module='LightKrylov_IterativeSolvers', procedure='svds_cdp')
+            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1624,7 +1624,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k
-        real(sp) :: alpha
+        real(sp), allocatable :: alpha(:)
         class(abstract_vector_rsp), allocatable :: dx, wrk
 
         ! Deals with the optional args.
@@ -1657,6 +1657,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
+        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         info = 0
@@ -1691,17 +1692,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_rsp, V(j), -alpha)
-                    H(j, k) = alpha
-                enddo
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_rsp, V(j), -alpha)
-                    H(j, k) = H(j, k) + alpha
-                enddo
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -1792,7 +1785,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k
-        real(dp) :: alpha
+        real(dp), allocatable :: alpha(:)
         class(abstract_vector_rdp), allocatable :: dx, wrk
 
         ! Deals with the optional args.
@@ -1825,6 +1818,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
+        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         info = 0
@@ -1859,17 +1853,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_rdp, V(j), -alpha)
-                    H(j, k) = alpha
-                enddo
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_rdp, V(j), -alpha)
-                    H(j, k) = H(j, k) + alpha
-                enddo
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -1960,7 +1946,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k
-        complex(sp) :: alpha
+        complex(sp), allocatable :: alpha(:)
         class(abstract_vector_csp), allocatable :: dx, wrk
 
         ! Deals with the optional args.
@@ -1993,6 +1979,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
+        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         info = 0
@@ -2027,17 +2014,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_csp, V(j), -alpha)
-                    H(j, k) = alpha
-                enddo
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_csp, V(j), -alpha)
-                    H(j, k) = H(j, k) + alpha
-                enddo
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -2128,7 +2107,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k
-        complex(dp) :: alpha
+        complex(dp), allocatable :: alpha(:)
         class(abstract_vector_cdp), allocatable :: dx, wrk
 
         ! Deals with the optional args.
@@ -2161,6 +2140,7 @@ contains
         allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
+        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         info = 0
@@ -2195,17 +2175,9 @@ contains
                     call A%matvec(wrk, V(k+1))
                 endif
 
-                ! Gram-Schmid orthogonalization (twice is enough).
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_cdp, V(j), -alpha)
-                    H(j, k) = alpha
-                enddo
-                do j = 1, k
-                    alpha = V(j)%dot(V(k+1))
-                    call V(k+1)%axpby(one_cdp, V(j), -alpha)
-                    H(j, k) = H(j, k) + alpha
-                enddo
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()

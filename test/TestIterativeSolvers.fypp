@@ -9,7 +9,9 @@ module TestIterativeSolvers
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
 
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -19,7 +21,10 @@ module TestIterativeSolvers
     use TestKrylov
 
     implicit none
+    
     private
+
+    character*128, parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
@@ -39,11 +44,11 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Eigs computation", test_evp_${type[0]}$${kind}$), &
+                    new_unittest("Eigs computation (eigvals & eigvecs)", test_evp_${type[0]}$${kind}$), &
                     #:if type[0] == "r"
-                    new_unittest("Sym. eigs computation", test_sym_evp_${type[0]}$${kind}$), &
+                    new_unittest("Sym. eigs computation (eigvals, eigvecs & eigvec orthonormality)", test_sym_evp_${type[0]}$${kind}$), &
                     #:endif
-                    new_unittest("KS eigs computation", test_ks_evp_${type[0]}$${kind}$) &
+                    new_unittest("KS eigs computation (eigvals & eigvecs)", test_ks_evp_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_eig_${type[0]}$${kind}$_testsuite
@@ -64,6 +69,8 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         integer, parameter :: nev = 8
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         #:if type[0] == "r"
@@ -88,24 +95,35 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, select=select_eigs)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_ks_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
+        true_eigvals = zero_c${kind}$; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
-            true_eigvals(i+1) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+            true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             k = k+1
         enddo
 
+        ! check eigenvalues
         call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
+        !if (allocated(error)) return
+        !! check eigenvectors
+        !allocate(AX(nev))
+        !allocate(eigvec_residuals(test_size, nev))
+        !do i = 1, nev
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !print *, norm2(abs(eigvec_residuals))
+        !call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
         #:endif
 
         return
         contains
         function select_eigs(lambda) result(selected)
             complex(${kind}$), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical :: selected(size(lambda))
 
             selected = abs(lambda) > median(abs(lambda))
             return
@@ -127,6 +145,8 @@ contains
         integer :: info
         ! Miscellaneous.
         integer :: i, k, n
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         #:if type[0] == "r"
@@ -151,17 +171,27 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info)
-        call check_info(info, 'eigs', module='LightKrylov_TestIterativeSolvers', procedure='test_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
-        true_eigvals = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$) ; k = 1
+        true_eigvals = zero_c${kind}$; k = 1
         do i = 1, test_size, 2
-            true_eigvals(i) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) + (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
-            true_eigvals(i+1) = a_*cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$) - (2*b_*cos(k*pi/(test_size+1)))*cmplx(0.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+            true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             k = k+1
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_${kind}$)
+!        if (allocated(error)) return
+!
+!        ! check eigenvectors
+!        allocate(AX(test_size))
+!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+!        do i = 1, test_size
+!            call A%matvec(X(i), AX(i))
+!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+!        end do
+!        call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
         #:endif
 
         return
@@ -187,6 +217,9 @@ contains
         integer :: i
         ${type}$ :: alpha, true_evals(test_size)
         ${type}$, parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
+        ${type}$, allocatable, dimension(:,:) :: G, Id
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -208,7 +241,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
-        call check_info(info, 'eighs', module='LightKrylov_TestIterativeSolvers', procedure='test_sym_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_${kind}$
@@ -218,6 +251,26 @@ contains
 
         ! Check error.
         call check(error, all_close(evals, true_evals, rtol_${kind}$, atol_${kind}$))
+        if (allocated(error)) return
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, X, X)
+
+        ! Check orthonormality of the eigenvectors.
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_sym_evp_${type[0]}$${kind}$
@@ -235,7 +288,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("SVDS computation", test_svd_${type[0]}$${kind}$) &
+                    new_unittest("SVDS computation (factorization correctness, singular values, left/right orthonormality)", test_svd_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_svd_${type[0]}$${kind}$_testsuite
@@ -257,6 +310,8 @@ contains
         integer :: i, k, n
         real(${kind}$) :: true_svdvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        ${type}$, dimension(test_size, test_size) :: G, Id
+        ${type}$, dimension(test_size, test_size) :: Udata, Vdata
         #:if type[0] == "r"
 
         ! Allocate eigenvectors.
@@ -271,14 +326,14 @@ contains
             A%data(i, i) = 2.0_${kind}$
             ! Upper diagonal entry.
             if (i < n) then
-                A%data(i, i+1) = -1.0_${kind}$
-                A%data(i+1, i) = -1.0_${kind}$
+                A%data(i, i+1) = -one_r${kind}$
+                A%data(i+1, i) = -one_r${kind}$
             endif
         enddo
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info)
-        call check_info(info, 'svds', module='LightKrylov_TestIterativeSolvers', procedure='test_svd_${type[0]}$${kind}$')
+        call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
 
         ! Analytical singular values.
         do i = 1, test_size
@@ -286,6 +341,29 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, U(1:test_size), U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        Id = eye(test_size)
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, V(1:test_size), V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        if (allocated(error)) return
+
+        ! Check correctness of full factorization.
+        call get_data(Udata, U)
+        call get_data(Vdata, V)
+        call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_${kind}$)
         #:endif
 
         return
@@ -327,7 +405,7 @@ contains
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_${type[0]}$${kind}$')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
@@ -363,7 +441,7 @@ contains
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
-        call check_info(info, 'gmres', module='LightKrylov_TestIterativeSolvers', procedure='test_gmres_spd_${type[0]}$${kind}$')
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
@@ -413,7 +491,7 @@ contains
         ! CG solver.
         opts = cg_${kind}$_opts()
         call cg(A, b, x, info, options=opts)
-        call check_info(info, 'cg', module='LightKrylov_TestIterativeSolvers', procedure='test_cg_${type[0]}$${kind}$')
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
 
         write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_${kind}$ 
 

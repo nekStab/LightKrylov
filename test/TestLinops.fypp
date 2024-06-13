@@ -6,42 +6,46 @@ module TestLinops
 
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use TestVectors
 
     implicit none
+    
     private
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    public :: collect_linop_${t1[0]}$${k1}$_testsuite
+    character*128, parameter, private :: this_module = 'LightKrylov_TestLinops'
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_linop_${type[0]}$${kind}$_testsuite
     #:endfor
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    type, extends(abstract_linop_${t1[0]}$${k1}$), public :: linop_${t1[0]}$${k1}$
-        ${t1}$, dimension(test_size, test_size) :: data = 0.0_${k1}$
+    #:for kind, type in RC_KINDS_TYPES
+    type, extends(abstract_linop_${type[0]}$${kind}$), public :: linop_${type[0]}$${kind}$
+        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
     contains
         private
-        procedure, pass(self), public :: matvec  => matvec_${t1[0]}$${k1}$
-        procedure, pass(self), public :: rmatvec => rmatvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
     end type
 
-    #:if t1[0] == "r"
-    type, extends(abstract_sym_linop_${t1[0]}$${k1}$), public :: spd_linop_${t1[0]}$${k1}$
-        ${t1}$, dimension(test_size, test_size) :: data = 0.0_${k1}$
+    #:if type[0] == "r"
+    type, extends(abstract_sym_linop_${type[0]}$${kind}$), public :: spd_linop_${type[0]}$${kind}$
+        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
     contains
         private
-        procedure, pass(self), public :: matvec => sdp_matvec_${t1[0]}$${k1}$
-        procedure, pass(self), public :: rmatvec => sdp_matvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: matvec => sdp_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => sdp_matvec_${type[0]}$${kind}$
     end type
     #:else
-    type, extends(abstract_hermitian_linop_${t1[0]}$${k1}$), public :: hermitian_linop_${t1[0]}$${k1}$
-        ${t1}$, dimension(test_size, test_size) :: data = 0.0_${k1}$
+    type, extends(abstract_hermitian_linop_${type[0]}$${kind}$), public :: hermitian_linop_${type[0]}$${kind}$
+        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
     contains
         private
-        procedure, pass(self), public :: matvec => hermitian_matvec_${t1[0]}$${k1}$
-        procedure, pass(self), public :: rmatvec => hermitian_matvec_${t1[0]}$${k1}$
+        procedure, pass(self), public :: matvec => hermitian_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => hermitian_matvec_${type[0]}$${kind}$
     end type
     #:endif
 
@@ -52,16 +56,16 @@ contains
     !-----     DEFINITIONS OF THE VARIOUS TYPE-BOUND PROCEDURES     -----
     !--------------------------------------------------------------------
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    subroutine matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
-        class(linop_${t1[0]}$${k1}$), intent(in)  :: self
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
         select type(vec_in)
-        type is(vector_${t1[0]}$${k1}$)
+        type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
-            type is(vector_${t1[0]}$${k1}$)
+            type is(vector_${type[0]}$${kind}$)
 
             vec_out%data = matmul(self%data, vec_in%data)
 
@@ -69,19 +73,19 @@ contains
         end select
 
         return
-    end subroutine matvec_${t1[0]}$${k1}$
+    end subroutine matvec_${type[0]}$${kind}$
 
-    subroutine rmatvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
-        class(linop_${t1[0]}$${k1}$), intent(in)  :: self
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+    subroutine rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
         select type(vec_in)
-        type is(vector_${t1[0]}$${k1}$)
+        type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
-            type is(vector_${t1[0]}$${k1}$)
+            type is(vector_${type[0]}$${kind}$)
 
-            #:if t1[0] == "c"
+            #:if type[0] == "c"
             vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
             #:else
             vec_out%data = matmul(transpose(self%data), vec_in%data)
@@ -91,18 +95,18 @@ contains
         end select
 
         return
-    end subroutine rmatvec_${t1[0]}$${k1}$
+    end subroutine rmatvec_${type[0]}$${kind}$
 
-    #:if t1[0] == "r"
-    subroutine sdp_matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
-        class(spd_linop_${t1[0]}$${k1}$), intent(in)  :: self
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+    #:if type[0] == "r"
+    subroutine sdp_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(spd_linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
         select type(vec_in)
-        type is(vector_${t1[0]}$${k1}$)
+        type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
-            type is(vector_${t1[0]}$${k1}$)
+            type is(vector_${type[0]}$${kind}$)
 
             vec_out%data = matmul(self%data, vec_in%data)
 
@@ -110,17 +114,17 @@ contains
         end select
 
         return
-    end subroutine sdp_matvec_${t1[0]}$${k1}$
+    end subroutine sdp_matvec_${type[0]}$${kind}$
     #:else
-    subroutine hermitian_matvec_${t1[0]}$${k1}$(self, vec_in, vec_out)
-        class(hermitian_linop_${t1[0]}$${k1}$), intent(in)  :: self
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${t1[0]}$${k1}$)       , intent(out) :: vec_out
+    subroutine hermitian_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(hermitian_linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
         select type(vec_in)
-        type is(vector_${t1[0]}$${k1}$)
+        type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
-            type is(vector_${t1[0]}$${k1}$)
+            type is(vector_${type[0]}$${kind}$)
 
             vec_out%data = matmul(self%data, vec_in%data)
 
@@ -128,7 +132,7 @@ contains
         end select
 
         return
-    end subroutine hermitian_matvec_${t1[0]}$${k1}$
+    end subroutine hermitian_matvec_${type[0]}$${kind}$
    #:endif
 
     #:endfor
@@ -137,34 +141,34 @@ contains
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS     -----
     !---------------------------------------------------------
 
-    #:for k1, t1 in RC_KINDS_TYPES
-    subroutine collect_linop_${t1[0]}$${k1}$_testsuite(testsuite)
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_linop_${type[0]}$${kind}$_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                    new_unittest("Matrix-vector product", test_matvec_${t1[0]}$${k1}$), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${t1[0]}$${k1}$),  &
-                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${t1[0]}$${k1}$),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${t1[0]}$${k1}$) &
+                    new_unittest("Matrix-vector product", test_matvec_${type[0]}$${kind}$), &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${type[0]}$${kind}$),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${type[0]}$${kind}$),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${type[0]}$${kind}$) &
                     ]
         return
-    end subroutine collect_linop_${t1[0]}$${k1}$_testsuite
+    end subroutine collect_linop_${type[0]}$${kind}$_testsuite
 
-    subroutine test_matvec_${t1[0]}$${k1}$(error)
+    subroutine test_matvec_${type[0]}$${kind}$(error)
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
         ! Test LinOp.
-        type(linop_${t1[0]}$${k1}$), allocatable :: A
+        type(linop_${type[0]}$${kind}$), allocatable :: A
 
         ! Initialize vectors.
-        x = vector_${t1[0]}$${k1}$() ; call x%rand()
-        y = vector_${t1[0]}$${k1}$() ; call y%rand()
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
 
         ! Initialize matrix.
-        A = linop_${t1[0]}$${k1}$()
-        #:if t1[0] == "c"
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
         call random_number(A%data%re) ; call random_number(A%data%im)
         #:else
         call random_number(A%data)
@@ -174,30 +178,30 @@ contains
         call A%matvec(x, y)
 
         ! Check result.
-        #:if t1[0] == "c"
-        call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_${k1}$)
+        #:if type[0] == "c"
+        call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_${kind}$)
         #:else
-        call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${k1}$)
+        call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${kind}$)
         #:endif
 
         return
-    end subroutine test_matvec_${t1[0]}$${k1}$
+    end subroutine test_matvec_${type[0]}$${kind}$
 
-    subroutine test_rmatvec_${t1[0]}$${k1}$(error)
+    subroutine test_rmatvec_${type[0]}$${kind}$(error)
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
         ! Test LinOp.
-        type(linop_${t1[0]}$${k1}$), allocatable :: A
+        type(linop_${type[0]}$${kind}$), allocatable :: A
 
         ! Initialize vectors.
-        x = vector_${t1[0]}$${k1}$() ; call x%rand()
-        y = vector_${t1[0]}$${k1}$() ; call y%rand()
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
 
         ! Initialize matrix.
-        A = linop_${t1[0]}$${k1}$()
-        #:if t1[0] == "c"
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
         call random_number(A%data%re) ; call random_number(A%data%im)
         #:else
         call random_number(A%data)
@@ -207,30 +211,30 @@ contains
         call A%rmatvec(x, y)
 
         ! Check result.
-        #:if t1[0] == "c"
-        call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_${k1}$)
+        #:if type[0] == "c"
+        call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_${kind}$)
         #:else
-        call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${k1}$)
+        call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${kind}$)
         #:endif
         
         return
-    end subroutine test_rmatvec_${t1[0]}$${k1}$
+    end subroutine test_rmatvec_${type[0]}$${kind}$
 
-    subroutine test_adjoint_matvec_${t1[0]}$${k1}$(error)
+    subroutine test_adjoint_matvec_${type[0]}$${kind}$(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
         ! Test LinOp.
-        type(linop_${t1[0]}$${k1}$), allocatable :: A
-        type(adjoint_linop_${t1[0]}$${k1}$), allocatable :: B
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
 
         ! Internal variable.
-        real(${k1}$) :: alpha
+        real(${kind}$) :: alpha
 
         ! Initialize matrix.
-        A = linop_${t1[0]}$${k1}$()
-        #:if t1[0] == "c"
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
         call random_number(A%data%re) ; call random_number(A%data%im)
         #:else
         call random_number(A%data)
@@ -240,39 +244,39 @@ contains
         allocate(B) ; B%A = A
 
         ! Initialize vectors.
-        x = vector_${t1[0]}$${k1}$() ; call x%rand()
-        y = vector_${t1[0]}$${k1}$() ; call y%zero()
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
         call B%matvec(x, y)
 
         ! Check result.
-        #:if t1[0] == "c"
+        #:if type[0] == "c"
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
         #:else
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
         #:endif
 
-        call check(error, alpha < rtol_${k1}$)
+        call check(error, alpha < rtol_${kind}$)
 
        return
-    end subroutine test_adjoint_matvec_${t1[0]}$${k1}$
+    end subroutine test_adjoint_matvec_${type[0]}$${kind}$
 
-    subroutine test_adjoint_rmatvec_${t1[0]}$${k1}$(error)
+    subroutine test_adjoint_rmatvec_${type[0]}$${kind}$(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_${t1[0]}$${k1}$), allocatable :: x, y
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
         ! Test LinOp.
-        type(linop_${t1[0]}$${k1}$), allocatable :: A
-        type(adjoint_linop_${t1[0]}$${k1}$), allocatable :: B
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
 
         ! Internal variable.
-        real(${k1}$) :: alpha
+        real(${kind}$) :: alpha
 
         ! Initialize matrix.
-        A = linop_${t1[0]}$${k1}$()
-        #:if t1[0] == "c"
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
         call random_number(A%data%re) ; call random_number(A%data%im)
         #:else
         call random_number(A%data)
@@ -282,23 +286,23 @@ contains
         allocate(B) ; B%A = A
 
         ! Initialize vectors.
-        x = vector_${t1[0]}$${k1}$() ; call x%rand()
-        y = vector_${t1[0]}$${k1}$() ; call y%zero()
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
         call B%rmatvec(x, y)
 
         ! Check result.
-        #:if t1[0] == "c"
+        #:if type[0] == "c"
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))
         #:else
         alpha = norm2(y%data - matmul(A%data, x%data))
         #:endif
 
-        call check(error, alpha < rtol_${k1}$)
+        call check(error, alpha < rtol_${kind}$)
 
        return
-    end subroutine test_adjoint_rmatvec_${t1[0]}$${k1}$
+    end subroutine test_adjoint_rmatvec_${type[0]}$${kind}$
 
 
     #:endfor
