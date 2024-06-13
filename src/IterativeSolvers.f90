@@ -2,9 +2,10 @@ module lightkrylov_IterativeSolvers
 
     use iso_fortran_env, only: output_unit
     
-    use stdlib_sorting, only: sort_index, int_index
+    use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
+    use stdlib_linalg, only: lstsq
 
     use lightkrylov_constants
     Use LightKrylov_Logger
@@ -296,7 +297,7 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -315,7 +316,7 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
-                call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
                 ! Compute residuals.
                 beta = H(k+1, k)
@@ -331,11 +332,8 @@ contains
                 enddo
 
                 ! Check convergence.
-                conv = count(residuals_wrk(1:k) < tol)
-                if (conv >= nev) then
-                    exit arnoldi_factorization
-                endif
-
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
@@ -362,7 +360,7 @@ contains
         residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -436,7 +434,7 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -455,7 +453,7 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
-                call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
                 ! Compute residuals.
                 beta = H(k+1, k)
@@ -471,11 +469,8 @@ contains
                 enddo
 
                 ! Check convergence.
-                conv = count(residuals_wrk(1:k) < tol)
-                if (conv >= nev) then
-                    exit arnoldi_factorization
-                endif
-
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
@@ -502,7 +497,7 @@ contains
         residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -575,7 +570,7 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -594,18 +589,15 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
-                call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
                 ! Compute residuals.
                 beta = H(k+1, k)
-                residuals_wrk(1:k) = compute_residual_csp(beta, eigvecs_wrk(k,1:k))
+                residuals_wrk(:k) = compute_residual_csp(beta, eigvecs_wrk(k,:k))
 
                 ! Check convergence.
-                conv = count(residuals_wrk(1:k) < tol)
-                if (conv >= nev) then
-                    exit arnoldi_factorization
-                endif
-
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
@@ -632,7 +624,7 @@ contains
         residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -705,7 +697,7 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -724,18 +716,15 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
-                call eig(H(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
                 ! Compute residuals.
                 beta = H(k+1, k)
-                residuals_wrk(1:k) = compute_residual_cdp(beta, eigvecs_wrk(k,1:k))
+                residuals_wrk(:k) = compute_residual_cdp(beta, eigvecs_wrk(k,:k))
 
                 ! Check convergence.
-                conv = count(residuals_wrk(1:k) < tol)
-                if (conv >= nev) then
-                    exit arnoldi_factorization
-                endif
-
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
@@ -762,7 +751,7 @@ contains
         residuals_wrk = residuals_wrk(indices)
 
         ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -830,7 +819,7 @@ contains
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(T(kdim_+1, kdim_)) ; T = zero_rsp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rsp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -845,17 +834,15 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
-            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
             ! Compute residuals.
             beta = T(k+1, k)
-            residuals_wrk(1:k) = compute_residual_rsp(beta, eigvecs_wrk(k, 1:k))
+            residuals_wrk(:k) = compute_residual_rsp(beta, eigvecs_wrk(k, :k))
 
             ! Check convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nev) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nev) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -863,7 +850,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_index) :: indices(kdim_)
+            integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -931,7 +918,7 @@ contains
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(T(kdim_+1, kdim_)) ; T = zero_rdp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rdp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -946,17 +933,15 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
-            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
             ! Compute residuals.
             beta = T(k+1, k)
-            residuals_wrk(1:k) = compute_residual_rdp(beta, eigvecs_wrk(k, 1:k))
+            residuals_wrk(:k) = compute_residual_rdp(beta, eigvecs_wrk(k, :k))
 
             ! Check convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nev) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nev) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -964,7 +949,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_index) :: indices(kdim_)
+            integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -1032,7 +1017,7 @@ contains
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(T(kdim_+1, kdim_)) ; T = zero_csp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_csp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -1047,17 +1032,15 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
-            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
             ! Compute residuals.
             beta = T(k+1, k)
-            residuals_wrk(1:k) = compute_residual_csp(beta, eigvecs_wrk(k, 1:k))
+            residuals_wrk(:k) = compute_residual_csp(beta, eigvecs_wrk(k, :k))
 
             ! Check convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nev) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nev) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1065,7 +1048,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_index) :: indices(kdim_)
+            integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -1133,7 +1116,7 @@ contains
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call initialize_krylov_subspace(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
         allocate(T(kdim_+1, kdim_)) ; T = zero_cdp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_cdp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -1148,17 +1131,15 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
-            call eigh(T(1:k, 1:k), eigvecs_wrk(1:k, 1:k), eigvals_wrk(1:k))
+            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
 
             ! Compute residuals.
             beta = T(k+1, k)
-            residuals_wrk(1:k) = compute_residual_cdp(beta, eigvecs_wrk(k, 1:k))
+            residuals_wrk(:k) = compute_residual_cdp(beta, eigvecs_wrk(k, :k))
 
             ! Check convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nev) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nev) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1166,7 +1147,7 @@ contains
         !--------------------------------
 
         block
-            integer(int_index) :: indices(kdim_)
+            integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -1237,8 +1218,8 @@ contains
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
-        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
         allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
@@ -1255,17 +1236,15 @@ contains
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
-            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
             ! Compute residuals.
             beta = B(k+1, k)
-            residuals_wrk(1:k) = compute_residual_rsp(beta, vmat(k, 1:k))
+            residuals_wrk(:k) = compute_residual_rsp(beta, vmat(k, :k))
 
             ! Check for convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nsv) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1273,7 +1252,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(1:nsv)
+        S = svdvals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1334,8 +1313,8 @@ contains
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
-        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
         allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
@@ -1352,17 +1331,15 @@ contains
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
-            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
             ! Compute residuals.
             beta = B(k+1, k)
-            residuals_wrk(1:k) = compute_residual_rdp(beta, vmat(k, 1:k))
+            residuals_wrk(:k) = compute_residual_rdp(beta, vmat(k, :k))
 
             ! Check for convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nsv) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1370,7 +1347,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(1:nsv)
+        S = svdvals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1431,8 +1408,8 @@ contains
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
-        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
         allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
@@ -1449,17 +1426,15 @@ contains
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
-            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
             ! Compute residuals.
             beta = B(k+1, k)
-            residuals_wrk(1:k) = compute_residual_csp(beta, vmat(k, 1:k))
+            residuals_wrk(:k) = compute_residual_csp(beta, vmat(k, :k))
 
             ! Check for convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nsv) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1467,7 +1442,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(1:nsv)
+        S = svdvals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1528,8 +1503,8 @@ contains
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call initialize_krylov_subspace(Uwrk) ; call Uwrk(1)%rand(.true.)
-        allocate(Vwrk(kdim_+1), source=V(1)) ; call initialize_krylov_subspace(Vwrk)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
         allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
@@ -1546,17 +1521,15 @@ contains
 
             ! SVD of the k x k bidiagonal matrix.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
-            call svd(B(1:k, 1:k), umat(1:k, 1:k), svdvals_wrk(1:k), vmat(1:k, 1:k))
+            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
             ! Compute residuals.
             beta = B(k+1, k)
-            residuals_wrk(1:k) = compute_residual_cdp(beta, vmat(k, 1:k))
+            residuals_wrk(:k) = compute_residual_cdp(beta, vmat(k, :k))
 
             ! Check for convergence.
-            conv = count(residuals_wrk(1:k) < tol)
-            if (conv >= nsv) then
-                exit lanczos
-            endif
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1564,7 +1537,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(1:nsv)
+        S = svdvals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1589,7 +1562,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_rsp), intent(out) :: x
+        class(abstract_vector_rsp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -1654,7 +1627,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
         allocate(alpha(kdim)) ; alpha = 0.0_sp
@@ -1678,7 +1651,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -1693,7 +1666,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -1703,10 +1676,10 @@ contains
                 endif
 
                 ! Least-squares problem.
-                call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -1718,13 +1691,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_rsp, V(j), y(j))
-            enddo
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -1750,7 +1718,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_rdp), intent(out) :: x
+        class(abstract_vector_rdp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -1815,7 +1783,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
         allocate(alpha(kdim)) ; alpha = 0.0_dp
@@ -1839,7 +1807,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -1854,7 +1822,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -1864,10 +1832,10 @@ contains
                 endif
 
                 ! Least-squares problem.
-                call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -1879,13 +1847,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_rdp, V(j), y(j))
-            enddo
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -1911,7 +1874,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_csp), intent(out) :: x
+        class(abstract_vector_csp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -1976,7 +1939,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
         allocate(alpha(kdim)) ; alpha = 0.0_sp
@@ -2000,7 +1963,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2015,7 +1978,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -2025,10 +1988,10 @@ contains
                 endif
 
                 ! Least-squares problem.
-                call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -2040,13 +2003,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_csp, V(j), y(j))
-            enddo
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -2072,7 +2030,7 @@ contains
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
         !! Right-hand side vector.
-        class(abstract_vector_cdp), intent(out) :: x
+        class(abstract_vector_cdp), intent(inout) :: x
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
@@ -2137,7 +2095,7 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
-        allocate(V(1:kdim+1), source=b) ; call initialize_krylov_subspace(V)
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
         allocate(alpha(kdim)) ; alpha = 0.0_dp
@@ -2161,7 +2119,7 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call initialize_krylov_subspace(V(2:kdim+1))
+            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2176,7 +2134,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(1:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -2186,10 +2144,10 @@ contains
                 endif
 
                 ! Least-squares problem.
-                call lstsq(H(1:k+1, 1:k), e(1:k+1), y(1:k))
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
 
                 ! Compute residual.
-                beta = norm2(abs(e(1:k+1) - matmul(H(1:k+1, 1:k), y(1:k))))
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
                 info = info + 1
@@ -2201,13 +2159,8 @@ contains
             enddo arnoldi_fact
 
             ! Update solution.
-            k = min(k, kdim)
-            if (allocated(dx) .eqv. .false.) allocate(dx, source=x); call dx%zero()
-            do j = 1, k
-                call dx%axpby(one_cdp, V(j), y(j))
-            enddo
-            if (has_precond) call precond%apply(dx)
-            call x%add(dx)
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -2289,7 +2242,7 @@ contains
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() /= 0.0_sp) call A%matvec(x, r)
+        if (x%norm() > 0) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2299,7 +2252,7 @@ contains
         r_dot_r_old = r%dot(r)
 
         ! Conjugate gradient iteration.
-        do i = 1, maxiter
+        cg_loop: do i = 1, maxiter
             ! Compute A @ p
             call A%matvec(p, Ap)
             ! Compute step size.
@@ -2315,16 +2268,15 @@ contains
             ! Current number of iterations performed.
             info = info + 1
 
-            if (residual < tol) then
-                exit
-            endif
+            if (residual < tol) exit cg_loop
+
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             call p%axpby(beta, r, one_rsp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
-        enddo
+        enddo cg_loop
         
         return
     end subroutine cg_rsp
@@ -2382,7 +2334,7 @@ contains
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() /= 0.0_dp) call A%matvec(x, r)
+        if (x%norm() > 0) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2392,7 +2344,7 @@ contains
         r_dot_r_old = r%dot(r)
 
         ! Conjugate gradient iteration.
-        do i = 1, maxiter
+        cg_loop: do i = 1, maxiter
             ! Compute A @ p
             call A%matvec(p, Ap)
             ! Compute step size.
@@ -2408,16 +2360,15 @@ contains
             ! Current number of iterations performed.
             info = info + 1
 
-            if (residual < tol) then
-                exit
-            endif
+            if (residual < tol) exit cg_loop
+
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             call p%axpby(beta, r, one_rdp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
-        enddo
+        enddo cg_loop
         
         return
     end subroutine cg_rdp
@@ -2475,7 +2426,7 @@ contains
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() /= 0.0_sp) call A%matvec(x, r)
+        if (x%norm() > 0) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2485,7 +2436,7 @@ contains
         r_dot_r_old = r%dot(r)
 
         ! Conjugate gradient iteration.
-        do i = 1, maxiter
+        cg_loop: do i = 1, maxiter
             ! Compute A @ p
             call A%matvec(p, Ap)
             ! Compute step size.
@@ -2501,16 +2452,15 @@ contains
             ! Current number of iterations performed.
             info = info + 1
 
-            if (residual < tol) then
-                exit
-            endif
+            if (residual < tol) exit cg_loop
+
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             call p%axpby(beta, r, one_csp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
-        enddo
+        enddo cg_loop
         
         return
     end subroutine cg_csp
@@ -2568,7 +2518,7 @@ contains
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() /= 0.0_dp) call A%matvec(x, r)
+        if (x%norm() > 0) call A%matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2578,7 +2528,7 @@ contains
         r_dot_r_old = r%dot(r)
 
         ! Conjugate gradient iteration.
-        do i = 1, maxiter
+        cg_loop: do i = 1, maxiter
             ! Compute A @ p
             call A%matvec(p, Ap)
             ! Compute step size.
@@ -2594,16 +2544,15 @@ contains
             ! Current number of iterations performed.
             info = info + 1
 
-            if (residual < tol) then
-                exit
-            endif
+            if (residual < tol) exit cg_loop
+
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             call p%axpby(beta, r, one_cdp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
-        enddo
+        enddo cg_loop
         
         return
     end subroutine cg_cdp
