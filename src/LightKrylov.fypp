@@ -26,7 +26,7 @@ module LightKrylov
     public :: dp, atol_dp, rtol_dp
 
     ! Utils exports.
-    #:for kind, type in RC_KINDS_TYPES
+    #:for kind in REAL_KINDS
     public :: gmres_${kind}$_opts
     public :: cg_${kind}$_opts
     #:endfor
