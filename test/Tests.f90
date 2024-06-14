@@ -19,7 +19,7 @@ program Tester
    ! Unit-test related.
    integer :: status, is, num_tests
    type(testsuite_type), allocatable :: testsuites(:)
-   character(len=*), parameter :: fmt = '("+", *(1x, a))'
+   character(len=*), parameter :: fmt = '("#", *(1x, a))'
 
    ! Display information about the version of LightKrylov being tested.
    call greetings()
@@ -99,7 +99,7 @@ program Tester
 
    do is = 1, size(testsuites)
       write (*, *) "-------------------------------"
-      write (error_unit, fmt) "Testing :", testsuites(is)%name
+      write (error_unit, fmt) "Testing:", testsuites(is)%name
       write (*, *) "-------------------------------"
       write (*, *)
       call run_testsuite(testsuites(is)%collect, error_unit, status)
@@ -179,7 +179,7 @@ program Tester
 
    do is = 1, size(testsuites)
       write (*, *) "-------------------------------"
-      write (error_unit, fmt) "Testing :", testsuites(is)%name
+      write (error_unit, fmt) "Testing:", testsuites(is)%name
       write (*, *) "-------------------------------"
       write (*, *)
       call run_testsuite(testsuites(is)%collect, error_unit, status)
