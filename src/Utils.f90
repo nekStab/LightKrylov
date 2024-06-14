@@ -29,8 +29,6 @@ module lightkrylov_utils
     public :: assert_shape
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
-    ! Compute USV^T = svd(A) for dense matrices.
-    public :: svd
     ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
@@ -71,13 +69,6 @@ module lightkrylov_utils
         module procedure inv_rdp
         module procedure inv_csp
         module procedure inv_cdp
-    end interface
-
-    interface svd
-        module procedure svd_rsp
-        module procedure svd_rdp
-        module procedure svd_csp
-        module procedure svd_cdp
     end interface
 
     interface eig
@@ -365,41 +356,6 @@ contains
         return
     end subroutine inv_rsp
 
-    subroutine svd_rsp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        real(sp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        real(sp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(sp), intent(out) :: S(:)
-        !! Singular values.
-        real(sp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        real(sp), allocatable :: work(:)
-        real(sp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        v = transpose(vt)
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_rsp')
-
-        return
-    end subroutine svd_rsp
-
     subroutine eig_rsp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         real(sp), intent(in) :: A(:, :)
@@ -591,41 +547,6 @@ contains
 
         return
     end subroutine inv_rdp
-
-    subroutine svd_rdp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        real(dp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        real(dp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(dp), intent(out) :: S(:)
-        !! Singular values.
-        real(dp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        real(dp), allocatable :: work(:)
-        real(dp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        v = transpose(vt)
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_rdp')
-
-        return
-    end subroutine svd_rdp
 
     subroutine eig_rdp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
@@ -819,43 +740,6 @@ contains
         return
     end subroutine inv_csp
 
-    subroutine svd_csp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        complex(sp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        complex(sp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(sp), intent(out) :: S(:)
-        !! Singular values.
-        complex(sp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        complex(sp), allocatable :: work(:)
-        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-        real(sp), allocatable :: rwork(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        allocate(rwork(5*min(m, n)))
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_csp')
-
-        return
-    end subroutine svd_csp
-
     subroutine eig_csp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         complex(sp), intent(in) :: A(:, :)
@@ -1042,43 +926,6 @@ contains
 
         return
     end subroutine inv_cdp
-
-    subroutine svd_cdp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        complex(dp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        complex(dp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(dp), intent(out) :: S(:)
-        !! Singular values.
-        complex(dp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        complex(dp), allocatable :: work(:)
-        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-        real(dp), allocatable :: rwork(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        allocate(rwork(5*min(m, n)))
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_cdp')
-
-        return
-    end subroutine svd_cdp
 
     subroutine eig_cdp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.

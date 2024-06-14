@@ -11,7 +11,7 @@ module lightkrylov_constants
 
     integer , parameter, public :: dp = selected_real_kind(15, 307)
     !! Definition of the double precision data type.
-    real(dp), parameter, public :: atol_dp = 10.0_sp ** -precision(1.0_dp)
+    real(dp), parameter, public :: atol_dp = 10.0_dp ** -precision(1.0_dp)
     !! Definition of the absolute tolerance for double precision computations.
     real(dp), parameter, public :: rtol_dp = sqrt(atol_dp)
     !! Definition of the relative tolerance for double precision computations.
