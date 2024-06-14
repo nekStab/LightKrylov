@@ -8,8 +8,9 @@ module lightkrylov_BaseKrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
+    private
     
-    character*128, parameter, private :: this_module = 'LightKrylov_BaseKrylov'
+    character*128, parameter :: this_module = 'LightKrylov_BaseKrylov'
 
     public :: qr
     public :: apply_permutation_matrix
@@ -20,6 +21,9 @@ module lightkrylov_BaseKrylov
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
     public :: krylov_schur
+    public :: double_gram_schmidt_step
+    public :: eigvals_select_sp
+    public :: eigvals_select_dp
 
     interface qr
         module procedure qr_no_pivoting_rsp
@@ -118,6 +122,23 @@ module lightkrylov_BaseKrylov
         module procedure krylov_schur_cdp
     end interface
 
+    !----------------------------------------------------------
+    !-----     ABSTRACT EIGENVALUE SELECTOR INTERFACE     -----
+    !----------------------------------------------------------
+
+    abstract interface
+        function eigvals_select_sp(lambda) result(selected)
+            import sp
+            complex(sp), intent(in) :: lambda(:)
+            logical                       :: selected(size(lambda))
+        end function eigvals_select_sp
+        function eigvals_select_dp(lambda) result(selected)
+            import dp
+            complex(dp), intent(in) :: lambda(:)
+            logical                       :: selected(size(lambda))
+        end function eigvals_select_dp
+    end interface
+
 contains
 
     !-------------------------------------
@@ -135,9 +156,7 @@ contains
         integer :: i, p, info
 
         ! Zero-out X.
-        do i = 1, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X)
 
         ! Deals with optional args.
         if(present(X0)) then
@@ -151,8 +170,8 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = zero_rsp
-            allocate(perm(1:p)) ; perm = 0
+            allocate(R(p, p)) ; R = zero_rsp
+            allocate(perm(p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
                 call X(i)%add(Q(i))
@@ -377,9 +396,7 @@ contains
         integer :: i, p, info
 
         ! Zero-out X.
-        do i = 1, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X)
 
         ! Deals with optional args.
         if(present(X0)) then
@@ -393,8 +410,8 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = zero_rdp
-            allocate(perm(1:p)) ; perm = 0
+            allocate(R(p, p)) ; R = zero_rdp
+            allocate(perm(p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
                 call X(i)%add(Q(i))
@@ -619,9 +636,7 @@ contains
         integer :: i, p, info
 
         ! Zero-out X.
-        do i = 1, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X)
 
         ! Deals with optional args.
         if(present(X0)) then
@@ -635,8 +650,8 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = zero_rsp
-            allocate(perm(1:p)) ; perm = 0
+            allocate(R(p, p)) ; R = zero_rsp
+            allocate(perm(p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
                 call X(i)%add(Q(i))
@@ -861,9 +876,7 @@ contains
         integer :: i, p, info
 
         ! Zero-out X.
-        do i = 1, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X)
 
         ! Deals with optional args.
         if(present(X0)) then
@@ -877,8 +890,8 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = zero_rdp
-            allocate(perm(1:p)) ; perm = 0
+            allocate(R(p, p)) ; R = zero_rdp
+            allocate(perm(p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
                 call X(i)%add(Q(i))
@@ -3119,14 +3132,7 @@ contains
         !! Krylov basis.
         real(sp), intent(inout) :: H(:, :)
         !! Upper Hessenberg matrix.
-        interface
-            function selector(lambda) result(out)
-                import sp
-                complex(sp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector) :: select_eigs
+        procedure(eigvals_select_sp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
 
         !--------------------------------------
@@ -3170,9 +3176,7 @@ contains
 
         call X(n+1)%axpby(zero_rsp, X(kdim+1), one_rsp)
 
-        do i = n+2, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
         b = matmul(H(kdim+1, :), Z)
@@ -3192,14 +3196,7 @@ contains
         !! Krylov basis.
         real(dp), intent(inout) :: H(:, :)
         !! Upper Hessenberg matrix.
-        interface
-            function selector(lambda) result(out)
-                import dp
-                complex(dp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector) :: select_eigs
+        procedure(eigvals_select_dp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
 
         !--------------------------------------
@@ -3243,9 +3240,7 @@ contains
 
         call X(n+1)%axpby(zero_rdp, X(kdim+1), one_rdp)
 
-        do i = n+2, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
         b = matmul(H(kdim+1, :), Z)
@@ -3265,14 +3260,7 @@ contains
         !! Krylov basis.
         complex(sp), intent(inout) :: H(:, :)
         !! Upper Hessenberg matrix.
-        interface
-            function selector(lambda) result(out)
-                import sp
-                complex(sp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector) :: select_eigs
+        procedure(eigvals_select_sp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
 
         !--------------------------------------
@@ -3316,9 +3304,7 @@ contains
 
         call X(n+1)%axpby(zero_csp, X(kdim+1), one_csp)
 
-        do i = n+2, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
         b = matmul(H(kdim+1, :), Z)
@@ -3338,14 +3324,7 @@ contains
         !! Krylov basis.
         complex(dp), intent(inout) :: H(:, :)
         !! Upper Hessenberg matrix.
-        interface
-            function selector(lambda) result(out)
-                import dp
-                complex(dp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector) :: select_eigs
+        procedure(eigvals_select_dp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
 
         !--------------------------------------
@@ -3389,9 +3368,7 @@ contains
 
         call X(n+1)%axpby(zero_cdp, X(kdim+1), one_cdp)
 
-        do i = n+2, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
         b = matmul(H(kdim+1, :), Z)

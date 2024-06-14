@@ -4,7 +4,7 @@ module TestIterativeSolvers
     ! Fortran Standard library.
     use iso_fortran_env
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, diag
     use stdlib_stats, only : median
 
     ! LightKrylov
@@ -94,7 +94,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info, select=select_eigs)
+        call eigs(A, X, eigvals, residuals, info)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
@@ -120,14 +120,6 @@ contains
         #:endif
 
         return
-        contains
-        function select_eigs(lambda) result(selected)
-            complex(${kind}$), intent(in) :: lambda(:)
-            logical :: selected(size(lambda))
-
-            selected = abs(lambda) > median(abs(lambda))
-            return
-        end function select_eigs
     end subroutine test_ks_evp_${type[0]}$${kind}$
 
    subroutine test_evp_${type[0]}$${kind}$(error)

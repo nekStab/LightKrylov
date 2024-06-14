@@ -4,8 +4,12 @@ module LightKrylov_Logger
    use stdlib_logger, only: logger => global_logger
    use stdlib_ascii, only : to_lower
    implicit none
+   private
 
    logical, parameter :: exit_on_error = .true.
+
+   public :: check_info
+   public :: logger
 
 contains
 

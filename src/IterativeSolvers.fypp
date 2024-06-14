@@ -8,6 +8,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
     use stdlib_linalg, only: lstsq
+    use stdlib_stats, only: median
 
     use lightkrylov_constants
     Use LightKrylov_Logger
@@ -17,8 +18,9 @@ module lightkrylov_IterativeSolvers
     use lightkrylov_BaseKrylov
 
     implicit none
+    private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_IterativeSolvers'
+    character*128, parameter :: this_module = 'LightKrylov_IterativeSolvers'
 
     public :: save_eigenspectrum
     public :: eigs
@@ -129,6 +131,13 @@ contains
         return
     end subroutine save_eigenspectrum_${kind}$
 
+    function median_eigvals_selector_${kind}$(lambda) result(selected)
+        complex(${kind}$), intent(in) :: lambda(:)
+        logical :: selected(size(lambda))
+        selected = abs(lambda) > median(abs(lambda))
+        return
+    end function median_eigvals_selector_${kind}$
+
     #:endfor
 
     !---------------------------------------------------
@@ -148,14 +157,7 @@ contains
         integer, intent(out) :: info
         !! Information flag.
         integer, optional, intent(in) :: kdim
-        interface
-            function selector(lambda) result(out) 
-                import ${kind}$
-                complex(${kind}$), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector), optional :: select
+        procedure(eigvals_select_${kind}$), optional :: select
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -190,12 +192,20 @@ contains
         #:if type[0] == "r"
         ${type}$ :: alpha
         #:endif
+        ! Eigenvalue selection.
+        procedure(eigvals_select_${kind}$), pointer :: select_
 
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_${kind}$)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_${kind}$
+        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_${kind}$
@@ -245,13 +255,7 @@ contains
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
-            if (present(select)) then
-                call krylov_schur(kstart, Xwrk, H, select)
-                kstart = kstart + 1
-            else
-                exit krylovschur
-            endif
-
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
         end do krylovschur
 
         !--------------------------------

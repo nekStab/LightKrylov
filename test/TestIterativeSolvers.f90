@@ -2,7 +2,7 @@ module TestIterativeSolvers
     ! Fortran Standard library.
     use iso_fortran_env
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, diag
     use stdlib_stats, only : median
 
     ! LightKrylov
@@ -98,7 +98,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info, select=select_eigs)
+        call eigs(A, X, eigvals, residuals, info)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rsp')
 
         ! Analytical eigenvalues.
@@ -123,14 +123,6 @@ contains
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
 
         return
-        contains
-        function select_eigs(lambda) result(selected)
-            complex(sp), intent(in) :: lambda(:)
-            logical :: selected(size(lambda))
-
-            selected = abs(lambda) > median(abs(lambda))
-            return
-        end function select_eigs
     end subroutine test_ks_evp_rsp
 
    subroutine test_evp_rsp(error)
@@ -326,7 +318,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info, select=select_eigs)
+        call eigs(A, X, eigvals, residuals, info)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rdp')
 
         ! Analytical eigenvalues.
@@ -351,14 +343,6 @@ contains
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
 
         return
-        contains
-        function select_eigs(lambda) result(selected)
-            complex(dp), intent(in) :: lambda(:)
-            logical :: selected(size(lambda))
-
-            selected = abs(lambda) > median(abs(lambda))
-            return
-        end function select_eigs
     end subroutine test_ks_evp_rdp
 
    subroutine test_evp_rdp(error)
@@ -535,14 +519,6 @@ contains
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
 
         return
-        contains
-        function select_eigs(lambda) result(selected)
-            complex(sp), intent(in) :: lambda(:)
-            logical :: selected(size(lambda))
-
-            selected = abs(lambda) > median(abs(lambda))
-            return
-        end function select_eigs
     end subroutine test_ks_evp_csp
 
    subroutine test_evp_csp(error)
@@ -601,14 +577,6 @@ contains
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
 
         return
-        contains
-        function select_eigs(lambda) result(selected)
-            complex(dp), intent(in) :: lambda(:)
-            logical :: selected(size(lambda))
-
-            selected = abs(lambda) > median(abs(lambda))
-            return
-        end function select_eigs
     end subroutine test_ks_evp_cdp
 
    subroutine test_evp_cdp(error)
