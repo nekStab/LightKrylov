@@ -6,6 +6,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
     use stdlib_linalg, only: lstsq
+    use stdlib_stats, only: median
 
     use lightkrylov_constants
     Use LightKrylov_Logger
@@ -15,8 +16,9 @@ module lightkrylov_IterativeSolvers
     use lightkrylov_BaseKrylov
 
     implicit none
+    private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_IterativeSolvers'
+    character*128, parameter :: this_module = 'LightKrylov_IterativeSolvers'
 
     public :: save_eigenspectrum
     public :: eigs
@@ -213,6 +215,13 @@ contains
         return
     end subroutine save_eigenspectrum_sp
 
+    function median_eigvals_selector_sp(lambda) result(selected)
+        complex(sp), intent(in) :: lambda(:)
+        logical :: selected(size(lambda))
+        selected = abs(lambda) > median(abs(lambda))
+        return
+    end function median_eigvals_selector_sp
+
     subroutine save_eigenspectrum_dp(eigvals, residuals, fname)
         !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
         complex(dp), intent(in) :: eigvals(:)
@@ -233,6 +242,13 @@ contains
         return
     end subroutine save_eigenspectrum_dp
 
+    function median_eigvals_selector_dp(lambda) result(selected)
+        complex(dp), intent(in) :: lambda(:)
+        logical :: selected(size(lambda))
+        selected = abs(lambda) > median(abs(lambda))
+        return
+    end function median_eigvals_selector_dp
+
 
     !---------------------------------------------------
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
@@ -250,14 +266,7 @@ contains
         integer, intent(out) :: info
         !! Information flag.
         integer, optional, intent(in) :: kdim
-        interface
-            function selector(lambda) result(out) 
-                import sp
-                complex(sp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector), optional :: select
+        procedure(eigvals_select_sp), optional :: select
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -286,12 +295,20 @@ contains
         real(sp) :: tol
         real(sp) :: beta
         real(sp) :: alpha
+        ! Eigenvalue selection.
+        procedure(eigvals_select_sp), pointer :: select_
 
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_sp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_sp
+        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
@@ -337,13 +354,7 @@ contains
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
-            if (present(select)) then
-                call krylov_schur(kstart, Xwrk, H, select)
-                kstart = kstart + 1
-            else
-                exit krylovschur
-            endif
-
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
         end do krylovschur
 
         !--------------------------------
@@ -387,14 +398,7 @@ contains
         integer, intent(out) :: info
         !! Information flag.
         integer, optional, intent(in) :: kdim
-        interface
-            function selector(lambda) result(out) 
-                import dp
-                complex(dp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector), optional :: select
+        procedure(eigvals_select_dp), optional :: select
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -423,12 +427,20 @@ contains
         real(dp) :: tol
         real(dp) :: beta
         real(dp) :: alpha
+        ! Eigenvalue selection.
+        procedure(eigvals_select_dp), pointer :: select_
 
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_dp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_dp
+        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
@@ -474,13 +486,7 @@ contains
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
-            if (present(select)) then
-                call krylov_schur(kstart, Xwrk, H, select)
-                kstart = kstart + 1
-            else
-                exit krylovschur
-            endif
-
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
         end do krylovschur
 
         !--------------------------------
@@ -524,14 +530,7 @@ contains
         integer, intent(out) :: info
         !! Information flag.
         integer, optional, intent(in) :: kdim
-        interface
-            function selector(lambda) result(out) 
-                import sp
-                complex(sp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector), optional :: select
+        procedure(eigvals_select_sp), optional :: select
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -559,12 +558,20 @@ contains
         logical :: verbose, trans
         real(sp) :: tol
         complex(sp) :: beta
+        ! Eigenvalue selection.
+        procedure(eigvals_select_sp), pointer :: select_
 
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_sp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_sp
+        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
@@ -601,13 +608,7 @@ contains
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
-            if (present(select)) then
-                call krylov_schur(kstart, Xwrk, H, select)
-                kstart = kstart + 1
-            else
-                exit krylovschur
-            endif
-
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
         end do krylovschur
 
         !--------------------------------
@@ -651,14 +652,7 @@ contains
         integer, intent(out) :: info
         !! Information flag.
         integer, optional, intent(in) :: kdim
-        interface
-            function selector(lambda) result(out) 
-                import dp
-                complex(dp), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector), optional :: select
+        procedure(eigvals_select_dp), optional :: select
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -686,12 +680,20 @@ contains
         logical :: verbose, trans
         real(dp) :: tol
         complex(dp) :: beta
+        ! Eigenvalue selection.
+        procedure(eigvals_select_dp), pointer :: select_
 
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_dp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_dp
+        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
@@ -728,13 +730,7 @@ contains
             enddo arnoldi_factorization
 
             ! Krylov-Schur restarting procedure.
-            if (present(select)) then
-                call krylov_schur(kstart, Xwrk, H, select)
-                kstart = kstart + 1
-            else
-                exit krylovschur
-            endif
-
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
         end do krylovschur
 
         !--------------------------------

@@ -21,8 +21,9 @@ module lightkrylov_utils
     use LightKrylov_Constants
 
     implicit none
+    private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_Utils'
+    character*128, parameter :: this_module = 'LightKrylov_Utils'
 
     public :: stop_error
     public :: assert_shape
