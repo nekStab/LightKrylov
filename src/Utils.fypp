@@ -42,12 +42,6 @@ module lightkrylov_utils
     ! Re-orders the Schur factorization of A.
     public :: ordschur
 
-    public :: abstract_opts
-    #:for kind in REAL_KINDS
-    public :: gmres_${kind}$_opts
-    public :: cg_${kind}$_opts
-    #:endfor
-
     #:for kind, type in RC_KINDS_TYPES
     #:if type[0] == "r"
     public :: log2_${type[0]}$${kind}$

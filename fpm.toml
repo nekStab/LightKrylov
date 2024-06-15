@@ -11,8 +11,6 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
-link = ["blas", "lapack"]
-#link = ["openblas"]
 
 [install]
 library = true

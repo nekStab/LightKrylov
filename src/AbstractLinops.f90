@@ -8,10 +8,6 @@ module lightkrylov_AbstractLinops
     character*128, parameter :: this_module = 'Lightkrylov_AbstractLinops'
 
     type, abstract, public :: abstract_linop
-    contains
-    private
-        procedure, pass(from), public :: copy
-        generic, public :: assignment(=) => copy
     end type abstract_linop
 
     !------------------------------------------------------------------------------
@@ -389,14 +385,6 @@ module lightkrylov_AbstractLinops
 
 
 contains
-
-    subroutine copy(out, from)
-        class(abstract_linop), intent(in) :: from
-        class(abstract_linop), allocatable, intent(out) :: out
-        if (allocated(out)) deallocate(out)
-        allocate(out, source=from)
-        return
-    end subroutine copy
 
     subroutine id_matvec_rsp(self, vec_in, vec_out)
         class(Id_rsp), intent(in) :: self

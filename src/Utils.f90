@@ -40,12 +40,6 @@ module lightkrylov_utils
     ! Re-orders the Schur factorization of A.
     public :: ordschur
 
-    public :: abstract_opts
-    public :: gmres_sp_opts
-    public :: cg_sp_opts
-    public :: gmres_dp_opts
-    public :: cg_dp_opts
-
     public :: log2_rsp
     public :: norml_rsp
     public :: log2_rdp
