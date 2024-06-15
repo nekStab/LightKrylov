@@ -139,20 +139,7 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
-         else if (trim(to_lower(origin)) == 'gesvd') then
-            ! GESVD
-            if (info < 0) then
-               write(msg, *) "The ", -info, "-th argument has illegal value."
-               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
-               ierr = -1
-            else
-               write(msg, *) "The QR alg. did not converge. ", info, &
-                           & "superdiagonals of an intermediate bidiagonal form B ", &
-                           & "did not converge to zero."
-               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
-               ierr = -1
-            end if
-         !
+        !
          !   LightKrylov_Utils
          !
          else if (trim(to_lower(origin)) == 'sqrtm') then

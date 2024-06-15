@@ -5,7 +5,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: lstsq
+    use stdlib_linalg, only: lstsq, svd
     use stdlib_stats, only: median
 
     use lightkrylov_constants
@@ -1230,17 +1230,19 @@ contains
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
 
-            ! SVD of the k x k bidiagonal matrix.
+            ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
-            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
-            ! Compute residuals.
-            beta = B(k+1, k)
-            residuals_wrk(:k) = compute_residual_rsp(beta, vmat(k, :k))
+            if (k > 1) then
+                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+                vmat(:k, :k) = transpose(vmat(:k, :k))
 
-            ! Check for convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            if (conv >= nsv) exit lanczos
+                residuals_wrk(:k) = compute_residual_rsp(B(k+1, k), vmat(k, :k))
+
+                ! Check for convergence.
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nsv) exit lanczos
+            endif
         enddo lanczos
 
         !--------------------------------
@@ -1325,17 +1327,19 @@ contains
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
 
-            ! SVD of the k x k bidiagonal matrix.
+            ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
-            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
-            ! Compute residuals.
-            beta = B(k+1, k)
-            residuals_wrk(:k) = compute_residual_rdp(beta, vmat(k, :k))
+            if (k > 1) then
+                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+                vmat(:k, :k) = transpose(vmat(:k, :k))
 
-            ! Check for convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            if (conv >= nsv) exit lanczos
+                residuals_wrk(:k) = compute_residual_rdp(B(k+1, k), vmat(k, :k))
+
+                ! Check for convergence.
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nsv) exit lanczos
+            endif
         enddo lanczos
 
         !--------------------------------
@@ -1420,17 +1424,19 @@ contains
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
 
-            ! SVD of the k x k bidiagonal matrix.
+            ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
-            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
-            ! Compute residuals.
-            beta = B(k+1, k)
-            residuals_wrk(:k) = compute_residual_csp(beta, vmat(k, :k))
+            if (k > 1) then
+                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
 
-            ! Check for convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            if (conv >= nsv) exit lanczos
+                residuals_wrk(:k) = compute_residual_csp(B(k+1, k), vmat(k, :k))
+
+                ! Check for convergence.
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nsv) exit lanczos
+            endif
         enddo lanczos
 
         !--------------------------------
@@ -1515,17 +1521,19 @@ contains
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
 
-            ! SVD of the k x k bidiagonal matrix.
+            ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
-            call svd(B(:k, :k), umat(:k, :k), svdvals_wrk(:k), vmat(:k, :k))
 
-            ! Compute residuals.
-            beta = B(k+1, k)
-            residuals_wrk(:k) = compute_residual_cdp(beta, vmat(k, :k))
+            if (k > 1) then
+                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
 
-            ! Check for convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            if (conv >= nsv) exit lanczos
+                residuals_wrk(:k) = compute_residual_cdp(B(k+1, k), vmat(k, :k))
+
+                ! Check for convergence.
+                conv = count(residuals_wrk(:k) < tol)
+                if (conv >= nsv) exit lanczos
+            endif
         enddo lanczos
 
         !--------------------------------
