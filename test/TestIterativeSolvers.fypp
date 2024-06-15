@@ -3,6 +3,7 @@
 module TestIterativeSolvers
     ! Fortran Standard library.
     use iso_fortran_env
+    use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_stats, only : median
@@ -77,7 +78,7 @@ contains
         ${type}$ :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(nev)) ; call initialize_krylov_subspace(X)
+        allocate(X(nev)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
@@ -145,7 +146,7 @@ contains
         ${type}$ :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
@@ -229,7 +230,7 @@ contains
 
         ! Allocations.
         A = spd_linop_${type[0]}$${kind}$(T)
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
@@ -307,8 +308,8 @@ contains
         #:if type[0] == "r"
 
         ! Allocate eigenvectors.
-        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
-        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
         
         ! Initialize linear operator with the Strang matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
@@ -324,7 +325,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call svds(A, U, S, V, residuals, info)
+        call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
         call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
 
         ! Analytical singular values.
@@ -395,7 +396,7 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false., rtol=rtol_${kind}$, atol=atol_${kind}$)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
 

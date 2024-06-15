@@ -1,6 +1,7 @@
 module TestIterativeSolvers
     ! Fortran Standard library.
     use iso_fortran_env
+    use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_stats, only : median
@@ -81,7 +82,7 @@ contains
         real(sp) :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(nev)) ; call initialize_krylov_subspace(X)
+        allocate(X(nev)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_rsp() ; A%data = 0.0_sp ; n = size(A%data, 1)
@@ -147,7 +148,7 @@ contains
         real(sp) :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_rsp() ; A%data = 0.0_sp ; n = size(A%data, 1)
@@ -229,7 +230,7 @@ contains
 
         ! Allocations.
         A = spd_linop_rsp(T)
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
@@ -301,7 +302,7 @@ contains
         real(dp) :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(nev)) ; call initialize_krylov_subspace(X)
+        allocate(X(nev)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_rdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
@@ -367,7 +368,7 @@ contains
         real(dp) :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_rdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
@@ -449,7 +450,7 @@ contains
 
         ! Allocations.
         A = spd_linop_rdp(T)
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size)
@@ -640,8 +641,8 @@ contains
         real(sp), dimension(test_size, test_size) :: Udata, Vdata
 
         ! Allocate eigenvectors.
-        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
-        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
         
         ! Initialize linear operator with the Strang matrix.
         A = linop_rsp() ; A%data = 0.0_sp ; n = size(A%data, 1)
@@ -657,7 +658,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call svds(A, U, S, V, residuals, info)
+        call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
         call check_info(info, 'svds', module=this_module, procedure='test_svd_rsp')
 
         ! Analytical singular values.
@@ -724,8 +725,8 @@ contains
         real(dp), dimension(test_size, test_size) :: Udata, Vdata
 
         ! Allocate eigenvectors.
-        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
-        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
         
         ! Initialize linear operator with the Strang matrix.
         A = linop_rdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
@@ -741,7 +742,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call svds(A, U, S, V, residuals, info)
+        call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
         call check_info(info, 'svds', module=this_module, procedure='test_svd_rdp')
 
         ! Analytical singular values.
@@ -875,7 +876,7 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rsp')
 
@@ -940,7 +941,7 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rdp')
 
@@ -1005,7 +1006,7 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_csp')
 
@@ -1070,7 +1071,7 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_cdp')
 
