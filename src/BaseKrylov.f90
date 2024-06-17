@@ -2907,7 +2907,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rsp')
 
         return
@@ -2977,7 +2977,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rdp')
 
         return
@@ -3047,7 +3047,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_csp')
 
         return
@@ -3117,7 +3117,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call orthogonalize_against_basis(X(k+1), X(1:k), info, if_chk_orthonormal=.false.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_cdp')
 
         return
