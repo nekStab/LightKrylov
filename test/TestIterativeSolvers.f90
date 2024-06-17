@@ -112,11 +112,6 @@ contains
 
         ! check eigenvalues
         call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_sp)
-            write(output_unit, *) "True eigenvalues / Computed eigenvalues / Difference"
-            do i = 1, nev
-                write(output_unit, *) "    -", true_eigvals(i), eigvals(i), abs(eigvals(i) - true_eigvals(i)), rtol_sp, atol_sp
-            enddo
-            write(output_unit, *) "|| err ||_inf :",  maxval(abs(eigvals - true_eigvals(:nev))) 
         !if (allocated(error)) return
         !! check eigenvectors
         !allocate(AX(nev))
@@ -170,7 +165,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
         call check_info(info, 'eigs', module=this_module, procedure='test_evp_rsp')
 
         ! Analytical eigenvalues.
@@ -181,7 +176,7 @@ contains
             k = k+1
         enddo
 
-        call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_sp)
+        call check(error, maxval(abs(eigvals - true_eigvals)) < rtol_sp)
 !        if (allocated(error)) return
 !
 !        ! check eigenvectors
@@ -238,7 +233,7 @@ contains
         allocate(X(test_size)) ; call zero_basis(X)
 
         ! Spectral decomposition.
-        call eighs(A, X, evals, residuals, info, kdim=test_size)
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_sp)
         call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rsp')
 
         ! Analytical eigenvalues.
@@ -248,7 +243,7 @@ contains
         enddo
 
         ! Check error.
-        call check(error, all_close(evals, true_evals, rtol_sp, atol_sp))
+        call check(error, maxval(abs(true_evals - evals)) < rtol_sp)
         if (allocated(error)) return
 
         ! check eigenvectors
@@ -268,7 +263,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_sym_evp_rsp
@@ -337,11 +332,6 @@ contains
 
         ! check eigenvalues
         call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_dp)
-            write(output_unit, *) "True eigenvalues / Computed eigenvalues / Difference"
-            do i = 1, nev
-                write(output_unit, *) "    -", true_eigvals(i), eigvals(i), abs(eigvals(i) - true_eigvals(i)), rtol_dp, atol_dp
-            enddo
-            write(output_unit, *) "|| err ||_inf :",  maxval(abs(eigvals - true_eigvals(:nev))) 
         !if (allocated(error)) return
         !! check eigenvectors
         !allocate(AX(nev))
@@ -395,7 +385,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
         call check_info(info, 'eigs', module=this_module, procedure='test_evp_rdp')
 
         ! Analytical eigenvalues.
@@ -406,7 +396,7 @@ contains
             k = k+1
         enddo
 
-        call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_dp)
+        call check(error, maxval(abs(eigvals - true_eigvals)) < rtol_dp)
 !        if (allocated(error)) return
 !
 !        ! check eigenvectors
@@ -463,7 +453,7 @@ contains
         allocate(X(test_size)) ; call zero_basis(X)
 
         ! Spectral decomposition.
-        call eighs(A, X, evals, residuals, info, kdim=test_size)
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_dp)
         call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rdp')
 
         ! Analytical eigenvalues.
@@ -473,7 +463,7 @@ contains
         enddo
 
         ! Check error.
-        call check(error, all_close(evals, true_evals, rtol_dp, atol_dp))
+        call check(error, maxval(abs(true_evals - evals)) < rtol_dp)
         if (allocated(error)) return
 
         ! check eigenvectors
@@ -493,7 +483,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_sym_evp_rdp
@@ -676,7 +666,7 @@ contains
             true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
         enddo
 
-        call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
+        call check(error, maxval(s - true_svdvals) < rtol_sp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
@@ -685,7 +675,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -693,7 +683,7 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
         if (allocated(error)) return
 
         ! Check correctness of full factorization.
@@ -760,7 +750,7 @@ contains
             true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
         enddo
 
-        call check(error, norm2(s - true_svdvals)**2 < rtol_dp)
+        call check(error, maxval(s - true_svdvals) < rtol_dp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
@@ -769,7 +759,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -777,7 +767,7 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
         if (allocated(error)) return
 
         ! Check correctness of full factorization.
@@ -892,9 +882,6 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        if (allocated(error)) then
-            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_sp
-        endif
 
         return
     end subroutine test_gmres_rsp
@@ -917,7 +904,7 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
 
@@ -960,9 +947,6 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        if (allocated(error)) then
-            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_dp
-        endif
 
         return
     end subroutine test_gmres_rdp
@@ -985,7 +969,7 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
 
@@ -1028,9 +1012,6 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        if (allocated(error)) then
-            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_sp
-        endif
 
         return
     end subroutine test_gmres_csp
@@ -1053,7 +1034,7 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
 
@@ -1096,9 +1077,6 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        if (allocated(error)) then
-            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_dp
-        endif
 
         return
     end subroutine test_gmres_cdp
@@ -1121,7 +1099,7 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
 
@@ -1161,11 +1139,9 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts()
+        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
-
-        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_sp 
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -1198,11 +1174,9 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts()
+        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
-
-        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_dp 
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
@@ -1235,11 +1209,9 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts()
+        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
-
-        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_sp 
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -1272,11 +1244,9 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts()
+        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
-
-        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_dp 
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
