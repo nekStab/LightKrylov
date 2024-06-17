@@ -82,7 +82,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, info)
+        call qr(A, R, info, tol=atol_sp)
         call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_rsp')
 
         ! Get data.
@@ -148,7 +148,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, perm, info)
+        call qr(A, R, perm, info, tol=atol_sp)
         call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_rsp')
 
         ! Extract data
@@ -202,7 +202,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, info)
+        call qr(A, R, info, tol=atol_dp)
         call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_rdp')
 
         ! Get data.
@@ -268,7 +268,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, perm, info)
+        call qr(A, R, perm, info, tol=atol_dp)
         call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_rdp')
 
         ! Extract data
@@ -322,7 +322,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, info)
+        call qr(A, R, info, tol=atol_sp)
         call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_csp')
 
         ! Get data.
@@ -388,7 +388,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, perm, info)
+        call qr(A, R, perm, info, tol=atol_sp)
         call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_csp')
 
         ! Extract data
@@ -442,7 +442,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, info)
+        call qr(A, R, info, tol=atol_dp)
         call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
 
         ! Get data.
@@ -508,7 +508,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, perm, info)
+        call qr(A, R, perm, info, tol=atol_dp)
         call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
 
         ! Extract data
@@ -570,7 +570,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_rsp
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_sp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rsp')
 
         ! Check correctness of full factorization.
@@ -584,7 +584,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_arnoldi_factorization_rsp
@@ -617,7 +617,7 @@ contains
         H = zero_rsp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rsp')
 
         ! Check correctness of full factorization.
@@ -631,7 +631,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_block_arnoldi_factorization_rsp
@@ -665,7 +665,7 @@ contains
         H = zero_rsp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_sp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_rsp')
 
         ! Krylov-Schur condensation.
@@ -722,7 +722,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_rdp
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_dp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rdp')
 
         ! Check correctness of full factorization.
@@ -736,7 +736,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_arnoldi_factorization_rdp
@@ -769,7 +769,7 @@ contains
         H = zero_rdp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rdp')
 
         ! Check correctness of full factorization.
@@ -783,7 +783,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_block_arnoldi_factorization_rdp
@@ -817,7 +817,7 @@ contains
         H = zero_rdp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_dp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_rdp')
 
         ! Krylov-Schur condensation.
@@ -874,7 +874,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_csp
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_sp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_csp')
 
         ! Check correctness of full factorization.
@@ -888,7 +888,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_arnoldi_factorization_csp
@@ -921,7 +921,7 @@ contains
         H = zero_csp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_csp')
 
         ! Check correctness of full factorization.
@@ -935,7 +935,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_block_arnoldi_factorization_csp
@@ -969,7 +969,7 @@ contains
         H = zero_csp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_sp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_csp')
 
         ! Krylov-Schur condensation.
@@ -1026,7 +1026,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_cdp
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_dp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_cdp')
 
         ! Check correctness of full factorization.
@@ -1040,7 +1040,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_arnoldi_factorization_cdp
@@ -1073,7 +1073,7 @@ contains
         H = zero_cdp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_cdp')
 
         ! Check correctness of full factorization.
@@ -1087,7 +1087,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_block_arnoldi_factorization_cdp
@@ -1121,7 +1121,7 @@ contains
         H = zero_cdp
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_dp)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_cdp')
 
         ! Krylov-Schur condensation.
@@ -1186,7 +1186,7 @@ contains
         call initialize_krylov_subspace(V) ; B = zero_rsp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
+        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_sp)
         call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_rsp')
 
@@ -1204,7 +1204,7 @@ contains
 
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the right Krylov basis.
@@ -1212,7 +1212,7 @@ contains
         call innerprod(G, V(1:kdim), V(1:kdim))
 
         ! Check orthonormality of the right basis.
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_rsp
@@ -1255,7 +1255,7 @@ contains
         call initialize_krylov_subspace(V) ; B = zero_rdp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
+        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_dp)
         call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_rdp')
 
@@ -1273,7 +1273,7 @@ contains
 
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the right Krylov basis.
@@ -1281,7 +1281,7 @@ contains
         call innerprod(G, V(1:kdim), V(1:kdim))
 
         ! Check orthonormality of the right basis.
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_rdp
@@ -1324,7 +1324,7 @@ contains
         call initialize_krylov_subspace(V) ; B = zero_csp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
+        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_sp)
         call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_csp')
 
@@ -1342,7 +1342,7 @@ contains
 
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the right Krylov basis.
@@ -1350,7 +1350,7 @@ contains
         call innerprod(G, V(1:kdim), V(1:kdim))
 
         ! Check orthonormality of the right basis.
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_csp
@@ -1393,7 +1393,7 @@ contains
         call initialize_krylov_subspace(V) ; B = zero_cdp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
+        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_dp)
         call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_cdp')
 
@@ -1411,7 +1411,7 @@ contains
 
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the right Krylov basis.
@@ -1419,7 +1419,7 @@ contains
         call innerprod(G, V(1:kdim), V(1:kdim))
 
         ! Check orthonormality of the right basis.
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_lanczos_bidiag_factorization_cdp
@@ -1472,7 +1472,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
+        call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
                         & procedure='test_lanczos_tridiag_full_factorization_rsp')
 
@@ -1490,7 +1490,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_lanczos_tridiag_factorization_rsp
@@ -1538,7 +1538,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
+        call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
                         & procedure='test_lanczos_tridiag_full_factorization_rdp')
 
@@ -1556,7 +1556,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_lanczos_tridiag_factorization_rdp
@@ -1604,7 +1604,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
+        call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
                         & procedure='test_lanczos_tridiag_full_factorization_csp')
 
@@ -1622,7 +1622,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - Id)) < rtol_sp)
 
         return
     end subroutine test_lanczos_tridiag_factorization_csp
@@ -1670,7 +1670,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
+        call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
                         & procedure='test_lanczos_tridiag_full_factorization_cdp')
 
@@ -1688,7 +1688,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - Id)) < rtol_dp)
 
         return
     end subroutine test_lanczos_tridiag_factorization_cdp

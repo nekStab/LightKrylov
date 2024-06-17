@@ -3,6 +3,7 @@
 module TestIterativeSolvers
     ! Fortran Standard library.
     use iso_fortran_env
+    use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_stats, only : median
@@ -77,7 +78,7 @@ contains
         ${type}$ :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(nev)) ; call initialize_krylov_subspace(X)
+        allocate(X(nev)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
@@ -94,7 +95,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
@@ -106,7 +107,7 @@ contains
         enddo
 
         ! check eigenvalues
-        call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
+        call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
         !if (allocated(error)) return
         !! check eigenvectors
         !allocate(AX(nev))
@@ -145,7 +146,7 @@ contains
         ${type}$ :: a_, b_
 
         ! Allocate eigenvectors.
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
         
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
@@ -162,7 +163,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
         call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
@@ -173,7 +174,7 @@ contains
             k = k+1
         enddo
 
-        call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_${kind}$)
+        call check(error, maxval(abs(eigvals - true_eigvals)) < rtol_${kind}$)
 !        if (allocated(error)) return
 !
 !        ! check eigenvectors
@@ -229,10 +230,10 @@ contains
 
         ! Allocations.
         A = spd_linop_${type[0]}$${kind}$(T)
-        allocate(X(test_size)) ; call initialize_krylov_subspace(X)
+        allocate(X(test_size)) ; call zero_basis(X)
 
         ! Spectral decomposition.
-        call eighs(A, X, evals, residuals, info, kdim=test_size)
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_${kind}$)
         call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
@@ -242,7 +243,7 @@ contains
         enddo
 
         ! Check error.
-        call check(error, all_close(evals, true_evals, rtol_${kind}$, atol_${kind}$))
+        call check(error, maxval(abs(true_evals - evals)) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! check eigenvectors
@@ -262,7 +263,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_sym_evp_${type[0]}$${kind}$
@@ -307,8 +308,8 @@ contains
         #:if type[0] == "r"
 
         ! Allocate eigenvectors.
-        allocate(U(test_size)) ; call initialize_krylov_subspace(U)
-        allocate(V(test_size)) ; call initialize_krylov_subspace(V)
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
         
         ! Initialize linear operator with the Strang matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
@@ -324,7 +325,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call svds(A, U, S, V, residuals, info)
+        call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
         call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
 
         ! Analytical singular values.
@@ -332,7 +333,7 @@ contains
             true_svdvals(i) = 2.0_${kind}$ * (1.0_${kind}$ + cos(i*pi/(test_size+1)))
         enddo
 
-        call check(error, norm2(s - true_svdvals)**2 < rtol_${kind}$)
+        call check(error, maxval(s - true_svdvals) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
@@ -341,7 +342,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -349,7 +350,7 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! Check correctness of full factorization.
@@ -372,7 +373,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
                     new_unittest("Full GMRES", test_gmres_${type[0]}$${kind}$), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_${type[0]}$${kind}$) &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_gmres_${type[0]}$${kind}$_testsuite
@@ -395,7 +396,7 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false., rtol=rtol_${kind}$, atol=atol_${kind}$)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
 
@@ -431,7 +432,7 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false.)
+        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false., rtol=rtol_${kind}$, atol=atol_${kind}$)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
@@ -481,11 +482,9 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! CG solver.
-        opts = cg_${kind}$_opts()
+        opts = cg_${kind}$_opts(rtol=rtol_${kind}$, atol=atol_${kind}$)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
-
-        write(*, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm() * rtol_${kind}$ 
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
