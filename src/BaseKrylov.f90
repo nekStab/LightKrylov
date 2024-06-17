@@ -2549,7 +2549,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
             
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.true.)
+                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rsp, first pass')
             end if
@@ -2567,7 +2567,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.true.)
+            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rsp, second pass')
 
@@ -2633,7 +2633,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
             
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.true.)
+                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rdp, first pass')
             end if
@@ -2651,7 +2651,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.true.)
+            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rdp, second pass')
 
@@ -2717,7 +2717,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
             
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.true.)
+                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_csp, first pass')
             end if
@@ -2735,7 +2735,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.true.)
+            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_csp, second pass')
 
@@ -2801,7 +2801,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
             
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.true.)
+                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_cdp, first pass')
             end if
@@ -2819,7 +2819,7 @@ contains
             call A%matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.true.)
+            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
             call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_cdp, second pass')
 
@@ -2907,7 +2907,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rsp')
 
         return
@@ -2977,7 +2977,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rdp')
 
         return
@@ -3047,7 +3047,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_csp')
 
         return
@@ -3117,7 +3117,7 @@ contains
         enddo
 
         ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.true.)
+        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_cdp')
 
         return
