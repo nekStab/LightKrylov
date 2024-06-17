@@ -7,6 +7,7 @@ module TestLinops
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Constants
+    use LightKrylov_Logger
     
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -183,6 +184,7 @@ contains
         #:else
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${kind}$)
         #:endif
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', 'FAILED')
 
         return
     end subroutine test_matvec_${type[0]}$${kind}$
@@ -216,6 +218,7 @@ contains
         #:else
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${kind}$)
         #:endif
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', 'FAILED')
         
         return
     end subroutine test_rmatvec_${type[0]}$${kind}$
@@ -258,6 +261,7 @@ contains
         #:endif
 
         call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', 'FAILED')
 
        return
     end subroutine test_adjoint_matvec_${type[0]}$${kind}$
@@ -300,10 +304,10 @@ contains
         #:endif
 
         call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', 'FAILED')
 
        return
     end subroutine test_adjoint_rmatvec_${type[0]}$${kind}$
-
 
     #:endfor
 end module TestLinops

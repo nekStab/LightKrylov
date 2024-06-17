@@ -90,7 +90,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rsp
@@ -99,6 +99,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_qr_factorization_rsp', 'FAILED')
 
         return
     end subroutine test_qr_factorization_rsp
@@ -157,7 +158,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rsp
@@ -166,6 +167,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', 'FAILED')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rsp
@@ -210,7 +212,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rdp
@@ -219,6 +221,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_qr_factorization_rdp', 'FAILED')
 
         return
     end subroutine test_qr_factorization_rdp
@@ -277,7 +280,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rdp
@@ -286,6 +289,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', 'FAILED')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rdp
@@ -330,7 +334,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_csp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_csp
@@ -339,6 +343,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_qr_factorization_csp', 'FAILED')
 
         return
     end subroutine test_qr_factorization_csp
@@ -397,7 +402,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_csp
@@ -406,6 +411,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', 'FAILED')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_csp
@@ -450,7 +456,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_cdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_cdp
@@ -459,6 +465,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_qr_factorization_cdp', 'FAILED')
 
         return
     end subroutine test_qr_factorization_cdp
@@ -517,7 +524,7 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_cdp
@@ -526,6 +533,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', 'FAILED')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_cdp
@@ -576,7 +584,8 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_rsp', 'FAILED')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rsp
@@ -585,6 +594,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_arnoldi_factorization_rsp', 'FAILED')
 
         return
     end subroutine test_arnoldi_factorization_rsp
@@ -623,7 +633,7 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rsp
@@ -632,6 +642,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_block_arnoldi_factorization_rsp', 'FAILED')
 
         return
     end subroutine test_block_arnoldi_factorization_rsp
@@ -675,6 +686,7 @@ contains
         call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_sp)
+        call check_test(error, 'test_krylov_schur_rsp', 'FAILED')
 
         return
     contains
@@ -728,7 +740,8 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_rdp', 'FAILED')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rdp
@@ -737,6 +750,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_arnoldi_factorization_rdp', 'FAILED')
 
         return
     end subroutine test_arnoldi_factorization_rdp
@@ -775,7 +789,7 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_rdp
@@ -784,6 +798,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_block_arnoldi_factorization_rdp', 'FAILED')
 
         return
     end subroutine test_block_arnoldi_factorization_rdp
@@ -827,6 +842,7 @@ contains
         call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_dp)
+        call check_test(error, 'test_krylov_schur_rdp', 'FAILED')
 
         return
     contains
@@ -880,7 +896,8 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_csp', 'FAILED')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_csp
@@ -889,6 +906,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_arnoldi_factorization_csp', 'FAILED')
 
         return
     end subroutine test_arnoldi_factorization_csp
@@ -927,7 +945,7 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_csp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_csp
@@ -936,6 +954,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_block_arnoldi_factorization_csp', 'FAILED')
 
         return
     end subroutine test_block_arnoldi_factorization_csp
@@ -979,6 +998,7 @@ contains
         call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_sp)
+        call check_test(error, 'test_krylov_schur_csp', 'FAILED')
 
         return
     contains
@@ -1032,7 +1052,8 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_cdp', 'FAILED')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_cdp
@@ -1041,6 +1062,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_arnoldi_factorization_cdp', 'FAILED')
 
         return
     end subroutine test_arnoldi_factorization_cdp
@@ -1079,7 +1101,7 @@ contains
         ! Check correctness of full factorization.
         call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_cdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = zero_cdp
@@ -1088,6 +1110,7 @@ contains
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_block_arnoldi_factorization_cdp', 'FAILED')
 
         return
     end subroutine test_block_arnoldi_factorization_cdp
@@ -1131,6 +1154,7 @@ contains
         call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_dp)
+        call check_test(error, 'test_krylov_schur_cdp', 'FAILED')
 
         return
     contains
@@ -1196,7 +1220,7 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         G = zero_rsp
@@ -1205,7 +1229,7 @@ contains
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rsp
@@ -1213,6 +1237,7 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_rsp', 'FAILED')
 
         return
     end subroutine test_lanczos_bidiag_factorization_rsp
@@ -1265,7 +1290,7 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         G = zero_rdp
@@ -1274,7 +1299,7 @@ contains
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rdp
@@ -1282,6 +1307,7 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_rdp', 'FAILED')
 
         return
     end subroutine test_lanczos_bidiag_factorization_rdp
@@ -1334,7 +1360,7 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_csp', 'FAILED')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         G = zero_csp
@@ -1343,7 +1369,7 @@ contains
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_csp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_csp
@@ -1351,6 +1377,7 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_csp', 'FAILED')
 
         return
     end subroutine test_lanczos_bidiag_factorization_csp
@@ -1403,7 +1430,7 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_cdp', 'FAILED')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         G = zero_cdp
@@ -1412,7 +1439,7 @@ contains
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_cdp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_cdp
@@ -1420,6 +1447,7 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_cdp', 'FAILED')
 
         return
     end subroutine test_lanczos_bidiag_factorization_cdp
@@ -1474,7 +1502,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_rsp')
+                        & procedure='test_lanczos_tridiag_factorization_rsp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -1482,7 +1510,7 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rsp
@@ -1491,6 +1519,7 @@ contains
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_rsp', 'FAILED')
 
         return
     end subroutine test_lanczos_tridiag_factorization_rsp
@@ -1540,7 +1569,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_rdp')
+                        & procedure='test_lanczos_tridiag_factorization_rdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -1548,7 +1577,7 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rdp
@@ -1557,6 +1586,7 @@ contains
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_rdp', 'FAILED')
 
         return
     end subroutine test_lanczos_tridiag_factorization_rdp
@@ -1606,7 +1636,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_csp')
+                        & procedure='test_lanczos_tridiag_factorization_csp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -1614,7 +1644,7 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_csp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_csp
@@ -1623,6 +1653,7 @@ contains
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_csp', 'FAILED')
 
         return
     end subroutine test_lanczos_tridiag_factorization_csp
@@ -1672,7 +1703,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_cdp')
+                        & procedure='test_lanczos_tridiag_factorization_cdp')
 
         ! Check correctness.
         call get_data(Xdata, X)
@@ -1680,7 +1711,7 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_cdp', 'FAILED')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_cdp
@@ -1689,6 +1720,7 @@ contains
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_cdp', 'FAILED')
 
         return
     end subroutine test_lanczos_tridiag_factorization_cdp

@@ -3,9 +3,13 @@ module LightKrylov_Logger
    use stdlib_logger
    use stdlib_logger, only: logger => global_logger
    use stdlib_ascii, only : to_lower
+   use stdlib_strings, only : chomp, replace_all
+   ! Testdrive
+   use testdrive, only: error_type
    implicit none
 
    logical, parameter :: exit_on_error = .true.
+   logical, parameter :: exit_on_test_error = .true.
 
    public :: stop_error
 
@@ -370,5 +374,73 @@ contains
       end if
       
    end subroutine error_handler
+
+   subroutine check_test(error, test_name, msg)
+      type(error_type), allocatable, intent(in) :: error
+      character(len=*),              intent(in) :: test_name
+      character(len=*),              intent(in) :: msg
+      character*128                             :: name
+      
+      ! internals
+      character(len=4), dimension(4) :: substrings
+      integer :: i
+
+      name = trim(to_lower(test_name))
+      substrings = ["_rsp", "_rdp", "_csp", "_cdp"]
+      do i = 1, size(substrings)
+         name = replace_all(name, substrings(i), "")
+      end do
+
+      if (allocated(error)) then
+         call logger%log_message(trim(msg))
+         !
+         !   TestVector
+         !
+         if      (name == "test_vector_norm") then
+         else if (name == "test_vector_add") then
+         else if (name == "test_vector_sub") then
+         else if (name == "test_vector_dot") then
+         else if (name == "test_vector_scal") then
+         !
+         !   TestLinops
+         !
+         else if (name == "test_matvec") then
+         else if (name == "test_rmatvec") then
+         else if (name == "test_adjoint_matvec") then
+         else if (name == "test_adjoint_rmatvec") then
+         !
+         !   TestKrylov
+         !
+         else if (name == "test_qr_factorization") then
+         else if (name == "test_pivoting_qr_exact_rank_deficiency") then
+         else if (name == "test_arnoldi_factorization") then
+         else if (name == "test_block_arnoldi_factorization") then
+         else if (name == "test_krylov_schur") then
+         else if (name == "test_lanczos_bidiag_factorization") then
+         else if (name == "test_lanczos_tridiag_factorization") then
+         !
+         !   TestExpmLib
+         !
+         else if (name == "test_dense_expm") then
+         else if (name == "test_kexptA") then
+         else if (name == "test_block_kexptA") then
+         else if (name == "test_dense_sqrtm_pos_def") then
+         else if (name == "test_dense_sqrtm_pos_semi_def") then
+         !
+         !   TestIterativeSolvers
+         !
+         else if (name == "test_ks_evp") then
+         else if (name == "test_evp") then
+         else if (name == "test_sym_evp") then
+         else if (name == "test_svd") then
+         else if (name == "test_gmres") then
+         else if (name == "test_gmres_spd") then
+         else if (name == "test_cg") then
+         end if
+
+         if (exit_on_test_error) STOP 2
+      end if
+
+   end subroutine check_test
 
 end module LightKrylov_Logger

@@ -121,6 +121,7 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+        call check_test(error, 'test_ks_evp_rsp', 'FAILED')
 
         return
         contains
@@ -184,16 +185,17 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_sp)
-!        if (allocated(error)) return
-!
-!        ! check eigenvectors
-!        allocate(AX(test_size))
-!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
-!        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
-!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-!        end do
-!        call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+        call check_test(error, 'test_evp_rsp', 'FAILED')
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        end do
+        call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+        call check_test(error, 'test_evp_rsp', 'FAILED')
 
         return
     end subroutine test_evp_rsp
@@ -249,9 +251,9 @@ contains
             true_evals(i) = a_ + 2*abs(b_) * cos(i*pi/(test_size+1))
         enddo
 
-        ! Check error.
+        ! Check error,
         call check(error, all_close(evals, true_evals, rtol_sp, atol_sp))
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rsp', 'FAILED')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -261,7 +263,7 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
@@ -271,6 +273,7 @@ contains
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_sym_evp_rsp', 'FAILED')
 
         return
     end subroutine test_sym_evp_rsp
@@ -349,6 +352,7 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+        call check_test(error, 'test_ks_evp_rdp', 'FAILED')
 
         return
         contains
@@ -412,16 +416,17 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_dp)
-!        if (allocated(error)) return
-!
-!        ! check eigenvectors
-!        allocate(AX(test_size))
-!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
-!        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
-!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-!        end do
-!        call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+        call check_test(error, 'test_evp_rdp', 'FAILED')
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        end do
+        call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+        call check_test(error, 'test_evp_rdp', 'FAILED')
 
         return
     end subroutine test_evp_rdp
@@ -477,9 +482,9 @@ contains
             true_evals(i) = a_ + 2*abs(b_) * cos(i*pi/(test_size+1))
         enddo
 
-        ! Check error.
+        ! Check error,
         call check(error, all_close(evals, true_evals, rtol_dp, atol_dp))
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rdp', 'FAILED')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -489,7 +494,7 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
@@ -499,6 +504,7 @@ contains
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
+        call check_test(error, 'test_sym_evp_rdp', 'FAILED')
 
         return
     end subroutine test_sym_evp_rdp
@@ -698,7 +704,7 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         G = zero_rsp
@@ -707,7 +713,7 @@ contains
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rsp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_rsp
@@ -715,12 +721,13 @@ contains
 
         ! Check orthonormality of the right singular vectors
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rsp', 'FAILED')
 
         ! Check correctness of full factorization.
         call get_data(Udata, U)
         call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_sp)
+        call check_test(error, 'test_svd_rsp', 'FAILED')
 
         return
     end subroutine test_svd_rsp
@@ -782,7 +789,7 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         G = zero_rdp
@@ -791,7 +798,7 @@ contains
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rdp', 'FAILED')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_rdp
@@ -799,12 +806,13 @@ contains
 
         ! Check orthonormality of the right singular vectors
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rdp', 'FAILED')
 
         ! Check correctness of full factorization.
         call get_data(Udata, U)
         call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_dp)
+        call check_test(error, 'test_svd_rdp', 'FAILED')
 
         return
     end subroutine test_svd_rdp
@@ -913,6 +921,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_rsp', 'FAILED')
 
         return
     end subroutine test_gmres_rsp
@@ -941,6 +950,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_spd_rsp', 'FAILED')
 
         return
     end subroutine test_gmres_spd_rsp
@@ -978,6 +988,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_rdp', 'FAILED')
 
         return
     end subroutine test_gmres_rdp
@@ -1006,6 +1017,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_spd_rdp', 'FAILED')
 
         return
     end subroutine test_gmres_spd_rdp
@@ -1043,6 +1055,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_csp', 'FAILED')
 
         return
     end subroutine test_gmres_csp
@@ -1071,6 +1084,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_spd_csp', 'FAILED')
 
         return
     end subroutine test_gmres_spd_csp
@@ -1108,6 +1122,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_cdp', 'FAILED')
 
         return
     end subroutine test_gmres_cdp
@@ -1136,6 +1151,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_spd_cdp', 'FAILED')
 
         return
     end subroutine test_gmres_spd_cdp
@@ -1178,6 +1194,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_cg_rsp', 'FAILED')
 
         return
     end subroutine test_cg_rsp
@@ -1215,6 +1232,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_cg_rdp', 'FAILED')
 
         return
     end subroutine test_cg_rdp
@@ -1252,6 +1270,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_cg_csp', 'FAILED')
 
         return
     end subroutine test_cg_csp
@@ -1289,6 +1308,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_cg_cdp', 'FAILED')
 
         return
     end subroutine test_cg_cdp

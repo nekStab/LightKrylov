@@ -79,6 +79,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_sp)
+        call check_test(error, 'test_dense_expm_rsp', 'FAILED')
 
         return
     end subroutine test_dense_expm_rsp
@@ -113,13 +114,14 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rsp')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rsp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
-       call check(error, err < rtol_sp)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_rsp', 'FAILED')
 
         return
     end subroutine test_kexptA_rsp
@@ -178,13 +180,13 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
-            !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 1')
+            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 2')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -213,6 +215,7 @@ contains
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_sp)
+        call check_test(error, 'test_block_kexptA_rsp', 'FAILED')
 
         return
     end subroutine test_block_kexptA_rsp
@@ -256,6 +259,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_dp)
+        call check_test(error, 'test_dense_expm_rdp', 'FAILED')
 
         return
     end subroutine test_dense_expm_rdp
@@ -290,13 +294,14 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rdp')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
-       call check(error, err < rtol_dp)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_rdp', 'FAILED')
 
         return
     end subroutine test_kexptA_rdp
@@ -355,13 +360,13 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
-            !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 1')
+            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 2')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -390,6 +395,7 @@ contains
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_dp)
+        call check_test(error, 'test_block_kexptA_rdp', 'FAILED')
 
         return
     end subroutine test_block_kexptA_rdp
@@ -433,6 +439,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_sp)
+        call check_test(error, 'test_dense_expm_csp', 'FAILED')
 
         return
     end subroutine test_dense_expm_csp
@@ -467,13 +474,14 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_csp')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_csp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
-       call check(error, err < rtol_sp)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_csp', 'FAILED')
 
         return
     end subroutine test_kexptA_csp
@@ -532,13 +540,13 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
-            !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 1')
+            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 2')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -567,6 +575,7 @@ contains
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_sp)
+        call check_test(error, 'test_block_kexptA_csp', 'FAILED')
 
         return
     end subroutine test_block_kexptA_csp
@@ -610,6 +619,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_dp)
+        call check_test(error, 'test_dense_expm_cdp', 'FAILED')
 
         return
     end subroutine test_dense_expm_cdp
@@ -644,13 +654,14 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_cdp')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_cdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
-       call check(error, err < rtol_dp)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_cdp', 'FAILED')
 
         return
     end subroutine test_kexptA_cdp
@@ -709,13 +720,13 @@ contains
         do i = 1,p
             if (verb) write(*,*) '    column',i
             call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
-            !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 1')
+            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         if (verb) write(*,*) 'BLOCK-ARNOLDI'
         call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 2')
+        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -744,6 +755,7 @@ contains
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_dp)
+        call check_test(error, 'test_block_kexptA_cdp', 'FAILED')
 
         return
     end subroutine test_block_kexptA_cdp
@@ -792,10 +804,11 @@ contains
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_rsp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_rsp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
+       call check_test(error, 'test_dense_sqrtm_pos_def_rsp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_def_rsp
@@ -830,10 +843,11 @@ contains
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_rsp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_rsp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_rsp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_rsp
@@ -878,10 +892,11 @@ contains
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_rdp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_rdp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
+       call check_test(error, 'test_dense_sqrtm_pos_def_rdp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_def_rdp
@@ -916,10 +931,11 @@ contains
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_rdp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_rdp')
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_rdp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_rdp
@@ -965,10 +981,11 @@ contains
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_csp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_csp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
+       call check_test(error, 'test_dense_sqrtm_pos_def_csp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_def_csp
@@ -1004,10 +1021,11 @@ contains
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_csp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_csp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_csp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_csp
@@ -1053,10 +1071,11 @@ contains
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_cdp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_cdp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
+       call check_test(error, 'test_dense_sqrtm_pos_def_cdp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_def_cdp
@@ -1092,10 +1111,11 @@ contains
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_cdp')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_cdp')
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_cdp', 'FAILED')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_cdp
