@@ -95,7 +95,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
@@ -107,7 +107,7 @@ contains
         enddo
 
         ! check eigenvalues
-        call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
+        call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
         !if (allocated(error)) return
         !! check eigenvectors
         !allocate(AX(nev))

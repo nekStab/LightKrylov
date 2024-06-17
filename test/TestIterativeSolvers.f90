@@ -99,7 +99,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rsp')
 
         ! Analytical eigenvalues.
@@ -111,7 +111,12 @@ contains
         enddo
 
         ! check eigenvalues
-        call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_sp)
+        call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_sp)
+            write(output_unit, *) "True eigenvalues / Computed eigenvalues / Difference"
+            do i = 1, nev
+                write(output_unit, *) "    -", true_eigvals(i), eigvals(i), abs(eigvals(i) - true_eigvals(i)), rtol_sp, atol_sp
+            enddo
+            write(output_unit, *) "|| err ||_inf :",  maxval(abs(eigvals - true_eigvals(:nev))) 
         !if (allocated(error)) return
         !! check eigenvectors
         !allocate(AX(nev))
@@ -319,7 +324,7 @@ contains
         enddo
 
         ! Compute spectral decomposition.
-        call eigs(A, X, eigvals, residuals, info)
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
         call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rdp')
 
         ! Analytical eigenvalues.
@@ -331,7 +336,12 @@ contains
         enddo
 
         ! check eigenvalues
-        call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_dp)
+        call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_dp)
+            write(output_unit, *) "True eigenvalues / Computed eigenvalues / Difference"
+            do i = 1, nev
+                write(output_unit, *) "    -", true_eigvals(i), eigvals(i), abs(eigvals(i) - true_eigvals(i)), rtol_dp, atol_dp
+            enddo
+            write(output_unit, *) "|| err ||_inf :",  maxval(abs(eigvals - true_eigvals(:nev))) 
         !if (allocated(error)) return
         !! check eigenvectors
         !allocate(AX(nev))
@@ -882,6 +892,9 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        if (allocated(error)) then
+            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_sp
+        endif
 
         return
     end subroutine test_gmres_rsp
@@ -907,8 +920,6 @@ contains
         opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
-
-        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_sp
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -949,6 +960,9 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        if (allocated(error)) then
+            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_dp
+        endif
 
         return
     end subroutine test_gmres_rdp
@@ -974,8 +988,6 @@ contains
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
-
-        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_dp
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
@@ -1016,6 +1028,9 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        if (allocated(error)) then
+            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_sp
+        endif
 
         return
     end subroutine test_gmres_csp
@@ -1041,8 +1056,6 @@ contains
         opts = gmres_sp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
-
-        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_sp
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
@@ -1083,6 +1096,9 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        if (allocated(error)) then
+            write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)),  b%norm() * rtol_dp
+        endif
 
         return
     end subroutine test_gmres_cdp
@@ -1108,8 +1124,6 @@ contains
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
-
-        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_dp
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
