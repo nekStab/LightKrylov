@@ -373,7 +373,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
                     new_unittest("Full GMRES", test_gmres_${type[0]}$${kind}$), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_${type[0]}$${kind}$) &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_gmres_${type[0]}$${kind}$_testsuite

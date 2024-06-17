@@ -853,7 +853,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
                     new_unittest("Full GMRES", test_gmres_rsp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_rsp) &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_rsp) &
                     ]
         return
     end subroutine collect_gmres_rsp_testsuite
@@ -908,6 +908,8 @@ contains
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
 
+        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_sp
+
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
 
@@ -918,7 +920,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
                     new_unittest("Full GMRES", test_gmres_rdp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_rdp) &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_rdp) &
                     ]
         return
     end subroutine collect_gmres_rdp_testsuite
@@ -973,6 +975,8 @@ contains
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
 
+        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_dp
+
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
 
@@ -983,7 +987,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
                     new_unittest("Full GMRES", test_gmres_csp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_csp) &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_csp) &
                     ]
         return
     end subroutine collect_gmres_csp_testsuite
@@ -1038,6 +1042,8 @@ contains
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
 
+        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_sp
+
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
 
@@ -1048,7 +1054,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
                     new_unittest("Full GMRES", test_gmres_cdp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_cdp) &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_cdp) &
                     ]
         return
     end subroutine collect_gmres_cdp_testsuite
@@ -1102,6 +1108,8 @@ contains
         opts = gmres_dp_opts(kdim=test_size, verbose=.false.)
         call gmres(A, b, x, info, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
+
+        write(output_unit, *) norm2(abs(matmul(A%data, x%data) - b%data)), b%norm()*rtol_dp
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
