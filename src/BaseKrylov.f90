@@ -2866,6 +2866,7 @@ contains
         k_end = optval(kend, kdim)
         verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_sp)
+        info = 0
 
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
@@ -2936,6 +2937,7 @@ contains
         k_end = optval(kend, kdim)
         verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_dp)
+        info = 0
 
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
@@ -3006,6 +3008,7 @@ contains
         k_end = optval(kend, kdim)
         verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_sp)
+        info = 0
 
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
@@ -3076,6 +3079,7 @@ contains
         k_end = optval(kend, kdim)
         verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_dp)
+        info = 0
 
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
