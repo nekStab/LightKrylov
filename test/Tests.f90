@@ -1,6 +1,7 @@
 program Tester
    ! Fortran best practice.
    use, intrinsic :: iso_fortran_env, only: error_unit, output_unit
+   use stdlib_logger, only: error_level
    ! Unit-test utility.
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type
    ! Abstract implementation of Krylov-based techniques.
@@ -18,7 +19,7 @@ program Tester
    ! Unit-test related.
    integer :: status, is, num_tests
    type(testsuite_type), allocatable :: testsuites(:)
-   character(len=*), parameter :: fmt = '("+", *(1x, a))'
+   character(len=*), parameter :: fmt = '("#", *(1x, a))'
 
    ! Display information about the version of LightKrylov being tested.
    call greetings()

@@ -2,8 +2,9 @@ module lightkrylov_AbstractVectors
     use lightkrylov_constants
     use lightkrylov_utils
     implicit none
+    private
 
-    character*128, parameter, private :: this_module = 'Lightkrylov_AbstractVectors'
+    character*128, parameter :: this_module = 'Lightkrylov_AbstractVectors'
 
     public :: innerprod
     public :: linear_combination
@@ -56,10 +57,6 @@ module lightkrylov_AbstractVectors
 
 
     type, abstract, public :: abstract_vector
-    contains
-    private
-        procedure, pass(from), public :: copy => copy_vec
-        generic, public :: assignment(=) => copy
     end type abstract_vector
 
 
@@ -362,14 +359,6 @@ module lightkrylov_AbstractVectors
 
 
 contains
-
-    subroutine copy_vec(out, from)
-        class(abstract_vector), intent(in)  :: from
-        class(abstract_vector), allocatable, intent(out) :: out
-        if (allocated(out)) deallocate(out)
-        allocate(out, source=from)
-        return
-    end subroutine copy_vec
 
     function norm_rsp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.

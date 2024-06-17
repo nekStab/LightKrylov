@@ -11,8 +11,6 @@ module lightkrylov_utils
     use stdlib_linalg_lapack, only: gesvd
     ! Eigenvalue problem (general + symmetric).
     use stdlib_linalg_lapack, only: geev, syev, heev
-    ! Least-squares solver.
-    use stdlib_linalg_lapack, only: gels
     ! Schur factorization.
     use stdlib_linalg_lapack, only: gees, trsen
 
@@ -23,32 +21,23 @@ module lightkrylov_utils
     use LightKrylov_Constants
 
     implicit none
+    private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_Utils'
+    character*128, parameter :: this_module = 'LightKrylov_Utils'
 
     public :: assert_shape
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
-    ! Compute USV^T = svd(A) for dense matrices.
-    public :: svd
     ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
-    ! Solve min || Ax - b ||_2^2.
-    public :: lstsq
     ! Compute AX = XS where S is in Schur form.
     public :: schur
     ! Re-orders the Schur factorization of A.
     public :: ordschur
-
-    public :: abstract_opts
-    public :: gmres_sp_opts
-    public :: cg_sp_opts
-    public :: gmres_dp_opts
-    public :: cg_dp_opts
 
     public :: log2_rsp
     public :: norml_rsp
@@ -75,13 +64,6 @@ module lightkrylov_utils
         module procedure inv_cdp
     end interface
 
-    interface svd
-        module procedure svd_rsp
-        module procedure svd_rdp
-        module procedure svd_csp
-        module procedure svd_cdp
-    end interface
-
     interface eig
         module procedure eig_rsp
         module procedure eig_rdp
@@ -94,13 +76,6 @@ module lightkrylov_utils
         module procedure eigh_rdp
         module procedure eigh_csp
         module procedure eigh_cdp
-    end interface
-
-    interface lstsq
-        module procedure lstsq_rsp
-        module procedure lstsq_rdp
-        module procedure lstsq_csp
-        module procedure lstsq_cdp
     end interface
 
     interface schur
@@ -390,41 +365,6 @@ contains
         return
     end subroutine inv_rsp
 
-    subroutine svd_rsp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        real(sp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        real(sp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(sp), intent(out) :: S(:)
-        !! Singular values.
-        real(sp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        real(sp), allocatable :: work(:)
-        real(sp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        v = transpose(vt)
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_rsp')
-
-        return
-    end subroutine svd_rsp
-
     subroutine eig_rsp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         real(sp), intent(in) :: A(:, :)
@@ -483,37 +423,6 @@ contains
 
         return
     end subroutine eigh_rsp
-
-    subroutine lstsq_rsp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        real(sp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        real(sp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        real(sp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        real(sp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        real(sp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_rsp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rsp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_rsp
 
     subroutine schur_rsp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -649,41 +558,6 @@ contains
         return
     end subroutine inv_rdp
 
-    subroutine svd_rdp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        real(dp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        real(dp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(dp), intent(out) :: S(:)
-        !! Singular values.
-        real(dp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        real(dp), allocatable :: work(:)
-        real(dp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        v = transpose(vt)
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_rdp')
-
-        return
-    end subroutine svd_rdp
-
     subroutine eig_rdp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         real(dp), intent(in) :: A(:, :)
@@ -742,37 +616,6 @@ contains
 
         return
     end subroutine eigh_rdp
-
-    subroutine lstsq_rdp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        real(dp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        real(dp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        real(dp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        real(dp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        real(dp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_rdp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_rdp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_rdp
 
     subroutine schur_rdp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -908,43 +751,6 @@ contains
         return
     end subroutine inv_csp
 
-    subroutine svd_csp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        complex(sp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        complex(sp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(sp), intent(out) :: S(:)
-        !! Singular values.
-        complex(sp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        complex(sp), allocatable :: work(:)
-        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-        real(sp), allocatable :: rwork(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        allocate(rwork(5*min(m, n)))
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_csp')
-
-        return
-    end subroutine svd_csp
-
     subroutine eig_csp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         complex(sp), intent(in) :: A(:, :)
@@ -1004,37 +810,6 @@ contains
 
         return
     end subroutine eigh_csp
-
-    subroutine lstsq_csp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        complex(sp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        complex(sp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        complex(sp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        complex(sp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_csp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_csp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_csp
 
     subroutine schur_csp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -1164,43 +939,6 @@ contains
         return
     end subroutine inv_cdp
 
-    subroutine svd_cdp(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        complex(dp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        complex(dp), intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(dp), intent(out) :: S(:)
-        !! Singular values.
-        complex(dp), intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        complex(dp), allocatable :: work(:)
-        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-        real(dp), allocatable :: rwork(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        allocate(rwork(5*min(m, n)))
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        v = transpose(conjg(vt))
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_cdp')
-
-        return
-    end subroutine svd_cdp
-
     subroutine eig_cdp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         complex(dp), intent(in) :: A(:, :)
@@ -1260,37 +998,6 @@ contains
 
         return
     end subroutine eigh_cdp
-
-    subroutine lstsq_cdp(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        complex(dp), intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        complex(dp), intent(in) :: b(:)
-        !! Right-hand side vector.
-        complex(dp), intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        complex(dp), allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_cdp
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_cdp')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_cdp
 
     subroutine schur_cdp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.

@@ -13,8 +13,6 @@ module lightkrylov_utils
     use stdlib_linalg_lapack, only: gesvd
     ! Eigenvalue problem (general + symmetric).
     use stdlib_linalg_lapack, only: geev, syev, heev
-    ! Least-squares solver.
-    use stdlib_linalg_lapack, only: gels
     ! Schur factorization.
     use stdlib_linalg_lapack, only: gees, trsen
 
@@ -25,32 +23,23 @@ module lightkrylov_utils
     use LightKrylov_Constants
 
     implicit none
+    private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_Utils'
+    character*128, parameter :: this_module = 'LightKrylov_Utils'
 
     public :: assert_shape
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
-    ! Compute USV^T = svd(A) for dense matrices.
-    public :: svd
     ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
-    ! Solve min || Ax - b ||_2^2.
-    public :: lstsq
     ! Compute AX = XS where S is in Schur form.
     public :: schur
     ! Re-orders the Schur factorization of A.
     public :: ordschur
-
-    public :: abstract_opts
-    #:for kind in REAL_KINDS
-    public :: gmres_${kind}$_opts
-    public :: cg_${kind}$_opts
-    #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
     #:if type[0] == "r"
@@ -72,12 +61,6 @@ module lightkrylov_utils
         #:endfor
     end interface
 
-    interface svd
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure svd_${type[0]}$${kind}$
-        #:endfor
-    end interface
-
     interface eig
         #:for kind, type in RC_KINDS_TYPES
         module procedure eig_${type[0]}$${kind}$
@@ -87,12 +70,6 @@ module lightkrylov_utils
    interface eigh
         #:for kind, type in RC_KINDS_TYPES
         module procedure eigh_${type[0]}$${kind}$
-        #:endfor
-    end interface
-
-    interface lstsq
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure lstsq_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -230,50 +207,6 @@ contains
         return
     end subroutine inv_${type[0]}$${kind}$
 
-    subroutine svd_${type[0]}$${kind}$(A, U, S, V)
-        !! Singular value decomposition of a dense matrix.
-        ${type}$, intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        ${type}$, intent(out) :: U(:, :)
-        !! Left singular vectors.
-        real(${kind}$), intent(out) :: S(:)
-        !! Singular values.
-        ${type}$, intent(out) :: V(:, :)
-        !! Right singular vectors.
-
-        ! Internal variables.
-        character :: jobu = "S", jobvt = "S"
-        integer :: m, n, lda, ldu, ldvt, lwork, info
-        ${type}$, allocatable :: work(:)
-        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), Vt(min(size(A, 1), size(A, 2)), size(A, 2))
-        #:if type[0] == "c"
-        real(${kind}$), allocatable :: rwork(:)
-        #:endif
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2)
-        lda = m ; ldu = m ; ldvt = n
-        lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)) ; allocate(work(lwork))
-
-        ! Shape assertion.
-        call assert_shape(U, [m, m], "svd", "U")
-        call assert_shape(V, [n, n], "svd", "V")
-
-        ! SVD computation.
-        A_tilde = A
-        #:if type[0] == "c"
-        allocate(rwork(5*min(m, n)))
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, rwork, info)
-        v = transpose(conjg(vt))
-        #:else
-        call gesvd(jobu, jobvt, m, n, A_tilde, lda, S, U, ldu, Vt, ldvt, work, lwork, info)
-        v = transpose(vt)
-        #:endif
-        call check_info(info, 'GESVD', module=this_module, procedure='svd_${type[0]}$${kind}$')
-
-        return
-    end subroutine svd_${type[0]}$${kind}$
-
     subroutine eig_${type[0]}$${kind}$(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         ${type}$, intent(in) :: A(:, :)
@@ -365,37 +298,6 @@ contains
 
         return
     end subroutine eigh_${type[0]}$${kind}$
-
-    subroutine lstsq_${type[0]}$${kind}$(A, b, x)
-        !! Solves a linear least-squares problem \(\min ~ \| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-        ${type}$, intent(in) :: A(:, :)
-        !! Matrix to be "pseudo-inversed".
-        ${type}$, intent(in) :: b(:)
-        !! Right-hand side vector.
-        ${type}$, intent(out) :: x(:)
-        !! Solution of the least-squares problem.
-
-        ! Internal variables.
-        character :: trans="n"
-        integer :: m, n, nrhs, lda, ldb, lwork, info
-        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), b_tilde(size(A, 1), 1)
-        ${type}$, allocatable :: work(:)
-
-        ! Setup variables.
-        m = size(A, 1) ; n = size(A, 2) ; nrhs = 1
-        lda = m ; ldb = m ; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-        a_tilde = a ; b_tilde(:, 1) = b
-        allocate(work(lwork)) ; work = zero_${type[0]}$${kind}$
-
-        ! Solve the least-squares problem.
-        call gels(trans, m, n, nrhs, a_tilde, lda, b_tilde, ldb, work, lwork, info)
-        call check_info(info, 'GELS', module=this_module, procedure='lstsq_${type[0]}$${kind}$')
-
-        ! Return solution.
-        x = b_tilde(1:n, 1)
-
-        return
-    end subroutine lstsq_${type[0]}$${kind}$
 
     subroutine schur_${type[0]}$${kind}$(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.

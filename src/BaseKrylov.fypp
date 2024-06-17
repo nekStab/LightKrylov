@@ -10,8 +10,9 @@ module lightkrylov_BaseKrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
+    private
     
-    character*128, parameter, private :: this_module = 'LightKrylov_BaseKrylov'
+    character*128, parameter :: this_module = 'LightKrylov_BaseKrylov'
 
     public :: qr
     public :: apply_permutation_matrix
@@ -22,6 +23,10 @@ module lightkrylov_BaseKrylov
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
     public :: krylov_schur
+    public :: double_gram_schmidt_step
+    #:for kind in REAL_KINDS
+    public :: eigvals_select_${kind}$
+    #:endfor
 
     interface qr
         #:for kind, type in RC_KINDS_TYPES
@@ -94,6 +99,20 @@ module lightkrylov_BaseKrylov
         #:endfor
     end interface
 
+    !----------------------------------------------------------
+    !-----     ABSTRACT EIGENVALUE SELECTOR INTERFACE     -----
+    !----------------------------------------------------------
+
+    abstract interface
+        #:for kind in REAL_KINDS
+        function eigvals_select_${kind}$(lambda) result(selected)
+            import ${kind}$
+            complex(${kind}$), intent(in) :: lambda(:)
+            logical                       :: selected(size(lambda))
+        end function eigvals_select_${kind}$
+        #:endfor
+    end interface
+
 contains
 
     !-------------------------------------
@@ -112,9 +131,7 @@ contains
         integer :: i, p, info
 
         ! Zero-out X.
-        do i = 1, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X)
 
         ! Deals with optional args.
         if(present(X0)) then
@@ -128,8 +145,8 @@ contains
             enddo
     
             ! Orthonormalize.
-            allocate(R(1:p, 1:p)) ; R = zero_r${kind}$
-            allocate(perm(1:p)) ; perm = 0
+            allocate(R(p, p)) ; R = zero_r${kind}$
+            allocate(perm(p)) ; perm = 0
             call qr(Q, R, perm, info)
             do i = 1, p
                 call X(i)%add(Q(i))
@@ -889,14 +906,7 @@ contains
         !! Krylov basis.
         ${type}$, intent(inout) :: H(:, :)
         !! Upper Hessenberg matrix.
-        interface
-            function selector(lambda) result(out)
-                import ${kind}$
-                complex(${kind}$), intent(in) :: lambda(:)
-                logical                       :: out(size(lambda))
-            end function selector
-        end interface
-        procedure(selector) :: select_eigs
+        procedure(eigvals_select_${kind}$) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
 
         !--------------------------------------
@@ -940,9 +950,7 @@ contains
 
         call X(n+1)%axpby(zero_${type[0]}$${kind}$, X(kdim+1), one_${type[0]}$${kind}$)
 
-        do i = n+2, size(X)
-            call X(i)%zero()
-        enddo
+        call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
         b = matmul(H(kdim+1, :), Z)

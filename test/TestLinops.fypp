@@ -162,6 +162,9 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: x, y
         ! Test LinOp.
         type(linop_${type[0]}$${kind}$), allocatable :: A
+        #:if type[0] == "c"
+        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        #:endif
 
         ! Initialize vectors.
         x = vector_${type[0]}$${kind}$() ; call x%rand()
@@ -170,7 +173,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
-        call random_number(A%data%re) ; call random_number(A%data%im)
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
         #:endif
@@ -196,6 +199,9 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: x, y
         ! Test LinOp.
         type(linop_${type[0]}$${kind}$), allocatable :: A
+        #:if type[0] == "c"
+        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        #:endif
 
         ! Initialize vectors.
         x = vector_${type[0]}$${kind}$() ; call x%rand()
@@ -204,7 +210,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
-        call random_number(A%data%re) ; call random_number(A%data%im)
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
         #:endif
@@ -231,6 +237,9 @@ contains
         ! Test LinOp.
         type(linop_${type[0]}$${kind}$), allocatable :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
+        #:if type[0] == "c"
+        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        #:endif
 
         ! Internal variable.
         real(${kind}$) :: alpha
@@ -238,7 +247,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
-        call random_number(A%data%re) ; call random_number(A%data%im)
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
         #:endif
@@ -274,6 +283,9 @@ contains
         ! Test LinOp.
         type(linop_${type[0]}$${kind}$), allocatable :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
+        #:if type[0] == "c"
+        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        #:endif
 
         ! Internal variable.
         real(${kind}$) :: alpha
@@ -281,7 +293,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
-        call random_number(A%data%re) ; call random_number(A%data%im)
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
         #:endif

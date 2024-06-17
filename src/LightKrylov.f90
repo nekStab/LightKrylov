@@ -28,10 +28,6 @@ module LightKrylov
     public :: cg_sp_opts
     public :: gmres_dp_opts
     public :: cg_dp_opts
-    public :: gmres_sp_opts
-    public :: cg_sp_opts
-    public :: gmres_dp_opts
-    public :: cg_dp_opts
 
     ! AbstractVectors exports.
     public :: abstract_vector
