@@ -71,7 +71,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, info)
+        call qr(A, R, info, tol=atol_${kind}$)
         call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_${type[0]}$${kind}$')
 
         ! Get data.
@@ -137,7 +137,7 @@ contains
         call get_data(Adata, A)
 
         ! In-place QR factorization.
-        call qr(A, R, perm, info)
+        call qr(A, R, perm, info, tol=atol_${kind}$)
         call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$')
 
         ! Extract data
@@ -201,7 +201,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         H = zero_${type[0]}$${kind}$
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_${kind}$)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
@@ -215,7 +215,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_arnoldi_factorization_${type[0]}$${kind}$
@@ -248,7 +248,7 @@ contains
         H = zero_${type[0]}$${kind}$
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info, blksize=p)
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
@@ -262,7 +262,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         Id = eye(p*kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$
@@ -296,7 +296,7 @@ contains
         H = zero_${type[0]}$${kind}$
 
         ! Arnoldi factorization.
-        call arnoldi(A, X, H, info)
+        call arnoldi(A, X, H, info, tol=atol_${kind}$)
         call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_${type[0]}$${kind}$')
 
         ! Krylov-Schur condensation.
@@ -362,7 +362,7 @@ contains
         call initialize_krylov_subspace(V) ; B = zero_${type[0]}$${kind}$
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info)
+        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_${kind}$)
         call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_${type[0]}$${kind}$')
 
@@ -380,7 +380,7 @@ contains
 
         ! Check orthonormality of the left basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the right Krylov basis.
@@ -388,7 +388,7 @@ contains
         call innerprod(G, V(1:kdim), V(1:kdim))
 
         ! Check orthonormality of the right basis.
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_lanczos_bidiag_factorization_${type[0]}$${kind}$
@@ -451,7 +451,7 @@ contains
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info)
+        call lanczos_tridiagonalization(A, X, T, info, tol=atol_${kind}$)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
                         & procedure='test_lanczos_tridiag_full_factorization_${type[0]}$${kind}$')
 
@@ -469,7 +469,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         Id = eye(kdim)
-        call check(error, norm2(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
 
         return
     end subroutine test_lanczos_tridiag_factorization_${type[0]}$${kind}$
