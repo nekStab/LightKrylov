@@ -24,7 +24,7 @@ module TestExpmlib
 
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestExpmLib'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestExpmLib'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_expm_${type[0]}$${kind}$_testsuite
@@ -95,7 +95,7 @@ contains
         integer, parameter :: kdim = test_size
     
         ! ----- Internal variables -----
-        ${type}$ :: E(kdim, kdim)
+        ${type}$, allocatable :: E(:, :)
         real(${kind}$), parameter :: tau = 0.1_${kind}$
         logical, parameter :: verb = .true.
         integer, parameter :: nkmax = 64
@@ -109,7 +109,7 @@ contains
         allocate(XKryl) ; call Xkryl%zero()
 
         ! Dense computation.
-        call expm(E, tau*A%data)
+        allocate(E(kdim, kdim)) ; call expm(E, tau*A%data)
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
@@ -140,11 +140,7 @@ contains
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
         ! Test matrix.
-        ${type}$ :: Adata(kdim, kdim)
-        ${type}$ :: Edata(kdim, kdim)
-        ! GS factors.
-        ${type}$ :: R(kdim, kdim)
-        ${type}$ :: Id(kdim, kdim)
+        ${type}$, allocatable :: Adata(:, :), Edata(:, :)
         ! Information flag.
         integer :: info
         ! Test parameters
@@ -154,12 +150,14 @@ contains
         real(${kind}$), parameter :: tol = rtol_${kind}$
         logical       , parameter :: verb = .true.
         ! Misc.
-        integer  :: i, j, k
-        ${type}$ :: Xdata(test_size,p), Qdata(test_size,p)
+        integer  :: i, j
+        ${type}$, allocatable :: Xdata(:, :), Qdata(:, :)
         real(${kind}$) :: alpha
         ${type}$ :: err(p, p)
 
-        Adata = 0.0_${kind}$ ; Edata = 0.0_${kind}$ ; Xdata = 0.0_${kind}$
+        allocate(Adata(kdim, kdim)) ; Adata = 0.0_${kind}$
+        allocate(Edata(kdim, kdim)) ; Edata = 0.0_${kind}$
+        allocate(Xdata(test_size, p)) ; Xdata = 0.0_${kind}$
 
         allocate(Cref(p)) ; call initialize_krylov_subspace(Cref)
         allocate(C(p))    ; call initialize_krylov_subspace(C)
@@ -169,7 +167,8 @@ contains
         A = linop_${type[0]}$${kind}$() ; call init_rand(A) ; call get_data(Adata, A)
        
         ! --> Initialize rhs.
-        allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
+        allocate(B(1:p)) ; call init_rand(B)
+        allocate(Qdata(test_size, p)) ; call get_data(Qdata, B)
 
         ! Comparison is dense computation (10th order Pade approximation)
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
@@ -268,11 +267,11 @@ contains
        end do
        ! reconstruct matrix
        #:if type[0] == "r"
-       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + transpose(A))
        #:else
-       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + conjg(transpose(A)))
        #:endif
@@ -326,11 +325,11 @@ contains
        lambda(n) = zero_r${kind}$
        ! reconstruct matrix
        #:if type[0] == "r"
-       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + transpose(A))
        #:else
-       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + conjg(transpose(A)))
        #:endif
