@@ -9,7 +9,7 @@ module TestUtils
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestUtils'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestUtils'
 
     public :: get_data
     public :: put_data
@@ -73,8 +73,6 @@ contains
     subroutine get_data_vec_rsp(vec_out, vec_in)
         real(sp), intent(out) :: vec_out(:)
         type(vector_rsp), intent(in) :: vec_in
-        ! Internal variables.
-        integer :: k, kdim
         vec_out = vec_in%data
         return
     end subroutine get_data_vec_rsp
@@ -83,9 +81,8 @@ contains
         real(sp), intent(out) :: basis_out(:, :)
         type(vector_rsp), intent(in) :: basis_in(:)
         ! Internal variables.
-        integer :: k, kdim
-        kdim = size(basis_in)
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
         return
@@ -101,8 +98,6 @@ contains
     subroutine get_data_vec_rdp(vec_out, vec_in)
         real(dp), intent(out) :: vec_out(:)
         type(vector_rdp), intent(in) :: vec_in
-        ! Internal variables.
-        integer :: k, kdim
         vec_out = vec_in%data
         return
     end subroutine get_data_vec_rdp
@@ -111,9 +106,8 @@ contains
         real(dp), intent(out) :: basis_out(:, :)
         type(vector_rdp), intent(in) :: basis_in(:)
         ! Internal variables.
-        integer :: k, kdim
-        kdim = size(basis_in)
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
         return
@@ -129,8 +123,6 @@ contains
     subroutine get_data_vec_csp(vec_out, vec_in)
         complex(sp), intent(out) :: vec_out(:)
         type(vector_csp), intent(in) :: vec_in
-        ! Internal variables.
-        integer :: k, kdim
         vec_out = vec_in%data
         return
     end subroutine get_data_vec_csp
@@ -139,9 +131,8 @@ contains
         complex(sp), intent(out) :: basis_out(:, :)
         type(vector_csp), intent(in) :: basis_in(:)
         ! Internal variables.
-        integer :: k, kdim
-        kdim = size(basis_in)
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
         return
@@ -157,8 +148,6 @@ contains
     subroutine get_data_vec_cdp(vec_out, vec_in)
         complex(dp), intent(out) :: vec_out(:)
         type(vector_cdp), intent(in) :: vec_in
-        ! Internal variables.
-        integer :: k, kdim
         vec_out = vec_in%data
         return
     end subroutine get_data_vec_cdp
@@ -167,9 +156,8 @@ contains
         complex(dp), intent(out) :: basis_out(:, :)
         type(vector_cdp), intent(in) :: basis_in(:)
         ! Internal variables.
-        integer :: k, kdim
-        kdim = size(basis_in)
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
         return
@@ -319,8 +307,10 @@ contains
 
     subroutine init_rand_spd_linop_rsp(linop)
         type(spd_linop_rsp), intent(inout) :: linop
-        real(sp), dimension(test_size, 2*test_size) :: data
-        integer :: i
+        real(sp), allocatable :: data(:, :)
+
+        ! Allocate data.
+        allocate(data(test_size, 2*test_size))
         call random_number(data) ; data = data - 0.5_sp
         linop%data = matmul(data, transpose(data)) / 4
         return
@@ -349,8 +339,10 @@ contains
 
     subroutine init_rand_spd_linop_rdp(linop)
         type(spd_linop_rdp), intent(inout) :: linop
-        real(dp), dimension(test_size, 2*test_size) :: data
-        integer :: i
+        real(dp), allocatable :: data(:, :)
+
+        ! Allocate data.
+        allocate(data(test_size, 2*test_size))
         call random_number(data) ; data = data - 0.5_dp
         linop%data = matmul(data, transpose(data)) / 4
         return
@@ -373,7 +365,8 @@ contains
 
     subroutine init_rand_linop_csp(linop)
         type(linop_csp), intent(inout) :: linop
-        real(sp), dimension(test_size, test_size, 2) :: data
+        real(sp), allocatable :: data(:, :, :)
+        allocate(data(test_size, test_size, 2))
         call random_number(data) ; data = data - 0.5_sp
         linop%data%re = data(:, :, 1)
         linop%data%im = data(:, :, 2)
@@ -382,10 +375,15 @@ contains
 
     subroutine init_rand_hermitian_linop_csp(linop)
         type(hermitian_linop_csp), intent(inout) :: linop
-        real(sp), dimension(test_size, 2*test_size, 2) :: data
-        complex(sp), dimension(test_size, 2*test_size) :: data_c
-        complex(sp), dimension(test_size, test_size) :: matrix
-        integer :: i
+        real(sp), allocatable :: data(:, :, :)
+        complex(sp), allocatable :: data_c(:, :)
+        complex(sp), allocatable :: matrix(:, :)
+
+        ! Allocate data.
+        allocate(data(test_size, 2*test_size, 2))
+        allocate(data_c(test_size, 2*test_size))
+        allocate(matrix(test_size, test_size))
+
         call random_number(data)
         data_c%re = data(:, :, 1) - 0.5_sp
         data_c%im = data(:, :, 2) - 0.5_sp
@@ -411,7 +409,8 @@ contains
 
     subroutine init_rand_linop_cdp(linop)
         type(linop_cdp), intent(inout) :: linop
-        real(dp), dimension(test_size, test_size, 2) :: data
+        real(dp), allocatable :: data(:, :, :)
+        allocate(data(test_size, test_size, 2))
         call random_number(data) ; data = data - 0.5_dp
         linop%data%re = data(:, :, 1)
         linop%data%im = data(:, :, 2)
@@ -420,10 +419,15 @@ contains
 
     subroutine init_rand_hermitian_linop_cdp(linop)
         type(hermitian_linop_cdp), intent(inout) :: linop
-        real(dp), dimension(test_size, 2*test_size, 2) :: data
-        complex(dp), dimension(test_size, 2*test_size) :: data_c
-        complex(dp), dimension(test_size, test_size) :: matrix
-        integer :: i
+        real(dp), allocatable :: data(:, :, :)
+        complex(dp), allocatable :: data_c(:, :)
+        complex(dp), allocatable :: matrix(:, :)
+
+        ! Allocate data.
+        allocate(data(test_size, 2*test_size, 2))
+        allocate(data_c(test_size, 2*test_size))
+        allocate(matrix(test_size, test_size))
+
         call random_number(data)
         data_c%re = data(:, :, 1) - 0.5_dp
         data_c%im = data(:, :, 2) - 0.5_dp

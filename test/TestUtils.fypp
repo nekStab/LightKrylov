@@ -11,7 +11,7 @@ module TestUtils
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestUtils'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestUtils'
 
     public :: get_data
     public :: put_data
@@ -56,8 +56,6 @@ contains
     subroutine get_data_vec_${type[0]}$${kind}$(vec_out, vec_in)
         ${type}$, intent(out) :: vec_out(:)
         type(vector_${type[0]}$${kind}$), intent(in) :: vec_in
-        ! Internal variables.
-        integer :: k, kdim
         vec_out = vec_in%data
         return
     end subroutine get_data_vec_${type[0]}$${kind}$
@@ -66,9 +64,8 @@ contains
         ${type}$, intent(out) :: basis_out(:, :)
         type(vector_${type[0]}$${kind}$), intent(in) :: basis_in(:)
         ! Internal variables.
-        integer :: k, kdim
-        kdim = size(basis_in)
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
         return
@@ -139,7 +136,8 @@ contains
     subroutine init_rand_linop_${type[0]}$${kind}$(linop)
         type(linop_${type[0]}$${kind}$), intent(inout) :: linop
         #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, test_size, 2) :: data
+        real(${kind}$), allocatable :: data(:, :, :)
+        allocate(data(test_size, test_size, 2))
         call random_number(data) ; data = data - 0.5_${kind}$
         linop%data%re = data(:, :, 1)
         linop%data%im = data(:, :, 2)
@@ -152,8 +150,10 @@ contains
     #:if type[0] == "r"
     subroutine init_rand_spd_linop_${type[0]}$${kind}$(linop)
         type(spd_linop_${type[0]}$${kind}$), intent(inout) :: linop
-        ${type}$, dimension(test_size, 2*test_size) :: data
-        integer :: i
+        ${type}$, allocatable :: data(:, :)
+
+        ! Allocate data.
+        allocate(data(test_size, 2*test_size))
         call random_number(data) ; data = data - 0.5_${kind}$
         linop%data = matmul(data, transpose(data)) / 4
         return
@@ -161,10 +161,15 @@ contains
     #:else
     subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
         type(hermitian_linop_${type[0]}$${kind}$), intent(inout) :: linop
-        real(${kind}$), dimension(test_size, 2*test_size, 2) :: data
-        ${type}$, dimension(test_size, 2*test_size) :: data_c
-        ${type}$, dimension(test_size, test_size) :: matrix
-        integer :: i
+        real(${kind}$), allocatable :: data(:, :, :)
+        ${type}$, allocatable :: data_c(:, :)
+        ${type}$, allocatable :: matrix(:, :)
+
+        ! Allocate data.
+        allocate(data(test_size, 2*test_size, 2))
+        allocate(data_c(test_size, 2*test_size))
+        allocate(matrix(test_size, test_size))
+
         call random_number(data)
         data_c%re = data(:, :, 1) - 0.5_${kind}$
         data_c%im = data(:, :, 2) - 0.5_${kind}$
