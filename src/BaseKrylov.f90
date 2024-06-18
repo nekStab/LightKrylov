@@ -10,7 +10,7 @@ module lightkrylov_BaseKrylov
     implicit none
     private
     
-    character*128, parameter :: this_module = 'LightKrylov_BaseKrylov'
+    character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
 
     public :: qr
     public :: apply_permutation_matrix
@@ -1127,7 +1127,7 @@ contains
         ! Internal variables.
         real(sp) :: alpha
         real(sp) :: beta(size(Q))
-        integer :: idx, j, kdim, iwrk
+        integer :: j
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1179,7 +1179,7 @@ contains
 
         ! Internal variables
         real(sp) :: beta
-        integer :: idx, i, j, kdim, iwrk
+        integer :: idx, i, j, kdim
         integer :: idxv(1)
         real(sp)  :: Rii(size(Q))
 
@@ -1332,7 +1332,7 @@ contains
         integer :: i
         real(sp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q
+        allocate(Qwrk, source=Q)
         do i = 1, size(perm)
             Q(:, i) = Qwrk(:, perm(i))
         enddo
@@ -1351,7 +1351,7 @@ contains
         integer :: inv_perm(size(perm))
         real(sp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q ; inv_perm = 0
+        allocate(Qwrk, source=Q) ; inv_perm = 0
 
         ! Inverse permutation vector.
         do i = 1, size(perm)
@@ -1384,7 +1384,7 @@ contains
         ! Internal variables.
         real(dp) :: alpha
         real(dp) :: beta(size(Q))
-        integer :: idx, j, kdim, iwrk
+        integer :: j
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1436,7 +1436,7 @@ contains
 
         ! Internal variables
         real(dp) :: beta
-        integer :: idx, i, j, kdim, iwrk
+        integer :: idx, i, j, kdim
         integer :: idxv(1)
         real(dp)  :: Rii(size(Q))
 
@@ -1589,7 +1589,7 @@ contains
         integer :: i
         real(dp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q
+        allocate(Qwrk, source=Q)
         do i = 1, size(perm)
             Q(:, i) = Qwrk(:, perm(i))
         enddo
@@ -1608,7 +1608,7 @@ contains
         integer :: inv_perm(size(perm))
         real(dp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q ; inv_perm = 0
+        allocate(Qwrk, source=Q) ; inv_perm = 0
 
         ! Inverse permutation vector.
         do i = 1, size(perm)
@@ -1641,7 +1641,7 @@ contains
         ! Internal variables.
         complex(sp) :: alpha
         complex(sp) :: beta(size(Q))
-        integer :: idx, j, kdim, iwrk
+        integer :: j
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1693,7 +1693,7 @@ contains
 
         ! Internal variables
         complex(sp) :: beta
-        integer :: idx, i, j, kdim, iwrk
+        integer :: idx, i, j, kdim
         integer :: idxv(1)
         complex(sp)  :: Rii(size(Q))
 
@@ -1846,7 +1846,7 @@ contains
         integer :: i
         complex(sp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q
+        allocate(Qwrk, source=Q)
         do i = 1, size(perm)
             Q(:, i) = Qwrk(:, perm(i))
         enddo
@@ -1865,7 +1865,7 @@ contains
         integer :: inv_perm(size(perm))
         complex(sp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q ; inv_perm = 0
+        allocate(Qwrk, source=Q) ; inv_perm = 0
 
         ! Inverse permutation vector.
         do i = 1, size(perm)
@@ -1898,7 +1898,7 @@ contains
         ! Internal variables.
         complex(dp) :: alpha
         complex(dp) :: beta(size(Q))
-        integer :: idx, j, kdim, iwrk
+        integer :: j
 
         ! Deals with the optional args.
         verbose   = optval(verbosity, .false.)
@@ -1950,7 +1950,7 @@ contains
 
         ! Internal variables
         complex(dp) :: beta
-        integer :: idx, i, j, kdim, iwrk
+        integer :: idx, i, j, kdim
         integer :: idxv(1)
         complex(dp)  :: Rii(size(Q))
 
@@ -2103,7 +2103,7 @@ contains
         integer :: i
         complex(dp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q
+        allocate(Qwrk, source=Q)
         do i = 1, size(perm)
             Q(:, i) = Qwrk(:, perm(i))
         enddo
@@ -2122,7 +2122,7 @@ contains
         integer :: inv_perm(size(perm))
         complex(dp), allocatable :: Qwrk(:, :)
 
-        Qwrk = Q ; inv_perm = 0
+        allocate(Qwrk, source=Q) ; inv_perm = 0
 
         ! Inverse permutation vector.
         do i = 1, size(perm)
@@ -2527,7 +2527,7 @@ contains
         logical :: verbose
         real(sp) :: tolerance
         real(sp) :: alpha, beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
 
         info = 0
@@ -2611,7 +2611,7 @@ contains
         logical :: verbose
         real(dp) :: tolerance
         real(dp) :: alpha, beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
 
         info = 0
@@ -2695,7 +2695,7 @@ contains
         logical :: verbose
         real(sp) :: tolerance
         complex(sp) :: alpha, beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
 
         info = 0
@@ -2779,7 +2779,7 @@ contains
         logical :: verbose
         real(dp) :: tolerance
         complex(dp) :: alpha, beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
 
         info = 0
@@ -2858,7 +2858,7 @@ contains
         logical :: verbose
         real(sp) :: tolerance
         real(sp) :: beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
         ! Deal with optional args.
         kdim = size(X) - 1
@@ -2897,7 +2897,6 @@ contains
         class(abstract_vector_rsp), intent(inout) :: X(:)
 
         ! Internal variables.
-        class(abstract_vector_rsp), allocatable :: wrk
         integer :: i, info
 
         info = 0
@@ -2929,7 +2928,7 @@ contains
         logical :: verbose
         real(dp) :: tolerance
         real(dp) :: beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
         ! Deal with optional args.
         kdim = size(X) - 1
@@ -2968,7 +2967,6 @@ contains
         class(abstract_vector_rdp), intent(inout) :: X(:)
 
         ! Internal variables.
-        class(abstract_vector_rdp), allocatable :: wrk
         integer :: i, info
 
         info = 0
@@ -3000,7 +2998,7 @@ contains
         logical :: verbose
         real(sp) :: tolerance
         real(sp) :: beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
         ! Deal with optional args.
         kdim = size(X) - 1
@@ -3039,7 +3037,6 @@ contains
         class(abstract_vector_csp), intent(inout) :: X(:)
 
         ! Internal variables.
-        class(abstract_vector_csp), allocatable :: wrk
         integer :: i, info
 
         info = 0
@@ -3071,7 +3068,7 @@ contains
         logical :: verbose
         real(dp) :: tolerance
         real(dp) :: beta
-        integer :: i, j, k, kdim
+        integer :: k, kdim
 
         ! Deal with optional args.
         kdim = size(X) - 1
@@ -3110,7 +3107,6 @@ contains
         class(abstract_vector_cdp), intent(inout) :: X(:)
 
         ! Internal variables.
-        class(abstract_vector_cdp), allocatable :: wrk
         integer :: i, info
 
         info = 0
@@ -3147,7 +3143,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, j, kdim
+        integer :: i, kdim
         
         ! Schur-related.
         real(sp) :: Z(size(H, 2), size(H, 2))
@@ -3211,7 +3207,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, j, kdim
+        integer :: i, kdim
         
         ! Schur-related.
         real(dp) :: Z(size(H, 2), size(H, 2))
@@ -3275,7 +3271,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, j, kdim
+        integer :: i, kdim
         
         ! Schur-related.
         complex(sp) :: Z(size(H, 2), size(H, 2))
@@ -3339,7 +3335,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, j, kdim
+        integer :: i, kdim
         
         ! Schur-related.
         complex(dp) :: Z(size(H, 2), size(H, 2))
