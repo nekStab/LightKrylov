@@ -266,8 +266,7 @@ contains
         call innerprod(G, X, X)
 
         ! Check orthonormality of the eigenvectors.
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
         call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', 'The eigenvector basis X is not orthonormal: V.H @ V /= I')
 
         return
@@ -346,8 +345,7 @@ contains
         call innerprod(G, U(1:test_size), U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', 'The left singular vector basis U is not orthonormal: U.H @ U /= I')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -355,7 +353,7 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', 'The right singular vector basis V is not orthonormal: V.H @ V /= I')
 
         ! Check correctness of full factorization.

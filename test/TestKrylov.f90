@@ -99,7 +99,6 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_sp)
-        call check(error, norm2(abs(G - Id)) < rtol_sp)
         call check_test(error, 'test_qr_factorization_rsp', &
                         & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
@@ -169,6 +168,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rsp
@@ -222,6 +223,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_qr_factorization_rdp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_qr_factorization_rdp
@@ -289,6 +292,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rdp
@@ -342,6 +347,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_qr_factorization_csp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_qr_factorization_csp
@@ -409,6 +416,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_csp
@@ -462,6 +471,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_qr_factorization_cdp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_qr_factorization_cdp
@@ -529,6 +540,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_cdp
@@ -589,6 +602,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_arnoldi_factorization_rsp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_arnoldi_factorization_rsp
@@ -635,6 +650,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(p*kdim))) < rtol_sp)
+        call check_test(error, 'test_block_arnoldi_factorization_rsp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_block_arnoldi_factorization_rsp
@@ -743,6 +760,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_arnoldi_factorization_rdp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_arnoldi_factorization_rdp
@@ -789,6 +808,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(p*kdim))) < rtol_dp)
+        call check_test(error, 'test_block_arnoldi_factorization_rdp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_block_arnoldi_factorization_rdp
@@ -897,6 +918,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_arnoldi_factorization_csp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_arnoldi_factorization_csp
@@ -943,6 +966,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(p*kdim))) < rtol_sp)
+        call check_test(error, 'test_block_arnoldi_factorization_csp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_block_arnoldi_factorization_csp
@@ -1051,6 +1076,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_arnoldi_factorization_cdp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_arnoldi_factorization_cdp
@@ -1097,6 +1124,8 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, maxval(abs(G - eye(p*kdim))) < rtol_dp)
+        call check_test(error, 'test_block_arnoldi_factorization_cdp', &
+                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_block_arnoldi_factorization_cdp
@@ -1216,7 +1245,8 @@ contains
 
         ! Check orthonormality of the left basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
+                              & 'Left basis U not orthonormal: U[:,1:k].H @ U[:,1:k] /= I')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rsp
@@ -1224,6 +1254,8 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
+                              & 'Right basis V not orthonormal: V[:,1:k].H @ V[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_bidiag_factorization_rsp
@@ -1285,7 +1317,8 @@ contains
 
         ! Check orthonormality of the left basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
+                              & 'Left basis U not orthonormal: U[:,1:k].H @ U[:,1:k] /= I')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rdp
@@ -1293,6 +1326,8 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
+                              & 'Right basis V not orthonormal: V[:,1:k].H @ V[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_bidiag_factorization_rdp
@@ -1354,7 +1389,8 @@ contains
 
         ! Check orthonormality of the left basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
+                              & 'Left basis U not orthonormal: U[:,1:k].H @ U[:,1:k] /= I')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_csp
@@ -1362,6 +1398,8 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
+                              & 'Right basis V not orthonormal: V[:,1:k].H @ V[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_bidiag_factorization_csp
@@ -1423,7 +1461,8 @@ contains
 
         ! Check orthonormality of the left basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
+                              & 'Left basis U not orthonormal: U[:,1:k].H @ U[:,1:k] /= I')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_cdp
@@ -1431,6 +1470,8 @@ contains
 
         ! Check orthonormality of the right basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
+                              & 'Right basis V not orthonormal: V[:,1:k].H @ V[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_bidiag_factorization_cdp
@@ -1502,6 +1543,8 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
+                                 & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_tridiag_factorization_rsp
@@ -1568,6 +1611,8 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
+                                 & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_tridiag_factorization_rdp
@@ -1634,6 +1679,8 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_sp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
+                                 & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_tridiag_factorization_csp
@@ -1700,6 +1747,8 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         call check(error, maxval(abs(G - eye(kdim))) < rtol_dp)
+        call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
+                                 & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
 
         return
     end subroutine test_lanczos_tridiag_factorization_cdp

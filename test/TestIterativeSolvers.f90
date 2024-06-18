@@ -112,7 +112,7 @@ contains
 
         ! check eigenvalues
         call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_sp)
-        !if (allocated(error)) return
+        !call check_test(error, 'test_ks_evp_rsp', 'The computed eigenvalues are not exact.')
         !! check eigenvectors
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
@@ -249,7 +249,7 @@ contains
 
         ! Check error.
         call check(error, maxval(abs(true_evals - evals)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rsp', 'The computed eigenvalues E are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -268,6 +268,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         call check(error, maxval(abs(G - eye(test_size))) < rtol_sp)
+        call check_test(error, 'test_sym_evp_rsp', 'The eigenvector basis X is not orthonormal: V.H @ V /= I')
 
         return
     end subroutine test_sym_evp_rsp
@@ -336,7 +337,7 @@ contains
 
         ! check eigenvalues
         call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_dp)
-        !if (allocated(error)) return
+        !call check_test(error, 'test_ks_evp_rdp', 'The computed eigenvalues are not exact.')
         !! check eigenvectors
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
@@ -413,6 +414,8 @@ contains
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+!        call check_test(error, 'test_evp_rdp', &
+!                                 & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_evp_rdp
@@ -471,7 +474,7 @@ contains
 
         ! Check error.
         call check(error, maxval(abs(true_evals - evals)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rdp', 'The computed eigenvalues E are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -490,6 +493,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         call check(error, maxval(abs(G - eye(test_size))) < rtol_dp)
+        call check_test(error, 'test_sym_evp_rdp', 'The eigenvector basis X is not orthonormal: V.H @ V /= I')
 
         return
     end subroutine test_sym_evp_rdp
@@ -673,7 +677,7 @@ contains
         enddo
 
         call check(error, maxval(s - true_svdvals) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rsp', 'The computed singular values S are not exact.')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         allocate(G(test_size, test_size)) ; G = zero_rsp
@@ -681,7 +685,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         call check(error, maxval(abs(G - eye(test_size))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rsp', 'The left singular vector basis U is not orthonormal: U.H @ U /= I')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_rsp
@@ -689,7 +693,7 @@ contains
 
         ! Check orthonormality of the right singular vectors
         call check(error, maxval(abs(G - eye(test_size))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rsp', 'The right singular vector basis V is not orthonormal: V.H @ V /= I')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -757,7 +761,7 @@ contains
         enddo
 
         call check(error, maxval(s - true_svdvals) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rdp', 'The computed singular values S are not exact.')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         allocate(G(test_size, test_size)) ; G = zero_rdp
@@ -765,7 +769,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         call check(error, maxval(abs(G - eye(test_size))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rdp', 'The left singular vector basis U is not orthonormal: U.H @ U /= I')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_rdp
@@ -773,7 +777,7 @@ contains
 
         ! Check orthonormality of the right singular vectors
         call check(error, maxval(abs(G - eye(test_size))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_rdp', 'The right singular vector basis V is not orthonormal: V.H @ V /= I')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
