@@ -136,7 +136,7 @@ contains
         #:else
         call check(error, is_close(alpha, norm2(x%data)))
         #:endif
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', 'FAILED')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', 'is_close(alpha, norm2(x%data))')
         
         return
     end subroutine test_vector_${type[0]}$${kind}$_norm
@@ -162,7 +162,7 @@ contains
         #:else
         call check(error, norm2(z%data - x%data - y%data) < rtol_${kind}$)
         #:endif
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_add', 'FAILED')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_add', 'norm2(z%data - x%data - y%data) < rtol')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_add
@@ -188,7 +188,7 @@ contains
         #:else
         call check(error, norm2(z%data - x%data + y%data) < rtol_${kind}$)
         #:endif
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_sub', 'FAILED')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_sub', 'norm2(z%data - x%data + y%data) < rtol')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_sub
@@ -210,7 +210,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_dot', 'FAILED')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_dot', 'abs(alpha - dot_product(x%data, y%data)) < rtol')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_dot
@@ -245,7 +245,7 @@ contains
         #:else
         call check(error, norm2(x%data - alpha*y%data) < rtol_${kind}$)
         #:endif
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', 'FAILED')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', 'norm2(x%data - alpha*y%data) < rtol')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_scal

@@ -79,7 +79,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_sp)
-        call check_test(error, 'test_dense_expm_rsp', 'FAILED')
+        call check_test(error, 'test_dense_expm_rsp', 'maxval(abs(E-Eref)) < rtol')
 
         return
     end subroutine test_dense_expm_rsp
@@ -121,7 +121,7 @@ contains
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_kexptA_rsp', 'FAILED')
+        call check_test(error, 'test_kexptA_rsp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_kexptA_rsp
@@ -200,7 +200,7 @@ contains
                     err(i, j) = C(i)%dot(C(j))
                 enddo
             enddo
-            alpha = sqrt(norm2(abs(err)))
+            alpha = norm2(abs(err))
             write(*,*) '--------------------------------------------------------------------'
             write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
         endif
@@ -211,11 +211,11 @@ contains
             enddo
         enddo
         
-        alpha = sqrt(norm2(abs(err)))
+        alpha = norm2(abs(err))
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_block_kexptA_rsp', 'FAILED')
+        call check_test(error, 'test_block_kexptA_rsp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_block_kexptA_rsp
@@ -259,7 +259,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_dp)
-        call check_test(error, 'test_dense_expm_rdp', 'FAILED')
+        call check_test(error, 'test_dense_expm_rdp', 'maxval(abs(E-Eref)) < rtol')
 
         return
     end subroutine test_dense_expm_rdp
@@ -301,7 +301,7 @@ contains
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_kexptA_rdp', 'FAILED')
+        call check_test(error, 'test_kexptA_rdp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_kexptA_rdp
@@ -380,7 +380,7 @@ contains
                     err(i, j) = C(i)%dot(C(j))
                 enddo
             enddo
-            alpha = sqrt(norm2(abs(err)))
+            alpha = norm2(abs(err))
             write(*,*) '--------------------------------------------------------------------'
             write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
         endif
@@ -391,11 +391,11 @@ contains
             enddo
         enddo
         
-        alpha = sqrt(norm2(abs(err)))
+        alpha = norm2(abs(err))
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_block_kexptA_rdp', 'FAILED')
+        call check_test(error, 'test_block_kexptA_rdp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_block_kexptA_rdp
@@ -439,7 +439,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_sp)
-        call check_test(error, 'test_dense_expm_csp', 'FAILED')
+        call check_test(error, 'test_dense_expm_csp', 'maxval(abs(E-Eref)) < rtol')
 
         return
     end subroutine test_dense_expm_csp
@@ -481,7 +481,7 @@ contains
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_kexptA_csp', 'FAILED')
+        call check_test(error, 'test_kexptA_csp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_kexptA_csp
@@ -560,7 +560,7 @@ contains
                     err(i, j) = C(i)%dot(C(j))
                 enddo
             enddo
-            alpha = sqrt(norm2(abs(err)))
+            alpha = norm2(abs(err))
             write(*,*) '--------------------------------------------------------------------'
             write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
         endif
@@ -571,11 +571,11 @@ contains
             enddo
         enddo
         
-        alpha = sqrt(norm2(abs(err)))
+        alpha = norm2(abs(err))
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_block_kexptA_csp', 'FAILED')
+        call check_test(error, 'test_block_kexptA_csp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_block_kexptA_csp
@@ -619,7 +619,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_dp)
-        call check_test(error, 'test_dense_expm_cdp', 'FAILED')
+        call check_test(error, 'test_dense_expm_cdp', 'maxval(abs(E-Eref)) < rtol')
 
         return
     end subroutine test_dense_expm_cdp
@@ -661,7 +661,7 @@ contains
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_kexptA_cdp', 'FAILED')
+        call check_test(error, 'test_kexptA_cdp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_kexptA_cdp
@@ -740,7 +740,7 @@ contains
                     err(i, j) = C(i)%dot(C(j))
                 enddo
             enddo
-            alpha = sqrt(norm2(abs(err)))
+            alpha = norm2(abs(err))
             write(*,*) '--------------------------------------------------------------------'
             write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
         endif
@@ -751,11 +751,11 @@ contains
             enddo
         enddo
         
-        alpha = sqrt(norm2(abs(err)))
+        alpha = norm2(abs(err))
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_block_kexptA_cdp', 'FAILED')
+        call check_test(error, 'test_block_kexptA_cdp', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_block_kexptA_cdp
@@ -808,7 +808,7 @@ contains
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
-       call check_test(error, 'test_dense_sqrtm_pos_def_rsp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_def_rsp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_def_rsp
@@ -847,7 +847,7 @@ contains
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_sp)
-       call check_test(error, 'test_dense_sqrtm_pos_semi_def_rsp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_rsp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_rsp
@@ -896,7 +896,7 @@ contains
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
-       call check_test(error, 'test_dense_sqrtm_pos_def_rdp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_def_rdp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_def_rdp
@@ -935,7 +935,7 @@ contains
     
        write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
        call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_dp)
-       call check_test(error, 'test_dense_sqrtm_pos_semi_def_rdp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_rdp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_rdp
@@ -985,7 +985,7 @@ contains
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
-       call check_test(error, 'test_dense_sqrtm_pos_def_csp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_def_csp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_def_csp
@@ -1025,7 +1025,7 @@ contains
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_sp)
-       call check_test(error, 'test_dense_sqrtm_pos_semi_def_csp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_csp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_csp
@@ -1075,7 +1075,7 @@ contains
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
-       call check_test(error, 'test_dense_sqrtm_pos_def_cdp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_def_cdp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_def_cdp
@@ -1115,7 +1115,7 @@ contains
     
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_dp)
-       call check_test(error, 'test_dense_sqrtm_pos_semi_def_cdp', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_cdp', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_cdp

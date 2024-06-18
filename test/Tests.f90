@@ -1,7 +1,7 @@
 program Tester
    ! Fortran best practice.
    use, intrinsic :: iso_fortran_env, only: error_unit, output_unit
-   use stdlib_logger, only: error_level
+   use stdlib_logger, only: error_level, none_level
    ! Unit-test utility.
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type
    ! Abstract implementation of Krylov-based techniques.
@@ -26,7 +26,8 @@ program Tester
 
    ! Turn off logging during tests (unless you REALLY want it)
    !call logger%configure(level=debug_level); write(*,*) 'Logging set to debug mode.'; write(*,*) ""; write(*,*) ""
-   call logger%configure(level=error_level); write(*,*) 'Logging set to error_level.'; write(*,*) ""; write(*,*) ""
+   call logger%configure(level=none_level, time_stamp=.false.)
+   write(*,*) 'Logging set to none_level.'; write(*,*) ""; write(*,*) ""
 
    status = 0
 

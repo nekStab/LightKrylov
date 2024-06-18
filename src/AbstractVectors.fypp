@@ -3,6 +3,7 @@
 module lightkrylov_AbstractVectors
     use lightkrylov_constants
     use lightkrylov_utils
+    use LightKrylov_Logger
     implicit none
     private
 

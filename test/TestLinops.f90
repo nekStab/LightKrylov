@@ -346,8 +346,8 @@ contains
 
         ! Check result.
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_sp)
-        call check_test(error, 'test_matvec_rsp', 'FAILED')
-
+        call check_test(error, 'test_matvec_rsp', 'norm2(y%data - matmul(A%data, x%data)) < rtol')
+        
         return
     end subroutine test_matvec_rsp
 
@@ -372,7 +372,7 @@ contains
 
         ! Check result.
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_sp)
-        call check_test(error, 'test_rmatvec_rsp', 'FAILED')
+        call check_test(error, 'test_rmatvec_rsp', 'norm2(y%data - matmul(transpose(A%data), x%data)) < rtol')
         
         return
     end subroutine test_rmatvec_rsp
@@ -405,9 +405,10 @@ contains
 
         ! Check result.
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
-
         call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_matvec_rsp', 'FAILED')
+        call check_test(error, 'test_adjoint_matvec_rsp', 'norm2(y%data - matmul(transpose(A%data), x%data)) < rtol')
+
+        
 
        return
     end subroutine test_adjoint_matvec_rsp
@@ -440,9 +441,8 @@ contains
 
         ! Check result.
         alpha = norm2(y%data - matmul(A%data, x%data))
-
         call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_rmatvec_rsp', 'FAILED')
+        call check_test(error, 'test_adjoint_rmatvec_rsp', 'norm2(y%data - matmul(A%data, x%data)) < rtol')
 
        return
     end subroutine test_adjoint_rmatvec_rsp
@@ -480,8 +480,8 @@ contains
 
         ! Check result.
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_dp)
-        call check_test(error, 'test_matvec_rdp', 'FAILED')
-
+        call check_test(error, 'test_matvec_rdp', 'norm2(y%data - matmul(A%data, x%data)) < rtol')
+        
         return
     end subroutine test_matvec_rdp
 
@@ -506,7 +506,7 @@ contains
 
         ! Check result.
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_dp)
-        call check_test(error, 'test_rmatvec_rdp', 'FAILED')
+        call check_test(error, 'test_rmatvec_rdp', 'norm2(y%data - matmul(transpose(A%data), x%data)) < rtol')
         
         return
     end subroutine test_rmatvec_rdp
@@ -539,9 +539,10 @@ contains
 
         ! Check result.
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
-
         call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_matvec_rdp', 'FAILED')
+        call check_test(error, 'test_adjoint_matvec_rdp', 'norm2(y%data - matmul(transpose(A%data), x%data)) < rtol')
+
+        
 
        return
     end subroutine test_adjoint_matvec_rdp
@@ -574,9 +575,8 @@ contains
 
         ! Check result.
         alpha = norm2(y%data - matmul(A%data, x%data))
-
         call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_rmatvec_rdp', 'FAILED')
+        call check_test(error, 'test_adjoint_rmatvec_rdp', 'norm2(y%data - matmul(A%data, x%data)) < rtol')
 
        return
     end subroutine test_adjoint_rmatvec_rdp
@@ -615,8 +615,8 @@ contains
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_sp)
-        call check_test(error, 'test_matvec_csp', 'FAILED')
-
+        call check_test(error, 'test_matvec_csp', 'norm2(abs(y%data - matmul(A%data, x%data))) < rtol')
+        
         return
     end subroutine test_matvec_csp
 
@@ -642,7 +642,7 @@ contains
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_sp)
-        call check_test(error, 'test_rmatvec_csp', 'FAILED')
+        call check_test(error, 'test_rmatvec_csp', 'norm2(abs(y%data - matmul(transpose(A%data), x%data))) < rtol')
         
         return
     end subroutine test_rmatvec_csp
@@ -676,9 +676,10 @@ contains
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
-
         call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_matvec_csp', 'FAILED')
+        call check_test(error, 'test_adjoint_matvec_csp', 'norm2(abs(y%data - matmul(transpose(A%data), x%data))) < rtol')
+
+        
 
        return
     end subroutine test_adjoint_matvec_csp
@@ -712,9 +713,8 @@ contains
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))
-
         call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_rmatvec_csp', 'FAILED')
+        call check_test(error, 'test_adjoint_rmatvec_csp', 'norm2(abs(y%data - matmul(A%data, x%data))) < rtol')
 
        return
     end subroutine test_adjoint_rmatvec_csp
@@ -753,8 +753,8 @@ contains
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_dp)
-        call check_test(error, 'test_matvec_cdp', 'FAILED')
-
+        call check_test(error, 'test_matvec_cdp', 'norm2(abs(y%data - matmul(A%data, x%data))) < rtol')
+        
         return
     end subroutine test_matvec_cdp
 
@@ -780,7 +780,7 @@ contains
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_dp)
-        call check_test(error, 'test_rmatvec_cdp', 'FAILED')
+        call check_test(error, 'test_rmatvec_cdp', 'norm2(abs(y%data - matmul(transpose(A%data), x%data))) < rtol')
         
         return
     end subroutine test_rmatvec_cdp
@@ -814,9 +814,10 @@ contains
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
-
         call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_matvec_cdp', 'FAILED')
+        call check_test(error, 'test_adjoint_matvec_cdp', 'norm2(abs(y%data - matmul(transpose(A%data), x%data))) < rtol')
+
+        
 
        return
     end subroutine test_adjoint_matvec_cdp
@@ -850,9 +851,8 @@ contains
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))
-
         call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_rmatvec_cdp', 'FAILED')
+        call check_test(error, 'test_adjoint_rmatvec_cdp', 'norm2(abs(y%data - matmul(A%data, x%data))) < rtol')
 
        return
     end subroutine test_adjoint_rmatvec_cdp

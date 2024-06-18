@@ -309,7 +309,7 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, norm2(x%data)))
-        call check_test(error, 'test_vector_rsp_norm', 'FAILED')
+        call check_test(error, 'test_vector_rsp_norm', 'is_close(alpha, norm2(x%data))')
         
         return
     end subroutine test_vector_rsp_norm
@@ -331,7 +331,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data - y%data) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_add', 'FAILED')
+        call check_test(error, 'test_vector_rsp_add', 'norm2(z%data - x%data - y%data) < rtol')
 
         return
     end subroutine test_vector_rsp_add
@@ -353,7 +353,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data + y%data) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_sub', 'FAILED')
+        call check_test(error, 'test_vector_rsp_sub', 'norm2(z%data - x%data + y%data) < rtol')
 
         return
     end subroutine test_vector_rsp_sub
@@ -375,7 +375,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_dot', 'FAILED')
+        call check_test(error, 'test_vector_rsp_dot', 'abs(alpha - dot_product(x%data, y%data)) < rtol')
 
         return
     end subroutine test_vector_rsp_dot
@@ -398,7 +398,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(x%data - alpha*y%data) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_scal', 'FAILED')
+        call check_test(error, 'test_vector_rsp_scal', 'norm2(x%data - alpha*y%data) < rtol')
 
         return
     end subroutine test_vector_rsp_scal
@@ -431,7 +431,7 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, norm2(x%data)))
-        call check_test(error, 'test_vector_rdp_norm', 'FAILED')
+        call check_test(error, 'test_vector_rdp_norm', 'is_close(alpha, norm2(x%data))')
         
         return
     end subroutine test_vector_rdp_norm
@@ -453,7 +453,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data - y%data) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_add', 'FAILED')
+        call check_test(error, 'test_vector_rdp_add', 'norm2(z%data - x%data - y%data) < rtol')
 
         return
     end subroutine test_vector_rdp_add
@@ -475,7 +475,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data + y%data) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_sub', 'FAILED')
+        call check_test(error, 'test_vector_rdp_sub', 'norm2(z%data - x%data + y%data) < rtol')
 
         return
     end subroutine test_vector_rdp_sub
@@ -497,7 +497,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_dot', 'FAILED')
+        call check_test(error, 'test_vector_rdp_dot', 'abs(alpha - dot_product(x%data, y%data)) < rtol')
 
         return
     end subroutine test_vector_rdp_dot
@@ -520,7 +520,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(x%data - alpha*y%data) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_scal', 'FAILED')
+        call check_test(error, 'test_vector_rdp_scal', 'norm2(x%data - alpha*y%data) < rtol')
 
         return
     end subroutine test_vector_rdp_scal
@@ -553,7 +553,7 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
-        call check_test(error, 'test_vector_csp_norm', 'FAILED')
+        call check_test(error, 'test_vector_csp_norm', 'is_close(alpha, norm2(x%data))')
         
         return
     end subroutine test_vector_csp_norm
@@ -575,7 +575,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_add', 'FAILED')
+        call check_test(error, 'test_vector_csp_add', 'norm2(z%data - x%data - y%data) < rtol')
 
         return
     end subroutine test_vector_csp_add
@@ -597,7 +597,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_sub', 'FAILED')
+        call check_test(error, 'test_vector_csp_sub', 'norm2(z%data - x%data + y%data) < rtol')
 
         return
     end subroutine test_vector_csp_sub
@@ -619,7 +619,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_dot', 'FAILED')
+        call check_test(error, 'test_vector_csp_dot', 'abs(alpha - dot_product(x%data, y%data)) < rtol')
 
         return
     end subroutine test_vector_csp_dot
@@ -644,7 +644,7 @@ contains
         ! Check correctness.
         tmp = x%data - alpha*y%data
         call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_scal', 'FAILED')
+        call check_test(error, 'test_vector_csp_scal', 'norm2(x%data - alpha*y%data) < rtol')
 
         return
     end subroutine test_vector_csp_scal
@@ -677,7 +677,7 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
-        call check_test(error, 'test_vector_cdp_norm', 'FAILED')
+        call check_test(error, 'test_vector_cdp_norm', 'is_close(alpha, norm2(x%data))')
         
         return
     end subroutine test_vector_cdp_norm
@@ -699,7 +699,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_add', 'FAILED')
+        call check_test(error, 'test_vector_cdp_add', 'norm2(z%data - x%data - y%data) < rtol')
 
         return
     end subroutine test_vector_cdp_add
@@ -721,7 +721,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_sub', 'FAILED')
+        call check_test(error, 'test_vector_cdp_sub', 'norm2(z%data - x%data + y%data) < rtol')
 
         return
     end subroutine test_vector_cdp_sub
@@ -743,7 +743,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_dot', 'FAILED')
+        call check_test(error, 'test_vector_cdp_dot', 'abs(alpha - dot_product(x%data, y%data)) < rtol')
 
         return
     end subroutine test_vector_cdp_dot
@@ -768,7 +768,7 @@ contains
         ! Check correctness.
         tmp = x%data - alpha*y%data
         call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_scal', 'FAILED')
+        call check_test(error, 'test_vector_cdp_scal', 'norm2(x%data - alpha*y%data) < rtol')
 
         return
     end subroutine test_vector_cdp_scal

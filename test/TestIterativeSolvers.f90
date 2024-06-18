@@ -111,7 +111,7 @@ contains
 
         ! check eigenvalues
         call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_sp)
-        !if (allocated(error)) return
+        !call check_test(error, 'test_ks_evp_rsp', 'The computed eigenvalues are not exact.')
         !! check eigenvectors
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
@@ -121,7 +121,8 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
-        call check_test(error, 'test_ks_evp_rsp', 'FAILED')
+        call check_test(error, 'test_ks_evp_rsp', & 
+                              & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_ks_evp_rsp
@@ -177,7 +178,7 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_sp)
-        call check_test(error, 'test_evp_rsp', 'FAILED')
+        call check_test(error, 'test_evp_rsp', 'The computed eigenvalues are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -187,7 +188,8 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
-        call check_test(error, 'test_evp_rsp', 'FAILED')
+        call check_test(error, 'test_evp_rsp', &
+                                 & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_evp_rsp
@@ -245,7 +247,7 @@ contains
 
         ! Check error,
         call check(error, all_close(evals, true_evals, rtol_sp, atol_sp))
-        call check_test(error, 'test_sym_evp_rsp', 'FAILED')
+        call check_test(error, 'test_sym_evp_rsp', 'The computed eigenvalues E are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -255,7 +257,8 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
-        call check_test(error, 'test_sym_evp_rsp', 'FAILED')
+        call check_test(error, 'test_sym_evp_rsp', 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /=&
+            & diag(E) @ V')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
@@ -265,7 +268,7 @@ contains
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        call check_test(error, 'test_sym_evp_rsp', 'FAILED')
+        call check_test(error, 'test_sym_evp_rsp', 'The eigenvector basis X is not orthonormal: V.H @ V /= I')
 
         return
     end subroutine test_sym_evp_rsp
@@ -334,7 +337,7 @@ contains
 
         ! check eigenvalues
         call check(error, norm2(abs(eigvals - true_eigvals(:nev))) < rtol_dp)
-        !if (allocated(error)) return
+        !call check_test(error, 'test_ks_evp_rdp', 'The computed eigenvalues are not exact.')
         !! check eigenvectors
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
@@ -344,7 +347,8 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
-        call check_test(error, 'test_ks_evp_rdp', 'FAILED')
+        call check_test(error, 'test_ks_evp_rdp', & 
+                              & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_ks_evp_rdp
@@ -400,7 +404,7 @@ contains
         enddo
 
         call check(error, norm2(abs(eigvals - true_eigvals)) < rtol_dp)
-        call check_test(error, 'test_evp_rdp', 'FAILED')
+        call check_test(error, 'test_evp_rdp', 'The computed eigenvalues are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -410,7 +414,8 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
-        call check_test(error, 'test_evp_rdp', 'FAILED')
+        call check_test(error, 'test_evp_rdp', &
+                                 & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_evp_rdp
@@ -468,7 +473,7 @@ contains
 
         ! Check error,
         call check(error, all_close(evals, true_evals, rtol_dp, atol_dp))
-        call check_test(error, 'test_sym_evp_rdp', 'FAILED')
+        call check_test(error, 'test_sym_evp_rdp', 'The computed eigenvalues E are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -478,7 +483,8 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
-        call check_test(error, 'test_sym_evp_rdp', 'FAILED')
+        call check_test(error, 'test_sym_evp_rdp', 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /=&
+            & diag(E) @ V')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
@@ -488,7 +494,7 @@ contains
         ! Check orthonormality of the eigenvectors.
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        call check_test(error, 'test_sym_evp_rdp', 'FAILED')
+        call check_test(error, 'test_sym_evp_rdp', 'The eigenvector basis X is not orthonormal: V.H @ V /= I')
 
         return
     end subroutine test_sym_evp_rdp
@@ -672,7 +678,7 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_sp)
-        call check_test(error, 'test_svd_rsp', 'FAILED')
+        call check_test(error, 'test_svd_rsp', 'The computed singular values S are not exact.')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         G = zero_rsp
@@ -681,7 +687,7 @@ contains
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        call check_test(error, 'test_svd_rsp', 'FAILED')
+        call check_test(error, 'test_svd_rsp', 'The left singular vector basis U is not orthonormal: U.H @ U /= I')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_rsp
@@ -689,13 +695,13 @@ contains
 
         ! Check orthonormality of the right singular vectors
         call check(error, norm2(abs(G - Id)) < rtol_sp)
-        call check_test(error, 'test_svd_rsp', 'FAILED')
+        call check_test(error, 'test_svd_rsp', 'The right singular vector basis V is not orthonormal: V.H @ V /= I')
 
         ! Check correctness of full factorization.
         call get_data(Udata, U)
         call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_sp)
-        call check_test(error, 'test_svd_rsp', 'FAILED')
+        call check_test(error, 'test_svd_rsp', 'The factorization is not correct: A /= U @ S @ V.H')
 
         return
     end subroutine test_svd_rsp
@@ -757,7 +763,7 @@ contains
         enddo
 
         call check(error, norm2(s - true_svdvals)**2 < rtol_dp)
-        call check_test(error, 'test_svd_rdp', 'FAILED')
+        call check_test(error, 'test_svd_rdp', 'The computed singular values S are not exact.')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         G = zero_rdp
@@ -766,7 +772,7 @@ contains
         ! Check orthonormality of the left singular vectors
         Id = eye(test_size)
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        call check_test(error, 'test_svd_rdp', 'FAILED')
+        call check_test(error, 'test_svd_rdp', 'The left singular vector basis U is not orthonormal: U.H @ U /= I')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_rdp
@@ -774,13 +780,13 @@ contains
 
         ! Check orthonormality of the right singular vectors
         call check(error, norm2(abs(G - Id)) < rtol_dp)
-        call check_test(error, 'test_svd_rdp', 'FAILED')
+        call check_test(error, 'test_svd_rdp', 'The right singular vector basis V is not orthonormal: V.H @ V /= I')
 
         ! Check correctness of full factorization.
         call get_data(Udata, U)
         call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_dp)
-        call check_test(error, 'test_svd_rdp', 'FAILED')
+        call check_test(error, 'test_svd_rdp', 'The factorization is not correct: A /= U @ S @ V.H')
 
         return
     end subroutine test_svd_rdp
@@ -889,7 +895,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        call check_test(error, 'test_gmres_rsp', 'FAILED')
+        call check_test(error, 'test_gmres_rsp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_rsp
@@ -918,7 +924,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        call check_test(error, 'test_gmres_spd_rsp', 'FAILED')
+        call check_test(error, 'test_gmres_spd_rsp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_rsp
@@ -956,7 +962,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        call check_test(error, 'test_gmres_rdp', 'FAILED')
+        call check_test(error, 'test_gmres_rdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_rdp
@@ -985,7 +991,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        call check_test(error, 'test_gmres_spd_rdp', 'FAILED')
+        call check_test(error, 'test_gmres_spd_rdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_rdp
@@ -1023,7 +1029,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        call check_test(error, 'test_gmres_csp', 'FAILED')
+        call check_test(error, 'test_gmres_csp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_csp
@@ -1052,7 +1058,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        call check_test(error, 'test_gmres_spd_csp', 'FAILED')
+        call check_test(error, 'test_gmres_spd_csp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_csp
@@ -1090,7 +1096,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        call check_test(error, 'test_gmres_cdp', 'FAILED')
+        call check_test(error, 'test_gmres_cdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_cdp
@@ -1119,7 +1125,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        call check_test(error, 'test_gmres_spd_cdp', 'FAILED')
+        call check_test(error, 'test_gmres_spd_cdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_cdp
@@ -1162,7 +1168,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        call check_test(error, 'test_cg_rsp', 'FAILED')
+        call check_test(error, 'test_cg_rsp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_rsp
@@ -1200,7 +1206,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        call check_test(error, 'test_cg_rdp', 'FAILED')
+        call check_test(error, 'test_cg_rdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_rdp
@@ -1238,7 +1244,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
-        call check_test(error, 'test_cg_csp', 'FAILED')
+        call check_test(error, 'test_cg_csp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_csp
@@ -1276,7 +1282,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
-        call check_test(error, 'test_cg_cdp', 'FAILED')
+        call check_test(error, 'test_cg_cdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_cdp

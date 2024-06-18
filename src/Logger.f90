@@ -5,7 +5,7 @@ module LightKrylov_Logger
    use stdlib_ascii, only : to_lower
    use stdlib_strings, only : chomp, replace_all
    ! Testdrive
-   use testdrive, only: error_type
+   use testdrive, only: error_type, test_failed
    implicit none
    private
 
@@ -13,8 +13,8 @@ module LightKrylov_Logger
    logical, parameter :: exit_on_test_error = .true.
 
    public :: stop_error
-
    public :: check_info
+   public :: check_test
    public :: logger
 
 contains
@@ -366,11 +366,12 @@ contains
       
    end subroutine error_handler
 
-   subroutine check_test(error, test_name, msg)
-      type(error_type), allocatable, intent(in) :: error
-      character(len=*),              intent(in) :: test_name
-      character(len=*),              intent(in) :: msg
-      character*128                             :: name
+   subroutine check_test(error, test_name, info_str)
+      use face 
+      type(error_type), allocatable, intent(inout) :: error
+      character(len=*),              intent(in)    :: test_name
+      character(len=*),              intent(in)    :: info_str
+      character*128                                :: name
       
       ! internals
       character(len=4), dimension(4) :: substrings
@@ -382,54 +383,91 @@ contains
          name = replace_all(name, substrings(i), "")
       end do
 
+      !write(*,'(A50)', ADVANCE='NO') trim(adjustl(to_lower(test_name)))
+
       if (allocated(error)) then
-         call logger%log_message(trim(msg))
+         print *, colorize('FAILED', color_fg='red')
          !
          !   TestVector
          !
          if      (name == "test_vector_norm") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed.'
          else if (name == "test_vector_add") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_vector_sub") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_vector_dot") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_vector_scal") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          !
          !   TestLinops
          !
          else if (name == "test_matvec") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'     
          else if (name == "test_rmatvec") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_adjoint_matvec") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_adjoint_rmatvec") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          !
          !   TestKrylov
          !
          else if (name == "test_qr_factorization") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_pivoting_qr_exact_rank_deficiency") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_arnoldi_factorization") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_block_arnoldi_factorization") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_krylov_schur") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_lanczos_bidiag_factorization") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_lanczos_tridiag_factorization") then
+            print '(4X,A)', trim(info_str)
          !
          !   TestExpmLib
          !
          else if (name == "test_dense_expm") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_kexptA") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_block_kexptA") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_dense_sqrtm_pos_def") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          else if (name == "test_dense_sqrtm_pos_semi_def") then
+            print '(4X,A)', '"'//trim(info_str)//'" failed'
          !
          !   TestIterativeSolvers
          !
          else if (name == "test_ks_evp") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_evp") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_sym_evp") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_svd") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_gmres") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_gmres_spd") then
+            print '(4X,A)', trim(info_str)
          else if (name == "test_cg") then
+            print '(4X,A)', trim(info_str)
          end if
 
-         if (exit_on_test_error) STOP 2
+         if (exit_on_test_error) then
+            write(*,*)
+            write(*,*) 'A fatal error was encountered. Aborting calculation as per user directive.'
+            write(*,*)
+            STOP 1
+         end if
+      else
+         print *, colorize('PASSED', color_fg='green')
       end if
 
    end subroutine check_test

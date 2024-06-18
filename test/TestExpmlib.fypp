@@ -80,7 +80,7 @@ contains
 
         ! Check result.
         call check(error, maxval(abs(E-Eref)) < rtol_${kind}$)
-        call check_test(error, 'test_dense_expm_${type[0]}$${kind}$', 'FAILED')
+        call check_test(error, 'test_dense_expm_${type[0]}$${kind}$', 'maxval(abs(E-Eref)) < rtol')
 
         return
     end subroutine test_dense_expm_${type[0]}$${kind}$
@@ -122,7 +122,7 @@ contains
         if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
 
         call check(error, err < rtol_${kind}$)
-        call check_test(error, 'test_kexptA_${type[0]}$${kind}$', 'FAILED')
+        call check_test(error, 'test_kexptA_${type[0]}$${kind}$', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_kexptA_${type[0]}$${kind}$
@@ -201,7 +201,7 @@ contains
                     err(i, j) = C(i)%dot(C(j))
                 enddo
             enddo
-            alpha = sqrt(norm2(abs(err)))
+            alpha = norm2(abs(err))
             write(*,*) '--------------------------------------------------------------------'
             write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
         endif
@@ -212,11 +212,11 @@ contains
             enddo
         enddo
         
-        alpha = sqrt(norm2(abs(err)))
+        alpha = norm2(abs(err))
         if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
 
         call check(error, alpha < rtol_${kind}$)
-        call check_test(error, 'test_block_kexptA_${type[0]}$${kind}$', 'FAILED')
+        call check_test(error, 'test_block_kexptA_${type[0]}$${kind}$', 'norm2(x - x_true) < rol')
 
         return
     end subroutine test_block_kexptA_${type[0]}$${kind}$
@@ -291,7 +291,7 @@ contains
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_${kind}$)
        #:endif
-       call check_test(error, 'test_dense_sqrtm_pos_def_${type[0]}$${kind}$', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_def_${type[0]}$${kind}$', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_def_${type[0]}$${kind}$
@@ -350,7 +350,7 @@ contains
        write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
        call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_${kind}$)
        #:endif
-       call check_test(error, 'test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$', 'FAILED')
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$', 'sqrt(A)**2 /= A')
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$
