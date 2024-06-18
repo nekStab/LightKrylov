@@ -17,7 +17,7 @@ program Tester
    implicit none
 
    ! Unit-test related.
-   integer :: status, is, num_tests
+   integer :: status, is
    type(testsuite_type), allocatable :: testsuites(:)
    character(len=*), parameter :: fmt = '("#", *(1x, a))'
 
