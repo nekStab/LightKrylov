@@ -25,7 +25,6 @@ module lightkrylov_utils
 
     character*128, parameter :: this_module = 'LightKrylov_Utils'
 
-    public :: stop_error
     public :: assert_shape
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
@@ -167,14 +166,6 @@ contains
     !-----     VARIOUS UTILITIES     -----
     !-------------------------------------
 
-    subroutine stop_error(msg)
-        !! Utility function to print an error message.
-        character(len=*), intent(in) :: msg
-        !! Error message.
-        write(output_unit, *) msg; stop 1
-        return
-    end subroutine stop_error
-
     subroutine assert_shape_vector_rsp(v, size, routine, matname)
         !! Utility function to assert the shape of a vector.
         real(sp), intent(in) :: v(:)
@@ -185,11 +176,14 @@ contains
         !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted vector.
+        
+        ! internals
+        character*128 :: msg
 
         if(any(shape(v) /= size)) then
-            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
-            write(output_unit, *) "Expected length is ", size
-            call stop_error("Aborting due to illegal vector length.")
+            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
         endif
         return
     end subroutine assert_shape_vector_rsp
@@ -205,10 +199,13 @@ contains
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
 
+        ! internals
+        character*128 :: msg
+
         if(any(shape(A) /= size)) then
-            write(output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-            write(output_unit, *) "Expected shape is ", size
-            call stop_error("Aborting due to illegal matrix size.")
+            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
         endif
         return
     end subroutine assert_shape_matrix_rsp
@@ -222,11 +219,14 @@ contains
         !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted vector.
+        
+        ! internals
+        character*128 :: msg
 
         if(any(shape(v) /= size)) then
-            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
-            write(output_unit, *) "Expected length is ", size
-            call stop_error("Aborting due to illegal vector length.")
+            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
         endif
         return
     end subroutine assert_shape_vector_rdp
@@ -242,10 +242,13 @@ contains
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
 
+        ! internals
+        character*128 :: msg
+
         if(any(shape(A) /= size)) then
-            write(output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-            write(output_unit, *) "Expected shape is ", size
-            call stop_error("Aborting due to illegal matrix size.")
+            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
         endif
         return
     end subroutine assert_shape_matrix_rdp
@@ -259,11 +262,14 @@ contains
         !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted vector.
+        
+        ! internals
+        character*128 :: msg
 
         if(any(shape(v) /= size)) then
-            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
-            write(output_unit, *) "Expected length is ", size
-            call stop_error("Aborting due to illegal vector length.")
+            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
         endif
         return
     end subroutine assert_shape_vector_csp
@@ -279,10 +285,13 @@ contains
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
 
+        ! internals
+        character*128 :: msg
+
         if(any(shape(A) /= size)) then
-            write(output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-            write(output_unit, *) "Expected shape is ", size
-            call stop_error("Aborting due to illegal matrix size.")
+            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
         endif
         return
     end subroutine assert_shape_matrix_csp
@@ -296,11 +305,14 @@ contains
         !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted vector.
+        
+        ! internals
+        character*128 :: msg
 
         if(any(shape(v) /= size)) then
-            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
-            write(output_unit, *) "Expected length is ", size
-            call stop_error("Aborting due to illegal vector length.")
+            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
         endif
         return
     end subroutine assert_shape_vector_cdp
@@ -316,10 +328,13 @@ contains
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
 
+        ! internals
+        character*128 :: msg
+
         if(any(shape(A) /= size)) then
-            write(output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-            write(output_unit, *) "Expected shape is ", size
-            call stop_error("Aborting due to illegal matrix size.")
+            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
         endif
         return
     end subroutine assert_shape_matrix_cdp
@@ -487,13 +502,14 @@ contains
       real(sp) :: lambda(size(X,1))
       real(sp) :: V(size(X,1), size(X,1))
       integer :: i
+      character*128 :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(output_unit,*) "Error: Input matrix is not symmetric"
-        call stop_error("Aborting.")
+        write(msg,*) "Input matrix is not symmetric."
+        call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
       ! Perform eigenvalue decomposition
@@ -679,13 +695,14 @@ contains
       real(dp) :: lambda(size(X,1))
       real(dp) :: V(size(X,1), size(X,1))
       integer :: i
+      character*128 :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(output_unit,*) "Error: Input matrix is not symmetric"
-        call stop_error("Aborting.")
+        write(msg,*) "Input matrix is not symmetric."
+        call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       end if
 
       ! Perform eigenvalue decomposition
@@ -866,13 +883,14 @@ contains
       real(sp) :: lambda(size(X,1))
       complex(sp) :: V(size(X,1), size(X,1))
       integer :: i
+      character*128 :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(output_unit,*) "Error: Input matrix is not hermitian"
-        call stop_error("Aborting.")
+        write(msg,*) "Input matrix is not hermitian"
+        call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       end if
 
       ! Perform eigenvalue decomposition
@@ -1053,13 +1071,14 @@ contains
       real(dp) :: lambda(size(X,1))
       complex(dp) :: V(size(X,1), size(X,1))
       integer :: i
+      character*128 :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(output_unit,*) "Error: Input matrix is not hermitian"
-        call stop_error("Aborting.")
+        write(msg,*) "Input matrix is not hermitian"
+        call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       end if
 
       ! Perform eigenvalue decomposition

@@ -122,6 +122,8 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+        call check_test(error, 'test_ks_evp_rsp', & 
+                              & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_ks_evp_rsp
@@ -187,6 +189,8 @@ contains
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
+!        call check_test(error, 'test_evp_rsp', &
+!                                 & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_evp_rsp
@@ -255,7 +259,8 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rsp', 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /=&
+            & diag(E) @ V')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; G = zero_rsp
@@ -341,6 +346,8 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
+        call check_test(error, 'test_ks_evp_rdp', & 
+                              & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         return
     end subroutine test_ks_evp_rdp
@@ -474,7 +481,8 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_rdp', 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /=&
+            & diag(E) @ V')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; G = zero_rdp
@@ -687,6 +695,7 @@ contains
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_sp)
+        call check_test(error, 'test_svd_rsp', 'The factorization is not correct: A /= U @ S @ V.H')
 
         return
     end subroutine test_svd_rsp
@@ -770,6 +779,7 @@ contains
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_dp)
+        call check_test(error, 'test_svd_rdp', 'The factorization is not correct: A /= U @ S @ V.H')
 
         return
     end subroutine test_svd_rdp
@@ -878,6 +888,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_rsp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_rsp
@@ -906,6 +917,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_spd_rsp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_rsp
@@ -943,6 +955,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_rdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_rdp
@@ -971,6 +984,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_spd_rdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_rdp
@@ -1008,6 +1022,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_csp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_csp
@@ -1036,6 +1051,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_gmres_spd_csp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_csp
@@ -1073,6 +1089,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_cdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_cdp
@@ -1101,6 +1118,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_gmres_spd_cdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_cdp
@@ -1141,6 +1159,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_cg_rsp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_rsp
@@ -1176,6 +1195,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_cg_rdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_rdp
@@ -1211,6 +1231,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_sp)
+        call check_test(error, 'test_cg_csp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_csp
@@ -1246,6 +1267,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_dp)
+        call check_test(error, 'test_cg_cdp', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_cdp

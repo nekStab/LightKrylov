@@ -90,7 +90,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_rsp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
@@ -98,6 +99,9 @@ contains
 
         ! Check orthonormality of the computed basis.
         call check(error, norm2(abs(G - eye(kdim))) < rtol_sp)
+        call check(error, norm2(abs(G - Id)) < rtol_sp)
+        call check_test(error, 'test_qr_factorization_rsp', &
+                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
 
         return
     end subroutine test_qr_factorization_rsp
@@ -156,7 +160,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
@@ -208,7 +213,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_rdp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
@@ -274,7 +280,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
@@ -326,7 +333,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_csp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
@@ -392,7 +400,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
@@ -444,7 +453,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_qr_factorization_cdp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
@@ -510,7 +520,8 @@ contains
 
         ! Check correctness.
         call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
+                        & 'QR factorization not correct: A /= Q @ R')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
@@ -568,7 +579,9 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_rsp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
@@ -613,7 +626,8 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_rsp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:p*k] /= X[:,1:p*(k+1)] @ H[1:p*(k+1),1:k]')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_rsp
@@ -664,6 +678,8 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_sp)
+        call check_test(error, 'test_krylov_schur_rsp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
 
         return
     contains
@@ -717,7 +733,9 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_rdp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
@@ -762,7 +780,8 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_rdp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:p*k] /= X[:,1:p*(k+1)] @ H[1:p*(k+1),1:k]')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_rdp
@@ -813,6 +832,8 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_dp)
+        call check_test(error, 'test_krylov_schur_rdp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
 
         return
     contains
@@ -866,7 +887,9 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_csp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
@@ -911,7 +934,8 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_csp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:p*k] /= X[:,1:p*(k+1)] @ H[1:p*(k+1),1:k]')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_csp
@@ -962,6 +986,8 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_sp)
+        call check_test(error, 'test_krylov_schur_csp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
 
         return
     contains
@@ -1015,7 +1041,9 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_arnoldi_factorization_cdp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
@@ -1060,7 +1088,8 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_block_arnoldi_factorization_cdp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:p*k] /= X[:,1:p*(k+1)] @ H[1:p*(k+1),1:k]')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_cdp
@@ -1111,6 +1140,8 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
         call check(error, alpha < rtol_dp)
+        call check_test(error, 'test_krylov_schur_cdp', &
+                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
 
         return
     contains
@@ -1176,7 +1207,8 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
+                              & 'Bidiagonal Lanczos factorization not correct: A @ V[:,1:k] /= U[:,1:k+1] @ B[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
@@ -1244,7 +1276,8 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
+                              & 'Bidiagonal Lanczos factorization not correct: A @ V[:,1:k] /= U[:,1:k+1] @ B[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
@@ -1312,7 +1345,8 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
+                              & 'Bidiagonal Lanczos factorization not correct: A @ V[:,1:k] /= U[:,1:k+1] @ B[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
@@ -1380,7 +1414,8 @@ contains
 
         alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
+                              & 'Bidiagonal Lanczos factorization not correct: A @ V[:,1:k] /= U[:,1:k+1] @ B[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
@@ -1450,7 +1485,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_rsp')
+                        & procedure='test_lanczos_tridiag_factorization_rsp')
 
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -1458,7 +1493,8 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
+                                 & 'Tridiagonal Lanczos factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ T[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
@@ -1515,7 +1551,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_rdp')
+                        & procedure='test_lanczos_tridiag_factorization_rdp')
 
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -1523,7 +1559,8 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
+                                 & 'Tridiagonal Lanczos factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ T[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
@@ -1580,7 +1617,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_csp')
+                        & procedure='test_lanczos_tridiag_factorization_csp')
 
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -1588,7 +1625,8 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_sp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
+                                 & 'Tridiagonal Lanczos factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ T[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
@@ -1645,7 +1683,7 @@ contains
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
         call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
-                        & procedure='test_lanczos_tridiag_full_factorization_cdp')
+                        & procedure='test_lanczos_tridiag_factorization_cdp')
 
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -1653,7 +1691,8 @@ contains
         ! Infinity-norm check.
         alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
         call check(error, alpha < rtol_dp)
-        if (allocated(error)) return
+        call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
+                                 & 'Tridiagonal Lanczos factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ T[1:k+1,1:k]')
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp

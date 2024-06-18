@@ -1,6 +1,7 @@
 module lightkrylov_AbstractVectors
     use lightkrylov_constants
     use lightkrylov_utils
+    use LightKrylov_Logger
     implicit none
     private
 
@@ -518,7 +519,8 @@ contains
 
         ! Check sizes.
         if (size(X) /= size(v)) then
-            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+            call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
+                              & module=this_module, procedure='linear_combination_vector_rsp')
         endif
 
         ! Initialize output vector.
@@ -546,7 +548,8 @@ contains
     
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
-            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+            call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_rsp')
         endif
 
         ! Initialize output basis.
@@ -554,7 +557,8 @@ contains
             allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
-                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_rsp')
             endif
         endif
 
@@ -624,7 +628,8 @@ contains
 
         ! Check size.
         if (size(X) /= size(Y)) then
-            call stop_error("add_basis: X and Y have incompatible dimensions.")
+            call stop_error("X and Y have incompatible dimensions.", &
+                              & module=this_module, procedure='axpby_basis_rsp')
         endif
 
         ! Add basis.
@@ -653,7 +658,8 @@ contains
 
         ! Check size.
         if (size(out) /= size(from)) then
-            call stop_error("copy: from and out have incompatible dimensions.")
+            call stop_error("from and out have incompatible dimensions.", &
+                              & module=this_module, procedure='copy_basis_rsp')
         endif
 
         ! Copy array.
@@ -681,7 +687,8 @@ contains
 
         ! Check sizes.
         if (size(X) /= size(v)) then
-            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+            call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
+                              & module=this_module, procedure='linear_combination_vector_rdp')
         endif
 
         ! Initialize output vector.
@@ -709,7 +716,8 @@ contains
     
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
-            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+            call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_rdp')
         endif
 
         ! Initialize output basis.
@@ -717,7 +725,8 @@ contains
             allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
-                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_rdp')
             endif
         endif
 
@@ -787,7 +796,8 @@ contains
 
         ! Check size.
         if (size(X) /= size(Y)) then
-            call stop_error("add_basis: X and Y have incompatible dimensions.")
+            call stop_error("X and Y have incompatible dimensions.", &
+                              & module=this_module, procedure='axpby_basis_rdp')
         endif
 
         ! Add basis.
@@ -816,7 +826,8 @@ contains
 
         ! Check size.
         if (size(out) /= size(from)) then
-            call stop_error("copy: from and out have incompatible dimensions.")
+            call stop_error("from and out have incompatible dimensions.", &
+                              & module=this_module, procedure='copy_basis_rdp')
         endif
 
         ! Copy array.
@@ -844,7 +855,8 @@ contains
 
         ! Check sizes.
         if (size(X) /= size(v)) then
-            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+            call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
+                              & module=this_module, procedure='linear_combination_vector_csp')
         endif
 
         ! Initialize output vector.
@@ -872,7 +884,8 @@ contains
     
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
-            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+            call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_csp')
         endif
 
         ! Initialize output basis.
@@ -880,7 +893,8 @@ contains
             allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
-                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_csp')
             endif
         endif
 
@@ -950,7 +964,8 @@ contains
 
         ! Check size.
         if (size(X) /= size(Y)) then
-            call stop_error("add_basis: X and Y have incompatible dimensions.")
+            call stop_error("X and Y have incompatible dimensions.", &
+                              & module=this_module, procedure='axpby_basis_csp')
         endif
 
         ! Add basis.
@@ -979,7 +994,8 @@ contains
 
         ! Check size.
         if (size(out) /= size(from)) then
-            call stop_error("copy: from and out have incompatible dimensions.")
+            call stop_error("from and out have incompatible dimensions.", &
+                              & module=this_module, procedure='copy_basis_csp')
         endif
 
         ! Copy array.
@@ -1007,7 +1023,8 @@ contains
 
         ! Check sizes.
         if (size(X) /= size(v)) then
-            call stop_error("linear_combination: Krylov basis X and low-dimensional vector v have different sizes.")
+            call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
+                              & module=this_module, procedure='linear_combination_vector_cdp')
         endif
 
         ! Initialize output vector.
@@ -1035,7 +1052,8 @@ contains
     
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
-            call stop_error("linear_combination: Krylov basis X and combination matrix B have incompatible sizes.")
+            call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_cdp')
         endif
 
         ! Initialize output basis.
@@ -1043,7 +1061,8 @@ contains
             allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
-                call stop_error("linear_combination: Krylov basis Y and combination matrix B have incompatible sizes.")
+                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_cdp')
             endif
         endif
 
@@ -1113,7 +1132,8 @@ contains
 
         ! Check size.
         if (size(X) /= size(Y)) then
-            call stop_error("add_basis: X and Y have incompatible dimensions.")
+            call stop_error("X and Y have incompatible dimensions.", &
+                              & module=this_module, procedure='axpby_basis_cdp')
         endif
 
         ! Add basis.
@@ -1142,7 +1162,8 @@ contains
 
         ! Check size.
         if (size(out) /= size(from)) then
-            call stop_error("copy: from and out have incompatible dimensions.")
+            call stop_error("from and out have incompatible dimensions.", &
+                              & module=this_module, procedure='copy_basis_cdp')
         endif
 
         ! Copy array.

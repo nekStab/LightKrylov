@@ -27,7 +27,6 @@ module lightkrylov_utils
 
     character*128, parameter :: this_module = 'LightKrylov_Utils'
 
-    public :: stop_error
     public :: assert_shape
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
@@ -135,14 +134,6 @@ contains
     !-----     VARIOUS UTILITIES     -----
     !-------------------------------------
 
-    subroutine stop_error(msg)
-        !! Utility function to print an error message.
-        character(len=*), intent(in) :: msg
-        !! Error message.
-        write(output_unit, *) msg; stop 1
-        return
-    end subroutine stop_error
-
     #:for kind, type in RC_KINDS_TYPES
     subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, routine, matname)
         !! Utility function to assert the shape of a vector.
@@ -154,11 +145,14 @@ contains
         !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted vector.
+        
+        ! internals
+        character*128 :: msg
 
         if(any(shape(v) /= size)) then
-            write(output_unit, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v)
-            write(output_unit, *) "Expected length is ", size
-            call stop_error("Aborting due to illegal vector length.")
+            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_${type[0]}$${kind}$')
         endif
         return
     end subroutine assert_shape_vector_${type[0]}$${kind}$
@@ -174,10 +168,13 @@ contains
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
 
+        ! internals
+        character*128 :: msg
+
         if(any(shape(A) /= size)) then
-            write(output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-            write(output_unit, *) "Expected shape is ", size
-            call stop_error("Aborting due to illegal matrix size.")
+            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error(msg, module=this_module, procedure='assert_shape_vector_${type[0]}$${kind}$')
         endif
         return
     end subroutine assert_shape_matrix_${type[0]}$${kind}$
@@ -407,20 +404,21 @@ contains
       real(${kind}$) :: lambda(size(X,1))
       ${type}$ :: V(size(X,1), size(X,1))
       integer :: i
+      character*128 :: msg
 
       info = 0
 
       #:if type[0] == "r"
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(output_unit,*) "Error: Input matrix is not symmetric"
-        call stop_error("Aborting.")
+        write(msg,*) "Input matrix is not symmetric."
+        call stop_error(msg, module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
       end if
       #:else
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(output_unit,*) "Error: Input matrix is not hermitian"
-        call stop_error("Aborting.")
+        write(msg,*) "Input matrix is not hermitian"
+        call stop_error(msg, module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
       end if
       #:endif
 

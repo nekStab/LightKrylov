@@ -108,7 +108,7 @@ contains
 
         ! check eigenvalues
         call check(error, maxval(abs(eigvals - true_eigvals(:nev))) < rtol_${kind}$)
-        !if (allocated(error)) return
+        !call check_test(error, 'test_ks_evp_${type[0]}$${kind}$', 'The computed eigenvalues are not exact.')
         !! check eigenvectors
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
@@ -118,6 +118,8 @@ contains
         !end do
         !print *, norm2(abs(eigvec_residuals))
         !call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
+        call check_test(error, 'test_ks_evp_${type[0]}$${kind}$', & 
+                              & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
         #:endif
 
         return
@@ -185,6 +187,8 @@ contains
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
+!        call check_test(error, 'test_evp_${type[0]}$${kind}$', &
+!                                 & 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
         #:endif
 
         return
@@ -245,7 +249,7 @@ contains
 
         ! Check error.
         call check(error, maxval(abs(true_evals - evals)) < rtol_${kind}$)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', 'The computed eigenvalues E are not exact.')
 
         ! check eigenvectors
         allocate(AX(test_size))
@@ -255,14 +259,16 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         call check(error, norm2(abs(eigvec_residuals)) < rtol_${kind}$)
-        if (allocated(error)) return
+        call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', 'The computed eigenvalue/eigenvector pairs (E,V) are not correct: A @ V /= diag(E) @ V')
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, X, X)
 
         ! Check orthonormality of the eigenvectors.
-        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
+        Id = eye(test_size)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', 'The eigenvector basis X is not orthonormal: V.H @ V /= I')
 
         return
     end subroutine test_sym_evp_${type[0]}$${kind}$
@@ -333,28 +339,30 @@ contains
         enddo
 
         call check(error, maxval(s - true_svdvals) < rtol_${kind}$)
-        if (allocated(error)) return
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', 'The computed singular values S are not exact.')
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, U(1:test_size), U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
-        if (allocated(error)) return
+        Id = eye(test_size)
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', 'The left singular vector basis U is not orthonormal: U.H @ U /= I')
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
         G = zero_${type[0]}$${kind}$
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
-        if (allocated(error)) return
+        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', 'The right singular vector basis V is not orthonormal: V.H @ V /= I')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', 'The factorization is not correct: A /= U @ S @ V.H')
         #:endif
 
         return
@@ -400,6 +408,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
+        call check_test(error, 'test_gmres_${type[0]}$${kind}$', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_${type[0]}$${kind}$
@@ -436,6 +445,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
+        call check_test(error, 'test_gmres_spd_${type[0]}$${kind}$', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_gmres_spd_${type[0]}$${kind}$
@@ -486,6 +496,7 @@ contains
 
         ! Check convergence.
         call check(error, norm2(abs(matmul(A%data, x%data) - b%data)) < b%norm() * rtol_${kind}$)
+        call check_test(error, 'test_cg_${type[0]}$${kind}$', 'The computed solution is not correct: A @ x /= b')
 
         return
     end subroutine test_cg_${type[0]}$${kind}$
