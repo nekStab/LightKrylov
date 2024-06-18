@@ -23,7 +23,7 @@ module TestIterativeSolvers
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
 
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
@@ -205,18 +205,19 @@ contains
         ! Information flag.
         integer :: info
         ! Toeplitz matrix.
-        real(sp) :: T(test_size, test_size), a_, b_
+        real(sp), allocatable :: T(:, :)
+        real(sp) :: a_, b_
         ! Miscellaneous.
         integer :: i
         real(sp) :: alpha, true_evals(test_size)
         real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         type(vector_rsp), allocatable :: AX(:)
         complex(sp), allocatable :: eigvec_residuals(:,:)
-        real(sp), allocatable, dimension(:,:) :: G, Id
+        real(sp), allocatable, dimension(:,:) :: G
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
-        T = 0.0_sp
+        allocate(T(test_size, test_size)) ; T = 0.0_sp
         do i = 1, test_size
             ! Diagonal entry.
             T(i, i) = a_
@@ -257,13 +258,11 @@ contains
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
-        G = zero_rsp
+        allocate(G(test_size, test_size)) ; G = zero_rsp
         call innerprod(G, X, X)
 
         ! Check orthonormality of the eigenvectors.
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_sp)
 
         return
     end subroutine test_sym_evp_rsp
@@ -425,18 +424,19 @@ contains
         ! Information flag.
         integer :: info
         ! Toeplitz matrix.
-        real(dp) :: T(test_size, test_size), a_, b_
+        real(dp), allocatable :: T(:, :)
+        real(dp) :: a_, b_
         ! Miscellaneous.
         integer :: i
         real(dp) :: alpha, true_evals(test_size)
         real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         type(vector_rdp), allocatable :: AX(:)
         complex(dp), allocatable :: eigvec_residuals(:,:)
-        real(dp), allocatable, dimension(:,:) :: G, Id
+        real(dp), allocatable, dimension(:,:) :: G
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
-        T = 0.0_dp
+        allocate(T(test_size, test_size)) ; T = 0.0_dp
         do i = 1, test_size
             ! Diagonal entry.
             T(i, i) = a_
@@ -477,13 +477,11 @@ contains
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
-        G = zero_rdp
+        allocate(G(test_size, test_size)) ; G = zero_rdp
         call innerprod(G, X, X)
 
         ! Check orthonormality of the eigenvectors.
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_dp)
 
         return
     end subroutine test_sym_evp_rdp
@@ -637,8 +635,8 @@ contains
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
-        real(sp), dimension(test_size, test_size) :: G, Id
-        real(sp), dimension(test_size, test_size) :: Udata, Vdata
+        real(sp), allocatable :: G(:, :)
+        real(sp), allocatable :: Udata(:, :), Vdata(:, :)
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call zero_basis(U)
@@ -670,12 +668,11 @@ contains
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        G = zero_rsp
+        allocate(G(test_size, test_size)) ; G = zero_rsp
         call innerprod(G, U(1:test_size), U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_sp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -683,12 +680,12 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, maxval(abs(G - Id)) < rtol_sp)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_sp)
         if (allocated(error)) return
 
         ! Check correctness of full factorization.
-        call get_data(Udata, U)
-        call get_data(Vdata, V)
+        allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_sp)
 
         return
@@ -721,8 +718,8 @@ contains
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
-        real(dp), dimension(test_size, test_size) :: G, Id
-        real(dp), dimension(test_size, test_size) :: Udata, Vdata
+        real(dp), allocatable :: G(:, :)
+        real(dp), allocatable :: Udata(:, :), Vdata(:, :)
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call zero_basis(U)
@@ -754,12 +751,11 @@ contains
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        G = zero_rdp
+        allocate(G(test_size, test_size)) ; G = zero_rdp
         call innerprod(G, U(1:test_size), U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_dp)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -767,12 +763,12 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, maxval(abs(G - Id)) < rtol_dp)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_dp)
         if (allocated(error)) return
 
         ! Check correctness of full factorization.
-        call get_data(Udata, U)
-        call get_data(Vdata, V)
+        allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_dp)
 
         return
@@ -805,8 +801,8 @@ contains
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
-        complex(sp), dimension(test_size, test_size) :: G, Id
-        complex(sp), dimension(test_size, test_size) :: Udata, Vdata
+        complex(sp), allocatable :: G(:, :)
+        complex(sp), allocatable :: Udata(:, :), Vdata(:, :)
 
         return
     end subroutine test_svd_csp
@@ -838,8 +834,8 @@ contains
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
-        complex(dp), dimension(test_size, test_size) :: G, Id
-        complex(dp), dimension(test_size, test_size) :: Udata, Vdata
+        complex(dp), allocatable :: G(:, :)
+        complex(dp), allocatable :: Udata(:, :), Vdata(:, :)
 
         return
     end subroutine test_svd_cdp
@@ -1131,7 +1127,7 @@ contains
         type(vector_rsp), allocatable :: x
         type(cg_sp_opts) :: opts
         ! Information flag
-        integer :: info, i
+        integer :: info
 
         ! Initialize linear problem.
         A = spd_linop_rsp() ; call init_rand(A)
@@ -1166,7 +1162,7 @@ contains
         type(vector_rdp), allocatable :: x
         type(cg_dp_opts) :: opts
         ! Information flag
-        integer :: info, i
+        integer :: info
 
         ! Initialize linear problem.
         A = spd_linop_rdp() ; call init_rand(A)
@@ -1201,7 +1197,7 @@ contains
         type(vector_csp), allocatable :: x
         type(cg_sp_opts) :: opts
         ! Information flag
-        integer :: info, i
+        integer :: info
 
         ! Initialize linear problem.
         A = hermitian_linop_csp() ; call init_rand(A)
@@ -1236,7 +1232,7 @@ contains
         type(vector_cdp), allocatable :: x
         type(cg_dp_opts) :: opts
         ! Information flag
-        integer :: info, i
+        integer :: info
 
         ! Initialize linear problem.
         A = hermitian_linop_cdp() ; call init_rand(A)

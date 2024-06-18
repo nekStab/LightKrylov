@@ -25,7 +25,7 @@ module TestIterativeSolvers
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
@@ -205,18 +205,19 @@ contains
         ! Information flag.
         integer :: info
         ! Toeplitz matrix.
-        ${type}$ :: T(test_size, test_size), a_, b_
+        ${type}$, allocatable :: T(:, :)
+        ${type}$ :: a_, b_
         ! Miscellaneous.
         integer :: i
         ${type}$ :: alpha, true_evals(test_size)
         ${type}$, parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
         complex(${kind}$), allocatable :: eigvec_residuals(:,:)
-        ${type}$, allocatable, dimension(:,:) :: G, Id
+        ${type}$, allocatable, dimension(:,:) :: G
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
-        T = 0.0_${kind}$
+        allocate(T(test_size, test_size)) ; T = 0.0_${kind}$
         do i = 1, test_size
             ! Diagonal entry.
             T(i, i) = a_
@@ -257,13 +258,11 @@ contains
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(test_size, test_size)) ; allocate(Id(test_size, test_size))
-        G = zero_${type[0]}$${kind}$
+        allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, X, X)
 
         ! Check orthonormality of the eigenvectors.
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
 
         return
     end subroutine test_sym_evp_${type[0]}$${kind}$
@@ -303,8 +302,8 @@ contains
         integer :: i, k, n
         real(${kind}$) :: true_svdvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
-        ${type}$, dimension(test_size, test_size) :: G, Id
-        ${type}$, dimension(test_size, test_size) :: Udata, Vdata
+        ${type}$, allocatable :: G(:, :)
+        ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
         #:if type[0] == "r"
 
         ! Allocate eigenvectors.
@@ -337,12 +336,11 @@ contains
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        G = zero_${type[0]}$${kind}$
+        allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, U(1:test_size), U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        Id = eye(test_size)
-        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
@@ -350,12 +348,12 @@ contains
         call innerprod(G, V(1:test_size), V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        call check(error, maxval(abs(G - Id)) < rtol_${kind}$)
+        call check(error, maxval(abs(G - eye(test_size))) < rtol_${kind}$)
         if (allocated(error)) return
 
         ! Check correctness of full factorization.
-        call get_data(Udata, U)
-        call get_data(Vdata, V)
+        allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         call check(error, maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata))))) < rtol_${kind}$)
         #:endif
 
@@ -470,7 +468,7 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: x
         type(cg_${kind}$_opts) :: opts
         ! Information flag
-        integer :: info, i
+        integer :: info
 
         ! Initialize linear problem.
         #:if type[0] == "r"
