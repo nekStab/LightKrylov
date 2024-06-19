@@ -1,6 +1,6 @@
 module TestUtils
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, diag
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use LightKrylov
     use LightKrylov_Constants
@@ -303,21 +303,22 @@ contains
 
     subroutine init_rand_linop_rsp(linop)
         type(linop_rsp), intent(inout) :: linop
-        real(sp), allocatable :: mu(:, :), loc(:, :)
-        allocate(mu(test_size, test_size)) ; mu = zero_rsp
-        allocate(loc(test_size, test_size)) ; loc = one_rsp
-        linop%data = normal(mu, loc)
+        real(sp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size))
+        var = 1.0_sp
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_rsp
 
     subroutine init_rand_spd_linop_rsp(linop)
         type(spd_linop_rsp), intent(inout) :: linop
-        real(sp), allocatable :: mu(:, :), loc(:, :)
+        real(sp), allocatable :: mu(:, :), var(:, :)
         real(sp), allocatable :: data(:, :)
         allocate(mu(test_size, test_size)) ; mu = zero_rsp
-        allocate(loc(test_size, test_size)) ; loc = one_rsp
+        allocate(var(test_size, test_size)) ; var = one_rsp
 
-        data = normal(mu, loc)
+        data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
 
         return
@@ -340,21 +341,22 @@ contains
 
     subroutine init_rand_linop_rdp(linop)
         type(linop_rdp), intent(inout) :: linop
-        real(dp), allocatable :: mu(:, :), loc(:, :)
-        allocate(mu(test_size, test_size)) ; mu = zero_rdp
-        allocate(loc(test_size, test_size)) ; loc = one_rdp
-        linop%data = normal(mu, loc)
+        real(dp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size))
+        var = 1.0_dp
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_rdp
 
     subroutine init_rand_spd_linop_rdp(linop)
         type(spd_linop_rdp), intent(inout) :: linop
-        real(dp), allocatable :: mu(:, :), loc(:, :)
+        real(dp), allocatable :: mu(:, :), var(:, :)
         real(dp), allocatable :: data(:, :)
         allocate(mu(test_size, test_size)) ; mu = zero_rdp
-        allocate(loc(test_size, test_size)) ; loc = one_rdp
+        allocate(var(test_size, test_size)) ; var = one_rdp
 
-        data = normal(mu, loc)
+        data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
 
         return
@@ -377,22 +379,23 @@ contains
 
     subroutine init_rand_linop_csp(linop)
         type(linop_csp), intent(inout) :: linop
-        complex(sp), allocatable :: mu(:, :), loc(:, :)
-        allocate(mu(test_size, test_size)) ; mu = zero_csp
-        allocate(loc(test_size, test_size)) ; loc = one_csp
-        linop%data = normal(mu, loc)
+        complex(sp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size))
+        var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_csp
 
     subroutine init_rand_hermitian_linop_csp(linop)
         type(hermitian_linop_csp), intent(inout) :: linop
         complex(sp), allocatable :: data(:, :)
-        complex(sp), allocatable :: mu(:, :), loc(:, :)
+        complex(sp), allocatable :: mu(:, :), var(:, :)
 
-        allocate(mu(test_size, test_size)) ; mu = zero_csp
-        allocate(loc(test_size, test_size)) ; loc = one_csp
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_sp, 1.0_sp, kind=sp)
 
-        data = normal(loc, mu)
+        data = normal(mu, var)
         data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
         linop%data = data
 
@@ -416,22 +419,23 @@ contains
 
     subroutine init_rand_linop_cdp(linop)
         type(linop_cdp), intent(inout) :: linop
-        complex(dp), allocatable :: mu(:, :), loc(:, :)
-        allocate(mu(test_size, test_size)) ; mu = zero_cdp
-        allocate(loc(test_size, test_size)) ; loc = one_cdp
-        linop%data = normal(mu, loc)
+        complex(dp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size))
+        var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_cdp
 
     subroutine init_rand_hermitian_linop_cdp(linop)
         type(hermitian_linop_cdp), intent(inout) :: linop
         complex(dp), allocatable :: data(:, :)
-        complex(dp), allocatable :: mu(:, :), loc(:, :)
+        complex(dp), allocatable :: mu(:, :), var(:, :)
 
-        allocate(mu(test_size, test_size)) ; mu = zero_cdp
-        allocate(loc(test_size, test_size)) ; loc = one_cdp
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_dp, 1.0_dp, kind=dp)
 
-        data = normal(loc, mu)
+        data = normal(mu, var)
         data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
         linop%data = data
 

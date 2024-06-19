@@ -109,11 +109,12 @@ contains
         class(vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
-        real(sp) :: mu(test_size), loc(test_size)
+        real(sp) :: mu(test_size), var(test_size)
         real(sp) :: alpha
  
-        mu = 0.0_sp ; loc = 1.0_sp
-        self%data = normal(mu, loc)
+        mu = 0.0_sp
+        var = 1.0_sp
+        self%data = normal(mu, var)
  
         normalized = optval(ifnorm, .false.)
         if (normalized) then
@@ -162,11 +163,12 @@ contains
         class(vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
-        real(dp) :: mu(test_size), loc(test_size)
+        real(dp) :: mu(test_size), var(test_size)
         real(dp) :: alpha
  
-        mu = 0.0_dp ; loc = 1.0_dp
-        self%data = normal(mu, loc)
+        mu = 0.0_dp
+        var = 1.0_dp
+        self%data = normal(mu, var)
  
         normalized = optval(ifnorm, .false.)
         if (normalized) then
@@ -215,11 +217,12 @@ contains
         class(vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
-        complex(sp) :: mu(test_size), loc(test_size)
+        complex(sp) :: mu(test_size), var(test_size)
         complex(sp) :: alpha
  
-        mu = 0.0_sp ; loc = 1.0_sp
-        self%data = normal(mu, loc)
+        mu = 0.0_sp
+        var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+        self%data = normal(mu, var)
  
         normalized = optval(ifnorm, .false.)
         if (normalized) then
@@ -268,11 +271,12 @@ contains
         class(vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
-        complex(dp) :: mu(test_size), loc(test_size)
+        complex(dp) :: mu(test_size), var(test_size)
         complex(dp) :: alpha
  
-        mu = 0.0_dp ; loc = 1.0_dp
-        self%data = normal(mu, loc)
+        mu = 0.0_dp
+        var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+        self%data = normal(mu, var)
  
         normalized = optval(ifnorm, .false.)
         if (normalized) then

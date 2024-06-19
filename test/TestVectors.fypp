@@ -80,11 +80,16 @@ contains
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
-        ${type}$ :: mu(test_size), loc(test_size)
+        ${type}$ :: mu(test_size), var(test_size)
         ${type}$ :: alpha
  
-        mu = 0.0_${kind}$ ; loc = 1.0_${kind}$
-        self%data = normal(mu, loc)
+        mu = 0.0_${kind}$
+        #:if type[0] == "r"
+        var = 1.0_${kind}$
+        #:else
+        var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+        #:endif
+        self%data = normal(mu, var)
  
         normalized = optval(ifnorm, .false.)
         if (normalized) then

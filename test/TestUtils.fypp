@@ -2,7 +2,7 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestUtils
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, diag
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use LightKrylov
     use LightKrylov_Constants
@@ -137,22 +137,27 @@ contains
 
     subroutine init_rand_linop_${type[0]}$${kind}$(linop)
         type(linop_${type[0]}$${kind}$), intent(inout) :: linop
-        ${type}$, allocatable :: mu(:, :), loc(:, :)
-        allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
-        allocate(loc(test_size, test_size)) ; loc = one_${type[0]}$${kind}$
-        linop%data = normal(mu, loc)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size))
+        #:if type[0] == "r"
+        var = 1.0_${kind}$
+        #:else
+        var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+        #:endif
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_${type[0]}$${kind}$
 
     #:if type[0] == "r"
     subroutine init_rand_spd_linop_${type[0]}$${kind}$(linop)
         type(spd_linop_${type[0]}$${kind}$), intent(inout) :: linop
-        ${type}$, allocatable :: mu(:, :), loc(:, :)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
         ${type}$, allocatable :: data(:, :)
         allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
-        allocate(loc(test_size, test_size)) ; loc = one_${type[0]}$${kind}$
+        allocate(var(test_size, test_size)) ; var = one_${type[0]}$${kind}$
 
-        data = normal(mu, loc)
+        data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
 
         return
@@ -161,12 +166,12 @@ contains
     subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
         type(hermitian_linop_${type[0]}$${kind}$), intent(inout) :: linop
         ${type}$, allocatable :: data(:, :)
-        ${type}$, allocatable :: mu(:, :), loc(:, :)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
 
-        allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
-        allocate(loc(test_size, test_size)) ; loc = one_${type[0]}$${kind}$
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
 
-        data = normal(loc, mu)
+        data = normal(mu, var)
         data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
         linop%data = data
 
