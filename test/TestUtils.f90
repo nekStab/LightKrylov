@@ -14,6 +14,7 @@ module TestUtils
     public :: get_data
     public :: put_data
     public :: init_rand
+    public :: get_err_str
 
     interface get_data
         module procedure get_data_vec_rsp
@@ -62,6 +63,11 @@ module TestUtils
         module procedure init_rand_basis_cdp
         module procedure init_rand_linop_cdp
         module procedure init_rand_hermitian_linop_cdp
+    end interface
+
+    interface get_err_str
+        module procedure get_err_str_sp
+        module procedure get_err_str_dp
     end interface
 
 contains
@@ -436,5 +442,32 @@ contains
         return
     end subroutine init_rand_hermitian_linop_cdp
 
+
+    subroutine get_err_str_sp(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(sp) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_sp
+    subroutine get_err_str_dp(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(dp) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_dp
 
 end module

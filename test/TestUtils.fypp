@@ -16,6 +16,7 @@ module TestUtils
     public :: get_data
     public :: put_data
     public :: init_rand
+    public :: get_err_str
 
     interface get_data
         #:for kind, type in RC_KINDS_TYPES
@@ -43,6 +44,12 @@ module TestUtils
         #:else
         module procedure init_rand_hermitian_linop_${type[0]}$${kind}$
         #:endif
+        #:endfor
+    end interface
+
+    interface get_err_str
+        #:for kind, type in REAL_KINDS_TYPES
+        module procedure get_err_str_${kind}$
         #:endfor
     end interface
 
@@ -179,6 +186,22 @@ contains
     end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
     #:endif
 
+    #:endfor
+
+    #:for kind, type in REAL_KINDS_TYPES
+    subroutine get_err_str_${kind}$(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(${kind}$) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_${kind}$
     #:endfor
 
 end module
