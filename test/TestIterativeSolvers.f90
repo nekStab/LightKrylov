@@ -1157,7 +1157,7 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp)
+        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp, maxiter=2*test_size)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
 
@@ -1193,7 +1193,7 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp)
+        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp, maxiter=2*test_size)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
 
@@ -1229,7 +1229,7 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp)
+        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp, maxiter=2*test_size)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
 
@@ -1265,7 +1265,7 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp)
+        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp, maxiter=2*test_size)
         call cg(A, b, x, info, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
 
