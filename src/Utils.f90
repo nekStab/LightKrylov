@@ -1174,5 +1174,4 @@ contains
         enddo
     end function
 
-
 end module lightkrylov_utils
