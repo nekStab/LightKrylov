@@ -5,13 +5,14 @@ module TestVectors
     use LightKrylov_Logger
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use stdlib_math, only: is_close, all_close
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
     
     implicit none
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
 
     integer, parameter, public :: test_size = 128
 
@@ -79,17 +80,12 @@ contains
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        ${type}$ :: mu(test_size), loc(test_size)
         ${type}$ :: alpha
-        #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, 2) :: data
-
-        call random_number(data)
-        self%data%re = data(:, 1)
-        self%data%im = data(:, 2)
-        #:else
-        call random_number(self%data)
-        #:endif
-
+ 
+        mu = 0.0_${kind}$ ; loc = 1.0_${kind}$
+        self%data = normal(mu, loc)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
