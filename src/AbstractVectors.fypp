@@ -72,6 +72,8 @@ module lightkrylov_AbstractVectors
         !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_${type[0]}$${kind}$), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_${type[0]}$${kind}$`.
+        procedure(abstract_get_size_${type[0]}$${kind}$), pass(self), deferred, public :: get_size
+        !! Return size of specific abstract vector
         procedure, pass(self), public :: norm => norm_${type[0]}$${kind}$
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_${type[0]}$${kind}$
@@ -84,14 +86,14 @@ module lightkrylov_AbstractVectors
     abstract interface
         subroutine abstract_zero_${type[0]}$${kind}$(self)
             !! Abstract interface to zero-out a vector in-place.
-            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            import abstract_vector_${type[0]}$${kind}$
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_${type[0]}$${kind}$
 
         subroutine abstract_rand_${type[0]}$${kind}$(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
-            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            import abstract_vector_${type[0]}$${kind}$
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_${type[0]}$${kind}$
@@ -123,11 +125,17 @@ module lightkrylov_AbstractVectors
             ${type}$ :: alpha
             !! Result of the dot product.
         end function abstract_dot_${type[0]}$${kind}$
+
+        function abstract_get_size_${type[0]}$${kind}$(self) result(N)
+            !! Abstract interface to return the size of the specific abstract vector.
+            import abstract_vector_${type[0]}$${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
+            !! Vectors whose dot product will be computed.
+            integer :: N
+            !! Size of the vector
+        end function abstract_get_size_${type[0]}$${kind}$
+
     end interface
-
-
-
-
 
     #:endfor
 contains
