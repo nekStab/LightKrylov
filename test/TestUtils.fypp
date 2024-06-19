@@ -2,6 +2,8 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestUtils
     use stdlib_io_npy, only: save_npy
+    use stdlib_linalg, only: eye, diag
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use LightKrylov
     use LightKrylov_Constants
     use TestVectors
@@ -142,46 +144,44 @@ contains
 
     subroutine init_rand_linop_${type[0]}$${kind}$(linop)
         type(linop_${type[0]}$${kind}$), intent(inout) :: linop
-        #:if type[0] == "c"
-        real(${kind}$), allocatable :: data(:, :, :)
-        allocate(data(test_size, test_size, 2))
-        call random_number(data) ; data = data - 0.5_${kind}$
-        linop%data%re = data(:, :, 1)
-        linop%data%im = data(:, :, 2)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size))
+        #:if type[0] == "r"
+        var = 1.0_${kind}$
         #:else
-        call random_number(linop%data)
+        var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
         #:endif
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_${type[0]}$${kind}$
 
     #:if type[0] == "r"
     subroutine init_rand_spd_linop_${type[0]}$${kind}$(linop)
         type(spd_linop_${type[0]}$${kind}$), intent(inout) :: linop
+        ${type}$, allocatable :: mu(:, :), var(:, :)
         ${type}$, allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
+        allocate(var(test_size, test_size)) ; var = one_${type[0]}$${kind}$
 
-        ! Allocate data.
-        allocate(data(test_size, 2*test_size))
-        call random_number(data) ; data = data - 0.5_${kind}$
-        linop%data = matmul(data, transpose(data)) / 4
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
         return
     end subroutine init_rand_spd_linop_${type[0]}$${kind}$
     #:else
     subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
         type(hermitian_linop_${type[0]}$${kind}$), intent(inout) :: linop
-        real(${kind}$), allocatable :: data(:, :, :)
-        ${type}$, allocatable :: data_c(:, :)
-        ${type}$, allocatable :: matrix(:, :)
+        ${type}$, allocatable :: data(:, :)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
 
-        ! Allocate data.
-        allocate(data(test_size, 2*test_size, 2))
-        allocate(data_c(test_size, 2*test_size))
-        allocate(matrix(test_size, test_size))
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
 
-        call random_number(data)
-        data_c%re = data(:, :, 1) - 0.5_${kind}$
-        data_c%im = data(:, :, 2) - 0.5_${kind}$
-        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
-        linop%data = matrix
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
         return
     end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
     #:endif

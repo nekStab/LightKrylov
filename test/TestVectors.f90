@@ -3,13 +3,14 @@ module TestVectors
     use LightKrylov_Logger
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use stdlib_math, only: is_close, all_close
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
     
     implicit none
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
 
     integer, parameter, public :: test_size = 128
 
@@ -108,9 +109,13 @@ contains
         class(vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        real(sp) :: mu(test_size), var(test_size)
         real(sp) :: alpha
-        call random_number(self%data)
-
+ 
+        mu = 0.0_sp
+        var = 1.0_sp
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -158,9 +163,13 @@ contains
         class(vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        real(dp) :: mu(test_size), var(test_size)
         real(dp) :: alpha
-        call random_number(self%data)
-
+ 
+        mu = 0.0_dp
+        var = 1.0_dp
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -208,13 +217,13 @@ contains
         class(vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        complex(sp) :: mu(test_size), var(test_size)
         complex(sp) :: alpha
-        real(sp), dimension(test_size, 2) :: data
-
-        call random_number(data)
-        self%data%re = data(:, 1)
-        self%data%im = data(:, 2)
-
+ 
+        mu = 0.0_sp
+        var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -262,13 +271,13 @@ contains
         class(vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        complex(dp) :: mu(test_size), var(test_size)
         complex(dp) :: alpha
-        real(dp), dimension(test_size, 2) :: data
-
-        call random_number(data)
-        self%data%re = data(:, 1)
-        self%data%im = data(:, 2)
-
+ 
+        mu = 0.0_dp
+        var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()

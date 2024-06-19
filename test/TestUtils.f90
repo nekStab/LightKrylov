@@ -1,5 +1,7 @@
 module TestUtils
     use stdlib_io_npy, only: save_npy
+    use stdlib_linalg, only: eye, diag
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use LightKrylov
     use LightKrylov_Constants
     use TestVectors
@@ -307,18 +309,24 @@ contains
 
     subroutine init_rand_linop_rsp(linop)
         type(linop_rsp), intent(inout) :: linop
-        call random_number(linop%data)
+        real(sp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size))
+        var = 1.0_sp
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_rsp
 
     subroutine init_rand_spd_linop_rsp(linop)
         type(spd_linop_rsp), intent(inout) :: linop
+        real(sp), allocatable :: mu(:, :), var(:, :)
         real(sp), allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_rsp
+        allocate(var(test_size, test_size)) ; var = one_rsp
 
-        ! Allocate data.
-        allocate(data(test_size, 2*test_size))
-        call random_number(data) ; data = data - 0.5_sp
-        linop%data = matmul(data, transpose(data)) / 4
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
         return
     end subroutine init_rand_spd_linop_rsp
 
@@ -339,18 +347,24 @@ contains
 
     subroutine init_rand_linop_rdp(linop)
         type(linop_rdp), intent(inout) :: linop
-        call random_number(linop%data)
+        real(dp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size))
+        var = 1.0_dp
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_rdp
 
     subroutine init_rand_spd_linop_rdp(linop)
         type(spd_linop_rdp), intent(inout) :: linop
+        real(dp), allocatable :: mu(:, :), var(:, :)
         real(dp), allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_rdp
+        allocate(var(test_size, test_size)) ; var = one_rdp
 
-        ! Allocate data.
-        allocate(data(test_size, 2*test_size))
-        call random_number(data) ; data = data - 0.5_dp
-        linop%data = matmul(data, transpose(data)) / 4
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
         return
     end subroutine init_rand_spd_linop_rdp
 
@@ -371,30 +385,26 @@ contains
 
     subroutine init_rand_linop_csp(linop)
         type(linop_csp), intent(inout) :: linop
-        real(sp), allocatable :: data(:, :, :)
-        allocate(data(test_size, test_size, 2))
-        call random_number(data) ; data = data - 0.5_sp
-        linop%data%re = data(:, :, 1)
-        linop%data%im = data(:, :, 2)
+        complex(sp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size))
+        var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_csp
 
     subroutine init_rand_hermitian_linop_csp(linop)
         type(hermitian_linop_csp), intent(inout) :: linop
-        real(sp), allocatable :: data(:, :, :)
-        complex(sp), allocatable :: data_c(:, :)
-        complex(sp), allocatable :: matrix(:, :)
+        complex(sp), allocatable :: data(:, :)
+        complex(sp), allocatable :: mu(:, :), var(:, :)
 
-        ! Allocate data.
-        allocate(data(test_size, 2*test_size, 2))
-        allocate(data_c(test_size, 2*test_size))
-        allocate(matrix(test_size, test_size))
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_sp, 1.0_sp, kind=sp)
 
-        call random_number(data)
-        data_c%re = data(:, :, 1) - 0.5_sp
-        data_c%im = data(:, :, 2) - 0.5_sp
-        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
-        linop%data = matrix
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
         return
     end subroutine init_rand_hermitian_linop_csp
 
@@ -415,30 +425,26 @@ contains
 
     subroutine init_rand_linop_cdp(linop)
         type(linop_cdp), intent(inout) :: linop
-        real(dp), allocatable :: data(:, :, :)
-        allocate(data(test_size, test_size, 2))
-        call random_number(data) ; data = data - 0.5_dp
-        linop%data%re = data(:, :, 1)
-        linop%data%im = data(:, :, 2)
+        complex(dp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size))
+        var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_cdp
 
     subroutine init_rand_hermitian_linop_cdp(linop)
         type(hermitian_linop_cdp), intent(inout) :: linop
-        real(dp), allocatable :: data(:, :, :)
-        complex(dp), allocatable :: data_c(:, :)
-        complex(dp), allocatable :: matrix(:, :)
+        complex(dp), allocatable :: data(:, :)
+        complex(dp), allocatable :: mu(:, :), var(:, :)
 
-        ! Allocate data.
-        allocate(data(test_size, 2*test_size, 2))
-        allocate(data_c(test_size, 2*test_size))
-        allocate(matrix(test_size, test_size))
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_dp, 1.0_dp, kind=dp)
 
-        call random_number(data)
-        data_c%re = data(:, :, 1) - 0.5_dp
-        data_c%im = data(:, :, 2) - 0.5_dp
-        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
-        linop%data = matrix
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
         return
     end subroutine init_rand_hermitian_linop_cdp
 
