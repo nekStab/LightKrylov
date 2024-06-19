@@ -184,10 +184,10 @@ contains
         ! Check result.
         #:if type[0] == "c"
         call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_${kind}$)
-        call check_test(error, 'test_matvec_${type[0]}$${kind}$', 'norm2(abs(y%data - matmul(A%data, x%data))) < rtol')
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', eq='norm2(|y - A @ x|)')
         #:else
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${kind}$)
-        call check_test(error, 'test_matvec_${type[0]}$${kind}$', 'norm2(y%data - matmul(A%data, x%data)) < rtol')
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', eq='norm2(y - A @ x)')
         #:endif
         
         return
@@ -222,10 +222,10 @@ contains
         ! Check result.
         #:if type[0] == "c"
         call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_${kind}$)
-        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', 'norm2(abs(y%data - matmul(transpose(A%data), x%data))) < rtol')
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', eq='norm2(|y - A.H @ x|)')
         #:else
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${kind}$)
-        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', 'norm2(y%data - matmul(transpose(A%data), x%data)) < rtol')
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', eq='norm2(y - A.T @ x)')
         #:endif
         
         return
@@ -268,11 +268,11 @@ contains
         #:if type[0] == "c"
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
         call check(error, alpha < rtol_${kind}$)
-        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', 'norm2(abs(y%data - matmul(transpose(A%data), x%data))) < rtol')
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', eq='norm2(|y - A.H @ x|)')
         #:else
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
         call check(error, alpha < rtol_${kind}$)
-        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', 'norm2(y%data - matmul(transpose(A%data), x%data)) < rtol')
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', eq='norm2(y - A.T @ x)')
         #:endif
 
         
@@ -317,11 +317,11 @@ contains
         #:if type[0] == "c"
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))
         call check(error, alpha < rtol_${kind}$)
-        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', 'norm2(abs(y%data - matmul(A%data, x%data))) < rtol')
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', eq='norm2(|y - A @ x|)')
         #:else
         alpha = norm2(y%data - matmul(A%data, x%data))
         call check(error, alpha < rtol_${kind}$)
-        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', 'norm2(y%data - matmul(A%data, x%data)) < rtol')
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', eq='norm2(y - A @ x)')
         #:endif
 
        return

@@ -44,8 +44,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization (correctness & orthonormality)", test_qr_factorization_${type[0]}$${kind}$), &
-                        new_unittest("Pivoting QR for a rank deficient matrix (correctness & orthonormality))", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$) &
+                        new_unittest("QR factorization", test_qr_factorization_${type[0]}$${kind}$), &
+                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_qr_${type[0]}$${kind}$_testsuite
@@ -63,6 +63,8 @@ contains
         ! Miscellaneous.
         ${type}$, allocatable :: Adata(:, :), Qdata(:, :)
         ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character*256 :: msg
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -78,18 +80,22 @@ contains
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
 
         ! Check correctness.
-        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${kind}$)
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_qr_factorization_${type[0]}$${kind}$', &
-                        & 'QR factorization not correct: A /= Q @ R')
+                              & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, A(1:kdim), A(1:kdim))
 
         ! Check orthonormality of the computed basis.
-        call check(error, norm2(abs(G - eye(kdim))) < rtol_${kind}$)
+        err = norm2(abs(G - eye(kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_qr_factorization_${type[0]}$${kind}$', &
-                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
+                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
         return
     end subroutine test_qr_factorization_${type[0]}$${kind}$
@@ -116,6 +122,8 @@ contains
         logical :: mask(kdim)
         ${type}$, allocatable :: Adata(:, :), Qdata(:, :)
         ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character*256 :: msg
 
         ! Effective rank.
         rk = kdim - nzero
@@ -147,18 +155,22 @@ contains
         Adata = Adata(:, perm)
 
         ! Check correctness.
-        call check(error, maxval(abs(Adata - matmul(Qdata, R))) < rtol_${kind}$)
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$', &
-                        & 'QR factorization not correct: A /= Q @ R')
+                              & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, A(1:kdim), A(1:kdim))
 
         ! Check orthonormality of the computed basis.
-        call check(error, norm2(abs(G - eye(kdim))) < rtol_${kind}$)
+        err = norm2(abs(G - eye(kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$', &
-                        & 'Basis Q not orthonormal: Q.H @ Q /= I')
+                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$
@@ -174,8 +186,8 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Arnoldi factorization (correctness & orthonormality)", test_arnoldi_factorization_${type[0]}$${kind}$), &
-            new_unittest("Block Arnoldi factorization (correctness & orthonormality)", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$) &
                     ]
         return
@@ -197,6 +209,8 @@ contains
         ! Miscellaneous.
         ${type}$, allocatable :: Xdata(:, :)
         ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character*256 :: msg
            
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -210,9 +224,11 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
-        call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H))) < rtol_${kind}$)
+        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_arnoldi_factorization_${type[0]}$${kind}$', &
-                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
+                              & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
 
         ! Compute Gram matrix associated to the Krylov basis.
@@ -220,9 +236,11 @@ contains
         call innerprod(G, X(1:kdim), X(1:kdim))
 
         ! Check orthonormality of the computed basis.
-        call check(error, maxval(abs(G - eye(kdim))) < rtol_${kind}$)
+        err = maxval(abs(G - eye(kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_arnoldi_factorization_${type[0]}$${kind}$', &
-                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
+                              & info='Orthonomality', eq='X.H @ X = I', context=msg)
 
         return
     end subroutine test_arnoldi_factorization_${type[0]}$${kind}$
@@ -244,6 +262,8 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         ${type}$, allocatable :: Xdata(:, :)
         ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character*256 :: msg
 
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -259,18 +279,22 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
-        call check(error, maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H))) < rtol_${kind}$)
+        err = maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_block_arnoldi_factorization_${type[0]}$${kind}$', &
-                        & 'Arnoldi factorization not correct: A @ X[:,1:p*k] /= X[:,1:p*(k+1)] @ H[1:p*(k+1),1:k]')
+                              & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, X(1:p*kdim), X(1:p*kdim))
 
         ! Check orthonormality of the computed basis.
-        call check(error, maxval(abs(G - eye(p*kdim))) < rtol_${kind}$)
+        err = maxval(abs(G - eye(p*kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_block_arnoldi_factorization_${type[0]}$${kind}$', &
-                        & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
+                              & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
 
         return
     end subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$
@@ -292,7 +316,8 @@ contains
         ! Miscellaneous.
         integer :: n
         ${type}$, allocatable :: Xdata(:, :)
-        real(${kind}$) :: alpha
+        real(${kind}$) :: err
+        character*256 :: msg
 
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -312,10 +337,11 @@ contains
 
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
-        alpha = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
-        call check(error, alpha < rtol_${kind}$)
+        err = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_krylov_schur_${type[0]}$${kind}$', &
-                        & 'Arnoldi factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ H[1:k+1,1:k]')
+                              & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         return
     contains
@@ -339,7 +365,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-            new_unittest("Lanczos Bidiagonalization (correctness and left/right orthonormality)", test_lanczos_bidiag_factorization_${type[0]}$${kind}$) &
+            new_unittest("Lanczos Bidiagonalization", test_lanczos_bidiag_factorization_${type[0]}$${kind}$) &
                 ]
         return
     end subroutine collect_lanczos_bidiag_${type[0]}$${kind}$_testsuite
@@ -358,10 +384,11 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(${kind}$) :: alpha
         ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
         ${type}$, allocatable :: G(:, :)
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+        real(${kind}$) :: err
+        character*256 :: msg
 
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -380,28 +407,33 @@ contains
         allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
-        alpha = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
-        call check(error, alpha < rtol_${kind}$)
+        err = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_bidiag_factorization_${type[0]}$${kind}$', &
-                              & 'Bidiagonal Lanczos factorization not correct: A @ V[:,1:k] /= U[:,1:k+1] @ B[1:k+1,1:k]')
+                              & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, U(1:kdim), U(1:kdim))
 
         ! Check orthonormality of the left basis.
-        call check(error, maxval(abs(G - eye(kdim))) < rtol_${kind}$)
+        err = maxval(abs(G - eye(kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_bidiag_factorization_${type[0]}$${kind}$', &
-                              & 'Left basis U not orthonormal: U[:,1:k].H @ U[:,1:k] /= I')
+                              & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_${type[0]}$${kind}$
         call innerprod(G, V(1:kdim), V(1:kdim))
 
         ! Check orthonormality of the right basis.
-        call check(error, maxval(abs(G - eye(kdim))) < rtol_${kind}$)
+        err = maxval(abs(G - eye(kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_bidiag_factorization_${type[0]}$${kind}$', &
-                              & 'Right basis V not orthonormal: V[:,1:k].H @ V[:,1:k] /= I')
+                              & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_lanczos_bidiag_factorization_${type[0]}$${kind}$
@@ -418,7 +450,7 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-             new_unittest("Lanczos Tridiagonalization (correctness & orthonormality)", test_lanczos_tridiag_factorization_${type[0]}$${kind}$) &
+             new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_factorization_${type[0]}$${kind}$) &
             ]
 
         return
@@ -444,9 +476,10 @@ contains
 
         ! Internal variables.
         ${type}$, allocatable :: Xdata(:, :)
-        real(${kind}$) :: alpha
         class(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character*256 :: msg
 
         ! Initialize tridiagonal matrix.
         allocate(T(kdim+1, kdim)) ; T = zero_${type[0]}$${kind}$
@@ -472,19 +505,22 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
 
         ! Infinity-norm check.
-        alpha = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
-        call check(error, alpha < rtol_${kind}$)
+        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_tridiag_factorization_${type[0]}$${kind}$', &
-                                 & 'Tridiagonal Lanczos factorization not correct: A @ X[:,1:k] /= X[:,1:k+1] @ T[1:k+1,1:k]')
+                                 & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
         call innerprod(G, X(1:kdim), X(1:kdim))
 
         ! Check orthonormality of the Krylov basis.
-        call check(error, maxval(abs(G - eye(kdim))) < rtol_${kind}$)
+        err = maxval(abs(G - eye(kdim)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_tridiag_factorization_${type[0]}$${kind}$', &
-                                 & 'Basis X not orthonormal: X[:,1:k].H @ X[:,1:k] /= I')
+                                 & info='Orthonomality', eq='X.H @ X = I', context=msg)
 
         return
     end subroutine test_lanczos_tridiag_factorization_${type[0]}$${kind}$
