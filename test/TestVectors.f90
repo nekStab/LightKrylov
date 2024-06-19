@@ -648,7 +648,7 @@ contains
         ! Initialize vector.
         x = vector_csp() ; call x%rand()
         y = x
-        call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
         
         ! Scale the vector.
         call x%scal(alpha)
@@ -773,7 +773,7 @@ contains
         ! Initialize vector.
         x = vector_cdp() ; call x%rand()
         y = x
-        call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
         
         ! Scale the vector.
         call x%scal(alpha)
