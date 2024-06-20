@@ -36,6 +36,7 @@ module LightKrylov
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_vector_${type[0]}$${kind}$
     #:endfor
+    public :: zero_basis
     
     ! AbstractLinops exports.
     public :: abstract_linop
