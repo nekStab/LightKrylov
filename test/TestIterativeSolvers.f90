@@ -716,11 +716,6 @@ contains
         call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
         call check_info(info, 'svds', module=this_module, procedure='test_svd_rsp')
 
-        ! Analytical singular values.
-        do i = 1, test_size
-            true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
-        enddo
-
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
@@ -729,7 +724,11 @@ contains
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
 
-        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        ! Check against analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
+        enddo
+        err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', 'Singular values', context=msg)
@@ -811,11 +810,6 @@ contains
         call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
         call check_info(info, 'svds', module=this_module, procedure='test_svd_rdp')
 
-        ! Analytical singular values.
-        do i = 1, test_size
-            true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
-        enddo
-
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
@@ -824,7 +818,11 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
 
-        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        ! Check against analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
+        enddo
+        err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', 'Singular values', context=msg)
