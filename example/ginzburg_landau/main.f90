@@ -33,8 +33,7 @@ program demo
   integer          :: info
 
   !> Miscellaneous.
-  integer       :: i, j, k
-  real(kind=wp) :: alpha
+  integer       :: i
   complex(wp) :: eigenvectors(nx, nev)
 
   !=============================================================================
@@ -50,7 +49,7 @@ program demo
   A = exponential_prop(tau)
 
   !> Initialize Krylov subspace.
-  allocate(X(nev)) ; call initialize_krylov_subspace(X)
+  allocate(X(nev)) ; call zero_basis(X)
 
   !------------------------------------------
   !-----     EIGENVALUE COMPUTATION     -----
