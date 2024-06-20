@@ -6,7 +6,7 @@ program demo
   use Ginzburg_Landau
   implicit none
 
-  character*128, parameter :: this_module = 'Example Ginzburg_Landau'
+  character(len=128), parameter :: this_module = 'Example Ginzburg_Landau'
 
   !------------------------------------------------
   !-----     LINEAR OPERATOR INVESTIGATED     -----
