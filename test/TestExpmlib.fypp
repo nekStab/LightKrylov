@@ -61,7 +61,7 @@ contains
         ${type}$ :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = 0.0_${kind}$
@@ -105,7 +105,7 @@ contains
         integer, parameter :: nkmax = 64
         real(${kind}$) :: err
         integer :: info
-        character*256 :: msg
+        character(len=256) :: msg
         
         ! Initialize data.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -159,7 +159,7 @@ contains
         ${type}$, allocatable :: Xdata(:, :), Qdata(:, :)
         real(${kind}$) :: errv
         ${type}$ :: err(p, p)
-        character*256 :: msg
+        character(len=256) :: msg
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_${kind}$
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_${kind}$
@@ -250,7 +250,7 @@ contains
        complex(${kind}$) :: lambda(n)
        real(${kind}$) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        #:if type[0] == "r"
@@ -312,7 +312,7 @@ contains
        complex(${kind}$) :: lambda(n)
        real(${kind}$) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        #:if type[0] == "r"

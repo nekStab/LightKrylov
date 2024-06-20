@@ -74,7 +74,7 @@ contains
         real(sp), allocatable :: Adata(:, :), Qdata(:, :)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -133,7 +133,7 @@ contains
         real(sp), allocatable :: Adata(:, :), Qdata(:, :)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Effective rank.
         rk = kdim - nzero
@@ -209,7 +209,7 @@ contains
         real(dp), allocatable :: Adata(:, :), Qdata(:, :)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -268,7 +268,7 @@ contains
         real(dp), allocatable :: Adata(:, :), Qdata(:, :)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Effective rank.
         rk = kdim - nzero
@@ -344,7 +344,7 @@ contains
         complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -403,7 +403,7 @@ contains
         complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Effective rank.
         rk = kdim - nzero
@@ -479,7 +479,7 @@ contains
         complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -538,7 +538,7 @@ contains
         complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Effective rank.
         rk = kdim - nzero
@@ -623,7 +623,7 @@ contains
         real(sp), allocatable :: Xdata(:, :)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
            
         ! Initialize linear operator.
         A = linop_rsp() ; call init_rand(A)
@@ -676,7 +676,7 @@ contains
         real(sp), allocatable :: Xdata(:, :)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_rsp() ; call init_rand(A)
@@ -730,7 +730,7 @@ contains
         integer :: n
         real(sp), allocatable :: Xdata(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = linop_rsp() ; call init_rand(A)
@@ -795,7 +795,7 @@ contains
         real(dp), allocatable :: Xdata(:, :)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
            
         ! Initialize linear operator.
         A = linop_rdp() ; call init_rand(A)
@@ -848,7 +848,7 @@ contains
         real(dp), allocatable :: Xdata(:, :)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_rdp() ; call init_rand(A)
@@ -902,7 +902,7 @@ contains
         integer :: n
         real(dp), allocatable :: Xdata(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = linop_rdp() ; call init_rand(A)
@@ -967,7 +967,7 @@ contains
         complex(sp), allocatable :: Xdata(:, :)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
            
         ! Initialize linear operator.
         A = linop_csp() ; call init_rand(A)
@@ -1020,7 +1020,7 @@ contains
         complex(sp), allocatable :: Xdata(:, :)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_csp() ; call init_rand(A)
@@ -1074,7 +1074,7 @@ contains
         integer :: n
         complex(sp), allocatable :: Xdata(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = linop_csp() ; call init_rand(A)
@@ -1139,7 +1139,7 @@ contains
         complex(dp), allocatable :: Xdata(:, :)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
            
         ! Initialize linear operator.
         A = linop_cdp() ; call init_rand(A)
@@ -1192,7 +1192,7 @@ contains
         complex(dp), allocatable :: Xdata(:, :)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_cdp() ; call init_rand(A)
@@ -1246,7 +1246,7 @@ contains
         integer :: n
         complex(dp), allocatable :: Xdata(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = linop_cdp() ; call init_rand(A)
@@ -1315,7 +1315,7 @@ contains
         real(sp), allocatable :: G(:, :)
         type(vector_rsp), allocatable :: X0(:)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_rsp() ; call init_rand(A)
@@ -1392,7 +1392,7 @@ contains
         real(dp), allocatable :: G(:, :)
         type(vector_rdp), allocatable :: X0(:)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_rdp() ; call init_rand(A)
@@ -1469,7 +1469,7 @@ contains
         complex(sp), allocatable :: G(:, :)
         type(vector_csp), allocatable :: X0(:)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_csp() ; call init_rand(A)
@@ -1546,7 +1546,7 @@ contains
         complex(dp), allocatable :: G(:, :)
         type(vector_cdp), allocatable :: X0(:)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_cdp() ; call init_rand(A)
@@ -1631,7 +1631,7 @@ contains
         class(vector_rsp), allocatable :: X0(:)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize tridiagonal matrix.
         allocate(T(kdim+1, kdim)) ; T = zero_rsp
@@ -1703,7 +1703,7 @@ contains
         class(vector_rdp), allocatable :: X0(:)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize tridiagonal matrix.
         allocate(T(kdim+1, kdim)) ; T = zero_rdp
@@ -1775,7 +1775,7 @@ contains
         class(vector_csp), allocatable :: X0(:)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize tridiagonal matrix.
         allocate(T(kdim+1, kdim)) ; T = zero_csp
@@ -1847,7 +1847,7 @@ contains
         class(vector_cdp), allocatable :: X0(:)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize tridiagonal matrix.
         allocate(T(kdim+1, kdim)) ; T = zero_cdp

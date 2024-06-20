@@ -75,7 +75,7 @@ contains
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         #:if type[0] == "r"
         ${type}$ :: a_, b_
 
@@ -150,7 +150,7 @@ contains
         complex(${kind}$) :: true_eigvals(test_size)
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         #:if type[0] == "r"
         ${type}$ :: a_, b_
 
@@ -230,7 +230,7 @@ contains
         complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         ${type}$, allocatable, dimension(:,:) :: G
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -329,7 +329,7 @@ contains
         ${type}$, allocatable :: G(:, :)
         ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         #:if type[0] == "r"
 
         ! Allocate eigenvectors.
@@ -426,7 +426,7 @@ contains
         integer :: info
         ! Misc
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = linop_${type[0]}$${kind}$()  ; call init_rand(A)
@@ -464,7 +464,7 @@ contains
         integer :: info
         ! Misc
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         #:if type[0] == "r"
@@ -520,7 +520,7 @@ contains
         integer :: info
         ! Misc
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         #:if type[0] == "r"

@@ -60,7 +60,7 @@ contains
         real(sp) :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = 0.0_sp
@@ -104,7 +104,7 @@ contains
         integer, parameter :: nkmax = 64
         real(sp) :: err
         integer :: info
-        character*256 :: msg
+        character(len=256) :: msg
         
         ! Initialize data.
         A = linop_rsp() ; call init_rand(A)
@@ -158,7 +158,7 @@ contains
         real(sp), allocatable :: Xdata(:, :), Qdata(:, :)
         real(sp) :: errv
         real(sp) :: err(p, p)
-        character*256 :: msg
+        character(len=256) :: msg
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_sp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_sp
@@ -238,7 +238,7 @@ contains
         real(dp) :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = 0.0_dp
@@ -282,7 +282,7 @@ contains
         integer, parameter :: nkmax = 64
         real(dp) :: err
         integer :: info
-        character*256 :: msg
+        character(len=256) :: msg
         
         ! Initialize data.
         A = linop_rdp() ; call init_rand(A)
@@ -336,7 +336,7 @@ contains
         real(dp), allocatable :: Xdata(:, :), Qdata(:, :)
         real(dp) :: errv
         real(dp) :: err(p, p)
-        character*256 :: msg
+        character(len=256) :: msg
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_dp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_dp
@@ -416,7 +416,7 @@ contains
         complex(sp) :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = 0.0_sp
@@ -460,7 +460,7 @@ contains
         integer, parameter :: nkmax = 64
         real(sp) :: err
         integer :: info
-        character*256 :: msg
+        character(len=256) :: msg
         
         ! Initialize data.
         A = linop_csp() ; call init_rand(A)
@@ -514,7 +514,7 @@ contains
         complex(sp), allocatable :: Xdata(:, :), Qdata(:, :)
         real(sp) :: errv
         complex(sp) :: err(p, p)
-        character*256 :: msg
+        character(len=256) :: msg
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_sp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_sp
@@ -594,7 +594,7 @@ contains
         complex(dp) :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = 0.0_dp
@@ -638,7 +638,7 @@ contains
         integer, parameter :: nkmax = 64
         real(dp) :: err
         integer :: info
-        character*256 :: msg
+        character(len=256) :: msg
         
         ! Initialize data.
         A = linop_cdp() ; call init_rand(A)
@@ -692,7 +692,7 @@ contains
         complex(dp), allocatable :: Xdata(:, :), Qdata(:, :)
         real(dp) :: errv
         complex(dp) :: err(p, p)
-        character*256 :: msg
+        character(len=256) :: msg
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_dp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_dp
@@ -781,7 +781,7 @@ contains
        complex(sp) :: lambda(n)
        real(sp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -822,7 +822,7 @@ contains
        complex(sp) :: lambda(n)
        real(sp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -875,7 +875,7 @@ contains
        complex(dp) :: lambda(n)
        real(dp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -916,7 +916,7 @@ contains
        complex(dp) :: lambda(n)
        real(dp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A)
@@ -969,7 +969,7 @@ contains
        complex(sp) :: lambda(n)
        real(sp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -1011,7 +1011,7 @@ contains
        complex(sp) :: lambda(n)
        real(sp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -1065,7 +1065,7 @@ contains
        complex(dp) :: lambda(n)
        real(dp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A%re)
@@ -1107,7 +1107,7 @@ contains
        complex(dp) :: lambda(n)
        real(dp) :: err
        integer :: i, info
-       character*256 :: msg
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        call random_number(A%re)

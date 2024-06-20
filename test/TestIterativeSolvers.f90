@@ -80,7 +80,7 @@ contains
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         real(sp) :: a_, b_
 
         ! Allocate eigenvectors.
@@ -153,7 +153,7 @@ contains
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         real(sp) :: a_, b_
 
         ! Allocate eigenvectors.
@@ -230,7 +230,7 @@ contains
         complex(sp), allocatable :: eigvec_residuals(:,:)
         real(sp), allocatable, dimension(:,:) :: G
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -323,7 +323,7 @@ contains
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         real(dp) :: a_, b_
 
         ! Allocate eigenvectors.
@@ -396,7 +396,7 @@ contains
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
         real(dp) :: a_, b_
 
         ! Allocate eigenvectors.
@@ -473,7 +473,7 @@ contains
         complex(dp), allocatable :: eigvec_residuals(:,:)
         real(dp), allocatable, dimension(:,:) :: G
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Create the sym. pos. def. Toeplitz matrix.
         call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
@@ -565,7 +565,7 @@ contains
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         return
     end subroutine test_ks_evp_csp
@@ -590,7 +590,7 @@ contains
         complex(sp) :: true_eigvals(test_size)
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         return
     end subroutine test_evp_csp
@@ -627,7 +627,7 @@ contains
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         return
     end subroutine test_ks_evp_cdp
@@ -652,7 +652,7 @@ contains
         complex(dp) :: true_eigvals(test_size)
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         return
     end subroutine test_evp_cdp
@@ -693,7 +693,7 @@ contains
         real(sp), allocatable :: G(:, :)
         real(sp), allocatable :: Udata(:, :), Vdata(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call zero_basis(U)
@@ -788,7 +788,7 @@ contains
         real(dp), allocatable :: G(:, :)
         real(dp), allocatable :: Udata(:, :), Vdata(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call zero_basis(U)
@@ -883,7 +883,7 @@ contains
         complex(sp), allocatable :: G(:, :)
         complex(sp), allocatable :: Udata(:, :), Vdata(:, :)
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         return
     end subroutine test_svd_csp
@@ -917,7 +917,7 @@ contains
         complex(dp), allocatable :: G(:, :)
         complex(dp), allocatable :: Udata(:, :), Vdata(:, :)
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         return
     end subroutine test_svd_cdp
@@ -949,7 +949,7 @@ contains
         integer :: info
         ! Misc
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = linop_rsp()  ; call init_rand(A)
@@ -983,7 +983,7 @@ contains
         integer :: info
         ! Misc
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = spd_linop_rsp()  ; call init_rand(A)
@@ -1026,7 +1026,7 @@ contains
         integer :: info
         ! Misc
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = linop_rdp()  ; call init_rand(A)
@@ -1060,7 +1060,7 @@ contains
         integer :: info
         ! Misc
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = spd_linop_rdp()  ; call init_rand(A)
@@ -1103,7 +1103,7 @@ contains
         integer :: info
         ! Misc
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = linop_csp()  ; call init_rand(A)
@@ -1137,7 +1137,7 @@ contains
         integer :: info
         ! Misc
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = hermitian_linop_csp() ; call init_rand(A)
@@ -1180,7 +1180,7 @@ contains
         integer :: info
         ! Misc
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = linop_cdp()  ; call init_rand(A)
@@ -1214,7 +1214,7 @@ contains
         integer :: info
         ! Misc
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = hermitian_linop_cdp() ; call init_rand(A)
@@ -1260,7 +1260,7 @@ contains
         integer :: info
         ! Misc
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = spd_linop_rsp() ; call init_rand(A)
@@ -1301,7 +1301,7 @@ contains
         integer :: info
         ! Misc
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = spd_linop_rdp() ; call init_rand(A)
@@ -1342,7 +1342,7 @@ contains
         integer :: info
         ! Misc
         real(sp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = hermitian_linop_csp() ; call init_rand(A)
@@ -1383,7 +1383,7 @@ contains
         integer :: info
         ! Misc
         real(dp) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear problem.
         A = hermitian_linop_cdp() ; call init_rand(A)

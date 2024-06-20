@@ -64,7 +64,7 @@ contains
         ${type}$, allocatable :: Adata(:, :), Qdata(:, :)
         ${type}$, allocatable :: G(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initiliaze matrix.
         allocate(A(1:kdim)) ; call init_rand(A)
@@ -123,7 +123,7 @@ contains
         ${type}$, allocatable :: Adata(:, :), Qdata(:, :)
         ${type}$, allocatable :: G(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Effective rank.
         rk = kdim - nzero
@@ -210,7 +210,7 @@ contains
         ${type}$, allocatable :: Xdata(:, :)
         ${type}$, allocatable :: G(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
            
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -263,7 +263,7 @@ contains
         ${type}$, allocatable :: Xdata(:, :)
         ${type}$, allocatable :: G(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -317,7 +317,7 @@ contains
         integer :: n
         ${type}$, allocatable :: Xdata(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -388,7 +388,7 @@ contains
         ${type}$, allocatable :: G(:, :)
         type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -479,7 +479,7 @@ contains
         class(vector_${type[0]}$${kind}$), allocatable :: X0(:)
         ${type}$, allocatable :: G(:, :)
         real(${kind}$) :: err
-        character*256 :: msg
+        character(len=256) :: msg
 
         ! Initialize tridiagonal matrix.
         allocate(T(kdim+1, kdim)) ; T = zero_${type[0]}$${kind}$

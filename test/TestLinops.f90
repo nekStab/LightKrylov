@@ -600,7 +600,7 @@ contains
         type(vector_csp), allocatable :: x, y
         ! Test LinOp.
         type(linop_csp), allocatable :: A
-        real(sp), dimension(test_size, test_size, 2) :: Adata
+        real(sp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
         x = vector_csp() ; call x%rand()
@@ -608,6 +608,7 @@ contains
 
         ! Initialize matrix.
         A = linop_csp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -627,7 +628,7 @@ contains
         type(vector_csp), allocatable :: x, y
         ! Test LinOp.
         type(linop_csp), allocatable :: A
-        real(sp), dimension(test_size, test_size, 2) :: Adata
+        real(sp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
         x = vector_csp() ; call x%rand()
@@ -635,6 +636,7 @@ contains
 
         ! Initialize matrix.
         A = linop_csp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -655,13 +657,14 @@ contains
         ! Test LinOp.
         type(linop_csp), allocatable :: A
         type(adjoint_linop_csp), allocatable :: B
-        real(sp), dimension(test_size, test_size, 2) :: Adata
+        real(sp), allocatable :: Adata(:, :, :)
 
         ! Internal variable.
         real(sp) :: alpha
 
         ! Initialize matrix.
         A = linop_csp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Adjoint operator.
@@ -692,13 +695,14 @@ contains
         ! Test LinOp.
         type(linop_csp), allocatable :: A
         type(adjoint_linop_csp), allocatable :: B
-        real(sp), dimension(test_size, test_size, 2) :: Adata
+        real(sp), allocatable :: Adata(:, :, :)
 
         ! Internal variable.
         real(sp) :: alpha
 
         ! Initialize matrix.
         A = linop_csp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Adjoint operator.
@@ -738,7 +742,7 @@ contains
         type(vector_cdp), allocatable :: x, y
         ! Test LinOp.
         type(linop_cdp), allocatable :: A
-        real(dp), dimension(test_size, test_size, 2) :: Adata
+        real(dp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
         x = vector_cdp() ; call x%rand()
@@ -746,6 +750,7 @@ contains
 
         ! Initialize matrix.
         A = linop_cdp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -765,7 +770,7 @@ contains
         type(vector_cdp), allocatable :: x, y
         ! Test LinOp.
         type(linop_cdp), allocatable :: A
-        real(dp), dimension(test_size, test_size, 2) :: Adata
+        real(dp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
         x = vector_cdp() ; call x%rand()
@@ -773,6 +778,7 @@ contains
 
         ! Initialize matrix.
         A = linop_cdp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -793,13 +799,14 @@ contains
         ! Test LinOp.
         type(linop_cdp), allocatable :: A
         type(adjoint_linop_cdp), allocatable :: B
-        real(dp), dimension(test_size, test_size, 2) :: Adata
+        real(dp), allocatable :: Adata(:, :, :)
 
         ! Internal variable.
         real(dp) :: alpha
 
         ! Initialize matrix.
         A = linop_cdp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Adjoint operator.
@@ -830,13 +837,14 @@ contains
         ! Test LinOp.
         type(linop_cdp), allocatable :: A
         type(adjoint_linop_cdp), allocatable :: B
-        real(dp), dimension(test_size, test_size, 2) :: Adata
+        real(dp), allocatable :: Adata(:, :, :)
 
         ! Internal variable.
         real(dp) :: alpha
 
         ! Initialize matrix.
         A = linop_cdp()
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Adjoint operator.
