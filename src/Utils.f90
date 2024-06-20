@@ -376,9 +376,8 @@ contains
         ! Internal variables
         character :: jobvl = "n", jobvr = "v"
         integer :: n, lwork, info, lda, ldvl, ldvr
-        real(sp) :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        real(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         real(sp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
-        integer :: i, idx(size(A, 1))
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -569,9 +568,8 @@ contains
         ! Internal variables
         character :: jobvl = "n", jobvr = "v"
         integer :: n, lwork, info, lda, ldvl, ldvr
-        real(dp) :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        real(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         real(dp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
-        integer :: i, idx(size(A, 1))
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -762,10 +760,9 @@ contains
         ! Internal variables
         character :: jobvl = "n", jobvr = "v"
         integer :: n, lwork, info, lda, ldvl, ldvr
-        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 1))
-        complex(sp) :: work(2*size(A, 1)), w(size(A, 1))
+        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 1))
+        complex(sp) :: work(2*size(A, 1))
         real(sp) :: rwork(2*size(A, 1))
-        integer :: i, idx(size(A, 1))
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -950,10 +947,9 @@ contains
         ! Internal variables
         character :: jobvl = "n", jobvr = "v"
         integer :: n, lwork, info, lda, ldvl, ldvr
-        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 1))
-        complex(dp) :: work(2*size(A, 1)), w(size(A, 1))
+        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 1))
+        complex(dp) :: work(2*size(A, 1))
         real(dp) :: rwork(2*size(A, 1))
-        integer :: i, idx(size(A, 1))
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a

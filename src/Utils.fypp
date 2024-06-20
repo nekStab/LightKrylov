@@ -223,14 +223,13 @@ contains
         character :: jobvl = "n", jobvr = "v"
         integer :: n, lwork, info, lda, ldvl, ldvr
         #:if type[0] == "c"
-        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 1))
-        ${type}$ :: work(2*size(A, 1)), w(size(A, 1))
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 1))
+        ${type}$ :: work(2*size(A, 1))
         real(${kind}$) :: rwork(2*size(A, 1))
         #:else
-        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         ${type}$ :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
         #:endif
-        integer :: i, idx(size(A, 1))
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
