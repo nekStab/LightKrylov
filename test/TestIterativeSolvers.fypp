@@ -7,19 +7,16 @@ module TestIterativeSolvers
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_stats, only : median
-
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_AbstractVectors
-
-    ! Testdrive
-    use testdrive, only: new_unittest, unittest_type, error_type, check
-    use TestVectors
-    use TestLinops
+    ! Test Utilities
+    use LightKrylov_TestTypes
     use TestUtils
-    use TestKrylov
 
     implicit none
     

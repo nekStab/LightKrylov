@@ -4,8 +4,7 @@ module TestUtils
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use LightKrylov
     use LightKrylov_Constants
-    use TestVectors
-    use TestLinops
+    use LightKrylov_TestTypes
     
     implicit none
     
