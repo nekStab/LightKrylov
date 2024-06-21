@@ -1,18 +1,20 @@
 module LightKrylov
     ! --> Definitions of various constants.
-    use lightkrylov_constants
+    use LightKrylov_Constants
     ! --> Set of utility functions.
-    use lightkrylov_utils
+    use LightKrylov_Utils
     ! --> Definitions of the abstract vector types.
-    use lightkrylov_AbstractVectors
+    use LightKrylov_AbstractVectors
     ! --> Definitions of the abstract linear operators.
-    use lightkrylov_AbstractLinops
+    use LightKrylov_AbstractLinops
     ! --> Standard Krylov techniques.
-    use lightkrylov_BaseKrylov
+    use LightKrylov_BaseKrylov
     ! --> Iterative solvers.
-    use lightkrylov_IterativeSolvers
+    use LightKrylov_IterativeSolvers
     ! --> Expmlib
-    use lightkrylov_expmlib
+    use LightKrylov_Expmlib
+    ! --> TestTypes
+    use LightKrylov_TestTypes
     implicit none
     private
 
@@ -91,6 +93,9 @@ module LightKrylov
     public :: expm
     public :: kexpm
     public :: k_exptA
+
+    ! Testing exports.
+    public :: test_size
 
 contains
 
