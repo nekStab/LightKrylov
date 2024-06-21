@@ -7,8 +7,6 @@ module lightkrylov_utils
     use stdlib_linalg, only: is_hermitian, is_symmetric, diag
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
-    ! Singular value decomposition.
-    use stdlib_linalg_lapack, only: gesvd
     ! Eigenvalue problem (general + symmetric).
     use stdlib_linalg_lapack, only: geev, syev, heev
     ! Schur factorization.

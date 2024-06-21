@@ -469,20 +469,18 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                #:if type[0] == "r"
-                vmat(:k, :k) = transpose(vmat(:k, :k))
-                #:else
-                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
-                #:endif
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            #:if type[0] == "r"
+            vmat(:k, :k) = transpose(vmat(:k, :k))
+            #:else
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+            #:endif
 
-                residuals_wrk(:k) = compute_residual_${type[0]}$${kind}$(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_${type[0]}$${kind}$(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------

@@ -1233,16 +1233,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = transpose(vmat(:k, :k))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = transpose(vmat(:k, :k))
 
-                residuals_wrk(:k) = compute_residual_rsp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_rsp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1330,16 +1328,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = transpose(vmat(:k, :k))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = transpose(vmat(:k, :k))
 
-                residuals_wrk(:k) = compute_residual_rdp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_rdp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1427,16 +1423,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
 
-                residuals_wrk(:k) = compute_residual_csp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_csp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1524,16 +1518,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
 
-                residuals_wrk(:k) = compute_residual_cdp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_cdp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
