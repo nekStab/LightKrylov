@@ -28,6 +28,7 @@ module TestVectors
         procedure, pass(self), public :: scal => scal_${type[0]}$${kind}$
         procedure, pass(self), public :: axpby => axpby_${type[0]}$${kind}$
         procedure, pass(self), public :: rand => rand_${type[0]}$${kind}$
+        procedure, pass(self), public :: get_size => get_size_${type[0]}$${kind}$
     end type vector_${type[0]}$${kind}$
 
     #:endfor
@@ -54,6 +55,12 @@ contains
             alpha = dot_product(self%data, vec%data)
         end select
     end function dot_${type[0]}$${kind}$
+
+    integer function get_size_${type[0]}$${kind}$(self) result(N)
+        class(vector_${type[0]}$${kind}$), intent(in) :: self
+        N = test_size
+        return
+    end function get_size_${type[0]}$${kind}$
 
     subroutine scal_${type[0]}$${kind}$(self, alpha)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
