@@ -17,7 +17,7 @@ module lightkrylov_expmlib
 
     implicit none
     
-    character*128, parameter, private :: this_module = 'LightKrylov_ExpmLib'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_ExpmLib'
 
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
@@ -225,7 +225,7 @@ contains
 
         ! ----- Internal variables -----
         integer, parameter :: kmax = 100
-        integer :: i, k, p, km, kp, nk
+        integer :: k, km, kp, nk
         ! Arnoldi factorization.
         class(abstract_vector_rsp), allocatable :: X(:)
         real(sp), allocatable :: H(:, :)
@@ -593,7 +593,7 @@ contains
 
         ! ----- Internal variables -----
         integer, parameter :: kmax = 100
-        integer :: i, k, p, km, kp, nk
+        integer :: k, km, kp, nk
         ! Arnoldi factorization.
         class(abstract_vector_rdp), allocatable :: X(:)
         real(dp), allocatable :: H(:, :)
@@ -961,7 +961,7 @@ contains
 
         ! ----- Internal variables -----
         integer, parameter :: kmax = 100
-        integer :: i, k, p, km, kp, nk
+        integer :: k, km, kp, nk
         ! Arnoldi factorization.
         class(abstract_vector_csp), allocatable :: X(:)
         complex(sp), allocatable :: H(:, :)
@@ -1329,7 +1329,7 @@ contains
 
         ! ----- Internal variables -----
         integer, parameter :: kmax = 100
-        integer :: i, k, p, km, kp, nk
+        integer :: k, km, kp, nk
         ! Arnoldi factorization.
         class(abstract_vector_cdp), allocatable :: X(:)
         complex(dp), allocatable :: H(:, :)

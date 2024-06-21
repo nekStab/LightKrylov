@@ -1,14 +1,16 @@
 module TestVectors
     use LightKrylov
+    use LightKrylov_Logger
     use testdrive, only: new_unittest, unittest_type, error_type, check
     use stdlib_math, only: is_close, all_close
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
     
     implicit none
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
 
     integer, parameter, public :: test_size = 128
 
@@ -117,9 +119,13 @@ contains
         class(vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        real(sp) :: mu(test_size), var(test_size)
         real(sp) :: alpha
-        call random_number(self%data)
-
+ 
+        mu = 0.0_sp
+        var = 1.0_sp
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -173,9 +179,13 @@ contains
         class(vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        real(dp) :: mu(test_size), var(test_size)
         real(dp) :: alpha
-        call random_number(self%data)
-
+ 
+        mu = 0.0_dp
+        var = 1.0_dp
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -229,13 +239,13 @@ contains
         class(vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        complex(sp) :: mu(test_size), var(test_size)
         complex(sp) :: alpha
-        real(sp), dimension(test_size, 2) :: data
-
-        call random_number(data)
-        self%data%re = data(:, 1)
-        self%data%im = data(:, 2)
-
+ 
+        mu = 0.0_sp
+        var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -289,13 +299,13 @@ contains
         class(vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         logical :: normalized
+        complex(dp) :: mu(test_size), var(test_size)
         complex(dp) :: alpha
-        real(dp), dimension(test_size, 2) :: data
-
-        call random_number(data)
-        self%data%re = data(:, 1)
-        self%data%im = data(:, 2)
-
+ 
+        mu = 0.0_dp
+        var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+        self%data = normal(mu, var)
+ 
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -336,6 +346,8 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, norm2(x%data)))
+        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(x))')
+        
         
         return
     end subroutine test_vector_rsp_norm
@@ -357,6 +369,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data - y%data) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(z - (x+y)))')
 
         return
     end subroutine test_vector_rsp_add
@@ -378,6 +391,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data + y%data) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
 
         return
     end subroutine test_vector_rsp_sub
@@ -399,6 +413,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_dot', eq='abs(x%dot(y) - dot_product(x, y))')
 
         return
     end subroutine test_vector_rsp_dot
@@ -421,6 +436,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(x%data - alpha*y%data) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_scal', eq='norm2(x - alpha*y)')
 
         return
     end subroutine test_vector_rsp_scal
@@ -453,6 +469,8 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, norm2(x%data)))
+        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(x))')
+        
         
         return
     end subroutine test_vector_rdp_norm
@@ -474,6 +492,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data - y%data) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(z - (x+y)))')
 
         return
     end subroutine test_vector_rdp_add
@@ -495,6 +514,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(z%data - x%data + y%data) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
 
         return
     end subroutine test_vector_rdp_sub
@@ -516,6 +536,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_dot', eq='abs(x%dot(y) - dot_product(x, y))')
 
         return
     end subroutine test_vector_rdp_dot
@@ -538,6 +559,7 @@ contains
 
         ! Check correctness.
         call check(error, norm2(x%data - alpha*y%data) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_scal', eq='norm2(x - alpha*y)')
 
         return
     end subroutine test_vector_rdp_scal
@@ -570,6 +592,8 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
+        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, sqrt(sum(Re(x)^2 + Im(x)^2)))')
+        
         
         return
     end subroutine test_vector_csp_norm
@@ -591,6 +615,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_sp)
+        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm,  sqrt(sum(Re(z - (x+y))^2 + Im(z - (x+y))^2)))')
 
         return
     end subroutine test_vector_csp_add
@@ -612,6 +637,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_sp)
+        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
 
         return
     end subroutine test_vector_csp_sub
@@ -633,6 +659,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_sp)
+        call check_test(error, 'test_vector_csp_dot', eq='abs(x%dot(y) - dot_product(x, y))')
 
         return
     end subroutine test_vector_csp_dot
@@ -649,7 +676,7 @@ contains
         ! Initialize vector.
         x = vector_csp() ; call x%rand()
         y = x
-        call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
         
         ! Scale the vector.
         call x%scal(alpha)
@@ -657,6 +684,7 @@ contains
         ! Check correctness.
         tmp = x%data - alpha*y%data
         call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_sp)
+        call check_test(error, 'test_vector_csp_scal', eq='sqrt(sum(Re(x - alpha*y)**2 + Im(x - alpha*y)**2))')
 
         return
     end subroutine test_vector_csp_scal
@@ -689,6 +717,8 @@ contains
 
         ! Check result.
         call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
+        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, sqrt(sum(Re(x)^2 + Im(x)^2)))')
+        
         
         return
     end subroutine test_vector_cdp_norm
@@ -710,6 +740,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm,  sqrt(sum(Re(z - (x+y))^2 + Im(z - (x+y))^2)))')
 
         return
     end subroutine test_vector_cdp_add
@@ -731,6 +762,7 @@ contains
 
         ! Check correctness.
         call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
 
         return
     end subroutine test_vector_cdp_sub
@@ -752,6 +784,7 @@ contains
 
         ! Check correctness.
         call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_dot', eq='abs(x%dot(y) - dot_product(x, y))')
 
         return
     end subroutine test_vector_cdp_dot
@@ -768,7 +801,7 @@ contains
         ! Initialize vector.
         x = vector_cdp() ; call x%rand()
         y = x
-        call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
         
         ! Scale the vector.
         call x%scal(alpha)
@@ -776,6 +809,7 @@ contains
         ! Check correctness.
         tmp = x%data - alpha*y%data
         call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_scal', eq='sqrt(sum(Re(x - alpha*y)**2 + Im(x - alpha*y)**2))')
 
         return
     end subroutine test_vector_cdp_scal

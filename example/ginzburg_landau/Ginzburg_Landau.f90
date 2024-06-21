@@ -386,4 +386,3 @@ module Ginzburg_Landau
    end subroutine adjoint_solver
  
  end module Ginzburg_Landau
- 

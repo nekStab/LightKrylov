@@ -291,7 +291,6 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
-        logical :: verbose, trans
         real(sp) :: tol
         real(sp) :: beta
         real(sp) :: alpha
@@ -301,7 +300,6 @@ contains
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_sp)
 
         if (present(select)) then
@@ -328,7 +326,7 @@ contains
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -423,7 +421,6 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
-        logical :: verbose, trans
         real(dp) :: tol
         real(dp) :: beta
         real(dp) :: alpha
@@ -433,7 +430,6 @@ contains
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_dp)
 
         if (present(select)) then
@@ -460,7 +456,7 @@ contains
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -555,7 +551,6 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
-        logical :: verbose, trans
         real(sp) :: tol
         complex(sp) :: beta
         ! Eigenvalue selection.
@@ -564,7 +559,6 @@ contains
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_sp)
 
         if (present(select)) then
@@ -591,7 +585,7 @@ contains
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -677,7 +671,6 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
-        logical :: verbose, trans
         real(dp) :: tol
         complex(dp) :: beta
         ! Eigenvalue selection.
@@ -686,7 +679,6 @@ contains
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_dp)
 
         if (present(select)) then
@@ -713,7 +705,7 @@ contains
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -804,7 +796,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose, trans
+        logical :: verbose
         real(sp) :: tol
         real(sp) :: beta
 
@@ -851,7 +843,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev)
+            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -903,7 +895,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose, trans
+        logical :: verbose
         real(dp) :: tol
         real(dp) :: beta
 
@@ -950,7 +942,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev)
+            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1002,7 +994,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose, trans
+        logical :: verbose
         real(sp) :: tol
         complex(sp) :: beta
 
@@ -1049,7 +1041,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev)
+            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1101,7 +1093,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose, trans
+        logical :: verbose
         real(dp) :: tol
         complex(dp) :: beta
 
@@ -1148,7 +1140,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev)
+            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1205,7 +1197,6 @@ contains
         integer :: i, j, k
         logical :: verbose
         real(sp) :: tol
-        real(sp) :: beta, alpha
 
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -1233,16 +1224,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = transpose(vmat(:k, :k))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = transpose(vmat(:k, :k))
 
-                residuals_wrk(:k) = compute_residual_rsp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_rsp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1250,7 +1239,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(:nsv)
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1302,7 +1291,6 @@ contains
         integer :: i, j, k
         logical :: verbose
         real(dp) :: tol
-        real(dp) :: beta, alpha
 
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -1330,16 +1318,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = transpose(vmat(:k, :k))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = transpose(vmat(:k, :k))
 
-                residuals_wrk(:k) = compute_residual_rdp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_rdp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1347,7 +1333,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(:nsv)
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1399,7 +1385,6 @@ contains
         integer :: i, j, k
         logical :: verbose
         real(sp) :: tol
-        complex(sp) :: beta, alpha
 
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -1427,16 +1412,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
 
-                residuals_wrk(:k) = compute_residual_csp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_csp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1444,7 +1427,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(:nsv)
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1496,7 +1479,6 @@ contains
         integer :: i, j, k
         logical :: verbose
         real(dp) :: tol
-        complex(dp) :: beta, alpha
 
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -1524,16 +1506,14 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
 
-                residuals_wrk(:k) = compute_residual_cdp(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_cdp(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -1541,7 +1521,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(:nsv)
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -1600,7 +1580,7 @@ contains
         class(abstract_precond_rsp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, j, k
+        integer :: i, k
         real(sp), allocatable :: alpha(:)
         class(abstract_vector_rsp), allocatable :: dx, wrk
 
@@ -1756,7 +1736,7 @@ contains
         class(abstract_precond_rdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, j, k
+        integer :: i, k
         real(dp), allocatable :: alpha(:)
         class(abstract_vector_rdp), allocatable :: dx, wrk
 
@@ -1912,7 +1892,7 @@ contains
         class(abstract_precond_csp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, j, k
+        integer :: i, k
         complex(sp), allocatable :: alpha(:)
         class(abstract_vector_csp), allocatable :: dx, wrk
 
@@ -2068,7 +2048,7 @@ contains
         class(abstract_precond_cdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, j, k
+        integer :: i, k
         complex(dp), allocatable :: alpha(:)
         class(abstract_vector_cdp), allocatable :: dx, wrk
 

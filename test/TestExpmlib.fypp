@@ -24,7 +24,7 @@ module TestExpmlib
 
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestExpmLib'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestExpmLib'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_expm_${type[0]}$${kind}$_testsuite
@@ -60,6 +60,8 @@ contains
         ! Test matrix.
         ${type}$ :: A(n, n), E(n, n), Eref(n, n)
         integer :: i, j
+        real(${kind}$) :: err
+        character(len=256) :: msg
 
         ! Initialize matrix.
         A = 0.0_${kind}$
@@ -79,7 +81,10 @@ contains
         call expm(E, A)
 
         ! Check result.
-        call check(error, maxval(abs(E-Eref)) < rtol_${kind}$)
+        err = maxval(abs(E-Eref))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_dense_expm_${type[0]}$${kind}$', eq='maxval(abs(E-Eref)) < rtol', context=msg)
 
         return
     end subroutine test_dense_expm_${type[0]}$${kind}$
@@ -95,12 +100,12 @@ contains
         integer, parameter :: kdim = test_size
     
         ! ----- Internal variables -----
-        ${type}$ :: E(kdim, kdim)
+        ${type}$, allocatable :: E(:, :)
         real(${kind}$), parameter :: tau = 0.1_${kind}$
-        logical, parameter :: verb = .true.
         integer, parameter :: nkmax = 64
         real(${kind}$) :: err
         integer :: info
+        character(len=256) :: msg
         
         ! Initialize data.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
@@ -109,18 +114,19 @@ contains
         allocate(XKryl) ; call Xkryl%zero()
 
         ! Dense computation.
-        call expm(E, tau*A%data)
+        allocate(E(kdim, kdim)) ; call expm(E, tau*A%data)
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        call kexpm(Xkryl, A, Q, tau, rtol_${kind}$, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_${type[0]}$${kind}$')
+        call kexpm(Xkryl, A, Q, tau, rtol_${kind}$, info, verbosity=.false., kdim=nkmax)
+        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_${type[0]}$${kind}$')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        if (verb) write(output_unit, *) "     True error: ||error||_2 =", err
-
-       call check(error, err < rtol_${kind}$)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_${type[0]}$${kind}$', &
+                                 & info='Comparison with matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_${type[0]}$${kind}$
@@ -140,11 +146,7 @@ contains
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
         ! Test matrix.
-        ${type}$ :: Adata(kdim, kdim)
-        ${type}$ :: Edata(kdim, kdim)
-        ! GS factors.
-        ${type}$ :: R(kdim, kdim)
-        ${type}$ :: Id(kdim, kdim)
+        ${type}$, allocatable :: Adata(:, :), Edata(:, :)
         ! Information flag.
         integer :: info
         ! Test parameters
@@ -152,14 +154,16 @@ contains
         integer       , parameter :: p = 3
         real(${kind}$), parameter :: tau = 0.1_${kind}$
         real(${kind}$), parameter :: tol = rtol_${kind}$
-        logical       , parameter :: verb = .true.
         ! Misc.
-        integer  :: i, j, k
-        ${type}$ :: Xdata(test_size,p), Qdata(test_size,p)
-        real(${kind}$) :: alpha
+        integer  :: i, j
+        ${type}$, allocatable :: Xdata(:, :), Qdata(:, :)
+        real(${kind}$) :: errv
         ${type}$ :: err(p, p)
+        character(len=256) :: msg
 
-        Adata = 0.0_${kind}$ ; Edata = 0.0_${kind}$ ; Xdata = 0.0_${kind}$
+        allocate(Adata(kdim, kdim)) ; Adata = 0.0_${kind}$
+        allocate(Edata(kdim, kdim)) ; Edata = 0.0_${kind}$
+        allocate(Xdata(test_size, p)) ; Xdata = 0.0_${kind}$
 
         allocate(Cref(p)) ; call initialize_krylov_subspace(Cref)
         allocate(C(p))    ; call initialize_krylov_subspace(C)
@@ -169,23 +173,21 @@ contains
         A = linop_${type[0]}$${kind}$() ; call init_rand(A) ; call get_data(Adata, A)
        
         ! --> Initialize rhs.
-        allocate(B(1:p)) ; call init_rand(B) ; call get_data(Qdata, B)
+        allocate(B(1:p)) ; call init_rand(B)
+        allocate(Qdata(test_size, p)) ; call get_data(Qdata, B)
 
         ! Comparison is dense computation (10th order Pade approximation)
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
-        if (verb) write(*,*) 'SEQUENTIAL ARNOLDI'
         do i = 1,p
-            if (verb) write(*,*) '    column',i
-            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
-            !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_${type[0]}$${kind}$, 1')
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=.false., kdim=nkmax)
+            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_${type[0]}$${kind}$, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
-        if (verb) write(*,*) 'BLOCK-ARNOLDI'
-        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
-        !call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_${type[0]}$${kind}$, 2')
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=.false., kdim=nkmax)
+        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_${type[0]}$${kind}$, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -193,27 +195,26 @@ contains
         end do
 
         ! Compute 2-norm of the error
-        if (verb) then
-            do i = 1, size(C)
-                do j = 1, size(C)
-                    err(i, j) = C(i)%dot(C(j))
-                enddo
+        
+        do i = 1, size(C)
+            do j = 1, size(C)
+                err(i, j) = C(i)%dot(C(j))
             enddo
-            alpha = sqrt(norm2(abs(err)))
-            write(*,*) '--------------------------------------------------------------------'
-            write(*, *) '    true error (seq.):   ||error||_2 = ', alpha
-        endif
+        enddo
+        errv = norm2(abs(err))
+        !call get_err_str(msg, "max err: ", errv)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
                 err(i, j) = Cblk(i)%dot(Cblk(j))
             enddo
         enddo
-        
-        alpha = sqrt(norm2(abs(err)))
-        if (verb) write(*, *) '    true error (block):  ||error||_2 = ', alpha
+        errv = norm2(abs(err))
+        call get_err_str(msg, "max err: ", errv)
 
-        call check(error, alpha < rtol_${kind}$)
+        call check(error, errv < rtol_${kind}$)
+        call check_test(error, 'test_block_kexptA_${type[0]}$${kind}$', &
+                        & info='Comparison with matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_${type[0]}$${kind}$
@@ -247,7 +248,9 @@ contains
        ${type}$ :: A(n, n)
        ${type}$ :: sqrtmA(n, n)
        complex(${kind}$) :: lambda(n)
+       real(${kind}$) :: err
        integer :: i, info
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        #:if type[0] == "r"
@@ -268,26 +271,29 @@ contains
        end do
        ! reconstruct matrix
        #:if type[0] == "r"
-       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + transpose(A))
        #:else
-       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + conjg(transpose(A)))
        #:endif
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_${type[0]}$${kind}$')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_${type[0]}$${kind}$')
     
        #:if type[0] == "r"
-       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
-       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_${kind}$)
+       err = maxval(matmul(sqrtmA, sqrtmA) - A)
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
        #:else
-       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
-       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_${kind}$)
+       err =  maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
        #:endif
+       call check_test(error, 'test_dense_sqrtm_pos_def_${type[0]}$${kind}$', eq='sqrt(A)**2 = A', context=msg)
     
        return
     end subroutine test_dense_sqrtm_pos_def_${type[0]}$${kind}$
@@ -304,7 +310,9 @@ contains
        ${type}$ :: A(n, n)
        ${type}$ :: sqrtmA(n, n)
        complex(${kind}$) :: lambda(n)
+       real(${kind}$) :: err
        integer :: i, info
+       character(len=256) :: msg
     
        ! --> Initialize matrix.
        #:if type[0] == "r"
@@ -326,26 +334,29 @@ contains
        lambda(n) = zero_r${kind}$
        ! reconstruct matrix
        #:if type[0] == "r"
-       A = matmul(sqrtmA, matmul(diag(lambda), transpose(sqrtmA)))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + transpose(A))
        #:else
-       A = matmul(sqrtmA, matmul(diag(lambda), conjg(transpose(sqrtmA))))
+       A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
        ! ensure it is exactly symmetric/hermitian
        A = 0.5_${kind}$*(A + conjg(transpose(A)))
        #:endif
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       !call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$')
+       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$')
     
        #:if type[0] == "r"
-       write(*,*) 'max err: ', maxval(matmul(sqrtmA, sqrtmA) - A)
-       call check(error, maxval(matmul(sqrtmA, sqrtmA) - A) < rtol_${kind}$)
+       err = maxval(matmul(sqrtmA, sqrtmA) - A)
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
        #:else
-       write(*,*) 'max err: ', maxval(abs(matmul(sqrtmA, sqrtmA) - A))
-       call check(error, maxval(abs(matmul(sqrtmA, sqrtmA) - A)) < rtol_${kind}$)
+       err = maxval(abs(matmul(sqrtmA, sqrtmA) - A))
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
        #:endif
+       call check_test(error, 'test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$', eq='sqrt(A)**2 = A', context=trim(msg))
     
        return
     end subroutine test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$

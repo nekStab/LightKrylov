@@ -186,7 +186,6 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k
-        logical :: verbose, trans
         real(${kind}$) :: tol
         ${type}$ :: beta
         #:if type[0] == "r"
@@ -198,7 +197,6 @@ contains
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_${kind}$)
 
         if (present(select)) then
@@ -225,7 +223,7 @@ contains
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbose, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_${type[0]}$${kind}$')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -335,7 +333,7 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose, trans
+        logical :: verbose
         real(${kind}$) :: tol
         ${type}$ :: beta
 
@@ -382,7 +380,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev)
+            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -441,7 +439,6 @@ contains
         integer :: i, j, k
         logical :: verbose
         real(${kind}$) :: tol
-        ${type}$ :: beta, alpha
 
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -469,20 +466,18 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
 
-            if (k > 1) then
-                call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-                #:if type[0] == "r"
-                vmat(:k, :k) = transpose(vmat(:k, :k))
-                #:else
-                vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
-                #:endif
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            #:if type[0] == "r"
+            vmat(:k, :k) = transpose(vmat(:k, :k))
+            #:else
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+            #:endif
 
-                residuals_wrk(:k) = compute_residual_${type[0]}$${kind}$(B(k+1, k), vmat(k, :k))
+            residuals_wrk(:k) = compute_residual_${type[0]}$${kind}$(B(k+1, k), vmat(k, :k))
 
-                ! Check for convergence.
-                conv = count(residuals_wrk(:k) < tol)
-                if (conv >= nsv) exit lanczos
-            endif
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            if (conv >= nsv) exit lanczos
         enddo lanczos
 
         !--------------------------------
@@ -490,7 +485,7 @@ contains
         !--------------------------------
 
         ! Singular values.
-        S = svdvals_wrk(:nsv)
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
         k = min(k, kdim_)
@@ -551,7 +546,7 @@ contains
         class(abstract_precond_${type[0]}$${kind}$), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, j, k
+        integer :: i, k
         ${type}$, allocatable :: alpha(:)
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
 
