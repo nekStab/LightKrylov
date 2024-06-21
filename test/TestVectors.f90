@@ -28,6 +28,7 @@ module TestVectors
         procedure, pass(self), public :: scal => scal_rsp
         procedure, pass(self), public :: axpby => axpby_rsp
         procedure, pass(self), public :: rand => rand_rsp
+        procedure, pass(self), public :: get_size => get_size_rsp
     end type vector_rsp
 
     type, extends(abstract_vector_rdp), public :: vector_rdp
@@ -39,6 +40,7 @@ module TestVectors
         procedure, pass(self), public :: scal => scal_rdp
         procedure, pass(self), public :: axpby => axpby_rdp
         procedure, pass(self), public :: rand => rand_rdp
+        procedure, pass(self), public :: get_size => get_size_rdp
     end type vector_rdp
 
     type, extends(abstract_vector_csp), public :: vector_csp
@@ -50,6 +52,7 @@ module TestVectors
         procedure, pass(self), public :: scal => scal_csp
         procedure, pass(self), public :: axpby => axpby_csp
         procedure, pass(self), public :: rand => rand_csp
+        procedure, pass(self), public :: get_size => get_size_csp
     end type vector_csp
 
     type, extends(abstract_vector_cdp), public :: vector_cdp
@@ -61,6 +64,7 @@ module TestVectors
         procedure, pass(self), public :: scal => scal_cdp
         procedure, pass(self), public :: axpby => axpby_cdp
         procedure, pass(self), public :: rand => rand_cdp
+        procedure, pass(self), public :: get_size => get_size_cdp
     end type vector_cdp
 
 contains
@@ -85,6 +89,12 @@ contains
             alpha = dot_product(self%data, vec%data)
         end select
     end function dot_rsp
+
+    integer function get_size_rsp(self) result(N)
+        class(vector_rsp), intent(in) :: self
+        N = test_size
+        return
+    end function get_size_rsp
 
     subroutine scal_rsp(self, alpha)
         class(vector_rsp), intent(inout) :: self
@@ -140,6 +150,12 @@ contains
         end select
     end function dot_rdp
 
+    integer function get_size_rdp(self) result(N)
+        class(vector_rdp), intent(in) :: self
+        N = test_size
+        return
+    end function get_size_rdp
+
     subroutine scal_rdp(self, alpha)
         class(vector_rdp), intent(inout) :: self
         real(dp), intent(in) :: alpha
@@ -194,6 +210,12 @@ contains
         end select
     end function dot_csp
 
+    integer function get_size_csp(self) result(N)
+        class(vector_csp), intent(in) :: self
+        N = test_size
+        return
+    end function get_size_csp
+
     subroutine scal_csp(self, alpha)
         class(vector_csp), intent(inout) :: self
         complex(sp), intent(in) :: alpha
@@ -247,6 +269,12 @@ contains
             alpha = dot_product(self%data, vec%data)
         end select
     end function dot_cdp
+
+    integer function get_size_cdp(self) result(N)
+        class(vector_cdp), intent(in) :: self
+        N = test_size
+        return
+    end function get_size_cdp
 
     subroutine scal_cdp(self, alpha)
         class(vector_cdp), intent(inout) :: self

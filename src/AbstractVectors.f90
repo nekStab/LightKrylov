@@ -80,6 +80,8 @@ module lightkrylov_AbstractVectors
         !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_rsp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_rsp`.
+        procedure(abstract_get_size_rsp), pass(self), deferred, public :: get_size
+        !! Return size of specific abstract vector
         procedure, pass(self), public :: norm => norm_rsp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rsp
@@ -92,14 +94,14 @@ module lightkrylov_AbstractVectors
     abstract interface
         subroutine abstract_zero_rsp(self)
             !! Abstract interface to zero-out a vector in-place.
-            import abstract_vector_rsp, sp
+            import abstract_vector_rsp
             class(abstract_vector_rsp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_rsp
 
         subroutine abstract_rand_rsp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
-            import abstract_vector_rsp, sp
+            import abstract_vector_rsp
             class(abstract_vector_rsp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rsp
@@ -131,11 +133,17 @@ module lightkrylov_AbstractVectors
             real(sp) :: alpha
             !! Result of the dot product.
         end function abstract_dot_rsp
+
+        function abstract_get_size_rsp(self) result(N)
+            !! Abstract interface to return the size of the specific abstract vector.
+            import abstract_vector_rsp
+            class(abstract_vector_rsp), intent(in) :: self
+            !! Vectors whose dot product will be computed.
+            integer :: N
+            !! Size of the vector
+        end function abstract_get_size_rsp
+
     end interface
-
-
-
-
 
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) vector with kind=dp     -----
@@ -154,6 +162,8 @@ module lightkrylov_AbstractVectors
         !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_rdp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_rdp`.
+        procedure(abstract_get_size_rdp), pass(self), deferred, public :: get_size
+        !! Return size of specific abstract vector
         procedure, pass(self), public :: norm => norm_rdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rdp
@@ -166,14 +176,14 @@ module lightkrylov_AbstractVectors
     abstract interface
         subroutine abstract_zero_rdp(self)
             !! Abstract interface to zero-out a vector in-place.
-            import abstract_vector_rdp, dp
+            import abstract_vector_rdp
             class(abstract_vector_rdp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_rdp
 
         subroutine abstract_rand_rdp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
-            import abstract_vector_rdp, dp
+            import abstract_vector_rdp
             class(abstract_vector_rdp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rdp
@@ -205,11 +215,17 @@ module lightkrylov_AbstractVectors
             real(dp) :: alpha
             !! Result of the dot product.
         end function abstract_dot_rdp
+
+        function abstract_get_size_rdp(self) result(N)
+            !! Abstract interface to return the size of the specific abstract vector.
+            import abstract_vector_rdp
+            class(abstract_vector_rdp), intent(in) :: self
+            !! Vectors whose dot product will be computed.
+            integer :: N
+            !! Size of the vector
+        end function abstract_get_size_rdp
+
     end interface
-
-
-
-
 
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) vector with kind=sp     -----
@@ -228,6 +244,8 @@ module lightkrylov_AbstractVectors
         !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_csp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_csp`.
+        procedure(abstract_get_size_csp), pass(self), deferred, public :: get_size
+        !! Return size of specific abstract vector
         procedure, pass(self), public :: norm => norm_csp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_csp
@@ -240,14 +258,14 @@ module lightkrylov_AbstractVectors
     abstract interface
         subroutine abstract_zero_csp(self)
             !! Abstract interface to zero-out a vector in-place.
-            import abstract_vector_csp, sp
+            import abstract_vector_csp
             class(abstract_vector_csp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_csp
 
         subroutine abstract_rand_csp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
-            import abstract_vector_csp, sp
+            import abstract_vector_csp
             class(abstract_vector_csp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_csp
@@ -279,11 +297,17 @@ module lightkrylov_AbstractVectors
             complex(sp) :: alpha
             !! Result of the dot product.
         end function abstract_dot_csp
+
+        function abstract_get_size_csp(self) result(N)
+            !! Abstract interface to return the size of the specific abstract vector.
+            import abstract_vector_csp
+            class(abstract_vector_csp), intent(in) :: self
+            !! Vectors whose dot product will be computed.
+            integer :: N
+            !! Size of the vector
+        end function abstract_get_size_csp
+
     end interface
-
-
-
-
 
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract complex(dp) vector with kind=dp     -----
@@ -302,6 +326,8 @@ module lightkrylov_AbstractVectors
         !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_cdp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_cdp`.
+        procedure(abstract_get_size_cdp), pass(self), deferred, public :: get_size
+        !! Return size of specific abstract vector
         procedure, pass(self), public :: norm => norm_cdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_cdp
@@ -314,14 +340,14 @@ module lightkrylov_AbstractVectors
     abstract interface
         subroutine abstract_zero_cdp(self)
             !! Abstract interface to zero-out a vector in-place.
-            import abstract_vector_cdp, dp
+            import abstract_vector_cdp
             class(abstract_vector_cdp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_cdp
 
         subroutine abstract_rand_cdp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
-            import abstract_vector_cdp, dp
+            import abstract_vector_cdp
             class(abstract_vector_cdp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_cdp
@@ -353,11 +379,17 @@ module lightkrylov_AbstractVectors
             complex(dp) :: alpha
             !! Result of the dot product.
         end function abstract_dot_cdp
+
+        function abstract_get_size_cdp(self) result(N)
+            !! Abstract interface to return the size of the specific abstract vector.
+            import abstract_vector_cdp
+            class(abstract_vector_cdp), intent(in) :: self
+            !! Vectors whose dot product will be computed.
+            integer :: N
+            !! Size of the vector
+        end function abstract_get_size_cdp
+
     end interface
-
-
-
-
 
 contains
 
