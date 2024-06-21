@@ -1,12 +1,16 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestVectors
-    use LightKrylov
-    use LightKrylov_Logger
-    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! Fortran Standard Library
     use stdlib_math, only: is_close, all_close
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! LightKrylov
+    use LightKrylov
+    use LightKrylov_Logger
+    use LightKrylov_TestTypes    
     
     implicit none
     
@@ -14,99 +18,12 @@ module TestVectors
 
     character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
 
-    integer, parameter, public :: test_size = 128
-
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_vector_${type[0]}$${kind}$_testsuite
     #:endfor
 
-    #:for kind, type in RC_KINDS_TYPES
-    type, extends(abstract_vector_${type[0]}$${kind}$), public :: vector_${type[0]}$${kind}$
-        ${type}$, dimension(test_size) :: data = 0.0_${kind}$
-    contains
-        private
-        procedure, pass(self), public :: zero => zero_${type[0]}$${kind}$
-        procedure, pass(self), public :: dot => dot_${type[0]}$${kind}$
-        procedure, pass(self), public :: scal => scal_${type[0]}$${kind}$
-        procedure, pass(self), public :: axpby => axpby_${type[0]}$${kind}$
-        procedure, pass(self), public :: rand => rand_${type[0]}$${kind}$
-        procedure, pass(self), public :: get_size => get_size_${type[0]}$${kind}$
-    end type vector_${type[0]}$${kind}$
-
-    #:endfor
 contains
-    
-    !--------------------------------------------------------------------
-    !-----     DEFINITIONS OF THE VARIOUS TYPE-BOUND PROCEDURES     -----
-    !--------------------------------------------------------------------
-
-    #:for kind, type in RC_KINDS_TYPES
-    subroutine zero_${type[0]}$${kind}$(self)
-        class(vector_${type[0]}$${kind}$), intent(inout) :: self
-        self%data = 0.0_${kind}$
-        return
-    end subroutine zero_${type[0]}$${kind}$
-
-    function dot_${type[0]}$${kind}$(self, vec) result(alpha)
-        class(vector_${type[0]}$${kind}$), intent(in) :: self
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
-        ${type}$ :: alpha
-
-        select type(vec)
-        type is(vector_${type[0]}$${kind}$)
-            alpha = dot_product(self%data, vec%data)
-        end select
-    end function dot_${type[0]}$${kind}$
-
-    integer function get_size_${type[0]}$${kind}$(self) result(N)
-        class(vector_${type[0]}$${kind}$), intent(in) :: self
-        N = test_size
-        return
-    end function get_size_${type[0]}$${kind}$
-
-    subroutine scal_${type[0]}$${kind}$(self, alpha)
-        class(vector_${type[0]}$${kind}$), intent(inout) :: self
-        ${type}$, intent(in) :: alpha
-        self%data = alpha * self%data
-        return
-    end subroutine scal_${type[0]}$${kind}$
-
-    subroutine axpby_${type[0]}$${kind}$(self, alpha, vec, beta)
-        class(vector_${type[0]}$${kind}$), intent(inout) :: self
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
-        ${type}$, intent(in) :: alpha, beta
-
-        select type(vec)
-        type is(vector_${type[0]}$${kind}$)
-            self%data = alpha*self%data + beta*vec%data
-        end select
-        return
-    end subroutine
-
-    subroutine rand_${type[0]}$${kind}$(self, ifnorm)
-        class(vector_${type[0]}$${kind}$), intent(inout) :: self
-        logical, optional, intent(in) :: ifnorm
-        logical :: normalized
-        ${type}$ :: mu(test_size), var(test_size)
-        ${type}$ :: alpha
- 
-        mu = 0.0_${kind}$
-        #:if type[0] == "r"
-        var = 1.0_${kind}$
-        #:else
-        var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
-        #:endif
-        self%data = normal(mu, var)
- 
-        normalized = optval(ifnorm, .false.)
-        if (normalized) then
-            alpha = self%norm()
-            call self%scal(1.0_${kind}$/alpha)
-        endif
-    end subroutine rand_${type[0]}$${kind}$
-
-    #:endfor
-    
+        
     !---------------------------------------------------------
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS     -----
     !---------------------------------------------------------
