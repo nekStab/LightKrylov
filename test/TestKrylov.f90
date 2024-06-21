@@ -74,8 +74,8 @@ contains
         real(sp) :: err
         character(len=256) :: msg
 
-        ! Initiliaze matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        ! Initialiaze matrix.
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -96,7 +96,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -137,7 +137,7 @@ contains
         rk = kdim - nzero
 
         ! Initialize matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Add zero vectors at random places.
         mask = .true. ; k = nzero
@@ -171,7 +171,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -209,8 +209,8 @@ contains
         real(dp) :: err
         character(len=256) :: msg
 
-        ! Initiliaze matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        ! Initialiaze matrix.
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -231,7 +231,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -272,7 +272,7 @@ contains
         rk = kdim - nzero
 
         ! Initialize matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Add zero vectors at random places.
         mask = .true. ; k = nzero
@@ -306,7 +306,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -344,8 +344,8 @@ contains
         real(sp) :: err
         character(len=256) :: msg
 
-        ! Initiliaze matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        ! Initialiaze matrix.
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -366,7 +366,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -407,7 +407,7 @@ contains
         rk = kdim - nzero
 
         ! Initialize matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Add zero vectors at random places.
         mask = .true. ; k = nzero
@@ -441,7 +441,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -479,8 +479,8 @@ contains
         real(dp) :: err
         character(len=256) :: msg
 
-        ! Initiliaze matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        ! Initialiaze matrix.
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -501,7 +501,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -542,7 +542,7 @@ contains
         rk = kdim - nzero
 
         ! Initialize matrix.
-        allocate(A(1:kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A)
 
         ! Add zero vectors at random places.
         mask = .true. ; k = nzero
@@ -576,7 +576,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, A(1:kdim), A(1:kdim))
+        call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
@@ -611,7 +611,6 @@ contains
         type(linop_rsp), allocatable :: A
         ! Krylov subspace.
         type(vector_rsp), allocatable :: X(:)
-        type(vector_rsp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         real(sp), allocatable :: H(:, :)
@@ -626,8 +625,7 @@ contains
         ! Initialize linear operator.
         A = linop_rsp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ; allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_rsp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_sp)
@@ -635,7 +633,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_rsp', &
@@ -644,7 +642,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
@@ -680,7 +678,7 @@ contains
         A = linop_rsp() ; call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
+        allocate(X(p*(kdim+1))) ; allocate(X0(p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         allocate(H(p*(kdim+1), p*kdim)) ; H = zero_rsp
 
@@ -690,7 +688,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_rsp', &
@@ -698,7 +696,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_rsp
-        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
+        call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
@@ -716,14 +714,13 @@ contains
         ! Test operator.
         type(linop_rsp), allocatable :: A
         ! Krylov subspace.
-        type(vector_rsp), allocatable :: X(:), X0(:)
+        type(vector_rsp), allocatable :: X(:)
         ! Krylov subspace dimension.
         integer, parameter :: kdim = 100
         ! Hessenberg matrix.
         real(sp), allocatable :: H(:, :)
         ! Information flag.
         integer :: info
-
         ! Miscellaneous.
         integer :: n
         real(sp), allocatable :: Xdata(:, :)
@@ -735,8 +732,7 @@ contains
         A%data = A%data / norm2(abs(A%data))
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_rsp
 
         ! Arnoldi factorization.
@@ -783,7 +779,6 @@ contains
         type(linop_rdp), allocatable :: A
         ! Krylov subspace.
         type(vector_rdp), allocatable :: X(:)
-        type(vector_rdp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         real(dp), allocatable :: H(:, :)
@@ -798,8 +793,7 @@ contains
         ! Initialize linear operator.
         A = linop_rdp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ; allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_rdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_dp)
@@ -807,7 +801,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_rdp', &
@@ -816,7 +810,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
@@ -852,7 +846,7 @@ contains
         A = linop_rdp() ; call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
+        allocate(X(p*(kdim+1))) ; allocate(X0(p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         allocate(H(p*(kdim+1), p*kdim)) ; H = zero_rdp
 
@@ -862,7 +856,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_rdp', &
@@ -870,7 +864,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_rdp
-        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
+        call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
@@ -888,14 +882,13 @@ contains
         ! Test operator.
         type(linop_rdp), allocatable :: A
         ! Krylov subspace.
-        type(vector_rdp), allocatable :: X(:), X0(:)
+        type(vector_rdp), allocatable :: X(:)
         ! Krylov subspace dimension.
         integer, parameter :: kdim = 100
         ! Hessenberg matrix.
         real(dp), allocatable :: H(:, :)
         ! Information flag.
         integer :: info
-
         ! Miscellaneous.
         integer :: n
         real(dp), allocatable :: Xdata(:, :)
@@ -907,8 +900,7 @@ contains
         A%data = A%data / norm2(abs(A%data))
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_rdp
 
         ! Arnoldi factorization.
@@ -955,7 +947,6 @@ contains
         type(linop_csp), allocatable :: A
         ! Krylov subspace.
         type(vector_csp), allocatable :: X(:)
-        type(vector_csp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         complex(sp), allocatable :: H(:, :)
@@ -970,8 +961,7 @@ contains
         ! Initialize linear operator.
         A = linop_csp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ; allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_csp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_sp)
@@ -979,7 +969,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_csp', &
@@ -988,7 +978,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1024,7 +1014,7 @@ contains
         A = linop_csp() ; call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
+        allocate(X(p*(kdim+1))) ; allocate(X0(p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         allocate(H(p*(kdim+1), p*kdim)) ; H = zero_csp
 
@@ -1034,7 +1024,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_csp', &
@@ -1042,7 +1032,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_csp
-        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
+        call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
@@ -1060,14 +1050,13 @@ contains
         ! Test operator.
         type(linop_csp), allocatable :: A
         ! Krylov subspace.
-        type(vector_csp), allocatable :: X(:), X0(:)
+        type(vector_csp), allocatable :: X(:)
         ! Krylov subspace dimension.
         integer, parameter :: kdim = 100
         ! Hessenberg matrix.
         complex(sp), allocatable :: H(:, :)
         ! Information flag.
         integer :: info
-
         ! Miscellaneous.
         integer :: n
         complex(sp), allocatable :: Xdata(:, :)
@@ -1079,8 +1068,7 @@ contains
         A%data = A%data / norm2(abs(A%data))
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_csp
 
         ! Arnoldi factorization.
@@ -1127,7 +1115,6 @@ contains
         type(linop_cdp), allocatable :: A
         ! Krylov subspace.
         type(vector_cdp), allocatable :: X(:)
-        type(vector_cdp), dimension(:), allocatable :: X0
         integer, parameter :: kdim = test_size
         ! Hessenberg matrix.
         complex(dp), allocatable :: H(:, :)
@@ -1142,8 +1129,7 @@ contains
         ! Initialize linear operator.
         A = linop_cdp() ; call init_rand(A)
         ! Initialize Krylov subspace.
-        allocate(X(1:kdim+1)) ; allocate (X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_cdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_dp)
@@ -1151,7 +1137,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_cdp', &
@@ -1160,7 +1146,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1196,7 +1182,7 @@ contains
         A = linop_cdp() ; call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(1:p*(kdim+1))) ; allocate(X0(1:p))
+        allocate(X(p*(kdim+1))) ; allocate(X0(p))
         call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
         allocate(H(p*(kdim+1), p*kdim)) ; H = zero_cdp
 
@@ -1206,7 +1192,7 @@ contains
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:p*kdim)) - matmul(Xdata, H)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_cdp', &
@@ -1214,7 +1200,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis.
         allocate(G(p*kdim, p*kdim)) ; G = zero_cdp
-        call innerprod(G, X(1:p*kdim), X(1:p*kdim))
+        call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
@@ -1232,14 +1218,13 @@ contains
         ! Test operator.
         type(linop_cdp), allocatable :: A
         ! Krylov subspace.
-        type(vector_cdp), allocatable :: X(:), X0(:)
+        type(vector_cdp), allocatable :: X(:)
         ! Krylov subspace dimension.
         integer, parameter :: kdim = 100
         ! Hessenberg matrix.
         complex(dp), allocatable :: H(:, :)
         ! Information flag.
         integer :: info
-
         ! Miscellaneous.
         integer :: n
         complex(dp), allocatable :: Xdata(:, :)
@@ -1251,8 +1236,7 @@ contains
         A%data = A%data / norm2(abs(A%data))
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
         allocate(H(kdim+1, kdim)) ; H = zero_cdp
 
         ! Arnoldi factorization.
@@ -1311,7 +1295,6 @@ contains
         ! Miscellaneous.
         real(sp), allocatable :: Udata(:, :), Vdata(:, :)
         real(sp), allocatable :: G(:, :)
-        type(vector_rsp), allocatable :: X0(:)
         real(sp) :: err
         character(len=256) :: msg
 
@@ -1319,9 +1302,10 @@ contains
         A = linop_rsp() ; call init_rand(A)
 
         ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call zero_basis(V) ; allocate(B(kdim+1, kdim)) ; B = zero_rsp
+        allocate(U(kdim+1), V(kdim+1), B(kdim+1,kdim))
+        call zero_basis(U); call U(1)%rand(ifnorm = .true.)
+        call zero_basis(V)
+        B = zero_rsp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_sp)
@@ -1332,7 +1316,7 @@ contains
         allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
-        err = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
@@ -1340,7 +1324,7 @@ contains
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, U(1:kdim), U(1:kdim))
+        call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1351,7 +1335,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rsp
-        call innerprod(G, V(1:kdim), V(1:kdim))
+        call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1388,7 +1372,6 @@ contains
         ! Miscellaneous.
         real(dp), allocatable :: Udata(:, :), Vdata(:, :)
         real(dp), allocatable :: G(:, :)
-        type(vector_rdp), allocatable :: X0(:)
         real(dp) :: err
         character(len=256) :: msg
 
@@ -1396,9 +1379,10 @@ contains
         A = linop_rdp() ; call init_rand(A)
 
         ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call zero_basis(V) ; allocate(B(kdim+1, kdim)) ; B = zero_rdp
+        allocate(U(kdim+1), V(kdim+1), B(kdim+1,kdim))
+        call zero_basis(U); call U(1)%rand(ifnorm = .true.)
+        call zero_basis(V)
+        B = zero_rdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_dp)
@@ -1409,7 +1393,7 @@ contains
         allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
-        err = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
@@ -1417,7 +1401,7 @@ contains
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, U(1:kdim), U(1:kdim))
+        call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1428,7 +1412,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_rdp
-        call innerprod(G, V(1:kdim), V(1:kdim))
+        call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1465,7 +1449,6 @@ contains
         ! Miscellaneous.
         complex(sp), allocatable :: Udata(:, :), Vdata(:, :)
         complex(sp), allocatable :: G(:, :)
-        type(vector_csp), allocatable :: X0(:)
         real(sp) :: err
         character(len=256) :: msg
 
@@ -1473,9 +1456,10 @@ contains
         A = linop_csp() ; call init_rand(A)
 
         ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call zero_basis(V) ; allocate(B(kdim+1, kdim)) ; B = zero_csp
+        allocate(U(kdim+1), V(kdim+1), B(kdim+1,kdim))
+        call zero_basis(U); call U(1)%rand(ifnorm = .true.)
+        call zero_basis(V)
+        B = zero_csp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_sp)
@@ -1486,7 +1470,7 @@ contains
         allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
-        err = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
@@ -1494,7 +1478,7 @@ contains
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, U(1:kdim), U(1:kdim))
+        call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1505,7 +1489,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_csp
-        call innerprod(G, V(1:kdim), V(1:kdim))
+        call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1542,7 +1526,6 @@ contains
         ! Miscellaneous.
         complex(dp), allocatable :: Udata(:, :), Vdata(:, :)
         complex(dp), allocatable :: G(:, :)
-        type(vector_cdp), allocatable :: X0(:)
         real(dp) :: err
         character(len=256) :: msg
 
@@ -1550,9 +1533,10 @@ contains
         A = linop_cdp() ; call init_rand(A)
 
         ! Initialize Krylov subspaces.
-        allocate(U(1:kdim+1)) ; allocate(V(1:kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(U, X0)
-        call zero_basis(V) ; allocate(B(kdim+1, kdim)) ; B = zero_cdp
+        allocate(U(kdim+1), V(kdim+1), B(kdim+1,kdim))
+        call zero_basis(U); call U(1)%rand(ifnorm = .true.)
+        call zero_basis(V)
+        B = zero_cdp
 
         ! Lanczos bidiagonalization.
         call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_dp)
@@ -1563,7 +1547,7 @@ contains
         allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
-        err = maxval(abs(matmul(A%data, Vdata(:, 1:kdim)) - matmul(Udata, B)))
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
@@ -1571,7 +1555,7 @@ contains
 
         ! Compute Gram matrix associated to the left Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, U(1:kdim), U(1:kdim))
+        call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1582,7 +1566,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         G = zero_cdp
-        call innerprod(G, V(1:kdim), V(1:kdim))
+        call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1626,7 +1610,6 @@ contains
 
         ! Internal variables.
         real(sp), allocatable :: Xdata(:, :)
-        class(vector_rsp), allocatable :: X0(:)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
         character(len=256) :: msg
@@ -1639,8 +1622,7 @@ contains
         call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
@@ -1651,7 +1633,7 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
 
         ! Infinity-norm check.
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
@@ -1659,7 +1641,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1698,7 +1680,6 @@ contains
 
         ! Internal variables.
         real(dp), allocatable :: Xdata(:, :)
-        class(vector_rdp), allocatable :: X0(:)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
         character(len=256) :: msg
@@ -1711,8 +1692,7 @@ contains
         call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
@@ -1723,7 +1703,7 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
 
         ! Infinity-norm check.
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
@@ -1731,7 +1711,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1770,7 +1750,6 @@ contains
 
         ! Internal variables.
         complex(sp), allocatable :: Xdata(:, :)
-        class(vector_csp), allocatable :: X0(:)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
         character(len=256) :: msg
@@ -1783,8 +1762,7 @@ contains
         call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
@@ -1795,7 +1773,7 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
 
         ! Infinity-norm check.
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
@@ -1803,7 +1781,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
@@ -1842,7 +1820,6 @@ contains
 
         ! Internal variables.
         complex(dp), allocatable :: Xdata(:, :)
-        class(vector_cdp), allocatable :: X0(:)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
         character(len=256) :: msg
@@ -1855,8 +1832,7 @@ contains
         call init_rand(A)
 
         ! Initialize Krylov subspace.
-        allocate(X(kdim+1)) ; allocate(X0(1))
-        call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
         call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
@@ -1867,7 +1843,7 @@ contains
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
 
         ! Infinity-norm check.
-        err = maxval(abs(matmul(A%data, Xdata(:, 1:kdim)) - matmul(Xdata, T)))
+        err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
@@ -1875,7 +1851,7 @@ contains
 
         ! Compute Gram matrix associated to the right Krylov basis.
         allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, X(1:kdim), X(1:kdim))
+        call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
