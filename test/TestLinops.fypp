@@ -7,6 +7,7 @@ module TestLinops
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Constants
+    use LightKrylov_Logger
     
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -162,7 +163,7 @@ contains
         ! Test LinOp.
         type(linop_${type[0]}$${kind}$), allocatable :: A
         #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        real(${kind}$), allocatable :: Adata(:, :, :)
         #:endif
 
         ! Initialize vectors.
@@ -172,6 +173,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -183,10 +185,12 @@ contains
         ! Check result.
         #:if type[0] == "c"
         call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_${kind}$)
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', eq='norm2(|y - A @ x|)')
         #:else
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${kind}$)
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', eq='norm2(y - A @ x)')
         #:endif
-
+        
         return
     end subroutine test_matvec_${type[0]}$${kind}$
 
@@ -198,7 +202,7 @@ contains
         ! Test LinOp.
         type(linop_${type[0]}$${kind}$), allocatable :: A
         #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        real(${kind}$), allocatable :: Adata(:, :, :)
         #:endif
 
         ! Initialize vectors.
@@ -208,6 +212,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -219,8 +224,10 @@ contains
         ! Check result.
         #:if type[0] == "c"
         call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_${kind}$)
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', eq='norm2(|y - A.H @ x|)')
         #:else
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${kind}$)
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', eq='norm2(y - A.T @ x)')
         #:endif
         
         return
@@ -235,7 +242,7 @@ contains
         type(linop_${type[0]}$${kind}$), allocatable :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
         #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        real(${kind}$), allocatable :: Adata(:, :, :)
         #:endif
 
         ! Internal variable.
@@ -244,6 +251,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -262,11 +270,15 @@ contains
         ! Check result.
         #:if type[0] == "c"
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', eq='norm2(|y - A.H @ x|)')
         #:else
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', eq='norm2(y - A.T @ x)')
         #:endif
 
-        call check(error, alpha < rtol_${kind}$)
+        
 
        return
     end subroutine test_adjoint_matvec_${type[0]}$${kind}$
@@ -280,7 +292,7 @@ contains
         type(linop_${type[0]}$${kind}$), allocatable :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
         #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, test_size, 2) :: Adata
+        real(${kind}$), allocatable :: Adata(:, :, :)
         #:endif
 
         ! Internal variable.
@@ -289,6 +301,7 @@ contains
         ! Initialize matrix.
         A = linop_${type[0]}$${kind}$()
         #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -307,15 +320,16 @@ contains
         ! Check result.
         #:if type[0] == "c"
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', eq='norm2(|y - A @ x|)')
         #:else
         alpha = norm2(y%data - matmul(A%data, x%data))
-        #:endif
-
         call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', eq='norm2(y - A @ x)')
+        #:endif
 
        return
     end subroutine test_adjoint_rmatvec_${type[0]}$${kind}$
-
 
     #:endfor
 end module TestLinops

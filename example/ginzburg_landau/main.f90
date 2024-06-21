@@ -6,7 +6,7 @@ program demo
   use Ginzburg_Landau
   implicit none
 
-  character*128, parameter :: this_module = 'Example Ginzburg_Landau'
+  character(len=128), parameter :: this_module = 'Example Ginzburg_Landau'
 
   !------------------------------------------------
   !-----     LINEAR OPERATOR INVESTIGATED     -----
@@ -33,8 +33,7 @@ program demo
   integer          :: info
 
   !> Miscellaneous.
-  integer       :: i, j, k
-  real(kind=wp) :: alpha
+  integer       :: i
   complex(wp) :: eigenvectors(nx, nev)
 
   !=============================================================================
@@ -50,7 +49,7 @@ program demo
   A = exponential_prop(tau)
 
   !> Initialize Krylov subspace.
-  allocate(X(nev)) ; call initialize_krylov_subspace(X)
+  allocate(X(nev)) ; call zero_basis(X)
 
   !------------------------------------------
   !-----     EIGENVALUE COMPUTATION     -----

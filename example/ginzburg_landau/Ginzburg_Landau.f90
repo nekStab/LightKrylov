@@ -75,7 +75,7 @@ contains
   subroutine initialize_parameters()
     implicit none
     ! Mesh array.
-    real(kind=wp), allocatable :: x(:)
+    real(kind=wp) :: x(nx+2)
 
     ! Construct mesh.
     x = linspace(-L/2, L/2, nx+2)
@@ -102,7 +102,7 @@ contains
     real(kind=wp)  , dimension(:), intent(out) :: f
 
     ! Internal variables.
-    integer :: i, j, k
+    integer :: i
     real(kind=wp), dimension(nx) :: u, du
     real(kind=wp), dimension(nx) :: v, dv
     real(kind=wp)                :: d2u, d2v, cu, cv
@@ -129,7 +129,7 @@ contains
     dv(1) = dv(1) + mu(1)*v(1) ! Non-parallel term.
 
     ! Interior nodes.
-    do i = 2, nx-1
+    do concurrent (i=2:nx-1)
        ! Convective term.
        cu = (u(i+1) - u(i-1)) / (2*dx)
        cv = (v(i+1) - v(i-1)) / (2*dx)
@@ -180,7 +180,7 @@ contains
     real(kind=wp)  , dimension(:), intent(out) :: f
 
     ! Internal variables.
-    integer :: i, j, k
+    integer :: i
     real(kind=wp), dimension(nx) :: u, du
     real(kind=wp), dimension(nx) :: v, dv
     real(kind=wp)                :: d2u, d2v, cu, cv
@@ -207,7 +207,7 @@ contains
     dv(1) = dv(1) + mu(1)*v(1) ! Non-parallel term.
 
     ! Interior nodes.
-    do i = 2, nx-1
+    do concurrent (i=2:nx-1)
        ! Convective term.
        cu = (u(i+1) - u(i-1)) / (2*dx)
        cv = (v(i+1) - v(i-1)) / (2*dx)

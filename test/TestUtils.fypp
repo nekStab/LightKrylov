@@ -2,6 +2,8 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestUtils
     use stdlib_io_npy, only: save_npy
+    use stdlib_linalg, only: eye, diag
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use LightKrylov
     use LightKrylov_Constants
     use TestVectors
@@ -11,11 +13,12 @@ module TestUtils
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestUtils'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestUtils'
 
     public :: get_data
     public :: put_data
     public :: init_rand
+    public :: get_err_str
 
     interface get_data
         #:for kind, type in RC_KINDS_TYPES
@@ -46,6 +49,12 @@ module TestUtils
         #:endfor
     end interface
 
+    interface get_err_str
+        #:for kind, type in REAL_KINDS_TYPES
+        module procedure get_err_str_${kind}$
+        #:endfor
+    end interface
+
 contains
 
     !----------------------------------------------------
@@ -56,8 +65,6 @@ contains
     subroutine get_data_vec_${type[0]}$${kind}$(vec_out, vec_in)
         ${type}$, intent(out) :: vec_out(:)
         type(vector_${type[0]}$${kind}$), intent(in) :: vec_in
-        ! Internal variables.
-        integer :: k, kdim
         vec_out = vec_in%data
         return
     end subroutine get_data_vec_${type[0]}$${kind}$
@@ -66,9 +73,8 @@ contains
         ${type}$, intent(out) :: basis_out(:, :)
         type(vector_${type[0]}$${kind}$), intent(in) :: basis_in(:)
         ! Internal variables.
-        integer :: k, kdim
-        kdim = size(basis_in)
-        do k = 1, kdim
+        integer :: k
+        do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
         return
@@ -138,42 +144,64 @@ contains
 
     subroutine init_rand_linop_${type[0]}$${kind}$(linop)
         type(linop_${type[0]}$${kind}$), intent(inout) :: linop
-        #:if type[0] == "c"
-        real(${kind}$), dimension(test_size, test_size, 2) :: data
-        call random_number(data) ; data = data - 0.5_${kind}$
-        linop%data%re = data(:, :, 1)
-        linop%data%im = data(:, :, 2)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size))
+        #:if type[0] == "r"
+        var = 1.0_${kind}$
         #:else
-        call random_number(linop%data)
+        var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
         #:endif
+        linop%data = normal(mu, var)
         return
     end subroutine init_rand_linop_${type[0]}$${kind}$
 
     #:if type[0] == "r"
     subroutine init_rand_spd_linop_${type[0]}$${kind}$(linop)
         type(spd_linop_${type[0]}$${kind}$), intent(inout) :: linop
-        ${type}$, dimension(test_size, 2*test_size) :: data
-        integer :: i
-        call random_number(data) ; data = data - 0.5_${kind}$
-        linop%data = matmul(data, transpose(data)) / 4
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+        ${type}$, allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
+        allocate(var(test_size, test_size)) ; var = one_${type[0]}$${kind}$
+
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
         return
     end subroutine init_rand_spd_linop_${type[0]}$${kind}$
     #:else
     subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
         type(hermitian_linop_${type[0]}$${kind}$), intent(inout) :: linop
-        real(${kind}$), dimension(test_size, 2*test_size, 2) :: data
-        ${type}$, dimension(test_size, 2*test_size) :: data_c
-        ${type}$, dimension(test_size, test_size) :: matrix
-        integer :: i
-        call random_number(data)
-        data_c%re = data(:, :, 1) - 0.5_${kind}$
-        data_c%im = data(:, :, 2) - 0.5_${kind}$
-        matrix = matmul(data_c, transpose(conjg(data_c))) / 4
-        linop%data = matrix
+        ${type}$, allocatable :: data(:, :)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
         return
     end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
     #:endif
 
+    #:endfor
+
+    #:for kind, type in REAL_KINDS_TYPES
+    subroutine get_err_str_${kind}$(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(${kind}$) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_${kind}$
     #:endfor
 
 end module

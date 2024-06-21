@@ -24,8 +24,8 @@ source-form = "free"
 stdlib = "*"
 
 [dev-dependencies]
-test-drive.git = "https://github.com/fortran-lang/test-drive"
-test-drive.tag = "v0.4.0"
+test-drive.git = "https://github.com/nekStab/test-drive.git"
+FACE = {git="https://github.com/szaghi/FACE.git"}
 
 [[example]]
 
