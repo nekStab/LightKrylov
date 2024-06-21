@@ -14,7 +14,6 @@ module LightKrylov
     ! --> Expmlib
     use LightKrylov_Expmlib
     ! --> TestTypes
-    use LightKrylov_TestTypes
     implicit none
     private
 
@@ -93,9 +92,6 @@ module LightKrylov
     public :: expm
     public :: kexpm
     public :: k_exptA
-
-    ! Testing exports.
-    public :: test_size
 
 contains
 
