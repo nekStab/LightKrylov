@@ -161,7 +161,7 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
-        !
+         !
          !   LightKrylov_Utils
          !
          else if (trim(to_lower(origin)) == 'sqrtm') then
@@ -182,7 +182,7 @@ contains
          !
          else if (trim(to_lower(origin)) == 'orthogonalize_against_basis') then
             ! orthogonalization
-            if (info == 1) then
+            if (info > 0) then
                write(msg, *) 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
                call logger%log_information(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
@@ -199,7 +199,7 @@ contains
             end if
          else if (trim(to_lower(origin)) == 'double_gram_schmidt_step') then
             ! orthogonalization
-            if (info == 1) then
+            if (info > 0) then
                write(msg, *) 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
                call logger%log_information(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
