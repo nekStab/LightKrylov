@@ -4,7 +4,6 @@ module LightKrylov_TestTypes
     use stdlib_optval, only: optval
     ! LightKrylov
     use LightKrylov
-    use LightKrylov_Logger
     
     implicit none
     
