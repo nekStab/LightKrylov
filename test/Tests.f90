@@ -59,7 +59,10 @@ program Tester
    write(output_unit, *)
 
    do is = 1, size(testsuites)
+      write (*, *) "-------------------------------"
       write (error_unit, fmt) "Testing :", testsuites(is)%name
+      write (*, *) "-------------------------------"
+      write (*, *)
       call run_testsuite(testsuites(is)%collect, error_unit, status)
       write (*, *)
    end do
@@ -140,7 +143,10 @@ program Tester
    write(output_unit, *)
 
    do is = 1, size(testsuites)
+      write (*, *) "-------------------------------"
       write (error_unit, fmt) "Testing :", testsuites(is)%name
+      write (*, *) "-------------------------------"
+      write (*, *)
       call run_testsuite(testsuites(is)%collect, error_unit, status)
       write (*, *)
    end do
@@ -178,8 +184,12 @@ program Tester
    write(output_unit, *)
 
    do is = 1, size(testsuites)
+      write (*, *) "-------------------------------"
       write (error_unit, fmt) "Testing :", testsuites(is)%name
+      write (*, *) "-------------------------------"
+      write (*, *)
       call run_testsuite(testsuites(is)%collect, error_unit, status)
+      write (*, *)
    end do
 
    if (status > 0) then
