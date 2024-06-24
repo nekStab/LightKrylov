@@ -3,15 +3,13 @@
 module TestLinops
     ! Fortran Standard Library
     use stdlib_math, only: is_close, all_close
-
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Constants
     use LightKrylov_Logger
-    
-    ! Testdrive
-    use testdrive, only: new_unittest, unittest_type, error_type, check
-    use TestVectors
+    use LightKrylov_TestTypes
 
     implicit none
     
@@ -23,120 +21,7 @@ module TestLinops
     public :: collect_linop_${type[0]}$${kind}$_testsuite
     #:endfor
 
-    #:for kind, type in RC_KINDS_TYPES
-    type, extends(abstract_linop_${type[0]}$${kind}$), public :: linop_${type[0]}$${kind}$
-        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
-    contains
-        private
-        procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
-        procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
-    end type
-
-    #:if type[0] == "r"
-    type, extends(abstract_sym_linop_${type[0]}$${kind}$), public :: spd_linop_${type[0]}$${kind}$
-        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
-    contains
-        private
-        procedure, pass(self), public :: matvec => sdp_matvec_${type[0]}$${kind}$
-        procedure, pass(self), public :: rmatvec => sdp_matvec_${type[0]}$${kind}$
-    end type
-    #:else
-    type, extends(abstract_hermitian_linop_${type[0]}$${kind}$), public :: hermitian_linop_${type[0]}$${kind}$
-        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
-    contains
-        private
-        procedure, pass(self), public :: matvec => hermitian_matvec_${type[0]}$${kind}$
-        procedure, pass(self), public :: rmatvec => hermitian_matvec_${type[0]}$${kind}$
-    end type
-    #:endif
-
-    #:endfor
 contains
-
-    !--------------------------------------------------------------------
-    !-----     DEFINITIONS OF THE VARIOUS TYPE-BOUND PROCEDURES     -----
-    !--------------------------------------------------------------------
-
-    #:for kind, type in RC_KINDS_TYPES
-    subroutine matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(linop_${type[0]}$${kind}$), intent(in)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
-        select type(vec_in)
-        type is(vector_${type[0]}$${kind}$)
-            select type(vec_out)
-            type is(vector_${type[0]}$${kind}$)
-
-            vec_out%data = matmul(self%data, vec_in%data)
-
-            end select
-        end select
-
-        return
-    end subroutine matvec_${type[0]}$${kind}$
-
-    subroutine rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(linop_${type[0]}$${kind}$), intent(in)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
-        select type(vec_in)
-        type is(vector_${type[0]}$${kind}$)
-            select type(vec_out)
-            type is(vector_${type[0]}$${kind}$)
-
-            #:if type[0] == "c"
-            vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
-            #:else
-            vec_out%data = matmul(transpose(self%data), vec_in%data)
-            #:endif
-
-            end select
-        end select
-
-        return
-    end subroutine rmatvec_${type[0]}$${kind}$
-
-    #:if type[0] == "r"
-    subroutine sdp_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(spd_linop_${type[0]}$${kind}$), intent(in)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
-        select type(vec_in)
-        type is(vector_${type[0]}$${kind}$)
-            select type(vec_out)
-            type is(vector_${type[0]}$${kind}$)
-
-            vec_out%data = matmul(self%data, vec_in%data)
-
-            end select
-        end select
-
-        return
-    end subroutine sdp_matvec_${type[0]}$${kind}$
-    #:else
-    subroutine hermitian_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(hermitian_linop_${type[0]}$${kind}$), intent(in)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
-        select type(vec_in)
-        type is(vector_${type[0]}$${kind}$)
-            select type(vec_out)
-            type is(vector_${type[0]}$${kind}$)
-
-            vec_out%data = matmul(self%data, vec_in%data)
-
-            end select
-        end select
-
-        return
-    end subroutine hermitian_matvec_${type[0]}$${kind}$
-   #:endif
-
-    #:endfor
 
     !---------------------------------------------------------
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS     -----
