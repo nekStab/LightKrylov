@@ -2,13 +2,13 @@
 
 
 
-|                         **License**                          |                       **Build Status**                       | **Documentation** |
-| :----------------------------------------------------------: | :----------------------------------------------------------: | :---------------: |
-| [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) | [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/gcc.yml/badge.svg?event=push)](https://github.com/nekStab/LightKrylov/actions) | [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) |
+|                         **License**                          |                       **Build Status**                       |                      **Documentation**                       |
+| :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
+| [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) | [![ci](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml/badge.svg)](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml) | [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) |
 
 # LightKrylov
 
-Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of certain of the most useful Krylov methods to solve a variety of problems, among which:
+Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
    $$\mathbf{A} \mathbf{x} = \lambda \mathbf{x}$$
@@ -32,22 +32,17 @@ Krylov methods are *iterative methods*, i.e. they iteratively refine the solutio
 `LightKrylov` leverages Fortran's `abstract type` feature to provide generic implementations of the various Krylov methods.
 The only requirement from the user to benefit from the capabilities of `LightKrylov` is to extend the `abstract_vector` and `abstract_linop` types to define their notion of vectors and linear operators. `LightKrylov` then provides the following functionalities:
 
-- Krylov factorizations : `arnoldi_factorization`, `lanczos_tridiagonalization`, `lanczos_bidiagonalization`.
+- Krylov factorizations : `arnoldi`, `lanczos_tridiagonalization`, `lanczos_bidiagonalization`.
 - Spectral analysis : `eigs`, `eighs`, `svds`.
 - Linear systems : `gmres`, `cg`.
 
-### Known limitations
-
-For the sake of simplicity, `LightKrylov` only works with `real` or `double precision` data. While this might seem restrictive at first, consider that a complex-valued $n \times n$ linear system $\mathbf{Ax} = \mathbf{b}$ can always be rewritten using only real arithmetic as a $2n \times 2n$ real-valued system.
-The primary reason to develop `LightKrylov` is to couple it with high-performance solvers in computational mechanics which often use exclusively real-valued data types. As such, we do not have any plan to natively support complex-valued linear operators or vectors.
-
 ### Examples
 
-Several examples can be found in the `example` folder. These include:
+Some examples can be found in the `example` folder. These include:
 - [Ginzburg-Landau]() : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
 - [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
 
-Alternatively, you can also look at [`neklab`](), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
+Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
 
 | [**Ginzburg-Landau**]() | [**Laplace operator**]() |
 | :---------------------: | :----------------------: |
@@ -72,12 +67,14 @@ gh repo clone nekStab/LightKrylov
 `LightKrylov` has a very minimal set of dependencies. These only include:
 
 - a Fortran compiler,
-- [LAPACK]() (or similar),
-- [`fpm`](https://github.com/fortran-lang/fpm) or `make` for building the code.
+- [`fpm`](https://github.com/fortran-lang/fpm) for building the code.
 
-And that's all of it. To date, the tested compilers include:
+To date, the tested compilers include:
 
-- `gfortran 12.0.3`
+- `gfortran 12` (Linux)
+- `gfortran 13` (Linux, Windows, MacOS)
+- `ifort` (Linux)
+- `ifx` (Linux)
 
 ### Building with `fpm`
 
@@ -87,13 +84,17 @@ Provided you have cloned the repo, installing `LightKrylov` with `fpm` is as sim
 fpm build --profile release
 ```
 
-### Building with `make`
+To install it and make it accessible for other non-`fpm` related programs, simply run
 
-N/A
+```
+fpm install --profile release
+```
+
+Both of these will make use of the standard compilation options set by the `fpm` team. Please refer to their documentation ([here](https://fpm.fortran-lang.org/)) for more details.
 
 ### Running the tests
 
-To see if the library has been compiled correctly, a set of unit tests are provided in [test](). If you use `fpm`, running these tests is as simple as
+To see if the library has been compiled correctly, a set of unit tests are provided in [test](). Run the following command.
 
 ```
 fpm test
