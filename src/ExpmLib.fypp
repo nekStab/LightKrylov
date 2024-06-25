@@ -30,7 +30,7 @@ module lightkrylov_expmlib
 
     abstract interface
         #:for kind, type in RC_KINDS_TYPES
-        subroutine abstract_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+        subroutine abstract_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, dt, info, trans)
             import ${kind}$
             import abstract_vector_${type[0]}$${kind}$
             import abstract_linop_${type[0]}$${kind}$
@@ -43,6 +43,8 @@ module lightkrylov_expmlib
             !! Input vector.
             real(${kind}$), intent(in) :: tau
             !! Time horizon for integration.
+            real(${kind}$), intent(inout) :: dt
+            !! Current time step.
             integer, intent(out) :: info
             !! Information flag.
             logical, optional, intent(in) :: trans
@@ -144,7 +146,7 @@ contains
         return
     end subroutine expm_${type[0]}$${kind}$
 
-    subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, dt, tol, info, trans, verbosity, kdim)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
@@ -153,6 +155,8 @@ contains
         !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
         real(${kind}$), intent(in) :: tau
         !! Time horizon for the exponentiation.
+        real(${kind}$), intent(inout) :: dt
+        !! Current time step.
         real(${kind}$), intent(in) :: tol
         !! Solution tolerance based on error estimates.
         integer, intent(out) :: info
@@ -166,14 +170,16 @@ contains
 
         ! ----- Internal variables -----
         integer, parameter :: kmax = 100
-        integer :: k, km, kp, nk
+        integer :: k, km, kp, nk, istep
         ! Arnoldi factorization.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: X(:)
         ${type}$, allocatable :: H(:, :)
         ! Normaliztion & temporary arrays.
         ${type}$, allocatable :: E(:, :)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk
-        real(${kind}$) :: err_est, beta
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: b_
+        real(${kind}$) :: err_est, beta, Tend, dt_
+        character(len=128) :: msg
+
         ! Optional arguments.
         logical :: transpose
         logical :: verbose
@@ -188,84 +194,135 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(X(nk+1), source=b) ; allocate(H(nk+1, nk+1))
-        allocate(E(nk+1, nk+1)) ; allocate(Xwrk, source=b)
+        allocate(X(nk+1), b_, source=b)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1))
 
         ! Normalize input vector and initialize Krylov subspace.
         beta = b%norm()
         if (beta == 0.0_${kind}$) then
             ! Input is zero => Output is zero.
             call c%zero()
-            err_est = 0.0_${kind}$
-            kp = 1
         else
-            call initialize_krylov_subspace(X)
-            call X(1)%add(b) ; call X(1)%scal(one_${type[0]}$${kind}$ / beta)
-            H = 0.0_${kind}$
-
-            expm_arnoldi: do k = 1, nk
-                km = k-1 ; kp = k+1
-
-                ! Reset work arrays.
-                E = 0.0_${kind}$
-
-                ! Compute k-th step Arnoldi factorization.
-                call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
-
-                ! Compute approximation.
-                if (info == k) then
-                    ! Arnoldi breakdown, do not consider extended matrix.
-                    kp = k
-                    info = -2
-                endif
-
-                ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kp, :kp), tau*H(:kp, :kp))
-
-                ! Project back into original space.
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(zero_${type[0]}$${kind}$, Xwrk, one_${type[0]}$${kind}$*beta)
-
-                ! Cheap error esimate (this actually is the magnitude of the included correction
-                ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_${kind}$
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
-
-                ! Check convergence.
-                if (err_est <= tol) exit expm_arnoldi
-
-            enddo expm_arnoldi
-        endif
-
-        if (err_est <= tol) then
-            info = kp
+            istep = 1
+            Tend = 0.0_${kind}$
             if (verbose) then
-                write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
-                write(output_unit, *) "     n° of vectors     :", kp
-                write(output_unit, *) "     Estimated error   : ||err_est||_2 =", err_est
-                write(output_unit, *) "     Desired tolerance :           tol =", tol
-                write(output_unit, *)
-            endif
-        else
-            info = -1
-            if (verbose) then
-                write(output_unit, *) 'Arnoldi-based approxmation of the exp. propagator did not converge'
-                write(output_unit, *) '    Maximum n° of vectors reached: ', nk + 1
-                write(output_unit, *) '    Estimated error              :   ||err_est||_2 = ', err_est
-                write(output_unit, *) '    Desired tolerance            :           tol = ', tol
-                write(output_unit, *)
-            endif
+               write(msg, '(2(A,E12.6))') 'tau = ', tau, ', dt_0 = ', dt
+               call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+            end if
+            do while ( Tend < tau )
+
+               ! (Re-)initialization of X
+               call initialize_krylov_subspace(X) ; call X(1)%add(b_) ;
+               beta = b_%norm() ; call X(1)%scal(one_${type[0]}$${kind}$ / beta)
+               H = 0.0_${kind}$
+
+               ! choose time step
+               dt  = min(tau, 2*dt)    ! Reuse step size of last call (and try to increase)
+               if (dt > tau-Tend) then
+                  dt_ = tau-Tend       ! If a small final step is needed to reach Tend, ignore it on restart
+                  if (verbose) then
+                     write(msg, '(A,E12.6)') 'Filler step, set dt_ = ', dt_
+                     call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+                  end if
+               else
+                  dt_ = dt
+               end if
+               if (verbose) then
+                  write(msg, '(A,I3,3(A,E10.4))') 'step ', istep, ': T = ', Tend, ', dt = ', dt, ', dt_ = ', dt_
+                  call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+               end if
+
+               expm_arnoldi: do k = 1, nk
+                   km = k-1 ; kp = k+1
+
+                   ! Reset work arrays.
+                   E = 0.0_${kind}$
+
+                   ! Compute k-th step Arnoldi factorization.
+                   call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                   call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+
+                   ! Compute approximation.
+                   if (info == k) then
+                       ! Arnoldi breakdown, do not consider extended matrix.
+                       kp = k
+                       info = -2
+                   endif
+
+                   ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
+                   call expm(E(:kp, :kp), dt_*H(:kp, :kp))
+
+                   ! Cheap error esimate (this actually is the magnitude of the included correction
+                   ! and thus is very conservative).
+                   if (info == k) then
+                       ! Approximation is exact.
+                       err_est = 0.0_${kind}$
+                   else
+                       err_est = abs(E(kp, 1) * beta)
+                   endif
+
+                   ! Check convergence.
+                   if (err_est <= tol) exit expm_arnoldi
+
+               enddo expm_arnoldi
+
+               if (verbose) then
+                  write(msg, '(30X,A,E12.6)') 'err_est = ', err_est
+                  call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+               end if
+
+               if (err_est > tol) then ! decrease dt_ until error estimate is below tolerance
+                                       ! NOTE: We do not need to recompute X,H!
+                  do while (err_est > tol)
+
+                     dt_ = dt_/2 ! this is a quick hack, should choose step better
+
+                     if (dt_ < atol_${kind}$) then
+                        write(msg, *) 'dt < atol_${kind}$. Cannot compute action of the matrix exponential!'
+                        call stop_error(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+                     end if
+
+                     ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
+                     call expm(E(:kp, :kp), dt_*H(:kp, :kp))
+
+                     ! Compute new error estimate
+                     err_est = abs(E(kp, 1) * beta)
+
+                     if (verbose) then
+                        write(msg, '(2(A,E12.6))') '  reduce dt_ to ', dt_, ', err_est = ', err_est
+                        call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+                     end if
+
+                  end do
+
+                  ! save dt for reuse
+                  dt = dt_
+               
+               end if
+
+               ! Project back into original space.
+               block
+                  class(abstract_vector_${type[0]}$${kind}$), allocatable :: xwrk
+                  call linear_combination(xwrk, X(:kp), E(:kp, 1))
+                  call b_%axpby(zero_${type[0]}$${kind}$, xwrk, one_${type[0]}$${kind}$*beta)
+               end block
+                  
+               ! move forward in time
+               Tend = Tend + dt
+
+               istep = istep + 1
+           
+            end do ! integration
+
+            ! copy result into output vector
+            call c%axpby(zero_${type[0]}$${kind}$, b_, one_${type[0]}$${kind}$)
+
         endif
 
         return
     end subroutine kexpm_vec_${type[0]}$${kind}$
 
-    subroutine kexpm_mat_${type[0]}$${kind}$(C, A, B, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_mat_${type[0]}$${kind}$(C, A, B, tau, dt, tol, info, trans, verbosity, kdim)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
@@ -274,6 +331,8 @@ contains
         !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).
         real(${kind}$), intent(in) :: tau
         !! Time horizon for the exponentiation.
+        real(${kind}$), intent(inout) :: dt
+        !! Current time step.
         real(${kind}$), intent(in) :: tol
         !! Solution toleance based on error estimates.
         integer, intent(out) :: info
@@ -287,15 +346,17 @@ contains
 
         ! ----- Internal variables -----
         integer, parameter :: kmax = 100
-        integer :: i, j, k, p, kpm, kp, kpp, nk
+        integer :: i, j, k, p, kpm, kp, kpp, nk, istep
         ! Block-Arnoldi factorization.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: X(:)
         ${type}$, allocatable :: H(:, :)
         ! Normalization & temporary arrays.
         ${type}$, allocatable :: R(:, :), E(:, :), em(:, :)
         integer, allocatable :: perm(:), ptrans(:)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:), Cwrk(:)
-        real(${kind}$) :: err_est
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:), Cwrk(:), B_(:)
+        real(${kind}$) :: err_est, Tend, dt_
+        character(len=128) :: msg
+
         ! Optional arguments.
         logical :: transpose
         logical :: verbose
@@ -313,111 +374,124 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
-        allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(perm(p), ptrans(p))
+        allocate(H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), R(p, p), em(p, p))
+        allocate(X(p*(nk+1)), source=B(1))
 
         ! Scratch arrays.
-        allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
-
-        ! Normalize input matrix and initialize Krylov subspace.
-        R = 0.0_${kind}$
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        allocate(B_(p), source=B) ; allocate(Cwrk(p), source=B(1))
 
         if (norm2(abs(R)) == 0.0_${kind}$) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
-            err_est = 0.0_${kind}$ ; k = 0 ; kpp = p
+            call zero_basis(C)
         else
-            call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_${kind}$
+            istep = 1
+            Tend = 0.0_${kind}$
+            do while ( Tend < tau )
 
-            expm_arnoldi: do k = 1, nk
-                ! Set counters.
-                kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
+               ! Normalize B_ and (re-)initialize Krylov subspace.
+               R = 0.0_${kind}$
+               call qr(B_, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+               call initialize_krylov_subspace(X, B_)
+               H = 0.0_${kind}$
 
-                ! Reset working arrays.
-                E = 0.0_${kind}$
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+               ! choose time step
+               dt  = min(tau, 2*dt)    ! Reuse step size of last call (and try to increase)
+               dt_ = max(tau-Tend, dt) ! If a small final step is needed to reach Tend, ignore it on restart
+               if (verbose) then
+                  write(msg, '(A,I3,4(A,E8.2))') 'step ', istep, ': tau=', tau, ', T=', Tend, ', dt=', dt, ', dt_=', dt_
+                  call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+               end if
 
-                ! Compute the k-th step of the Arnoldi factorization.
-                call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+               expm_arnoldi: do k = 1, nk
+                   ! Set counters.
+                   kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
+                   ! Reset working arrays.
+                   E = 0.0_${kind}$
 
-                if (info == kp) then
-                    ! Arnoldi breakdown. Do not consider extended matrix.
-                    kpp = kp
-                    info = -2
-                endif
+                   ! Compute the k-th step of the Arnoldi factorization.
+                   call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
+                   call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
 
-                ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kpp, :kpp), tau*H(:kpp, :kpp))
+                   if (info == kp) then
+                       ! Arnoldi breakdown. Do not consider extended matrix.
+                       kpp = kp
+                       info = -2
+                   endif
 
-                ! Project back to original space.
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                    do j = 1, kpp
-                        call Xwrk(i)%axpby(one_${type[0]}$${kind}$, X(j), E(j, i))
-                    enddo
-                enddo
+                   ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
+                   call expm(E(:kpp, :kpp), dt_*H(:kpp, :kpp))
 
-                do i = 1, p
-                    call C(i)%zero()
-                    do j = 1, p
-                        call C(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), R(j, i))
-                    enddo
-                enddo
+                   ! Cheap error estimate.
+                   if (info == kp) then
+                       ! Approximation is exact.
+                       err_est = 0.0_${kind}$
+                   else
+                       em = matmul(E(kp+1:kpp, :p), R(:p, :p))
+                       err_est = norm2(abs(em))
+                   endif
 
-                ! Cheap error estimate.
-                if (info == kp) then
-                    ! Approximation is exact.
-                    err_est = 0.0_${kind}$
-                else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
-                endif
+                   if (err_est <= tol) exit expm_arnoldi
 
-                if (err_est <= tol) exit expm_arnoldi
+               enddo expm_arnoldi
 
-            enddo expm_arnoldi
-        endif
+               if (verbose) then
+                  write(msg, '(A,I3,A,I3,A,E8.2)') 'step ', istep, ': k=', k, ', err_est=', err_est
+                  call logger%log_debug(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+               end if
 
-        if (err_est .le. tol) then
-            info = kpp
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator converged'
-                endif 
-                write(*, *) '    n° of vectors:', k+1, 'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
-        else
-            info = -1
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator did not converge'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator did not converge'
-                endif
-                write(*, *) '    maximum n° of vectors reached: ', nsteps+1,'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
+               if (err_est > tol) then ! decrease dt_ until error estimate is below tolerance
+                                       ! NOTE: We do not need to recompute X,H!
+                  do while (err_est > tol)
+
+                     dt_ = dt_/2 ! this is a quick hack, should choose step better
+
+                     if (dt_ < atol_${kind}$) then
+                        write(msg, *) 'dt < atol_${kind}$. Cannot compute action of the matrix exponential!'
+                        call stop_error(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+                     end if
+
+                     ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
+                     call expm(E(:kpp, :kpp), dt_*H(:kpp, :kpp))
+
+                     ! Compute new error estimate
+                     em = matmul(E(kp+1:kpp, :p), R(:p, :p))
+                     err_est = norm2(abs(em))
+
+                     if (verbose) then
+                        write(msg, '(2(A,E8.2))') '        : dt_ =', dt_, ', err_est=', err_est
+                        call logger%log_debug(trim(msg), module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+                     end if
+
+                  end do
+
+                  ! save dt for reuse
+                  dt = dt_
+               
+               end if
+
+               ! Project back into original space.
+               block
+                  class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+                  call linear_combination(Xwrk, X(:kp), matmul(E(:kp, :p), R))
+               end block
+
+               ! move forward in time
+               Tend = Tend + dt
+
+               istep = istep + 1
+           
+            end do ! integration
+
+            ! copy result into output vector
+            call copy_basis(C, B_)
         endif
 
         return
     end subroutine kexpm_mat_${type[0]}$${kind}$
 
-    subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+    subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, dt, info, trans)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
@@ -426,6 +500,8 @@ contains
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
         real(${kind}$), intent(in) :: tau
         !! Time horizon for the exponentiation.
+        real(${kind}$), intent(inout) :: dt
+        !! Current time step.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: trans
@@ -440,7 +516,7 @@ contains
         kdim = 30
         verbose = .false.
 
-        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, dt, info, trans=trans, verbosity=verbose, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_${type[0]}$${kind}$')
 
         return
