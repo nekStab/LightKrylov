@@ -1,17 +1,24 @@
-module LightKrylov_TestTypes
-    ! Frortran Standard Library
+module LightKrylov_TestUtils
+    ! Fortran Standard Library
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
+    use stdlib_linalg, only: eye
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     
     implicit none
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestTypes'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestUtils'
 
     integer, parameter, public :: test_size = 128
+
+    public :: get_data
+    public :: put_data
+    public :: init_rand
+    public :: get_err_str
 
     !-----------------------------------------------
     !-----     TEST VECTOR TYPE DEFINITION     -----
@@ -21,7 +28,7 @@ module LightKrylov_TestTypes
         real(sp), dimension(test_size) :: data = 0.0_sp
     contains
         private
-        procedure, pass(self), public :: zero => zero_rsp
+        procedure, pass(self), public :: zero => init_zero_rsp
         procedure, pass(self), public :: dot => dot_rsp
         procedure, pass(self), public :: scal => scal_rsp
         procedure, pass(self), public :: axpby => axpby_rsp
@@ -33,7 +40,7 @@ module LightKrylov_TestTypes
         real(dp), dimension(test_size) :: data = 0.0_dp
     contains
         private
-        procedure, pass(self), public :: zero => zero_rdp
+        procedure, pass(self), public :: zero => init_zero_rdp
         procedure, pass(self), public :: dot => dot_rdp
         procedure, pass(self), public :: scal => scal_rdp
         procedure, pass(self), public :: axpby => axpby_rdp
@@ -45,7 +52,7 @@ module LightKrylov_TestTypes
         complex(sp), dimension(test_size) :: data = 0.0_sp
     contains
         private
-        procedure, pass(self), public :: zero => zero_csp
+        procedure, pass(self), public :: zero => init_zero_csp
         procedure, pass(self), public :: dot => dot_csp
         procedure, pass(self), public :: scal => scal_csp
         procedure, pass(self), public :: axpby => axpby_csp
@@ -57,7 +64,7 @@ module LightKrylov_TestTypes
         complex(dp), dimension(test_size) :: data = 0.0_dp
     contains
         private
-        procedure, pass(self), public :: zero => zero_cdp
+        procedure, pass(self), public :: zero => init_zero_cdp
         procedure, pass(self), public :: dot => dot_cdp
         procedure, pass(self), public :: scal => scal_cdp
         procedure, pass(self), public :: axpby => axpby_cdp
@@ -134,17 +141,72 @@ module LightKrylov_TestTypes
         procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
     end type
 
+
+    interface get_data
+        module procedure get_data_vec_rsp
+        module procedure get_data_vec_basis_rsp
+        module procedure get_data_linop_rsp
+        module procedure get_data_vec_rdp
+        module procedure get_data_vec_basis_rdp
+        module procedure get_data_linop_rdp
+        module procedure get_data_vec_csp
+        module procedure get_data_vec_basis_csp
+        module procedure get_data_linop_csp
+        module procedure get_data_vec_cdp
+        module procedure get_data_vec_basis_cdp
+        module procedure get_data_linop_cdp
+    end interface
+
+    interface put_data
+        module procedure put_data_vec_rsp
+        module procedure put_data_vec_basis_rsp
+        module procedure put_data_linop_rsp
+        module procedure put_data_vec_rdp
+        module procedure put_data_vec_basis_rdp
+        module procedure put_data_linop_rdp
+        module procedure put_data_vec_csp
+        module procedure put_data_vec_basis_csp
+        module procedure put_data_linop_csp
+        module procedure put_data_vec_cdp
+        module procedure put_data_vec_basis_cdp
+        module procedure put_data_linop_cdp
+    end interface
+
+    interface init_rand
+        module procedure init_rand_vec_rsp
+        module procedure init_rand_basis_rsp
+        module procedure init_rand_linop_rsp
+        module procedure init_rand_spd_linop_rsp
+        module procedure init_rand_vec_rdp
+        module procedure init_rand_basis_rdp
+        module procedure init_rand_linop_rdp
+        module procedure init_rand_spd_linop_rdp
+        module procedure init_rand_vec_csp
+        module procedure init_rand_basis_csp
+        module procedure init_rand_linop_csp
+        module procedure init_rand_hermitian_linop_csp
+        module procedure init_rand_vec_cdp
+        module procedure init_rand_basis_cdp
+        module procedure init_rand_linop_cdp
+        module procedure init_rand_hermitian_linop_cdp
+    end interface
+
+    interface get_err_str
+        module procedure get_err_str_sp
+        module procedure get_err_str_dp
+    end interface
+
 contains
     
     !----------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST VECTORS     -----
     !----------------------------------------------------------
 
-    subroutine zero_rsp(self)
+    subroutine init_zero_rsp(self)
         class(vector_rsp), intent(inout) :: self
         self%data = 0.0_sp
         return
-    end subroutine zero_rsp
+    end subroutine init_zero_rsp
 
     function dot_rsp(self, vec) result(alpha)
         class(vector_rsp), intent(in) :: self
@@ -200,11 +262,11 @@ contains
         endif
     end subroutine rand_rsp
 
-    subroutine zero_rdp(self)
+    subroutine init_zero_rdp(self)
         class(vector_rdp), intent(inout) :: self
         self%data = 0.0_dp
         return
-    end subroutine zero_rdp
+    end subroutine init_zero_rdp
 
     function dot_rdp(self, vec) result(alpha)
         class(vector_rdp), intent(in) :: self
@@ -260,11 +322,11 @@ contains
         endif
     end subroutine rand_rdp
 
-    subroutine zero_csp(self)
+    subroutine init_zero_csp(self)
         class(vector_csp), intent(inout) :: self
         self%data = 0.0_sp
         return
-    end subroutine zero_csp
+    end subroutine init_zero_csp
 
     function dot_csp(self, vec) result(alpha)
         class(vector_csp), intent(in) :: self
@@ -320,11 +382,11 @@ contains
         endif
     end subroutine rand_csp
 
-    subroutine zero_cdp(self)
+    subroutine init_zero_cdp(self)
         class(vector_cdp), intent(inout) :: self
         self%data = 0.0_dp
         return
-    end subroutine zero_cdp
+    end subroutine init_zero_cdp
 
     function dot_cdp(self, vec) result(alpha)
         class(vector_cdp), intent(in) :: self
@@ -601,5 +663,407 @@ contains
         return
     end subroutine hermitian_matvec_cdp
 
+
+    !----------------------------------------------------
+    !-----     EXTRACT DATA FROM ABSTRACT TYPES     -----
+    !----------------------------------------------------
+
+    subroutine get_data_vec_rsp(vec_out, vec_in)
+        real(sp), intent(out) :: vec_out(:)
+        type(vector_rsp), intent(in) :: vec_in
+        vec_out = vec_in%data
+        return
+    end subroutine get_data_vec_rsp
+
+    subroutine get_data_vec_basis_rsp(basis_out, basis_in)
+        real(sp), intent(out) :: basis_out(:, :)
+        type(vector_rsp), intent(in) :: basis_in(:)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_in)
+            basis_out(:, k) = basis_in(k)%data
+        enddo
+        return
+    end subroutine get_data_vec_basis_rsp
+
+    subroutine get_data_linop_rsp(mat_out, linop_in)
+        real(sp), intent(out) :: mat_out(:, :)
+        type(linop_rsp), intent(in) :: linop_in
+        mat_out = linop_in%data
+        return
+    end subroutine get_data_linop_rsp
+
+    subroutine get_data_vec_rdp(vec_out, vec_in)
+        real(dp), intent(out) :: vec_out(:)
+        type(vector_rdp), intent(in) :: vec_in
+        vec_out = vec_in%data
+        return
+    end subroutine get_data_vec_rdp
+
+    subroutine get_data_vec_basis_rdp(basis_out, basis_in)
+        real(dp), intent(out) :: basis_out(:, :)
+        type(vector_rdp), intent(in) :: basis_in(:)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_in)
+            basis_out(:, k) = basis_in(k)%data
+        enddo
+        return
+    end subroutine get_data_vec_basis_rdp
+
+    subroutine get_data_linop_rdp(mat_out, linop_in)
+        real(dp), intent(out) :: mat_out(:, :)
+        type(linop_rdp), intent(in) :: linop_in
+        mat_out = linop_in%data
+        return
+    end subroutine get_data_linop_rdp
+
+    subroutine get_data_vec_csp(vec_out, vec_in)
+        complex(sp), intent(out) :: vec_out(:)
+        type(vector_csp), intent(in) :: vec_in
+        vec_out = vec_in%data
+        return
+    end subroutine get_data_vec_csp
+
+    subroutine get_data_vec_basis_csp(basis_out, basis_in)
+        complex(sp), intent(out) :: basis_out(:, :)
+        type(vector_csp), intent(in) :: basis_in(:)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_in)
+            basis_out(:, k) = basis_in(k)%data
+        enddo
+        return
+    end subroutine get_data_vec_basis_csp
+
+    subroutine get_data_linop_csp(mat_out, linop_in)
+        complex(sp), intent(out) :: mat_out(:, :)
+        type(linop_csp), intent(in) :: linop_in
+        mat_out = linop_in%data
+        return
+    end subroutine get_data_linop_csp
+
+    subroutine get_data_vec_cdp(vec_out, vec_in)
+        complex(dp), intent(out) :: vec_out(:)
+        type(vector_cdp), intent(in) :: vec_in
+        vec_out = vec_in%data
+        return
+    end subroutine get_data_vec_cdp
+
+    subroutine get_data_vec_basis_cdp(basis_out, basis_in)
+        complex(dp), intent(out) :: basis_out(:, :)
+        type(vector_cdp), intent(in) :: basis_in(:)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_in)
+            basis_out(:, k) = basis_in(k)%data
+        enddo
+        return
+    end subroutine get_data_vec_basis_cdp
+
+    subroutine get_data_linop_cdp(mat_out, linop_in)
+        complex(dp), intent(out) :: mat_out(:, :)
+        type(linop_cdp), intent(in) :: linop_in
+        mat_out = linop_in%data
+        return
+    end subroutine get_data_linop_cdp
+
+
+    !----------------------------------------------
+    !-----     PUT DATA TO ABSTRACT TYPES     -----
+    !----------------------------------------------
+
+    subroutine put_data_vec_rsp(vec_out, vec_in)
+        type(vector_rsp), intent(out) :: vec_out
+        real(sp), intent(in) :: vec_in
+        vec_out%data = vec_in
+        return
+    end subroutine put_data_vec_rsp
+
+    subroutine put_data_vec_basis_rsp(basis_out, basis_in)
+        type(vector_rsp), intent(out) :: basis_out(:)
+        real(sp), intent(in) :: basis_in(:, :)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_out)
+            basis_out(k)%data = basis_in(:, k)
+        enddo
+        return
+    end subroutine put_data_vec_basis_rsp
+
+    subroutine put_data_linop_rsp(linop_out, mat_in)
+        type(linop_rsp), intent(out) :: linop_out
+        real(sp), intent(in) :: mat_in(:, :)
+        ! Internal variables.
+        linop_out%data = mat_in
+        return
+    end subroutine put_data_linop_rsp
+
+    subroutine put_data_vec_rdp(vec_out, vec_in)
+        type(vector_rdp), intent(out) :: vec_out
+        real(dp), intent(in) :: vec_in
+        vec_out%data = vec_in
+        return
+    end subroutine put_data_vec_rdp
+
+    subroutine put_data_vec_basis_rdp(basis_out, basis_in)
+        type(vector_rdp), intent(out) :: basis_out(:)
+        real(dp), intent(in) :: basis_in(:, :)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_out)
+            basis_out(k)%data = basis_in(:, k)
+        enddo
+        return
+    end subroutine put_data_vec_basis_rdp
+
+    subroutine put_data_linop_rdp(linop_out, mat_in)
+        type(linop_rdp), intent(out) :: linop_out
+        real(dp), intent(in) :: mat_in(:, :)
+        ! Internal variables.
+        linop_out%data = mat_in
+        return
+    end subroutine put_data_linop_rdp
+
+    subroutine put_data_vec_csp(vec_out, vec_in)
+        type(vector_csp), intent(out) :: vec_out
+        complex(sp), intent(in) :: vec_in
+        vec_out%data = vec_in
+        return
+    end subroutine put_data_vec_csp
+
+    subroutine put_data_vec_basis_csp(basis_out, basis_in)
+        type(vector_csp), intent(out) :: basis_out(:)
+        complex(sp), intent(in) :: basis_in(:, :)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_out)
+            basis_out(k)%data = basis_in(:, k)
+        enddo
+        return
+    end subroutine put_data_vec_basis_csp
+
+    subroutine put_data_linop_csp(linop_out, mat_in)
+        type(linop_csp), intent(out) :: linop_out
+        complex(sp), intent(in) :: mat_in(:, :)
+        ! Internal variables.
+        linop_out%data = mat_in
+        return
+    end subroutine put_data_linop_csp
+
+    subroutine put_data_vec_cdp(vec_out, vec_in)
+        type(vector_cdp), intent(out) :: vec_out
+        complex(dp), intent(in) :: vec_in
+        vec_out%data = vec_in
+        return
+    end subroutine put_data_vec_cdp
+
+    subroutine put_data_vec_basis_cdp(basis_out, basis_in)
+        type(vector_cdp), intent(out) :: basis_out(:)
+        complex(dp), intent(in) :: basis_in(:, :)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_out)
+            basis_out(k)%data = basis_in(:, k)
+        enddo
+        return
+    end subroutine put_data_vec_basis_cdp
+
+    subroutine put_data_linop_cdp(linop_out, mat_in)
+        type(linop_cdp), intent(out) :: linop_out
+        complex(dp), intent(in) :: mat_in(:, :)
+        ! Internal variables.
+        linop_out%data = mat_in
+        return
+    end subroutine put_data_linop_cdp
+
+
+    !--------------------------------------------------------------
+    !-----     INITIALIZE ABSTRACT TYPES WITH RANDOM DATA     -----
+    !--------------------------------------------------------------
+
+    subroutine init_rand_vec_rsp(x)
+        type(vector_rsp), intent(inout) :: x
+        call x%rand()
+        return
+    end subroutine init_rand_vec_rsp
+
+    subroutine init_rand_basis_rsp(X)
+        type(vector_rsp), intent(inout) :: X(:)
+        integer :: i
+        do i = 1, size(X)
+            call X(i)%rand()
+        enddo
+        return
+    end subroutine init_rand_basis_rsp
+
+    subroutine init_rand_linop_rsp(linop)
+        type(linop_rsp), intent(inout) :: linop
+        real(sp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size))
+        var = 1.0_sp
+        linop%data = normal(mu, var)
+        return
+    end subroutine init_rand_linop_rsp
+
+    subroutine init_rand_spd_linop_rsp(linop)
+        type(spd_linop_rsp), intent(inout) :: linop
+        real(sp), allocatable :: mu(:, :), var(:, :)
+        real(sp), allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_rsp
+        allocate(var(test_size, test_size)) ; var = one_rsp
+
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
+        return
+    end subroutine init_rand_spd_linop_rsp
+
+    subroutine init_rand_vec_rdp(x)
+        type(vector_rdp), intent(inout) :: x
+        call x%rand()
+        return
+    end subroutine init_rand_vec_rdp
+
+    subroutine init_rand_basis_rdp(X)
+        type(vector_rdp), intent(inout) :: X(:)
+        integer :: i
+        do i = 1, size(X)
+            call X(i)%rand()
+        enddo
+        return
+    end subroutine init_rand_basis_rdp
+
+    subroutine init_rand_linop_rdp(linop)
+        type(linop_rdp), intent(inout) :: linop
+        real(dp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size))
+        var = 1.0_dp
+        linop%data = normal(mu, var)
+        return
+    end subroutine init_rand_linop_rdp
+
+    subroutine init_rand_spd_linop_rdp(linop)
+        type(spd_linop_rdp), intent(inout) :: linop
+        real(dp), allocatable :: mu(:, :), var(:, :)
+        real(dp), allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_rdp
+        allocate(var(test_size, test_size)) ; var = one_rdp
+
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
+        return
+    end subroutine init_rand_spd_linop_rdp
+
+    subroutine init_rand_vec_csp(x)
+        type(vector_csp), intent(inout) :: x
+        call x%rand()
+        return
+    end subroutine init_rand_vec_csp
+
+    subroutine init_rand_basis_csp(X)
+        type(vector_csp), intent(inout) :: X(:)
+        integer :: i
+        do i = 1, size(X)
+            call X(i)%rand()
+        enddo
+        return
+    end subroutine init_rand_basis_csp
+
+    subroutine init_rand_linop_csp(linop)
+        type(linop_csp), intent(inout) :: linop
+        complex(sp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size))
+        var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+        linop%data = normal(mu, var)
+        return
+    end subroutine init_rand_linop_csp
+
+    subroutine init_rand_hermitian_linop_csp(linop)
+        type(hermitian_linop_csp), intent(inout) :: linop
+        complex(sp), allocatable :: data(:, :)
+        complex(sp), allocatable :: mu(:, :), var(:, :)
+
+        allocate(mu(test_size, test_size)) ; mu = 0.0_sp
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_sp, 1.0_sp, kind=sp)
+
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
+        return
+    end subroutine init_rand_hermitian_linop_csp
+
+    subroutine init_rand_vec_cdp(x)
+        type(vector_cdp), intent(inout) :: x
+        call x%rand()
+        return
+    end subroutine init_rand_vec_cdp
+
+    subroutine init_rand_basis_cdp(X)
+        type(vector_cdp), intent(inout) :: X(:)
+        integer :: i
+        do i = 1, size(X)
+            call X(i)%rand()
+        enddo
+        return
+    end subroutine init_rand_basis_cdp
+
+    subroutine init_rand_linop_cdp(linop)
+        type(linop_cdp), intent(inout) :: linop
+        complex(dp), allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size))
+        var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+        linop%data = normal(mu, var)
+        return
+    end subroutine init_rand_linop_cdp
+
+    subroutine init_rand_hermitian_linop_cdp(linop)
+        type(hermitian_linop_cdp), intent(inout) :: linop
+        complex(dp), allocatable :: data(:, :)
+        complex(dp), allocatable :: mu(:, :), var(:, :)
+
+        allocate(mu(test_size, test_size)) ; mu = 0.0_dp
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_dp, 1.0_dp, kind=dp)
+
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
+        return
+    end subroutine init_rand_hermitian_linop_cdp
+
+
+    subroutine get_err_str_sp(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(sp) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_sp
+    subroutine get_err_str_dp(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(dp) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_dp
     
-end module LightKrylov_TestTypes
+end module LightKrylov_TestUtils
