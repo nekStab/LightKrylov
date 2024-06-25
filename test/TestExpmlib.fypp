@@ -14,8 +14,7 @@ module TestExpmlib
     use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
     ! Test Utilities
-    use LightKrylov_TestTypes
-    use TestUtils
+    use LightKrylov_TestUtils
 
     implicit none
 
@@ -81,7 +80,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
-        call check_test(error, 'test_dense_expm_${type[0]}$${kind}$', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_${type[0]}$${kind}$', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_${type[0]}$${kind}$
@@ -123,7 +122,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_kexptA_${type[0]}$${kind}$', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_${type[0]}$${kind}$
@@ -211,7 +210,7 @@ contains
 
         call check(error, errv < rtol_${kind}$)
         call check_test(error, 'test_block_kexptA_${type[0]}$${kind}$', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_${type[0]}$${kind}$

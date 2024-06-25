@@ -8,7 +8,8 @@ module TestVectors
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Logger
-    use LightKrylov_TestTypes    
+    ! Test Utilities
+    use LightKrylov_TestUtils
     
     implicit none
     

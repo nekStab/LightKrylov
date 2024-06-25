@@ -7,7 +7,8 @@ module TestLinops
     use LightKrylov
     use LightKrylov_Constants
     use LightKrylov_Logger
-    use LightKrylov_TestTypes
+    ! Test Utilities
+    use LightKrylov_TestUtils
 
     implicit none
     

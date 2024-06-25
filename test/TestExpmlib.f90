@@ -12,8 +12,7 @@ module TestExpmlib
     use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
     ! Test Utilities
-    use LightKrylov_TestTypes
-    use TestUtils
+    use LightKrylov_TestUtils
 
     implicit none
 
@@ -80,7 +79,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_dense_expm_rsp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_rsp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_rsp
@@ -122,7 +121,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_rsp
@@ -210,7 +209,7 @@ contains
 
         call check(error, errv < rtol_sp)
         call check_test(error, 'test_block_kexptA_rsp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_rsp
@@ -258,7 +257,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_dense_expm_rdp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_rdp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_rdp
@@ -300,7 +299,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_rdp
@@ -388,7 +387,7 @@ contains
 
         call check(error, errv < rtol_dp)
         call check_test(error, 'test_block_kexptA_rdp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_rdp
@@ -436,7 +435,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_dense_expm_csp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_csp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_csp
@@ -478,7 +477,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_csp
@@ -566,7 +565,7 @@ contains
 
         call check(error, errv < rtol_sp)
         call check_test(error, 'test_block_kexptA_csp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_csp
@@ -614,7 +613,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_dense_expm_cdp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_cdp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_cdp
@@ -656,7 +655,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_cdp
@@ -744,7 +743,7 @@ contains
 
         call check(error, errv < rtol_dp)
         call check_test(error, 'test_block_kexptA_cdp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_cdp
