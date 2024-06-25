@@ -12,8 +12,7 @@ module TestKrylov
     use LightKrylov_Logger
     use LightKrylov_AbstractVectors
     ! Test Utilities
-    use LightKrylov_TestTypes
-    use TestUtils
+    use LightKrylov_TestUtils
 
     implicit none
     
