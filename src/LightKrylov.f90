@@ -91,6 +91,7 @@ module LightKrylov
     public :: abstract_exptA_cdp
     public :: expm
     public :: kexpm
+    public :: kexpm_var_dt
     public :: k_exptA
 
 contains
