@@ -110,7 +110,7 @@ contains
 
         ! check eigenvalues
         err = maxval(abs(eigvals - true_eigvals(:nev)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_ks_evp_rsp', info='eval correctness.', context=msg)
         !! check eigenvectors
@@ -121,7 +121,7 @@ contains
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
-        !call get_err_str(msg, "max err: ", err)
+        !call get_err_str(msg, "max err: ", err, rtol_sp)
         !call check(error, err < rtol_sp)
         !call check_test(error, 'test_ks_evp_rsp', & 
         !                      & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -182,7 +182,7 @@ contains
         enddo
 
         err = maxval(abs(eigvals - true_eigvals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_rsp', info='eval correctness', context=msg)
 
@@ -194,7 +194,7 @@ contains
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
-!        call get_err_str(msg, "max err: ", err)
+!        call get_err_str(msg, "max err: ", err, rtol_sp)
 !        call check(error, err < rtol_sp)
 !        call check_test(error, 'test_evp_rsp', &
 !                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -258,7 +258,7 @@ contains
 
         ! Check error.
         err = maxval(abs(true_evals - evals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_sym_evp_rsp', info='eval correctness', context=msg)
 
@@ -270,7 +270,7 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_sym_evp_rsp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
@@ -280,7 +280,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         err = maxval(abs(G - eye(test_size)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_sym_evp_rsp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
 
@@ -353,7 +353,7 @@ contains
 
         ! check eigenvalues
         err = maxval(abs(eigvals - true_eigvals(:nev)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_ks_evp_rdp', info='eval correctness.', context=msg)
         !! check eigenvectors
@@ -364,7 +364,7 @@ contains
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
-        !call get_err_str(msg, "max err: ", err)
+        !call get_err_str(msg, "max err: ", err, rtol_dp)
         !call check(error, err < rtol_dp)
         !call check_test(error, 'test_ks_evp_rdp', & 
         !                      & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -425,7 +425,7 @@ contains
         enddo
 
         err = maxval(abs(eigvals - true_eigvals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_rdp', info='eval correctness', context=msg)
 
@@ -437,7 +437,7 @@ contains
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
-!        call get_err_str(msg, "max err: ", err)
+!        call get_err_str(msg, "max err: ", err, rtol_dp)
 !        call check(error, err < rtol_dp)
 !        call check_test(error, 'test_evp_rdp', &
 !                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -501,7 +501,7 @@ contains
 
         ! Check error.
         err = maxval(abs(true_evals - evals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_sym_evp_rdp', info='eval correctness', context=msg)
 
@@ -513,7 +513,7 @@ contains
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_sym_evp_rdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
@@ -523,7 +523,7 @@ contains
 
         ! Check orthonormality of the eigenvectors.
         err = maxval(abs(G - eye(test_size)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_sym_evp_rdp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
 
@@ -716,7 +716,7 @@ contains
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
 
@@ -725,7 +725,7 @@ contains
             true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
         enddo
         err = maxval(abs(S - true_svdvals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', 'Singular values', context=msg)
 
@@ -735,7 +735,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         err = maxval(abs(G - eye(test_size)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
@@ -745,7 +745,7 @@ contains
 
         ! Check orthonormality of the right singular vectors
         err = maxval(abs(G - eye(test_size)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
 
@@ -810,7 +810,7 @@ contains
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
         err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
 
@@ -819,7 +819,7 @@ contains
             true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
         enddo
         err = maxval(abs(S - true_svdvals))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', 'Singular values', context=msg)
 
@@ -829,7 +829,7 @@ contains
 
         ! Check orthonormality of the left singular vectors
         err = maxval(abs(G - eye(test_size)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
@@ -839,7 +839,7 @@ contains
 
         ! Check orthonormality of the right singular vectors
         err = maxval(abs(G - eye(test_size)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
 
@@ -957,7 +957,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_sp)
         call check(error, err < b%norm() * rtol_sp)
         call check_test(error, 'test_gmres_rsp', eq='A @ x = b', context=msg)
 
@@ -991,7 +991,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_sp)
         call check(error, err < b%norm() * rtol_sp)
         call check_test(error, 'test_gmres_spd_rsp', eq='A @ x = b', context=msg)
 
@@ -1034,7 +1034,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_dp)
         call check(error, err < b%norm() * rtol_dp)
         call check_test(error, 'test_gmres_rdp', eq='A @ x = b', context=msg)
 
@@ -1068,7 +1068,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_dp)
         call check(error, err < b%norm() * rtol_dp)
         call check_test(error, 'test_gmres_spd_rdp', eq='A @ x = b', context=msg)
 
@@ -1111,7 +1111,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_sp)
         call check(error, err < b%norm() * rtol_sp)
         call check_test(error, 'test_gmres_csp', eq='A @ x = b', context=msg)
 
@@ -1145,7 +1145,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_sp)
         call check(error, err < b%norm() * rtol_sp)
         call check_test(error, 'test_gmres_spd_csp', eq='A @ x = b', context=msg)
 
@@ -1188,7 +1188,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_dp)
         call check(error, err < b%norm() * rtol_dp)
         call check_test(error, 'test_gmres_cdp', eq='A @ x = b', context=msg)
 
@@ -1222,7 +1222,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_dp)
         call check(error, err < b%norm() * rtol_dp)
         call check_test(error, 'test_gmres_spd_cdp', eq='A @ x = b', context=msg)
 
@@ -1268,7 +1268,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_sp)
         call check(error, err < b%norm() * rtol_sp)
         call check_test(error, 'test_cg_rsp', eq='A @ x = b', context=msg)
 
@@ -1309,7 +1309,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_dp)
         call check(error, err < b%norm() * rtol_dp)
         call check_test(error, 'test_cg_rdp', eq='A @ x = b', context=msg)
 
@@ -1350,7 +1350,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_sp)
         call check(error, err < b%norm() * rtol_sp)
         call check_test(error, 'test_cg_csp', eq='A @ x = b', context=msg)
 
@@ -1391,7 +1391,7 @@ contains
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, b%norm() * rtol_dp)
         call check(error, err < b%norm() * rtol_dp)
         call check_test(error, 'test_cg_cdp', eq='A @ x = b', context=msg)
 

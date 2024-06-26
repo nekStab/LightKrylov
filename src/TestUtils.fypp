@@ -407,17 +407,20 @@ contains
     #:endfor
 
     #:for kind, type in REAL_KINDS_TYPES
-    subroutine get_err_str_${kind}$(msg, info, err)
+    subroutine get_err_str_${kind}$(msg, info, err, tol)
       character(len=*), intent(inout) :: msg
       character(len=*), intent(in)    :: info
-      real(${kind}$) :: err
+      real(${kind}$), intent(in)      :: err
+      real(${kind}$), intent(in)      :: tol
 
       ! internals
       character*8 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
       write(value_str, '(E8.2)') err
-      msg = indent // info // value_str // achar(10)
+      msg = indent // info // value_str
+      write(value_str, '(E8.2)') tol
+      msg = trim(msg) // new_line('A') // indent // '    tol: ' // value_str
        
     end subroutine get_err_str_${kind}$
     #:endfor

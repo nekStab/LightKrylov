@@ -78,6 +78,7 @@ module LightKrylov
     #:endfor
     public :: expm
     public :: kexpm
+    public :: kexpm_var_dt
     public :: k_exptA
 
 contains

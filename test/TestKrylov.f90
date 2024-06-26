@@ -88,7 +88,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -99,7 +99,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -163,7 +163,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -174,7 +174,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -223,7 +223,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -234,7 +234,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -298,7 +298,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -309,7 +309,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -358,7 +358,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -369,7 +369,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -433,7 +433,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -444,7 +444,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -493,7 +493,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -504,7 +504,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -568,7 +568,7 @@ contains
 
         ! Check correctness.
         err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
@@ -579,7 +579,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -633,7 +633,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_rsp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -645,7 +645,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_rsp', &
                               & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -688,7 +688,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_rsp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -699,7 +699,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_rsp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
@@ -744,7 +744,7 @@ contains
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_krylov_schur_rsp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -801,7 +801,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_rdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -813,7 +813,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_rdp', &
                               & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -856,7 +856,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_rdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -867,7 +867,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_rdp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
@@ -912,7 +912,7 @@ contains
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_krylov_schur_rdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -969,7 +969,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_csp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -981,7 +981,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_csp', &
                               & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -1024,7 +1024,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_csp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -1035,7 +1035,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_csp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
@@ -1080,7 +1080,7 @@ contains
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_krylov_schur_csp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -1137,7 +1137,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_cdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -1149,7 +1149,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_cdp', &
                               & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -1192,7 +1192,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :p*kdim)) - matmul(Xdata, H)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_cdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -1203,7 +1203,7 @@ contains
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_cdp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
@@ -1248,7 +1248,7 @@ contains
         ! Check correctness.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
         err = maxval(abs(matmul(A%data, Xdata(:, :n)) - matmul(Xdata(:, :n+1), H(:n+1, :n))))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_krylov_schur_cdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
@@ -1316,7 +1316,7 @@ contains
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
         err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
@@ -1327,7 +1327,7 @@ contains
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
@@ -1338,7 +1338,7 @@ contains
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
@@ -1393,7 +1393,7 @@ contains
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
         err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
@@ -1404,7 +1404,7 @@ contains
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
@@ -1415,7 +1415,7 @@ contains
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
@@ -1470,7 +1470,7 @@ contains
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
         err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
@@ -1481,7 +1481,7 @@ contains
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
@@ -1492,7 +1492,7 @@ contains
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
@@ -1547,7 +1547,7 @@ contains
         allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
 
         err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, B)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
@@ -1558,7 +1558,7 @@ contains
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
@@ -1569,7 +1569,7 @@ contains
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
@@ -1633,7 +1633,7 @@ contains
 
         ! Infinity-norm check.
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
@@ -1644,7 +1644,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
                                  & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -1703,7 +1703,7 @@ contains
 
         ! Infinity-norm check.
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
@@ -1714,7 +1714,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
                                  & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -1773,7 +1773,7 @@ contains
 
         ! Infinity-norm check.
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
@@ -1784,7 +1784,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
                                  & info='Orthonomality', eq='X.H @ X = I', context=msg)
@@ -1843,7 +1843,7 @@ contains
 
         ! Infinity-norm check.
         err = maxval(abs(matmul(A%data, Xdata(:, :kdim)) - matmul(Xdata, T)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
@@ -1854,7 +1854,7 @@ contains
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim)))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
                                  & info='Orthonomality', eq='X.H @ X = I', context=msg)

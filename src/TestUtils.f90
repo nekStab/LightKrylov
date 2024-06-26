@@ -1039,30 +1039,36 @@ contains
     end subroutine init_rand_hermitian_linop_cdp
 
 
-    subroutine get_err_str_sp(msg, info, err)
+    subroutine get_err_str_sp(msg, info, err, tol)
       character(len=*), intent(inout) :: msg
       character(len=*), intent(in)    :: info
-      real(sp) :: err
+      real(sp), intent(in)      :: err
+      real(sp), intent(in)      :: tol
 
       ! internals
       character*8 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
       write(value_str, '(E8.2)') err
-      msg = indent // info // value_str // achar(10)
+      msg = indent // info // value_str
+      write(value_str, '(E8.2)') tol
+      msg = trim(msg) // new_line('A') // indent // '    tol: ' // value_str
        
     end subroutine get_err_str_sp
-    subroutine get_err_str_dp(msg, info, err)
+    subroutine get_err_str_dp(msg, info, err, tol)
       character(len=*), intent(inout) :: msg
       character(len=*), intent(in)    :: info
-      real(dp) :: err
+      real(dp), intent(in)      :: err
+      real(dp), intent(in)      :: tol
 
       ! internals
       character*8 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
       write(value_str, '(E8.2)') err
-      msg = indent // info // value_str // achar(10)
+      msg = indent // info // value_str
+      write(value_str, '(E8.2)') tol
+      msg = trim(msg) // new_line('A') // indent // '    tol: ' // value_str
        
     end subroutine get_err_str_dp
     
