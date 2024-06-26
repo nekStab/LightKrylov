@@ -1,4 +1,42 @@
 module lightkrylov_AbstractVectors
+    !! This module provides the base class `absract_vector` from which all Krylov vectors
+    !! needs to be derived. To use `LightKrylov`, you need to extend one of the
+    !! followings:
+    !!
+    !! - `abstract_vector_rsp`: Real-valued vector with single precision arithmetic.
+    !! - `abstract_vector_rdp`: Real-valued vector with double precision arithmetic.
+    !! - `abstract_vector_csp`: Complex-valued vector with single precision arithmetic.
+    !! - `abstract_vector_cdp`: Complex-valued vector with double precision arithmetic.
+    !!
+    !! To extend either of these abstract types, you need to provide an associated implementation
+    !! for the following type-bound procedures:
+    !!
+    !! - `zero(self)`: A subroutine zeroing-out the vector.
+    !! - `rand(self, ifnorm)`: A subroutine creating a random vector, possibily normalized to have unit-norm (`ifnorm = .true.`).
+    !! - `scal(self, alpha)`: A subroutine computing *in-place* the scalar multiplication \( \mathbf{x} = \alpha \mathbf{x} \).
+    !! - `axpby(self, alpha, vec, beta)`: A subroutine computing *in-place* the product \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+    !! - `dot(self, vec)`: A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
+    !! - `get_size(self)`: A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
+    !!
+    !! Once these type-bound procedures have been implemented by the user, they will automatically 
+    !! be used to define:
+    !!
+    !! - vector addition `add(self, vec) = axpby(self, 1, vec, 1)`
+    !! - vector subtraction `sub(self, vec) = axpby(self, 1, vec, -1)`
+    !! - vector norm `norm(self) = sqrt(dot_product(self, self))`.
+    !!
+    !! This module also provides the following utility subroutines:
+    !!
+    !! - `innerprod(v, X, y)` / `innerprod(M, X, Y)`: Subroutine to compute the 
+    !! inner-product matrix/vector between a Krylov basis `X` and a Krylov vector 
+    !! (resp. basis) `y` (resp. `Y`).
+    !! - `linear_combination(y, X, v)` / `linear_combination(Y, X, B)`: Subroutine to 
+    !! compute the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
+    !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
+    !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
+    !! - `zero_basis(X)`: Self explanatory.
+    !! - `copy_basis(out, from)`: Self explanatory.
+
     use lightkrylov_constants
     use lightkrylov_utils
     use LightKrylov_Logger
@@ -56,12 +94,8 @@ module lightkrylov_AbstractVectors
         module procedure copy_basis_cdp
     end interface
 
-
     type, abstract, public :: abstract_vector
     end type abstract_vector
-
-
-
 
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) vector with kind=sp     -----
@@ -534,7 +568,6 @@ contains
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-
     subroutine linear_combination_vector_rsp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -701,7 +734,6 @@ contains
 
         return
     end subroutine copy_basis_rsp
-
 
     subroutine linear_combination_vector_rdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
@@ -870,7 +902,6 @@ contains
         return
     end subroutine copy_basis_rdp
 
-
     subroutine linear_combination_vector_csp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1038,7 +1069,6 @@ contains
         return
     end subroutine copy_basis_csp
 
-
     subroutine linear_combination_vector_cdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1205,6 +1235,5 @@ contains
 
         return
     end subroutine copy_basis_cdp
-
 
 end module lightkrylov_AbstractVectors
