@@ -29,7 +29,7 @@ module lightkrylov_expmlib
     public :: k_exptA
 
     abstract interface
-        subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, dt, info, trans)
+        subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
             import sp
             import abstract_vector_rsp
             import abstract_linop_rsp
@@ -42,15 +42,13 @@ module lightkrylov_expmlib
             !! Input vector.
             real(sp), intent(in) :: tau
             !! Time horizon for integration.
-            real(sp), intent(inout) :: dt
-            !! Current time step.
             integer, intent(out) :: info
             !! Information flag.
             logical, optional, intent(in) :: trans
             !! Use transpose ?
         end subroutine abstract_exptA_rsp
 
-        subroutine abstract_exptA_rdp(vec_out, A, vec_in, tau, dt, info, trans)
+        subroutine abstract_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
             import dp
             import abstract_vector_rdp
             import abstract_linop_rdp
@@ -63,15 +61,13 @@ module lightkrylov_expmlib
             !! Input vector.
             real(dp), intent(in) :: tau
             !! Time horizon for integration.
-            real(dp), intent(inout) :: dt
-            !! Current time step.
             integer, intent(out) :: info
             !! Information flag.
             logical, optional, intent(in) :: trans
             !! Use transpose ?
         end subroutine abstract_exptA_rdp
 
-        subroutine abstract_exptA_csp(vec_out, A, vec_in, tau, dt, info, trans)
+        subroutine abstract_exptA_csp(vec_out, A, vec_in, tau, info, trans)
             import sp
             import abstract_vector_csp
             import abstract_linop_csp
@@ -84,15 +80,13 @@ module lightkrylov_expmlib
             !! Input vector.
             real(sp), intent(in) :: tau
             !! Time horizon for integration.
-            real(sp), intent(inout) :: dt
-            !! Current time step.
             integer, intent(out) :: info
             !! Information flag.
             logical, optional, intent(in) :: trans
             !! Use transpose ?
         end subroutine abstract_exptA_csp
 
-        subroutine abstract_exptA_cdp(vec_out, A, vec_in, tau, dt, info, trans)
+        subroutine abstract_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
             import dp
             import abstract_vector_cdp
             import abstract_linop_cdp
@@ -105,8 +99,6 @@ module lightkrylov_expmlib
             !! Input vector.
             real(dp), intent(in) :: tau
             !! Time horizon for integration.
-            real(dp), intent(inout) :: dt
-            !! Current time step.
             integer, intent(out) :: info
             !! Information flag.
             logical, optional, intent(in) :: trans

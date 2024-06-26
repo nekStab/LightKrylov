@@ -31,7 +31,7 @@ module lightkrylov_expmlib
 
     abstract interface
         #:for kind, type in RC_KINDS_TYPES
-        subroutine abstract_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, dt, info, trans)
+        subroutine abstract_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
             import ${kind}$
             import abstract_vector_${type[0]}$${kind}$
             import abstract_linop_${type[0]}$${kind}$
@@ -44,8 +44,6 @@ module lightkrylov_expmlib
             !! Input vector.
             real(${kind}$), intent(in) :: tau
             !! Time horizon for integration.
-            real(${kind}$), intent(inout) :: dt
-            !! Current time step.
             integer, intent(out) :: info
             !! Information flag.
             logical, optional, intent(in) :: trans
