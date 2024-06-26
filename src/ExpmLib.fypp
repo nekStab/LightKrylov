@@ -801,7 +801,7 @@ contains
         return
     end subroutine kexpm_mat_variable_dt_${type[0]}$${kind}$
 
-    subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, dt, info, trans)
+    subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
@@ -810,8 +810,6 @@ contains
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
         real(${kind}$), intent(in) :: tau
         !! Time horizon for the exponentiation.
-        real(${kind}$), intent(inout) :: dt
-        !! Current time step.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: trans
@@ -826,7 +824,7 @@ contains
         kdim = 30
         verbose = .false.
 
-        call kexpm_var_dt(vec_out, A, vec_in, tau, tol, dt, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_${type[0]}$${kind}$')
 
         return

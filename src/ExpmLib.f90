@@ -870,7 +870,7 @@ contains
         return
     end subroutine kexpm_mat_variable_dt_rsp
 
-    subroutine k_exptA_rsp(vec_out, A, vec_in, tau, dt, info, trans)
+    subroutine k_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rsp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_rsp), intent(inout) :: A
@@ -879,8 +879,6 @@ contains
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
         real(sp), intent(in) :: tau
         !! Time horizon for the exponentiation.
-        real(sp), intent(inout) :: dt
-        !! Current time step.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: trans
@@ -895,7 +893,7 @@ contains
         kdim = 30
         verbose = .false.
 
-        call kexpm_var_dt(vec_out, A, vec_in, tau, tol, dt, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rsp')
 
         return
@@ -1614,7 +1612,7 @@ contains
         return
     end subroutine kexpm_mat_variable_dt_rdp
 
-    subroutine k_exptA_rdp(vec_out, A, vec_in, tau, dt, info, trans)
+    subroutine k_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rdp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_rdp), intent(inout) :: A
@@ -1623,8 +1621,6 @@ contains
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
         real(dp), intent(in) :: tau
         !! Time horizon for the exponentiation.
-        real(dp), intent(inout) :: dt
-        !! Current time step.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: trans
@@ -1639,7 +1635,7 @@ contains
         kdim = 30
         verbose = .false.
 
-        call kexpm_var_dt(vec_out, A, vec_in, tau, tol, dt, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rdp')
 
         return
@@ -2358,7 +2354,7 @@ contains
         return
     end subroutine kexpm_mat_variable_dt_csp
 
-    subroutine k_exptA_csp(vec_out, A, vec_in, tau, dt, info, trans)
+    subroutine k_exptA_csp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_csp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_csp), intent(inout) :: A
@@ -2367,8 +2363,6 @@ contains
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
         real(sp), intent(in) :: tau
         !! Time horizon for the exponentiation.
-        real(sp), intent(inout) :: dt
-        !! Current time step.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: trans
@@ -2383,7 +2377,7 @@ contains
         kdim = 30
         verbose = .false.
 
-        call kexpm_var_dt(vec_out, A, vec_in, tau, tol, dt, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_csp')
 
         return
@@ -3102,7 +3096,7 @@ contains
         return
     end subroutine kexpm_mat_variable_dt_cdp
 
-    subroutine k_exptA_cdp(vec_out, A, vec_in, tau, dt, info, trans)
+    subroutine k_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_cdp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_cdp), intent(inout) :: A
@@ -3111,8 +3105,6 @@ contains
         !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
         real(dp), intent(in) :: tau
         !! Time horizon for the exponentiation.
-        real(dp), intent(inout) :: dt
-        !! Current time step.
         integer, intent(out) :: info
         !! Information flag.
         logical, optional, intent(in) :: trans
@@ -3127,7 +3119,7 @@ contains
         kdim = 30
         verbose = .false.
 
-        call kexpm_var_dt(vec_out, A, vec_in, tau, tol, dt, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_cdp')
 
         return
