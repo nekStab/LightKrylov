@@ -78,7 +78,7 @@ contains
 
         ! Check result.
         err = maxval(abs(E-Eref))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_dense_expm_rsp', eq='maxval(abs(E-Eref))', context=msg)
 
@@ -99,7 +99,7 @@ contains
         real(sp), allocatable :: E(:, :)
         real(sp), parameter :: tau = 0.1_sp
         integer, parameter :: nkmax = 50
-        real(sp) :: err, dt
+        real(sp) :: err
         integer :: info
         character(len=256) :: msg
 
@@ -116,13 +116,12 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_sp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rsp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
@@ -142,13 +141,13 @@ contains
     
         ! ----- Internal variables -----
         real(sp), allocatable :: E(:, :)
-        real(sp), parameter :: tau = 0.1_sp
+        real(sp), parameter :: tau = 0.5_sp
         integer, parameter :: nkmax = 10
         real(sp) :: err, dt
         integer :: info
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
         
         ! Initialize data.
         A = linop_rsp() ; call init_rand(A)
@@ -162,15 +161,15 @@ contains
 
         ! Krylov exponential.
         dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_sp, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rsp')
+        call kexpm_var_dt(Xkryl, A, Q, tau, dt, rtol_sp, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_kexptA_variable_dt_rsp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_kexptA_rsp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_kexptA_variable_dt_rsp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_variable_dt_rsp
@@ -201,7 +200,7 @@ contains
         ! Misc.
         integer  :: i, j
         real(sp), allocatable :: Xdata(:, :), Qdata(:, :)
-        real(sp) :: errv, dt
+        real(sp) :: errv
         real(sp) :: err(p, p)
         character(len=256) :: msg
 
@@ -227,14 +226,12 @@ contains
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
-        dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 2')
     
         do i = 1, p
@@ -250,7 +247,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_sp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -258,7 +255,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_sp)
 
         call check(error, errv < rtol_sp)
         call check_test(error, 'test_block_kexptA_rsp', &
@@ -288,7 +285,7 @@ contains
         ! Test parameters
         integer       , parameter :: nkmax = 10
         integer       , parameter :: p = 3
-        real(sp), parameter :: tau = 0.1_sp
+        real(sp), parameter :: tau = 0.5_sp
         real(sp), parameter :: tol = rtol_sp
         ! Misc.
         integer  :: i, j
@@ -297,7 +294,7 @@ contains
         real(sp) :: err(p, p)
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_sp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_sp
@@ -318,16 +315,16 @@ contains
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        dt = tau
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 1')
+            call kexpm_var_dt(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_rsp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rsp, 2')
+        call kexpm_var_dt(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_rsp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -342,7 +339,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_sp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -350,11 +347,11 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_sp)
 
         call check(error, errv < rtol_sp)
-        call check_test(error, 'test_block_kexptA_rsp', &
-                        & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_block_kexptA_variable_dt_rsp', &
+                        & eq='Comparison with matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_variable_dt_rsp
@@ -401,7 +398,7 @@ contains
 
         ! Check result.
         err = maxval(abs(E-Eref))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_dense_expm_rdp', eq='maxval(abs(E-Eref))', context=msg)
 
@@ -422,7 +419,7 @@ contains
         real(dp), allocatable :: E(:, :)
         real(dp), parameter :: tau = 0.1_dp
         integer, parameter :: nkmax = 50
-        real(dp) :: err, dt
+        real(dp) :: err
         integer :: info
         character(len=256) :: msg
 
@@ -439,13 +436,12 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_dp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
@@ -465,13 +461,13 @@ contains
     
         ! ----- Internal variables -----
         real(dp), allocatable :: E(:, :)
-        real(dp), parameter :: tau = 0.1_dp
+        real(dp), parameter :: tau = 0.5_dp
         integer, parameter :: nkmax = 10
         real(dp) :: err, dt
         integer :: info
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
         
         ! Initialize data.
         A = linop_rdp() ; call init_rand(A)
@@ -485,15 +481,15 @@ contains
 
         ! Krylov exponential.
         dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_dp, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_rdp')
+        call kexpm_var_dt(Xkryl, A, Q, tau, dt, rtol_dp, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_kexptA_variable_dt_rdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_kexptA_rdp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_kexptA_variable_dt_rdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_variable_dt_rdp
@@ -524,7 +520,7 @@ contains
         ! Misc.
         integer  :: i, j
         real(dp), allocatable :: Xdata(:, :), Qdata(:, :)
-        real(dp) :: errv, dt
+        real(dp) :: errv
         real(dp) :: err(p, p)
         character(len=256) :: msg
 
@@ -550,14 +546,12 @@ contains
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
-        dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 2')
     
         do i = 1, p
@@ -573,7 +567,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_dp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -581,7 +575,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_dp)
 
         call check(error, errv < rtol_dp)
         call check_test(error, 'test_block_kexptA_rdp', &
@@ -611,7 +605,7 @@ contains
         ! Test parameters
         integer       , parameter :: nkmax = 10
         integer       , parameter :: p = 3
-        real(dp), parameter :: tau = 0.1_dp
+        real(dp), parameter :: tau = 0.5_dp
         real(dp), parameter :: tol = rtol_dp
         ! Misc.
         integer  :: i, j
@@ -620,7 +614,7 @@ contains
         real(dp) :: err(p, p)
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_dp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_dp
@@ -641,16 +635,16 @@ contains
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        dt = tau
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 1')
+            call kexpm_var_dt(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_rdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_rdp, 2')
+        call kexpm_var_dt(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_rdp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -665,7 +659,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_dp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -673,11 +667,11 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_dp)
 
         call check(error, errv < rtol_dp)
-        call check_test(error, 'test_block_kexptA_rdp', &
-                        & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_block_kexptA_variable_dt_rdp', &
+                        & eq='Comparison with matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_variable_dt_rdp
@@ -724,7 +718,7 @@ contains
 
         ! Check result.
         err = maxval(abs(E-Eref))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_dense_expm_csp', eq='maxval(abs(E-Eref))', context=msg)
 
@@ -745,7 +739,7 @@ contains
         complex(sp), allocatable :: E(:, :)
         real(sp), parameter :: tau = 0.1_sp
         integer, parameter :: nkmax = 50
-        real(sp) :: err, dt
+        real(sp) :: err
         integer :: info
         character(len=256) :: msg
 
@@ -762,13 +756,12 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_sp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_sp, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_csp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
@@ -788,13 +781,13 @@ contains
     
         ! ----- Internal variables -----
         complex(sp), allocatable :: E(:, :)
-        real(sp), parameter :: tau = 0.1_sp
+        real(sp), parameter :: tau = 0.5_sp
         integer, parameter :: nkmax = 10
         real(sp) :: err, dt
         integer :: info
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
         
         ! Initialize data.
         A = linop_csp() ; call init_rand(A)
@@ -808,15 +801,15 @@ contains
 
         ! Krylov exponential.
         dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_sp, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_csp')
+        call kexpm_var_dt(Xkryl, A, Q, tau, dt, rtol_sp, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_kexptA_variable_dt_csp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_sp)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_kexptA_csp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_kexptA_variable_dt_csp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_variable_dt_csp
@@ -847,7 +840,7 @@ contains
         ! Misc.
         integer  :: i, j
         complex(sp), allocatable :: Xdata(:, :), Qdata(:, :)
-        real(sp) :: errv, dt
+        real(sp) :: errv
         complex(sp) :: err(p, p)
         character(len=256) :: msg
 
@@ -873,14 +866,12 @@ contains
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
-        dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 2')
     
         do i = 1, p
@@ -896,7 +887,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_sp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -904,7 +895,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_sp)
 
         call check(error, errv < rtol_sp)
         call check_test(error, 'test_block_kexptA_csp', &
@@ -934,7 +925,7 @@ contains
         ! Test parameters
         integer       , parameter :: nkmax = 10
         integer       , parameter :: p = 3
-        real(sp), parameter :: tau = 0.1_sp
+        real(sp), parameter :: tau = 0.5_sp
         real(sp), parameter :: tol = rtol_sp
         ! Misc.
         integer  :: i, j
@@ -943,7 +934,7 @@ contains
         complex(sp) :: err(p, p)
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_sp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_sp
@@ -964,16 +955,16 @@ contains
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        dt = tau
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 1')
+            call kexpm_var_dt(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_csp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_csp, 2')
+        call kexpm_var_dt(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_csp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -988,7 +979,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_sp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -996,11 +987,11 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_sp)
 
         call check(error, errv < rtol_sp)
-        call check_test(error, 'test_block_kexptA_csp', &
-                        & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_block_kexptA_variable_dt_csp', &
+                        & eq='Comparison with matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_variable_dt_csp
@@ -1047,7 +1038,7 @@ contains
 
         ! Check result.
         err = maxval(abs(E-Eref))
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_dense_expm_cdp', eq='maxval(abs(E-Eref))', context=msg)
 
@@ -1068,7 +1059,7 @@ contains
         complex(dp), allocatable :: E(:, :)
         real(dp), parameter :: tau = 0.1_dp
         integer, parameter :: nkmax = 50
-        real(dp) :: err, dt
+        real(dp) :: err
         integer :: info
         character(len=256) :: msg
 
@@ -1085,13 +1076,12 @@ contains
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
-        dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_dp, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Xkryl, A, Q, tau, rtol_dp, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_cdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
@@ -1111,13 +1101,13 @@ contains
     
         ! ----- Internal variables -----
         complex(dp), allocatable :: E(:, :)
-        real(dp), parameter :: tau = 0.1_dp
+        real(dp), parameter :: tau = 0.5_dp
         integer, parameter :: nkmax = 10
         real(dp) :: err, dt
         integer :: info
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
         
         ! Initialize data.
         A = linop_cdp() ; call init_rand(A)
@@ -1131,15 +1121,15 @@ contains
 
         ! Krylov exponential.
         dt = tau
-        call kexpm(Xkryl, A, Q, tau, dt, rtol_dp, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_cdp')
+        call kexpm_var_dt(Xkryl, A, Q, tau, dt, rtol_dp, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_kexptA_variable_dt_cdp')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
-        call get_err_str(msg, "max err: ", err)
+        call get_err_str(msg, "max err: ", err, rtol_dp)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_kexptA_cdp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_kexptA_variable_dt_cdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_variable_dt_cdp
@@ -1170,7 +1160,7 @@ contains
         ! Misc.
         integer  :: i, j
         complex(dp), allocatable :: Xdata(:, :), Qdata(:, :)
-        real(dp) :: errv, dt
+        real(dp) :: errv
         complex(dp) :: err(p, p)
         character(len=256) :: msg
 
@@ -1196,14 +1186,12 @@ contains
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call kexpm(C(i), A, B(i), tau, tol, info, verbosity=verb, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
-        dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call kexpm(Cblk, A, B, tau, tol, info, verbosity=verb, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 2')
     
         do i = 1, p
@@ -1219,7 +1207,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_dp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -1227,7 +1215,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_dp)
 
         call check(error, errv < rtol_dp)
         call check_test(error, 'test_block_kexptA_cdp', &
@@ -1257,7 +1245,7 @@ contains
         ! Test parameters
         integer       , parameter :: nkmax = 10
         integer       , parameter :: p = 3
-        real(dp), parameter :: tau = 0.1_dp
+        real(dp), parameter :: tau = 0.5_dp
         real(dp), parameter :: tol = rtol_dp
         ! Misc.
         integer  :: i, j
@@ -1266,7 +1254,7 @@ contains
         complex(dp) :: err(p, p)
         character(len=256) :: msg
 
-        logical, parameter :: verb = .true.
+        logical, parameter :: verb = .false.
 
         allocate(Adata(kdim, kdim)) ; Adata = 0.0_dp
         allocate(Edata(kdim, kdim)) ; Edata = 0.0_dp
@@ -1287,16 +1275,16 @@ contains
         call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
+        dt = tau
         do i = 1,p
-            dt = tau
-            call kexpm(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 1')
+            call kexpm_var_dt(C(i), A, B(i), tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+            call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_cdp, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         dt = tau
-        call kexpm(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_cdp, 2')
+        call kexpm_var_dt(Cblk, A, B, tau, dt, tol, info, verbosity=verb, kdim=nkmax)
+        call check_info(info, 'kexpm_var_dt', module=this_module, procedure='test_block_kexptA_variable_dt_cdp, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -1311,7 +1299,7 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        !call get_err_str(msg, "max err: ", errv)
+        !call get_err_str(msg, "max err: ", errv, rtol_dp)
  
         do i = 1, size(Cblk)
             do j = 1, size(Cblk)
@@ -1319,11 +1307,11 @@ contains
             enddo
         enddo
         errv = norm2(abs(err))
-        call get_err_str(msg, "max err: ", errv)
+        call get_err_str(msg, "max err: ", errv, rtol_dp)
 
         call check(error, errv < rtol_dp)
-        call check_test(error, 'test_block_kexptA_cdp', &
-                        & info='Comparison with matrix exponential', context=msg)
+        call check_test(error, 'test_block_kexptA_variable_dt_cdp', &
+                        & eq='Comparison with matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_variable_dt_cdp
@@ -1377,7 +1365,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_rsp')
     
        err = maxval(matmul(sqrtmA, sqrtmA) - A)
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_sp)
        call check(error, err < rtol_sp)
        call check_test(error, 'test_dense_sqrtm_pos_def_rsp', eq='sqrt(A)**2 = A', context=msg)
     
@@ -1419,7 +1407,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_rsp')
     
        err = maxval(matmul(sqrtmA, sqrtmA) - A)
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_sp)
        call check(error, err < rtol_sp)
        call check_test(error, 'test_dense_sqrtm_pos_semi_def_rsp', eq='sqrt(A)**2 = A', context=trim(msg))
     
@@ -1471,7 +1459,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_rdp')
     
        err = maxval(matmul(sqrtmA, sqrtmA) - A)
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_dp)
        call check(error, err < rtol_dp)
        call check_test(error, 'test_dense_sqrtm_pos_def_rdp', eq='sqrt(A)**2 = A', context=msg)
     
@@ -1513,7 +1501,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_rdp')
     
        err = maxval(matmul(sqrtmA, sqrtmA) - A)
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_dp)
        call check(error, err < rtol_dp)
        call check_test(error, 'test_dense_sqrtm_pos_semi_def_rdp', eq='sqrt(A)**2 = A', context=trim(msg))
     
@@ -1566,7 +1554,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_csp')
     
        err =  maxval(abs(matmul(sqrtmA, sqrtmA) - A))
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_sp)
        call check(error, err < rtol_sp)
        call check_test(error, 'test_dense_sqrtm_pos_def_csp', eq='sqrt(A)**2 = A', context=msg)
     
@@ -1609,7 +1597,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_csp')
     
        err = maxval(abs(matmul(sqrtmA, sqrtmA) - A))
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_sp)
        call check(error, err < rtol_sp)
        call check_test(error, 'test_dense_sqrtm_pos_semi_def_csp', eq='sqrt(A)**2 = A', context=trim(msg))
     
@@ -1662,7 +1650,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_cdp')
     
        err =  maxval(abs(matmul(sqrtmA, sqrtmA) - A))
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_dp)
        call check(error, err < rtol_dp)
        call check_test(error, 'test_dense_sqrtm_pos_def_cdp', eq='sqrt(A)**2 = A', context=msg)
     
@@ -1705,7 +1693,7 @@ contains
        call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_cdp')
     
        err = maxval(abs(matmul(sqrtmA, sqrtmA) - A))
-       call get_err_str(msg, "max err: ", err)
+       call get_err_str(msg, "max err: ", err, rtol_dp)
        call check(error, err < rtol_dp)
        call check_test(error, 'test_dense_sqrtm_pos_semi_def_cdp', eq='sqrt(A)**2 = A', context=trim(msg))
     
