@@ -523,7 +523,7 @@ contains
         ! Normaliztion & temporary arrays.
         real(sp), allocatable :: E(:, :)
         class(abstract_vector_rsp), allocatable :: b_
-        real(sp) :: err_est, beta, Tend, dt_, tol_, scale
+        real(sp) :: err_est, beta, Tend, dt_, tol_, scale, sfact
         character(len=128) :: msg
 
         ! Optional arguments.
@@ -539,6 +539,7 @@ contains
 
         info = 0
         scale = 1.5_sp
+        sfact = 0.5_sp
 
         ! Allocate arrays.
         allocate(X(nk+1), b_, source=b)
@@ -574,7 +575,7 @@ contains
                else
                   dt_ = dt
                end if
-               tol_ = dt_/tau*tol
+               tol_ = dt_/tau*tol*sfact
                if (verbose) then
                   write(msg, '(A,I3,4(A,E8.2))') 'step ', tstep, ': T= ', Tend, ', dt= ', dt, ', dt_= ', dt_, ', tol_= ', tol_
                   call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_variable_dt_rsp')
@@ -628,7 +629,7 @@ contains
                      !dt_ = 0.5_sp*sfact_sp*hfact*dt_ 
                      dt_ = dt_/scale ! this is a quick hack, should choose step better
 
-                     tol_ = dt_/tau*tol ! update accepted tol based on new time step
+                     tol_ = dt_/tau*tol*sfact ! update accepted tol based on new time step
 
                      if (dt_ < atol_sp) then
                         write(msg, *) 'dt < atol_sp. Cannot compute action of the matrix exponential!'
@@ -1265,7 +1266,7 @@ contains
         ! Normaliztion & temporary arrays.
         real(dp), allocatable :: E(:, :)
         class(abstract_vector_rdp), allocatable :: b_
-        real(dp) :: err_est, beta, Tend, dt_, tol_, scale
+        real(dp) :: err_est, beta, Tend, dt_, tol_, scale, sfact
         character(len=128) :: msg
 
         ! Optional arguments.
@@ -1281,6 +1282,7 @@ contains
 
         info = 0
         scale = 1.5_dp
+        sfact = 0.5_dp
 
         ! Allocate arrays.
         allocate(X(nk+1), b_, source=b)
@@ -1316,7 +1318,7 @@ contains
                else
                   dt_ = dt
                end if
-               tol_ = dt_/tau*tol
+               tol_ = dt_/tau*tol*sfact
                if (verbose) then
                   write(msg, '(A,I3,4(A,E8.2))') 'step ', tstep, ': T= ', Tend, ', dt= ', dt, ', dt_= ', dt_, ', tol_= ', tol_
                   call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_variable_dt_rdp')
@@ -1370,7 +1372,7 @@ contains
                      !dt_ = 0.5_dp*sfact_dp*hfact*dt_ 
                      dt_ = dt_/scale ! this is a quick hack, should choose step better
 
-                     tol_ = dt_/tau*tol ! update accepted tol based on new time step
+                     tol_ = dt_/tau*tol*sfact ! update accepted tol based on new time step
 
                      if (dt_ < atol_dp) then
                         write(msg, *) 'dt < atol_dp. Cannot compute action of the matrix exponential!'
@@ -2007,7 +2009,7 @@ contains
         ! Normaliztion & temporary arrays.
         complex(sp), allocatable :: E(:, :)
         class(abstract_vector_csp), allocatable :: b_
-        real(sp) :: err_est, beta, Tend, dt_, tol_, scale
+        real(sp) :: err_est, beta, Tend, dt_, tol_, scale, sfact
         character(len=128) :: msg
 
         ! Optional arguments.
@@ -2023,6 +2025,7 @@ contains
 
         info = 0
         scale = 1.5_sp
+        sfact = 0.5_sp
 
         ! Allocate arrays.
         allocate(X(nk+1), b_, source=b)
@@ -2058,7 +2061,7 @@ contains
                else
                   dt_ = dt
                end if
-               tol_ = dt_/tau*tol
+               tol_ = dt_/tau*tol*sfact
                if (verbose) then
                   write(msg, '(A,I3,4(A,E8.2))') 'step ', tstep, ': T= ', Tend, ', dt= ', dt, ', dt_= ', dt_, ', tol_= ', tol_
                   call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_variable_dt_csp')
@@ -2112,7 +2115,7 @@ contains
                      !dt_ = 0.5_sp*sfact_sp*hfact*dt_ 
                      dt_ = dt_/scale ! this is a quick hack, should choose step better
 
-                     tol_ = dt_/tau*tol ! update accepted tol based on new time step
+                     tol_ = dt_/tau*tol*sfact ! update accepted tol based on new time step
 
                      if (dt_ < atol_sp) then
                         write(msg, *) 'dt < atol_sp. Cannot compute action of the matrix exponential!'
@@ -2749,7 +2752,7 @@ contains
         ! Normaliztion & temporary arrays.
         complex(dp), allocatable :: E(:, :)
         class(abstract_vector_cdp), allocatable :: b_
-        real(dp) :: err_est, beta, Tend, dt_, tol_, scale
+        real(dp) :: err_est, beta, Tend, dt_, tol_, scale, sfact
         character(len=128) :: msg
 
         ! Optional arguments.
@@ -2765,6 +2768,7 @@ contains
 
         info = 0
         scale = 1.5_dp
+        sfact = 0.5_dp
 
         ! Allocate arrays.
         allocate(X(nk+1), b_, source=b)
@@ -2800,7 +2804,7 @@ contains
                else
                   dt_ = dt
                end if
-               tol_ = dt_/tau*tol
+               tol_ = dt_/tau*tol*sfact
                if (verbose) then
                   write(msg, '(A,I3,4(A,E8.2))') 'step ', tstep, ': T= ', Tend, ', dt= ', dt, ', dt_= ', dt_, ', tol_= ', tol_
                   call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_variable_dt_cdp')
@@ -2854,7 +2858,7 @@ contains
                      !dt_ = 0.5_dp*sfact_dp*hfact*dt_ 
                      dt_ = dt_/scale ! this is a quick hack, should choose step better
 
-                     tol_ = dt_/tau*tol ! update accepted tol based on new time step
+                     tol_ = dt_/tau*tol*sfact ! update accepted tol based on new time step
 
                      if (dt_ < atol_dp) then
                         write(msg, *) 'dt < atol_dp. Cannot compute action of the matrix exponential!'

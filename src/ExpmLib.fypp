@@ -454,7 +454,7 @@ contains
         ! Normaliztion & temporary arrays.
         ${type}$, allocatable :: E(:, :)
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: b_
-        real(${kind}$) :: err_est, beta, Tend, dt_, tol_, scale
+        real(${kind}$) :: err_est, beta, Tend, dt_, tol_, scale, sfact
         character(len=128) :: msg
 
         ! Optional arguments.
@@ -470,6 +470,7 @@ contains
 
         info = 0
         scale = 1.5_${kind}$
+        sfact = 0.5_${kind}$
 
         ! Allocate arrays.
         allocate(X(nk+1), b_, source=b)
@@ -505,7 +506,7 @@ contains
                else
                   dt_ = dt
                end if
-               tol_ = dt_/tau*tol
+               tol_ = dt_/tau*tol*sfact
                if (verbose) then
                   write(msg, '(A,I3,4(A,E8.2))') 'step ', tstep, ': T= ', Tend, ', dt= ', dt, ', dt_= ', dt_, ', tol_= ', tol_
                   call logger%log_message(trim(msg), module=this_module, procedure='kexpm_vec_variable_dt_${type[0]}$${kind}$')
@@ -559,7 +560,7 @@ contains
                      !dt_ = 0.5_${kind}$*sfact_${kind}$*hfact*dt_ 
                      dt_ = dt_/scale ! this is a quick hack, should choose step better
 
-                     tol_ = dt_/tau*tol ! update accepted tol based on new time step
+                     tol_ = dt_/tau*tol*sfact ! update accepted tol based on new time step
 
                      if (dt_ < atol_${kind}$) then
                         write(msg, *) 'dt < atol_${kind}$. Cannot compute action of the matrix exponential!'
