@@ -19,6 +19,7 @@ module lightkrylov_BaseKrylov
     public :: apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: orthonormalize_basis
     public :: orthogonalize_against_basis
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
