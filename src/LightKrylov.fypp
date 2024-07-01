@@ -38,6 +38,7 @@ module LightKrylov
     public :: abstract_vector_${type[0]}$${kind}$
     #:endfor
     public :: zero_basis
+    public :: copy_basis
     
     ! AbstractLinops exports.
     public :: abstract_linop

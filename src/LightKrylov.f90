@@ -37,6 +37,7 @@ module LightKrylov
     public :: abstract_vector_csp
     public :: abstract_vector_cdp
     public :: zero_basis
+    public :: copy_basis
     
     ! AbstractLinops exports.
     public :: abstract_linop
