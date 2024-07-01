@@ -37,6 +37,9 @@ module LightKrylov
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_vector_${type[0]}$${kind}$
     #:endfor
+    public :: innerprod
+    public :: linear_combination
+    public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
     

@@ -36,6 +36,9 @@ module LightKrylov
     public :: abstract_vector_rdp
     public :: abstract_vector_csp
     public :: abstract_vector_cdp
+    public :: innerprod
+    public :: linear_combination
+    public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
     
