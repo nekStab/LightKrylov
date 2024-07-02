@@ -363,6 +363,8 @@ contains
         integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -373,7 +375,6 @@ contains
         end block
 
         ! Construct eigenvectors.
-        k = min(k, kdim_)
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
@@ -493,6 +494,8 @@ contains
         integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -503,7 +506,6 @@ contains
         end block
 
         ! Construct eigenvectors.
-        k = min(k, kdim_)
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
@@ -613,6 +615,8 @@ contains
         integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
        
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -623,7 +627,6 @@ contains
         end block
 
         ! Construct eigenvectors.
-        k = min(k, kdim_)
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
@@ -733,6 +736,8 @@ contains
         integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
        
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -743,7 +748,6 @@ contains
         end block
 
         ! Construct eigenvectors.
-        k = min(k, kdim_)
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
