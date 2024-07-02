@@ -1246,7 +1246,7 @@ contains
         S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
-        k = min(k, kdim_)
+        k = min(k, kdim_) ; info = k
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
@@ -1340,7 +1340,7 @@ contains
         S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
-        k = min(k, kdim_)
+        k = min(k, kdim_) ; info = k
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
@@ -1434,7 +1434,7 @@ contains
         S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
-        k = min(k, kdim_)
+        k = min(k, kdim_) ; info = k
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
@@ -1528,7 +1528,7 @@ contains
         S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
-        k = min(k, kdim_)
+        k = min(k, kdim_) ; info = k
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
@@ -1584,7 +1584,7 @@ contains
         class(abstract_precond_rsp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k
+        integer :: i, k, niter
         real(sp), allocatable :: alpha(:)
         class(abstract_vector_rsp), allocatable :: dx, wrk
 
@@ -1621,7 +1621,7 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
-        info = 0
+        info = 0 ; niter = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
@@ -1670,7 +1670,7 @@ contains
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
-                info = info + 1
+                niter = niter + 1
 
                 ! Check convergence.
                 if (abs(beta) <= tol) then
@@ -1697,6 +1697,9 @@ contains
             if (abs(beta) <= tol) exit gmres_iter
 
         enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
 
         return
     end subroutine gmres_rsp
@@ -1740,7 +1743,7 @@ contains
         class(abstract_precond_rdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k
+        integer :: i, k, niter
         real(dp), allocatable :: alpha(:)
         class(abstract_vector_rdp), allocatable :: dx, wrk
 
@@ -1777,7 +1780,7 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
-        info = 0
+        info = 0 ; niter = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
@@ -1826,7 +1829,7 @@ contains
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
-                info = info + 1
+                niter = niter + 1
 
                 ! Check convergence.
                 if (abs(beta) <= tol) then
@@ -1853,6 +1856,9 @@ contains
             if (abs(beta) <= tol) exit gmres_iter
 
         enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
 
         return
     end subroutine gmres_rdp
@@ -1896,7 +1902,7 @@ contains
         class(abstract_precond_csp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k
+        integer :: i, k, niter
         complex(sp), allocatable :: alpha(:)
         class(abstract_vector_csp), allocatable :: dx, wrk
 
@@ -1933,7 +1939,7 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
-        info = 0
+        info = 0 ; niter = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
@@ -1982,7 +1988,7 @@ contains
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
-                info = info + 1
+                niter = niter + 1
 
                 ! Check convergence.
                 if (abs(beta) <= tol) then
@@ -2009,6 +2015,9 @@ contains
             if (abs(beta) <= tol) exit gmres_iter
 
         enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
 
         return
     end subroutine gmres_csp
@@ -2052,7 +2061,7 @@ contains
         class(abstract_precond_cdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k
+        integer :: i, k, niter
         complex(dp), allocatable :: alpha(:)
         class(abstract_vector_cdp), allocatable :: dx, wrk
 
@@ -2089,7 +2098,7 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
-        info = 0
+        info = 0 ; niter = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
@@ -2138,7 +2147,7 @@ contains
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
-                info = info + 1
+                niter = niter + 1
 
                 ! Check convergence.
                 if (abs(beta) <= tol) then
@@ -2165,6 +2174,9 @@ contains
             if (abs(beta) <= tol) exit gmres_iter
 
         enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
 
         return
     end subroutine gmres_cdp

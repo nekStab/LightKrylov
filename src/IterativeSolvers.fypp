@@ -489,7 +489,7 @@ contains
         S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
 
         ! Singular vectors.
-        k = min(k, kdim_)
+        k = min(k, kdim_) ; info = k
         do i = 1, nsv
             call U(i)%zero() ; call V(i)%zero()
             do j = 1, k
@@ -547,7 +547,7 @@ contains
         class(abstract_precond_${type[0]}$${kind}$), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k
+        integer :: i, k, niter
         ${type}$, allocatable :: alpha(:)
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
 
@@ -584,7 +584,7 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_${kind}$
         allocate(e(kdim+1)) ; e = 0.0_${kind}$
 
-        info = 0
+        info = 0 ; niter = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
@@ -633,7 +633,7 @@ contains
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
                 ! Current number of iterations performed.
-                info = info + 1
+                niter = niter + 1
 
                 ! Check convergence.
                 if (abs(beta) <= tol) then
@@ -660,6 +660,9 @@ contains
             if (abs(beta) <= tol) exit gmres_iter
 
         enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
 
         return
     end subroutine gmres_${type[0]}$${kind}$
