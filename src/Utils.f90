@@ -21,7 +21,7 @@ module lightkrylov_utils
     implicit none
     private
 
-    character*128, parameter :: this_module = 'LightKrylov_Utils'
+    character(len=128), parameter :: this_module = 'LightKrylov_Utils'
 
     public :: assert_shape
     ! Compute B = inv(A) in-place for dense matrices.
@@ -176,7 +176,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -198,7 +198,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -219,7 +219,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -241,7 +241,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -262,7 +262,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -284,7 +284,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -305,7 +305,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -327,7 +327,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -499,7 +499,7 @@ contains
       real(sp) :: lambda(size(X,1))
       real(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -691,7 +691,7 @@ contains
       real(dp) :: lambda(size(X,1))
       real(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -878,7 +878,7 @@ contains
       real(sp) :: lambda(size(X,1))
       complex(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -1065,7 +1065,7 @@ contains
       real(dp) :: lambda(size(X,1))
       complex(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
