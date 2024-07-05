@@ -17,6 +17,7 @@ module lightkrylov_BaseKrylov
     public :: apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
     public :: lanczos_bidiagonalization
@@ -78,6 +79,13 @@ module lightkrylov_BaseKrylov
         module procedure initialize_krylov_subspace_rdp
         module procedure initialize_krylov_subspace_csp
         module procedure initialize_krylov_subspace_cdp
+    end interface
+
+    interface is_orthonormal
+        module procedure is_orthonormal_rsp
+        module procedure is_orthonormal_rdp
+        module procedure is_orthonormal_csp
+        module procedure is_orthonormal_cdp
     end interface
 
     interface orthonormalize_basis
@@ -152,6 +160,47 @@ contains
     !-------------------------------------
     !-----     UTILITY FUNCTIONS     -----
     !-------------------------------------
+
+    logical function is_orthonormal_rsp(X) result(ortho)
+        class(abstract_vector_rsp), intent(in) :: X(:)
+        real(sp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end function
+    logical function is_orthonormal_rdp(X) result(ortho)
+        class(abstract_vector_rdp), intent(in) :: X(:)
+        real(dp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end function
+    logical function is_orthonormal_csp(X) result(ortho)
+        class(abstract_vector_csp), intent(in) :: X(:)
+        complex(sp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end function
+    logical function is_orthonormal_cdp(X) result(ortho)
+        class(abstract_vector_cdp), intent(in) :: X(:)
+        complex(dp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end function
 
     subroutine initialize_krylov_subspace_rsp(X, X0)
         class(abstract_vector_rsp), intent(inout) :: X(:)

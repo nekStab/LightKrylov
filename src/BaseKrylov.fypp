@@ -19,6 +19,7 @@ module lightkrylov_BaseKrylov
     public :: apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
     public :: lanczos_bidiagonalization
@@ -65,6 +66,12 @@ module lightkrylov_BaseKrylov
     interface initialize_krylov_subspace
         #:for kind, type in RC_KINDS_TYPES
         module procedure initialize_krylov_subspace_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface is_orthonormal
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure is_orthonormal_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -125,6 +132,19 @@ contains
     !-------------------------------------
     !-----     UTILITY FUNCTIONS     -----
     !-------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    logical function is_orthonormal_${type[0]}$${kind}$(X) result(ortho)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
+        ${type}$, dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end function
+    #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine initialize_krylov_subspace_${type[0]}$${kind}$(X, X0)
