@@ -23,7 +23,7 @@ module lightkrylov_utils
 
     character(len=128), parameter :: this_module = 'LightKrylov_Utils'
 
-    public :: assert_shape
+    public :: assert_shape, norml, log2
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
     ! Compute AX = XD for general dense matrices.
@@ -37,13 +37,6 @@ module lightkrylov_utils
     ! Re-orders the Schur factorization of A.
     public :: ordschur
 
-    public :: log2_rsp
-    public :: norml_rsp
-    public :: log2_rdp
-    public :: norml_rdp
-    public :: norml_csp
-    public :: norml_cdp
-
     interface assert_shape
         module procedure assert_shape_vector_rsp
         module procedure assert_shape_matrix_rsp
@@ -53,6 +46,18 @@ module lightkrylov_utils
         module procedure assert_shape_matrix_csp
         module procedure assert_shape_vector_cdp
         module procedure assert_shape_matrix_cdp
+    end interface
+
+    interface norml
+        module procedure norml_rsp
+        module procedure norml_rdp
+        module procedure norml_csp
+        module procedure norml_cdp
+    end interface
+
+    interface log2
+        module procedure log2_rsp
+        module procedure log2_rdp
     end interface
 
     interface inv
