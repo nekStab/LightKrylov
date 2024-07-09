@@ -8,12 +8,12 @@ module lightkrylov_IterativeSolvers
     use stdlib_linalg, only: lstsq, svd
     use stdlib_stats, only: median
 
-    use lightkrylov_constants
+    use LightKrylov_Constants
     Use LightKrylov_Logger
-    use lightkrylov_Utils
-    use lightkrylov_AbstractVectors
-    use lightkrylov_AbstractLinops
-    use lightkrylov_BaseKrylov
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
+    use LightKrylov_AbstractLinops
+    use LightKrylov_BaseKrylov
 
     implicit none
     private
@@ -327,7 +327,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -457,7 +457,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -586,7 +586,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -706,7 +706,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -817,7 +817,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
+            if (nid == 0) call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -916,7 +916,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
+            if (nid == 0) call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1015,7 +1015,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
+            if (nid == 0) call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1114,7 +1114,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
+            if (nid == 0) call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
 
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
@@ -1219,7 +1219,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
+            if (nid == 0) call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1313,7 +1313,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
+            if (nid == 0) call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1407,7 +1407,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
+            if (nid == 0) call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1501,7 +1501,7 @@ contains
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
+            if (nid == 0) call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1651,7 +1651,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
+                if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -1807,7 +1807,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
+                if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -1963,7 +1963,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
+                if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -2119,7 +2119,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
+                if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()

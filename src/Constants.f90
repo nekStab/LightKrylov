@@ -1,6 +1,14 @@
 module lightkrylov_constants
+#ifdef MPI
+    use mpi
+#endif
     implicit none
     private
+#ifdef MPI
+    integer , parameter, public :: nid = myrank
+#else
+    integer , parameter, public :: nid = 0
+#endif
 
     integer , parameter, public :: sp = selected_real_kind(6, 37)
     !! Definition of the single precision data type.
