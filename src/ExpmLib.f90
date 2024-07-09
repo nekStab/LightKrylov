@@ -8,17 +8,16 @@ module lightkrylov_expmlib
     use stdlib_linalg, only: eye
 
     ! LightKrylov.
-    use lightkrylov_constants
+    use LightKrylov_Constants
     use LightKrylov_Logger
-    use lightkrylov_utils
-    use lightkrylov_AbstractVectors
-    use lightkrylov_AbstractLinops
-    use lightkrylov_BaseKrylov
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
+    use LightKrylov_AbstractLinops
+    use LightKrylov_BaseKrylov
 
     implicit none
     
     character(len=128), parameter, private :: this_module = 'LightKrylov_ExpmLib'
-
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp
@@ -270,7 +269,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rsp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rsp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -404,7 +403,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rsp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rsp')
 
 
                 if (info == kp) then
@@ -500,7 +499,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rsp')
+        if (nid == 0) call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rsp')
 
         return
     end subroutine k_exptA_rsp
@@ -638,7 +637,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rdp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rdp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -772,7 +771,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rdp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rdp')
 
 
                 if (info == kp) then
@@ -868,7 +867,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rdp')
+        if (nid == 0) call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rdp')
 
         return
     end subroutine k_exptA_rdp
@@ -1006,7 +1005,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_csp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_csp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -1140,7 +1139,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_csp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_csp')
 
 
                 if (info == kp) then
@@ -1236,7 +1235,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_csp')
+        if (nid == 0) call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_csp')
 
         return
     end subroutine k_exptA_csp
@@ -1374,7 +1373,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_cdp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_cdp')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -1508,7 +1507,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_cdp')
+                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_cdp')
 
 
                 if (info == kp) then
@@ -1604,7 +1603,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_cdp')
+        if (nid == 0) call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_cdp')
 
         return
     end subroutine k_exptA_cdp

@@ -11,6 +11,7 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
+external-modules = "mpi"
 
 [install]
 library = true
@@ -19,6 +20,9 @@ library = true
 implicit-typing = false
 implicit-external = true
 source-form = "free"
+
+[preprocess]
+[preprocess.cpp]
 
 [dependencies]
 stdlib = "*"

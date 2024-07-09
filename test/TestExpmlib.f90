@@ -4,7 +4,7 @@ module TestExpmlib
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_io_npy, only: save_npy
-   ! Testdrive
+    ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
     ! LightKrylov
     use LightKrylov
