@@ -180,8 +180,6 @@ contains
         return
     end subroutine initialize_krylov_subspace_rsp
 
-<<<<<<< Updated upstream
-=======
     subroutine orthonormalize_basis_rsp(X)
       !! Orthonormalizes the `abstract_vector` basis `X`
       class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -193,12 +191,11 @@ contains
 
       ! internals
       call qr(X, R, info)
-      if (nid == 0) call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
       
       return
     end subroutine orthonormalize_basis_rsp
 
->>>>>>> Stashed changes
     subroutine orthogonalize_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: y
@@ -442,8 +439,6 @@ contains
         return
     end subroutine initialize_krylov_subspace_rdp
 
-<<<<<<< Updated upstream
-=======
     subroutine orthonormalize_basis_rdp(X)
       !! Orthonormalizes the `abstract_vector` basis `X`
       class(abstract_vector_rdp), intent(inout) :: X(:)
@@ -455,12 +450,11 @@ contains
 
       ! internals
       call qr(X, R, info)
-      if (nid == 0) call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
       
       return
     end subroutine orthonormalize_basis_rdp
 
->>>>>>> Stashed changes
     subroutine orthogonalize_vector_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rdp), intent(inout) :: y
@@ -704,8 +698,6 @@ contains
         return
     end subroutine initialize_krylov_subspace_csp
 
-<<<<<<< Updated upstream
-=======
     subroutine orthonormalize_basis_csp(X)
       !! Orthonormalizes the `abstract_vector` basis `X`
       class(abstract_vector_csp), intent(inout) :: X(:)
@@ -717,12 +709,11 @@ contains
 
       ! internals
       call qr(X, R, info)
-      if (nid == 0) call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
       
       return
     end subroutine orthonormalize_basis_csp
 
->>>>>>> Stashed changes
     subroutine orthogonalize_vector_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_csp), intent(inout) :: y
@@ -966,8 +957,6 @@ contains
         return
     end subroutine initialize_krylov_subspace_cdp
 
-<<<<<<< Updated upstream
-=======
     subroutine orthonormalize_basis_cdp(X)
       !! Orthonormalizes the `abstract_vector` basis `X`
       class(abstract_vector_cdp), intent(inout) :: X(:)
@@ -979,12 +968,11 @@ contains
 
       ! internals
       call qr(X, R, info)
-      if (nid == 0) call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
       
       return
     end subroutine orthonormalize_basis_cdp
 
->>>>>>> Stashed changes
     subroutine orthogonalize_vector_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_cdp), intent(inout) :: y
