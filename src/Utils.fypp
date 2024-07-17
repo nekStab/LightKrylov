@@ -196,11 +196,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (nid == 0) call check_info(info, 'GETREF', module=this_module, procedure='inv_${type[0]}$${kind}$')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_${type[0]}$${kind}$')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (nid == 0) call check_info(info, 'GETRI', module=this_module, procedure='inv_${type[0]}$${kind}$')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_${type[0]}$${kind}$')
 
         return
     end subroutine inv_${type[0]}$${kind}$
@@ -243,7 +243,7 @@ contains
         #:else
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
         #:endif
-        if (nid == 0) call check_info(info, 'GEEV', module=this_module, procedure='eig_${type[0]}$${kind}$')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_${type[0]}$${kind}$')
 
         #:if type[0] == "r"
         ! Reconstruct eigenvalues
@@ -284,10 +284,10 @@ contains
         ! Eigendecomposition.
         #:if type[0] == "r"
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        if (nid == 0) call check_info(info, 'SYEV', module=this_module, procedure='eigh_${type[0]}$${kind}$')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_${type[0]}$${kind}$')
         #:else
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        if (nid == 0) call check_info(info, 'HEEV', module=this_module, procedure='eigh_${type[0]}$${kind}$')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_${type[0]}$${kind}$')
         #:endif
 
         ! Extract eigenvectors
@@ -326,7 +326,7 @@ contains
         #:else
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
         #:endif
-        if (nid == 0) call check_info(info, 'GEES', module=this_module, procedure='schur_${type[0]}$${kind}$')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_${type[0]}$${kind}$')
 
         #:if type[0] == "r"
         ! Reconstruct eigenvalues
@@ -383,7 +383,7 @@ contains
         #:else
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
-        if (nid == 0) call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_${type[0]}$${kind}$')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_${type[0]}$${kind}$')
 
         return
     end subroutine ordschur_${type[0]}$${kind}$

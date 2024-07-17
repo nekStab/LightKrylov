@@ -210,7 +210,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
 
                 ! Compute approximation.
                 if (info == k) then
@@ -344,7 +344,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                if (nid == 0) call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
 
 
                 if (info == kp) then
@@ -440,7 +440,7 @@ contains
         verbose = .false.
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
-        if (nid == 0) call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_${type[0]}$${kind}$')
+        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_${type[0]}$${kind}$')
 
         return
     end subroutine k_exptA_${type[0]}$${kind}$
