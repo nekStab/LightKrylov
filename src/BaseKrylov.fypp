@@ -331,11 +331,11 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                         & procedure='DGS_vector_against_basis_${type[0]}$${kind}$, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                         & procedure='DGS_vector_against_basis_${type[0]}$${kind}$, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
@@ -376,10 +376,10 @@ contains
       ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, first pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, first pass')
       ! second pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, second pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, second pass')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
@@ -426,7 +426,7 @@ contains
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
-                if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
             end if
 
             ! Normalize column.
@@ -490,7 +490,7 @@ contains
                 do i = j, kdim
                     call Q(i)%rand(.false.)
                     call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
                     beta = Q(i)%norm(); call Q(i)%scal(one_${type[0]}$${kind}$ / beta)
                 enddo
                 info = j
@@ -724,11 +724,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
-            if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            if (nid == 0) call check_info(info, 'qr', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
+            call check_info(info, 'qr', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_r${kind}$
@@ -807,7 +807,7 @@ contains
             if (k > 1 ) then
             
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                if (nid == 0) call check_info(info, 'double_gram_schmidt_step', module=this_module, &
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_${type[0]}$${kind}$, first pass')
             end if
 
@@ -825,7 +825,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+            call check_info(info, 'orthogonalize_against_basis', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_${type[0]}$${kind}$, second pass')
 
             ! Normalization step
@@ -919,7 +919,7 @@ contains
 
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        if (nid == 0) call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_${type[0]}$${kind}$')
+        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_${type[0]}$${kind}$')
 
         return
     end subroutine update_tridiag_matrix_${type[0]}$${kind}$

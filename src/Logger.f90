@@ -6,8 +6,6 @@ module LightKrylov_Logger
    use stdlib_strings, only : chomp, replace_all
    ! Testdrive
    use testdrive, only: error_type, test_failed
-   ! LightKrylov
-   use LightKrylov_Constants
 
    implicit none
    private
@@ -29,7 +27,7 @@ contains
       !! The name of the module in which the call happens
       character(len=*), optional,  intent(in)  :: procedure
       !! The name of the procedure in which the call happens
-      if (nid == 0) call check_info(-1, origin='', module=module, procedure=procedure, info_msg=msg)
+      call check_info(-1, origin="STOP_ERROR", module=module, procedure=procedure, info_msg=msg)
       return
    end subroutine stop_error
 
@@ -339,6 +337,12 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
+         !
+         !  stop error
+         !
+         else if (trim(origin) == 'STOP_ERROR') then
+            call logger%log_error(trim(origin), module=module, procedure=procedure, stat=info, errmsg=trim(str))
+            ierr = -1
          !
          !   Default
          !

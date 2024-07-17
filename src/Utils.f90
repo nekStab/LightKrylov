@@ -359,11 +359,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (nid == 0) call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (nid == 0) call check_info(info, 'GETRI', module=this_module, procedure='inv_rsp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_rsp')
 
         return
     end subroutine inv_rsp
@@ -388,7 +388,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        if (nid == 0) call check_info(info, 'GEEV', module=this_module, procedure='eig_rsp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rsp')
 
         ! Reconstruct eigenvalues
         vals = one_csp*wr + one_im_csp*wi
@@ -418,7 +418,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        if (nid == 0) call check_info(info, 'SYEV', module=this_module, procedure='eigh_rsp')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rsp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -448,7 +448,7 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-        if (nid == 0) call check_info(info, 'GEES', module=this_module, procedure='schur_rsp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rsp')
 
         ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=sp)
@@ -486,7 +486,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        if (nid == 0) call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rsp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rsp')
 
         return
     end subroutine ordschur_rsp
@@ -551,11 +551,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (nid == 0) call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (nid == 0) call check_info(info, 'GETRI', module=this_module, procedure='inv_rdp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_rdp')
 
         return
     end subroutine inv_rdp
@@ -580,7 +580,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        if (nid == 0) call check_info(info, 'GEEV', module=this_module, procedure='eig_rdp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rdp')
 
         ! Reconstruct eigenvalues
         vals = one_cdp*wr + one_im_cdp*wi
@@ -610,7 +610,7 @@ contains
 
         ! Eigendecomposition.
         call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        if (nid == 0) call check_info(info, 'SYEV', module=this_module, procedure='eigh_rdp')
+        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -640,7 +640,7 @@ contains
 
         allocate(wr(size(eigvals)), wi(size(eigvals)))
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-        if (nid == 0) call check_info(info, 'GEES', module=this_module, procedure='schur_rdp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rdp')
 
         ! Reconstruct eigenvalues
         eigvals = cmplx(wr, wi, kind=dp)
@@ -678,7 +678,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        if (nid == 0) call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rdp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rdp')
 
         return
     end subroutine ordschur_rdp
@@ -743,11 +743,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (nid == 0) call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (nid == 0) call check_info(info, 'GETRI', module=this_module, procedure='inv_csp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_csp')
 
         return
     end subroutine inv_csp
@@ -773,7 +773,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        if (nid == 0) call check_info(info, 'GEEV', module=this_module, procedure='eig_csp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_csp')
 
 
         return
@@ -803,7 +803,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        if (nid == 0) call check_info(info, 'HEEV', module=this_module, procedure='eigh_csp')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_csp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -832,7 +832,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
-        if (nid == 0) call check_info(info, 'GEES', module=this_module, procedure='schur_csp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_csp')
 
 
         return
@@ -865,7 +865,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        if (nid == 0) call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_csp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_csp')
 
         return
     end subroutine ordschur_csp
@@ -930,11 +930,11 @@ contains
         ! Compute A = LU (in-place).
         n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
         call getrf(n, n, A, n, ipiv, info)
-        if (nid == 0) call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
+        call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
 
         ! Compute inv(A) (in-place).
         call getri(n, A, n, ipiv, work, n, info)
-        if (nid == 0) call check_info(info, 'GETRI', module=this_module, procedure='inv_cdp')
+        call check_info(info, 'GETRI', module=this_module, procedure='inv_cdp')
 
         return
     end subroutine inv_cdp
@@ -960,7 +960,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        if (nid == 0) call check_info(info, 'GEEV', module=this_module, procedure='eig_cdp')
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_cdp')
 
 
         return
@@ -990,7 +990,7 @@ contains
 
         ! Eigendecomposition.
         call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        if (nid == 0) call check_info(info, 'HEEV', module=this_module, procedure='eigh_cdp')
+        call check_info(info, 'HEEV', module=this_module, procedure='eigh_cdp')
 
         ! Extract eigenvectors
         vecs = a_tilde
@@ -1019,7 +1019,7 @@ contains
         allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
 
         call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
-        if (nid == 0) call check_info(info, 'GEES', module=this_module, procedure='schur_cdp')
+        call check_info(info, 'GEES', module=this_module, procedure='schur_cdp')
 
 
         return
@@ -1052,7 +1052,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        if (nid == 0) call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_cdp')
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_cdp')
 
         return
     end subroutine ordschur_cdp
