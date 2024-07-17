@@ -37,7 +37,7 @@ module LightKrylov_Constants
     complex(dp), parameter, public :: zero_cdp   = cmplx(0.0_dp, 0.0_dp, kind=dp)
 
     ! MPI subroutines
-    public :: mpi_setup, mpi_close
+    public :: comm_setup, comm_close
     
     ! Getter/setter
     public :: set_io_rank
@@ -46,7 +46,7 @@ module LightKrylov_Constants
     
 contains
 
-   subroutine mpi_setup()
+   subroutine comm_setup()
       integer :: ierr
       character(len=128) :: msg
 #ifdef MPI
@@ -63,9 +63,9 @@ contains
 #endif
       call set_io_rank(0)
       return
-   end subroutine mpi_setup
+   end subroutine comm_setup
 
-   subroutine mpi_close
+   subroutine comm_close
       integer :: ierr
       character(len=128) :: msg
 #ifdef MPI
@@ -76,7 +76,7 @@ contains
       ierr = 0
 #endif
       return
-   end subroutine mpi_close
+   end subroutine comm_close
 
    subroutine set_io_rank(rk)
       integer, intent(in) :: rk
