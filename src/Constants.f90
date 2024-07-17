@@ -1,13 +1,15 @@
 module LightKrylov_Constants
+    use stdlib_logger, only: logger => global_logger
+    use LightKrylov_Logger
 #ifdef MPI
     use mpi_f08
 #endif
     implicit none
     private
 
-    integer, private :: nio = 1
-    integer, private :: nid = 1
+    integer, private :: nid = 0
     integer, private :: comm_size = 1
+    integer, private :: nio = 0
 
     integer , parameter, public :: sp = selected_real_kind(6, 37)
     !! Definition of the single precision data type.
@@ -34,10 +36,9 @@ module LightKrylov_Constants
     complex(sp), parameter, public :: one_im_cdp = cmplx(0.0_dp, 1.0_dp, kind=dp)
     complex(dp), parameter, public :: zero_cdp   = cmplx(0.0_dp, 0.0_dp, kind=dp)
 
-#ifdef MPI
     ! MPI subroutines
-    public :: mpi_initialize, mpi_close
-#endif
+    public :: mpi_setup, mpi_close
+    
     ! Getter/setter
     public :: set_io_rank
     public :: io_rank
@@ -45,34 +46,49 @@ module LightKrylov_Constants
     
 contains
 
-#ifdef MPI
-   subroutine mpi_initialize()
+   subroutine mpi_setup()
       integer :: ierr
+      character(len=128) :: msg
+#ifdef MPI
       ! Initialize MPI
       call MPI_Init(ierr)
-      if (ierr /= MPI_SUCCESS) then
-         print *, "Error initializing MPI"
-         STOP 1
-      end if
+      if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", module='LightKrylov',procedure='mpi_init')
       call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr)
       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr)
-   end subroutine mpi_initialize
+      write(msg, '(A,I4,A,I4)') 'Setup parallel run: rank', nid, ', comm_size = ', comm_size
+      call logger%log_message(trim(msg), module='LightKrylov', procedure='mpi_setup')
+#else
+      write(msg, *) 'Setup serial run'
+      call logger%log_message(trim(msg), module='LightKrylov', procedure='mpi_setup')
+#endif
+      call set_io_rank(0)
+      return
+   end subroutine mpi_setup
 
    subroutine mpi_close
       integer :: ierr
+      character(len=128) :: msg
+#ifdef MPI
       ! Finalize MPI
       call MPI_Finalize(ierr)
-      if (ierr /= MPI_SUCCESS) then
-          print *, "Error finalizing MPI"
-          STOP 1
-      end if
-   end subroutine mpi_close
+      if (ierr /= MPI_SUCCESS) call stop_error("Error finalizing MPI", module='LightKrylov',procedure='mpi_finalize')
+#else
+      ierr = 0
 #endif
+      return
+   end subroutine mpi_close
 
    subroutine set_io_rank(rk)
       integer, intent(in) :: rk
-      if (rk > comm_size) print *, 'Invalid I/O rank specified in set_io_rank'
-      nio = rk
+      character(len=128) :: msg
+      if (rk > comm_size) then
+         write(msg, *) 'Invalid I/O rank specified!'
+         if (io_rank()) call logger%log_message(trim(msg), module='LightKrylov', procedure='set_io_rank')
+      else
+         nio = rk
+         write(msg, '(A,I4)') 'I/O rank --> rank ', nio
+         if (io_rank()) call logger%log_message(trim(msg), module='LightKrylov', procedure='set_io_rank')
+      end if
    end 
 
    logical function io_rank() result(is_io)
