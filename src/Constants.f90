@@ -1,5 +1,7 @@
 module LightKrylov_Constants
+#ifdef MPI
     use mpi_f08
+#endif
     implicit none
     private
 
@@ -32,8 +34,10 @@ module LightKrylov_Constants
     complex(sp), parameter, public :: one_im_cdp = cmplx(0.0_dp, 1.0_dp, kind=dp)
     complex(dp), parameter, public :: zero_cdp   = cmplx(0.0_dp, 0.0_dp, kind=dp)
 
+#ifdef MPI
     ! MPI subroutines
     public :: mpi_initialize, mpi_close
+#endif
     ! Getter/setter
     public :: set_io_rank
     public :: io_rank
@@ -41,6 +45,7 @@ module LightKrylov_Constants
     
 contains
 
+#ifdef MPI
    subroutine mpi_initialize()
       integer :: ierr
       ! Initialize MPI
@@ -62,6 +67,7 @@ contains
           STOP 1
       end if
    end subroutine mpi_close
+#endif
 
    subroutine set_io_rank(rk)
       integer, intent(in) :: rk
