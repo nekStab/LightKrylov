@@ -65,7 +65,7 @@ contains
       return
    end subroutine comm_setup
 
-   subroutine comm_close
+   subroutine comm_close()
       integer :: ierr
 #ifdef MPI
       character(len=128) :: msg

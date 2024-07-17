@@ -23,9 +23,6 @@ module LightKrylov
     ! Constants exports.
     public :: sp, atol_sp, rtol_sp
     public :: dp, atol_dp, rtol_dp
-    ! MPI and I/O
-    public :: comm_setup, comm_close
-    public :: get_rank, set_io_rank, io_rank
 
     ! Utils exports.
     public :: gmres_sp_opts
