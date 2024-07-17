@@ -52,7 +52,7 @@ contains
 #ifdef MPI
       ! Initialize MPI
       call MPI_Init(ierr)
-      if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", module='LightKrylov',procedure='mpi_initialize')
+      if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", module='LightKrylov',procedure='mpi_init')
       call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr)
       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr)
       write(msg, '(A,I4,A,I4)') 'Setup parallel run: rank', nid, ', comm_size = ', comm_size
@@ -71,7 +71,7 @@ contains
 #ifdef MPI
       ! Finalize MPI
       call MPI_Finalize(ierr)
-      if (ierr /= MPI_SUCCESS) call stop_error("Error finalizing MPI", module='LightKrylov',procedure='mpi_destroy')
+      if (ierr /= MPI_SUCCESS) call stop_error("Error finalizing MPI", module='LightKrylov',procedure='mpi_finalize')
 #else
       ierr = 0
 #endif
