@@ -65,10 +65,10 @@ contains
       return
    end subroutine comm_setup
 
-   subroutine comm_close
+   subroutine comm_close()
       integer :: ierr
-      character(len=128) :: msg
 #ifdef MPI
+      character(len=128) :: msg
       ! Finalize MPI
       call MPI_Finalize(ierr)
       if (ierr /= MPI_SUCCESS) call stop_error("Error finalizing MPI", module='LightKrylov',procedure='mpi_finalize')
