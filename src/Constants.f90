@@ -47,6 +47,7 @@ module LightKrylov_Constants
 contains
 
    subroutine comm_setup()
+      ! internal
       integer :: ierr
       logical :: mpi_is_initialized
       character(len=128) :: msg
@@ -54,19 +55,19 @@ contains
       ! check if MPI has already been initialized and if not, initialize
       call MPI_Initialized(mpi_is_initialized, ierr)
       if (.not. mpi_is_initialized) then
-         call logger%log_message('Set up parallel run with MPI.', module='LightKrylov', procedure='comm_setup')
+         call logger%log_debug('Set up parallel run with MPI.', module='LightKrylov', procedure='comm_setup')
          call MPI_Init(ierr)
          if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", module='LightKrylov',procedure='mpi_init')
       else
-         call logger%log_message('MPI already initialized.', module='LightKrylov', procedure='comm_setup')
+         call logger%log_debug('MPI already initialized.', module='LightKrylov', procedure='comm_setup')
       end if
       call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr)
       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr)
       write(msg, '(A,I4,A,I4)') 'rank', nid, ', comm_size = ', comm_size
-      call logger%log_message(trim(msg), module='LightKrylov', procedure='comm_setup')
+      call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
 #else
       write(msg, *) 'Setup serial run'
-      call logger%log_message(trim(msg), module='LightKrylov', procedure='comm_setup')
+      call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
 #endif
       call set_io_rank(0)
       return
