@@ -32,11 +32,24 @@ module LightKrylov_Constants
    complex(dp), parameter, public :: zero_cdp   = cmplx(0.0_dp, 0.0_dp, kind=dp)
 
    ! Getter/setter routines
-   public :: get_rank
+   public :: set_comm_size
+   public :: set_rank
    public :: set_io_rank
+   public :: get_rank
+   public :: get_comm_size
    public :: io_rank
     
 contains
+
+   subroutine set_rank(rank)
+      integer :: rank
+      nid = rank
+   end subroutine set_rank
+
+   subroutine set_comm_size(c_size)
+      integer :: c_size
+      comm_size = c_size
+   end subroutine set_comm_size
 
    subroutine set_io_rank(rk)
       integer, intent(in) :: rk
@@ -46,15 +59,19 @@ contains
          nio = rk
          if (io_rank()) print *, 'I/O rank --> rank ', nio
       end if
-   end 
+   end
+
+   integer function get_rank() result(rank)
+      rank = nid
+   end function get_rank
+   
+   integer function get_comm_size() result(c_size)
+      c_size = comm_size
+   end function get_comm_size
 
    logical function io_rank() result(is_io)
       is_io = .false.      
       if (nid == nio) is_io = .true.
    end function io_rank
-
-   integer function get_rank() result(rank)
-      rank = nid
-   end function get_rank
 
 end module LightKrylov_Constants
