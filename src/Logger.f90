@@ -91,7 +91,7 @@ contains
 
    subroutine comm_setup()
       ! internal
-      integer :: ierr
+      integer :: ierr, nid, comm_size
       logical :: mpi_is_initialized
       character(len=128) :: msg
 #ifdef MPI
@@ -104,12 +104,14 @@ contains
       else
          call logger%log_debug('MPI already initialized.', module='LightKrylov', procedure='comm_setup')
       end if
-      call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr)
-      call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr)
+      call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr); call set_rank(nid)
+      call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr); call set_comm_size(comm_size)
       write(msg, '(A,I4,A,I4)') 'rank', nid, ', comm_size = ', comm_size
       call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
 #else
       write(msg, *) 'Setup serial run'
+      call set_rank(0)
+      call set_comm_size(1)
       call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
 #endif
       return
