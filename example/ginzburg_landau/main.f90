@@ -42,6 +42,9 @@ program demo
   !-----     INITIALIZATION     -----
   !----------------------------------
 
+  !> Set up logging
+  call logger_setup()
+
   !> Initialize physical parameters.
   call initialize_parameters()
 

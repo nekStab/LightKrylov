@@ -2,7 +2,7 @@ module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
     use stdlib_linalg, only: eye
-    use LightKrylov_constants
+    use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
@@ -11,7 +11,6 @@ module lightkrylov_BaseKrylov
     private
     
     character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
-
     public :: qr
     public :: apply_permutation_matrix
     public :: apply_inverse_permutation_matrix
@@ -181,6 +180,22 @@ contains
         return
     end subroutine initialize_krylov_subspace_rsp
 
+    subroutine orthonormalize_basis_rsp(X)
+      !! Orthonormalizes the `abstract_vector` basis `X`
+      class(abstract_vector_rsp), intent(inout) :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      
+      ! internals
+      real(sp) :: R(size(X),size(X))
+      integer :: info
+
+      ! internals
+      call qr(X, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
+      
+      return
+    end subroutine orthonormalize_basis_rsp
+
     subroutine orthogonalize_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
       class(abstract_vector_rsp), intent(inout) :: y
@@ -326,11 +341,12 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_rsp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_rsp, second&
-          & pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_rsp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
@@ -420,6 +436,22 @@ contains
 
         return
     end subroutine initialize_krylov_subspace_rdp
+
+    subroutine orthonormalize_basis_rdp(X)
+      !! Orthonormalizes the `abstract_vector` basis `X`
+      class(abstract_vector_rdp), intent(inout) :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      
+      ! internals
+      real(dp) :: R(size(X),size(X))
+      integer :: info
+
+      ! internals
+      call qr(X, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
+      
+      return
+    end subroutine orthonormalize_basis_rdp
 
     subroutine orthogonalize_vector_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
@@ -566,11 +598,12 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_rdp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_rdp, second&
-          & pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_rdp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
@@ -660,6 +693,22 @@ contains
 
         return
     end subroutine initialize_krylov_subspace_csp
+
+    subroutine orthonormalize_basis_csp(X)
+      !! Orthonormalizes the `abstract_vector` basis `X`
+      class(abstract_vector_csp), intent(inout) :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      
+      ! internals
+      complex(sp) :: R(size(X),size(X))
+      integer :: info
+
+      ! internals
+      call qr(X, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
+      
+      return
+    end subroutine orthonormalize_basis_csp
 
     subroutine orthogonalize_vector_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
@@ -806,11 +855,12 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_csp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_csp, second&
-          & pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_csp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
@@ -900,6 +950,22 @@ contains
 
         return
     end subroutine initialize_krylov_subspace_cdp
+
+    subroutine orthonormalize_basis_cdp(X)
+      !! Orthonormalizes the `abstract_vector` basis `X`
+      class(abstract_vector_cdp), intent(inout) :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      
+      ! internals
+      complex(dp) :: R(size(X),size(X))
+      integer :: info
+
+      ! internals
+      call qr(X, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
+      
+      return
+    end subroutine orthonormalize_basis_cdp
 
     subroutine orthogonalize_vector_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
@@ -1046,11 +1112,12 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_cdp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_cdp, second&
-          & pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_cdp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 

@@ -4,7 +4,7 @@ module lightkrylov_BaseKrylov
     use iso_fortran_env
     use stdlib_optval, only: optval
     use stdlib_linalg, only: eye
-    use LightKrylov_constants
+    use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
@@ -13,7 +13,6 @@ module lightkrylov_BaseKrylov
     private
     
     character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
-
     public :: qr
     public :: apply_permutation_matrix
     public :: apply_inverse_permutation_matrix
@@ -155,6 +154,22 @@ contains
 
         return
     end subroutine initialize_krylov_subspace_${type[0]}$${kind}$
+
+    subroutine orthonormalize_basis_${type[0]}$${kind}$(X)
+      !! Orthonormalizes the `abstract_vector` basis `X`
+      class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+      !! Input `abstract_vector` basis to orthogonalize against
+      
+      ! internals
+      ${type}$ :: R(size(X),size(X))
+      integer :: info
+
+      ! internals
+      call qr(X, R, info)
+      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
+      
+      return
+    end subroutine orthonormalize_basis_${type[0]}$${kind}$
 
     subroutine orthogonalize_vector_against_basis_${type[0]}$${kind}$(y, X, info, if_chk_orthonormal, beta)
       !! Orthonormalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
@@ -301,10 +316,12 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis, first pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_${type[0]}$${kind}$, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$, second pass')
+      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+                        & procedure='DGS_vector_against_basis_${type[0]}$${kind}$, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 

@@ -11,6 +11,7 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
+external-modules = "mpi_f08"
 
 [install]
 library = true

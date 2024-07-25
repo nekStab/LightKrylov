@@ -8,12 +8,12 @@ module lightkrylov_IterativeSolvers
     use stdlib_linalg, only: lstsq, svd
     use stdlib_stats, only: median
 
-    use lightkrylov_constants
+    use LightKrylov_Constants
     Use LightKrylov_Logger
-    use lightkrylov_Utils
-    use lightkrylov_AbstractVectors
-    use lightkrylov_AbstractLinops
-    use lightkrylov_BaseKrylov
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
+    use LightKrylov_AbstractLinops
+    use LightKrylov_BaseKrylov
 
     implicit none
     private

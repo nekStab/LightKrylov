@@ -8,17 +8,16 @@ module lightkrylov_expmlib
     use stdlib_linalg, only: eye
 
     ! LightKrylov.
-    use lightkrylov_constants
+    use LightKrylov_Constants
     use LightKrylov_Logger
-    use lightkrylov_utils
-    use lightkrylov_AbstractVectors
-    use lightkrylov_AbstractLinops
-    use lightkrylov_BaseKrylov
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
+    use LightKrylov_AbstractLinops
+    use LightKrylov_BaseKrylov
 
     implicit none
     
     character(len=128), parameter, private :: this_module = 'LightKrylov_ExpmLib'
-
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp
