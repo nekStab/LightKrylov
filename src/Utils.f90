@@ -519,7 +519,6 @@ contains
 
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
-      print *, "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
       if (symmetry_error > rtol_sp) then
         write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
@@ -758,7 +757,6 @@ contains
 
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
-      print *, "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
       if (symmetry_error > rtol_dp) then
         write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
