@@ -512,13 +512,16 @@ contains
       real(sp) :: S(size(X,1))
       real(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
+      real(sp) :: symmetry_error
       character(len=128) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
-      if (.not. is_symmetric(X)) then
-        write(msg,*) "Input matrix is not symmetric."
+      symmetry_error = 0.5*maxval(X - transpose(X))
+      print *, "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
+      if (symmetry_error > 10*atol_sp) then
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
@@ -745,13 +748,16 @@ contains
       real(dp) :: S(size(X,1))
       real(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
+      real(dp) :: symmetry_error
       character(len=128) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
-      if (.not. is_symmetric(X)) then
-        write(msg,*) "Input matrix is not symmetric."
+      symmetry_error = 0.5*maxval(X - transpose(X))
+      print *, "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
+      if (symmetry_error > 10*atol_dp) then
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       end if
 
@@ -973,13 +979,15 @@ contains
       real(sp) :: S(size(X,1))
       complex(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
+      real(sp) :: symmetry_error
       character(len=128) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
-      if (.not. is_hermitian(X)) then
-        write(msg,*) "Input matrix is not hermitian"
+      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > 10*atol_sp) then
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", symmetry_error
         call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       end if
 
@@ -1201,13 +1209,15 @@ contains
       real(dp) :: S(size(X,1))
       complex(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
+      real(dp) :: symmetry_error
       character(len=128) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
-      if (.not. is_hermitian(X)) then
-        write(msg,*) "Input matrix is not hermitian"
+      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > 10*atol_dp) then
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", symmetry_error
         call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       end if
 

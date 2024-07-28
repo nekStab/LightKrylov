@@ -268,12 +268,8 @@ contains
        ! reconstruct matrix
        #:if type[0] == "r"
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_${kind}$*(A + transpose(A))
        #:else
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_${kind}$*(A + conjg(transpose(A)))
        #:endif
      
        ! compute matrix square root
@@ -301,7 +297,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        ${type}$ :: A(n, n)
        ${type}$ :: sqrtmA(n, n)
@@ -331,12 +327,8 @@ contains
        ! reconstruct matrix
        #:if type[0] == "r"
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_${kind}$*(A + transpose(A))
        #:else
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_${kind}$*(A + conjg(transpose(A)))
        #:endif
     
        ! compute matrix square root

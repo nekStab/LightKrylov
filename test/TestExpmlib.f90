@@ -789,8 +789,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + transpose(A))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -811,7 +809,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        real(sp) :: A(n, n)
        real(sp) :: sqrtmA(n, n)
@@ -831,8 +829,6 @@ contains
        lambda(n) = zero_rsp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + transpose(A))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -883,8 +879,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + transpose(A))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -905,7 +899,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        real(dp) :: A(n, n)
        real(dp) :: sqrtmA(n, n)
@@ -925,8 +919,6 @@ contains
        lambda(n) = zero_rdp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + transpose(A))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -978,8 +970,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + conjg(transpose(A)))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -1000,7 +990,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        complex(sp) :: A(n, n)
        complex(sp) :: sqrtmA(n, n)
@@ -1021,8 +1011,6 @@ contains
        lambda(n) = zero_rsp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + conjg(transpose(A)))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -1074,8 +1062,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + conjg(transpose(A)))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -1096,7 +1082,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        complex(dp) :: A(n, n)
        complex(dp) :: sqrtmA(n, n)
@@ -1117,8 +1103,6 @@ contains
        lambda(n) = zero_rdp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + conjg(transpose(A)))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
