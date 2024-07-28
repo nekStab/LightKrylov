@@ -5,7 +5,7 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use stdlib_linalg, only: is_hermitian, is_symmetric, diag
+    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Eigenvalue problem (general + symmetric).
@@ -34,6 +34,7 @@ module lightkrylov_utils
     public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
+    public :: sqrtm_eig
     ! Compute AX = XS where S is in Schur form.
     public :: schur
     ! Re-orders the Schur factorization of A.
@@ -91,6 +92,12 @@ module lightkrylov_utils
     interface sqrtm
         #:for kind, type in RC_KINDS_TYPES
         module procedure sqrtm_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface sqrtm_eig
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure sqrtm_eig_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -395,6 +402,56 @@ contains
 
     subroutine sqrtm_${type[0]}$${kind}$(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      ${type}$, intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      ${type}$, intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(${kind}$) :: S(size(X,1))
+      ${type}$ :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      character(len=128) :: msg
+
+      info = 0
+
+      #:if type[0] == "r"
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(msg,*) "Input matrix is not symmetric."
+        call stop_error(msg, module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
+      end if
+      #:else
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(msg,*) "Input matrix is not hermitian"
+        call stop_error(msg, module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
+      end if
+      #:endif
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_${kind}$ ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_r${kind}$
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_${type[0]}$${kind}$(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       ${type}$, intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       ${type}$, intent(out) :: sqrtmX(size(X,1),size(X,1))
@@ -451,7 +508,6 @@ contains
 
       return
     end subroutine
-
     #:endfor
 
     !---------------------------------
