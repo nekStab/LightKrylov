@@ -520,7 +520,8 @@ contains
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
       if (symmetry_error > rtol_sp) then
-        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_sp
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       else if (symmetry_error > 10*atol_sp) then
         write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
@@ -758,7 +759,8 @@ contains
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
       if (symmetry_error > rtol_dp) then
-        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_dp
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       else if (symmetry_error > 10*atol_dp) then
         write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
@@ -991,7 +993,8 @@ contains
       ! Check if the matrix is hermitian
       symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_sp) then
-        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", symmetry_error
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_sp
         call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       else if (symmetry_error > 10*atol_sp) then
         write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
@@ -1224,7 +1227,8 @@ contains
       ! Check if the matrix is hermitian
       symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_dp) then
-        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", symmetry_error
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_dp
         call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       else if (symmetry_error > 10*atol_dp) then
         write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
