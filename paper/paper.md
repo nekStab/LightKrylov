@@ -1,40 +1,26 @@
 ---
-title: 'Gala: A Python package for galactic dynamics'
+title: '`LightKrylov`: Lightweight implementation of Krylov subspace techniques in Fortran'
 tags:
-  - Python
-  - astronomy
-  - dynamics
-  - galactic dynamics
-  - milky way
+  - Fortran
+  - Numerical linear algebra
+  - Krylov methods
 authors:
-  - name: Adrian M. Price-Whelan
+  - name: Jean-Christophe Loiseau
     orcid: 0000-0000-0000-0000
+    corresponding: true
     equal-contrib: true
-    affiliation: "1, 2" # (Multiple affiliations must be quoted)
-  - name: Author Without ORCID
+    affiliation: 1 # (Multiple affiliations must be quoted)
+  - name: J. Simon Kern
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
-    affiliation: 2
-  - name: Author with no affiliation
-    corresponding: true # (This is how to denote the corresponding author)
-    affiliation: 3
-  - given-names: Ludwig
-    dropping-particle: van
-    surname: Beethoven
-    affiliation: 3
+    affiliation: 1
+  - name: Ricardo S. Frantz
+    equal-contrib: true
+    affiliation: 1
 affiliations:
- - name: Lyman Spitzer, Jr. Fellow, Princeton University, USA
+ - name: Arts et Métiers Institute of Technology
    index: 1
- - name: Institution Name, Country
-   index: 2
- - name: Independent Researcher, Country
-   index: 3
 date: 13 August 2017
 bibliography: paper.bib
-
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
 # Summary
