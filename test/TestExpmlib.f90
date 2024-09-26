@@ -4,7 +4,7 @@ module TestExpmlib
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_io_npy, only: save_npy
-   ! Testdrive
+    ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
     ! LightKrylov
     use LightKrylov
@@ -12,8 +12,7 @@ module TestExpmlib
     use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
     ! Test Utilities
-    use LightKrylov_TestTypes
-    use TestUtils
+    use LightKrylov_TestUtils
 
     implicit none
 
@@ -80,7 +79,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_dense_expm_rsp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_rsp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_rsp
@@ -122,7 +121,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_rsp
@@ -210,7 +209,7 @@ contains
 
         call check(error, errv < rtol_sp)
         call check_test(error, 'test_block_kexptA_rsp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_rsp
@@ -258,7 +257,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_dense_expm_rdp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_rdp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_rdp
@@ -300,7 +299,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_rdp
@@ -388,7 +387,7 @@ contains
 
         call check(error, errv < rtol_dp)
         call check_test(error, 'test_block_kexptA_rdp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_rdp
@@ -436,7 +435,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_dense_expm_csp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_csp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_csp
@@ -478,7 +477,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_csp
@@ -566,7 +565,7 @@ contains
 
         call check(error, errv < rtol_sp)
         call check_test(error, 'test_block_kexptA_csp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_csp
@@ -614,7 +613,7 @@ contains
         err = maxval(abs(E-Eref))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_dense_expm_cdp', eq='maxval(abs(E-Eref)) < rtol', context=msg)
+        call check_test(error, 'test_dense_expm_cdp', eq='maxval(abs(E-Eref))', context=msg)
 
         return
     end subroutine test_dense_expm_cdp
@@ -656,7 +655,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &
-                                 & info='Comparison with matrix exponential', context=msg)
+                                 & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_kexptA_cdp
@@ -744,7 +743,7 @@ contains
 
         call check(error, errv < rtol_dp)
         call check_test(error, 'test_block_kexptA_cdp', &
-                        & info='Comparison with matrix exponential', context=msg)
+                        & eq='Comparison with dense matrix exponential', context=msg)
 
         return
     end subroutine test_block_kexptA_cdp
@@ -790,8 +789,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + transpose(A))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -812,7 +809,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        real(sp) :: A(n, n)
        real(sp) :: sqrtmA(n, n)
@@ -832,8 +829,6 @@ contains
        lambda(n) = zero_rsp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + transpose(A))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -884,8 +879,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + transpose(A))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -906,7 +899,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        real(dp) :: A(n, n)
        real(dp) :: sqrtmA(n, n)
@@ -926,8 +919,6 @@ contains
        lambda(n) = zero_rdp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), transpose(sqrtmA)))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + transpose(A))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -979,8 +970,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + conjg(transpose(A)))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -1001,7 +990,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        complex(sp) :: A(n, n)
        complex(sp) :: sqrtmA(n, n)
@@ -1022,8 +1011,6 @@ contains
        lambda(n) = zero_rsp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_sp*(A + conjg(transpose(A)))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -1075,8 +1062,6 @@ contains
        end do
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + conjg(transpose(A)))
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
@@ -1097,7 +1082,7 @@ contains
        !> Error type to be returned.
        type(error_type), allocatable, intent(out) :: error
        !> Problem dimension.
-       integer, parameter :: n = 5
+       integer, parameter :: n = 25
        !> Test matrix.
        complex(dp) :: A(n, n)
        complex(dp) :: sqrtmA(n, n)
@@ -1118,8 +1103,6 @@ contains
        lambda(n) = zero_rdp
        ! reconstruct matrix
        A = matmul(sqrtmA, matmul(diag(abs(lambda)), conjg(transpose(sqrtmA))))
-       ! ensure it is exactly symmetric/hermitian
-       A = 0.5_dp*(A + conjg(transpose(A)))
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)

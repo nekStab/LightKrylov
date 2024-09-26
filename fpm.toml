@@ -11,6 +11,7 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
+external-modules = "mpi_f08"
 
 [install]
 library = true
@@ -22,6 +23,7 @@ source-form = "free"
 
 [dependencies]
 stdlib = "*"
+FACE = {git="https://github.com/szaghi/FACE.git"}
 
 [dev-dependencies]
 test-drive.git = "https://github.com/nekStab/test-drive.git"

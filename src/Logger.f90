@@ -1,23 +1,134 @@
 module LightKrylov_Logger
+#ifdef MPI
+   use mpi_f08
+#endif
+   ! Fortran Standard Library
    use stdlib_optval, only : optval
-   use stdlib_logger
    use stdlib_logger, only: logger => global_logger
    use stdlib_ascii, only : to_lower
    use stdlib_strings, only : chomp, replace_all
    ! Testdrive
    use testdrive, only: error_type, test_failed
+   ! LightKrylov
+   use LightKrylov_Constants
+
    implicit none
    private
 
-   logical, parameter :: exit_on_error = .true.
-   logical, parameter :: exit_on_test_error = .true.
+   character(len=128), parameter, private :: this_module = 'LightKrylov_Logger'
+
+   logical, parameter, private :: exit_on_error = .true.
+   logical, parameter, private :: exit_on_test_error = .true.
 
    public :: stop_error
    public :: check_info
    public :: check_test
    public :: logger
 
+   public :: logger_setup
+
+   ! MPI subroutines
+   public :: comm_setup
+   public :: comm_close
+
 contains
+
+   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp)
+      !! Wrapper to set up MPI if needed and initialize log files
+      character(len=*), optional, intent(in) :: logfile
+      !! name of the dedicated LightKrylov logfile
+      integer, optional, intent(in)          :: nio
+      !! I/O rank for logging
+      integer, optional, intent(in)          :: log_level
+      !! set logging level
+      !! 0   : all_level
+      !! 10  : debug_level
+      !! 20  : information_level
+      !! 30  : warning_level	
+      !! 40  : error_level	
+      !! 100 : none_level
+      logical, optional, intent(in)          :: log_stdout
+      !! duplicate log messages to stdout?
+      logical, optional, intent(in)          :: log_timestamp
+      !! add timestamp to log messages
+
+      ! internals
+      character(len=:), allocatable :: logfile_
+      integer                       :: nio_
+      integer                       :: log_level_
+      logical                       :: log_stdout_
+      logical                       :: log_timestamp_
+      ! misc
+      integer :: stat, iunit
+
+      logfile_       = optval(logfile, 'lightkrylov.log')
+      nio_           = optval(nio, 0)
+      log_level_     = optval(log_level, 20)
+      log_level_     = max(0, min(log_level_, 100))
+      log_stdout_    = optval(log_stdout, .true.)
+      log_timestamp_ = optval(log_timestamp, .true.)
+
+      ! set log level
+      call logger%configure(level=log_level_, time_stamp=log_timestamp_) 
+
+      ! set up LightKrylov log file
+      call logger%add_log_file(logfile_, unit=iunit, stat=stat)
+      if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', module=this_module, procedure='logger_setup')
+
+      ! Set up comms
+      call comm_setup()
+
+      ! Set I/O rank
+      if (nio_/=0) call set_io_rank(nio_)
+
+      ! log to stdout
+      if (log_stdout_) then
+         call logger%add_log_unit(6, stat=stat)
+         if (stat /= 0) call stop_error('Unable to add stdout to logger.', module=this_module, procedure='logger_setup')
+      end if
+      return
+   end subroutine logger_setup
+
+   subroutine comm_setup()
+      ! internal
+      integer :: ierr, nid, comm_size
+      logical :: mpi_is_initialized
+      character(len=128) :: msg
+#ifdef MPI
+      ! check if MPI has already been initialized and if not, initialize
+      call MPI_Initialized(mpi_is_initialized, ierr)
+      if (.not. mpi_is_initialized) then
+         call logger%log_debug('Set up parallel run with MPI.', module='LightKrylov', procedure='comm_setup')
+         call MPI_Init(ierr)
+         if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", module='LightKrylov',procedure='mpi_init')
+      else
+         call logger%log_debug('MPI already initialized.', module='LightKrylov', procedure='comm_setup')
+      end if
+      call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr); call set_rank(nid)
+      call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr); call set_comm_size(comm_size)
+      write(msg, '(A,I4,A,I4)') 'rank', nid, ', comm_size = ', comm_size
+      call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
+#else
+      write(msg, *) 'Setup serial run'
+      call set_rank(0)
+      call set_comm_size(1)
+      call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
+#endif
+      return
+   end subroutine comm_setup
+
+   subroutine comm_close()
+      integer :: ierr
+#ifdef MPI
+      character(len=128) :: msg
+      ! Finalize MPI
+      call MPI_Finalize(ierr)
+      if (ierr /= MPI_SUCCESS) call stop_error("Error finalizing MPI", module='LightKrylov',procedure='comm_close')
+#else
+      ierr = 0
+#endif
+      return
+   end subroutine comm_close
 
    subroutine stop_error(msg, module, procedure)
       character(len=*),            intent(in)  :: msg
@@ -26,7 +137,7 @@ contains
       !! The name of the module in which the call happens
       character(len=*), optional,  intent(in)  :: procedure
       !! The name of the procedure in which the call happens
-      call check_info(-1, origin='', module=module, procedure=procedure, info_msg=msg)
+      call check_info(-1, origin="STOP_ERROR", module=module, procedure=procedure, info_msg=msg)
       return
    end subroutine stop_error
 
@@ -336,6 +447,12 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
+         !
+         !  stop error
+         !
+         else if (trim(origin) == 'STOP_ERROR') then
+            call logger%log_error(trim(origin), module=module, procedure=procedure, stat=info, errmsg=trim(str))
+            ierr = -1
          !
          !   Default
          !

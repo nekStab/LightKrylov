@@ -1,19 +1,26 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-module LightKrylov_TestTypes
-    ! Frortran Standard Library
+module LightKrylov_TestUtils
+    ! Fortran Standard Library
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
+    use stdlib_linalg, only: eye
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Constants
     
     implicit none
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestTypes'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestUtils'
 
     integer, parameter, public :: test_size = 128
+
+    public :: get_data
+    public :: put_data
+    public :: init_rand
+    public :: get_err_str
 
     !-----------------------------------------------
     !-----     TEST VECTOR TYPE DEFINITION     -----
@@ -24,7 +31,7 @@ module LightKrylov_TestTypes
         ${type}$, dimension(test_size) :: data = 0.0_${kind}$
     contains
         private
-        procedure, pass(self), public :: zero => zero_${type[0]}$${kind}$
+        procedure, pass(self), public :: zero => init_zero_${type[0]}$${kind}$
         procedure, pass(self), public :: dot => dot_${type[0]}$${kind}$
         procedure, pass(self), public :: scal => scal_${type[0]}$${kind}$
         procedure, pass(self), public :: axpby => axpby_${type[0]}$${kind}$
@@ -74,6 +81,42 @@ module LightKrylov_TestTypes
     #:endif
 
     #:endfor
+
+    interface get_data
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure get_data_vec_${type[0]}$${kind}$
+        module procedure get_data_vec_basis_${type[0]}$${kind}$
+        module procedure get_data_linop_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface put_data
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure put_data_vec_${type[0]}$${kind}$
+        module procedure put_data_vec_basis_${type[0]}$${kind}$
+        module procedure put_data_linop_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface init_rand
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure init_rand_vec_${type[0]}$${kind}$
+        module procedure init_rand_basis_${type[0]}$${kind}$
+        module procedure init_rand_linop_${type[0]}$${kind}$
+        #:if type[0] == "r"
+        module procedure init_rand_spd_linop_${type[0]}$${kind}$
+        #:else
+        module procedure init_rand_hermitian_linop_${type[0]}$${kind}$
+        #:endif
+        #:endfor
+    end interface
+
+    interface get_err_str
+        #:for kind, type in REAL_KINDS_TYPES
+        module procedure get_err_str_${kind}$
+        #:endfor
+    end interface
+
 contains
     
     !----------------------------------------------------------
@@ -81,11 +124,11 @@ contains
     !----------------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine zero_${type[0]}$${kind}$(self)
+    subroutine init_zero_${type[0]}$${kind}$(self)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         self%data = 0.0_${kind}$
         return
-    end subroutine zero_${type[0]}$${kind}$
+    end subroutine init_zero_${type[0]}$${kind}$
 
     function dot_${type[0]}$${kind}$(self, vec) result(alpha)
         class(vector_${type[0]}$${kind}$), intent(in) :: self
@@ -231,5 +274,152 @@ contains
    #:endif
 
     #:endfor
+
+    !----------------------------------------------------
+    !-----     EXTRACT DATA FROM ABSTRACT TYPES     -----
+    !----------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine get_data_vec_${type[0]}$${kind}$(vec_out, vec_in)
+        ${type}$, intent(out) :: vec_out(:)
+        type(vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        vec_out = vec_in%data
+        return
+    end subroutine get_data_vec_${type[0]}$${kind}$
+
+    subroutine get_data_vec_basis_${type[0]}$${kind}$(basis_out, basis_in)
+        ${type}$, intent(out) :: basis_out(:, :)
+        type(vector_${type[0]}$${kind}$), intent(in) :: basis_in(:)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_in)
+            basis_out(:, k) = basis_in(k)%data
+        enddo
+        return
+    end subroutine get_data_vec_basis_${type[0]}$${kind}$
+
+    subroutine get_data_linop_${type[0]}$${kind}$(mat_out, linop_in)
+        ${type}$, intent(out) :: mat_out(:, :)
+        type(linop_${type[0]}$${kind}$), intent(in) :: linop_in
+        mat_out = linop_in%data
+        return
+    end subroutine get_data_linop_${type[0]}$${kind}$
+
+    #:endfor
+
+    !----------------------------------------------
+    !-----     PUT DATA TO ABSTRACT TYPES     -----
+    !----------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine put_data_vec_${type[0]}$${kind}$(vec_out, vec_in)
+        type(vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        ${type}$, intent(in) :: vec_in
+        vec_out%data = vec_in
+        return
+    end subroutine put_data_vec_${type[0]}$${kind}$
+
+    subroutine put_data_vec_basis_${type[0]}$${kind}$(basis_out, basis_in)
+        type(vector_${type[0]}$${kind}$), intent(out) :: basis_out(:)
+        ${type}$, intent(in) :: basis_in(:, :)
+        ! Internal variables.
+        integer :: k
+        do k = 1, size(basis_out)
+            basis_out(k)%data = basis_in(:, k)
+        enddo
+        return
+    end subroutine put_data_vec_basis_${type[0]}$${kind}$
+
+    subroutine put_data_linop_${type[0]}$${kind}$(linop_out, mat_in)
+        type(linop_${type[0]}$${kind}$), intent(out) :: linop_out
+        ${type}$, intent(in) :: mat_in(:, :)
+        ! Internal variables.
+        linop_out%data = mat_in
+        return
+    end subroutine put_data_linop_${type[0]}$${kind}$
+
+    #:endfor
+
+    !--------------------------------------------------------------
+    !-----     INITIALIZE ABSTRACT TYPES WITH RANDOM DATA     -----
+    !--------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine init_rand_vec_${type[0]}$${kind}$(x)
+        type(vector_${type[0]}$${kind}$), intent(inout) :: x
+        call x%rand()
+        return
+    end subroutine init_rand_vec_${type[0]}$${kind}$
+
+    subroutine init_rand_basis_${type[0]}$${kind}$(X)
+        type(vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        integer :: i
+        do i = 1, size(X)
+            call X(i)%rand()
+        enddo
+        return
+    end subroutine init_rand_basis_${type[0]}$${kind}$
+
+    subroutine init_rand_linop_${type[0]}$${kind}$(linop)
+        type(linop_${type[0]}$${kind}$), intent(inout) :: linop
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size))
+        #:if type[0] == "r"
+        var = 1.0_${kind}$
+        #:else
+        var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+        #:endif
+        linop%data = normal(mu, var)
+        return
+    end subroutine init_rand_linop_${type[0]}$${kind}$
+
+    #:if type[0] == "r"
+    subroutine init_rand_spd_linop_${type[0]}$${kind}$(linop)
+        type(spd_linop_${type[0]}$${kind}$), intent(inout) :: linop
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+        ${type}$, allocatable :: data(:, :)
+        allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
+        allocate(var(test_size, test_size)) ; var = one_${type[0]}$${kind}$
+
+        data = normal(mu, var)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+
+        return
+    end subroutine init_rand_spd_linop_${type[0]}$${kind}$
+    #:else
+    subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
+        type(hermitian_linop_${type[0]}$${kind}$), intent(inout) :: linop
+        ${type}$, allocatable :: data(:, :)
+        ${type}$, allocatable :: mu(:, :), var(:, :)
+
+        allocate(mu(test_size, test_size)) ; mu = 0.0_${kind}$
+        allocate(var(test_size, test_size)) ; var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
+
+        data = normal(mu, var)
+        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        linop%data = data
+
+        return
+    end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
+    #:endif
+
+    #:endfor
+
+    #:for kind, type in REAL_KINDS_TYPES
+    subroutine get_err_str_${kind}$(msg, info, err)
+      character(len=*), intent(inout) :: msg
+      character(len=*), intent(in)    :: info
+      real(${kind}$) :: err
+
+      ! internals
+      character*8 :: value_str
+      character(len=*), parameter :: indent = repeat(" ", 4)
+
+      write(value_str, '(E8.2)') err
+      msg = indent // info // value_str // achar(10)
+       
+    end subroutine get_err_str_${kind}$
+    #:endfor
     
-end module LightKrylov_TestTypes
+end module LightKrylov_TestUtils

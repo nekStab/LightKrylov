@@ -3,8 +3,7 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use LightKrylov_Logger
-    use stdlib_linalg, only: is_hermitian, is_symmetric, diag
+    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Eigenvalue problem (general + symmetric).
@@ -16,14 +15,15 @@ module lightkrylov_utils
     !-----     LightKrylov     -----
     !-------------------------------
     ! Various constants.
+    use LightKrylov_Logger
     use LightKrylov_Constants
 
     implicit none
     private
 
-    character*128, parameter :: this_module = 'LightKrylov_Utils'
+    character(len=128), parameter :: this_module = 'LightKrylov_Utils'
 
-    public :: assert_shape
+    public :: assert_shape, norml, log2
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
     ! Compute AX = XD for general dense matrices.
@@ -32,17 +32,11 @@ module lightkrylov_utils
     public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
+    public :: sqrtm_eig
     ! Compute AX = XS where S is in Schur form.
     public :: schur
     ! Re-orders the Schur factorization of A.
     public :: ordschur
-
-    public :: log2_rsp
-    public :: norml_rsp
-    public :: log2_rdp
-    public :: norml_rdp
-    public :: norml_csp
-    public :: norml_cdp
 
     interface assert_shape
         module procedure assert_shape_vector_rsp
@@ -53,6 +47,18 @@ module lightkrylov_utils
         module procedure assert_shape_matrix_csp
         module procedure assert_shape_vector_cdp
         module procedure assert_shape_matrix_cdp
+    end interface
+
+    interface norml
+        module procedure norml_rsp
+        module procedure norml_rdp
+        module procedure norml_csp
+        module procedure norml_cdp
+    end interface
+
+    interface log2
+        module procedure log2_rsp
+        module procedure log2_rdp
     end interface
 
     interface inv
@@ -95,6 +101,13 @@ module lightkrylov_utils
         module procedure sqrtm_rdp
         module procedure sqrtm_csp
         module procedure sqrtm_cdp
+    end interface
+
+    interface sqrtm_eig
+        module procedure sqrtm_eig_rsp
+        module procedure sqrtm_eig_rdp
+        module procedure sqrtm_eig_csp
+        module procedure sqrtm_eig_cdp
     end interface
 
     !------------------------------------------------
@@ -176,7 +189,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -198,7 +211,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -219,7 +232,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -241,7 +254,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -262,7 +275,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -284,7 +297,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -305,7 +318,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -327,7 +340,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -488,6 +501,54 @@ contains
 
     subroutine sqrtm_rsp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(sp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(sp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(sp) :: S(size(X,1))
+      real(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(sp) :: symmetry_error
+      character(len=128) :: msg
+
+      info = 0
+
+      ! Check if the matrix is symmetric
+      symmetry_error = 0.5*maxval(X - transpose(X))
+      if (symmetry_error > rtol_sp) then
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_sp
+        call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
+      else if (symmetry_error > 10*atol_sp) then
+        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_rsp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_sp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rsp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_rsp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       real(sp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       real(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
@@ -499,7 +560,7 @@ contains
       real(sp) :: lambda(size(X,1))
       real(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -532,7 +593,6 @@ contains
 
       return
     end subroutine
-
     subroutine inv_rdp(A)
         !! In-place inversion of A using LAPACK.
         real(dp), intent(inout) :: A(:, :)
@@ -680,6 +740,54 @@ contains
 
     subroutine sqrtm_rdp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(dp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(dp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(dp) :: S(size(X,1))
+      real(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(dp) :: symmetry_error
+      character(len=128) :: msg
+
+      info = 0
+
+      ! Check if the matrix is symmetric
+      symmetry_error = 0.5*maxval(X - transpose(X))
+      if (symmetry_error > rtol_dp) then
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_dp
+        call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
+      else if (symmetry_error > 10*atol_dp) then
+        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_rdp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_dp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rdp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_rdp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       real(dp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       real(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
@@ -691,7 +799,7 @@ contains
       real(dp) :: lambda(size(X,1))
       real(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -724,7 +832,6 @@ contains
 
       return
     end subroutine
-
     subroutine inv_csp(A)
         !! In-place inversion of A using LAPACK.
         complex(sp), intent(inout) :: A(:, :)
@@ -867,6 +974,54 @@ contains
 
     subroutine sqrtm_csp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(sp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(sp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(sp) :: S(size(X,1))
+      complex(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(sp) :: symmetry_error
+      character(len=128) :: msg
+
+      info = 0
+
+      ! Check if the matrix is hermitian
+      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > rtol_sp) then
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_sp
+        call stop_error(msg, module=this_module, procedure='sqrtm_csp')
+      else if (symmetry_error > 10*atol_sp) then
+        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_csp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_sp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rsp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_csp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       complex(sp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
@@ -878,7 +1033,7 @@ contains
       real(sp) :: lambda(size(X,1))
       complex(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -911,7 +1066,6 @@ contains
 
       return
     end subroutine
-
     subroutine inv_cdp(A)
         !! In-place inversion of A using LAPACK.
         complex(dp), intent(inout) :: A(:, :)
@@ -1054,6 +1208,54 @@ contains
 
     subroutine sqrtm_cdp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(dp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(dp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(dp) :: S(size(X,1))
+      complex(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(dp) :: symmetry_error
+      character(len=128) :: msg
+
+      info = 0
+
+      ! Check if the matrix is hermitian
+      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > rtol_dp) then
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_dp
+        call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
+      else if (symmetry_error > 10*atol_dp) then
+        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_cdp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_dp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rdp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_cdp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       complex(dp), intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
@@ -1065,7 +1267,7 @@ contains
       real(dp) :: lambda(size(X,1))
       complex(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -1098,7 +1300,6 @@ contains
 
       return
     end subroutine
-
 
     !---------------------------------
     !-----     MISCELLANEOUS     -----

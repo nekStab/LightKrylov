@@ -36,7 +36,11 @@ module LightKrylov
     public :: abstract_vector_rdp
     public :: abstract_vector_csp
     public :: abstract_vector_cdp
+    public :: innerprod
+    public :: linear_combination
+    public :: axpby_basis
     public :: zero_basis
+    public :: copy_basis
     
     ! AbstractLinops exports.
     public :: abstract_linop
@@ -70,6 +74,8 @@ module LightKrylov
     public :: apply_permutation_matrix, apply_inverse_permutation_matrix
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: orthogonalize_against_basis
+    public :: orthonormalize_basis
     public :: lanczos_bidiagonalization
     public :: lanczos_tridiagonalization
     public :: krylov_schur
@@ -110,10 +116,10 @@ contains
       write (*, *) "              |___/                     |___/              "
 
       write (*, *)
-      write (*, *) "Developped by: Jean-Christophe Loiseau"
-      write (*, *) "               J. Simon Kern"
-      write (*, *) "               Arts & Métiers Institute of Technology, 2023."
-      write (*, *) "               jean-christophe.loiseau@ensam.eu"
+      write (*, *) "Developed by: Jean-Christophe Loiseau"
+      write (*, *) "              J. Simon Kern"
+      write (*, *) "              Arts & Métiers Institute of Technology, 2023."
+      write (*, *) "              jean-christophe.loiseau@ensam.eu"
       write (*, *)
 
       write (*, *) "Version -- beta 0.1.0"
