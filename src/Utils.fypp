@@ -5,7 +5,7 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use stdlib_linalg, only: is_hermitian, is_symmetric, diag
+    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd
     ! Matrix inversion.
     use stdlib_linalg_lapack, only: getrf, getri
     ! Eigenvalue problem (general + symmetric).
@@ -23,9 +23,9 @@ module lightkrylov_utils
     implicit none
     private
 
-    character*128, parameter :: this_module = 'LightKrylov_Utils'
+    character(len=128), parameter :: this_module = 'LightKrylov_Utils'
 
-    public :: assert_shape
+    public :: assert_shape, norml, log2
     ! Compute B = inv(A) in-place for dense matrices.
     public :: inv
     ! Compute AX = XD for general dense matrices.
@@ -34,22 +34,28 @@ module lightkrylov_utils
     public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
+    public :: sqrtm_eig
     ! Compute AX = XS where S is in Schur form.
     public :: schur
     ! Re-orders the Schur factorization of A.
     public :: ordschur
 
-    #:for kind, type in RC_KINDS_TYPES
-    #:if type[0] == "r"
-    public :: log2_${type[0]}$${kind}$
-    #:endif
-    public :: norml_${type[0]}$${kind}$
-    #:endfor
-
     interface assert_shape
         #:for kind, type in RC_KINDS_TYPES
         module procedure assert_shape_vector_${type[0]}$${kind}$
         module procedure assert_shape_matrix_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface norml
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure norml_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface log2
+        #:for kind, type in REAL_KINDS_TYPES
+        module procedure log2_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -86,6 +92,12 @@ module lightkrylov_utils
     interface sqrtm
         #:for kind, type in RC_KINDS_TYPES
         module procedure sqrtm_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface sqrtm_eig
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure sqrtm_eig_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -145,7 +157,7 @@ contains
         !! Name of the asserted vector.
         
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
             write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
@@ -167,7 +179,7 @@ contains
         !! Name of the asserted matrix.
 
         ! internals
-        character*128 :: msg
+        character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
             write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
@@ -390,6 +402,67 @@ contains
 
     subroutine sqrtm_${type[0]}$${kind}$(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      ${type}$, intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      ${type}$, intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(${kind}$) :: S(size(X,1))
+      ${type}$ :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(${kind}$) :: symmetry_error
+      character(len=128) :: msg
+
+      info = 0
+
+      #:if type[0] == "r"
+      ! Check if the matrix is symmetric
+      symmetry_error = 0.5*maxval(X - transpose(X))
+      if (symmetry_error > rtol_${kind}$) then
+        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_${kind}$
+        call stop_error(msg, module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
+      else if (symmetry_error > 10*atol_${kind}$) then
+        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
+      end if
+      #:else
+      ! Check if the matrix is hermitian
+      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > rtol_${kind}$) then
+        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_${kind}$
+        call stop_error(msg, module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
+      else if (symmetry_error > 10*atol_${kind}$) then
+        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_${type[0]}$${kind}$')
+      end if
+      #:endif
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_${kind}$ ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_r${kind}$
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_${type[0]}$${kind}$(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
       ${type}$, intent(in)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       ${type}$, intent(out) :: sqrtmX(size(X,1),size(X,1))
@@ -401,7 +474,7 @@ contains
       real(${kind}$) :: lambda(size(X,1))
       ${type}$ :: V(size(X,1), size(X,1))
       integer :: i
-      character*128 :: msg
+      character(len=128) :: msg
 
       info = 0
 
@@ -446,7 +519,6 @@ contains
 
       return
     end subroutine
-
     #:endfor
 
     !---------------------------------

@@ -162,10 +162,10 @@ contains
         allocate(wrk(n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml_rsp(A)
+        a_norm = norml(A)
 
         ! Determine scaling factor for the matrix.
-        ee = int(log2_rsp(a_norm)) + 1
+        ee = int(log2(a_norm)) + 1
         s = max(0, ee+1)
 
         ! Scale the input matrix & initialize polynomial.
@@ -530,10 +530,10 @@ contains
         allocate(wrk(n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml_rdp(A)
+        a_norm = norml(A)
 
         ! Determine scaling factor for the matrix.
-        ee = int(log2_rdp(a_norm)) + 1
+        ee = int(log2(a_norm)) + 1
         s = max(0, ee+1)
 
         ! Scale the input matrix & initialize polynomial.
@@ -898,10 +898,10 @@ contains
         allocate(wrk(n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml_csp(A)
+        a_norm = norml(A)
 
         ! Determine scaling factor for the matrix.
-        ee = int(log2_rsp(a_norm)) + 1
+        ee = int(log2(a_norm)) + 1
         s = max(0, ee+1)
 
         ! Scale the input matrix & initialize polynomial.
@@ -1266,10 +1266,10 @@ contains
         allocate(wrk(n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml_cdp(A)
+        a_norm = norml(A)
 
         ! Determine scaling factor for the matrix.
-        ee = int(log2_rdp(a_norm)) + 1
+        ee = int(log2(a_norm)) + 1
         s = max(0, ee+1)
 
         ! Scale the input matrix & initialize polynomial.
