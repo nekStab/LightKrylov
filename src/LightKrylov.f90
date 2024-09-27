@@ -7,6 +7,8 @@ module LightKrylov
     use LightKrylov_AbstractVectors
     ! --> Definitions of the abstract linear operators.
     use LightKrylov_AbstractLinops
+    ! --> Definitions of the abstract dynamical systems.
+    use LightKrylov_AbstractSystems
     ! --> Standard Krylov techniques.
     use LightKrylov_BaseKrylov
     ! --> Iterative solvers.
@@ -68,6 +70,10 @@ module LightKrylov
     public :: scaled_linop_cdp
     public :: axpby_linop_cdp
     public :: abstract_hermitian_linop_cdp
+
+    ! AbstractSystems exports.
+    public :: abstract_system_rdp
+    public :: abstract_jacobian_linop_rdp
     
     ! BaseKrylov exports.
     public :: qr

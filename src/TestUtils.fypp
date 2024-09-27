@@ -82,6 +82,40 @@ module LightKrylov_TestUtils
 
     #:endfor
 
+    ! ROESSLER SYSTEM
+
+    ! Mesh related parameters.
+    real(dp), parameter :: a = 0.2
+    real(dp), parameter :: b = 0.2
+    real(dp), parameter :: c = 5.7
+
+    type, extends(abstract_vector_rdp), public :: state_vector
+       real(dp) :: x = 0.0_dp
+       real(dp) :: y = 0.0_dp
+       real(dp) :: z = 0.0_dp
+    contains
+       private
+       procedure, pass(self), public :: zero
+       procedure, pass(self), public :: dot
+       procedure, pass(self), public :: scal
+       procedure, pass(self), public :: axpby
+       procedure, pass(self), public :: rand
+       procedure, pass(self), public :: get_size
+    end type state_vector
+
+    type, extends(abstract_system_rdp), public :: roessler
+    contains
+       private
+       procedure, pass(self), public :: eval => eval_roessler
+    end type roessler
+
+    type, extends(abstract_jacobian_linop_rdp), public :: jacobian
+    contains
+       private
+       procedure, pass(self), public :: matvec => lin_roessler
+       procedure, pass(self), public :: rmatvec => adj_lin_roessler
+    end type jacobian
+
     interface get_data
         #:for kind, type in RC_KINDS_TYPES
         module procedure get_data_vec_${type[0]}$${kind}$
@@ -421,5 +455,136 @@ contains
        
     end subroutine get_err_str_${kind}$
     #:endfor
+
+    !-----------------------------------------------
+    !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
+    !-----------------------------------------------
+ 
+    subroutine zero(self)
+      class(state_vector), intent(inout) :: self
+      self%x = 0.0_dp
+      self%y = 0.0_dp
+      self%z = 0.0_dp
+      return
+    end subroutine zero
+  
+    real(dp) function dot(self, vec) result(alpha)
+      class(state_vector)       , intent(in) :: self
+      class(abstract_vector_rdp), intent(in) :: vec
+      select type(vec)
+      type is(state_vector)
+         alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
+      end select
+      return
+    end function dot
+  
+    subroutine scal(self, alpha)
+      class(state_vector), intent(inout) :: self
+      real(dp)           , intent(in)    :: alpha
+      self%x = self%x * alpha
+      self%y = self%y * alpha
+      self%z = self%z * alpha
+      return
+    end subroutine scal
+  
+    subroutine axpby(self, alpha, vec, beta)
+      class(state_vector)       , intent(inout) :: self
+      class(abstract_vector_rdp), intent(in)    :: vec
+      real(dp)                  , intent(in)    :: alpha, beta
+      select type(vec)
+      type is(state_vector)
+         self%x = alpha*self%x + beta*vec%x
+         self%y = alpha*self%y + beta*vec%y
+         self%z = alpha*self%z + beta*vec%z
+      end select
+      return
+    end subroutine axpby
+  
+    integer function get_size(self) result(N)
+      class(state_vector), intent(in) :: self
+      N = 3
+      return
+    end function get_size
+  
+    subroutine rand(self, ifnorm)
+      class(state_vector), intent(inout) :: self
+      logical, optional,   intent(in)    :: ifnorm
+      logical :: normalized
+      real(dp) :: mu, var
+      real(dp) :: alpha
+  
+      mu = 0.0_dp
+      var = 1.0_dp
+      self%x = normal(mu, var)
+      self%y = normal(mu, var)
+      self%z = normal(mu, var)
+  
+      normalized = optval(ifnorm, .false.)
+      if (normalized) then
+         alpha = self%norm()
+         call self%scal(1.0_dp/alpha)
+      endif
+      return
+    end subroutine rand
+
+    subroutine eval_roessler(self, vec_in, vec_out)
+      class(roessler),            intent(in)  :: self
+      class(abstract_vector_rdp), intent(in)  :: vec_in
+      class(abstract_vector_rdp), intent(out) :: vec_out
+
+      select type(vec_in)
+        type is(state_vector)
+            select type(vec_out)
+            type is(state_vector)
+
+            vec_out%x = -vec_in%y - vec_in%z
+            vec_out%y = vec_in%x + a * vec_in%y
+            vec_out%z = b + vec_in%z * (vec_in%x - c)
+
+            end select
+        end select
+
+      return
+    end subroutine eval_roessler
+
+    subroutine lin_roessler(self, vec_in, vec_out)
+      class(jacobian),            intent(in)  :: self
+      class(abstract_vector_rdp), intent(in)  :: vec_in
+      class(abstract_vector_rdp), intent(out) :: vec_out
+
+      select type(vec_in)
+      type is(state_vector)
+         select type(vec_out)
+         type is(state_vector)
+
+            vec_out%x = -vec_in%y - vec_in%z
+            vec_out%y =  vec_in%x + a*vec_in%y
+            vec_out%z =  vec_in%x*self%X%z + vec_in%z*(self%X%x - c)
+
+         end select
+      end select
+
+      return
+    end subroutine lin_roessler
+
+    subroutine adj_lin_roessler(self, vec_in, vec_out)
+      class(jacobian),            intent(in)  :: self
+      class(abstract_vector_rdp), intent(in)  :: vec_in
+      class(abstract_vector_rdp), intent(out) :: vec_out
+
+      select type(vec_in)
+      type is(state_vector)
+         select type(vec_out)
+         type is(state_vector)
+
+            vec_out%x =  vec_in%y + vec_in%z*self%X%z
+            vec_out%y = -vec_in%x + a*vec_in%y
+            vec_out%z = -vec_in%x + vec_in%z*(self%X%x - c)
+
+         end select
+      end select
+
+      return
+    end subroutine adj_lin_roessler
     
 end module LightKrylov_TestUtils
