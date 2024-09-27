@@ -114,6 +114,7 @@ module LightKrylov_TestUtils
        private
        procedure, pass(self), public :: matvec => lin_roessler
        procedure, pass(self), public :: rmatvec => adj_lin_roessler
+       procedure, pass(self), public :: initialize_jacobian
     end type jacobian
 
     interface get_data
@@ -552,14 +553,29 @@ contains
       class(abstract_vector_rdp), intent(in)  :: vec_in
       class(abstract_vector_rdp), intent(out) :: vec_out
 
+      real(dp) :: X, Z
+      type(state_vector) :: e1, e3
+
+      e1%x = 1.0
+      e1%y = 0.0
+      e1%z = 0.0
+
+      e3%x = 0.0
+      e3%y = 0.0
+      e3%z = 1.0
+
       select type(vec_in)
       type is(state_vector)
          select type(vec_out)
          type is(state_vector)
 
+            X = self%X%dot(e1)
+            Z = self%X%dot(e3)
+            write(*,*) X, Z
+
             vec_out%x = -vec_in%y - vec_in%z
             vec_out%y =  vec_in%x + a*vec_in%y
-            vec_out%z =  vec_in%x*self%X%z + vec_in%z*(self%X%x - c)
+            vec_out%z =  vec_in%x*Z + vec_in%z*(X - c)
 
          end select
       end select
@@ -572,19 +588,51 @@ contains
       class(abstract_vector_rdp), intent(in)  :: vec_in
       class(abstract_vector_rdp), intent(out) :: vec_out
 
+      real(dp) :: X, Z
+      type(state_vector) :: e1, e3
+
+      e1%x = 1.0
+      e1%y = 0.0
+      e1%z = 0.0
+
+      e3%x = 0.0
+      e3%y = 0.0
+      e3%z = 1.0
+
       select type(vec_in)
       type is(state_vector)
          select type(vec_out)
          type is(state_vector)
 
-            vec_out%x =  vec_in%y + vec_in%z*self%X%z
+            X = self%X%dot(e1)
+            Z = self%X%dot(e3)
+            write(*,*) X, Z
+
+            vec_out%x =  vec_in%y + vec_in%z*Z
             vec_out%y = -vec_in%x + a*vec_in%y
-            vec_out%z = -vec_in%x + vec_in%z*(self%X%x - c)
+            vec_out%z = -vec_in%x + vec_in%z*(X - c)
 
          end select
       end select
 
       return
     end subroutine adj_lin_roessler
+
+    subroutine initialize_jacobian(self, X)
+      class(jacobian), intent(inout) :: self
+      class(abstract_vector_rdp), intent(in)    :: X
+
+      real(dp) :: test
+
+      select type (X)
+      type is (state_vector)
+         test = X%norm()
+         write(*,*) test
+         if (allocated(self%X)) write(*,*) 'test'
+         !allocate(self%X, source=X)
+      end select
+
+      return
+    end subroutine initialize_jacobian
     
 end module LightKrylov_TestUtils

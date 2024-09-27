@@ -19,12 +19,12 @@ module LightKrylov_AbstractSystems
         class(abstract_vector_rdp), allocatable :: X
     contains
         private
-        procedure(abstract_jac_matvec_rdp), pass(self), deferred, public :: matvec
-        procedure(abstract_jac_matvec_rdp), pass(self), deferred, public :: rmatvec
+        procedure(abstract_matvec_rdp), pass(self), deferred, public :: matvec
+        procedure(abstract_matvec_rdp), pass(self), deferred, public :: rmatvec
     end type
 
     abstract interface
-        subroutine abstract_jac_matvec_rdp(self, vec_in, vec_out)
+        subroutine abstract_matvec_rdp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_jacobian_linop_rdp
@@ -34,7 +34,7 @@ module LightKrylov_AbstractSystems
             !! Vector to be multiplied by \(\mathbf{A}\).
             class(abstract_vector_rdp), intent(out) :: vec_out
             !! Result of the matrix-vector product.
-        end subroutine abstract_jac_matvec_rdp
+        end subroutine abstract_matvec_rdp
     end interface
 
     !> Abstract continuous system.

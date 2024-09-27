@@ -60,15 +60,14 @@ contains
 
        ! Allocate and set initial guess
        allocate(X);
-       X%x = 0.0_dp
-       X%y = 0.0_dp
-       X%z = 0.0_dp
+       X%x = 1.0_dp
+       X%y = 1.0_dp
+       X%z = 1.0_dp
 
        ! Allocate and set roessler system
-       sys = roessler()
-
-       J = jacobian(X)
-       sys%jacobian = J
+       call J%initialize_jacobian(X)
+       !sys%jacobian = J
+       STOP 5
 
        call newton(sys, X, tol, verb, info)
 
