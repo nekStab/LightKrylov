@@ -1,10 +1,6 @@
 module TestNewtonKrylov
     ! Fortran Standard library.
     use iso_fortran_env
-    use stdlib_io_npy, only: save_npy
-    use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag
-    use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
     ! LightKrylov
@@ -47,7 +43,7 @@ contains
        ! Jacobian
        type(jacobian), allocatable :: J
        ! Initial guess
-       type(state_vector), allocatable :: X, fp1, fp2 !, Xtest(:), vout(:)
+       type(state_vector), allocatable :: X, fp1, fp2
        ! Solver tolerance
        real(dp) :: tol = 1e-10_dp
        ! Verbosity
@@ -60,41 +56,11 @@ contains
 
        ! Allocate and set initial guess
        allocate(X, fp1, fp2);
-       !X%x = 1.0_dp
-       !X%y = 1.0_dp
-       !X%z = 1.0_dp
-
-       !allocate(Xtest(3)); call zero_basis(Xtest)
-       !Xtest(1)%x = 1.0
-       !Xtest(2)%y = 1.0
-       !Xtest(3)%z = 1.0
-       !allocate(vout(3)); call zero_basis(vout)
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler()
        J   = jacobian()
        sys%jacobian = J
-
-       !call J%set_base_state(X)
-       !call J%get_base_state(J%X, X%x, X%y, X%z)
-       !print *, 'BF: ', X%x, X%y, X%z
-       !do i = 1, 3
-       !    call J%matvec(Xtest(i), vout(i))
-       !end do
-       !print *, 'J'
-       !print *, vout(1)%x, vout(2)%x, vout(3)%x
-       !print *, vout(1)%y, vout(2)%y, vout(3)%y
-       !print *, vout(1)%z, vout(2)%z, vout(3)%z
-       !call J%set_base_state(vout(3))
-       !call J%get_base_state(J%X, X%x, X%y, X%z)
-       !print *, 'new BF (third column of J): ', X%x, X%y, X%z
-       !do i = 1, 3
-       !    call J%matvec(Xtest(i), vout(i))
-       !end do
-       !print *, 'J'
-       !print *, vout(1)%x, vout(2)%x, vout(3)%x
-       !print *, vout(1)%y, vout(2)%y, vout(3)%y
-       !print *, vout(1)%z, vout(2)%z, vout(3)%z
        
        call roessler_analytical_fp(fp1, fp2)
 

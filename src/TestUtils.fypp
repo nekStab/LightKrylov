@@ -119,7 +119,6 @@ module LightKrylov_TestUtils
        private
        procedure, pass(self), public :: matvec => lin_roessler
        procedure, pass(self), public :: rmatvec => adj_lin_roessler
-       !procedure, pass(self), public :: get_base_state => get_base_jac
        procedure, pass(self), public :: set_base_state => set_base_jac
     end type jacobian
 
