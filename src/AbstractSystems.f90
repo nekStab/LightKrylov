@@ -21,6 +21,7 @@ module LightKrylov_AbstractSystems
         private
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: matvec
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: rmatvec
+        procedure(abstract_setter_jac_rdp), pass(self), deferred, public :: set_base_state
     end type
 
     abstract interface
@@ -37,6 +38,18 @@ module LightKrylov_AbstractSystems
         end subroutine abstract_matvec_rdp
     end interface
 
+    abstract interface
+        subroutine abstract_setter_jac_rdp(self, state)
+            !! Interface to set Base State
+            use LightKrylov_AbstractVectors
+            import abstract_jacobian_linop_rdp
+            class(abstract_jacobian_linop_rdp), intent(inout)  :: self
+            !! System
+            class(abstract_vector_rdp),         intent(in)     :: state
+            !! Base State
+        end subroutine abstract_setter_jac_rdp
+    end interface
+
     !> Abstract continuous system.
     type, abstract, extends(abstract_dynamical_system), public :: abstract_system_rdp
         class(abstract_jacobian_linop_rdp), allocatable :: jacobian
@@ -45,6 +58,7 @@ module LightKrylov_AbstractSystems
         private
         procedure(abstract_eval_rdp), pass(self), deferred, public :: eval
         !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        procedure(abstract_setter_sys_rdp), pass(self), deferred, public :: set_base_state
     end type
 
     abstract interface
@@ -55,10 +69,22 @@ module LightKrylov_AbstractSystems
             class(abstract_system_rdp), intent(in)  :: self
             !! System
             class(abstract_vector_rdp), intent(in)  :: vec_in
-            !! Base state
+            !! State
             class(abstract_vector_rdp), intent(out) :: vec_out
-            !! System response
+            !! Response
         end subroutine abstract_eval_rdp
+    end interface
+
+    abstract interface
+        subroutine abstract_setter_sys_rdp(self, state)
+            !! Interface to set Base State
+            use LightKrylov_AbstractVectors
+            import abstract_system_rdp
+            class(abstract_system_rdp), intent(inout)  :: self
+            !! System
+            class(abstract_vector_rdp), intent(in)     :: state
+            !! Base State
+        end subroutine abstract_setter_sys_rdp
     end interface
 
 end module LightKrylov_AbstractSystems

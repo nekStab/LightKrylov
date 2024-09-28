@@ -22,6 +22,10 @@ module LightKrylov_TestUtils
     public :: init_rand
     public :: get_err_str
 
+    ! Roessler
+    public :: get_state
+    public :: roessler_analytical_fp
+
     !-----------------------------------------------
     !-----     TEST VECTOR TYPE DEFINITION     -----
     !-----------------------------------------------
@@ -107,6 +111,7 @@ module LightKrylov_TestUtils
     contains
        private
        procedure, pass(self), public :: eval => eval_roessler
+       procedure, pass(self), public :: set_base_state => set_base_sys
     end type roessler
 
     type, extends(abstract_jacobian_linop_rdp), public :: jacobian
@@ -114,7 +119,8 @@ module LightKrylov_TestUtils
        private
        procedure, pass(self), public :: matvec => lin_roessler
        procedure, pass(self), public :: rmatvec => adj_lin_roessler
-       procedure, pass(self), public :: initialize_jacobian
+       !procedure, pass(self), public :: get_base_state => get_base_jac
+       procedure, pass(self), public :: set_base_state => set_base_jac
     end type jacobian
 
     interface get_data
@@ -548,30 +554,60 @@ contains
       return
     end subroutine eval_roessler
 
+    subroutine get_state(state, X, Y, Z)
+        class(abstract_vector),   intent(in)  :: state
+        real(dp),                 intent(out) :: X, Y, z
+
+        select type (state)
+        type is (state_vector)
+            X = state%x
+            Y = state%y
+            Z = state%z        
+        end select
+
+        return
+    end subroutine get_state
+
+    subroutine set_base_jac(self, state)
+      class(jacobian),            intent(inout) :: self
+      class(abstract_vector_rdp), intent(in)    :: state
+
+      select type (state)
+      type is (state_vector)
+         if (.not.allocated(self%X)) then
+            allocate(self%X, source=state)
+         else
+            call self%X%axpby(zero_rdp, state, one_rdp)
+         end if
+      end select
+
+      return
+    end subroutine set_base_jac
+
+    subroutine set_base_sys(self, state)
+      class(roessler),            intent(inout) :: self
+      class(abstract_vector_rdp), intent(in)    :: state
+
+      call self%jacobian%set_base_state(state)
+      
+      return
+    end subroutine set_base_sys
+
     subroutine lin_roessler(self, vec_in, vec_out)
       class(jacobian),            intent(in)  :: self
       class(abstract_vector_rdp), intent(in)  :: vec_in
       class(abstract_vector_rdp), intent(out) :: vec_out
 
-      real(dp) :: X, Z
-      type(state_vector) :: e1, e3
+      real(dp) :: X, Y, Z
 
-      e1%x = 1.0
-      e1%y = 0.0
-      e1%z = 0.0
-
-      e3%x = 0.0
-      e3%y = 0.0
-      e3%z = 1.0
+      call get_state(self%X, X, Y, Z)
 
       select type(vec_in)
       type is(state_vector)
          select type(vec_out)
          type is(state_vector)
 
-            X = self%X%dot(e1)
-            Z = self%X%dot(e3)
-            write(*,*) X, Z
+            !write(*,*) 'lin_roessler, BF =', X, Y, Z
 
             vec_out%x = -vec_in%y - vec_in%z
             vec_out%y =  vec_in%x + a*vec_in%y
@@ -588,25 +624,16 @@ contains
       class(abstract_vector_rdp), intent(in)  :: vec_in
       class(abstract_vector_rdp), intent(out) :: vec_out
 
-      real(dp) :: X, Z
-      type(state_vector) :: e1, e3
-
-      e1%x = 1.0
-      e1%y = 0.0
-      e1%z = 0.0
-
-      e3%x = 0.0
-      e3%y = 0.0
-      e3%z = 1.0
+      real(dp) :: X, Y, Z
+      
+      call get_state(self%X, X, Y, Z)
 
       select type(vec_in)
       type is(state_vector)
          select type(vec_out)
-         type is(state_vector)
+         type is(state_vector) 
 
-            X = self%X%dot(e1)
-            Z = self%X%dot(e3)
-            write(*,*) X, Z
+            !write(*,*) 'adj_lin_roessler, BF =', X, Y, Z
 
             vec_out%x =  vec_in%y + vec_in%z*Z
             vec_out%y = -vec_in%x + a*vec_in%y
@@ -618,21 +645,22 @@ contains
       return
     end subroutine adj_lin_roessler
 
-    subroutine initialize_jacobian(self, X)
-      class(jacobian), intent(inout) :: self
-      class(abstract_vector_rdp), intent(in)    :: X
+    subroutine roessler_analytical_fp(fp1, fp2)
+        class(state_vector), intent(out) :: fp1, fp2
 
-      real(dp) :: test
+        real(dp) :: d
 
-      select type (X)
-      type is (state_vector)
-         test = X%norm()
-         write(*,*) test
-         if (allocated(self%X)) write(*,*) 'test'
-         !allocate(self%X, source=X)
-      end select
+        d = sqrt(c**2 - 4*a*b)
 
-      return
-    end subroutine initialize_jacobian
+        fp1%x = ( c - d)/ 2
+        fp1%y = (-c + d)/(2*a)
+        fp1%z = ( c - d)/(2*a)
+
+        fp2%x = ( c + d)/ 2
+        fp2%y = (-c - d)/(2*a)
+        fp2%z = ( c + d)/(2*a)
+
+        return
+    end subroutine roessler_analytical_fp
     
 end module LightKrylov_TestUtils

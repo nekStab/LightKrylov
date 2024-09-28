@@ -37,7 +37,7 @@ contains
        !-----     Internal variables     -----
        !--------------------------------------
        ! residual vector
-       class(abstract_vector_rdp), allocatable :: residual, X, dX
+       class(abstract_vector_rdp), allocatable :: residual, increment
        real(dp) :: rnorm
        logical :: converged, verb_
        integer :: i, maxiter
@@ -49,14 +49,14 @@ contains
        maxiter = 100
        converged = .false.
        allocate(residual, source=X0); call residual%zero()
-       allocate(dX,       source=X0); call dX%zero()
-       allocate(X,        source=X0);
+       allocate(increment,source=X0); call increment%zero()
 
+       if (verb) write(*,*) 'Starting Newton ...'
        ! Newton iteration
        newton: do i = 1, maxiter
 
-          call sys%eval(X0, X)
-          rnorm = X%norm()
+          call sys%eval(X0, residual)
+          rnorm = residual%norm()
           if (verb) write(*,*) "Iteration", i, ": Residual norm = ", rnorm
 
           ! Check for convergence.
@@ -67,16 +67,15 @@ contains
           end if
 
           ! Define the Jacobian
-          call sys%jacobian%X%axpby(zero_rdp, X, one_rdp)
+          call sys%set_base_state(X0)
         
           ! Solve the linear system using GMRES.
           call residual%chsgn()
-          call gmres(sys%jacobian, residual, dX, info)
+          call gmres(sys%jacobian, residual, increment, info)
           call check_info(info, 'gmres', module=this_module, procedure='newton_classic_rdp')
 
           ! Update the solution and overwrite X0
-          call X0%axpby(zero_rdp, X, one_rdp)
-          call X0%add(dX)
+          call X0%add(increment)
 
        enddo newton
 
