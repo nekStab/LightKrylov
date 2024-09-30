@@ -136,7 +136,7 @@ contains
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
-            call increment_bisection(X, sys, increment, maxstep_bisection)
+            call increment_bisection(X, sys, increment, rnorm, maxstep_bisection, verb)
          else
             call X%add(increment)
          endif
@@ -151,36 +151,68 @@ contains
       return
    end subroutine newton_rdp
 
-   subroutine increment_bisection(X, sys, increment, maxstep)
+   subroutine increment_bisection(X, sys, increment, rnorm_old, maxstep, verb)
       class(abstract_vector_rdp), intent(inout) :: X
       class(abstract_system_rdp), intent(in)    :: sys
       class(abstract_vector_rdp), intent(in)    :: increment
+      real(dp),                   intent(in)    :: rnorm_old
       integer,                    intent(in)    :: maxstep
+      logical,                    intent(in)    :: verb
       ! internals
-      integer :: i, maxstep_
-      real(dp) :: alpha, step, rnorm0, rnorm1
+      integer :: i
+      real(dp) :: alpha, step, rnorm_ref, rnorm0, rnorm1
       class(abstract_vector_rdp), allocatable :: Xin, residual
+      character(len=128) :: fmt
+
+      write(fmt,*) '(A,I3,A,F8.6,A,E9.3)'
 
       allocate(Xin, source=X)
       allocate(residual, source=X); call residual%zero()
 
-      alpha = 1.0_dp
-      step  = 1.0_dp
-      rnorm0 = huge(step)
+      if (verb) then
+         print *, 'Current residual norm:', rnorm_old
+         print *, 'Start Newton step bisection ...'
+      end if
 
-      do i = 1, maxstep
+      alpha = 1.0_dp
+      call X%axpby(one_rdp, increment, alpha)
+      ! evaluate residual norm
+      call sys%eval(X, residual)
+      rnorm1 = residual%norm()    
+      if (verb) print fmt, '   step', 1, ': alpha = ', alpha, ' => rnorm = ', rnorm1
+      rnorm_ref = rnorm1 ! Save norm of full step as reference
+
+      alpha = alpha/2
+      call X%axpby(one_rdp, increment, alpha)
+      ! evaluate residual norm
+      call sys%eval(X, residual)
+      rnorm0 = residual%norm()    
+      if (verb) print fmt, '   step ', 2, ': alpha = ', alpha, ' => rnorm = ', rnorm0
+
+      step = 0.5_dp
+      do i = 3, maxstep
+         ! decide on bisection step
+         step  = step/2
+         if (rnorm1 < rnorm0) then
+            alpha = alpha + step
+         else
+            alpha = alpha - step
+            rnorm0 = rnorm1
+         end if
          ! compute new trial solution
          call X%axpby(zero_rdp, Xin, one_rdp)
          call X%axpby(one_rdp, increment, alpha)
          ! evaluate residual norm
          call sys%eval(X, residual)
          rnorm1 = residual%norm()
-         ! decide on bisection step
-         step  = step/2
-         alpha = alpha + sign(step, rnorm1-rnorm0)
-         rnorm0 = rnorm1
-         print *, 'Iteration', i, ': alpha =', alpha
+         if (verb) print fmt, '   step', i, ': alpha = ', alpha, ' => rnorm = ', rnorm1
       enddo
+      if (rnorm1 > rnorm_ref) then
+         print *, 'Newton step bisection: Reverting to full Newton step.'
+         ! compute new trial solution
+         call X%axpby(zero_rdp, Xin, one_rdp)
+         call X%axpby(one_rdp, increment, one_rdp)
+      end if
 
       return
    end subroutine
