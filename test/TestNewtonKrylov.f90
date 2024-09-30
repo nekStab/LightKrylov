@@ -44,18 +44,25 @@ contains
        type(jacobian), allocatable :: J
        ! Initial guess
        type(state_vector), allocatable :: X, fp1, fp2
-       ! Solver tolerance
-       real(dp) :: tol = 1e-10_dp
+       ! Newton options
+       type(newton_dp_opts) :: opts
+       ! GMRES options.
+       type(gmres_dp_opts) :: gmres_opts
        ! Verbosity
-       logical :: verb = .false.
+       logical :: verb = .true.
        ! Information flag.
        integer :: info, i
        ! Misc
        real(dp) :: err
        character(len=256) :: msg, infomsg
 
-       ! Allocate and set initial guess
+       ! Allocate solution variables and reference values
        allocate(X, fp1, fp2);
+
+       ! GMRES opts
+       gmres_opts = gmres_dp_opts(verbose=.false., rtol=rtol_dp, atol=atol_dp)
+       ! Newton opts
+       opts = newton_dp_opts(maxiter=10, ifbisect=.false., verbose=.true., gmres_opts=gmres_opts) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler()
@@ -67,7 +74,7 @@ contains
        X%x = 0.0_dp
        X%y = 0.0_dp
        X%z = 0.0_dp
-       call newton(sys, X, tol, verb, info)
+       call newton(sys, X, info, opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -81,7 +88,7 @@ contains
        X%x = 10.0_dp
        X%y = -5.0_dp
        X%z = 20.0_dp
-       call newton(sys, X, tol, verb, info)
+       call newton(sys, X, info)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -92,6 +99,7 @@ contains
        call check(error, err < rtol_dp)
        call check_test(error, 'test_fixedp_rdp', info=infomsg, context=msg)
        
+       STOP 2
        return
    end subroutine test_fixedp_rdp
 
