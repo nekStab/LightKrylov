@@ -54,13 +54,11 @@ module LightKrylov_NewtonKrylov
       !! Ignored if ifbisect = .false.
       logical :: verbose = .false.
       !! Verbosity control (default: `.false.`)
-      class(gmres_dp_opts), allocatable :: gmres_opts
-      !! GMRES solver options
     end type
 
 contains
 
-   subroutine newton_rdp(sys, X, info, options, scheduler)
+   subroutine newton_rdp(sys, X, info, options, linear_solver, linear_solver_options, preconditioner, scheduler)
       !! Classic no-frills implementation of the Newton-Krylov root-finding algorithm
       class(abstract_system_rdp), intent(inout)  :: sys
       !! Dynamical system for which we wish to compute a fixed point
@@ -71,7 +69,14 @@ contains
       type(newton_dp_opts),  optional, intent(in)   :: options
       type(newton_dp_opts)                          :: opts
       !! Options for the Newton-Krylov iteration
-
+      procedure(abstract_linear_solver_rdp), optional :: linear_solver
+      !! Linear solver to be used to find Newton step
+      class(abstract_opts),  optional, intent(in) :: linear_solver_options
+      class(abstract_opts), allocatable :: solver_opts
+      !! Options for the linear solver
+      class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+      class(abstract_precond_rdp), allocatable :: precond
+      !! Preconditioner for the linear solver
       procedure(abstract_scheduler_rdp), optional :: scheduler
 
       !--------------------------------------
@@ -84,17 +89,36 @@ contains
       logical :: converged, verb
       integer :: i, maxiter, maxstep_bisection
       type(gmres_dp_opts) :: gmres_opts
+      procedure(abstract_linear_solver_rdp), pointer :: solver => null()
       procedure(abstract_scheduler_rdp), pointer :: tolerance_scheduler => null()
+      
+      ! Allocate or assign a gmres_dp_opts to linear_solver_options
+      allocate(gmres_dp_opts :: solver_opts)
+     
 
-      ! Options
+
+
+      ! Newton-Krylov options
       if (present(options)) then
-         opts       = options
-         gmres_opts = options%gmres_opts
-      else ! default
-         opts       = newton_dp_opts()
-         gmres_opts = gmres_dp_opts()
-
+         opts = options
+      else
+         opts = newton_dp_opts()
       end if
+      ! Linear solver
+      if (present(linear_solver)) then
+         solver => linear_solver
+      else
+         solver => gmres
+      end if
+      ! Linear solver options ?
+      if (present(linear_solver_options)) then
+         allocate(solver_opts, source=linear_solver_opts())
+      end if
+      ! Preconditioner ?
+      if (present(preconditioner)) then
+         allocate(precond, source=preconditioner)
+      end if
+      ! Scheduler
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
       else
@@ -131,8 +155,21 @@ contains
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
-         call gmres(sys%jacobian, residual, increment, info)
-         call check_info(info, 'gmres', module=this_module, procedure='newton_rdp')
+         if (present(preconditioner)) then
+            if (present(linear_solver_opts)) then
+               call solver(sys%jacobian, residual, increment, info, precond, solver_opts, .false.)
+            else
+               call solver(sys%jacobian, residual, increment, info, precond, .false.)
+            end if
+         else
+            if (present(linear_solver_opts)) then
+               call solver(sys%jacobian, residual, increment, info, solver_opts, .false.)
+            else
+               call solver(sys%jacobian, residual, increment, info, .false.)
+            end if
+         end if
+         !call gmres(sys%jacobian, residual, increment, info)
+         !call check_info(info, 'gmres', module=this_module, procedure='newton_rdp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then

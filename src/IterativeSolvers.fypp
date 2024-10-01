@@ -22,11 +22,17 @@ module lightkrylov_IterativeSolvers
 
     character*128, parameter :: this_module = 'LightKrylov_IterativeSolvers'
 
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_linear_solver_${type[0]}$${kind}$
+    #:endfor
     public :: save_eigenspectrum
     public :: eigs
     public :: eighs
     public :: svds
     public :: gmres
+    #:for kind, type in RC_KINDS_TYPES
+    public :: gmres_${type[0]}$${kind}$
+    #:endfor
     public :: cg
 
     interface save_eigenspectrum
@@ -41,7 +47,7 @@ module lightkrylov_IterativeSolvers
         #:endfor
     end interface
 
-   interface eigs
+    interface eigs
         #:for kind, type in RC_KINDS_TYPES
         module procedure eigs_${type[0]}$${kind}$
         #:endfor
@@ -88,6 +94,36 @@ module lightkrylov_IterativeSolvers
     end interface
     
     #:endfor
+
+    !--------------------------------------------------------
+    !-----                                              -----
+    !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
+    !-----                                              -----
+    !--------------------------------------------------------
+
+    abstract interface
+    #:for kind, type in RC_KINDS_TYPES
+        subroutine abstract_linear_solver_${type[0]}$${kind}$(A, b, x, info, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$, abstract_opts, abstract_precond_${type[0]}$${kind}$
+            class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_${type[0]}$${kind}$
+
+    #:endfor
+    end interface
 
 contains
 
@@ -519,7 +555,8 @@ contains
         !! Information flag.
         class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        type(gmres_${kind}$_opts), optional, intent(in) :: options
+        !type(gmres_${kind}$_opts), optional, intent(in) :: options
+        class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
@@ -532,7 +569,8 @@ contains
         integer :: kdim, maxiter
         real(${kind}$) :: tol
         logical :: verbose, trans
-        type(gmres_${kind}$_opts) :: opts
+        type(gmres_${kind}$_opts), pointer :: opts
+        type(abstract_opts), pointer :: temp_options
 
         ! Krylov subspace
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:)
@@ -553,13 +591,22 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            opts = gmres_${kind}$_opts( &
-                        kdim    = options%kdim, &
-                        maxiter = options%maxiter, &
-                        atol    = options%atol, &
-                        rtol    = options%rtol, &
-                        verbose = options%verbose &
-                    )
+            allocate(temp_options, source=options)
+        
+            ! Copy the contents of the input options to the temporary variable
+            opts = transfer(options, opts)
+
+            ! Safely typecast to gmres_opts
+            opts => transfer(temp_options, opts)
+            !call move_alloc(options, opts)
+            !opts = options
+            !opts = gmres_${kind}$_opts( &
+            !            kdim    = options%kdim, &
+            !            maxiter = options%maxiter, &
+            !            atol    = options%atol, &
+            !            rtol    = options%rtol, &
+            !            verbose = options%verbose &
+            !        )
         else
             opts = gmres_${kind}$_opts()
         endif
