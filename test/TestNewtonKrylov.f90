@@ -49,7 +49,7 @@ contains
        ! GMRES options.
        type(gmres_dp_opts) :: gmres_opts
        ! Verbosity
-       logical :: verb = .true.
+       logical :: verb = .false.
        ! Information flag.
        integer :: info, i
        ! Misc
@@ -106,12 +106,12 @@ contains
        call newton(sys, X, info, opts)
        call X%sub(fp1)
 
-       ! check fixed point 1
+       ! check fixed point 1 with bisection (if necessary)
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       call check_test(error, 'test_fixedp_rdp', info='Newton step bisection', context=msg)
-       
+       call check_test(error, 'test_fixedp_rdp', info='Newton step with step bisection', context=msg)
+
        return
    end subroutine test_fixedp_rdp
 
