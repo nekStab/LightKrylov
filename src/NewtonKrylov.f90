@@ -127,12 +127,12 @@ contains
          end if
 
          ! Define the Jacobian
-         call sys%set_base_state(X)
+         sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          call gmres(sys%jacobian, residual, increment, info)
-         call check_info(info, 'gmres', module=this_module, procedure='newton_classic_rdp')
+         call check_info(info, 'gmres', module=this_module, procedure='newton_rdp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
@@ -151,67 +151,76 @@ contains
       return
    end subroutine newton_rdp
 
-   subroutine increment_bisection(X, sys, increment, rnorm_old, maxstep, verb)
+   subroutine increment_bisection(X, sys, increment, rold, maxstep, verb)
       class(abstract_vector_rdp), intent(inout) :: X
       class(abstract_system_rdp), intent(in)    :: sys
       class(abstract_vector_rdp), intent(in)    :: increment
-      real(dp),                   intent(in)    :: rnorm_old
+      real(dp),                   intent(in)    :: rold
       integer,                    intent(in)    :: maxstep
       logical,                    intent(in)    :: verb
       ! internals
-      integer :: i
-      real(dp) :: alpha, step, rnorm_ref, rnorm0, rnorm1
+      integer :: i, j, idx(1)
+      real(dp) :: invphi, invphi2, step
+      real(dp) :: alpha(4), res(4)
       class(abstract_vector_rdp), allocatable :: Xin, residual
-      character(len=128) :: fmt
-
-      write(fmt,*) '(A,I3,A,F8.6,A,E9.3)'
 
       allocate(Xin, source=X)
       allocate(residual, source=X); call residual%zero()
+      step    = 1.0_dp
+      invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
+      invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
+      alpha = (/ 0.0_dp, invphi2, invphi, 1.0_dp /)
+      res   = (/ rold, 0.0_dp, 0.0_dp, 0.0_dp /)
 
-      if (verb) then
-         print *, 'Current residual norm:', rnorm_old
-         print *, 'Start Newton step bisection ...'
-      end if
-
-      alpha = 1.0_dp
-      call X%axpby(one_rdp, increment, alpha)
+      call X%add(increment)
       ! evaluate residual norm
       call sys%eval(X, residual)
-      rnorm1 = residual%norm()    
-      if (verb) print fmt, '   step', 1, ': alpha = ', alpha, ' => rnorm = ', rnorm1
-      rnorm_ref = rnorm1 ! Save norm of full step as reference
+      res(4) = residual%norm()
 
-      alpha = alpha/2
-      call X%axpby(one_rdp, increment, alpha)
-      ! evaluate residual norm
-      call sys%eval(X, residual)
-      rnorm0 = residual%norm()    
-      if (verb) print fmt, '   step ', 2, ': alpha = ', alpha, ' => rnorm = ', rnorm0
+      if (res(4) > rold) then
+         if (verb) print *, 'Start Newton step bisection ...'
+         ! compute new trial solutions
+         do j = 2, 3
+            call X%axpby(zero_rdp, Xin, one_rdp)
+            call X%axpby(one_rdp, increment, alpha(j))
+            call sys%eval(X, residual)
+            res(j) = residual%norm()
+         end do
 
-      step = 0.5_dp
-      do i = 3, maxstep
-         ! decide on bisection step
-         step  = step/2
-         if (rnorm1 < rnorm0) then
-            alpha = alpha + step
-         else
-            alpha = alpha - step
-            rnorm0 = rnorm1
-         end if
-         ! compute new trial solution
+         do i = 1, maxstep
+            step = step * invphi
+            if (res(2) < res(3)) then
+               ! alphas
+               ! a1 is kept
+               alpha(3:4) = alpha(2:3)           
+               ! residuals
+               ! r1 is kept
+               res(3:4) = res(2:3)
+               ! new point --> a2, r2
+               alpha(2) = alpha(1) + step * invphi2
+               call X%axpby(zero_rdp, Xin, one_rdp)
+               call X%axpby(one_rdp, increment, alpha(2))
+               call sys%eval(X, residual)
+               res(2) = residual%norm()
+            else
+               ! alphas
+               alpha(1:2) = alpha(2:3)
+               ! a4 is kept
+               ! residuals
+               res(1:2) = res(2:3)
+               ! r4 is kept
+               ! new point --> a3, r3
+               alpha(3) = alpha(1) + step * invphi
+               call X%axpby(zero_rdp, Xin, one_rdp)
+               call X%axpby(one_rdp, increment, alpha(3))
+               call sys%eval(X, residual)
+               res(3) = residual%norm()
+            end if
+         end do
+         ! set new vector to optimal step
+         idx = minloc(res)
          call X%axpby(zero_rdp, Xin, one_rdp)
-         call X%axpby(one_rdp, increment, alpha)
-         ! evaluate residual norm
-         call sys%eval(X, residual)
-         rnorm1 = residual%norm()
-         if (verb) print fmt, '   step', i, ': alpha = ', alpha, ' => rnorm = ', rnorm1
-      enddo
-      if (rnorm1 > rnorm_ref) then
-         print *, 'Newton step bisection: Reverting to full Newton step.'
-         ! compute new trial solution
-         call X%axpby(zero_rdp, Xin, one_rdp)
-         call X%axpby(one_rdp, increment, one_rdp)
+         call X%axpby(one_rdp, increment, alpha(idx(1)))
       end if
 
       return
@@ -227,7 +236,7 @@ contains
       !! Newton iteration count
       integer,  intent(out)  :: info
       !! Information flag
-      tol = atol_dp
+      tol = 10*atol_dp
       return
    end subroutine constant_atol_rdp
 
