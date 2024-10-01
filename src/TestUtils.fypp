@@ -111,7 +111,6 @@ module LightKrylov_TestUtils
     contains
        private
        procedure, pass(self), public :: eval => eval_roessler
-       procedure, pass(self), public :: set_base_state => set_base_sys
     end type roessler
 
     type, extends(abstract_jacobian_linop_rdp), public :: jacobian
@@ -119,7 +118,6 @@ module LightKrylov_TestUtils
        private
        procedure, pass(self), public :: matvec => lin_roessler
        procedure, pass(self), public :: rmatvec => adj_lin_roessler
-       procedure, pass(self), public :: set_base_state => set_base_jac
     end type jacobian
 
     interface get_data
@@ -566,31 +564,6 @@ contains
 
         return
     end subroutine get_state
-
-    subroutine set_base_jac(self, state)
-      class(jacobian),            intent(inout) :: self
-      class(abstract_vector_rdp), intent(in)    :: state
-
-      select type (state)
-      type is (state_vector)
-         if (.not.allocated(self%X)) then
-            allocate(self%X, source=state)
-         else
-            call self%X%axpby(zero_rdp, state, one_rdp)
-         end if
-      end select
-
-      return
-    end subroutine set_base_jac
-
-    subroutine set_base_sys(self, state)
-      class(roessler),            intent(inout) :: self
-      class(abstract_vector_rdp), intent(in)    :: state
-
-      call self%jacobian%set_base_state(state)
-      
-      return
-    end subroutine set_base_sys
 
     subroutine lin_roessler(self, vec_in, vec_out)
       class(jacobian),            intent(in)  :: self
