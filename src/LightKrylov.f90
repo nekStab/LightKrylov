@@ -91,6 +91,10 @@ module LightKrylov
     public :: abstract_precond_rdp
     public :: abstract_precond_csp
     public :: abstract_precond_cdp
+    public :: abstract_linear_solver_rsp
+    public :: abstract_linear_solver_rdp
+    public :: abstract_linear_solver_csp
+    public :: abstract_linear_solver_cdp
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres

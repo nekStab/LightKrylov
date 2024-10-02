@@ -79,6 +79,9 @@ module LightKrylov
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_precond_${type[0]}$${kind}$
     #:endfor
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_linear_solver_${type[0]}$${kind}$
+    #:endfor
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres

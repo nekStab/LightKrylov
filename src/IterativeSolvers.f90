@@ -20,12 +20,24 @@ module lightkrylov_IterativeSolvers
 
     character*128, parameter :: this_module = 'LightKrylov_IterativeSolvers'
 
+    public :: abstract_linear_solver_rsp
+    public :: abstract_linear_solver_rdp
+    public :: abstract_linear_solver_csp
+    public :: abstract_linear_solver_cdp
     public :: save_eigenspectrum
     public :: eigs
     public :: eighs
     public :: svds
     public :: gmres
+    public :: gmres_rsp
+    public :: gmres_rdp
+    public :: gmres_csp
+    public :: gmres_cdp
     public :: cg
+    public :: cg_rsp
+    public :: cg_rdp
+    public :: cg_csp
+    public :: cg_cdp
 
     interface save_eigenspectrum
         module procedure save_eigenspectrum_sp
@@ -39,7 +51,7 @@ module lightkrylov_IterativeSolvers
         module procedure eighs_cdp
     end interface
 
-   interface eigs
+    interface eigs
         module procedure eigs_rsp
         module procedure eigs_rdp
         module procedure eigs_csp
@@ -139,6 +151,91 @@ module lightkrylov_IterativeSolvers
         end subroutine abstract_apply_cdp
     end interface
     
+
+    !--------------------------------------------------------
+    !-----                                              -----
+    !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
+    !-----                                              -----
+    !--------------------------------------------------------
+
+    abstract interface
+        subroutine abstract_linear_solver_rsp(A, b, x, info, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp
+            class(abstract_linop_rsp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_rsp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rsp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_rsp
+
+        subroutine abstract_linear_solver_rdp(A, b, x, info, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp
+            class(abstract_linop_rdp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_rdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_rdp
+
+        subroutine abstract_linear_solver_csp(A, b, x, info, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp
+            class(abstract_linop_csp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_csp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_csp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_csp
+
+        subroutine abstract_linear_solver_cdp(A, b, x, info, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp
+            class(abstract_linop_cdp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_cdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_cdp
+
+    end interface
 
 contains
 
@@ -1556,7 +1653,8 @@ contains
         !! Information flag.
         class(abstract_precond_rsp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        type(gmres_sp_opts), optional, intent(in) :: options
+        !type(gmres_sp_opts), optional, intent(in) :: options
+        class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
@@ -1590,13 +1688,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            opts = gmres_sp_opts( &
-                        kdim    = options%kdim, &
-                        maxiter = options%maxiter, &
-                        atol    = options%atol, &
-                        rtol    = options%rtol, &
-                        verbose = options%verbose &
-                    )
+            select type (options)
+            type is (gmres_sp_opts)
+                opts = options
+            end select
         else
             opts = gmres_sp_opts()
         endif
@@ -1715,7 +1810,8 @@ contains
         !! Information flag.
         class(abstract_precond_rdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        type(gmres_dp_opts), optional, intent(in) :: options
+        !type(gmres_dp_opts), optional, intent(in) :: options
+        class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
@@ -1749,13 +1845,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            opts = gmres_dp_opts( &
-                        kdim    = options%kdim, &
-                        maxiter = options%maxiter, &
-                        atol    = options%atol, &
-                        rtol    = options%rtol, &
-                        verbose = options%verbose &
-                    )
+            select type (options)
+            type is (gmres_dp_opts)
+                opts = options
+            end select
         else
             opts = gmres_dp_opts()
         endif
@@ -1874,7 +1967,8 @@ contains
         !! Information flag.
         class(abstract_precond_csp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        type(gmres_sp_opts), optional, intent(in) :: options
+        !type(gmres_sp_opts), optional, intent(in) :: options
+        class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
@@ -1908,13 +2002,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            opts = gmres_sp_opts( &
-                        kdim    = options%kdim, &
-                        maxiter = options%maxiter, &
-                        atol    = options%atol, &
-                        rtol    = options%rtol, &
-                        verbose = options%verbose &
-                    )
+            select type (options)
+            type is (gmres_sp_opts)
+                opts = options
+            end select
         else
             opts = gmres_sp_opts()
         endif
@@ -2033,7 +2124,8 @@ contains
         !! Information flag.
         class(abstract_precond_cdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        type(gmres_dp_opts), optional, intent(in) :: options
+        !type(gmres_dp_opts), optional, intent(in) :: options
+        class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
@@ -2067,13 +2159,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            opts = gmres_dp_opts( &
-                        kdim    = options%kdim, &
-                        maxiter = options%maxiter, &
-                        atol    = options%atol, &
-                        rtol    = options%rtol, &
-                        verbose = options%verbose &
-                    )
+            select type (options)
+            type is (gmres_dp_opts)
+                opts = options
+            end select
         else
             opts = gmres_dp_opts()
         endif
