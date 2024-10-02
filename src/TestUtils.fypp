@@ -88,7 +88,6 @@ module LightKrylov_TestUtils
 
     ! ROESSLER SYSTEM
 
-    ! Mesh related parameters.
     real(dp), parameter :: a = 0.2
     real(dp), parameter :: b = 0.2
     real(dp), parameter :: c = 5.7
