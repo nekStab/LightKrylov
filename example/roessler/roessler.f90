@@ -1,12 +1,12 @@
 module Roessler
+   ! Standard Library.
+   use stdlib_stats_distribution_normal, only: normal => rvs_normal
+   use stdlib_optval, only: optval
    ! RKLIB module for time integration.
    use rklib_module
    ! LightKrylov for linear algebra.
    use LightKrylov
    use LightKrylov, only: wp => dp
-   ! Standard Library.
-   use stdlib_math, only : linspace
-   use stdlib_optval, only : optval
    implicit none
  
    character*128, parameter, private :: this_module = 'Roessler'
@@ -18,16 +18,18 @@ module Roessler
    !------------------------------
  
    integer,  parameter :: npts = 3
-   real(dp), parameter :: a = 0.2
-   real(dp), parameter :: b = 0.2
-   real(dp), parameter :: c = 5.7
+   real(wp), parameter :: a = 0.2
+   real(wp), parameter :: b = 0.2
+   real(wp), parameter :: c = 5.7
  
    !-------------------------------------------
    !-----     LIGHTKRYLOV VECTOR TYPE     -----
    !-------------------------------------------
  
-   type, extends(abstract_vector_cdp), public :: state_vector
-      complex(kind=wp) :: state(nx) = 0.0_wp
+   type, extends(abstract_vector_rdp), public :: state_vector
+      real(wp) :: x = 0.0_wp
+      real(wp) :: y = 0.0_wp
+      real(wp) :: z = 0.0_wp
    contains
       private
       procedure, pass(self), public :: zero
@@ -42,14 +44,15 @@ module Roessler
    !-----     LIGHTKRYLOV SYSTEM TYPE     -----
    !-------------------------------------------
 
-   type, extends(abstract_system_rdp), public :: roessler
+   type, extends(abstract_system_rdp), public :: roessler_upo
+      real(wp) :: tau ! Integration time
    contains
       private
       procedure, pass(self), public :: eval => nonlinear_map
-   end type roessler
+   end type roessler_upo
 
    !type, extends(abstract_jacobian_linop_rdp), public :: jacobian
-   !   real(kind=wp) :: tau ! Integration time.
+   !   real(wp) :: tau ! Integration time.
    !contains
    !   private
    !   procedure, pass(self), public :: matvec => linear_map
@@ -131,13 +134,13 @@ module Roessler
  
    subroutine zero(self)
       class(state_vector), intent(inout) :: self
-      self%x = 0.0_dp
-      self%y = 0.0_dp
-      self%z = 0.0_dp
+      self%x = 0.0_wp
+      self%y = 0.0_wp
+      self%z = 0.0_wp
       return
    end subroutine zero
   
-   real(dp) function dot(self, vec) result(alpha)
+   real(wp) function dot(self, vec) result(alpha)
       class(state_vector)       , intent(in) :: self
       class(abstract_vector_rdp), intent(in) :: vec
       select type(vec)
@@ -149,7 +152,7 @@ module Roessler
   
    subroutine scal(self, alpha)
       class(state_vector), intent(inout) :: self
-      real(dp)           , intent(in)    :: alpha
+      real(wp)           , intent(in)    :: alpha
       self%x = self%x * alpha
       self%y = self%y * alpha
       self%z = self%z * alpha
@@ -159,7 +162,7 @@ module Roessler
    subroutine axpby(self, alpha, vec, beta)
       class(state_vector)       , intent(inout) :: self
       class(abstract_vector_rdp), intent(in)    :: vec
-      real(dp)                  , intent(in)    :: alpha, beta
+      real(wp)                  , intent(in)    :: alpha, beta
       select type(vec)
       type is(state_vector)
          self%x = alpha*self%x + beta*vec%x
@@ -179,11 +182,11 @@ module Roessler
       class(state_vector), intent(inout) :: self
       logical, optional,   intent(in)    :: ifnorm
       logical :: normalized
-      real(dp) :: mu, var
-      real(dp) :: alpha
+      real(wp) :: mu, var
+      real(wp) :: alpha
   
-      mu = 0.0_dp
-      var = 1.0_dp
+      mu = 0.0_wp
+      var = 1.0_wp
       self%x = normal(mu, var)
       self%y = normal(mu, var)
       self%z = normal(mu, var)
@@ -191,7 +194,7 @@ module Roessler
       normalized = optval(ifnorm, .false.)
       if (normalized) then
          alpha = self%norm()
-         call self%scal(1.0_dp/alpha)
+         call self%scal(1.0_wp/alpha)
       endif
       return
    end subroutine rand
@@ -202,11 +205,11 @@ module Roessler
  
    subroutine nonlinear_map(self, vec_in, vec_out)
       ! Linear Operator.
-      class(roessler), intent(in)  :: self
+      class(roessler_upo),        intent(in)  :: self
       ! Input vector.
-      class(abstract_vector_cdp) , intent(in)  :: vec_in
+      class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_cdp) , intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(out) :: vec_out
       
       ! Time-integrator.
       type(rks54_class) :: nonlinear_roessler
@@ -234,9 +237,9 @@ module Roessler
 !      ! Linear Operator.
 !      class(exponential_prop), intent(in)  :: self
 !      ! Input vector.
-!      class(abstract_vector_cdp) , intent(in)  :: vec_in
+!      class(abstract_vector_rdp) , intent(in)  :: vec_in
 !      ! Output vector.
-!      class(abstract_vector_cdp) , intent(out) :: vec_out
+!      class(abstract_vector_rdp) , intent(out) :: vec_out
 !      
 !      ! Time-integrator.
 !      type(rks54_class) :: prop
@@ -269,7 +272,7 @@ module Roessler
 
    subroutine get_state_vector(vec_in, state)
       class(abstract_vector),    intent(in)  :: vec_in
-      real(dp), dimension(npts), intent(out) :: state
+      real(wp), dimension(npts), intent(out) :: state
 
       state = 0.0_wp
       select type (vec_in)
@@ -283,7 +286,7 @@ module Roessler
    end subroutine get_state_vector
 
    subroutine set_state_vector(state, vec_out)
-      real(dp), dimension(npts), intent(in)  :: state
+      real(wp), dimension(npts), intent(in)  :: state
       class(abstract_vector),    intent(out) :: vec_out
 
       select type (vec_out)
@@ -294,6 +297,6 @@ module Roessler
       end select
 
       return
-   end subroutine get_state_vector
+   end subroutine set_state_vector
  
 end module Roessler
