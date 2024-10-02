@@ -60,24 +60,24 @@ contains
 
    subroutine newton_rdp(sys, X, info, options, linear_solver, linear_solver_options, preconditioner, scheduler)
       !! Classic no-frills implementation of the Newton-Krylov root-finding algorithm
-      class(abstract_system_rdp), intent(inout)  :: sys
+      class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
-      class(abstract_vector_rdp), intent(inout)  :: X
+      class(abstract_vector_rdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
-      integer,                    intent(out)    :: info
+      integer,                                            intent(out)   :: info
       !! Information flag
-      type(newton_dp_opts), optional, intent(in)   :: options
-      type(newton_dp_opts)                          :: opts
+      type(newton_dp_opts),                     optional, intent(in)    :: options
+      type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_rdp), optional :: linear_solver
+      procedure(abstract_linear_solver_rdp),    optional                :: linear_solver
       !! Linear solver to be used to find Newton step
-      class(abstract_opts), optional, intent(in) :: linear_solver_options
-      class(abstract_opts), allocatable :: solver_opts
+      class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
+      class(abstract_opts), allocatable                                 :: solver_opts
       !! Options for the linear solver
-      class(abstract_precond_rdp), optional, intent(in) :: preconditioner
-      class(abstract_precond_rdp), allocatable :: precond
+      class(abstract_precond_rdp),              optional, intent(in)     :: preconditioner
+      class(abstract_precond_rdp), allocatable                           :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_rdp), optional :: scheduler
+      procedure(abstract_scheduler_rdp),        optional                 :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -90,7 +90,6 @@ contains
       integer :: i, maxiter, maxstep_bisection
       procedure(abstract_linear_solver_rdp), pointer :: solver => null()
       procedure(abstract_scheduler_rdp), pointer :: tolerance_scheduler => null()
-         
 
       ! Newton-Krylov options
       if (present(options)) then
