@@ -34,6 +34,9 @@ module lightkrylov_IterativeSolvers
     public :: gmres_${type[0]}$${kind}$
     #:endfor
     public :: cg
+    #:for kind, type in RC_KINDS_TYPES
+    public :: cg_${type[0]}$${kind}$
+    #:endfor
 
     interface save_eigenspectrum
         #:for kind in REAL_KINDS
@@ -569,8 +572,7 @@ contains
         integer :: kdim, maxiter
         real(${kind}$) :: tol
         logical :: verbose, trans
-        type(gmres_${kind}$_opts), pointer :: opts
-        type(abstract_opts), pointer :: temp_options
+        type(gmres_${kind}$_opts) :: opts
 
         ! Krylov subspace
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:)
@@ -591,22 +593,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            allocate(temp_options, source=options)
-        
-            ! Copy the contents of the input options to the temporary variable
-            opts = transfer(options, opts)
-
-            ! Safely typecast to gmres_opts
-            opts => transfer(temp_options, opts)
-            !call move_alloc(options, opts)
-            !opts = options
-            !opts = gmres_${kind}$_opts( &
-            !            kdim    = options%kdim, &
-            !            maxiter = options%maxiter, &
-            !            atol    = options%atol, &
-            !            rtol    = options%rtol, &
-            !            verbose = options%verbose &
-            !        )
+            select type (options)
+            type is (gmres_${kind}$_opts)
+                opts = options
+            end select
         else
             opts = gmres_${kind}$_opts()
         endif

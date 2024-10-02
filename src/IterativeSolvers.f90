@@ -34,6 +34,10 @@ module lightkrylov_IterativeSolvers
     public :: gmres_csp
     public :: gmres_cdp
     public :: cg
+    public :: cg_rsp
+    public :: cg_rdp
+    public :: cg_csp
+    public :: cg_cdp
 
     interface save_eigenspectrum
         module procedure save_eigenspectrum_sp
@@ -1663,8 +1667,7 @@ contains
         integer :: kdim, maxiter
         real(sp) :: tol
         logical :: verbose, trans
-        type(gmres_sp_opts), pointer :: opts
-        type(abstract_opts), pointer :: temp_options
+        type(gmres_sp_opts) :: opts
 
         ! Krylov subspace
         class(abstract_vector_rsp), allocatable :: V(:)
@@ -1685,22 +1688,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            allocate(temp_options, source=options)
-        
-            ! Copy the contents of the input options to the temporary variable
-            opts = transfer(options, opts)
-
-            ! Safely typecast to gmres_opts
-            opts => transfer(temp_options, opts)
-            !call move_alloc(options, opts)
-            !opts = options
-            !opts = gmres_sp_opts( &
-            !            kdim    = options%kdim, &
-            !            maxiter = options%maxiter, &
-            !            atol    = options%atol, &
-            !            rtol    = options%rtol, &
-            !            verbose = options%verbose &
-            !        )
+            select type (options)
+            type is (gmres_sp_opts)
+                opts = options
+            end select
         else
             opts = gmres_sp_opts()
         endif
@@ -1833,8 +1824,7 @@ contains
         integer :: kdim, maxiter
         real(dp) :: tol
         logical :: verbose, trans
-        type(gmres_dp_opts), pointer :: opts
-        type(abstract_opts), pointer :: temp_options
+        type(gmres_dp_opts) :: opts
 
         ! Krylov subspace
         class(abstract_vector_rdp), allocatable :: V(:)
@@ -1855,22 +1845,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            allocate(temp_options, source=options)
-        
-            ! Copy the contents of the input options to the temporary variable
-            opts = transfer(options, opts)
-
-            ! Safely typecast to gmres_opts
-            opts => transfer(temp_options, opts)
-            !call move_alloc(options, opts)
-            !opts = options
-            !opts = gmres_dp_opts( &
-            !            kdim    = options%kdim, &
-            !            maxiter = options%maxiter, &
-            !            atol    = options%atol, &
-            !            rtol    = options%rtol, &
-            !            verbose = options%verbose &
-            !        )
+            select type (options)
+            type is (gmres_dp_opts)
+                opts = options
+            end select
         else
             opts = gmres_dp_opts()
         endif
@@ -2003,8 +1981,7 @@ contains
         integer :: kdim, maxiter
         real(sp) :: tol
         logical :: verbose, trans
-        type(gmres_sp_opts), pointer :: opts
-        type(abstract_opts), pointer :: temp_options
+        type(gmres_sp_opts) :: opts
 
         ! Krylov subspace
         class(abstract_vector_csp), allocatable :: V(:)
@@ -2025,22 +2002,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            allocate(temp_options, source=options)
-        
-            ! Copy the contents of the input options to the temporary variable
-            opts = transfer(options, opts)
-
-            ! Safely typecast to gmres_opts
-            opts => transfer(temp_options, opts)
-            !call move_alloc(options, opts)
-            !opts = options
-            !opts = gmres_sp_opts( &
-            !            kdim    = options%kdim, &
-            !            maxiter = options%maxiter, &
-            !            atol    = options%atol, &
-            !            rtol    = options%rtol, &
-            !            verbose = options%verbose &
-            !        )
+            select type (options)
+            type is (gmres_sp_opts)
+                opts = options
+            end select
         else
             opts = gmres_sp_opts()
         endif
@@ -2173,8 +2138,7 @@ contains
         integer :: kdim, maxiter
         real(dp) :: tol
         logical :: verbose, trans
-        type(gmres_dp_opts), pointer :: opts
-        type(abstract_opts), pointer :: temp_options
+        type(gmres_dp_opts) :: opts
 
         ! Krylov subspace
         class(abstract_vector_cdp), allocatable :: V(:)
@@ -2195,22 +2159,10 @@ contains
 
         ! Deals with the optional args.
         if (present(options)) then
-            allocate(temp_options, source=options)
-        
-            ! Copy the contents of the input options to the temporary variable
-            opts = transfer(options, opts)
-
-            ! Safely typecast to gmres_opts
-            opts => transfer(temp_options, opts)
-            !call move_alloc(options, opts)
-            !opts = options
-            !opts = gmres_dp_opts( &
-            !            kdim    = options%kdim, &
-            !            maxiter = options%maxiter, &
-            !            atol    = options%atol, &
-            !            rtol    = options%rtol, &
-            !            verbose = options%verbose &
-            !        )
+            select type (options)
+            type is (gmres_dp_opts)
+                opts = options
+            end select
         else
             opts = gmres_dp_opts()
         endif

@@ -62,7 +62,7 @@ contains
        ! GMRES opts
        gmres_opts = gmres_dp_opts(verbose=.false., rtol=rtol_dp, atol=atol_dp)
        ! Newton opts
-       opts = newton_dp_opts(maxiter=10, ifbisect=.false., verbose=.false., gmres_opts=gmres_opts) 
+       opts = newton_dp_opts(maxiter=10, ifbisect=.false., verbose=.false.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler()
@@ -110,7 +110,7 @@ contains
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       call check_test(error, 'test_fixedp_rdp', info='Newton step with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_rdp', info='Newton with step bisection', context=msg)
 
        return
    end subroutine test_fixedp_rdp

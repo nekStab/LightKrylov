@@ -66,12 +66,12 @@ contains
       !! Initial guess for the fixed point, will be overwritten with solution
       integer,                    intent(out)    :: info
       !! Information flag
-      type(newton_dp_opts),  optional, intent(in)   :: options
+      type(newton_dp_opts), optional, intent(in)   :: options
       type(newton_dp_opts)                          :: opts
       !! Options for the Newton-Krylov iteration
       procedure(abstract_linear_solver_rdp), optional :: linear_solver
       !! Linear solver to be used to find Newton step
-      class(abstract_opts),  optional, intent(in) :: linear_solver_options
+      class(abstract_opts), optional, intent(in) :: linear_solver_options
       class(abstract_opts), allocatable :: solver_opts
       !! Options for the linear solver
       class(abstract_precond_rdp), optional, intent(in) :: preconditioner
@@ -86,17 +86,11 @@ contains
       ! residual vector
       class(abstract_vector_rdp), allocatable :: residual, increment
       real(dp) :: rnorm, tol
-      logical :: converged, verb
+      logical :: converged, has_precond, has_solver_opts, verb
       integer :: i, maxiter, maxstep_bisection
-      type(gmres_dp_opts) :: gmres_opts
       procedure(abstract_linear_solver_rdp), pointer :: solver => null()
       procedure(abstract_scheduler_rdp), pointer :: tolerance_scheduler => null()
-      
-      ! Allocate or assign a gmres_dp_opts to linear_solver_options
-      allocate(gmres_dp_opts :: solver_opts)
-     
-
-
+         
 
       ! Newton-Krylov options
       if (present(options)) then
@@ -108,15 +102,21 @@ contains
       if (present(linear_solver)) then
          solver => linear_solver
       else
-         solver => gmres
+         solver => gmres_rdp
       end if
       ! Linear solver options ?
       if (present(linear_solver_options)) then
-         allocate(solver_opts, source=linear_solver_opts())
+         has_solver_opts = .true.
+         allocate(solver_opts, source=linear_solver_options)
+      else
+         has_solver_opts = .false.
       end if
       ! Preconditioner ?
       if (present(preconditioner)) then
+         has_precond = .true.
          allocate(precond, source=preconditioner)
+      else
+         has_precond = .false.
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -155,18 +155,14 @@ contains
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
-         if (present(preconditioner)) then
-            if (present(linear_solver_opts)) then
-               call solver(sys%jacobian, residual, increment, info, precond, solver_opts, .false.)
-            else
-               call solver(sys%jacobian, residual, increment, info, precond, .false.)
-            end if
+         if (.not. has_precond .and. .not. has_solver_opts) then
+            call solver(sys%jacobian, residual, increment, info,                                              transpose=.false.)
+         elseif (.not. has_precond .and. has_solver_opts) then
+            call solver(sys%jacobian, residual, increment, info,                         options=solver_opts, transpose=.false.)
+         elseif (has_precond .and. .not. has_solver_opts) then
+            call solver(sys%jacobian, residual, increment, info, preconditioner=precond,                      transpose=.false.)
          else
-            if (present(linear_solver_opts)) then
-               call solver(sys%jacobian, residual, increment, info, solver_opts, .false.)
-            else
-               call solver(sys%jacobian, residual, increment, info, .false.)
-            end if
+            call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          !call gmres(sys%jacobian, residual, increment, info)
          !call check_info(info, 'gmres', module=this_module, procedure='newton_rdp')
