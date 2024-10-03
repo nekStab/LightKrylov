@@ -169,7 +169,7 @@ module lightkrylov_IterativeSolvers
             class(abstract_vector_rsp), intent(inout) :: x
             !! Solution vector.
             integer, intent(out) :: info
-            !! Information flag.
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_rsp), optional, intent(in) :: preconditioner
@@ -188,7 +188,7 @@ module lightkrylov_IterativeSolvers
             class(abstract_vector_rdp), intent(inout) :: x
             !! Solution vector.
             integer, intent(out) :: info
-            !! Information flag.
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_rdp), optional, intent(in) :: preconditioner
@@ -207,7 +207,7 @@ module lightkrylov_IterativeSolvers
             class(abstract_vector_csp), intent(inout) :: x
             !! Solution vector.
             integer, intent(out) :: info
-            !! Information flag.
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_csp), optional, intent(in) :: preconditioner
@@ -226,7 +226,7 @@ module lightkrylov_IterativeSolvers
             class(abstract_vector_cdp), intent(inout) :: x
             !! Solution vector.
             integer, intent(out) :: info
-            !! Information flag.
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_cdp), optional, intent(in) :: preconditioner
