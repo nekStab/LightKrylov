@@ -43,7 +43,7 @@ module LightKrylov_NewtonKrylov
       end subroutine abstract_scheduler_rdp
    end interface
 
-   type, extends(abstract_opts), public :: newton_dp_opts
+   type, extends(abstract_opts), public :: newton_opts
       !! Options for Newton-Krylov fixed-point iteration.
       integer :: maxiter = 100
       !! Maximum number of Newton iterations (default = 100)
@@ -66,18 +66,18 @@ contains
       !! Initial guess for the fixed point, will be overwritten with solution
       integer,                                            intent(out)   :: info
       !! Information flag
-      type(newton_dp_opts),                     optional, intent(in)    :: options
-      type(newton_dp_opts)                                              :: opts
+      type(newton_opts),                        optional, intent(in)    :: options
+      type(newton_opts)                                                 :: opts
       !! Options for the Newton-Krylov iteration
       procedure(abstract_linear_solver_rdp),    optional                :: linear_solver
       !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       class(abstract_opts), allocatable                                 :: solver_opts
       !! Options for the linear solver
-      class(abstract_precond_rdp),              optional, intent(in)     :: preconditioner
-      class(abstract_precond_rdp), allocatable                           :: precond
+      class(abstract_precond_rdp),              optional, intent(in)    :: preconditioner
+      class(abstract_precond_rdp), allocatable                          :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_rdp),        optional                 :: scheduler
+      procedure(abstract_scheduler_rdp),        optional                :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -95,7 +95,7 @@ contains
       if (present(options)) then
          opts = options
       else
-         opts = newton_dp_opts()
+         opts = newton_opts()
       end if
       ! Linear solver
       if (present(linear_solver)) then
@@ -163,8 +163,8 @@ contains
          else
             call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
-         !call gmres(sys%jacobian, residual, increment, info)
-         !call check_info(info, 'gmres', module=this_module, procedure='newton_rdp')
+         print *, 'Newton-Krylov iteration', i, ': solver info:', info
+         !call check_info(info, 'linear_solver', module=this_module, procedure='newton_rdp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
