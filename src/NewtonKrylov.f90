@@ -163,7 +163,7 @@ contains
          else
             call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
-         print *, 'Newton-Krylov iteration', i, ': solver info:', info
+         print *, 'DEBUG: Newton-Krylov iteration', i, ': solver info:', info
          !call check_info(info, 'linear_solver', module=this_module, procedure='newton_rdp')
 
          ! Update the solution and overwrite X0

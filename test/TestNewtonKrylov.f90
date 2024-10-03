@@ -45,7 +45,7 @@ contains
        ! Initial guess
        type(state_vector), allocatable :: X, fp1, fp2
        ! Newton options
-       type(newton_dp_opts) :: opts
+       type(newton_opts) :: opts
        ! GMRES options.
        type(gmres_dp_opts) :: gmres_opts
        ! Verbosity
@@ -60,9 +60,9 @@ contains
        allocate(X, fp1, fp2);
 
        ! GMRES opts
-       gmres_opts = gmres_dp_opts(verbose=.false., rtol=rtol_dp, atol=atol_dp)
+       gmres_opts = gmres_dp_opts(verbose=.false., rtol=rtol_dp, atol=1e-6)
        ! Newton opts
-       opts = newton_dp_opts(maxiter=10, ifbisect=.false., verbose=.false.) 
+       opts = newton_opts(maxiter=10, ifbisect=.false., verbose=.false.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler()
