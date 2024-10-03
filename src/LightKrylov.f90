@@ -12,6 +12,8 @@ module LightKrylov
     ! --> Standard Krylov techniques.
     use LightKrylov_BaseKrylov
     ! --> Iterative solvers.
+    use LightKrylov_NewtonKrylov
+    ! --> Newton-Krylov fixed-point iteration.
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
@@ -99,6 +101,10 @@ module LightKrylov
     public :: svds
     public :: gmres
     public :: cg
+
+    ! Newton-Krylov exports.
+    public :: newton
+    public :: newton_opts
 
     ! ExpmLib exports.
     public :: abstract_exptA_rsp
