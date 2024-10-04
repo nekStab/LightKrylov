@@ -374,8 +374,8 @@ contains
       class(abstract_vector_rdp), intent(out) :: vec_out
       ! internal
       real(wp), dimension(npts) :: wrk
+      call vec_out%zero() ! ensure that the period shift vec_out%T is zero
       call nonlinear_roessler(pos, wrk)
-      call vec_out%zero()
       call set_position(wrk, vec_out)
       return
    end subroutine compute_fdot
