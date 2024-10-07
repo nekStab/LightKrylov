@@ -144,6 +144,21 @@ module lightkrylov_utils
         !! Verbosity control (default: `.false.`)
     end type
 
+    type, extends(abstract_opts), public :: newton_sp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        real(sp) :: tol = 1e-12_sp
+        !! Target tolerance for Newton iteration (default = 1e-12)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+    
     type, extends(abstract_opts), public :: gmres_dp_opts
         !! GMRES options.
         integer :: kdim = 30
@@ -170,6 +185,21 @@ module lightkrylov_utils
         !! Verbosity control (default: `.false.`)
     end type
 
+    type, extends(abstract_opts), public :: newton_dp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        real(dp) :: tol = 1e-12_dp
+        !! Target tolerance for Newton iteration (default = 1e-12)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+    
 
 contains
 
@@ -463,9 +493,9 @@ contains
 
         return
     contains
-        pure function dummy_select(wr, wi) result(out)
-            real(sp), intent(in) :: wr
-            real(sp), intent(in) :: wi
+        pure function dummy_select(wre, wim) result(out)
+            real(sp), intent(in) :: wre
+            real(sp), intent(in) :: wim
             logical :: out
             out = .false.
             return
@@ -702,9 +732,9 @@ contains
 
         return
     contains
-        pure function dummy_select(wr, wi) result(out)
-            real(dp), intent(in) :: wr
-            real(dp), intent(in) :: wi
+        pure function dummy_select(wre, wim) result(out)
+            real(dp), intent(in) :: wre
+            real(dp), intent(in) :: wim
             logical :: out
             out = .false.
             return

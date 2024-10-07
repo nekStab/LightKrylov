@@ -136,6 +136,21 @@ module lightkrylov_utils
         !! Verbosity control (default: `.false.`)
     end type
 
+    type, extends(abstract_opts), public :: newton_${kind}$_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        real(${kind}$) :: tol = 1e-12_${kind}$
+        !! Target tolerance for Newton iteration (default = 1e-12)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+        logical :: verbose = .false.
+        !! Verbosity control (default: `.false.`)
+    end type
+    
     #:endfor
 
 contains
@@ -348,9 +363,9 @@ contains
         return
     contains
         #:if type[0] == "r"
-        pure function dummy_select(wr, wi) result(out)
-            ${type}$, intent(in) :: wr
-            ${type}$, intent(in) :: wi
+        pure function dummy_select(wre, wim) result(out)
+            ${type}$, intent(in) :: wre
+            ${type}$, intent(in) :: wim
             logical :: out
             out = .false.
             return
