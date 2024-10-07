@@ -34,6 +34,7 @@ module LightKrylov
     #:for kind in REAL_KINDS
     public :: gmres_${kind}$_opts
     public :: cg_${kind}$_opts
+    public :: newton_${kind}$_opts
     #:endfor
 
     ! AbstractVectors exports.
@@ -91,7 +92,9 @@ module LightKrylov
 
     ! Newton-Krylov exports.
     public :: newton
-    public :: newton_opts
+    #:for kind in REAL_KINDS
+    public :: constant_atol_${kind}$, dynamic_tol_${kind}$
+    #:endfor
 
     ! ExpmLib exports.
     #:for kind, type in RC_KINDS_TYPES
