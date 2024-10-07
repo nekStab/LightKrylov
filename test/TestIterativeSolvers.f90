@@ -129,7 +129,7 @@ contains
         return
     end subroutine test_ks_evp_rsp
 
-   subroutine test_evp_rsp(error)
+    subroutine test_evp_rsp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -372,7 +372,7 @@ contains
         return
     end subroutine test_ks_evp_rdp
 
-   subroutine test_evp_rdp(error)
+    subroutine test_evp_rdp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -566,7 +566,7 @@ contains
         return
     end subroutine test_ks_evp_csp
 
-   subroutine test_evp_csp(error)
+    subroutine test_evp_csp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -628,7 +628,7 @@ contains
         return
     end subroutine test_ks_evp_cdp
 
-   subroutine test_evp_cdp(error)
+    subroutine test_evp_cdp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.

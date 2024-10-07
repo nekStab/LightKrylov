@@ -76,6 +76,8 @@ module LightKrylov
     public :: abstract_hermitian_linop_cdp
 
     ! AbstractSystems exports.
+    public :: abstract_system_rsp
+    public :: abstract_jacobian_linop_rsp
     public :: abstract_system_rdp
     public :: abstract_jacobian_linop_rdp
     

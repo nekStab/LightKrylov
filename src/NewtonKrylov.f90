@@ -127,7 +127,7 @@ contains
       class(abstract_precond_rsp),              optional, intent(in)    :: preconditioner
       class(abstract_precond_rsp), allocatable                          :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_sp),        optional                :: scheduler
+      procedure(abstract_scheduler_sp),         optional                :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -255,7 +255,7 @@ contains
       class(abstract_precond_rdp),              optional, intent(in)    :: preconditioner
       class(abstract_precond_rdp), allocatable                          :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_dp),        optional                :: scheduler
+      procedure(abstract_scheduler_dp),         optional                :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -383,7 +383,7 @@ contains
       class(abstract_precond_csp),              optional, intent(in)    :: preconditioner
       class(abstract_precond_csp), allocatable                          :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_sp),        optional                :: scheduler
+      procedure(abstract_scheduler_sp),         optional                :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -511,7 +511,7 @@ contains
       class(abstract_precond_cdp),              optional, intent(in)    :: preconditioner
       class(abstract_precond_cdp), allocatable                          :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_dp),        optional                :: scheduler
+      procedure(abstract_scheduler_dp),         optional                :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----

@@ -116,7 +116,7 @@ contains
       class(abstract_precond_${type[0]}$${kind}$),              optional, intent(in)    :: preconditioner
       class(abstract_precond_${type[0]}$${kind}$), allocatable                          :: precond
       !! Preconditioner for the linear solver
-      procedure(abstract_scheduler_${kind}$),        optional                :: scheduler
+      procedure(abstract_scheduler_${kind}$),         optional                :: scheduler
 
       !--------------------------------------
       !-----     Internal variables     -----
