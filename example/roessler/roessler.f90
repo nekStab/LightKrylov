@@ -46,14 +46,12 @@ module Roessler
    !-------------------------------------------
 
    type, extends(abstract_system_rdp), public :: roessler_upo
-      !real(wp) :: tau ! Integration time
    contains
       private
       procedure, pass(self), public :: eval => nonlinear_map
    end type roessler_upo
 
    type, extends(abstract_jacobian_linop_rdp), public :: jacobian
-      !real(wp) :: tau ! Integration time.
    contains
       private
       procedure, pass(self), public :: matvec => linear_map
@@ -236,16 +234,18 @@ contains
    !-----     TYPE-BOUND PROCEDURES FOR THE INTEGRATORS     -----
    !-------------------------------------------------------------
  
-   subroutine nonlinear_map(self, vec_in, vec_out)
+   subroutine nonlinear_map(self, vec_in, vec_out, iter)
       ! Linear Operator.
       class(roessler_upo),        intent(in)  :: self
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
       class(abstract_vector_rdp), intent(out) :: vec_out
+      ! Newton iteration counter
+      integer,                    intent(in)  :: iter
       
       ! Time-integrator.
-      type(rks54_class)         :: nonlinear_roessler
+      type(rks54_class)         :: nonlinear_integrator
       real(wp)                  :: dt = 1.0_wp
       real(wp)                  :: period
       real(wp), dimension(npts) :: pos_in, pos_out
@@ -258,9 +258,9 @@ contains
             ! Get state vector.
             call get_position(vec_in, pos_in)
             ! Initialize integrator.
-            call nonlinear_roessler%initialize(n=npts, f=NL_rhs)!, report=roessler_report_stdout, report_rate=1)
+            call nonlinear_integrator%initialize(n=npts, f=NL_rhs)!, report=roessler_report_stdout, report_rate=1)
             ! Integrate forward in time.
-            call nonlinear_roessler%integrate(0.0_wp, pos_in, dt, vec_in%T, pos_out)
+            call nonlinear_integrator%integrate(0.0_wp, pos_in, dt, vec_in%T, pos_out)
             ! Pass-back the state vector.
             call set_position(pos_out, vec_out)
 
@@ -316,7 +316,7 @@ contains
 
             ! Evaluate f'(X(0), 0).T @ dx and add phase condition
             call compute_fdot(pos_in(:npts), vec) 
-            vec_out%T = vec%dot(self%X)
+            vec_out%T = vec_in%dot(vec)
             
          end select
       end select
