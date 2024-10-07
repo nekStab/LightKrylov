@@ -1,8 +1,10 @@
 program demo
    use stdlib_io_npy, only : save_npy
+   use stdlib_logger, only : information_level, warning_level, debug_level, error_level, none_level
    use LightKrylov
    use LightKrylov, only: wp => dp
    use LightKrylov_Logger
+   use LightKrylov_Utils
    use Roessler
    implicit none
 
@@ -10,60 +12,65 @@ program demo
 
    ! Roessler system.
    type(roessler_upo), allocatable :: sys
-   ! Jacobian.
-   type(jacobian), allocatable :: J
    ! State vectors
-   type(state_vector), allocatable :: bf, dx
+   type(state_vector), allocatable :: bf, dx, residual
    ! Integration time.
    real(wp), parameter :: Tend = 10.0_wp
+
    ! Misc
-   integer :: iunit, iostat, info
-   type(newton_opts) :: opts
+   integer :: i, info
+   type(newton_dp_opts) :: opts
    type(gmres_dp_opts) :: gmres_opts
-
-   ! NEWTON
-   type(state_vector), allocatable :: residual, xtest
    real(wp) :: rnorm
-   integer :: i
-   character(len=128) :: fmt
-
-   write(fmt,*) '(A,4(1X,F18.6))'
+   character(len=20) :: fmt
+   
+   write(fmt,*) '(A20,4(1X,F18.6))'
 
    ! Set up logging
    call logger_setup()
-
-   ! Initialize system
-   sys = roessler_upo() !tau=Tend)
+   call logger%configure(level=warning_level, time_stamp=.false.)
 
    ! Initialize baseflow and perturbation state vectors
-   allocate(bf, dx, residual, xtest)
-   call bf%zero(); call dx%zero(); call residual%zero(); call xtest%zero()
+   allocate(bf, dx, residual)
+   call bf%zero()
+   call dx%zero()
+   call residual%zero()
+   print '(A20,4(18X,A))', '         ', 'X', 'Y', 'Z', 'T'
 
    call set_position((/ 1.0_wp, 1.0_wp, 0.0_wp/), bf)  ! some initial guess
    bf%T = Tend ! period guess
+   print fmt, 'Initial guess PO:', bf%x, bf%y, bf%z, bf%T
+   print *,''
 
-   J = jacobian() !tau=Tend)
-   sys%jacobian = J
+   ! Initialize system and Jacobian
+   sys = roessler_upo()
+   ! Set Jacobian and baseflow
+   sys%jacobian = jacobian()
    sys%jacobian%X = bf
 
-   ! compute residual
-   call sys%eval(bf, residual)
-   call residual%chsgn()
-   print fmt, '-res:', residual%x, residual%y, residual%z, residual%T
-   
-   call gmres(sys%jacobian, residual, dx, info)
+   opts       = newton_dp_opts(maxiter=30, ifbisect=.false., verbose=.true.)
+   gmres_opts = gmres_dp_opts(atol=1e-12, verbose=.true.)
+   call newton(sys, bf, info, opts, linear_solver_options=gmres_opts, scheduler=constant_atol_dp)
 
-   print fmt, 'dX  :', dx%x, dx%y, dx%z, dx%T
+   call sys%eval(bf, residual, 0)
+   print *,''
+   print fmt, ' PO(0):  ', bf%x, bf%y, bf%z, bf%T
+   print *, 'Compute residual of newton solution:'
+   print fmt, ' res:    ', residual%x, residual%y, residual%z, residual%T
+   print *,''
 
-   call sys%jacobian%matvec(dx, xtest)
-   call xtest%add(residual)
-   print fmt, 'J@dx + res:', xtest%x, xtest%y, xtest%z, xtest%T
+   call set_position((/ 1.0_wp, 1.0_wp, 0.0_wp/), bf)  ! some initial guess
+   bf%T = Tend ! period guess
+   sys%jacobian%X = bf
 
-   STOP 4
+   call newton(sys, bf, info, opts, linear_solver_options=gmres_opts, scheduler=dynamic_tol_dp)
 
-   opts       = newton_opts(maxiter=10, ifbisect=.false., verbose=.true.)
-   gmres_opts = gmres_dp_opts(atol=1e-6, verbose=.true.)
-   call newton(sys, bf, info, opts, linear_solver_options=gmres_opts)
+   call sys%eval(bf, residual, 0)
+   print *,''
+   print fmt, ' PO(0):  ', bf%x, bf%y, bf%z, bf%T
+   print *, 'Compute residual of newton solution:'
+   print fmt, ' res:    ', residual%x, residual%y, residual%z, residual%T
+   print *,''
 
    return
 end program demo
