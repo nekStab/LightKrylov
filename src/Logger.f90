@@ -428,6 +428,16 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
+         else if (trim(to_lower(origin)) == 'linear_solver') then
+            ! Abstract linear solver
+            if (info > 0) then
+               write(msg, *) 'The linear solver converged after', info, 'iterations'
+               call logger%log_information(trim(msg), module=module, procedure=procedure)
+            else
+               write(msg, *) "Undocumented error. ", trim(str)
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
          !
          !   LightKrylov_ExpmLib
          !
