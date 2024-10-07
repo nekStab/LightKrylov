@@ -51,7 +51,7 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_rsp(self, vec_in, vec_out)
+        subroutine abstract_eval_rsp(self, vec_in, vec_out, iter)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_rsp
@@ -61,6 +61,8 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_rsp), intent(out) :: vec_out
             !! Response
+            integer,                                    intent(in)  :: iter
+            !! Newton iteration counter
         end subroutine abstract_eval_rsp
     end interface
 
@@ -105,7 +107,7 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_rdp(self, vec_in, vec_out)
+        subroutine abstract_eval_rdp(self, vec_in, vec_out, iter)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_rdp
@@ -115,6 +117,8 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_rdp), intent(out) :: vec_out
             !! Response
+            integer,                                    intent(in)  :: iter
+            !! Newton iteration counter
         end subroutine abstract_eval_rdp
     end interface
 
@@ -159,7 +163,7 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_csp(self, vec_in, vec_out)
+        subroutine abstract_eval_csp(self, vec_in, vec_out, iter)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_csp
@@ -169,6 +173,8 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_csp), intent(out) :: vec_out
             !! Response
+            integer,                                    intent(in)  :: iter
+            !! Newton iteration counter
         end subroutine abstract_eval_csp
     end interface
 
@@ -213,7 +219,7 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_cdp(self, vec_in, vec_out)
+        subroutine abstract_eval_cdp(self, vec_in, vec_out, iter)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_cdp
@@ -223,6 +229,8 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_cdp), intent(out) :: vec_out
             !! Response
+            integer,                                    intent(in)  :: iter
+            !! Newton iteration counter
         end subroutine abstract_eval_cdp
     end interface
 

@@ -54,7 +54,7 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_${type[0]}$${kind}$(self, vec_in, vec_out)
+        subroutine abstract_eval_${type[0]}$${kind}$(self, vec_in, vec_out, iter)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_${type[0]}$${kind}$
@@ -64,6 +64,8 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
             !! Response
+            integer,                                    intent(in)  :: iter
+            !! Newton iteration counter
         end subroutine abstract_eval_${type[0]}$${kind}$
     end interface
 
