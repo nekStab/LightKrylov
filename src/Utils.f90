@@ -124,39 +124,23 @@ module lightkrylov_utils
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
-        real(sp) :: atol = atol_sp
-        !! Absolute tolerance.
-        real(sp) :: rtol = rtol_sp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
     type, extends(abstract_opts), public :: cg_sp_opts
         !! Conjugate gradient options.
         integer :: maxiter = 100
         !! Maximum number of `cg` iterations (default: 100).
-        real(sp) :: atol = atol_sp
-        !! Absolute tolerance.
-        real(sp) :: rtol = rtol_sp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
     type, extends(abstract_opts), public :: newton_sp_opts
         !! Options for Newton-Krylov fixed-point iteration.
         integer :: maxiter = 100
         !! Maximum number of Newton iterations (default = 100)
-        real(sp) :: tol = 1e-12_sp
-        !! Target tolerance for Newton iteration (default = 1e-12)
         logical :: ifbisect = .false.
         !! Bisection toggle to enforce residual reduction (default = .false.)
         integer :: maxstep_bisection = 5
         !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
         !! Ignored if ifbisect = .false.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
     
     type, extends(abstract_opts), public :: gmres_dp_opts
@@ -165,39 +149,23 @@ module lightkrylov_utils
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
-        real(dp) :: atol = atol_dp
-        !! Absolute tolerance.
-        real(dp) :: rtol = rtol_dp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
     type, extends(abstract_opts), public :: cg_dp_opts
         !! Conjugate gradient options.
         integer :: maxiter = 100
         !! Maximum number of `cg` iterations (default: 100).
-        real(dp) :: atol = atol_dp
-        !! Absolute tolerance.
-        real(dp) :: rtol = rtol_dp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
     type, extends(abstract_opts), public :: newton_dp_opts
         !! Options for Newton-Krylov fixed-point iteration.
         integer :: maxiter = 100
         !! Maximum number of Newton iterations (default = 100)
-        real(dp) :: tol = 1e-12_dp
-        !! Target tolerance for Newton iteration (default = 1e-12)
         logical :: ifbisect = .false.
         !! Bisection toggle to enforce residual reduction (default = .false.)
         integer :: maxstep_bisection = 5
         !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
         !! Ignored if ifbisect = .false.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
     
 
@@ -222,7 +190,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
         endif
@@ -244,7 +212,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
         endif
@@ -265,7 +233,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
         endif
@@ -287,7 +255,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
         endif
@@ -308,7 +276,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
         endif
@@ -330,7 +298,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
         endif
@@ -351,7 +319,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
         endif
@@ -373,7 +341,7 @@ contains
         character(len=256) :: msg
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
             call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
         endif
@@ -543,19 +511,19 @@ contains
       real(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(sp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
       if (symmetry_error > rtol_sp) then
-        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
             & symmetry_error, ", tol = ", rtol_sp
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       else if (symmetry_error > 10*atol_sp) then
-        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_rsp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
       ! Perform svd
@@ -590,13 +558,13 @@ contains
       real(sp) :: lambda(size(X,1))
       real(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(msg,*) "Input matrix is not symmetric."
+        write(msg,'(A)') "Input matrix is not symmetric."
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
@@ -782,19 +750,19 @@ contains
       real(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(dp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
       if (symmetry_error > rtol_dp) then
-        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
             & symmetry_error, ", tol = ", rtol_dp
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       else if (symmetry_error > 10*atol_dp) then
-        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_rdp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_rdp')
       end if
 
       ! Perform svd
@@ -829,13 +797,13 @@ contains
       real(dp) :: lambda(size(X,1))
       real(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(msg,*) "Input matrix is not symmetric."
+        write(msg,'(A)') "Input matrix is not symmetric."
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       end if
 
@@ -1016,19 +984,19 @@ contains
       complex(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(sp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_sp) then
-        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
             & symmetry_error, ", tol = ", rtol_sp
         call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       else if (symmetry_error > 10*atol_sp) then
-        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_csp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_csp')
       end if
 
       ! Perform svd
@@ -1063,13 +1031,13 @@ contains
       real(sp) :: lambda(size(X,1))
       complex(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(msg,*) "Input matrix is not hermitian"
+        write(msg,'(A)') "Input matrix is not hermitian"
         call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       end if
 
@@ -1250,19 +1218,19 @@ contains
       complex(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(dp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_dp) then
-        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
             & symmetry_error, ", tol = ", rtol_dp
         call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       else if (symmetry_error > 10*atol_dp) then
-        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_cdp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_cdp')
       end if
 
       ! Perform svd
@@ -1297,13 +1265,13 @@ contains
       real(dp) :: lambda(size(X,1))
       complex(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(msg,*) "Input matrix is not hermitian"
+        write(msg,'(A)') "Input matrix is not hermitian"
         call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       end if
 

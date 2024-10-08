@@ -1114,10 +1114,10 @@ contains
       real(sp) :: err
 
       ! internals
-      character*8 :: value_str
+      character*9 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
-      write(value_str, '(E8.2)') err
+      write(value_str, '(E9.2)') err
       msg = indent // info // value_str // achar(10)
        
     end subroutine get_err_str_sp
@@ -1127,10 +1127,10 @@ contains
       real(dp) :: err
 
       ! internals
-      character*8 :: value_str
+      character*9 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
-      write(value_str, '(E8.2)') err
+      write(value_str, '(E9.2)') err
       msg = indent // info // value_str // achar(10)
        
     end subroutine get_err_str_dp
@@ -1274,11 +1274,11 @@ contains
     end subroutine rand_state_rdp
 
 
-    subroutine eval_roessler_rsp(self, vec_in, vec_out, iter)
+    subroutine eval_roessler_rsp(self, vec_in, vec_out, atol)
       class(roessler_rsp),            intent(in)  :: self
       class(abstract_vector_rsp), intent(in)  :: vec_in
       class(abstract_vector_rsp), intent(out) :: vec_out
-      integer,                    intent(in)  :: iter
+      real(sp),                    intent(in)  :: atol
 
       select type(vec_in)
         type is(state_vector_rsp)
@@ -1375,11 +1375,11 @@ contains
         return
     end subroutine roessler_analytical_fp_rsp
 
-    subroutine eval_roessler_rdp(self, vec_in, vec_out, iter)
+    subroutine eval_roessler_rdp(self, vec_in, vec_out, atol)
       class(roessler_rdp),            intent(in)  :: self
       class(abstract_vector_rdp), intent(in)  :: vec_in
       class(abstract_vector_rdp), intent(out) :: vec_out
-      integer,                    intent(in)  :: iter
+      real(dp),                    intent(in)  :: atol
 
       select type(vec_in)
         type is(state_vector_rdp)

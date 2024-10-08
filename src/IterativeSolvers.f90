@@ -159,9 +159,9 @@ module lightkrylov_IterativeSolvers
     !--------------------------------------------------------
 
     abstract interface
-        subroutine abstract_linear_solver_rsp(A, b, x, info, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp
+            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp, sp
             class(abstract_linop_rsp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_rsp), intent(in) :: b
@@ -170,6 +170,10 @@ module lightkrylov_IterativeSolvers
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_rsp), optional, intent(in) :: preconditioner
@@ -178,9 +182,9 @@ module lightkrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_rsp
 
-        subroutine abstract_linear_solver_rdp(A, b, x, info, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp
+            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp, dp
             class(abstract_linop_rdp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_rdp), intent(in) :: b
@@ -189,6 +193,10 @@ module lightkrylov_IterativeSolvers
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_rdp), optional, intent(in) :: preconditioner
@@ -197,9 +205,9 @@ module lightkrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_rdp
 
-        subroutine abstract_linear_solver_csp(A, b, x, info, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp
+            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp, sp
             class(abstract_linop_csp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_csp), intent(in) :: b
@@ -208,6 +216,10 @@ module lightkrylov_IterativeSolvers
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_csp), optional, intent(in) :: preconditioner
@@ -216,9 +228,9 @@ module lightkrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_csp
 
-        subroutine abstract_linear_solver_cdp(A, b, x, info, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp
+            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp, dp
             class(abstract_linop_cdp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_cdp), intent(in) :: b
@@ -227,6 +239,10 @@ module lightkrylov_IterativeSolvers
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_cdp), optional, intent(in) :: preconditioner
@@ -351,7 +367,7 @@ contains
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    subroutine eigs_rsp(A, X, eigvals, residuals, info, kdim, select, tolerance, verbosity, transpose)
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
         class(abstract_linop_rsp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -367,8 +383,6 @@ contains
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
 
@@ -387,10 +401,11 @@ contains
         real(sp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
         integer :: nev, conv
-        integer :: i, j, k
+        integer :: i, j, k, niter, krst
         real(sp) :: tol
         real(sp) :: beta
         real(sp) :: alpha
+        character(len=256) :: msg
         ! Eigenvalue selection.
         procedure(eigvals_select_sp), pointer :: select_
 
@@ -418,12 +433,12 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_sp
 
-        kstart = 1 ; conv = 0
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -444,12 +459,19 @@ contains
                 enddo
 
                 ! Check convergence.
+                niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
             ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
         end do krylovschur
 
         !--------------------------------
@@ -479,10 +501,12 @@ contains
             enddo
         enddo
 
+        info = niter
+
         return
     end subroutine eigs_rsp
 
-    subroutine eigs_rdp(A, X, eigvals, residuals, info, kdim, select, tolerance, verbosity, transpose)
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -498,8 +522,6 @@ contains
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
 
@@ -518,10 +540,11 @@ contains
         real(dp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
         integer :: nev, conv
-        integer :: i, j, k
+        integer :: i, j, k, niter, krst
         real(dp) :: tol
         real(dp) :: beta
         real(dp) :: alpha
+        character(len=256) :: msg
         ! Eigenvalue selection.
         procedure(eigvals_select_dp), pointer :: select_
 
@@ -549,12 +572,12 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_dp
 
-        kstart = 1 ; conv = 0
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -575,12 +598,19 @@ contains
                 enddo
 
                 ! Check convergence.
+                niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
             ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
         end do krylovschur
 
         !--------------------------------
@@ -610,10 +640,12 @@ contains
             enddo
         enddo
 
+        info = niter
+
         return
     end subroutine eigs_rdp
 
-    subroutine eigs_csp(A, X, eigvals, residuals, info, kdim, select, tolerance, verbosity, transpose)
+    subroutine eigs_csp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -629,8 +661,6 @@ contains
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
 
@@ -649,9 +679,10 @@ contains
         real(sp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
         integer :: nev, conv
-        integer :: i, j, k
+        integer :: i, j, k, niter, krst
         real(sp) :: tol
         complex(sp) :: beta
+        character(len=256) :: msg
         ! Eigenvalue selection.
         procedure(eigvals_select_sp), pointer :: select_
 
@@ -679,12 +710,12 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_sp
 
-        kstart = 1 ; conv = 0
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -696,12 +727,19 @@ contains
                 residuals_wrk(:k) = compute_residual_csp(beta, eigvecs_wrk(k,:k))
 
                 ! Check convergence.
+                niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_csp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_csp')
             ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
         end do krylovschur
 
         !--------------------------------
@@ -731,10 +769,12 @@ contains
             enddo
         enddo
 
+        info = niter
+
         return
     end subroutine eigs_csp
 
-    subroutine eigs_cdp(A, X, eigvals, residuals, info, kdim, select, tolerance, verbosity, transpose)
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -750,8 +790,6 @@ contains
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
 
@@ -770,9 +808,10 @@ contains
         real(dp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
         integer :: nev, conv
-        integer :: i, j, k
+        integer :: i, j, k, niter, krst
         real(dp) :: tol
         complex(dp) :: beta
+        character(len=256) :: msg
         ! Eigenvalue selection.
         procedure(eigvals_select_dp), pointer :: select_
 
@@ -800,12 +839,12 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_dp
 
-        kstart = 1 ; conv = 0
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -817,12 +856,19 @@ contains
                 residuals_wrk(:k) = compute_residual_cdp(beta, eigvecs_wrk(k,:k))
 
                 ! Check convergence.
+                niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
             ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
         end do krylovschur
 
         !--------------------------------
@@ -852,6 +898,8 @@ contains
             enddo
         enddo
 
+        info = niter
+
         return
     end subroutine eigs_cdp
 
@@ -860,7 +908,7 @@ contains
     !-----      EIGENVALUE COMPUTATIONS FOR SYMMETRIC/HERMITIAN MATRICES     -----
     !-----------------------------------------------------------------------------
 
-    subroutine eighs_rsp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+    subroutine eighs_rsp(A, X, eigvals, residuals, info, kdim, tolerance)
         class(abstract_sym_linop_rsp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -875,8 +923,6 @@ contains
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -897,14 +943,13 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose
         real(sp) :: tol
         real(sp) :: beta
+        character(len=256) :: msg
 
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
@@ -917,9 +962,8 @@ contains
         ! Ritz eigenpairs computation.
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
             call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
-
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
@@ -931,6 +975,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
             if (conv >= nev) exit lanczos
         enddo lanczos
 
@@ -955,11 +1001,13 @@ contains
                 call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
+        
+        info = k
 
         return
     end subroutine eighs_rsp
 
-    subroutine eighs_rdp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+    subroutine eighs_rdp(A, X, eigvals, residuals, info, kdim, tolerance)
         class(abstract_sym_linop_rdp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -974,8 +1022,6 @@ contains
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -996,14 +1042,13 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose
         real(dp) :: tol
         real(dp) :: beta
+        character(len=256) :: msg
 
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
@@ -1016,9 +1061,8 @@ contains
         ! Ritz eigenpairs computation.
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
             call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
-
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
@@ -1030,6 +1074,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
             if (conv >= nev) exit lanczos
         enddo lanczos
 
@@ -1054,11 +1100,13 @@ contains
                 call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
+        
+        info = k
 
         return
     end subroutine eighs_rdp
 
-    subroutine eighs_csp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+    subroutine eighs_csp(A, X, eigvals, residuals, info, kdim, tolerance)
         class(abstract_hermitian_linop_csp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -1073,8 +1121,6 @@ contains
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1095,14 +1141,13 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose
         real(sp) :: tol
         complex(sp) :: beta
+        character(len=256) :: msg
 
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
@@ -1115,9 +1160,8 @@ contains
         ! Ritz eigenpairs computation.
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
             call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
-
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
@@ -1129,6 +1173,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_csp')
             if (conv >= nev) exit lanczos
         enddo lanczos
 
@@ -1153,11 +1199,13 @@ contains
                 call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
+        
+        info = k
 
         return
     end subroutine eighs_csp
 
-    subroutine eighs_cdp(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+    subroutine eighs_cdp(A, X, eigvals, residuals, info, kdim, tolerance)
         class(abstract_hermitian_linop_cdp), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1172,8 +1220,6 @@ contains
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1194,14 +1240,13 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose
         real(dp) :: tol
         complex(dp) :: beta
+        character(len=256) :: msg
 
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
@@ -1214,9 +1259,8 @@ contains
         ! Ritz eigenpairs computation.
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
             call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
-
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
@@ -1228,6 +1272,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
             if (conv >= nev) exit lanczos
         enddo lanczos
 
@@ -1252,6 +1298,8 @@ contains
                 call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
+        
+        info = k
 
         return
     end subroutine eighs_cdp
@@ -1261,7 +1309,7 @@ contains
     !-----     SINGULAR VALUE DECOMPOSITION     -----
     !------------------------------------------------
 
-    subroutine svds_rsp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+    subroutine svds_rsp(A, U, S, V, residuals, info, kdim, tolerance)
         class(abstract_linop_rsp), intent(in) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rsp), intent(out) :: U(:)
@@ -1278,8 +1326,6 @@ contains
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1296,13 +1342,12 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        logical :: verbose
         real(sp) :: tol
+        character(len=256) :: msg
 
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
@@ -1319,7 +1364,7 @@ contains
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
@@ -1332,6 +1377,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_rsp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
 
@@ -1355,7 +1402,7 @@ contains
         return
     end subroutine svds_rsp
 
-    subroutine svds_rdp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+    subroutine svds_rdp(A, U, S, V, residuals, info, kdim, tolerance)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rdp), intent(out) :: U(:)
@@ -1372,8 +1419,6 @@ contains
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1390,13 +1435,12 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        logical :: verbose
         real(dp) :: tol
+        character(len=256) :: msg
 
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
@@ -1413,7 +1457,7 @@ contains
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
@@ -1426,6 +1470,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_rdp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
 
@@ -1449,7 +1495,7 @@ contains
         return
     end subroutine svds_rdp
 
-    subroutine svds_csp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+    subroutine svds_csp(A, U, S, V, residuals, info, kdim, tolerance)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_csp), intent(out) :: U(:)
@@ -1466,8 +1512,6 @@ contains
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1484,13 +1528,12 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        logical :: verbose
         real(sp) :: tol
+        character(len=256) :: msg
 
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
@@ -1507,7 +1550,7 @@ contains
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
@@ -1520,6 +1563,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_csp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
 
@@ -1543,7 +1588,7 @@ contains
         return
     end subroutine svds_csp
 
-    subroutine svds_cdp(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+    subroutine svds_cdp(A, U, S, V, residuals, info, kdim, tolerance)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_cdp), intent(out) :: U(:)
@@ -1560,8 +1605,6 @@ contains
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1578,13 +1621,12 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        logical :: verbose
         real(dp) :: tol
+        character(len=256) :: msg
 
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
@@ -1601,7 +1643,7 @@ contains
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
@@ -1614,6 +1656,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_cdp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
 
@@ -1642,7 +1686,7 @@ contains
     !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
     !-------------------------------------------------------
 
-    subroutine gmres_rsp(A, b, x, info, preconditioner, options, transpose)
+    subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
         class(abstract_linop_rsp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
@@ -1651,6 +1695,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_rsp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
         !type(gmres_sp_opts), optional, intent(in) :: options
@@ -1665,8 +1713,8 @@ contains
 
         ! Options.
         integer :: kdim, maxiter
-        real(sp) :: tol
-        logical :: verbose, trans
+        real(sp) :: tol, rtol_, atol_
+        logical :: trans
         type(gmres_sp_opts) :: opts
 
         ! Krylov subspace
@@ -1685,8 +1733,19 @@ contains
         integer :: i, k, niter
         real(sp), allocatable :: alpha(:)
         class(abstract_vector_rsp), allocatable :: dx, wrk
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_sp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_sp
+        end if
         if (present(options)) then
             select type (options)
             type is (gmres_sp_opts)
@@ -1697,7 +1756,7 @@ contains
         endif
 
         kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
@@ -1768,6 +1827,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
                 endif
@@ -1788,6 +1849,9 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
 
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
 
@@ -1799,7 +1863,7 @@ contains
         return
     end subroutine gmres_rsp
 
-    subroutine gmres_rdp(A, b, x, info, preconditioner, options, transpose)
+    subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
@@ -1808,6 +1872,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_rdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
         !type(gmres_dp_opts), optional, intent(in) :: options
@@ -1822,8 +1890,8 @@ contains
 
         ! Options.
         integer :: kdim, maxiter
-        real(dp) :: tol
-        logical :: verbose, trans
+        real(dp) :: tol, rtol_, atol_
+        logical :: trans
         type(gmres_dp_opts) :: opts
 
         ! Krylov subspace
@@ -1842,8 +1910,19 @@ contains
         integer :: i, k, niter
         real(dp), allocatable :: alpha(:)
         class(abstract_vector_rdp), allocatable :: dx, wrk
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_dp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_dp
+        end if
         if (present(options)) then
             select type (options)
             type is (gmres_dp_opts)
@@ -1854,7 +1933,7 @@ contains
         endif
 
         kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
@@ -1925,6 +2004,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
                 endif
@@ -1945,6 +2026,9 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
 
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
 
@@ -1956,7 +2040,7 @@ contains
         return
     end subroutine gmres_rdp
 
-    subroutine gmres_csp(A, b, x, info, preconditioner, options, transpose)
+    subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
@@ -1965,6 +2049,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_csp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
         !type(gmres_sp_opts), optional, intent(in) :: options
@@ -1979,8 +2067,8 @@ contains
 
         ! Options.
         integer :: kdim, maxiter
-        real(sp) :: tol
-        logical :: verbose, trans
+        real(sp) :: tol, rtol_, atol_
+        logical :: trans
         type(gmres_sp_opts) :: opts
 
         ! Krylov subspace
@@ -1999,8 +2087,19 @@ contains
         integer :: i, k, niter
         complex(sp), allocatable :: alpha(:)
         class(abstract_vector_csp), allocatable :: dx, wrk
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_sp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_sp
+        end if
         if (present(options)) then
             select type (options)
             type is (gmres_sp_opts)
@@ -2011,7 +2110,7 @@ contains
         endif
 
         kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
@@ -2082,6 +2181,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_csp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
                 endif
@@ -2102,6 +2203,9 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
 
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
 
@@ -2113,7 +2217,7 @@ contains
         return
     end subroutine gmres_csp
 
-    subroutine gmres_cdp(A, b, x, info, preconditioner, options, transpose)
+    subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
@@ -2122,6 +2226,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_cdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
         !type(gmres_dp_opts), optional, intent(in) :: options
@@ -2136,8 +2244,8 @@ contains
 
         ! Options.
         integer :: kdim, maxiter
-        real(dp) :: tol
-        logical :: verbose, trans
+        real(dp) :: tol, rtol_, atol_
+        logical :: trans
         type(gmres_dp_opts) :: opts
 
         ! Krylov subspace
@@ -2156,8 +2264,19 @@ contains
         integer :: i, k, niter
         complex(dp), allocatable :: alpha(:)
         class(abstract_vector_cdp), allocatable :: dx, wrk
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_dp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_dp
+        end if
         if (present(options)) then
             select type (options)
             type is (gmres_dp_opts)
@@ -2168,7 +2287,7 @@ contains
         endif
 
         kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
@@ -2239,6 +2358,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
                 endif
@@ -2259,6 +2380,9 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
 
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
 
@@ -2278,7 +2402,7 @@ contains
     !-----     CONJUGATE GRADIENT METHOD     -----
     !---------------------------------------------
 
-    subroutine cg_rsp(A, b, x, info, preconditioner, options)
+    subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options)
         class(abstract_sym_linop_rsp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
@@ -2287,6 +2411,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_rsp), optional, intent(in) :: preconditioner
         !! Preconditioner (not yet supported).
         type(cg_sp_opts), optional, intent(in) :: options
@@ -2298,8 +2426,7 @@ contains
 
         ! Options.
         integer :: maxiter
-        real(sp) :: tol
-        logical :: verbose
+        real(sp) :: tol, rtol_, atol_
         type(cg_sp_opts) :: opts
 
         ! Working variables.
@@ -2309,19 +2436,25 @@ contains
 
         ! Miscellaneous.
         integer :: i
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_sp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_sp
+        end if
         if (present(options)) then
-            opts = cg_sp_opts( &
-                    maxiter = options%maxiter, &
-                    atol    = options%atol   , &
-                    rtol    = options%rtol   , &
-                    verbose = options%verbose  &
-                    )
+            opts = options
         else
             opts = cg_sp_opts()
         endif
-        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
         allocate(r, source=b)  ; call r%zero()
@@ -2365,12 +2498,15 @@ contains
             call p%axpby(beta, r, one_rsp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_rsp')
         enddo cg_loop
         
         return
     end subroutine cg_rsp
 
-    subroutine cg_rdp(A, b, x, info, preconditioner, options)
+    subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options)
         class(abstract_sym_linop_rdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
@@ -2379,6 +2515,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_rdp), optional, intent(in) :: preconditioner
         !! Preconditioner (not yet supported).
         type(cg_dp_opts), optional, intent(in) :: options
@@ -2390,8 +2530,7 @@ contains
 
         ! Options.
         integer :: maxiter
-        real(dp) :: tol
-        logical :: verbose
+        real(dp) :: tol, rtol_, atol_
         type(cg_dp_opts) :: opts
 
         ! Working variables.
@@ -2401,19 +2540,25 @@ contains
 
         ! Miscellaneous.
         integer :: i
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_dp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_dp
+        end if
         if (present(options)) then
-            opts = cg_dp_opts( &
-                    maxiter = options%maxiter, &
-                    atol    = options%atol   , &
-                    rtol    = options%rtol   , &
-                    verbose = options%verbose  &
-                    )
+            opts = options
         else
             opts = cg_dp_opts()
         endif
-        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
         allocate(r, source=b)  ; call r%zero()
@@ -2457,12 +2602,15 @@ contains
             call p%axpby(beta, r, one_rdp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_rdp')
         enddo cg_loop
         
         return
     end subroutine cg_rdp
 
-    subroutine cg_csp(A, b, x, info, preconditioner, options)
+    subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options)
         class(abstract_hermitian_linop_csp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
@@ -2471,6 +2619,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_csp), optional, intent(in) :: preconditioner
         !! Preconditioner (not yet supported).
         type(cg_sp_opts), optional, intent(in) :: options
@@ -2482,8 +2634,7 @@ contains
 
         ! Options.
         integer :: maxiter
-        real(sp) :: tol
-        logical :: verbose
+        real(sp) :: tol, rtol_, atol_
         type(cg_sp_opts) :: opts
 
         ! Working variables.
@@ -2493,19 +2644,25 @@ contains
 
         ! Miscellaneous.
         integer :: i
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_sp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_sp
+        end if
         if (present(options)) then
-            opts = cg_sp_opts( &
-                    maxiter = options%maxiter, &
-                    atol    = options%atol   , &
-                    rtol    = options%rtol   , &
-                    verbose = options%verbose  &
-                    )
+            opts = options
         else
             opts = cg_sp_opts()
         endif
-        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
         allocate(r, source=b)  ; call r%zero()
@@ -2549,12 +2706,15 @@ contains
             call p%axpby(beta, r, one_csp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_csp')
         enddo cg_loop
         
         return
     end subroutine cg_csp
 
-    subroutine cg_cdp(A, b, x, info, preconditioner, options)
+    subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options)
         class(abstract_hermitian_linop_cdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
@@ -2563,6 +2723,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_cdp), optional, intent(in) :: preconditioner
         !! Preconditioner (not yet supported).
         type(cg_dp_opts), optional, intent(in) :: options
@@ -2574,8 +2738,7 @@ contains
 
         ! Options.
         integer :: maxiter
-        real(dp) :: tol
-        logical :: verbose
+        real(dp) :: tol, rtol_, atol_
         type(cg_dp_opts) :: opts
 
         ! Working variables.
@@ -2585,19 +2748,25 @@ contains
 
         ! Miscellaneous.
         integer :: i
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_dp
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_dp
+        end if
         if (present(options)) then
-            opts = cg_dp_opts( &
-                    maxiter = options%maxiter, &
-                    atol    = options%atol   , &
-                    rtol    = options%rtol   , &
-                    verbose = options%verbose  &
-                    )
+            opts = options
         else
             opts = cg_dp_opts()
         endif
-        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
         allocate(r, source=b)  ; call r%zero()
@@ -2641,6 +2810,9 @@ contains
             call p%axpby(beta, r, one_cdp)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_cdp')
         enddo cg_loop
         
         return

@@ -1,4 +1,5 @@
 module LightKrylov_AbstractSystems
+    use LightKrylov_Constants
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
@@ -51,18 +52,18 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_rsp(self, vec_in, vec_out, iter)
+        subroutine abstract_eval_rsp(self, vec_in, vec_out, atol)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
-            import abstract_system_rsp
+            import abstract_system_rsp, sp
             class(abstract_system_rsp), intent(in)  :: self
             !! System
             class(abstract_vector_rsp), intent(in)  :: vec_in
             !! State
             class(abstract_vector_rsp), intent(out) :: vec_out
             !! Response
-            integer,                                    intent(in)  :: iter
-            !! Newton iteration counter
+            real(sp),                                   intent(in)  :: atol
+            !! Solver tolerance
         end subroutine abstract_eval_rsp
     end interface
 
@@ -107,18 +108,18 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_rdp(self, vec_in, vec_out, iter)
+        subroutine abstract_eval_rdp(self, vec_in, vec_out, atol)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
-            import abstract_system_rdp
+            import abstract_system_rdp, dp
             class(abstract_system_rdp), intent(in)  :: self
             !! System
             class(abstract_vector_rdp), intent(in)  :: vec_in
             !! State
             class(abstract_vector_rdp), intent(out) :: vec_out
             !! Response
-            integer,                                    intent(in)  :: iter
-            !! Newton iteration counter
+            real(dp),                                   intent(in)  :: atol
+            !! Solver tolerance
         end subroutine abstract_eval_rdp
     end interface
 
@@ -163,18 +164,18 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_csp(self, vec_in, vec_out, iter)
+        subroutine abstract_eval_csp(self, vec_in, vec_out, atol)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
-            import abstract_system_csp
+            import abstract_system_csp, sp
             class(abstract_system_csp), intent(in)  :: self
             !! System
             class(abstract_vector_csp), intent(in)  :: vec_in
             !! State
             class(abstract_vector_csp), intent(out) :: vec_out
             !! Response
-            integer,                                    intent(in)  :: iter
-            !! Newton iteration counter
+            real(sp),                                   intent(in)  :: atol
+            !! Solver tolerance
         end subroutine abstract_eval_csp
     end interface
 
@@ -219,18 +220,18 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_cdp(self, vec_in, vec_out, iter)
+        subroutine abstract_eval_cdp(self, vec_in, vec_out, atol)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
-            import abstract_system_cdp
+            import abstract_system_cdp, dp
             class(abstract_system_cdp), intent(in)  :: self
             !! System
             class(abstract_vector_cdp), intent(in)  :: vec_in
             !! State
             class(abstract_vector_cdp), intent(out) :: vec_out
             !! Response
-            integer,                                    intent(in)  :: iter
-            !! Newton iteration counter
+            real(dp),                                   intent(in)  :: atol
+            !! Solver tolerance
         end subroutine abstract_eval_cdp
     end interface
 

@@ -109,13 +109,16 @@ module LightKrylov_NewtonKrylov
 
 contains
 
-   subroutine newton_rsp(sys, X, info, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rsp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_rsp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rsp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
       integer,                                            intent(out)   :: info
       !! Information flag
+      real(sp),                                 optional, intent(in)    :: tolerance
+      real(sp)                                                          :: target_tol
+      !! Target absolute solver tolerance
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
@@ -133,14 +136,20 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      ! residual vector
       class(abstract_vector_rsp), allocatable :: residual, increment
       real(sp) :: rnorm, tol
-      logical :: converged, has_precond, has_solver_opts, verb
+      logical :: converged, has_precond, has_solver_opts
       integer :: i, maxiter, maxstep_bisection
+      character(len=256) :: msg
       procedure(abstract_linear_solver_rsp), pointer :: solver => null()
       procedure(abstract_scheduler_sp), pointer :: tolerance_scheduler => null()
 
+      ! Newton-solver tolerance
+      if (present(tolerance)) then
+         target_tol = tolerance
+      else
+         target_tol = atol_sp
+      end if
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -174,76 +183,97 @@ contains
          tolerance_scheduler => constant_atol_sp
       endif
 
-      ! Initialisation
-      verb = opts%verbose
-      
-      maxiter = opts%maxiter
-      maxstep_bisection = opts%maxstep_bisection
+      ! Initialisation      
+      maxiter = opts%maxiter ; maxstep_bisection = opts%maxstep_bisection ;
       converged = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, i)
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
+      ! Check for lucky convergence.
+      if (rnorm < target_tol) then
+         write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
+         call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
+         converged = .true.
+         return
+      end if
 
-      if (verb) write(*,*) 'Starting Newton ...'
+      write(msg,'(A)') 'Starting Newton iteration ...'
+      call logger%log_information(msg, module=this_module, procedure='newton_rsp')
       ! Newton iteration
       newton: do i = 1, maxiter
 
-         if (verb) write(*,"(A,I3,2(A,1X,E12.6))") "Iteration", i, ": Residual norm = ", rnorm
+         ! Set dynamic tolerances for Newton iteration and linear solves.
+         call tolerance_scheduler(tol, target_tol, rnorm, i, info)
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         call logger%log_message(msg, module=this_module, procedure='newton_rsp')
+
          ! Define the Jacobian
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                                              transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_rsp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
-            call increment_bisection_rsp(X, sys, increment, rnorm, i, maxstep_bisection, verb)
+            call increment_bisection_rsp(X, sys, increment, rnorm, tol, maxstep_bisection)
          else
             call X%add(increment)
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, i)
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
-         ! Set tolerance for convergence.
-         call tolerance_scheduler(tol, opts%tol, rnorm, i, info)
          ! Check for convergence.
          if (rnorm < tol) then
-            if (verb) write(*,*) "Newton iteration converged."
-            converged = .true.
-            exit newton
+            if (tol >= target_tol .and. tol < 100.0_sp*target_tol) then
+               ! the tolerances are not at the target, check the accurate residual                  
+               call sys%eval(X, residual, target_tol)
+               if (rnorm < target_tol) then
+                  write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
+                  call logger%log_message(msg, module=this_module, procedure='newton_rsp')
+                  converged = .true.
+                  exit newton
+               else
+                  write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
+                  call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
+               end if
+            end if
          end if
 
       enddo newton
 
       if (.not.converged) then
-         if (verb) write(*,*) 'Newton iteration did not converge within', maxiter, 'steps.'
+         write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
+         call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          info = -1
       endif
 
       return
    end subroutine newton_rsp
 
-   subroutine newton_rdp(sys, X, info, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rdp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
       integer,                                            intent(out)   :: info
       !! Information flag
+      real(dp),                                 optional, intent(in)    :: tolerance
+      real(dp)                                                          :: target_tol
+      !! Target absolute solver tolerance
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
@@ -261,14 +291,20 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      ! residual vector
       class(abstract_vector_rdp), allocatable :: residual, increment
       real(dp) :: rnorm, tol
-      logical :: converged, has_precond, has_solver_opts, verb
+      logical :: converged, has_precond, has_solver_opts
       integer :: i, maxiter, maxstep_bisection
+      character(len=256) :: msg
       procedure(abstract_linear_solver_rdp), pointer :: solver => null()
       procedure(abstract_scheduler_dp), pointer :: tolerance_scheduler => null()
 
+      ! Newton-solver tolerance
+      if (present(tolerance)) then
+         target_tol = tolerance
+      else
+         target_tol = atol_dp
+      end if
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -302,76 +338,97 @@ contains
          tolerance_scheduler => constant_atol_dp
       endif
 
-      ! Initialisation
-      verb = opts%verbose
-      
-      maxiter = opts%maxiter
-      maxstep_bisection = opts%maxstep_bisection
+      ! Initialisation      
+      maxiter = opts%maxiter ; maxstep_bisection = opts%maxstep_bisection ;
       converged = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, i)
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
+      ! Check for lucky convergence.
+      if (rnorm < target_tol) then
+         write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
+         call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
+         converged = .true.
+         return
+      end if
 
-      if (verb) write(*,*) 'Starting Newton ...'
+      write(msg,'(A)') 'Starting Newton iteration ...'
+      call logger%log_information(msg, module=this_module, procedure='newton_rdp')
       ! Newton iteration
       newton: do i = 1, maxiter
 
-         if (verb) write(*,"(A,I3,2(A,1X,E12.6))") "Iteration", i, ": Residual norm = ", rnorm
+         ! Set dynamic tolerances for Newton iteration and linear solves.
+         call tolerance_scheduler(tol, target_tol, rnorm, i, info)
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         call logger%log_message(msg, module=this_module, procedure='newton_rdp')
+
          ! Define the Jacobian
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                                              transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_rdp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
-            call increment_bisection_rdp(X, sys, increment, rnorm, i, maxstep_bisection, verb)
+            call increment_bisection_rdp(X, sys, increment, rnorm, tol, maxstep_bisection)
          else
             call X%add(increment)
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, i)
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
-         ! Set tolerance for convergence.
-         call tolerance_scheduler(tol, opts%tol, rnorm, i, info)
          ! Check for convergence.
          if (rnorm < tol) then
-            if (verb) write(*,*) "Newton iteration converged."
-            converged = .true.
-            exit newton
+            if (tol >= target_tol .and. tol < 100.0_dp*target_tol) then
+               ! the tolerances are not at the target, check the accurate residual                  
+               call sys%eval(X, residual, target_tol)
+               if (rnorm < target_tol) then
+                  write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
+                  call logger%log_message(msg, module=this_module, procedure='newton_rdp')
+                  converged = .true.
+                  exit newton
+               else
+                  write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
+                  call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
+               end if
+            end if
          end if
 
       enddo newton
 
       if (.not.converged) then
-         if (verb) write(*,*) 'Newton iteration did not converge within', maxiter, 'steps.'
+         write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
+         call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          info = -1
       endif
 
       return
    end subroutine newton_rdp
 
-   subroutine newton_csp(sys, X, info, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_csp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_csp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_csp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
       integer,                                            intent(out)   :: info
       !! Information flag
+      real(sp),                                 optional, intent(in)    :: tolerance
+      real(sp)                                                          :: target_tol
+      !! Target absolute solver tolerance
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
@@ -389,14 +446,20 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      ! residual vector
       class(abstract_vector_csp), allocatable :: residual, increment
       real(sp) :: rnorm, tol
-      logical :: converged, has_precond, has_solver_opts, verb
+      logical :: converged, has_precond, has_solver_opts
       integer :: i, maxiter, maxstep_bisection
+      character(len=256) :: msg
       procedure(abstract_linear_solver_csp), pointer :: solver => null()
       procedure(abstract_scheduler_sp), pointer :: tolerance_scheduler => null()
 
+      ! Newton-solver tolerance
+      if (present(tolerance)) then
+         target_tol = tolerance
+      else
+         target_tol = atol_sp
+      end if
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -430,76 +493,97 @@ contains
          tolerance_scheduler => constant_atol_sp
       endif
 
-      ! Initialisation
-      verb = opts%verbose
-      
-      maxiter = opts%maxiter
-      maxstep_bisection = opts%maxstep_bisection
+      ! Initialisation      
+      maxiter = opts%maxiter ; maxstep_bisection = opts%maxstep_bisection ;
       converged = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, i)
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
+      ! Check for lucky convergence.
+      if (rnorm < target_tol) then
+         write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
+         call logger%log_warning(msg, module=this_module, procedure='newton_csp')
+         converged = .true.
+         return
+      end if
 
-      if (verb) write(*,*) 'Starting Newton ...'
+      write(msg,'(A)') 'Starting Newton iteration ...'
+      call logger%log_information(msg, module=this_module, procedure='newton_csp')
       ! Newton iteration
       newton: do i = 1, maxiter
 
-         if (verb) write(*,"(A,I3,2(A,1X,E12.6))") "Iteration", i, ": Residual norm = ", rnorm
+         ! Set dynamic tolerances for Newton iteration and linear solves.
+         call tolerance_scheduler(tol, target_tol, rnorm, i, info)
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         call logger%log_message(msg, module=this_module, procedure='newton_csp')
+
          ! Define the Jacobian
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                                              transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_csp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
-            call increment_bisection_csp(X, sys, increment, rnorm, i, maxstep_bisection, verb)
+            call increment_bisection_csp(X, sys, increment, rnorm, tol, maxstep_bisection)
          else
             call X%add(increment)
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, i)
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
-         ! Set tolerance for convergence.
-         call tolerance_scheduler(tol, opts%tol, rnorm, i, info)
          ! Check for convergence.
          if (rnorm < tol) then
-            if (verb) write(*,*) "Newton iteration converged."
-            converged = .true.
-            exit newton
+            if (tol >= target_tol .and. tol < 100.0_sp*target_tol) then
+               ! the tolerances are not at the target, check the accurate residual                  
+               call sys%eval(X, residual, target_tol)
+               if (rnorm < target_tol) then
+                  write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
+                  call logger%log_message(msg, module=this_module, procedure='newton_csp')
+                  converged = .true.
+                  exit newton
+               else
+                  write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
+                  call logger%log_warning(msg, module=this_module, procedure='newton_csp')
+               end if
+            end if
          end if
 
       enddo newton
 
       if (.not.converged) then
-         if (verb) write(*,*) 'Newton iteration did not converge within', maxiter, 'steps.'
+         write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
+         call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          info = -1
       endif
 
       return
    end subroutine newton_csp
 
-   subroutine newton_cdp(sys, X, info, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_cdp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_cdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_cdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
       integer,                                            intent(out)   :: info
       !! Information flag
+      real(dp),                                 optional, intent(in)    :: tolerance
+      real(dp)                                                          :: target_tol
+      !! Target absolute solver tolerance
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
@@ -517,14 +601,20 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      ! residual vector
       class(abstract_vector_cdp), allocatable :: residual, increment
       real(dp) :: rnorm, tol
-      logical :: converged, has_precond, has_solver_opts, verb
+      logical :: converged, has_precond, has_solver_opts
       integer :: i, maxiter, maxstep_bisection
+      character(len=256) :: msg
       procedure(abstract_linear_solver_cdp), pointer :: solver => null()
       procedure(abstract_scheduler_dp), pointer :: tolerance_scheduler => null()
 
+      ! Newton-solver tolerance
+      if (present(tolerance)) then
+         target_tol = tolerance
+      else
+         target_tol = atol_dp
+      end if
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -558,63 +648,81 @@ contains
          tolerance_scheduler => constant_atol_dp
       endif
 
-      ! Initialisation
-      verb = opts%verbose
-      
-      maxiter = opts%maxiter
-      maxstep_bisection = opts%maxstep_bisection
+      ! Initialisation      
+      maxiter = opts%maxiter ; maxstep_bisection = opts%maxstep_bisection ;
       converged = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, i)
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
+      ! Check for lucky convergence.
+      if (rnorm < target_tol) then
+         write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
+         call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
+         converged = .true.
+         return
+      end if
 
-      if (verb) write(*,*) 'Starting Newton ...'
+      write(msg,'(A)') 'Starting Newton iteration ...'
+      call logger%log_information(msg, module=this_module, procedure='newton_cdp')
       ! Newton iteration
       newton: do i = 1, maxiter
 
-         if (verb) write(*,"(A,I3,2(A,1X,E12.6))") "Iteration", i, ": Residual norm = ", rnorm
+         ! Set dynamic tolerances for Newton iteration and linear solves.
+         call tolerance_scheduler(tol, target_tol, rnorm, i, info)
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         call logger%log_message(msg, module=this_module, procedure='newton_cdp')
+
          ! Define the Jacobian
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                                              transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_cdp')
 
          ! Update the solution and overwrite X0
          if (opts%ifbisect) then
-            call increment_bisection_cdp(X, sys, increment, rnorm, i, maxstep_bisection, verb)
+            call increment_bisection_cdp(X, sys, increment, rnorm, tol, maxstep_bisection)
          else
             call X%add(increment)
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, i)
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
-         ! Set tolerance for convergence.
-         call tolerance_scheduler(tol, opts%tol, rnorm, i, info)
          ! Check for convergence.
          if (rnorm < tol) then
-            if (verb) write(*,*) "Newton iteration converged."
-            converged = .true.
-            exit newton
+            if (tol >= target_tol .and. tol < 100.0_dp*target_tol) then
+               ! the tolerances are not at the target, check the accurate residual                  
+               call sys%eval(X, residual, target_tol)
+               if (rnorm < target_tol) then
+                  write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
+                  call logger%log_message(msg, module=this_module, procedure='newton_cdp')
+                  converged = .true.
+                  exit newton
+               else
+                  write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
+                  call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
+               end if
+            end if
          end if
 
       enddo newton
 
       if (.not.converged) then
-         if (verb) write(*,*) 'Newton iteration did not converge within', maxiter, 'steps.'
+         write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
+         call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          info = -1
       endif
 
@@ -622,7 +730,7 @@ contains
    end subroutine newton_cdp
 
 
-   subroutine increment_bisection_rsp(X, sys, increment, rold, iter, maxstep, verb)
+   subroutine increment_bisection_rsp(X, sys, increment, rold, tol, maxstep)
       !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_rsp), intent(inout) :: X
@@ -633,18 +741,17 @@ contains
       !! Newton step computed from the standard method
       real(sp),                   intent(in)    :: rold
       !! Residual of the current system state to determine improvement
-      integer,                    intent(in)    :: iter
-      !! Current Newton step
+      real(sp),                   intent(in)    :: tol
       integer,                    intent(in)    :: maxstep
       !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
-      logical,                    intent(in)    :: verb
-      !! Verbosity toggle
+
       ! internals
       integer :: i, j, idx(1)
       real(sp) :: invphi, invphi2
       real(sp) :: alpha(4), step
       real(sp) :: res(4)
       class(abstract_vector_rsp), allocatable :: Xin, residual
+      character(len=256) :: msg
 
       allocate(Xin, source=X)
       allocate(residual, source=X); call residual%zero()
@@ -656,16 +763,17 @@ contains
 
       call X%add(increment)
       ! evaluate residual norm
-      call sys%eval(X, residual, iter)
+      call sys%eval(X, residual, tol)
       res(4) = residual%norm()
 
       if (res(4) > rold) then
-         if (verb) print *, 'Start Newton step bisection ...'
+         write(msg,'(A)') 'Start Newton step bisection ... '
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          ! compute new trial solutions
          do j = 2, 3
             call X%axpby(zero_rsp, Xin, one_rsp)
             call X%axpby(one_rsp, increment, alpha(j))
-            call sys%eval(X, residual, iter)
+            call sys%eval(X, residual, tol)
             res(j) = residual%norm()
          end do
 
@@ -682,7 +790,7 @@ contains
                alpha(2) = alpha(1) + step * invphi2
                call X%axpby(zero_rsp, Xin, one_rsp)
                call X%axpby(one_rsp, increment, alpha(2))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(2) = residual%norm()
             else
                ! alphas
@@ -695,20 +803,27 @@ contains
                alpha(3) = alpha(1) + step * invphi
                call X%axpby(zero_rsp, Xin, one_rsp)
                call X%axpby(one_rsp, increment, alpha(3))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(3) = residual%norm()
             end if
+            write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          call X%axpby(zero_rsp, Xin, one_rsp)
          call X%axpby(one_rsp, increment, alpha(idx(1)))
+      else
+         write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
       end if
 
       return
    end subroutine
 
-   subroutine increment_bisection_rdp(X, sys, increment, rold, iter, maxstep, verb)
+   subroutine increment_bisection_rdp(X, sys, increment, rold, tol, maxstep)
       !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_rdp), intent(inout) :: X
@@ -719,18 +834,17 @@ contains
       !! Newton step computed from the standard method
       real(dp),                   intent(in)    :: rold
       !! Residual of the current system state to determine improvement
-      integer,                    intent(in)    :: iter
-      !! Current Newton step
+      real(dp),                   intent(in)    :: tol
       integer,                    intent(in)    :: maxstep
       !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
-      logical,                    intent(in)    :: verb
-      !! Verbosity toggle
+
       ! internals
       integer :: i, j, idx(1)
       real(dp) :: invphi, invphi2
       real(dp) :: alpha(4), step
       real(dp) :: res(4)
       class(abstract_vector_rdp), allocatable :: Xin, residual
+      character(len=256) :: msg
 
       allocate(Xin, source=X)
       allocate(residual, source=X); call residual%zero()
@@ -742,16 +856,17 @@ contains
 
       call X%add(increment)
       ! evaluate residual norm
-      call sys%eval(X, residual, iter)
+      call sys%eval(X, residual, tol)
       res(4) = residual%norm()
 
       if (res(4) > rold) then
-         if (verb) print *, 'Start Newton step bisection ...'
+         write(msg,'(A)') 'Start Newton step bisection ... '
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          ! compute new trial solutions
          do j = 2, 3
             call X%axpby(zero_rdp, Xin, one_rdp)
             call X%axpby(one_rdp, increment, alpha(j))
-            call sys%eval(X, residual, iter)
+            call sys%eval(X, residual, tol)
             res(j) = residual%norm()
          end do
 
@@ -768,7 +883,7 @@ contains
                alpha(2) = alpha(1) + step * invphi2
                call X%axpby(zero_rdp, Xin, one_rdp)
                call X%axpby(one_rdp, increment, alpha(2))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(2) = residual%norm()
             else
                ! alphas
@@ -781,20 +896,27 @@ contains
                alpha(3) = alpha(1) + step * invphi
                call X%axpby(zero_rdp, Xin, one_rdp)
                call X%axpby(one_rdp, increment, alpha(3))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(3) = residual%norm()
             end if
+            write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          call X%axpby(zero_rdp, Xin, one_rdp)
          call X%axpby(one_rdp, increment, alpha(idx(1)))
+      else
+         write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
       end if
 
       return
    end subroutine
 
-   subroutine increment_bisection_csp(X, sys, increment, rold, iter, maxstep, verb)
+   subroutine increment_bisection_csp(X, sys, increment, rold, tol, maxstep)
       !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_csp), intent(inout) :: X
@@ -805,18 +927,17 @@ contains
       !! Newton step computed from the standard method
       real(sp),                   intent(in)    :: rold
       !! Residual of the current system state to determine improvement
-      integer,                    intent(in)    :: iter
-      !! Current Newton step
+      real(sp),                   intent(in)    :: tol
       integer,                    intent(in)    :: maxstep
       !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
-      logical,                    intent(in)    :: verb
-      !! Verbosity toggle
+
       ! internals
       integer :: i, j, idx(1)
       real(sp) :: invphi, invphi2
       complex(sp) :: alpha(4), step
       real(sp) :: res(4)
       class(abstract_vector_csp), allocatable :: Xin, residual
+      character(len=256) :: msg
 
       allocate(Xin, source=X)
       allocate(residual, source=X); call residual%zero()
@@ -828,16 +949,17 @@ contains
 
       call X%add(increment)
       ! evaluate residual norm
-      call sys%eval(X, residual, iter)
+      call sys%eval(X, residual, tol)
       res(4) = residual%norm()
 
       if (res(4) > rold) then
-         if (verb) print *, 'Start Newton step bisection ...'
+         write(msg,'(A)') 'Start Newton step bisection ... '
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          ! compute new trial solutions
          do j = 2, 3
             call X%axpby(zero_csp, Xin, one_csp)
             call X%axpby(one_csp, increment, alpha(j))
-            call sys%eval(X, residual, iter)
+            call sys%eval(X, residual, tol)
             res(j) = residual%norm()
          end do
 
@@ -854,7 +976,7 @@ contains
                alpha(2) = alpha(1) + step * invphi2
                call X%axpby(zero_csp, Xin, one_csp)
                call X%axpby(one_csp, increment, alpha(2))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(2) = residual%norm()
             else
                ! alphas
@@ -867,20 +989,27 @@ contains
                alpha(3) = alpha(1) + step * invphi
                call X%axpby(zero_csp, Xin, one_csp)
                call X%axpby(one_csp, increment, alpha(3))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(3) = residual%norm()
             end if
+            write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          call X%axpby(zero_csp, Xin, one_csp)
          call X%axpby(one_csp, increment, alpha(idx(1)))
+      else
+         write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
       end if
 
       return
    end subroutine
 
-   subroutine increment_bisection_cdp(X, sys, increment, rold, iter, maxstep, verb)
+   subroutine increment_bisection_cdp(X, sys, increment, rold, tol, maxstep)
       !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_cdp), intent(inout) :: X
@@ -891,18 +1020,17 @@ contains
       !! Newton step computed from the standard method
       real(dp),                   intent(in)    :: rold
       !! Residual of the current system state to determine improvement
-      integer,                    intent(in)    :: iter
-      !! Current Newton step
+      real(dp),                   intent(in)    :: tol
       integer,                    intent(in)    :: maxstep
       !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
-      logical,                    intent(in)    :: verb
-      !! Verbosity toggle
+
       ! internals
       integer :: i, j, idx(1)
       real(dp) :: invphi, invphi2
       complex(dp) :: alpha(4), step
       real(dp) :: res(4)
       class(abstract_vector_cdp), allocatable :: Xin, residual
+      character(len=256) :: msg
 
       allocate(Xin, source=X)
       allocate(residual, source=X); call residual%zero()
@@ -914,16 +1042,17 @@ contains
 
       call X%add(increment)
       ! evaluate residual norm
-      call sys%eval(X, residual, iter)
+      call sys%eval(X, residual, tol)
       res(4) = residual%norm()
 
       if (res(4) > rold) then
-         if (verb) print *, 'Start Newton step bisection ...'
+         write(msg,'(A)') 'Start Newton step bisection ... '
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          ! compute new trial solutions
          do j = 2, 3
             call X%axpby(zero_cdp, Xin, one_cdp)
             call X%axpby(one_cdp, increment, alpha(j))
-            call sys%eval(X, residual, iter)
+            call sys%eval(X, residual, tol)
             res(j) = residual%norm()
          end do
 
@@ -940,7 +1069,7 @@ contains
                alpha(2) = alpha(1) + step * invphi2
                call X%axpby(zero_cdp, Xin, one_cdp)
                call X%axpby(one_cdp, increment, alpha(2))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(2) = residual%norm()
             else
                ! alphas
@@ -953,14 +1082,21 @@ contains
                alpha(3) = alpha(1) + step * invphi
                call X%axpby(zero_cdp, Xin, one_cdp)
                call X%axpby(one_cdp, increment, alpha(3))
-               call sys%eval(X, residual, iter)
+               call sys%eval(X, residual, tol)
                res(3) = residual%norm()
             end if
+            write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          call X%axpby(zero_cdp, Xin, one_cdp)
          call X%axpby(one_cdp, increment, alpha(idx(1)))
+      else
+         write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
+         call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
       end if
 
       return
@@ -983,7 +1119,10 @@ contains
       !! Newton iteration count
       integer,  intent(out)  :: info
       !! Information flag
+      character(len=256) :: msg
       tol = target_tol
+      write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
+      call logger%log_information(msg, module=this_module, procedure='constant_atol_sp')
       return
    end subroutine constant_atol_sp
 
@@ -1001,18 +1140,18 @@ contains
       !! Information flag
       ! internals
       real(sp) :: tol_old
-      character(len=128) :: msg
+      character(len=256) :: msg
       
       tol_old = tol
       tol = max(0.1*rnorm, target_tol)
 
       if (tol /= tol_old) then
          if (tol == target_tol) then
-            write(msg,'(A,I3,A,E8.2)') 'Newton(',iter,'): solver tolerance set to input target. tol =', tol
+            write(msg,'(A,E9.2)') 'Solver tolerance set to input target. tol= ', tol
          else
-            write(msg,'(A,I3,A,E8.2)') 'Newton(',iter,'): solver tolerance set to tol = ', tol
+            write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
          end if
-         call logger%log_warning(msg, module=this_module, procedure='dynamic_tol_sp')
+         call logger%log_information(msg, module=this_module, procedure='dynamic_tol_sp')
       end if
       return
    end subroutine dynamic_tol_sp
@@ -1033,7 +1172,10 @@ contains
       !! Newton iteration count
       integer,  intent(out)  :: info
       !! Information flag
+      character(len=256) :: msg
       tol = target_tol
+      write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
+      call logger%log_information(msg, module=this_module, procedure='constant_atol_dp')
       return
    end subroutine constant_atol_dp
 
@@ -1051,18 +1193,18 @@ contains
       !! Information flag
       ! internals
       real(dp) :: tol_old
-      character(len=128) :: msg
+      character(len=256) :: msg
       
       tol_old = tol
       tol = max(0.1*rnorm, target_tol)
 
       if (tol /= tol_old) then
          if (tol == target_tol) then
-            write(msg,'(A,I3,A,E8.2)') 'Newton(',iter,'): solver tolerance set to input target. tol =', tol
+            write(msg,'(A,E9.2)') 'Solver tolerance set to input target. tol= ', tol
          else
-            write(msg,'(A,I3,A,E8.2)') 'Newton(',iter,'): solver tolerance set to tol = ', tol
+            write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
          end if
-         call logger%log_warning(msg, module=this_module, procedure='dynamic_tol_dp')
+         call logger%log_information(msg, module=this_module, procedure='dynamic_tol_dp')
       end if
       return
    end subroutine dynamic_tol_dp
