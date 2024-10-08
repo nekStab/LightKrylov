@@ -95,5 +95,4 @@ program demo
    end do
    print *, ''
 
-   return
 end program demo
