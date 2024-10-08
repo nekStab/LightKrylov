@@ -206,7 +206,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rsp')
 
          ! Define the Jacobian
@@ -365,7 +365,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rdp')
 
          ! Define the Jacobian
@@ -524,7 +524,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_csp')
 
          ! Define the Jacobian
@@ -683,7 +683,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_cdp')
 
          ! Define the Jacobian
