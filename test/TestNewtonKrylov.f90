@@ -46,10 +46,8 @@ contains
        type(state_vector_rsp), allocatable :: X, fp1, fp2
        ! Newton options
        type(newton_sp_opts) :: opts
-       ! Verbosity
-       logical :: verb = .false.
        ! Information flag.
-       integer :: info, i
+       integer :: info
        ! Misc
        real(sp) :: err
        character(len=256) :: msg, infomsg
@@ -58,7 +56,7 @@ contains
        allocate(X, fp1, fp2);
 
        ! Newton opts
-       opts = newton_sp_opts(maxiter=10, ifbisect=.false., verbose=.false.) 
+       opts = newton_sp_opts(maxiter=10, ifbisect=.false.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler_rsp()
@@ -69,7 +67,7 @@ contains
        X%x = zero_rsp
        X%y = zero_rsp
        X%z = zero_rsp
-       call newton(sys, X, info, opts)
+       call newton(sys, X, info, tolerance=atol_sp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -83,7 +81,7 @@ contains
        X%x = 10.0_sp
        X%y = -5.0_sp
        X%z = 20.0_sp
-       call newton(sys, X, info)
+       call newton(sys, X, info, tolerance=atol_sp, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -98,7 +96,7 @@ contains
        X%y = zero_rsp
        X%z = zero_rsp
        opts%ifbisect = .true.
-       call newton(sys, X, info) !, opts)
+       call newton(sys, X, info, tolerance=atol_sp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)
@@ -127,10 +125,8 @@ contains
        type(state_vector_rdp), allocatable :: X, fp1, fp2
        ! Newton options
        type(newton_dp_opts) :: opts
-       ! Verbosity
-       logical :: verb = .false.
        ! Information flag.
-       integer :: info, i
+       integer :: info
        ! Misc
        real(dp) :: err
        character(len=256) :: msg, infomsg
@@ -139,7 +135,7 @@ contains
        allocate(X, fp1, fp2);
 
        ! Newton opts
-       opts = newton_dp_opts(maxiter=10, ifbisect=.false., verbose=.false.) 
+       opts = newton_dp_opts(maxiter=10, ifbisect=.false.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler_rdp()
@@ -150,7 +146,7 @@ contains
        X%x = zero_rdp
        X%y = zero_rdp
        X%z = zero_rdp
-       call newton(sys, X, info, opts)
+       call newton(sys, X, info, tolerance=atol_dp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -164,7 +160,7 @@ contains
        X%x = 10.0_dp
        X%y = -5.0_dp
        X%z = 20.0_dp
-       call newton(sys, X, info)
+       call newton(sys, X, info, tolerance=atol_dp, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -179,7 +175,7 @@ contains
        X%y = zero_rdp
        X%z = zero_rdp
        opts%ifbisect = .true.
-       call newton(sys, X, info) !, opts)
+       call newton(sys, X, info, tolerance=atol_dp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)

@@ -1,7 +1,7 @@
 program Tester
    ! Fortran best practice.
    use, intrinsic :: iso_fortran_env, only: error_unit, output_unit
-   use stdlib_logger, only: error_level, none_level
+   use stdlib_logger, only: information_level, warning_level, debug_level, error_level, none_level
    ! Unit-test utility.
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type
    ! Abstract implementation of Krylov-based techniques.

@@ -429,8 +429,8 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false., rtol=rtol_${kind}$, atol=atol_${kind}$)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_${kind}$_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
 
         ! Check convergence.
@@ -471,8 +471,8 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size, verbose=.false., rtol=rtol_${kind}$, atol=atol_${kind}$)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_${kind}$_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
         ! Check convergence.
@@ -527,8 +527,8 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! CG solver.
-        opts = cg_${kind}$_opts(rtol=rtol_${kind}$, atol=atol_${kind}$, maxiter=2*test_size)
-        call cg(A, b, x, info, options=opts)
+        opts = cg_${kind}$_opts(maxiter=2*test_size)
+        call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
 
         ! Check convergence.
