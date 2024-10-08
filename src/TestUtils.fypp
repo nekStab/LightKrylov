@@ -454,10 +454,10 @@ contains
       real(${kind}$) :: err
 
       ! internals
-      character*8 :: value_str
+      character*9 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
-      write(value_str, '(E8.2)') err
+      write(value_str, '(E9.2)') err
       msg = indent // info // value_str // achar(10)
        
     end subroutine get_err_str_${kind}$
@@ -538,11 +538,11 @@ contains
     #:endfor
 
     #:for kind in REAL_KINDS
-    subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, iter)
+    subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, atol)
       class(roessler_r${kind}$),            intent(in)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
-      integer,                    intent(in)  :: iter
+      real(${kind}$),                    intent(in)  :: atol
 
       select type(vec_in)
         type is(state_vector_r${kind}$)

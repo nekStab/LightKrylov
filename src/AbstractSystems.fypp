@@ -1,6 +1,7 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module LightKrylov_AbstractSystems
+    use LightKrylov_Constants
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
@@ -54,18 +55,18 @@ module LightKrylov_AbstractSystems
     end type
 
     abstract interface
-        subroutine abstract_eval_${type[0]}$${kind}$(self, vec_in, vec_out, iter)
+        subroutine abstract_eval_${type[0]}$${kind}$(self, vec_in, vec_out, atol)
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
-            import abstract_system_${type[0]}$${kind}$
+            import abstract_system_${type[0]}$${kind}$, ${kind}$
             class(abstract_system_${type[0]}$${kind}$), intent(in)  :: self
             !! System
             class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
             !! State
             class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
             !! Response
-            integer,                                    intent(in)  :: iter
-            !! Newton iteration counter
+            real(${kind}$),                                   intent(in)  :: atol
+            !! Solver tolerance
         end subroutine abstract_eval_${type[0]}$${kind}$
     end interface
 

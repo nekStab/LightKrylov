@@ -331,11 +331,11 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
                         & procedure='DGS_vector_against_basis_${type[0]}$${kind}$, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
                         & procedure='DGS_vector_against_basis_${type[0]}$${kind}$, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
@@ -376,10 +376,10 @@ contains
       ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, first pass')
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, first pass')
       ! second pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, second pass')
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$, second pass')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
@@ -398,16 +398,13 @@ contains
     !------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine qr_no_pivoting_${type[0]}$${kind}$(Q, R, info, verbosity, tol)
+    subroutine qr_no_pivoting_${type[0]}$${kind}$(Q, R, info, tol)
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         ${type}$, intent(out) :: R(:, :)
         !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical                       :: verbose
         real(${kind}$), optional, intent(in) :: tol
         !! Tolerance to determine colinearity.
         real(${kind}$)                       :: tolerance
@@ -418,7 +415,6 @@ contains
         integer :: j
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_${kind}$)
 
         info = 0 ; R = zero_r${kind}$ ; beta = zero_r${kind}$
@@ -434,10 +430,6 @@ contains
 
             ! Check for breakdown.
             if (abs(alpha) < tolerance) then
-                if(verbose) then
-                    write(output_unit, *) "INFO: Colinear columns detected."
-                    write(output_unit, *) "      (j, alpha) = (", j, ", ", alpha, ")"
-                endif
                 info = j
                 R(j, j) = zero_r${kind}$ ; call Q(j)%zero()
             else
@@ -448,7 +440,7 @@ contains
         return
     end subroutine qr_no_pivoting_${type[0]}$${kind}$
 
-    subroutine qr_with_pivoting_${type[0]}$${kind}$(Q, R, perm, info, verbosity, tol)
+    subroutine qr_with_pivoting_${type[0]}$${kind}$(Q, R, perm, info, tol)
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         ${type}$, intent(out) :: R(:, :)
@@ -457,9 +449,6 @@ contains
         !! Permutation matrix.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical :: verbose
         real(${kind}$), optional, intent(in) :: tol
 
         !! Tolerance to detect colinearity.
@@ -475,7 +464,6 @@ contains
         R = zero_r${kind}$ ; Rii = zero_r${kind}$
         
         ! Deals with the optional arguments.
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_${kind}$)
 
         ! Initialize diagonal entries.
@@ -490,7 +478,7 @@ contains
                 do i = j, kdim
                     call Q(i)%rand(.false.)
                     call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+                    call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
                     beta = Q(i)%norm(); call Q(i)%scal(one_${type[0]}$${kind}$ / beta)
                 enddo
                 info = j
@@ -662,7 +650,7 @@ contains
     !-----------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine arnoldi_${type[0]}$${kind}$(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+    subroutine arnoldi_${type[0]}$${kind}$(A, X, H, info, kstart, kend, tol, transpose, blksize)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
@@ -675,8 +663,6 @@ contains
         !! Starting index for the Arnoldi factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
         real(${kind}$), optional, intent(in) :: tol
@@ -686,7 +672,7 @@ contains
 
         ! Internal variables.
         integer :: k_start, k_end, p
-        logical :: verbose, trans
+        logical :: trans
         real(${kind}$) :: tolerance
         real(${kind}$) :: beta
         ${type}$, allocatable :: res(:)
@@ -702,7 +688,6 @@ contains
 
         ! Deal with the other optional args.
         k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        verbose   = optval(verbosity, .false.)
         tolerance = optval (tol, atol_${kind}$)
         trans     = optval(transpose, .false.)
 
@@ -758,7 +743,7 @@ contains
     !---------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine lanczos_bidiagonalization_${type[0]}$${kind}$(A, U, V, B, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_bidiagonalization_${type[0]}$${kind}$(A, U, V, B, info, kstart, kend, tol)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
@@ -774,14 +759,11 @@ contains
         !! Starting index for the Lanczos factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Lanczos factorization (default 1).
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control (default `.false.`)
         real(${kind}$), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(${kind}$) :: tolerance
         ${type}$ :: alpha, beta
         integer :: k, kdim
@@ -795,7 +777,6 @@ contains
         ! Deals with the optional args.
         k_start = optval(kstart, 1)
         k_end   = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_${kind}$)
 
         ! Lanczos bidiagonalization.
@@ -808,7 +789,7 @@ contains
             
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_${type[0]}$${kind}$, first pass')
+                                    & procedure='lanczos_bidiagonalization_${type[0]}$${kind}$, right basis')
             end if
 
             ! Normalization step.
@@ -825,8 +806,8 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_${type[0]}$${kind}$, second pass')
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
+                                    & procedure='lanczos_bidiagonalization_${type[0]}$${kind}$, left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -850,7 +831,7 @@ contains
     !----------------------------------------------
     
     #:for kind, type in RC_KINDS_TYPES
-    subroutine lanczos_tridiagonalization_${type[0]}$${kind}$(A, X, T, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_tridiagonalization_${type[0]}$${kind}$(A, X, T, info, kstart, kend, tol)
         #:if type[0] == "r"
         class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
         #:else
@@ -861,12 +842,10 @@ contains
         integer, intent(out) :: info
         integer, optional, intent(in) :: kstart
         integer, optional, intent(in) :: kend
-        logical, optional, intent(in) :: verbosity
         real(${kind}$), optional, intent(in) :: tol
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(${kind}$) :: tolerance
         real(${kind}$) :: beta
         integer :: k, kdim
@@ -875,7 +854,6 @@ contains
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
         k_end = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_${kind}$)
         info = 0
 
@@ -919,7 +897,7 @@ contains
 
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_${type[0]}$${kind}$')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_${type[0]}$${kind}$')
 
         return
     end subroutine update_tridiag_matrix_${type[0]}$${kind}$

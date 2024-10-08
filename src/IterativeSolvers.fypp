@@ -106,9 +106,9 @@ module lightkrylov_IterativeSolvers
 
     abstract interface
     #:for kind, type in RC_KINDS_TYPES
-        subroutine abstract_linear_solver_${type[0]}$${kind}$(A, b, x, info, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$, abstract_opts, abstract_precond_${type[0]}$${kind}$
+            import abstract_linop_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$, abstract_opts, abstract_precond_${type[0]}$${kind}$, ${kind}$
             class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
@@ -117,6 +117,10 @@ module lightkrylov_IterativeSolvers
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(${kind}$), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(${kind}$), optional, intent(in) :: atol
+            !! Absolute solver tolerance
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
             class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
@@ -184,7 +188,7 @@ contains
     !---------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, select, tolerance, verbosity, transpose)
+    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
@@ -200,8 +204,6 @@ contains
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
 
@@ -224,12 +226,13 @@ contains
         real(${kind}$), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
         integer :: nev, conv
-        integer :: i, j, k
+        integer :: i, j, k, niter, krst
         real(${kind}$) :: tol
         ${type}$ :: beta
         #:if type[0] == "r"
         ${type}$ :: alpha
         #:endif
+        character(len=256) :: msg
         ! Eigenvalue selection.
         procedure(eigvals_select_${kind}$), pointer :: select_
 
@@ -257,12 +260,12 @@ contains
         ! Ritz eigenpairs computation.
         H = 0.0_${kind}$
 
-        kstart = 1 ; conv = 0
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, verbosity=verbosity, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', module=this_module, procedure='eigs_${type[0]}$${kind}$')
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
@@ -287,12 +290,19 @@ contains
                 #:endif
 
                 ! Check convergence.
+                niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
             ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
         end do krylovschur
 
         !--------------------------------
@@ -322,6 +332,8 @@ contains
             enddo
         enddo
 
+        info = niter
+
         return
     end subroutine eigs_${type[0]}$${kind}$
 
@@ -332,7 +344,7 @@ contains
     !-----------------------------------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eighs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, tolerance, verbosity)
+    subroutine eighs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, kdim, tolerance)
         #:if type[0] == "r"
         class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
         #:else
@@ -351,8 +363,6 @@ contains
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -373,14 +383,13 @@ contains
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
-        logical :: verbose
         real(${kind}$) :: tol
         ${type}$ :: beta
+        character(len=256) :: msg
 
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
-        verbose = optval(verbosity, .false.)
         tol = optval(tolerance, rtol_${kind}$)
 
         ! Allocate working variables.
@@ -393,9 +402,8 @@ contains
         ! Ritz eigenpairs computation.
         lanczos : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k, verbosity=verbose)
+            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
             call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_${type[0]}$${kind}$')
-
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
@@ -407,6 +415,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_${type[0]}$${kind}$')
             if (conv >= nev) exit lanczos
         enddo lanczos
 
@@ -431,6 +441,8 @@ contains
                 call X(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), eigvecs_wrk(j, i))
             enddo
         enddo
+        
+        info = k
 
         return
     end subroutine eighs_${type[0]}$${kind}$
@@ -442,7 +454,7 @@ contains
     !------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, kdim, tolerance, verbosity)
+    subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, kdim, tolerance)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
@@ -459,8 +471,6 @@ contains
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -477,13 +487,12 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        logical :: verbose
         real(${kind}$) :: tol
+        character(len=256) :: msg
 
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
-        verbose = optval(verbosity, .false.)
         tol     = optval(tolerance, rtol_${kind}$)
 
         ! Allocate working variables.
@@ -500,7 +509,7 @@ contains
         ! Ritz singular triplets computation.
         lanczos : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, verbosity=verbosity, tol=tol)
+            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
             call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
@@ -517,6 +526,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
             if (conv >= nsv) exit lanczos
         enddo lanczos
 
@@ -547,7 +558,7 @@ contains
     !-------------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine gmres_${type[0]}$${kind}$(A, b, x, info, preconditioner, options, transpose)
+    subroutine gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
@@ -556,6 +567,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(${kind}$), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(${kind}$), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
         !type(gmres_${kind}$_opts), optional, intent(in) :: options
@@ -570,8 +585,8 @@ contains
 
         ! Options.
         integer :: kdim, maxiter
-        real(${kind}$) :: tol
-        logical :: verbose, trans
+        real(${kind}$) :: tol, rtol_, atol_
+        logical :: trans
         type(gmres_${kind}$_opts) :: opts
 
         ! Krylov subspace
@@ -590,8 +605,19 @@ contains
         integer :: i, k, niter
         ${type}$, allocatable :: alpha(:)
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_${kind}$
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_${kind}$
+        end if
         if (present(options)) then
             select type (options)
             type is (gmres_${kind}$_opts)
@@ -602,7 +628,7 @@ contains
         endif
 
         kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = opts%atol + opts%rtol * b%norm() ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
@@ -673,6 +699,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
                 endif
@@ -692,6 +720,9 @@ contains
 
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_${type[0]}$${kind}$ / beta)
+
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) exit gmres_iter
@@ -714,7 +745,7 @@ contains
     !---------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine cg_${type[0]}$${kind}$(A, b, x, info, preconditioner, options)
+    subroutine cg_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options)
         #:if type[0] == "r"
         class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
         #:else
@@ -727,6 +758,10 @@ contains
         !! Solution vector.
         integer, intent(out) :: info
         !! Information flag.
+        real(${kind}$), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(${kind}$), optional, intent(in) :: atol
+        !! Absolute solver tolerance
         class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
         !! Preconditioner (not yet supported).
         type(cg_${kind}$_opts), optional, intent(in) :: options
@@ -738,8 +773,7 @@ contains
 
         ! Options.
         integer :: maxiter
-        real(${kind}$) :: tol
-        logical :: verbose
+        real(${kind}$) :: tol, rtol_, atol_
         type(cg_${kind}$_opts) :: opts
 
         ! Working variables.
@@ -749,19 +783,25 @@ contains
 
         ! Miscellaneous.
         integer :: i
+        character(len=256) :: msg
 
         ! Deals with the optional args.
+        if (present(rtol)) then
+            rtol_ = rtol
+        else
+            rtol_ = rtol_${kind}$
+        end if
+        if (present(atol)) then
+            atol_ = atol
+        else
+            atol_ = atol_${kind}$
+        end if
         if (present(options)) then
-            opts = cg_${kind}$_opts( &
-                    maxiter = options%maxiter, &
-                    atol    = options%atol   , &
-                    rtol    = options%rtol   , &
-                    verbose = options%verbose  &
-                    )
+            opts = options
         else
             opts = cg_${kind}$_opts()
         endif
-        tol = opts%atol + opts%rtol*b%norm() ; maxiter = opts%maxiter ; verbose = opts%verbose
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
         allocate(r, source=b)  ; call r%zero()
@@ -809,6 +849,9 @@ contains
             call p%axpby(beta, r, one_${type[0]}$${kind}$)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_${type[0]}$${kind}$')
         enddo cg_loop
         
         return
