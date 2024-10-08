@@ -18,9 +18,9 @@ module Roessler
    !------------------------------
  
    integer,  parameter :: npts = 3
-   real(wp), parameter :: a = 0.2
-   real(wp), parameter :: b = 0.2
-   real(wp), parameter :: c = 5.7
+   real(wp), parameter :: a = 0.2_wp
+   real(wp), parameter :: b = 0.2_wp
+   real(wp), parameter :: c = 5.7_wp
  
    !-------------------------------------------
    !-----     LIGHTKRYLOV VECTOR TYPE     -----
@@ -57,6 +57,13 @@ module Roessler
       procedure, pass(self), public :: matvec => linear_map
       procedure, pass(self), public :: rmatvec => linear_map ! dummy, we do not need the adjoint of the jacobian
    end type jacobian
+
+   type, extends(abstract_jacobian_linop_rdp), public :: floquet_operator
+   contains
+      private
+      procedure, pass(self), public :: matvec => monodromy_map
+      procedure, pass(self), public :: rmatvec => monodromy_map ! dummy, we do not need the adjoint of the monodromy
+   end type floquet_operator
  
 contains
  
@@ -235,7 +242,7 @@ contains
    !-------------------------------------------------------------
  
    subroutine nonlinear_map(self, vec_in, vec_out, iter)
-      ! Linear Operator.
+      ! Dynamical system.
       class(roessler_upo),        intent(in)  :: self
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
@@ -323,6 +330,43 @@ contains
       
       return
    end subroutine linear_map
+
+   subroutine monodromy_map(self, vec_in, vec_out)
+      ! Linear Operator.
+      class(floquet_operator), intent(in) :: self
+      ! Input vector.
+      class(abstract_vector_rdp) , intent(in)  :: vec_in
+      ! Output vector.
+      class(abstract_vector_rdp) , intent(out) :: vec_out
+      
+      ! Time-integrator.
+      type(rks54_class)           :: combined_roessler
+      real(wp)                    :: dt = 1.0_wp
+      real(wp)                    :: period
+      real(wp), dimension(2*npts) :: pos_in, pos_out
+      type(state_vector)          :: vec
+      
+      select type(vec_in)
+      type is(state_vector)
+         select type(vec_out)
+         type is(state_vector)
+            ! Get the state.
+            call get_position(self%X, pos_in(:npts))
+            call get_period(  self%X, period)
+            call get_position(vec_in, pos_in(npts+1:))
+            ! Initialize integrator.
+            call combined_roessler%initialize(n=2*npts, f=combined_rhs)!, report=roessler_report_stdout, report_rate=1)
+            ! Evaluate:
+            ! 1. F(X)
+            ! 2. exp(tau*J) @ dx
+            call combined_roessler%integrate(0.0_wp, pos_in, dt, period, pos_out)
+            ! Pass-back the state.
+            call set_position(pos_out(npts+1:), vec_out)
+         end select
+      end select
+      
+      return
+   end subroutine monodromy_map
 
    !-------------------------------------------
    !-----     MISCELLANEOUS UTILITIES     -----
