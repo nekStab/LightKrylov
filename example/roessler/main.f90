@@ -23,7 +23,7 @@ program demo
    integer :: i, info
    type(newton_dp_opts) :: opts
    type(gmres_dp_opts) :: gmres_opts
-   real(wp) :: rnorm
+   real(wp) :: rnorm, tol
    character(len=20) :: fmt
    real(wp) :: M(npts,npts), Id(npts, npts)
    complex(wp) :: floquet_exponents(npts)
@@ -32,7 +32,7 @@ program demo
 
    ! Set up logging
    call logger_setup()
-   call logger%configure(level=warning_level, time_stamp=.false.)
+   call logger%configure(level=error_level, time_stamp=.false.)
 
    ! Initialize baseflow and perturbation state vectors
    allocate(bf, dx, residual)
@@ -51,15 +51,18 @@ program demo
    ! Set Jacobian and baseflow
    sys%jacobian = jacobian()
    sys%jacobian%X = bf
+   ! Set tolerace
+   tol = 1e-12_wp
 
-   opts       = newton_dp_opts(maxiter=30, ifbisect=.false., verbose=.true.)
-   gmres_opts = gmres_dp_opts(atol=1e-12_wp, verbose=.true.)
-   call newton(sys, bf, info, opts, linear_solver=gmres_rdp, linear_solver_options=gmres_opts, scheduler=constant_atol_dp)
+   opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
+   call newton(sys, bf, info, tolerance=tol, options=opts, linear_solver=gmres_rdp, scheduler=constant_atol_dp)
 
-   call sys%eval(bf, residual, 0)
+   call sys%eval(bf, residual, tol)
    print *,''
    print fmt, ' PO(0):  ', bf%x, bf%y, bf%z, bf%T
+   print *,''
    print *, 'Compute residual of newton solution:'
+   print *,''
    print fmt, ' res:    ', residual%x, residual%y, residual%z, residual%T
    print *,''
 
@@ -67,12 +70,14 @@ program demo
    bf%T = Tend ! period guess
    sys%jacobian%X = bf
 
-   call newton(sys, bf, info, opts, linear_solver=gmres_rdp, linear_solver_options=gmres_opts, scheduler=dynamic_tol_dp)
+   call newton(sys, bf, info, tolerance=tol, options=opts, linear_solver=gmres_rdp, scheduler=dynamic_tol_dp)
 
-   call sys%eval(bf, residual, 0)
+   call sys%eval(bf, residual, tol)
    print *,''
    print fmt, ' PO(0):  ', bf%x, bf%y, bf%z, bf%T
+   print *,''
    print *, 'Compute residual of newton solution:'
+   print *,''
    print fmt, ' res:    ', residual%x, residual%y, residual%z, residual%T
    print *,''
 

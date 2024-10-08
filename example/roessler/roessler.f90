@@ -241,15 +241,15 @@ contains
    !-----     TYPE-BOUND PROCEDURES FOR THE INTEGRATORS     -----
    !-------------------------------------------------------------
  
-   subroutine nonlinear_map(self, vec_in, vec_out, iter)
+   subroutine nonlinear_map(self, vec_in, vec_out, atol)
       ! Dynamical system.
       class(roessler_upo),        intent(in)  :: self
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
       class(abstract_vector_rdp), intent(out) :: vec_out
-      ! Newton iteration counter
-      integer,                    intent(in)  :: iter
+      ! Solver tolerances if needed
+      real(wp),                   intent(in)  :: atol
       
       ! Time-integrator.
       type(rks54_class)         :: nonlinear_integrator
