@@ -292,12 +292,14 @@ contains
                 ! Check convergence.
                 niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
-                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
                 call logger%log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
             call logger%log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
@@ -415,7 +417,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_${type[0]}$${kind}$')
             if (conv >= nev) exit lanczos
         enddo lanczos
@@ -526,7 +529,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
             if (conv >= nsv) exit lanczos
         enddo lanczos
@@ -699,7 +703,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta)', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -721,7 +726,8 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_${type[0]}$${kind}$ / beta)
 
-            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
 
             ! Exit gmres if desired accuracy is reached.

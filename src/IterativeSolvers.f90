@@ -461,12 +461,14 @@ contains
                 ! Check convergence.
                 niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
-                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
                 call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
             call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
@@ -600,12 +602,14 @@ contains
                 ! Check convergence.
                 niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
-                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
                 call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
             call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
@@ -729,12 +733,14 @@ contains
                 ! Check convergence.
                 niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
-                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
                 call logger%log_information(msg, module=this_module, procedure='eigs_csp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
             call logger%log_information(msg, module=this_module, procedure='eigs_csp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
@@ -858,12 +864,14 @@ contains
                 ! Check convergence.
                 niter = niter + 1
                 conv = count(residuals_wrk(:k) < tol)
-                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, ' steps of the Arnoldi process.'
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
                 call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, ' Krylov-Schur restarts of the Arnoldi process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
             call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
@@ -975,7 +983,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
             if (conv >= nev) exit lanczos
         enddo lanczos
@@ -1074,7 +1083,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
             if (conv >= nev) exit lanczos
         enddo lanczos
@@ -1173,7 +1183,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_csp')
             if (conv >= nev) exit lanczos
         enddo lanczos
@@ -1272,7 +1283,8 @@ contains
 
             ! Check convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
             if (conv >= nev) exit lanczos
         enddo lanczos
@@ -1377,7 +1389,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_rsp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
@@ -1470,7 +1483,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_rdp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
@@ -1563,7 +1577,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_csp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
@@ -1656,7 +1671,8 @@ contains
 
             ! Check for convergence.
             conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, ' iterations of the Lanczos process.'
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_cdp')
             if (conv >= nsv) exit lanczos
         enddo lanczos
@@ -1827,7 +1843,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta)', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -1849,7 +1866,8 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
 
-            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
 
             ! Exit gmres if desired accuracy is reached.
@@ -2004,7 +2022,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta)', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -2026,7 +2045,8 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
 
-            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
 
             ! Exit gmres if desired accuracy is reached.
@@ -2181,7 +2201,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta)', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_csp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -2203,7 +2224,8 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
 
-            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_csp')
 
             ! Exit gmres if desired accuracy is reached.
@@ -2358,7 +2380,8 @@ contains
                 niter = niter + 1
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', abs(beta), ', tol= ', tol
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta)', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -2380,7 +2403,8 @@ contains
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
 
-            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', abs(beta), ', tol= ', tol
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
 
             ! Exit gmres if desired accuracy is reached.
