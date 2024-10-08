@@ -91,7 +91,7 @@ program demo
    print *, 'Floquet multiplier norms | exp(T*mu) | of the PO:'
    print *, ''
    do i = 1, npts
-      print '(4X,I1,": ",E12.6)', i, abs(floquet_exponents(i))
+      print '(4X,I1,": ",E14.6)', i, abs(floquet_exponents(i))
    end do
    print *, ''
 
