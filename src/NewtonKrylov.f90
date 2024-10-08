@@ -215,13 +215,17 @@ contains
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  &                                              transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,  &
+                  &                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_rsp')
 
@@ -370,13 +374,17 @@ contains
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  &                                              transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,  &
+                  &                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_rdp')
 
@@ -525,13 +533,17 @@ contains
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  &                                              transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,  &
+                  &                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_csp')
 
@@ -680,13 +692,17 @@ contains
          ! Solve the linear system using GMRES.
          call residual%chsgn()
          if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                                             transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  &                                              transpose=.false.)
          elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,                         options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol,  &
+                  &                         options=solver_opts, transpose=.false.)
          elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond,                      transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond,                      transpose=.false.)
          else
-            call solver(sys%jacobian, residual, increment, info, atol=tol, preconditioner=precond, options=solver_opts, transpose=.false.)
+            call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                  & preconditioner=precond, options=solver_opts, transpose=.false.)
          end if
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_cdp')
 
