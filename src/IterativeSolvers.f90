@@ -1844,7 +1844,7 @@ contains
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
-                            & abs(beta)', tol= ', tol
+                            & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -2023,7 +2023,7 @@ contains
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
-                            & abs(beta)', tol= ', tol
+                            & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -2202,7 +2202,7 @@ contains
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
-                            & abs(beta)', tol= ', tol
+                            & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_csp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
@@ -2381,7 +2381,7 @@ contains
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
-                            & abs(beta)', tol= ', tol
+                            & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
                 if (abs(beta) <= tol) then
                     exit arnoldi_fact
