@@ -175,178 +175,174 @@ contains
     !-----     VARIOUS UTILITIES     -----
     !-------------------------------------
 
-    subroutine assert_shape_vector_rsp(v, size, routine, matname)
+    subroutine assert_shape_vector_rsp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         real(sp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_rsp
 
-    subroutine assert_shape_matrix_rsp(A, size, routine, matname)
+    subroutine assert_shape_matrix_rsp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         real(sp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_rsp
-    subroutine assert_shape_vector_rdp(v, size, routine, matname)
+
+    subroutine assert_shape_vector_rdp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         real(dp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_rdp
 
-    subroutine assert_shape_matrix_rdp(A, size, routine, matname)
+    subroutine assert_shape_matrix_rdp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         real(dp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_rdp
-    subroutine assert_shape_vector_csp(v, size, routine, matname)
+
+    subroutine assert_shape_vector_csp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         complex(sp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_csp
 
-    subroutine assert_shape_matrix_csp(A, size, routine, matname)
+    subroutine assert_shape_matrix_csp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         complex(sp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_csp
-    subroutine assert_shape_vector_cdp(v, size, routine, matname)
+
+    subroutine assert_shape_vector_cdp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         complex(dp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_cdp
 
-    subroutine assert_shape_matrix_cdp(A, size, routine, matname)
+    subroutine assert_shape_matrix_cdp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         complex(dp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_cdp
+
 
     !-------------------------------------------
     !-----     LAPACK MATRIX INVERSION     -----
@@ -363,7 +359,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
 
@@ -602,7 +598,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
 
@@ -841,7 +837,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
 
@@ -1075,7 +1071,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
 

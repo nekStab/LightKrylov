@@ -236,7 +236,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_${type[0]}$${kind}$', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
       
@@ -296,7 +296,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_${type[0]}$${kind}$', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
       
@@ -342,7 +342,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_${type[0]}$${kind}$', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
 
@@ -385,7 +385,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_${type[0]}$${kind}$', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
 

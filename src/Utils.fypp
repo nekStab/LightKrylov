@@ -144,49 +144,48 @@ contains
     !-------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, routine, matname)
+    subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         ${type}$, intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg,*) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_${type[0]}$${kind}$')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_${type[0]}$${kind}$
 
-    subroutine assert_shape_matrix_${type[0]}$${kind}$(A, size, routine, matname)
+    subroutine assert_shape_matrix_${type[0]}$${kind}$(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         ${type}$, intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg,*) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_${type[0]}$${kind}$')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_${type[0]}$${kind}$
+
     #:endfor
 
     !-------------------------------------------
@@ -205,7 +204,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_${type[0]}$${kind}$')
 

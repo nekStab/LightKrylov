@@ -291,11 +291,28 @@ contains
          !
          !   LightKrylov_BaseKrylov
          !
+         else if (trim(to_lower(origin)) == 'orthogonalize_against_basis') then ! the regular case
+            ! orthogonalization
+            if (info > 0) then
+               write(msg,'(A,I0,A)') 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
+            else if (info == -1) then
+               write(msg,'(A)') 'The input Krylov basis is not orthonormal.'
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -2) then
+               write(msg,'(A)') 'Orthogonalization: The last column of the input basis is zero.'
+               call logger%log_warning(trim(msg), module=module, procedure=procedure)
+            else
+               write(msg,'(A)') "Undocumented error. "//trim(str)
+               call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
          else if (trim(to_lower(origin)) == 'orthogonalize_against_basis_p1') then
             ! orthogonalization
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write(msg,'(A)') 'The input Krylov basis is not orthonormal.'
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -329,7 +346,7 @@ contains
             ! orthogonalization
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Orthogonalization: The ', info, 'th input vector is numerically zero.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write(msg,'(A)') 'The input Krylov basis is not orthonormal.'
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -346,7 +363,7 @@ contains
             ! qr
             if (info > 0) then
                write(msg,'(A,I0)') 'QR factorization: Colinear column detected in column ', info
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -356,7 +373,7 @@ contains
             ! qr_pivot
             if (info > 0) then
                write(msg,'(A,I0,A)') 'QR factorization: Invariant subspace found after ', info, ' steps.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -366,7 +383,7 @@ contains
             ! arnoldi
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Arnoldi factorization: Invariant subspace computed after ', info, ' iterations.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -376,7 +393,7 @@ contains
             ! lanczos_bidiagonalization
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Lanczos Bidiagonalisation: Invariant subspace found after ', info, ' steps.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -386,7 +403,7 @@ contains
             ! lanczos_tridiagonalization
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Lanczos Tridiagonalisation: Invariant subspace found after ', info, ' steps.'
-               call logger%log_information(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
