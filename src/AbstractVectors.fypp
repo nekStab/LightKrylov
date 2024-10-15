@@ -1,6 +1,7 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_AbstractVectors
+    use stdlib_optval, only: optval
     use lightkrylov_constants
     use lightkrylov_utils
     use LightKrylov_Logger
@@ -14,6 +15,7 @@ module lightkrylov_AbstractVectors
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
+    public :: rand_basis
 
     interface innerprod
         #:for kind, type in RC_KINDS_TYPES
@@ -44,6 +46,12 @@ module lightkrylov_AbstractVectors
     interface copy_basis
         #:for kind, type in RC_KINDS_TYPES
         module procedure copy_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface rand_basis
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure rand_basis_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -361,6 +369,22 @@ contains
 
         return
     end subroutine copy_basis_${type[0]}$${kind}$
+
+    subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        logical                       :: if_normalize
+        ! internal
+        integer :: i
+
+        if_normalize = optval(ifnorm, .true.)
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_${type[0]}$${kind}$
 
     #:endfor
 

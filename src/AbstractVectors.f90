@@ -1,4 +1,5 @@
 module lightkrylov_AbstractVectors
+    use stdlib_optval, only: optval
     use lightkrylov_constants
     use lightkrylov_utils
     use LightKrylov_Logger
@@ -12,6 +13,7 @@ module lightkrylov_AbstractVectors
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
+    public :: rand_basis
 
     interface innerprod
         module procedure innerprod_vector_rsp
@@ -54,6 +56,13 @@ module lightkrylov_AbstractVectors
         module procedure copy_basis_rdp
         module procedure copy_basis_csp
         module procedure copy_basis_cdp
+    end interface
+
+    interface rand_basis
+        module procedure rand_basis_rsp
+        module procedure rand_basis_rdp
+        module procedure rand_basis_csp
+        module procedure rand_basis_cdp
     end interface
 
 
@@ -702,6 +711,22 @@ contains
         return
     end subroutine copy_basis_rsp
 
+    subroutine rand_basis_rsp(X, ifnorm)
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        logical                       :: if_normalize
+        ! internal
+        integer :: i
+
+        if_normalize = optval(ifnorm, .true.)
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_rsp
+
 
     subroutine linear_combination_vector_rdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
@@ -869,6 +894,22 @@ contains
 
         return
     end subroutine copy_basis_rdp
+
+    subroutine rand_basis_rdp(X, ifnorm)
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        logical                       :: if_normalize
+        ! internal
+        integer :: i
+
+        if_normalize = optval(ifnorm, .true.)
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_rdp
 
 
     subroutine linear_combination_vector_csp(y, X, v)
@@ -1038,6 +1079,22 @@ contains
         return
     end subroutine copy_basis_csp
 
+    subroutine rand_basis_csp(X, ifnorm)
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        logical                       :: if_normalize
+        ! internal
+        integer :: i
+
+        if_normalize = optval(ifnorm, .true.)
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_csp
+
 
     subroutine linear_combination_vector_cdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
@@ -1205,6 +1262,22 @@ contains
 
         return
     end subroutine copy_basis_cdp
+
+    subroutine rand_basis_cdp(X, ifnorm)
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        logical                       :: if_normalize
+        ! internal
+        integer :: i
+
+        if_normalize = optval(ifnorm, .true.)
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_cdp
 
 
 end module lightkrylov_AbstractVectors
