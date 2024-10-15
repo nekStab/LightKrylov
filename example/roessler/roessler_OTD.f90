@@ -22,6 +22,7 @@ module Roessler_OTD
    !------------------------------
  
    integer,  parameter :: r = 2
+   character(len=128), parameter :: file = 'example/roessler/roessler_OTD_output.txt'
 
    !-------------------------------------------
    !-----     LIGHTKRYLOV VECTOR TYPE     -----
@@ -347,15 +348,14 @@ contains
          end do
       end do
 
-      open(newunit=iunit, file='roessler_OTD.txt', status='old', action='write', position='append')
+      open(newunit=iunit, file=file, status='old', action='write', position='append')
       write(iunit, '(*(E16.9,1X))') t, bf, xp, real(eigvals(Lr)), ( Lr(i,i), i = 1,r ), ( uTu(i,i) - 1.0_wp, i = 1, r )
       close(iunit)
 
       return
    end subroutine OTD_report_file
 
-   subroutine write_header(file)
-      character(len=*) :: file
+   subroutine write_header()
       ! internals
       integer :: i, iunit
       open(newunit=iunit, file=file, status='new', action='write')

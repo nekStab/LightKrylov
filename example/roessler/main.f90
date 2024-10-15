@@ -20,24 +20,22 @@ program demo
    type(state_vector), allocatable :: bf, dx, residual
    ! OTD basis
    type(pos_vector), allocatable :: OTD_in(:), OTD_out(:)
-   ! Integration time.
-   real(wp) :: Tend, TGS
    ! Report OTD?
    logical, parameter :: if_report_OTD    = .true.
-   logical, parameter :: if_report_stdout = .true.
+   logical, parameter :: if_report_stdout = .false.
 
    ! Misc
-   integer :: i, info, stat, iunit
-   type(newton_dp_opts) :: opts
-   type(gmres_dp_opts) :: gmres_opts
-   real(wp) :: rnorm, tol
-   character(len=20) :: fmt, file
-   real(wp) :: M(npts,npts), Id(npts, npts)
-   complex(wp) :: floquet_exponents(npts)
-   logical :: exist
+   type(newton_dp_opts)            :: opts
+   type(gmres_dp_opts)             :: gmres_opts
+   integer                         :: i, info, stat, iunit
+   real(wp)                        :: rnorm, tol, Tend
+   real(wp), dimension(npts, npts) :: M, Id
+   complex(wp)                     :: floquet_exponents(npts)
+   ! IO
+   logical              :: exist
+   character(len=20)    :: fmt
    
    write(fmt,*) '(A22,4(1X,F18.6))'
-   file = 'roessler_OTD.txt'
 
    ! Set up logging
    call logger_setup()
@@ -130,7 +128,7 @@ program demo
    if (if_report_OTD) then
       inquire(file=file, exist=exist)
       if (exist) open(unit=1234, file=file, status='old'); close(1234, status='delete')
-      call write_header(file)
+      call write_header()
       call OTD_map(bf, OTD_in, Tend, OTD_out, if_report_stdout)
    else
       call OTD_map(bf, OTD_in, Tend, OTD_out)
