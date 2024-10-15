@@ -1,6 +1,7 @@
 program demo
    use stdlib_linalg, only : eye, eigvals
    use stdlib_io_npy, only : save_npy
+   use stdlib_sorting, only : sort
    use stdlib_logger, only : information_level, warning_level, debug_level, error_level, none_level
    use LightKrylov
    use LightKrylov, only: wp => dp
@@ -28,9 +29,9 @@ program demo
    type(newton_dp_opts)            :: opts
    type(gmres_dp_opts)             :: gmres_opts
    integer                         :: i, info, stat, iunit
-   real(wp)                        :: rnorm, tol, Tend
+   real(wp)                        :: rnorm, tol, Tend, t_FTLE
    real(wp), dimension(npts, npts) :: M, Id
-   complex(wp)                     :: floquet_exponents(npts)
+   real(wp)                        :: floquet_exponents(npts)
    ! IO
    logical              :: exist
    character(len=20)    :: fmt
@@ -109,11 +110,12 @@ program demo
       call sys%jacobian%matvec(dx, residual)
       call get_position(residual, M(:,i))
    end do
-   floquet_exponents = eigvals(M)
+   floquet_exponents = real(eigvals(M))
+   call sort(floquet_exponents, reverse=.true.)
    print *, 'Real part of the Floquet multipliers exp(T*mu) along the PO:'
    print *, ''
    do i = 1, npts
-      print '(4X,I1,": ",E14.6)', i, real(floquet_exponents(i))
+      print '(4X,I1,": ",E14.6)', i, floquet_exponents(i)
    end do
    print *, ''
 
@@ -124,14 +126,15 @@ program demo
    call rand_basis(OTD_in, ifnorm=.false.)
    call orthonormalize_basis(OTD_in)
 
-   Tend = 10.0_wp
+   Tend = 1000.0_wp
+   t_FTLE = 1000.0_wp ! bf%T
    if (if_report_OTD) then
       inquire(file=file, exist=exist)
       if (exist) open(unit=1234, file=file, status='old'); close(1234, status='delete')
       call write_header()
-      call OTD_map(bf, OTD_in, Tend, OTD_out, if_report_stdout)
+      call OTD_map(bf, OTD_in, Tend, OTD_out, t_FTLE, if_report_stdout)
    else
-      call OTD_map(bf, OTD_in, Tend, OTD_out)
+      call OTD_map(bf, OTD_in, Tend, OTD_out, t_FTLE)
    end if
 
 end program demo
