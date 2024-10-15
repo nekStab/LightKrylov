@@ -66,6 +66,91 @@ module Roessler
    end type floquet_operator
  
 contains
+
+   !=========================================================
+   !=========================================================
+   !=====                                               =====
+   !=====     LIGHTKRYLOV MANDATORY IMPLEMENTATIONS     =====
+   !=====                                               =====
+   !=========================================================
+   !=========================================================
+   
+   !----------------------------------------------------
+   !-----     TYPE-BOUND PROCEDURE FOR VECTORS     -----
+   !----------------------------------------------------
+   
+   subroutine zero(self)
+      class(state_vector), intent(inout) :: self
+      ! spatial coordinates of initial condition for orbit
+      self%x = 0.0_wp
+      self%y = 0.0_wp
+      self%z = 0.0_wp
+      ! period
+      self%T = 0.0_wp
+      return
+   end subroutine zero
+
+   real(wp) function dot(self, vec) result(alpha)
+      class(state_vector)       , intent(in) :: self
+      class(abstract_vector_rdp), intent(in) :: vec
+      select type(vec)
+      type is(state_vector)
+         alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z + self%T*vec%T
+      end select
+      return
+   end function dot
+
+   subroutine scal(self, alpha)
+      class(state_vector), intent(inout) :: self
+      real(wp)           , intent(in)    :: alpha
+      self%x = self%x * alpha
+      self%y = self%y * alpha
+      self%z = self%z * alpha
+      self%T = self%T * alpha
+      return
+   end subroutine scal
+
+   subroutine axpby(self, alpha, vec, beta)
+      class(state_vector)       , intent(inout) :: self
+      class(abstract_vector_rdp), intent(in)    :: vec
+      real(wp)                  , intent(in)    :: alpha, beta
+      select type(vec)
+      type is(state_vector)
+         self%x = alpha*self%x + beta*vec%x
+         self%y = alpha*self%y + beta*vec%y
+         self%z = alpha*self%z + beta*vec%z
+         self%T = alpha*self%T + beta*vec%T
+      end select
+      return
+   end subroutine axpby
+
+   integer function get_size(self) result(N)
+      class(state_vector), intent(in) :: self
+      N = npts+1
+      return
+   end function get_size
+
+   subroutine rand(self, ifnorm)
+      class(state_vector), intent(inout) :: self
+      logical, optional,   intent(in)    :: ifnorm
+      logical :: normalized
+      real(wp) :: mu, var
+      real(wp) :: alpha
+
+      mu = 0.0_wp
+      var = 1.0_wp
+      self%x = normal(mu, var)
+      self%y = normal(mu, var)
+      self%z = normal(mu, var)
+      self%T = normal(mu, var)
+
+      normalized = optval(ifnorm, .false.)
+      if (normalized) then
+         alpha = self%norm()
+         call self%scal(1.0_wp/alpha)
+      endif
+      return
+   end subroutine rand
  
    !===================================
    !===================================
@@ -151,91 +236,6 @@ contains
      
       return
    end subroutine combined_rhs
-  
-   !=========================================================
-   !=========================================================
-   !=====                                               =====
-   !=====     LIGHTKRYLOV MANDATORY IMPLEMENTATIONS     =====
-   !=====                                               =====
-   !=========================================================
-   !=========================================================
- 
-   !----------------------------------------------------
-   !-----     TYPE-BOUND PROCEDURE FOR VECTORS     -----
-   !----------------------------------------------------
- 
-   subroutine zero(self)
-      class(state_vector), intent(inout) :: self
-      ! spatial coordinates of initial condition for orbit
-      self%x = 0.0_wp
-      self%y = 0.0_wp
-      self%z = 0.0_wp
-      ! period
-      self%T = 0.0_wp
-      return
-   end subroutine zero
-  
-   real(wp) function dot(self, vec) result(alpha)
-      class(state_vector)       , intent(in) :: self
-      class(abstract_vector_rdp), intent(in) :: vec
-      select type(vec)
-      type is(state_vector)
-         alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z + self%T*vec%T
-      end select
-      return
-   end function dot
-  
-   subroutine scal(self, alpha)
-      class(state_vector), intent(inout) :: self
-      real(wp)           , intent(in)    :: alpha
-      self%x = self%x * alpha
-      self%y = self%y * alpha
-      self%z = self%z * alpha
-      self%T = self%T * alpha
-      return
-   end subroutine scal
-  
-   subroutine axpby(self, alpha, vec, beta)
-      class(state_vector)       , intent(inout) :: self
-      class(abstract_vector_rdp), intent(in)    :: vec
-      real(wp)                  , intent(in)    :: alpha, beta
-      select type(vec)
-      type is(state_vector)
-         self%x = alpha*self%x + beta*vec%x
-         self%y = alpha*self%y + beta*vec%y
-         self%z = alpha*self%z + beta*vec%z
-         self%T = alpha*self%T + beta*vec%T
-      end select
-      return
-   end subroutine axpby
-  
-   integer function get_size(self) result(N)
-      class(state_vector), intent(in) :: self
-      N = npts+1
-      return
-   end function get_size
-  
-   subroutine rand(self, ifnorm)
-      class(state_vector), intent(inout) :: self
-      logical, optional,   intent(in)    :: ifnorm
-      logical :: normalized
-      real(wp) :: mu, var
-      real(wp) :: alpha
-  
-      mu = 0.0_wp
-      var = 1.0_wp
-      self%x = normal(mu, var)
-      self%y = normal(mu, var)
-      self%z = normal(mu, var)
-      self%T = normal(mu, var)
-
-      normalized = optval(ifnorm, .false.)
-      if (normalized) then
-         alpha = self%norm()
-         call self%scal(1.0_wp/alpha)
-      endif
-      return
-   end subroutine rand
  
    !-------------------------------------------------------------
    !-----     TYPE-BOUND PROCEDURES FOR THE INTEGRATORS     -----
