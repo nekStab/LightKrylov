@@ -21,7 +21,7 @@ module Roessler_OTD
    !-----     PARAMETERS     -----
    !------------------------------
  
-   integer,  parameter :: r = 2
+   integer, parameter :: r = 2
    character(len=128), parameter :: file = 'example/roessler/roessler_OTD_output.txt'
 
    !-------------------------------------------
@@ -316,7 +316,7 @@ contains
          end do
       end do
 
-      print '(*(E16.9,1X))', t, bf, xp, real(eigvals(Lr)), ( Lr(i,i), i = 1,r ), ( uTu(i,i) - 1.0_wp, i = 1, r )
+      print '(*(E16.9,1X))', t, bf, xp, real(eigvals(Lr)), ( uTu(i,i) - 1.0_wp, i = 1, r )
 
       return
    end subroutine OTD_report_stdout
@@ -349,7 +349,7 @@ contains
       end do
 
       open(newunit=iunit, file=file, status='old', action='write', position='append')
-      write(iunit, '(*(E16.9,1X))') t, bf, xp, real(eigvals(Lr)), ( Lr(i,i), i = 1,r ), ( uTu(i,i) - 1.0_wp, i = 1, r )
+      write(iunit, '(*(E16.9,1X))') t, bf, xp, real(eigvals(Lr)), ( uTu(i,i) - 1.0_wp, i = 1, r )
       close(iunit)
 
       return
@@ -368,10 +368,6 @@ contains
       ! instantaneous eigenvalues of the reduced operator
       do i = 1, r
          write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'lambda_', i
-      end do
-      ! instantaneous trace of the reduced operator
-      do i = 1, r
-         write(iunit,'(A12,I1,A1,I1,A1,1X)', ADVANCE='NO') 'Lr(', i, ',', i, ')'
       end do
       ! orthogonality of the basis vectors
       do i = 1, r
