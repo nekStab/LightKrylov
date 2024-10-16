@@ -272,7 +272,7 @@ contains
                FTLE_in = FTLE_out
             else
                p_cnt = p_cnt + 1
-               call report_LE(FTLE_out, t_FTLE, p_cnt)
+               call report_LE(FTLE_out, time, t_FTLE, p_cnt)
                FTLE_in = 0.0_wp                                   ! reset FTLE computation
                if (if_rst) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
             endif
@@ -285,7 +285,7 @@ contains
             FTLE_in = FTLE_out
          else
             p_cnt = p_cnt + 1
-            call report_LE(FTLE_out, t_FTLE, p_cnt)
+            call report_LE(FTLE_out, time, t_FTLE, p_cnt)
             FTLE_in = 0.0_wp                                      ! reset FTLE computation
             if (if_rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
          endif
@@ -335,6 +335,7 @@ contains
       real(wp), dimension(npts,r) :: u, Lu
       real(wp), dimension(r,r)    :: Lr, uTu
       real(wp), dimension(r)      :: FTLE
+      real(wp), allocatable       :: s(:)
       integer                     :: i, j, iunit
 
       bf   = x(:npts)
@@ -353,36 +354,40 @@ contains
             uTu(i,j) = dot_product( u(:,i), u(:,j))
          end do
       end do
+      s = svdvals(Lr)
 
       open(newunit=iunit, file=file, status='old', action='write', position='append')
-      write(iunit, '(*(E16.9,1X))') t, bf, u, real(eigvals(Lr)), FTLE, ( uTu(i,i) - 1.0_wp, i = 1, r )
+      write(iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, u, s(1), real(eigvals(Lr)), FTLE
+      write(iunit, '(*(E16.9,1X))') ( uTu(i, i) - 1, i = 1, r), (( uTu(i, j), j = 1, i-1), i = 2, r)
       close(iunit)
 
       return
    end subroutine OTD_report_file
 
-   subroutine report_LE(FTLE, time, p_cnt)
+   subroutine report_LE(FTLE, time, period, p_cnt)
       ! Integrated FTLE values
       real(wp), dimension(r), intent(in) :: FTLE
-      ! period
+      ! simulation
       real(wp),               intent(in) :: time
+      ! period
+      real(wp),               intent(in) :: period
       ! period counter
       integer,                intent(in) :: p_cnt
       ! internal
       integer :: iunit
       real(wp), dimension(r) :: LE
-      LE = FTLE/time
+      LE = FTLE/period
       call sort(LE)
       print '(A10,I3,A3,1X,*(F16.9,1X))', 'OTD:  t=', p_cnt, 'T ', LE
       open(newunit=iunit, file=file_LE, status='old', action='write', position='append')
-      write(iunit, '(*(F16.9,1X))') time, LE, LE_ref
+      write(iunit, '(F16.9,1X,I16,1X,*(F16.9,1X))') time, p_cnt, LE, LE_ref
       close(iunit)
       return
    end subroutine report_LE
 
    subroutine write_header()
       ! internals
-      integer :: i, iunit
+      integer :: i, j, iunit
       open(newunit=iunit, file=file, status='new', action='write')
       ! time, baseflow
       write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'x_BF', 'y_BF', 'z_BF'
@@ -390,6 +395,8 @@ contains
       do i = 1, r 
          write(iunit,'(*(A15,I1,1X))', ADVANCE='NO') 'xp_', i, 'yp_', i, 'zp_', i
       end do
+      ! instantaneous numerical abscissa of the reduced operator
+      write(iunit,'(A16,1X)', ADVANCE='NO') 'sigma_1'
       ! instantaneous eigenvalues of the reduced operator
       do i = 1, r
          write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'lambda_', i
@@ -398,9 +405,14 @@ contains
       do i = 1, r
          write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'FTLE_', i
       end do
-      ! orthogonality of the basis vectors
+      ! orthonormality of the basis vectors
       do i = 1, r
-         write(iunit,'(A5,I1,A3,I0,A5,1X)', ADVANCE='NO') '<u_', i, ',u_', i, '> - 1'
+         write(iunit,'(A7,I1,A3,I0,A3,1X)', ADVANCE='NO') '<u_', i, ',u_', i, '> - 1'
+      end do
+      do i = 2, r
+         do j = 1, i-1
+            write(iunit,'(A9,I1,A3,I0,A1,1X)', ADVANCE='NO') '<u_', i, ',u_', j, '>'
+         end do
       end do
       write(iunit,*) ''; close(iunit)
       return
@@ -411,7 +423,7 @@ contains
       integer :: i, iunit
       open(newunit=iunit, file=file_LE, status='new', action='write')
       ! time, baseflow
-      write(iunit,'(A16,1X)', ADVANCE='NO') 't'
+      write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'period'
       ! LE
       do i = 1, r
          write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'LE_', i
