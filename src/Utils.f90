@@ -124,52 +124,50 @@ module lightkrylov_utils
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
-        real(sp) :: atol = atol_sp
-        !! Absolute tolerance.
-        real(sp) :: rtol = rtol_sp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
     type, extends(abstract_opts), public :: cg_sp_opts
         !! Conjugate gradient options.
         integer :: maxiter = 100
         !! Maximum number of `cg` iterations (default: 100).
-        real(sp) :: atol = atol_sp
-        !! Absolute tolerance.
-        real(sp) :: rtol = rtol_sp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
+    type, extends(abstract_opts), public :: newton_sp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+    end type
+    
     type, extends(abstract_opts), public :: gmres_dp_opts
         !! GMRES options.
         integer :: kdim = 30
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
-        real(dp) :: atol = atol_dp
-        !! Absolute tolerance.
-        real(dp) :: rtol = rtol_dp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
     type, extends(abstract_opts), public :: cg_dp_opts
         !! Conjugate gradient options.
         integer :: maxiter = 100
         !! Maximum number of `cg` iterations (default: 100).
-        real(dp) :: atol = atol_dp
-        !! Absolute tolerance.
-        real(dp) :: rtol = rtol_dp
-        !! Relative tolerance.
-        logical :: verbose = .false.
-        !! Verbosity control (default: `.false.`)
     end type
 
+    type, extends(abstract_opts), public :: newton_dp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+    end type
+    
 
 contains
 
@@ -177,178 +175,174 @@ contains
     !-----     VARIOUS UTILITIES     -----
     !-------------------------------------
 
-    subroutine assert_shape_vector_rsp(v, size, routine, matname)
+    subroutine assert_shape_vector_rsp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         real(sp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_rsp
 
-    subroutine assert_shape_matrix_rsp(A, size, routine, matname)
+    subroutine assert_shape_matrix_rsp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         real(sp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rsp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_rsp
-    subroutine assert_shape_vector_rdp(v, size, routine, matname)
+
+    subroutine assert_shape_vector_rdp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         real(dp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_rdp
 
-    subroutine assert_shape_matrix_rdp(A, size, routine, matname)
+    subroutine assert_shape_matrix_rdp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         real(dp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_rdp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_rdp
-    subroutine assert_shape_vector_csp(v, size, routine, matname)
+
+    subroutine assert_shape_vector_csp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         complex(sp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_csp
 
-    subroutine assert_shape_matrix_csp(A, size, routine, matname)
+    subroutine assert_shape_matrix_csp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         complex(sp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_csp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_csp
-    subroutine assert_shape_vector_cdp(v, size, routine, matname)
+
+    subroutine assert_shape_vector_cdp(v, size, vecname, module, procedure)
         !! Utility function to assert the shape of a vector.
         complex(dp), intent(in) :: v(:)
         !! Vector whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of v.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
-        character(len=*), intent(in) :: matname
+        character(len=*), intent(in) :: vecname
         !! Name of the asserted vector.
-        
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(v) /= size)) then
-            write(msg, *) "In routine "//routine//" vector "//matname//" has illegal length ", shape(v), &
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
                            & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_vector_cdp
 
-    subroutine assert_shape_matrix_cdp(A, size, routine, matname)
+    subroutine assert_shape_matrix_cdp(A, size, matname, module, procedure)
         !! Utility function to assert the shape of a matrix.
         complex(dp), intent(in) :: A(:, :)
         !! Matrix whose dimension need to be asserted.
         integer, intent(in) :: size(:)
         !! Expected dimensions of A.
-        character(len=*), intent(in) :: routine
-        !! Name of the routine where assertion is done.
         character(len=*), intent(in) :: matname
         !! Name of the asserted matrix.
-
-        ! internals
-        character(len=256) :: msg
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
         if(any(shape(A) /= size)) then
-            write(msg, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A), &
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
                         & ". Expected shape is ", size, ". Aborting due to illegal vector length."
-            call stop_error(msg, module=this_module, procedure='assert_shape_vector_cdp')
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
         endif
         return
     end subroutine assert_shape_matrix_cdp
+
 
     !-------------------------------------------
     !-----     LAPACK MATRIX INVERSION     -----
@@ -365,7 +359,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
 
@@ -463,9 +457,9 @@ contains
 
         return
     contains
-        pure function dummy_select(wr, wi) result(out)
-            real(sp), intent(in) :: wr
-            real(sp), intent(in) :: wi
+        pure function dummy_select(wre, wim) result(out)
+            real(sp), intent(in) :: wre
+            real(sp), intent(in) :: wim
             logical :: out
             out = .false.
             return
@@ -513,19 +507,19 @@ contains
       real(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(sp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
       if (symmetry_error > rtol_sp) then
-        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
             & symmetry_error, ", tol = ", rtol_sp
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       else if (symmetry_error > 10*atol_sp) then
-        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_rsp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
       ! Perform svd
@@ -560,13 +554,13 @@ contains
       real(sp) :: lambda(size(X,1))
       real(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(msg,*) "Input matrix is not symmetric."
+        write(msg,'(A)') "Input matrix is not symmetric."
         call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
@@ -604,7 +598,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
 
@@ -702,9 +696,9 @@ contains
 
         return
     contains
-        pure function dummy_select(wr, wi) result(out)
-            real(dp), intent(in) :: wr
-            real(dp), intent(in) :: wi
+        pure function dummy_select(wre, wim) result(out)
+            real(dp), intent(in) :: wre
+            real(dp), intent(in) :: wim
             logical :: out
             out = .false.
             return
@@ -752,19 +746,19 @@ contains
       real(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(dp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       symmetry_error = 0.5*maxval(X - transpose(X))
       if (symmetry_error > rtol_dp) then
-        write(msg,*) "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
             & symmetry_error, ", tol = ", rtol_dp
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       else if (symmetry_error > 10*atol_dp) then
-        write(msg,*) "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_rdp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_rdp')
       end if
 
       ! Perform svd
@@ -799,13 +793,13 @@ contains
       real(dp) :: lambda(size(X,1))
       real(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is symmetric
       if (.not. is_symmetric(X)) then
-        write(msg,*) "Input matrix is not symmetric."
+        write(msg,'(A)') "Input matrix is not symmetric."
         call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
       end if
 
@@ -843,7 +837,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
 
@@ -986,19 +980,19 @@ contains
       complex(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(sp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_sp) then
-        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
             & symmetry_error, ", tol = ", rtol_sp
         call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       else if (symmetry_error > 10*atol_sp) then
-        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_csp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_csp')
       end if
 
       ! Perform svd
@@ -1033,13 +1027,13 @@ contains
       real(sp) :: lambda(size(X,1))
       complex(sp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(msg,*) "Input matrix is not hermitian"
+        write(msg,'(A)') "Input matrix is not hermitian"
         call stop_error(msg, module=this_module, procedure='sqrtm_csp')
       end if
 
@@ -1077,7 +1071,7 @@ contains
         integer  :: ipiv(size(A, 1))
 
         ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "inv", "A")
+        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
         call getrf(n, n, A, n, ipiv, info)
         call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
 
@@ -1220,19 +1214,19 @@ contains
       complex(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
       integer :: i
       real(dp) :: symmetry_error
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_dp) then
-        write(msg,*) "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+        write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
             & symmetry_error, ", tol = ", rtol_dp
         call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       else if (symmetry_error > 10*atol_dp) then
-        write(msg,*) "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
-        call logger%log_warning(trim(msg), module=this_module, procedure='sqrtm_cdp')
+        write(msg,'(A,E9.2)') "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_cdp')
       end if
 
       ! Perform svd
@@ -1267,13 +1261,13 @@ contains
       real(dp) :: lambda(size(X,1))
       complex(dp) :: V(size(X,1), size(X,1))
       integer :: i
-      character(len=128) :: msg
+      character(len=256) :: msg
 
       info = 0
 
       ! Check if the matrix is hermitian
       if (.not. is_hermitian(X)) then
-        write(msg,*) "Input matrix is not hermitian"
+        write(msg,'(A)') "Input matrix is not hermitian"
         call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
       end if
 

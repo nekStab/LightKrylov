@@ -16,7 +16,7 @@ module TestLinops
     
     private
 
-    character*128, parameter, private :: this_module = 'LightKrylov_TestLinops'
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestLinops'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_linop_${type[0]}$${kind}$_testsuite

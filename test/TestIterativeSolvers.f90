@@ -129,7 +129,7 @@ contains
         return
     end subroutine test_ks_evp_rsp
 
-   subroutine test_evp_rsp(error)
+    subroutine test_evp_rsp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -372,7 +372,7 @@ contains
         return
     end subroutine test_ks_evp_rdp
 
-   subroutine test_evp_rdp(error)
+    subroutine test_evp_rdp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -566,7 +566,7 @@ contains
         return
     end subroutine test_ks_evp_csp
 
-   subroutine test_evp_csp(error)
+    subroutine test_evp_csp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -628,7 +628,7 @@ contains
         return
     end subroutine test_ks_evp_cdp
 
-   subroutine test_evp_cdp(error)
+    subroutine test_evp_cdp(error)
         ! Error type.
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -951,8 +951,8 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_sp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rsp')
 
         ! Check convergence.
@@ -985,8 +985,8 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_sp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
 
         ! Check convergence.
@@ -1028,8 +1028,8 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_dp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rdp')
 
         ! Check convergence.
@@ -1062,8 +1062,8 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_dp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
 
         ! Check convergence.
@@ -1105,8 +1105,8 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_sp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_csp')
 
         ! Check convergence.
@@ -1139,8 +1139,8 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, verbose=.false., rtol=rtol_sp, atol=atol_sp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_sp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
 
         ! Check convergence.
@@ -1182,8 +1182,8 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_dp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_cdp')
 
         ! Check convergence.
@@ -1216,8 +1216,8 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, verbose=.false., rtol=rtol_dp, atol=atol_dp)
-        call gmres(A, b, x, info, options=opts)
+        opts = gmres_dp_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
 
         ! Check convergence.
@@ -1262,8 +1262,8 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp, maxiter=2*test_size)
-        call cg(A, b, x, info, options=opts)
+        opts = cg_sp_opts(maxiter=2*test_size)
+        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
 
         ! Check convergence.
@@ -1303,8 +1303,8 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp, maxiter=2*test_size)
-        call cg(A, b, x, info, options=opts)
+        opts = cg_dp_opts(maxiter=2*test_size)
+        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
 
         ! Check convergence.
@@ -1344,8 +1344,8 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(rtol=rtol_sp, atol=atol_sp, maxiter=2*test_size)
-        call cg(A, b, x, info, options=opts)
+        opts = cg_sp_opts(maxiter=2*test_size)
+        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
 
         ! Check convergence.
@@ -1385,8 +1385,8 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(rtol=rtol_dp, atol=atol_dp, maxiter=2*test_size)
-        call cg(A, b, x, info, options=opts)
+        opts = cg_dp_opts(maxiter=2*test_size)
+        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
 
         ! Check convergence.

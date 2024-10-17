@@ -1,0 +1,1 @@
+# Calculation of (unstable) periodic orbits in the Roessler system using a Newton-Krylov fixed point iteration

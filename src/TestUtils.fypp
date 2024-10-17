@@ -22,6 +22,12 @@ module LightKrylov_TestUtils
     public :: init_rand
     public :: get_err_str
 
+    ! Roessler
+    #:for kind in REAL_KINDS
+    public :: get_state_r${kind}$
+    public :: roessler_analytical_fp_r${kind}$
+    #:endfor
+
     !-----------------------------------------------
     !-----     TEST VECTOR TYPE DEFINITION     -----
     !-----------------------------------------------
@@ -80,6 +86,41 @@ module LightKrylov_TestUtils
     end type
     #:endif
 
+    #:endfor
+
+    ! ROESSLER SYSTEM
+
+    #:for kind in REAL_KINDS
+    real(${kind}$), parameter :: a_${kind}$ = 0.2
+    real(${kind}$), parameter :: b_${kind}$ = 0.2
+    real(${kind}$), parameter :: c_${kind}$ = 5.7
+
+    type, extends(abstract_vector_r${kind}$), public :: state_vector_r${kind}$
+       real(${kind}$) :: x = 0.0_${kind}$
+       real(${kind}$) :: y = 0.0_${kind}$
+       real(${kind}$) :: z = 0.0_${kind}$
+    contains
+       private
+       procedure, pass(self), public :: zero => zero_state_r${kind}$
+       procedure, pass(self), public :: dot => dot_state_r${kind}$
+       procedure, pass(self), public :: scal => scal_state_r${kind}$
+       procedure, pass(self), public :: axpby => axpby_state_r${kind}$
+       procedure, pass(self), public :: rand => rand_state_r${kind}$
+       procedure, pass(self), public :: get_size => get_size_state_r${kind}$
+    end type state_vector_r${kind}$
+
+    type, extends(abstract_system_r${kind}$), public :: roessler_r${kind}$
+    contains
+       private
+       procedure, pass(self), public :: eval => eval_roessler_r${kind}$
+    end type roessler_r${kind}$
+
+    type, extends(abstract_jacobian_linop_r${kind}$), public :: jacobian_r${kind}$
+    contains
+       private
+       procedure, pass(self), public :: matvec => lin_roessler_r${kind}$
+       procedure, pass(self), public :: rmatvec => adj_lin_roessler_r${kind}$
+    end type jacobian_r${kind}$
     #:endfor
 
     interface get_data
@@ -413,13 +454,190 @@ contains
       real(${kind}$) :: err
 
       ! internals
-      character*8 :: value_str
+      character*9 :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
-      write(value_str, '(E8.2)') err
+      write(value_str, '(E9.2)') err
       msg = indent // info // value_str // achar(10)
        
     end subroutine get_err_str_${kind}$
     #:endfor
-    
+
+    !-----------------------------------------------
+    !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
+    !-----------------------------------------------
+ 
+    #:for kind in REAL_KINDS
+    subroutine zero_state_r${kind}$(self)
+      class(state_vector_r${kind}$), intent(inout) :: self
+      self%x = 0.0_${kind}$
+      self%y = 0.0_${kind}$
+      self%z = 0.0_${kind}$
+      return
+    end subroutine zero_state_r${kind}$
+  
+    real(${kind}$) function dot_state_r${kind}$(self, vec) result(alpha)
+      class(state_vector_r${kind}$)   , intent(in) :: self
+      class(abstract_vector_r${kind}$), intent(in) :: vec
+      select type(vec)
+      type is(state_vector_r${kind}$)
+         alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
+      end select
+      return
+    end function dot_state_r${kind}$
+  
+    subroutine scal_state_r${kind}$(self, alpha)
+      class(state_vector_r${kind}$), intent(inout) :: self
+      real(${kind}$)               , intent(in)    :: alpha
+      self%x = self%x * alpha
+      self%y = self%y * alpha
+      self%z = self%z * alpha
+      return
+    end subroutine scal_state_r${kind}$
+  
+    subroutine axpby_state_r${kind}$(self, alpha, vec, beta)
+      class(state_vector_r${kind}$)   , intent(inout) :: self
+      class(abstract_vector_r${kind}$), intent(in)    :: vec
+      real(${kind}$)                  , intent(in)    :: alpha, beta
+      select type(vec)
+      type is(state_vector_r${kind}$)
+         self%x = alpha*self%x + beta*vec%x
+         self%y = alpha*self%y + beta*vec%y
+         self%z = alpha*self%z + beta*vec%z
+      end select
+      return
+    end subroutine axpby_state_r${kind}$
+  
+    integer function get_size_state_r${kind}$(self) result(N)
+      class(state_vector_r${kind}$), intent(in) :: self
+      N = 3
+      return
+    end function get_size_state_r${kind}$
+  
+    subroutine rand_state_r${kind}$(self, ifnorm)
+      class(state_vector_r${kind}$), intent(inout) :: self
+      logical, optional,   intent(in)        :: ifnorm
+      logical :: normalized
+      real(${kind}$) :: mu, var
+      real(${kind}$) :: alpha
+  
+      mu = zero_r${kind}$
+      var = one_r${kind}$
+      self%x = normal(mu, var)
+      self%y = normal(mu, var)
+      self%z = normal(mu, var)
+  
+      normalized = optval(ifnorm, .false.)
+      if (normalized) then
+         alpha = self%norm()
+         call self%scal(one_r${kind}$/alpha)
+      endif
+      return
+    end subroutine rand_state_r${kind}$
+
+    #:endfor
+
+    #:for kind in REAL_KINDS
+    subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, atol)
+      class(roessler_r${kind}$),            intent(in)  :: self
+      class(abstract_vector_r${kind}$), intent(in)  :: vec_in
+      class(abstract_vector_r${kind}$), intent(out) :: vec_out
+      real(${kind}$),                    intent(in)  :: atol
+
+      select type(vec_in)
+        type is(state_vector_r${kind}$)
+            select type(vec_out)
+            type is(state_vector_r${kind}$)
+
+            vec_out%x = -vec_in%y - vec_in%z
+            vec_out%y = vec_in%x + a_${kind}$ * vec_in%y
+            vec_out%z = b_${kind}$ + vec_in%z * (vec_in%x - c_${kind}$)
+
+            end select
+        end select
+
+      return
+    end subroutine eval_roessler_r${kind}$
+
+    subroutine get_state_r${kind}$(state, X, Y, Z)
+        class(abstract_vector_r${kind}$),   intent(in)  :: state
+        real(${kind}$),                 intent(out) :: X, Y, z
+
+        select type (state)
+        type is (state_vector_r${kind}$)
+            X = state%x
+            Y = state%y
+            Z = state%z        
+        end select
+
+        return
+    end subroutine get_state_r${kind}$
+
+    subroutine lin_roessler_r${kind}$(self, vec_in, vec_out)
+      class(jacobian_r${kind}$),            intent(in)  :: self
+      class(abstract_vector_r${kind}$), intent(in)  :: vec_in
+      class(abstract_vector_r${kind}$), intent(out) :: vec_out
+
+      real(${kind}$) :: X, Y, Z
+
+      call get_state_r${kind}$(self%X, X, Y, Z)
+
+      select type(vec_in)
+      type is(state_vector_r${kind}$)
+         select type(vec_out)
+         type is(state_vector_r${kind}$)
+
+            vec_out%x = -vec_in%y - vec_in%z
+            vec_out%y =  vec_in%x + a_${kind}$*vec_in%y
+            vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
+
+         end select
+      end select
+
+      return
+    end subroutine lin_roessler_r${kind}$
+
+    subroutine adj_lin_roessler_r${kind}$(self, vec_in, vec_out)
+      class(jacobian_r${kind}$),            intent(in)  :: self
+      class(abstract_vector_r${kind}$), intent(in)  :: vec_in
+      class(abstract_vector_r${kind}$), intent(out) :: vec_out
+
+      real(${kind}$) :: X, Y, Z
+      
+      call get_state_r${kind}$(self%X, X, Y, Z)
+
+      select type(vec_in)
+      type is(state_vector_r${kind}$)
+         select type(vec_out)
+         type is(state_vector_r${kind}$) 
+
+            vec_out%x =  vec_in%y + vec_in%z*Z
+            vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
+            vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
+
+         end select
+      end select
+
+      return
+    end subroutine adj_lin_roessler_r${kind}$
+
+    subroutine roessler_analytical_fp_r${kind}$(fp1, fp2)
+        class(state_vector_r${kind}$), intent(out) :: fp1, fp2
+
+        real(${kind}$) :: d
+
+        d = sqrt(c_${kind}$**2 - 4*a_${kind}$*b_${kind}$)
+
+        fp1%x = ( c_${kind}$ - d)/ 2
+        fp1%y = (-c_${kind}$ + d)/(2*a_${kind}$)
+        fp1%z = ( c_${kind}$ - d)/(2*a_${kind}$)
+
+        fp2%x = ( c_${kind}$ + d)/ 2
+        fp2%y = (-c_${kind}$ - d)/(2*a_${kind}$)
+        fp2%z = ( c_${kind}$ + d)/(2*a_${kind}$)
+
+        return
+    end subroutine roessler_analytical_fp_r${kind}$
+
+    #:endfor
 end module LightKrylov_TestUtils

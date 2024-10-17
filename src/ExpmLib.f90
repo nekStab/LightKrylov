@@ -17,7 +17,7 @@ module lightkrylov_expmlib
 
     implicit none
     
-    character(len=128), parameter, private :: this_module = 'LightKrylov_ExpmLib'
+    character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp
@@ -202,7 +202,7 @@ contains
         return
     end subroutine expm_rsp
 
-    subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rsp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_rsp), intent(in) :: A
@@ -217,8 +217,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -234,12 +232,11 @@ contains
         real(sp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
     
         ! Deals with optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps
 
@@ -302,28 +299,18 @@ contains
 
         if (err_est <= tol) then
             info = kp
-            if (verbose) then
-                write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
-                write(output_unit, *) "     n° of vectors     :", kp
-                write(output_unit, *) "     Estimated error   : ||err_est||_2 =", err_est
-                write(output_unit, *) "     Desired tolerance :           tol =", tol
-                write(output_unit, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_rsp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_rsp')
             info = -1
-            if (verbose) then
-                write(output_unit, *) 'Arnoldi-based approxmation of the exp. propagator did not converge'
-                write(output_unit, *) '    Maximum n° of vectors reached: ', nk + 1
-                write(output_unit, *) '    Estimated error              :   ||err_est||_2 = ', err_est
-                write(output_unit, *) '    Desired tolerance            :           tol = ', tol
-                write(output_unit, *)
-            endif
         endif
 
         return
     end subroutine kexpm_vec_rsp
 
-    subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_rsp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_rsp), intent(in) :: A
@@ -338,8 +325,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose ?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -356,15 +341,14 @@ contains
         real(sp) :: err_est
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
 
         ! Determine block size.
         p = size(B)
 
         ! Deals with the optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
         
@@ -404,7 +388,6 @@ contains
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
                 call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rsp')
-
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -446,30 +429,12 @@ contains
 
         if (err_est .le. tol) then
             info = kpp
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator converged'
-                endif 
-                write(*, *) '    n° of vectors:', k+1, 'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_rsp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_rsp')
             info = -1
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator did not converge'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator did not converge'
-                endif
-                write(*, *) '    maximum n° of vectors reached: ', nsteps+1,'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
         endif
 
         return
@@ -492,13 +457,11 @@ contains
         ! ----- Internal variables -----
         real(sp) :: tol
         integer :: kdim
-        logical :: verbose
 
         tol = rtol_sp
         kdim = 30
-        verbose = .false.
 
-        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rsp')
 
         return
@@ -570,7 +533,7 @@ contains
         return
     end subroutine expm_rdp
 
-    subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_rdp), intent(in) :: A
@@ -585,8 +548,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -602,12 +563,11 @@ contains
         real(dp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
     
         ! Deals with optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps
 
@@ -670,28 +630,18 @@ contains
 
         if (err_est <= tol) then
             info = kp
-            if (verbose) then
-                write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
-                write(output_unit, *) "     n° of vectors     :", kp
-                write(output_unit, *) "     Estimated error   : ||err_est||_2 =", err_est
-                write(output_unit, *) "     Desired tolerance :           tol =", tol
-                write(output_unit, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_rdp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_rdp')
             info = -1
-            if (verbose) then
-                write(output_unit, *) 'Arnoldi-based approxmation of the exp. propagator did not converge'
-                write(output_unit, *) '    Maximum n° of vectors reached: ', nk + 1
-                write(output_unit, *) '    Estimated error              :   ||err_est||_2 = ', err_est
-                write(output_unit, *) '    Desired tolerance            :           tol = ', tol
-                write(output_unit, *)
-            endif
         endif
 
         return
     end subroutine kexpm_vec_rdp
 
-    subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_rdp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_rdp), intent(in) :: A
@@ -706,8 +656,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose ?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -724,15 +672,14 @@ contains
         real(dp) :: err_est
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
 
         ! Determine block size.
         p = size(B)
 
         ! Deals with the optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
         
@@ -772,7 +719,6 @@ contains
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
                 call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rdp')
-
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -814,30 +760,12 @@ contains
 
         if (err_est .le. tol) then
             info = kpp
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator converged'
-                endif 
-                write(*, *) '    n° of vectors:', k+1, 'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_rdp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_rdp')
             info = -1
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator did not converge'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator did not converge'
-                endif
-                write(*, *) '    maximum n° of vectors reached: ', nsteps+1,'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
         endif
 
         return
@@ -860,13 +788,11 @@ contains
         ! ----- Internal variables -----
         real(dp) :: tol
         integer :: kdim
-        logical :: verbose
 
         tol = rtol_dp
         kdim = 30
-        verbose = .false.
 
-        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rdp')
 
         return
@@ -938,7 +864,7 @@ contains
         return
     end subroutine expm_csp
 
-    subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_csp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_csp), intent(in) :: A
@@ -953,8 +879,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -970,12 +894,11 @@ contains
         real(sp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
     
         ! Deals with optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps
 
@@ -1038,28 +961,18 @@ contains
 
         if (err_est <= tol) then
             info = kp
-            if (verbose) then
-                write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
-                write(output_unit, *) "     n° of vectors     :", kp
-                write(output_unit, *) "     Estimated error   : ||err_est||_2 =", err_est
-                write(output_unit, *) "     Desired tolerance :           tol =", tol
-                write(output_unit, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_csp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_csp')
             info = -1
-            if (verbose) then
-                write(output_unit, *) 'Arnoldi-based approxmation of the exp. propagator did not converge'
-                write(output_unit, *) '    Maximum n° of vectors reached: ', nk + 1
-                write(output_unit, *) '    Estimated error              :   ||err_est||_2 = ', err_est
-                write(output_unit, *) '    Desired tolerance            :           tol = ', tol
-                write(output_unit, *)
-            endif
         endif
 
         return
     end subroutine kexpm_vec_csp
 
-    subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_csp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_csp), intent(in) :: A
@@ -1074,8 +987,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose ?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -1092,15 +1003,14 @@ contains
         real(sp) :: err_est
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
 
         ! Determine block size.
         p = size(B)
 
         ! Deals with the optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
         
@@ -1140,7 +1050,6 @@ contains
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
                 call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_csp')
-
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -1182,30 +1091,12 @@ contains
 
         if (err_est .le. tol) then
             info = kpp
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator converged'
-                endif 
-                write(*, *) '    n° of vectors:', k+1, 'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_csp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_csp')
             info = -1
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator did not converge'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator did not converge'
-                endif
-                write(*, *) '    maximum n° of vectors reached: ', nsteps+1,'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
         endif
 
         return
@@ -1228,13 +1119,11 @@ contains
         ! ----- Internal variables -----
         real(sp) :: tol
         integer :: kdim
-        logical :: verbose
 
         tol = rtol_sp
         kdim = 30
-        verbose = .false.
 
-        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_csp')
 
         return
@@ -1306,7 +1195,7 @@ contains
         return
     end subroutine expm_cdp
 
-    subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_cdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_cdp), intent(in) :: A
@@ -1321,8 +1210,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -1338,12 +1225,11 @@ contains
         real(dp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
     
         ! Deals with optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps
 
@@ -1406,28 +1292,18 @@ contains
 
         if (err_est <= tol) then
             info = kp
-            if (verbose) then
-                write(output_unit, *) "Arnoldi-based approximation of the exp. propagator converged!"
-                write(output_unit, *) "     n° of vectors     :", kp
-                write(output_unit, *) "     Estimated error   : ||err_est||_2 =", err_est
-                write(output_unit, *) "     Desired tolerance :           tol =", tol
-                write(output_unit, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_cdp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_cdp')
             info = -1
-            if (verbose) then
-                write(output_unit, *) 'Arnoldi-based approxmation of the exp. propagator did not converge'
-                write(output_unit, *) '    Maximum n° of vectors reached: ', nk + 1
-                write(output_unit, *) '    Estimated error              :   ||err_est||_2 = ', err_est
-                write(output_unit, *) '    Desired tolerance            :           tol = ', tol
-                write(output_unit, *)
-            endif
         endif
 
         return
     end subroutine kexpm_vec_cdp
 
-    subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, verbosity, kdim)
+    subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_cdp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_cdp), intent(in) :: A
@@ -1442,8 +1318,6 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose ?
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -1460,15 +1334,14 @@ contains
         real(dp) :: err_est
         ! Optional arguments.
         logical :: transpose
-        logical :: verbose
         integer :: nsteps
+        character(len=256) :: msg
 
         ! Determine block size.
         p = size(B)
 
         ! Deals with the optional args.
         transpose = optval(trans, .false.)
-        verbose   = optval(verbosity, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
         
@@ -1508,7 +1381,6 @@ contains
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
                 call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_cdp')
-
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -1550,30 +1422,12 @@ contains
 
         if (err_est .le. tol) then
             info = kpp
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator converged'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator converged'
-                endif 
-                write(*, *) '    n° of vectors:', k+1, 'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_cdp')
         else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_cdp')
             info = -1
-            if (verbose) then
-                if (p.eq.1) then
-                    write(*, *) 'Arnoldi approxmation of the action of the exp. propagator did not converge'
-                else
-                    write(*, *) 'Block Arnoldi approxmation of the action of the exp. propagator did not converge'
-                endif
-                write(*, *) '    maximum n° of vectors reached: ', nsteps+1,'per input vector, total:', kpp
-                write(*, *) '    estimated error:   ||err_est||_2 = ', err_est
-                write(*, *) '    desired tolerance:           tol = ', tol
-                write(*, *)
-            endif
         endif
 
         return
@@ -1596,13 +1450,11 @@ contains
         ! ----- Internal variables -----
         real(dp) :: tol
         integer :: kdim
-        logical :: verbose
 
         tol = rtol_dp
         kdim = 30
-        verbose = .false.
 
-        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, verbosity=verbose, kdim=kdim)
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_cdp')
 
         return
