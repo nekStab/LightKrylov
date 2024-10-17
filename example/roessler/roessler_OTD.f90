@@ -3,7 +3,7 @@ module Roessler_OTD
    use stdlib_stats_distribution_normal, only: normal => rvs_normal
    use stdlib_optval, only: optval
    use stdlib_sorting, only : sort
-   use stdlib_linalg, only: eigvals, svdvals, eye
+   use stdlib_linalg, only: eig, svdvals, eye
    ! RKLIB module for time integration.
    use rklib_module
    ! LightKrylov for linear algebra.
@@ -142,23 +142,23 @@ contains
       real(kind=wp)  , dimension(:), intent(out) :: f
       ! internal
       real(kind=wp)  , dimension(npts)   :: bf
-      real(kind=wp)  , dimension(npts,r) :: u, Lu, fp
+      real(kind=wp)  , dimension(npts,r) :: q, Lq, fp
       real(kind=wp)  , dimension(r,r)    :: Lr, Phi
       integer :: i, j
    
       bf = x(:npts)
-      u = reshape(x(npts+1:(r+1)*npts), shape(u))
+      q = reshape(x(npts+1:(r+1)*npts), shape(q))
    
       call    nonlinear_roessler(        bf, f(:npts))
       do i = 1, r
-         call linear_roessler   (u(:,i), bf, Lu(:,i))
+         call linear_roessler   (q(:,i), bf, Lq(:,i))
       end do
       ! build reduced operator and rotation matrix
       Lr = 0.0_wp
       Phi = 0.0_wp
       do i = 1, r
          do j = 1, r
-            Lr(i,j) = dot_product(u(:,i), Lu(:,j))
+            Lr(i,j) = dot_product(q(:,i), Lq(:,j))
          end do
          do j = i+1, r
             Phi(i,j) =  Lr(i, j)
@@ -166,7 +166,7 @@ contains
          enddo
       end do
       ! Construct forcing and add the rhs
-      fp = Lu - matmul(u, Lr - Phi)
+      fp = Lq - matmul(q, Lr - Phi)
       f(npts+1:(r+1)*npts) = reshape(fp, [size(fp)])
       ! Construct dFTLE(i)/dt = Lr(i,i)
       do i = 1, r
@@ -250,7 +250,7 @@ contains
       integer, parameter :: ndof = npts*(r+1) + r
 
       ! Initialize integrator.
-      call OTD_roessler%initialize(n=ndof, f=OTD_rhs, report=OTD_report_file, report_rate=1)
+      call OTD_roessler%initialize(n=ndof, f=OTD_rhs, report=OTD_report_file, report_rate=20)
       
       ! Save IC
       call get_pos(bf, bf_bkp)
@@ -331,34 +331,48 @@ contains
       real(wp), dimension(:), intent(in)  :: x
       
       ! internal
-      real(wp), dimension(npts)   :: bf
-      real(wp), dimension(npts,r) :: u, Lu
-      real(wp), dimension(r,r)    :: Lr, uTu
-      real(wp), dimension(r)      :: FTLE
-      real(wp), allocatable       :: s(:)
-      integer                     :: i, j, iunit
+      real(wp), dimension(npts)      :: bf
+      real(wp), dimension(npts,r)    :: q, Lq
+      real(wp), dimension(r,r)       :: Lr, qTq
+      real(wp), dimension(r)         :: FTLE
+      real(wp), allocatable          :: s(:)
+      complex(wp), dimension(r)      :: l
+      complex(wp), dimension(r,r)    :: v
+      complex(wp), dimension(npts,r) :: u
+      integer                        :: i, j, iunit
+      logical                        :: is_cc
 
       bf   = x(:npts)
-      u    = reshape(x(npts+1:(r+1)*npts), shape(u))
+      q    = reshape(x(npts+1:(r+1)*npts), shape(q))
       FTLE = x(npts*(r+1)+1:)/t
 
       do i = 1, r
-         call linear_roessler   (u(:,i), bf, Lu(:,i))
+         call linear_roessler   (q(:,i), bf, Lq(:,i))
       end do
       ! build reduced operator
       Lr = 0.0_wp
-      uTu = 0.0_wp
+      qTq = 0.0_wp
       do i = 1, r
          do j = 1, r
-            Lr(i,j)  = dot_product(Lu(:,i), u(:,j))
-            uTu(i,j) = dot_product( u(:,i), u(:,j))
+            Lr(i,j)  = dot_product(Lq(:,i), q(:,j))
+            qTq(i,j) = dot_product( q(:,i), q(:,j))
          end do
       end do
+      ! spectral analysis
       s = svdvals(Lr)
+      call eig(Lr, l, right=v)
+      u = matmul(q, v)
+      is_cc = .false.
+      if (abs(aimag(l(1))) > 0.0_wp) is_cc = .true.
 
       open(newunit=iunit, file=file, status='old', action='write', position='append')
-      write(iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, u, s(1), real(eigvals(Lr)), FTLE
-      write(iunit, '(*(E16.9,1X))') ( uTu(i, i) - 1, i = 1, r), (( uTu(i, j), j = 1, i-1), i = 2, r)
+      write(iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, q
+      if (is_cc) then
+         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 1, s(1), real(l(1)), aimag(l(1)), real(u(:,1)), aimag(u(:,1))
+      else
+         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 0, s(1), real(l), real(u)
+      endif
+      write(iunit, '(*(E16.9,1X))') FTLE, ( qTq(i, i) - 1, i = 1, r), (( qTq(i, j), j = 1, i-1), i = 2, r)
       close(iunit)
 
       return
@@ -390,28 +404,32 @@ contains
       integer :: i, j, iunit
       open(newunit=iunit, file=file, status='new', action='write')
       ! time, baseflow
-      write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'x_BF', 'y_BF', 'z_BF'
+      write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'BF_x', 'BF_y', 'BF_z'
       ! basis vectors
       do i = 1, r 
-         write(iunit,'(*(A15,I1,1X))', ADVANCE='NO') 'xp_', i, 'yp_', i, 'zp_', i
+         write(iunit,'(*(A13,I1,A2,1X))', ADVANCE='NO') 'q', i, '_x', 'q', i, '_y', 'q', i, '_z'
       end do
       ! instantaneous numerical abscissa of the reduced operator
-      write(iunit,'(A16,1X)', ADVANCE='NO') 'sigma_1'
+      write(iunit,'(A2,1X,A16,1X)', ADVANCE='NO') , 'cc', 'sigma_1'
       ! instantaneous eigenvalues of the reduced operator
       do i = 1, r
-         write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'lambda_', i
+         write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'l_', i
       end do
-      ! instantaneous FLTE
+      ! instantaneous projected eigenvectors of the reduced operator
+      do i = 1, r
+         write(iunit,'(*(A13,I1,A2,1X))', ADVANCE='NO') 'u', i, '_x', 'u', i, '_y', 'u', i, '_z'
+      end do
+      ! instantaneous FLTEs
       do i = 1, r
          write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'FTLE_', i
       end do
       ! orthonormality of the basis vectors
       do i = 1, r
-         write(iunit,'(A7,I1,A3,I0,A3,1X)', ADVANCE='NO') '<u_', i, ',u_', i, '> - 1'
+         write(iunit,'(A7,I1,A2,I1,A5,1X)', ADVANCE='NO') '<q', i, ',q', i, '> - 1'
       end do
       do i = 2, r
          do j = 1, i-1
-            write(iunit,'(A9,I1,A3,I0,A1,1X)', ADVANCE='NO') '<u_', i, ',u_', j, '>'
+            write(iunit,'(A11,I1,A2,I1,A1,1X)', ADVANCE='NO') '<q', j, ',q', i, '>'
          end do
       end do
       write(iunit,*) ''; close(iunit)

@@ -165,6 +165,7 @@ program demo
    end do
    eval = 0.0_wp
    eval(1:r) = eigvals(Lr)
+   print '(*(A16,1X))', ' ', 'lambda_1', 'lambda_2'
    print '(A16,1X,*(F16.9,1X))', 'Reference   ', EV_ref
    print *, ''
    print '(A10,F6.3,1X,*(F16.9,1X))', 'OTD:  t=', Tend, eval(1:r)
@@ -185,11 +186,32 @@ program demo
    Tend = 30.0_wp*bf%T
    t_FTLE = bf%T
    call write_header(); call write_header_LE()
-   print '(A16,1X,*(F16.9,1X))', 'Reference   ', LE_ref
-   print *, ''
+   print '(*(A16,1X))', ' ', 'LE_1', 'LE_2'
+   print '(A16,1X,2(F16.9,1X),A16,1X,F16.9)', 'Reference   ', LE_ref, 'Period T=', bf%T
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.true.)
    call rename(file,    'example/roessler/PO_OTD.txt')
    call rename(file_LE, 'example/roessler/PO_LE.txt')
+   print *, ''
+
+   print *, ''
+   print *, '########################################################################################'
+   print *, '#                  Optimally Time-Dependent (OTD) modes on Route to Chaos              #'
+   print *, '########################################################################################'
+   print *, ''
+
+   ! We use the old converged basis
+   call orthonormalize_basis(OTD_in)
+
+   ! We need long enough for the orbit to return to the chaotic attractor
+   Tend = 60.0_wp*bf%T
+   t_FTLE = bf%T
+   call write_header(); call write_header_LE()
+   print '(*(A16,1X))', ' ', 'FTLE_1', 'FTLE_2'
+   print '(A16,1X,*(F16.9,1X))', 'Reference   ', LE_ref
+   print *, ''
+   call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.false.) ! we do not reset the bf!
+   call rename(file,    'example/roessler/PO-chaos_OTD.txt')
+   call rename(file_LE, 'example/roessler/PO-chaos_LE.txt')
    print *, ''
    
 end program demo
