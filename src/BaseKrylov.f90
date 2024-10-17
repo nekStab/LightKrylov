@@ -1273,8 +1273,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='qr_with_pivoting_rsp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
@@ -1518,8 +1520,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='qr_with_pivoting_rdp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
@@ -1763,8 +1767,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='qr_with_pivoting_csp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
                 enddo
                 info = j
@@ -2008,8 +2014,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='qr_with_pivoting_cdp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
                 enddo
                 info = j

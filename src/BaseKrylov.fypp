@@ -477,8 +477,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_${type[0]}$${kind}$ / beta)
                 enddo
                 info = j
