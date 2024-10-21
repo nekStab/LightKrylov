@@ -107,6 +107,39 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface linear_combination
+        !!  Given a set of extended `abstract_vectors` and coefficients, return the corresponding
+        !!  linear combinations.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods for computing linear combinations of a set of extended
+        !!  `abstract_vectors`. Depending on its input, it either computes
+        !!
+        !!  \[
+        !!      \mathbf{y} = \sum_{i=1}^n \alpha_i \mathbf{x}_i,
+        !!  \]
+        !!
+        !!  i.e. a single vector, or
+        !!
+        !!  \[
+        !!      \mathbf{y}_j = \sum_{i=1}^n \alpha_{ij} \mathbf{x}_i,
+        !!  \]
+        !!
+        !!  i.e. a set of vectors of the same type as \( \mathbf{X} \).
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      real(dp), dimension(m, n)           :: B
+        !!      type(my_real_vector)                :: Y
+        !!
+        !!      ! ... Whatever your code is doing ...
+        !!
+        !!      call linear_combination(Y, X, B)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
         #:for kind, type in RC_KINDS_TYPES
         module procedure linear_combination_vector_${type[0]}$${kind}$
         module procedure linear_combination_matrix_${type[0]}$${kind}$
