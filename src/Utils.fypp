@@ -525,13 +525,13 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     #:if type[0] == "r"
-    real(${kind}$) function log2_${type[0]}$${kind}$(x) result(y)
+    pure real(${kind}$) function log2_${type[0]}$${kind}$(x) result(y)
         ${type}$, intent(in) :: x
         y = log(x) / log(2.0_${kind}$)
     end function
     #:endif
 
-    real(${kind}$) function norml_${type[0]}$${kind}$(A) result(norm)
+    pure real(${kind}$) function norml_${type[0]}$${kind}$(A) result(norm)
         ${type}$, intent(in) :: A(:, :)
         integer :: i, n
         real(${kind}$) :: row_sum

@@ -1299,12 +1299,12 @@ contains
     !-----     MISCELLANEOUS     -----
     !---------------------------------
 
-    real(sp) function log2_rsp(x) result(y)
+    pure real(sp) function log2_rsp(x) result(y)
         real(sp), intent(in) :: x
         y = log(x) / log(2.0_sp)
     end function
 
-    real(sp) function norml_rsp(A) result(norm)
+    pure real(sp) function norml_rsp(A) result(norm)
         real(sp), intent(in) :: A(:, :)
         integer :: i, n
         real(sp) :: row_sum
@@ -1317,12 +1317,12 @@ contains
         enddo
     end function
 
-    real(dp) function log2_rdp(x) result(y)
+    pure real(dp) function log2_rdp(x) result(y)
         real(dp), intent(in) :: x
         y = log(x) / log(2.0_dp)
     end function
 
-    real(dp) function norml_rdp(A) result(norm)
+    pure real(dp) function norml_rdp(A) result(norm)
         real(dp), intent(in) :: A(:, :)
         integer :: i, n
         real(dp) :: row_sum
@@ -1336,7 +1336,7 @@ contains
     end function
 
 
-    real(sp) function norml_csp(A) result(norm)
+    pure real(sp) function norml_csp(A) result(norm)
         complex(sp), intent(in) :: A(:, :)
         integer :: i, n
         real(sp) :: row_sum
@@ -1350,7 +1350,7 @@ contains
     end function
 
 
-    real(dp) function norml_cdp(A) result(norm)
+    pure real(dp) function norml_cdp(A) result(norm)
         complex(dp), intent(in) :: A(:, :)
         integer :: i, n
         real(dp) :: row_sum
