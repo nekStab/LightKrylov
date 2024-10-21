@@ -612,16 +612,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_${kind}$
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_${kind}$
-        end if
+        rtol_ = optval(rtol, rtol_${kind}$)
+        atol_ = optval(atol, atol_${kind}$)
         if (present(options)) then
             select type (options)
             type is (gmres_${kind}$_opts)
@@ -792,16 +784,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_${kind}$
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_${kind}$
-        end if
+        rtol_ = optval(rtol, rtol_${kind}$)
+        atol_ = optval(atol, atol_${kind}$)
         if (present(options)) then
             opts = options
         else

@@ -1752,16 +1752,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_sp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_sp
-        end if
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
         if (present(options)) then
             select type (options)
             type is (gmres_sp_opts)
@@ -1931,16 +1923,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_dp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_dp
-        end if
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
         if (present(options)) then
             select type (options)
             type is (gmres_dp_opts)
@@ -2110,16 +2094,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_sp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_sp
-        end if
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
         if (present(options)) then
             select type (options)
             type is (gmres_sp_opts)
@@ -2289,16 +2265,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_dp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_dp
-        end if
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
         if (present(options)) then
             select type (options)
             type is (gmres_dp_opts)
@@ -2463,16 +2431,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_sp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_sp
-        end if
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
         if (present(options)) then
             opts = options
         else
@@ -2567,16 +2527,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_dp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_dp
-        end if
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
         if (present(options)) then
             opts = options
         else
@@ -2671,16 +2623,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_sp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_sp
-        end if
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
         if (present(options)) then
             opts = options
         else
@@ -2775,16 +2719,8 @@ contains
         character(len=256) :: msg
 
         ! Deals with the optional args.
-        if (present(rtol)) then
-            rtol_ = rtol
-        else
-            rtol_ = rtol_dp
-        end if
-        if (present(atol)) then
-            atol_ = atol
-        else
-            atol_ = atol_dp
-        end if
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
         if (present(options)) then
             opts = options
         else
