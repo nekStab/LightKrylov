@@ -190,6 +190,18 @@ module lightkrylov_AbstractVectors
     interface zero_basis
         !!  This interface provides methods to zero-out a collection of `abstract_vector` `X`.
         !!  It is a simple wrapper around `X(i)%zero()`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call zero_basis(X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
         module procedure zero_basis_rsp
         module procedure zero_basis_rdp
         module procedure zero_basis_csp
@@ -199,6 +211,19 @@ module lightkrylov_AbstractVectors
     interface copy_basis
         !!  This interface provides methods to copy an array `X` of `abstract_vector` into
         !!  another array `Y`. Note that `Y` needs to be pre-allocated.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call copy_basis(Y, X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
         module procedure copy_basis_rsp
         module procedure copy_basis_rdp
         module procedure copy_basis_csp
@@ -208,6 +233,19 @@ module lightkrylov_AbstractVectors
     interface rand_basis
         !!  This interface provides methods to create an array `X` of random `abstract_vector`.
         !!  It is a simple wrapper around `X(i)%rand(ifnorm)`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      logical                             :: ifnorm = .true.
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call rand_basis(X, ifnorm)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
         module procedure rand_basis_rsp
         module procedure rand_basis_rdp
         module procedure rand_basis_csp
