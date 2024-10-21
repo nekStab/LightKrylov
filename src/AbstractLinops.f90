@@ -8,14 +8,19 @@ module lightkrylov_AbstractLinops
     character(len=128), parameter :: this_module = 'Lightkrylov_AbstractLinops'
 
     type, abstract, public :: abstract_linop
+        !!  Base type to define an abstract linear operator. All other types defined in
+        !!  `LightKrylov` derive from this fundamental one.
+        !!
+        !!  @warning
+        !!  Users should not extend this abstract class to define their own types.
+        !!  @endwarning
     end type abstract_linop
 
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_rsp
-        !! Base type to define an abstract linear operator. All other types defined in
-        !! `LightKrylov` derive from this fundamental one.
+        !! Base type to extend in order to define a real(sp)-valued linear operator.
     contains
         private
         procedure(abstract_matvec_rsp), pass(self), deferred, public :: matvec
@@ -57,8 +62,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract real(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_rdp
-        !! Base type to define an abstract linear operator. All other types defined in
-        !! `LightKrylov` derive from this fundamental one.
+        !! Base type to extend in order to define a real(dp)-valued linear operator.
     contains
         private
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: matvec
@@ -100,8 +104,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract complex(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_csp
-        !! Base type to define an abstract linear operator. All other types defined in
-        !! `LightKrylov` derive from this fundamental one.
+        !! Base type to extend in order to define a complex(sp)-valued linear operator.
     contains
         private
         procedure(abstract_matvec_csp), pass(self), deferred, public :: matvec
@@ -143,8 +146,7 @@ module lightkrylov_AbstractLinops
     !-----     Definition of an abstract complex(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop), public :: abstract_linop_cdp
-        !! Base type to define an abstract linear operator. All other types defined in
-        !! `LightKrylov` derive from this fundamental one.
+        !! Base type to extend in order to define a complex(dp)-valued linear operator.
     contains
         private
         procedure(abstract_matvec_cdp), pass(self), deferred, public :: matvec
