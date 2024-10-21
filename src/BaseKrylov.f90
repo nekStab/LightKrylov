@@ -291,7 +291,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_rsp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rsp')
          beta = proj_coefficients
       end if
       
@@ -351,7 +351,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_rsp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rsp')
          beta = proj_coefficients
       end if
       
@@ -386,18 +386,18 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
                         & procedure='DGS_vector_against_basis_rsp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
                         & procedure='DGS_vector_against_basis_rsp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_rsp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rsp')
          beta = proj_coefficients
       end if
 
@@ -431,16 +431,18 @@ contains
       ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rsp, first pass')
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_rsp, first&
+          & pass')
       ! second pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rsp, second pass')
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_rsp, second&
+          & pass')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_rsp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rsp')
          beta = proj_coefficients
       end if
 
@@ -536,7 +538,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_rdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rdp')
          beta = proj_coefficients
       end if
       
@@ -596,7 +598,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_rdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rdp')
          beta = proj_coefficients
       end if
       
@@ -631,18 +633,18 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
                         & procedure='DGS_vector_against_basis_rdp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
                         & procedure='DGS_vector_against_basis_rdp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_rdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rdp')
          beta = proj_coefficients
       end if
 
@@ -676,16 +678,18 @@ contains
       ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rdp, first pass')
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_rdp, first&
+          & pass')
       ! second pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_rdp, second pass')
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_rdp, second&
+          & pass')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_rdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rdp')
          beta = proj_coefficients
       end if
 
@@ -781,7 +785,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_csp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_csp')
          beta = proj_coefficients
       end if
       
@@ -841,7 +845,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_csp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_csp')
          beta = proj_coefficients
       end if
       
@@ -876,18 +880,18 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
                         & procedure='DGS_vector_against_basis_csp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
                         & procedure='DGS_vector_against_basis_csp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_csp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_csp')
          beta = proj_coefficients
       end if
 
@@ -921,16 +925,18 @@ contains
       ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_csp, first pass')
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_csp, first&
+          & pass')
       ! second pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_csp, second pass')
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_csp, second&
+          & pass')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_csp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_csp')
          beta = proj_coefficients
       end if
 
@@ -1026,7 +1032,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_vector_against_basis_cdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_cdp')
          beta = proj_coefficients
       end if
       
@@ -1086,7 +1092,7 @@ contains
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'orthogonalize_basis_against_basis_cdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_cdp')
          beta = proj_coefficients
       end if
       
@@ -1121,18 +1127,18 @@ contains
       ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
                         & procedure='DGS_vector_against_basis_cdp, pass 1')
       ! second pass
       call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, &
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
                         & procedure='DGS_vector_against_basis_cdp, pass 2')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_vector_against_basis_cdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_cdp')
          beta = proj_coefficients
       end if
 
@@ -1166,16 +1172,18 @@ contains
       ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
       ! first pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_cdp, first pass')
+      call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_cdp, first&
+          & pass')
       ! second pass
       call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-      call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='DGS_basis_against_basis_cdp, second pass')
+      call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_cdp, second&
+          & pass')
       ! combine passes
       proj_coefficients = proj_coefficients + wrk
 
       if (present(beta)) then
          ! check size
-         call assert_shape(beta, shape(proj_coefficients), 'DGS_basis_against_basis_cdp', 'beta')
+         call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_cdp')
          beta = proj_coefficients
       end if
 
@@ -1186,16 +1194,13 @@ contains
     !-----     QR FACTORIZATION     -----
     !------------------------------------
 
-    subroutine qr_no_pivoting_rsp(Q, R, info, verbosity, tol)
+    subroutine qr_no_pivoting_rsp(Q, R, info, tol)
         class(abstract_vector_rsp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         real(sp), intent(out) :: R(:, :)
         !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical                       :: verbose
         real(sp), optional, intent(in) :: tol
         !! Tolerance to determine colinearity.
         real(sp)                       :: tolerance
@@ -1206,7 +1211,6 @@ contains
         integer :: j
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
         info = 0 ; R = zero_rsp ; beta = zero_rsp
@@ -1222,10 +1226,6 @@ contains
 
             ! Check for breakdown.
             if (abs(alpha) < tolerance) then
-                if(verbose) then
-                    write(output_unit, *) "INFO: Colinear columns detected."
-                    write(output_unit, *) "      (j, alpha) = (", j, ", ", alpha, ")"
-                endif
                 info = j
                 R(j, j) = zero_rsp ; call Q(j)%zero()
             else
@@ -1236,7 +1236,7 @@ contains
         return
     end subroutine qr_no_pivoting_rsp
 
-    subroutine qr_with_pivoting_rsp(Q, R, perm, info, verbosity, tol)
+    subroutine qr_with_pivoting_rsp(Q, R, perm, info, tol)
         class(abstract_vector_rsp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         real(sp), intent(out) :: R(:, :)
@@ -1245,9 +1245,6 @@ contains
         !! Permutation matrix.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical :: verbose
         real(sp), optional, intent(in) :: tol
 
         !! Tolerance to detect colinearity.
@@ -1263,7 +1260,6 @@ contains
         R = zero_rsp ; Rii = zero_rsp
         
         ! Deals with the optional arguments.
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
         ! Initialize diagonal entries.
@@ -1277,8 +1273,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_rsp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
@@ -1443,16 +1441,13 @@ contains
     end subroutine apply_inverse_permutation_matrix_array_rsp
 
 
-    subroutine qr_no_pivoting_rdp(Q, R, info, verbosity, tol)
+    subroutine qr_no_pivoting_rdp(Q, R, info, tol)
         class(abstract_vector_rdp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         real(dp), intent(out) :: R(:, :)
         !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical                       :: verbose
         real(dp), optional, intent(in) :: tol
         !! Tolerance to determine colinearity.
         real(dp)                       :: tolerance
@@ -1463,7 +1458,6 @@ contains
         integer :: j
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
         info = 0 ; R = zero_rdp ; beta = zero_rdp
@@ -1479,10 +1473,6 @@ contains
 
             ! Check for breakdown.
             if (abs(alpha) < tolerance) then
-                if(verbose) then
-                    write(output_unit, *) "INFO: Colinear columns detected."
-                    write(output_unit, *) "      (j, alpha) = (", j, ", ", alpha, ")"
-                endif
                 info = j
                 R(j, j) = zero_rdp ; call Q(j)%zero()
             else
@@ -1493,7 +1483,7 @@ contains
         return
     end subroutine qr_no_pivoting_rdp
 
-    subroutine qr_with_pivoting_rdp(Q, R, perm, info, verbosity, tol)
+    subroutine qr_with_pivoting_rdp(Q, R, perm, info, tol)
         class(abstract_vector_rdp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         real(dp), intent(out) :: R(:, :)
@@ -1502,9 +1492,6 @@ contains
         !! Permutation matrix.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical :: verbose
         real(dp), optional, intent(in) :: tol
 
         !! Tolerance to detect colinearity.
@@ -1520,7 +1507,6 @@ contains
         R = zero_rdp ; Rii = zero_rdp
         
         ! Deals with the optional arguments.
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
         ! Initialize diagonal entries.
@@ -1534,8 +1520,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_rdp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
@@ -1700,16 +1688,13 @@ contains
     end subroutine apply_inverse_permutation_matrix_array_rdp
 
 
-    subroutine qr_no_pivoting_csp(Q, R, info, verbosity, tol)
+    subroutine qr_no_pivoting_csp(Q, R, info, tol)
         class(abstract_vector_csp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         complex(sp), intent(out) :: R(:, :)
         !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical                       :: verbose
         real(sp), optional, intent(in) :: tol
         !! Tolerance to determine colinearity.
         real(sp)                       :: tolerance
@@ -1720,7 +1705,6 @@ contains
         integer :: j
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
         info = 0 ; R = zero_rsp ; beta = zero_rsp
@@ -1736,10 +1720,6 @@ contains
 
             ! Check for breakdown.
             if (abs(alpha) < tolerance) then
-                if(verbose) then
-                    write(output_unit, *) "INFO: Colinear columns detected."
-                    write(output_unit, *) "      (j, alpha) = (", j, ", ", alpha, ")"
-                endif
                 info = j
                 R(j, j) = zero_rsp ; call Q(j)%zero()
             else
@@ -1750,7 +1730,7 @@ contains
         return
     end subroutine qr_no_pivoting_csp
 
-    subroutine qr_with_pivoting_csp(Q, R, perm, info, verbosity, tol)
+    subroutine qr_with_pivoting_csp(Q, R, perm, info, tol)
         class(abstract_vector_csp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         complex(sp), intent(out) :: R(:, :)
@@ -1759,9 +1739,6 @@ contains
         !! Permutation matrix.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical :: verbose
         real(sp), optional, intent(in) :: tol
 
         !! Tolerance to detect colinearity.
@@ -1777,7 +1754,6 @@ contains
         R = zero_rsp ; Rii = zero_rsp
         
         ! Deals with the optional arguments.
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_sp)
 
         ! Initialize diagonal entries.
@@ -1791,8 +1767,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_csp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
                 enddo
                 info = j
@@ -1957,16 +1935,13 @@ contains
     end subroutine apply_inverse_permutation_matrix_array_csp
 
 
-    subroutine qr_no_pivoting_cdp(Q, R, info, verbosity, tol)
+    subroutine qr_no_pivoting_cdp(Q, R, info, tol)
         class(abstract_vector_cdp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         complex(dp), intent(out) :: R(:, :)
         !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical                       :: verbose
         real(dp), optional, intent(in) :: tol
         !! Tolerance to determine colinearity.
         real(dp)                       :: tolerance
@@ -1977,7 +1952,6 @@ contains
         integer :: j
 
         ! Deals with the optional args.
-        verbose   = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
         info = 0 ; R = zero_rdp ; beta = zero_rdp
@@ -1993,10 +1967,6 @@ contains
 
             ! Check for breakdown.
             if (abs(alpha) < tolerance) then
-                if(verbose) then
-                    write(output_unit, *) "INFO: Colinear columns detected."
-                    write(output_unit, *) "      (j, alpha) = (", j, ", ", alpha, ")"
-                endif
                 info = j
                 R(j, j) = zero_rdp ; call Q(j)%zero()
             else
@@ -2007,7 +1977,7 @@ contains
         return
     end subroutine qr_no_pivoting_cdp
 
-    subroutine qr_with_pivoting_cdp(Q, R, perm, info, verbosity, tol)
+    subroutine qr_with_pivoting_cdp(Q, R, perm, info, tol)
         class(abstract_vector_cdp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
         complex(dp), intent(out) :: R(:, :)
@@ -2016,9 +1986,6 @@ contains
         !! Permutation matrix.
         integer, intent(out) :: info
         !! Information flag.
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
-        logical :: verbose
         real(dp), optional, intent(in) :: tol
 
         !! Tolerance to detect colinearity.
@@ -2034,7 +2001,6 @@ contains
         R = zero_rdp ; Rii = zero_rdp
         
         ! Deals with the optional arguments.
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, rtol_dp)
 
         ! Initialize diagonal entries.
@@ -2048,8 +2014,10 @@ contains
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
                     call Q(i)%rand(.false.)
-                    call orthogonalize_against_basis(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='qr_with_pivoting_cdp')
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
+                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                    end if
                     beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
                 enddo
                 info = j
@@ -2219,7 +2187,7 @@ contains
     !-----     ARNOLDI FACTORIZATION     -----
     !-----------------------------------------
 
-    subroutine arnoldi_rsp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+    subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
         class(abstract_linop_rsp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -2232,8 +2200,6 @@ contains
         !! Starting index for the Arnoldi factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
         real(sp), optional, intent(in) :: tol
@@ -2243,7 +2209,7 @@ contains
 
         ! Internal variables.
         integer :: k_start, k_end, p
-        logical :: verbose, trans
+        logical :: trans
         real(sp) :: tolerance
         real(sp) :: beta
         real(sp), allocatable :: res(:)
@@ -2259,7 +2225,6 @@ contains
 
         ! Deal with the other optional args.
         k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        verbose   = optval(verbosity, .false.)
         tolerance = optval (tol, atol_sp)
         trans     = optval(transpose, .false.)
 
@@ -2307,7 +2272,7 @@ contains
         return
     end subroutine arnoldi_rsp
 
-    subroutine arnoldi_rdp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+    subroutine arnoldi_rdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rdp), intent(inout) :: X(:)
@@ -2320,8 +2285,6 @@ contains
         !! Starting index for the Arnoldi factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
         real(dp), optional, intent(in) :: tol
@@ -2331,7 +2294,7 @@ contains
 
         ! Internal variables.
         integer :: k_start, k_end, p
-        logical :: verbose, trans
+        logical :: trans
         real(dp) :: tolerance
         real(dp) :: beta
         real(dp), allocatable :: res(:)
@@ -2347,7 +2310,6 @@ contains
 
         ! Deal with the other optional args.
         k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        verbose   = optval(verbosity, .false.)
         tolerance = optval (tol, atol_dp)
         trans     = optval(transpose, .false.)
 
@@ -2395,7 +2357,7 @@ contains
         return
     end subroutine arnoldi_rdp
 
-    subroutine arnoldi_csp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+    subroutine arnoldi_csp(A, X, H, info, kstart, kend, tol, transpose, blksize)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_csp), intent(inout) :: X(:)
@@ -2408,8 +2370,6 @@ contains
         !! Starting index for the Arnoldi factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
         real(sp), optional, intent(in) :: tol
@@ -2419,7 +2379,7 @@ contains
 
         ! Internal variables.
         integer :: k_start, k_end, p
-        logical :: verbose, trans
+        logical :: trans
         real(sp) :: tolerance
         real(sp) :: beta
         complex(sp), allocatable :: res(:)
@@ -2435,7 +2395,6 @@ contains
 
         ! Deal with the other optional args.
         k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        verbose   = optval(verbosity, .false.)
         tolerance = optval (tol, atol_sp)
         trans     = optval(transpose, .false.)
 
@@ -2483,7 +2442,7 @@ contains
         return
     end subroutine arnoldi_csp
 
-    subroutine arnoldi_cdp(A, X, H, info, kstart, kend, verbosity, tol, transpose, blksize)
+    subroutine arnoldi_cdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_cdp), intent(inout) :: X(:)
@@ -2496,8 +2455,6 @@ contains
         !! Starting index for the Arnoldi factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control.
         logical, optional, intent(in) :: transpose
         !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
         real(dp), optional, intent(in) :: tol
@@ -2507,7 +2464,7 @@ contains
 
         ! Internal variables.
         integer :: k_start, k_end, p
-        logical :: verbose, trans
+        logical :: trans
         real(dp) :: tolerance
         real(dp) :: beta
         complex(dp), allocatable :: res(:)
@@ -2523,7 +2480,6 @@ contains
 
         ! Deal with the other optional args.
         k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        verbose   = optval(verbosity, .false.)
         tolerance = optval (tol, atol_dp)
         trans     = optval(transpose, .false.)
 
@@ -2577,7 +2533,7 @@ contains
     !-----     LANCZOS BIDIAGONALIZATION     -----
     !---------------------------------------------
 
-    subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
         class(abstract_linop_rsp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rsp), intent(inout) :: U(:)
@@ -2593,14 +2549,11 @@ contains
         !! Starting index for the Lanczos factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Lanczos factorization (default 1).
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control (default `.false.`)
         real(sp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(sp) :: tolerance
         real(sp) :: alpha, beta
         integer :: k, kdim
@@ -2614,7 +2567,6 @@ contains
         ! Deals with the optional args.
         k_start = optval(kstart, 1)
         k_end   = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_sp)
 
         ! Lanczos bidiagonalization.
@@ -2627,7 +2579,7 @@ contains
             
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rsp, first pass')
+                                    & procedure='lanczos_bidiagonalization_rsp, right basis')
             end if
 
             ! Normalization step.
@@ -2644,8 +2596,8 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rsp, second pass')
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
+                                    & procedure='lanczos_bidiagonalization_rsp, left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -2661,7 +2613,7 @@ contains
         return
     end subroutine lanczos_bidiagonalization_rsp
 
-    subroutine lanczos_bidiagonalization_rdp(A, U, V, B, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_bidiagonalization_rdp(A, U, V, B, info, kstart, kend, tol)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rdp), intent(inout) :: U(:)
@@ -2677,14 +2629,11 @@ contains
         !! Starting index for the Lanczos factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Lanczos factorization (default 1).
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control (default `.false.`)
         real(dp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(dp) :: tolerance
         real(dp) :: alpha, beta
         integer :: k, kdim
@@ -2698,7 +2647,6 @@ contains
         ! Deals with the optional args.
         k_start = optval(kstart, 1)
         k_end   = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_dp)
 
         ! Lanczos bidiagonalization.
@@ -2711,7 +2659,7 @@ contains
             
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rdp, first pass')
+                                    & procedure='lanczos_bidiagonalization_rdp, right basis')
             end if
 
             ! Normalization step.
@@ -2728,8 +2676,8 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rdp, second pass')
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
+                                    & procedure='lanczos_bidiagonalization_rdp, left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -2745,7 +2693,7 @@ contains
         return
     end subroutine lanczos_bidiagonalization_rdp
 
-    subroutine lanczos_bidiagonalization_csp(A, U, V, B, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_bidiagonalization_csp(A, U, V, B, info, kstart, kend, tol)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_csp), intent(inout) :: U(:)
@@ -2761,14 +2709,11 @@ contains
         !! Starting index for the Lanczos factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Lanczos factorization (default 1).
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control (default `.false.`)
         real(sp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(sp) :: tolerance
         complex(sp) :: alpha, beta
         integer :: k, kdim
@@ -2782,7 +2727,6 @@ contains
         ! Deals with the optional args.
         k_start = optval(kstart, 1)
         k_end   = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_sp)
 
         ! Lanczos bidiagonalization.
@@ -2795,7 +2739,7 @@ contains
             
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_csp, first pass')
+                                    & procedure='lanczos_bidiagonalization_csp, right basis')
             end if
 
             ! Normalization step.
@@ -2812,8 +2756,8 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_csp, second pass')
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
+                                    & procedure='lanczos_bidiagonalization_csp, left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -2829,7 +2773,7 @@ contains
         return
     end subroutine lanczos_bidiagonalization_csp
 
-    subroutine lanczos_bidiagonalization_cdp(A, U, V, B, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_bidiagonalization_cdp(A, U, V, B, info, kstart, kend, tol)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_cdp), intent(inout) :: U(:)
@@ -2845,14 +2789,11 @@ contains
         !! Starting index for the Lanczos factorization (default 1).
         integer, optional, intent(in) :: kend
         !! Final index for the Lanczos factorization (default 1).
-        logical, optional, intent(in) :: verbosity
-        !! Verbosity control (default `.false.`)
         real(dp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(dp) :: tolerance
         complex(dp) :: alpha, beta
         integer :: k, kdim
@@ -2866,7 +2807,6 @@ contains
         ! Deals with the optional args.
         k_start = optval(kstart, 1)
         k_end   = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_dp)
 
         ! Lanczos bidiagonalization.
@@ -2879,7 +2819,7 @@ contains
             
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_cdp, first pass')
+                                    & procedure='lanczos_bidiagonalization_cdp, right basis')
             end if
 
             ! Normalization step.
@@ -2896,8 +2836,8 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'orthogonalize_against_basis', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_cdp, second pass')
+            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
+                                    & procedure='lanczos_bidiagonalization_cdp, left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -2919,19 +2859,17 @@ contains
     !-----     LANCZOS TRIDIAGONALIZATION     -----
     !----------------------------------------------
     
-    subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
         class(abstract_sym_linop_rsp), intent(in) :: A
         class(abstract_vector_rsp), intent(inout) :: X(:)
         real(sp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
         integer, optional, intent(in) :: kstart
         integer, optional, intent(in) :: kend
-        logical, optional, intent(in) :: verbosity
         real(sp), optional, intent(in) :: tol
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(sp) :: tolerance
         real(sp) :: beta
         integer :: k, kdim
@@ -2940,7 +2878,6 @@ contains
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
         k_end = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_sp)
         info = 0
 
@@ -2984,24 +2921,22 @@ contains
 
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rsp')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_rsp')
 
         return
     end subroutine update_tridiag_matrix_rsp
 
-    subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, tol)
         class(abstract_sym_linop_rdp), intent(in) :: A
         class(abstract_vector_rdp), intent(inout) :: X(:)
         real(dp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
         integer, optional, intent(in) :: kstart
         integer, optional, intent(in) :: kend
-        logical, optional, intent(in) :: verbosity
         real(dp), optional, intent(in) :: tol
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(dp) :: tolerance
         real(dp) :: beta
         integer :: k, kdim
@@ -3010,7 +2945,6 @@ contains
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
         k_end = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_dp)
         info = 0
 
@@ -3054,24 +2988,22 @@ contains
 
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_rdp')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_rdp')
 
         return
     end subroutine update_tridiag_matrix_rdp
 
-    subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, tol)
         class(abstract_hermitian_linop_csp), intent(in) :: A
         class(abstract_vector_csp), intent(inout) :: X(:)
         complex(sp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
         integer, optional, intent(in) :: kstart
         integer, optional, intent(in) :: kend
-        logical, optional, intent(in) :: verbosity
         real(sp), optional, intent(in) :: tol
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(sp) :: tolerance
         real(sp) :: beta
         integer :: k, kdim
@@ -3080,7 +3012,6 @@ contains
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
         k_end = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_sp)
         info = 0
 
@@ -3124,24 +3055,22 @@ contains
 
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_csp')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_csp')
 
         return
     end subroutine update_tridiag_matrix_csp
 
-    subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, verbosity, tol)
+    subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, tol)
         class(abstract_hermitian_linop_cdp), intent(in) :: A
         class(abstract_vector_cdp), intent(inout) :: X(:)
         complex(dp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
         integer, optional, intent(in) :: kstart
         integer, optional, intent(in) :: kend
-        logical, optional, intent(in) :: verbosity
         real(dp), optional, intent(in) :: tol
 
         ! Internal variables.
         integer :: k_start, k_end
-        logical :: verbose
         real(dp) :: tolerance
         real(dp) :: beta
         integer :: k, kdim
@@ -3150,7 +3079,6 @@ contains
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
         k_end = optval(kend, kdim)
-        verbose = optval(verbosity, .false.)
         tolerance = optval(tol, atol_dp)
         info = 0
 
@@ -3194,7 +3122,7 @@ contains
 
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis', module=this_module, procedure='update_tridiag_matrix_cdp')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_cdp')
 
         return
     end subroutine update_tridiag_matrix_cdp

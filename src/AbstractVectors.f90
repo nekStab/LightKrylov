@@ -36,7 +36,7 @@ module lightkrylov_AbstractVectors
     !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
     !! - `zero_basis(X)`: Self explanatory.
     !! - `copy_basis(out, from)`: Self explanatory.
-
+    use stdlib_optval, only: optval
     use lightkrylov_constants
     use lightkrylov_utils
     use LightKrylov_Logger
@@ -50,6 +50,7 @@ module lightkrylov_AbstractVectors
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
+    public :: rand_basis
 
     interface innerprod
         module procedure innerprod_vector_rsp
@@ -93,7 +94,14 @@ module lightkrylov_AbstractVectors
         module procedure copy_basis_csp
         module procedure copy_basis_cdp
     end interface
-
+    
+    interface rand_basis
+        module procedure rand_basis_rsp
+        module procedure rand_basis_rdp
+        module procedure rand_basis_csp
+        module procedure rand_basis_cdp
+    end interface
+    
     type, abstract, public :: abstract_vector
     end type abstract_vector
 
@@ -735,6 +743,19 @@ contains
         return
     end subroutine copy_basis_rsp
 
+    subroutine rand_basis_rsp(X, ifnorm)
+        class(abstract_vector_rsp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        ! internal
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_rsp
+
     subroutine linear_combination_vector_rdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -901,6 +922,19 @@ contains
 
         return
     end subroutine copy_basis_rdp
+
+    subroutine rand_basis_rdp(X, ifnorm)
+        class(abstract_vector_rdp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        ! internal
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
@@ -1069,6 +1103,19 @@ contains
         return
     end subroutine copy_basis_csp
 
+    subroutine rand_basis_csp(X, ifnorm)
+        class(abstract_vector_csp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        ! internal
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_csp
+
     subroutine linear_combination_vector_cdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1235,5 +1282,18 @@ contains
 
         return
     end subroutine copy_basis_cdp
+
+    subroutine rand_basis_cdp(X, ifnorm)
+        class(abstract_vector_cdp), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        ! internal
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_cdp
 
 end module lightkrylov_AbstractVectors

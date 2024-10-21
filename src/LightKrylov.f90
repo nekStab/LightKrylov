@@ -7,9 +7,13 @@ module LightKrylov
     use LightKrylov_AbstractVectors
     ! --> Definitions of the abstract linear operators.
     use LightKrylov_AbstractLinops
+    ! --> Definitions of the abstract dynamical systems.
+    use LightKrylov_AbstractSystems
     ! --> Standard Krylov techniques.
     use LightKrylov_BaseKrylov
     ! --> Iterative solvers.
+    use LightKrylov_NewtonKrylov
+    ! --> Newton-Krylov fixed-point iteration.
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
@@ -27,8 +31,10 @@ module LightKrylov
     ! Utils exports.
     public :: gmres_sp_opts
     public :: cg_sp_opts
+    public :: newton_sp_opts
     public :: gmres_dp_opts
     public :: cg_dp_opts
+    public :: newton_dp_opts
 
     ! AbstractVectors exports.
     public :: abstract_vector
@@ -41,6 +47,7 @@ module LightKrylov
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
+    public :: rand_basis
     
     ! AbstractLinops exports.
     public :: abstract_linop
@@ -68,6 +75,16 @@ module LightKrylov
     public :: scaled_linop_cdp
     public :: axpby_linop_cdp
     public :: abstract_hermitian_linop_cdp
+
+    ! AbstractSystems exports.
+    public :: abstract_system_rsp
+    public :: abstract_jacobian_linop_rsp
+    public :: abstract_system_rdp
+    public :: abstract_jacobian_linop_rdp
+    public :: abstract_system_csp
+    public :: abstract_jacobian_linop_csp
+    public :: abstract_system_cdp
+    public :: abstract_jacobian_linop_cdp
     
     ! BaseKrylov exports.
     public :: qr
@@ -85,10 +102,19 @@ module LightKrylov
     public :: abstract_precond_rdp
     public :: abstract_precond_csp
     public :: abstract_precond_cdp
+    public :: abstract_linear_solver_rsp
+    public :: abstract_linear_solver_rdp
+    public :: abstract_linear_solver_csp
+    public :: abstract_linear_solver_cdp
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
     public :: cg
+
+    ! Newton-Krylov exports.
+    public :: newton
+    public :: constant_atol_sp, dynamic_tol_sp
+    public :: constant_atol_dp, dynamic_tol_dp
 
     ! ExpmLib exports.
     public :: abstract_exptA_rsp
