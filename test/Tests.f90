@@ -1,7 +1,7 @@
 program Tester
    ! Fortran best practice.
    use, intrinsic :: iso_fortran_env, only: error_unit, output_unit
-   use stdlib_logger, only: error_level, none_level
+   use stdlib_logger, only: information_level, warning_level, debug_level, error_level, none_level
    ! Unit-test utility.
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type
    ! Abstract implementation of Krylov-based techniques.
@@ -13,6 +13,7 @@ program Tester
    use TestKrylov
    use TestIterativeSolvers
    use TestExpmlib
+   use TestNewtonKrylov
 
    implicit none
 
@@ -36,7 +37,7 @@ program Tester
    !----------------------------------------------------
 
    testsuites = [ &
-                new_testsuite("Real Vector (sp) Test Suite", collect_vector_rsp_testsuite), &
+                new_testsuite("Real Vector (sp) Test Suite", collect_vector_rsp_testsuite) , &
                 new_testsuite("Real Linops (sp) Test Suite", collect_linop_rsp_testsuite), &
                 new_testsuite("Real QR (sp) Test Suite", collect_qr_rsp_testsuite), &
                 new_testsuite("Real Arnoldi (sp) Test Suite", collect_arnoldi_rsp_testsuite), &
@@ -46,10 +47,10 @@ program Tester
                 new_testsuite("Real SVD (sp) Test Suite", collect_svd_rsp_testsuite), &
                 new_testsuite("Real GMRES (sp) Test Suite", collect_gmres_rsp_testsuite), &
                 new_testsuite("Real CG (sp) Test Suite", collect_cg_rsp_testsuite), &
-                ! new_testsuite("Real Expm (sp) Test Suite", collect_expm_rsp_testsuite), &
-                new_testsuite("Real Sqrtm (sp) Test Suite", collect_sqrtm_rsp_testsuite) &
+                ! new_testsuite("Real Expm (sp) Test Suite", collect_expm_rsp_testsuite), & 
+                new_testsuite("Real Sqrtm (sp) Test Suite", collect_sqrtm_rsp_testsuite), &
+                new_testsuite("Real Newton-Krylov fixed-point iteration (sp) Test Suite", collect_newton_rsp_testsuite) &
                 ]
-
 
    write(output_unit, *) "----------------------------------------------------------------"
    write(output_unit, *) "-----                                                      -----"
@@ -80,7 +81,7 @@ program Tester
    !----------------------------------------------------
 
    testsuites = [ &
-                new_testsuite("Real Vector (dp) Test Suite", collect_vector_rdp_testsuite), &
+                new_testsuite("Real Vector (dp) Test Suite", collect_vector_rdp_testsuite) , &
                 new_testsuite("Real Linops (dp) Test Suite", collect_linop_rdp_testsuite), &
                 new_testsuite("Real QR (dp) Test Suite", collect_qr_rdp_testsuite), &
                 new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
@@ -91,7 +92,8 @@ program Tester
                 new_testsuite("Real GMRES (dp) Test Suite", collect_gmres_rdp_testsuite), &
                 new_testsuite("Real CG (dp) Test Suite", collect_cg_rdp_testsuite), &
                 new_testsuite("Real Expm (dp) Test Suite", collect_expm_rdp_testsuite), &
-                new_testsuite("Real Sqrtm (dp) Test Suite", collect_sqrtm_rdp_testsuite) &
+                new_testsuite("Real Sqrtm (dp) Test Suite", collect_sqrtm_rdp_testsuite), &
+                new_testsuite("Real Newton-Krylov fixed-point iteration (dp) Test Suite", collect_newton_rdp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"

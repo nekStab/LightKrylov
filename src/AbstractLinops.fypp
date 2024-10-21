@@ -7,7 +7,7 @@ module lightkrylov_AbstractLinops
     implicit none
     private
 
-    character*128, parameter :: this_module = 'Lightkrylov_AbstractLinops'
+    character(len=128), parameter :: this_module = 'Lightkrylov_AbstractLinops'
 
     type, abstract, public :: abstract_linop
     end type abstract_linop

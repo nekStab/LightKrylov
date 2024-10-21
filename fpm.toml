@@ -40,3 +40,15 @@ source-dir = "example/ginzburg_landau"
 
 [example.dependencies]
 rklib = { git="https://github.com/jacobwilliams/rklib.git" }
+
+[[example]]
+
+#----------------------------------------------
+#-----     SETUP FOR ROESSLER EXAMPLE     -----
+#----------------------------------------------
+
+name = "Roessler"
+source-dir = "example/roessler"
+
+[example.dependencies]
+rklib = { git="https://github.com/jacobwilliams/rklib.git" }

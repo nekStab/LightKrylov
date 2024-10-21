@@ -9,9 +9,13 @@ module LightKrylov
     use LightKrylov_AbstractVectors
     ! --> Definitions of the abstract linear operators.
     use LightKrylov_AbstractLinops
+    ! --> Definitions of the abstract dynamical systems.
+    use LightKrylov_AbstractSystems
     ! --> Standard Krylov techniques.
     use LightKrylov_BaseKrylov
     ! --> Iterative solvers.
+    use LightKrylov_NewtonKrylov
+    ! --> Newton-Krylov fixed-point iteration.
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
@@ -30,6 +34,7 @@ module LightKrylov
     #:for kind in REAL_KINDS
     public :: gmres_${kind}$_opts
     public :: cg_${kind}$_opts
+    public :: newton_${kind}$_opts
     #:endfor
 
     ! AbstractVectors exports.
@@ -42,6 +47,7 @@ module LightKrylov
     public :: axpby_basis
     public :: zero_basis
     public :: copy_basis
+    public :: rand_basis
     
     ! AbstractLinops exports.
     public :: abstract_linop
@@ -56,6 +62,12 @@ module LightKrylov
     #:else
     public :: abstract_hermitian_linop_${type[0]}$${kind}$
     #:endif
+    #:endfor
+
+    ! AbstractSystems exports.
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_system_${type[0]}$${kind}$
+    public :: abstract_jacobian_linop_${type[0]}$${kind}$
     #:endfor
     
     ! BaseKrylov exports.
@@ -73,10 +85,19 @@ module LightKrylov
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_precond_${type[0]}$${kind}$
     #:endfor
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_linear_solver_${type[0]}$${kind}$
+    #:endfor
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
     public :: cg
+
+    ! Newton-Krylov exports.
+    public :: newton
+    #:for kind in REAL_KINDS
+    public :: constant_atol_${kind}$, dynamic_tol_${kind}$
+    #:endfor
 
     ! ExpmLib exports.
     #:for kind, type in RC_KINDS_TYPES
