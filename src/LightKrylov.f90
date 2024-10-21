@@ -81,6 +81,10 @@ module LightKrylov
     public :: abstract_jacobian_linop_rsp
     public :: abstract_system_rdp
     public :: abstract_jacobian_linop_rdp
+    public :: abstract_system_csp
+    public :: abstract_jacobian_linop_csp
+    public :: abstract_system_cdp
+    public :: abstract_jacobian_linop_cdp
     
     ! BaseKrylov exports.
     public :: qr

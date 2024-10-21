@@ -65,9 +65,9 @@ module LightKrylov
     #:endfor
 
     ! AbstractSystems exports.
-    #:for kind in REAL_KINDS
-    public :: abstract_system_r${kind}$
-    public :: abstract_jacobian_linop_r${kind}$
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_system_${type[0]}$${kind}$
+    public :: abstract_jacobian_linop_${type[0]}$${kind}$
     #:endfor
     
     ! BaseKrylov exports.
