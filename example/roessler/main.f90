@@ -118,7 +118,7 @@ program demo
    print *, 'Real part of the Floquet multipliers exp(T*mu) along the PO:'
    print *, ''
    do i = 1, npts
-      print '(4X,I1,": ",E14.6)', i, eval(i)
+      print '(4X,I1,": ",F15.12)', i, eval(i)
    end do
    print *, ''
 

@@ -5,7 +5,7 @@ module LightKrylov_AbstractSystems
     implicit none
     private
 
-    character*128, parameter :: this_module = 'LightKrylov_AbstractSystems'
+    character(len=128), parameter :: this_module = 'LightKrylov_AbstractSystems'
 
     ! Base type for dynamical systems.
     type, abstract, public :: abstract_dynamical_system
@@ -21,24 +21,7 @@ module LightKrylov_AbstractSystems
         class(abstract_vector_rsp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
-        private
-        procedure(abstract_matvec_rsp), pass(self), deferred, public :: matvec
-        procedure(abstract_matvec_rsp), pass(self), deferred, public :: rmatvec
     end type
-
-    abstract interface
-        subroutine abstract_matvec_rsp(self, vec_in, vec_out)
-            !! Interface for the matrix-vector product for the Jacobian.
-            use lightkrylov_AbstractVectors
-            import abstract_jacobian_linop_rsp
-            class(abstract_jacobian_linop_rsp), intent(in)  :: self
-            !! Linear operator \(\mathbf{A}\).
-            class(abstract_vector_rsp), intent(in)  :: vec_in
-            !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_rsp), intent(out) :: vec_out
-            !! Result of the matrix-vector product.
-        end subroutine abstract_matvec_rsp
-    end interface
 
     ! Abstract continuous system for kind=sp.
     type, abstract, extends(abstract_dynamical_system), public :: abstract_system_rsp
@@ -77,24 +60,7 @@ module LightKrylov_AbstractSystems
         class(abstract_vector_rdp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
-        private
-        procedure(abstract_matvec_rdp), pass(self), deferred, public :: matvec
-        procedure(abstract_matvec_rdp), pass(self), deferred, public :: rmatvec
     end type
-
-    abstract interface
-        subroutine abstract_matvec_rdp(self, vec_in, vec_out)
-            !! Interface for the matrix-vector product for the Jacobian.
-            use lightkrylov_AbstractVectors
-            import abstract_jacobian_linop_rdp
-            class(abstract_jacobian_linop_rdp), intent(in)  :: self
-            !! Linear operator \(\mathbf{A}\).
-            class(abstract_vector_rdp), intent(in)  :: vec_in
-            !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_rdp), intent(out) :: vec_out
-            !! Result of the matrix-vector product.
-        end subroutine abstract_matvec_rdp
-    end interface
 
     ! Abstract continuous system for kind=dp.
     type, abstract, extends(abstract_dynamical_system), public :: abstract_system_rdp
@@ -133,24 +99,7 @@ module LightKrylov_AbstractSystems
         class(abstract_vector_csp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
-        private
-        procedure(abstract_matvec_csp), pass(self), deferred, public :: matvec
-        procedure(abstract_matvec_csp), pass(self), deferred, public :: rmatvec
     end type
-
-    abstract interface
-        subroutine abstract_matvec_csp(self, vec_in, vec_out)
-            !! Interface for the matrix-vector product for the Jacobian.
-            use lightkrylov_AbstractVectors
-            import abstract_jacobian_linop_csp
-            class(abstract_jacobian_linop_csp), intent(in)  :: self
-            !! Linear operator \(\mathbf{A}\).
-            class(abstract_vector_csp), intent(in)  :: vec_in
-            !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_csp), intent(out) :: vec_out
-            !! Result of the matrix-vector product.
-        end subroutine abstract_matvec_csp
-    end interface
 
     ! Abstract continuous system for kind=sp.
     type, abstract, extends(abstract_dynamical_system), public :: abstract_system_csp
@@ -189,24 +138,7 @@ module LightKrylov_AbstractSystems
         class(abstract_vector_cdp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
-        private
-        procedure(abstract_matvec_cdp), pass(self), deferred, public :: matvec
-        procedure(abstract_matvec_cdp), pass(self), deferred, public :: rmatvec
     end type
-
-    abstract interface
-        subroutine abstract_matvec_cdp(self, vec_in, vec_out)
-            !! Interface for the matrix-vector product for the Jacobian.
-            use lightkrylov_AbstractVectors
-            import abstract_jacobian_linop_cdp
-            class(abstract_jacobian_linop_cdp), intent(in)  :: self
-            !! Linear operator \(\mathbf{A}\).
-            class(abstract_vector_cdp), intent(in)  :: vec_in
-            !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_cdp), intent(out) :: vec_out
-            !! Result of the matrix-vector product.
-        end subroutine abstract_matvec_cdp
-    end interface
 
     ! Abstract continuous system for kind=dp.
     type, abstract, extends(abstract_dynamical_system), public :: abstract_system_cdp
