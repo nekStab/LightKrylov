@@ -29,18 +29,20 @@ module lightkrylov_AbstractVectors
     !!
     !! This module also provides the following utility subroutines:
     !!
-    !! - `innerprod(v, X, y)` / `innerprod(M, X, Y)`: Subroutine to compute the 
+    !! - `innerprod(v, X, y)` and `innerprod(M, X, Y)`: Subroutine to compute the 
     !! inner-product matrix/vector between a Krylov basis `X` and a Krylov vector 
     !! (resp. basis) `y` (resp. `Y`).
-    !! - `linear_combination(y, X, v)` / `linear_combination(Y, X, B)`: Subroutine to 
+    !! - `linear_combination(y, X, v)` and `linear_combination(Y, X, B)`: Subroutine to 
     !! compute the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
     !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
     !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
-    !! - `zero_basis(X)`: Self explanatory.
-    !! - `copy_basis(out, from)`: Self explanatory.
+    !! - `zero_basis(X)`: Zero-out a collection of `abstract_vectors`.
+    !! - `copy_basis(out, from)`: Copy a collection of `abstract_vectors`.
+    !! - `rand_basis(X, ifnorm)`: Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
+
     use stdlib_optval, only: optval
-    use lightkrylov_constants
-    use lightkrylov_utils
+    use LightKrylov_Constants
+    use LightKrylov_Utils
     use LightKrylov_Logger
     implicit none
     private
@@ -104,7 +106,7 @@ module lightkrylov_AbstractVectors
     contains
         private
         procedure(abstract_zero_${type[0]}$${kind}$), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_${type[0]}$${kind}$` to zero.
+        !! Sets an `abstract_vector_${type[0]}$${kind}$` to zero.
         procedure(abstract_rand_${type[0]}$${kind}$), pass(self), deferred, public :: rand
         !! Creates a random `abstract_vector_${type[0]}$${kind}$.
         procedure(abstract_scal_${type[0]}$${kind}$), pass(self), deferred, public :: scal
@@ -197,11 +199,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         !! Vector to be added.
-        #:if type[0] == "c"
-        call self%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), vec, cmplx(-1.0_${kind}$, 0.0_${kind}$, kind=${kind}$))
-        #:else
-        call self%axpby(1.0_${kind}$, vec, -1.0_${kind}$)
-        #:endif
+        call self%axpby(one_${type[0]}$${kind}$, vec, -one_${type[0]}$${kind}$)
     end subroutine sub_${type[0]}$${kind}$
 
     subroutine add_${type[0]}$${kind}$(self, vec)
@@ -210,22 +208,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         !! Vector to be added.
-        #:if type[0] == "c"
-        call self%axpby(cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$), vec, cmplx(1.0_${kind}$, 0.0_${kind}$, kind=${kind}$))
-        #:else
-        call self%axpby(1.0_${kind}$, vec, 1.0_${kind}$)
-        #:endif
+        call self%axpby(one_${type[0]}$${kind}$, vec, one_${type[0]}$${kind}$)
     end subroutine add_${type[0]}$${kind}$
 
     subroutine chsgn_${type[0]}$${kind}$(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        #:if type[0] == "c"
-        call self%scal(cmplx(-1.0_${kind}$, 0.0_${kind}$, kind=${kind}$))
-        #:else
-        call self%scal(-1.0_${kind}$)
-        #:endif
+        call self%scal(-one_${type[0]}$${kind}$)
     end subroutine chsgn_${type[0]}$${kind}$
 
     #:endfor
@@ -259,7 +249,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_${type[0]}$${kind}$, x(i), v(i))
+            call y%axpby(one_${type[0]}$${kind}$, X(i), v(i))
         enddo
 
         return
@@ -315,7 +305,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_${kind}$
+        v = zero_${type[0]}$${kind}$
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -334,7 +324,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_${kind}$
+        M = zero_${type[0]}$${kind}$
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))

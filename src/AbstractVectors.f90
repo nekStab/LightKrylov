@@ -27,18 +27,20 @@ module lightkrylov_AbstractVectors
     !!
     !! This module also provides the following utility subroutines:
     !!
-    !! - `innerprod(v, X, y)` / `innerprod(M, X, Y)`: Subroutine to compute the 
+    !! - `innerprod(v, X, y)` and `innerprod(M, X, Y)`: Subroutine to compute the 
     !! inner-product matrix/vector between a Krylov basis `X` and a Krylov vector 
     !! (resp. basis) `y` (resp. `Y`).
-    !! - `linear_combination(y, X, v)` / `linear_combination(Y, X, B)`: Subroutine to 
+    !! - `linear_combination(y, X, v)` and `linear_combination(Y, X, B)`: Subroutine to 
     !! compute the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
     !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
     !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
-    !! - `zero_basis(X)`: Self explanatory.
-    !! - `copy_basis(out, from)`: Self explanatory.
+    !! - `zero_basis(X)`: Zero-out a collection of `abstract_vectors`.
+    !! - `copy_basis(out, from)`: Copy a collection of `abstract_vectors`.
+    !! - `rand_basis(X, ifnorm)`: Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
+
     use stdlib_optval, only: optval
-    use lightkrylov_constants
-    use lightkrylov_utils
+    use LightKrylov_Constants
+    use LightKrylov_Utils
     use LightKrylov_Logger
     implicit none
     private
@@ -94,14 +96,14 @@ module lightkrylov_AbstractVectors
         module procedure copy_basis_csp
         module procedure copy_basis_cdp
     end interface
-    
+
     interface rand_basis
         module procedure rand_basis_rsp
         module procedure rand_basis_rdp
         module procedure rand_basis_csp
         module procedure rand_basis_cdp
     end interface
-    
+
     type, abstract, public :: abstract_vector
     end type abstract_vector
 
@@ -113,7 +115,7 @@ module lightkrylov_AbstractVectors
     contains
         private
         procedure(abstract_zero_rsp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_rsp` to zero.
+        !! Sets an `abstract_vector_rsp` to zero.
         procedure(abstract_rand_rsp), pass(self), deferred, public :: rand
         !! Creates a random `abstract_vector_rsp.
         procedure(abstract_scal_rsp), pass(self), deferred, public :: scal
@@ -195,7 +197,7 @@ module lightkrylov_AbstractVectors
     contains
         private
         procedure(abstract_zero_rdp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_rdp` to zero.
+        !! Sets an `abstract_vector_rdp` to zero.
         procedure(abstract_rand_rdp), pass(self), deferred, public :: rand
         !! Creates a random `abstract_vector_rdp.
         procedure(abstract_scal_rdp), pass(self), deferred, public :: scal
@@ -277,7 +279,7 @@ module lightkrylov_AbstractVectors
     contains
         private
         procedure(abstract_zero_csp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_csp` to zero.
+        !! Sets an `abstract_vector_csp` to zero.
         procedure(abstract_rand_csp), pass(self), deferred, public :: rand
         !! Creates a random `abstract_vector_csp.
         procedure(abstract_scal_csp), pass(self), deferred, public :: scal
@@ -359,7 +361,7 @@ module lightkrylov_AbstractVectors
     contains
         private
         procedure(abstract_zero_cdp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_cdp` to zero.
+        !! Sets an `abstract_vector_cdp` to zero.
         procedure(abstract_rand_cdp), pass(self), deferred, public :: rand
         !! Creates a random `abstract_vector_cdp.
         procedure(abstract_scal_cdp), pass(self), deferred, public :: scal
@@ -450,7 +452,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_sp, vec, -1.0_sp)
+        call self%axpby(one_rsp, vec, -one_rsp)
     end subroutine sub_rsp
 
     subroutine add_rsp(self, vec)
@@ -459,14 +461,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_sp, vec, 1.0_sp)
+        call self%axpby(one_rsp, vec, one_rsp)
     end subroutine add_rsp
 
     subroutine chsgn_rsp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rsp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(-1.0_sp)
+        call self%scal(-one_rsp)
     end subroutine chsgn_rsp
 
     function norm_rdp(self) result(alpha)
@@ -484,7 +486,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_dp, vec, -1.0_dp)
+        call self%axpby(one_rdp, vec, -one_rdp)
     end subroutine sub_rdp
 
     subroutine add_rdp(self, vec)
@@ -493,14 +495,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_dp, vec, 1.0_dp)
+        call self%axpby(one_rdp, vec, one_rdp)
     end subroutine add_rdp
 
     subroutine chsgn_rdp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rdp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(-1.0_dp)
+        call self%scal(-one_rdp)
     end subroutine chsgn_rdp
 
     function norm_csp(self) result(alpha)
@@ -518,7 +520,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), vec, cmplx(-1.0_sp, 0.0_sp, kind=sp))
+        call self%axpby(one_csp, vec, -one_csp)
     end subroutine sub_csp
 
     subroutine add_csp(self, vec)
@@ -527,14 +529,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), vec, cmplx(1.0_sp, 0.0_sp, kind=sp))
+        call self%axpby(one_csp, vec, one_csp)
     end subroutine add_csp
 
     subroutine chsgn_csp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_csp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(cmplx(-1.0_sp, 0.0_sp, kind=sp))
+        call self%scal(-one_csp)
     end subroutine chsgn_csp
 
     function norm_cdp(self) result(alpha)
@@ -552,7 +554,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), vec, cmplx(-1.0_dp, 0.0_dp, kind=dp))
+        call self%axpby(one_cdp, vec, -one_cdp)
     end subroutine sub_cdp
 
     subroutine add_cdp(self, vec)
@@ -561,14 +563,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), vec, cmplx(1.0_dp, 0.0_dp, kind=dp))
+        call self%axpby(one_cdp, vec, one_cdp)
     end subroutine add_cdp
 
     subroutine chsgn_cdp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_cdp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(cmplx(-1.0_dp, 0.0_dp, kind=dp))
+        call self%scal(-one_cdp)
     end subroutine chsgn_cdp
 
     
@@ -600,7 +602,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_rsp, x(i), v(i))
+            call y%axpby(one_rsp, X(i), v(i))
         enddo
 
         return
@@ -656,7 +658,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_sp
+        v = zero_rsp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -675,7 +677,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_sp
+        M = zero_rsp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -780,7 +782,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_rdp, x(i), v(i))
+            call y%axpby(one_rdp, X(i), v(i))
         enddo
 
         return
@@ -836,7 +838,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_dp
+        v = zero_rdp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -855,7 +857,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_dp
+        M = zero_rdp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -960,7 +962,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_csp, x(i), v(i))
+            call y%axpby(one_csp, X(i), v(i))
         enddo
 
         return
@@ -1016,7 +1018,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_sp
+        v = zero_csp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -1035,7 +1037,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_sp
+        M = zero_csp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -1140,7 +1142,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_cdp, x(i), v(i))
+            call y%axpby(one_cdp, X(i), v(i))
         enddo
 
         return
@@ -1196,7 +1198,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_dp
+        v = zero_cdp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -1215,7 +1217,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_dp
+        M = zero_cdp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
