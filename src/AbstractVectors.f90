@@ -188,6 +188,8 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface zero_basis
+        !!  This interface provides methods to zero-out a collection of `abstract_vector` `X`.
+        !!  It is a simple wrapper around `X(i)%zero()`.
         module procedure zero_basis_rsp
         module procedure zero_basis_rdp
         module procedure zero_basis_csp
@@ -195,6 +197,8 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface copy_basis
+        !!  This interface provides methods to copy an array `X` of `abstract_vector` into
+        !!  another array `Y`. Note that `Y` needs to be pre-allocated.
         module procedure copy_basis_rsp
         module procedure copy_basis_rdp
         module procedure copy_basis_csp
@@ -202,6 +206,8 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface rand_basis
+        !!  This interface provides methods to create an array `X` of random `abstract_vector`.
+        !!  It is a simple wrapper around `X(i)%rand(ifnorm)`.
         module procedure rand_basis_rsp
         module procedure rand_basis_rdp
         module procedure rand_basis_csp
@@ -843,7 +849,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_rsp, from(i), one_rsp)
         enddo
 
         return
@@ -1023,7 +1029,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_rdp, from(i), one_rdp)
         enddo
 
         return
@@ -1203,7 +1209,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_csp, from(i), one_csp)
         enddo
 
         return
@@ -1383,7 +1389,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_cdp, from(i), one_cdp)
         enddo
 
         return
