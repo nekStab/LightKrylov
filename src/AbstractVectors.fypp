@@ -147,6 +147,34 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface axpby_basis
+        !!  In-place addition of two arrays of extended `abstract_vector`.
+        !!  
+        !!  ### Description
+        !!
+        !!  This interface provides methods to add in-place two arrays of
+        !!  extended `abstract_vector`, i.e.
+        !!
+        !!  \[
+        !!      \mathbf{x}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
+        !!  \]
+        !!
+        !!  No out-of-place alternative is currently available in `LightKrylov`.
+        !!  If you do need an out-of-place version, you can combine `axpby_basis`
+        !!  with `copy_basis`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!      real(dp), dimension(10)             :: alpha, beta
+        !!
+        !!      ! ... Whatever your code is doing ...
+        !!
+        !!      call axpby_basis(X, alpha, Y, beta)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
         #:for kind, type in RC_KINDS_TYPES
         module procedure axpby_basis_${type[0]}$${kind}$
         #:endfor
