@@ -205,6 +205,12 @@ module lightkrylov_AbstractVectors
     end interface
 
     type, abstract, public :: abstract_vector
+        !!  Base abstract type from which all other types of vectors used in `LightKrylov`
+        !!  are being derived from.
+        !!
+        !!  @warning
+        !!  Users should not extend this abstract class to define their own types.
+        !!  @endwarning
     end type abstract_vector
 
     #:for kind, type in RC_KINDS_TYPES
@@ -213,12 +219,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_${type[0]}$${kind}$
+        !!  Abstract type to define ${type}$-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_${type[0]}$${kind}$), pass(self), deferred, public :: zero
         !! Sets an `abstract_vector_${type[0]}$${kind}$` to zero.
         procedure(abstract_rand_${type[0]}$${kind}$), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_${type[0]}$${kind}$.
+        !! Creates a random `abstract_vector_${type[0]}$${kind}$`.
         procedure(abstract_scal_${type[0]}$${kind}$), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_${type[0]}$${kind}$), pass(self), deferred, public :: axpby

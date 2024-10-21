@@ -215,6 +215,12 @@ module lightkrylov_AbstractVectors
     end interface
 
     type, abstract, public :: abstract_vector
+        !!  Base abstract type from which all other types of vectors used in `LightKrylov`
+        !!  are being derived from.
+        !!
+        !!  @warning
+        !!  Users should not extend this abstract class to define their own types.
+        !!  @endwarning
     end type abstract_vector
 
     !----------------------------------------------------------------------------
@@ -222,12 +228,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_rsp
+        !!  Abstract type to define real(sp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_rsp), pass(self), deferred, public :: zero
         !! Sets an `abstract_vector_rsp` to zero.
         procedure(abstract_rand_rsp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_rsp.
+        !! Creates a random `abstract_vector_rsp`.
         procedure(abstract_scal_rsp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_rsp), pass(self), deferred, public :: axpby
@@ -304,12 +312,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_rdp
+        !!  Abstract type to define real(dp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_rdp), pass(self), deferred, public :: zero
         !! Sets an `abstract_vector_rdp` to zero.
         procedure(abstract_rand_rdp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_rdp.
+        !! Creates a random `abstract_vector_rdp`.
         procedure(abstract_scal_rdp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_rdp), pass(self), deferred, public :: axpby
@@ -386,12 +396,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_csp
+        !!  Abstract type to define complex(sp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_csp), pass(self), deferred, public :: zero
         !! Sets an `abstract_vector_csp` to zero.
         procedure(abstract_rand_csp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_csp.
+        !! Creates a random `abstract_vector_csp`.
         procedure(abstract_scal_csp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_csp), pass(self), deferred, public :: axpby
@@ -468,12 +480,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_cdp
+        !!  Abstract type to define complex(dp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_cdp), pass(self), deferred, public :: zero
         !! Sets an `abstract_vector_cdp` to zero.
         procedure(abstract_rand_cdp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_cdp.
+        !! Creates a random `abstract_vector_cdp`.
         procedure(abstract_scal_cdp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_cdp), pass(self), deferred, public :: axpby
