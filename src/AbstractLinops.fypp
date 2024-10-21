@@ -1,8 +1,18 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_AbstractLinops
-    use lightkrylov_constants
-    use lightkrylov_utils
+    !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
+    !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
+    !!  linear operators. To do so, you simply need to provide two type-bound procedures:
+    !!  
+    !!  - `matvec(self, vec_in, vec_out)` : Computes the matrix-vector product.
+    !!  - `rmatvec(self, vec_in, vec_out)`: Computes the transpose matrix-vector product.
+    !!
+    !!  It also provides extended types to define the identity operator, symmetric linear
+    !!  operators, scalar-multiplication of a linear multiplication, as well as addition
+    !!  of two linear operators.
+    use lightkrylov_Constants
+    use lightkrylov_Utils
     use lightkrylov_AbstractVectors
     implicit none
     private
