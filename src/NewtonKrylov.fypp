@@ -114,10 +114,8 @@ contains
       procedure(abstract_linear_solver_${type[0]}$${kind}$),    optional                :: linear_solver
       !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
-      class(abstract_opts), allocatable                                 :: solver_opts
       !! Options for the linear solver
       class(abstract_precond_${type[0]}$${kind}$),              optional, intent(in)    :: preconditioner
-      class(abstract_precond_${type[0]}$${kind}$), allocatable                          :: precond
       !! Preconditioner for the linear solver
       procedure(abstract_scheduler_${kind}$),         optional                :: scheduler
 
@@ -125,20 +123,16 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      class(abstract_vector_${type[0]}$${kind}$), allocatable :: residual, increment
-      real(${kind}$) :: rnorm, tol
-      logical :: converged, has_precond, has_solver_opts
-      integer :: i, maxiter, maxstep_bisection
-      character(len=256) :: msg
       procedure(abstract_linear_solver_${type[0]}$${kind}$), pointer :: solver => null()
-      procedure(abstract_scheduler_${kind}$), pointer :: tolerance_scheduler => null()
-
+      procedure(abstract_scheduler_${kind}$),      pointer :: tolerance_scheduler => null()
+      class(abstract_vector_${type[0]}$${kind}$), allocatable        :: residual, increment
+      real(${kind}$)           :: rnorm, tol
+      logical            :: converged
+      integer            :: i, maxiter, maxstep_bisection
+      character(len=256) :: msg
+      
       ! Newton-solver tolerance
-      if (present(tolerance)) then
-         target_tol = tolerance
-      else
-         target_tol = atol_${kind}$
-      end if
+      target_tol = optval(tolerance, atol_${kind}$)
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -151,20 +145,6 @@ contains
       else
          solver => gmres_${type[0]}$${kind}$
       end if
-      ! Linear solver options ?
-      if (present(linear_solver_options)) then
-         has_solver_opts = .true.
-         allocate(solver_opts, source=linear_solver_options)
-      else
-         has_solver_opts = .false.
-      end if
-      ! Preconditioner ?
-      if (present(preconditioner)) then
-         has_precond = .true.
-         allocate(precond, source=preconditioner)
-      else
-         has_precond = .false.
-      end if
       ! Scheduler
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
@@ -173,8 +153,9 @@ contains
       endif
 
       ! Initialisation      
-      maxiter = opts%maxiter ; maxstep_bisection = opts%maxstep_bisection ;
-      converged = .false.
+      maxiter           = opts%maxiter
+      maxstep_bisection = opts%maxstep_bisection
+      converged         = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
@@ -203,19 +184,8 @@ contains
         
          ! Solve the linear system using GMRES.
          call residual%chsgn()
-         if (.not. has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol, &
-                  &                                              transpose=.false.)
-         elseif (.not. has_precond .and. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol,  &
-                  &                         options=solver_opts, transpose=.false.)
-         elseif (has_precond .and. .not. has_solver_opts) then
-            call solver(sys%jacobian, residual, increment, info, atol=tol, &
-                  & preconditioner=precond,                      transpose=.false.)
-         else
-            call solver(sys%jacobian, residual, increment, info, atol=tol, &
-                  & preconditioner=precond, options=solver_opts, transpose=.false.)
-         end if
+         call solver(sys%jacobian, residual, increment, info, atol=tol, &
+            & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_${type[0]}$${kind}$')
 
          ! Update the solution and overwrite X0

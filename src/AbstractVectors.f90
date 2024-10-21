@@ -714,11 +714,8 @@ contains
     subroutine rand_basis_rsp(X, ifnorm)
         class(abstract_vector_rsp), intent(inout) :: X(:)
         logical, optional, intent(in) :: ifnorm
-        logical                       :: if_normalize
         ! internal
         integer :: i
-
-        if_normalize = optval(ifnorm, .true.)
 
         do i = 1, size(X)
             call X(i)%rand(ifnorm=ifnorm)
@@ -898,11 +895,8 @@ contains
     subroutine rand_basis_rdp(X, ifnorm)
         class(abstract_vector_rdp), intent(inout) :: X(:)
         logical, optional, intent(in) :: ifnorm
-        logical                       :: if_normalize
         ! internal
         integer :: i
-
-        if_normalize = optval(ifnorm, .true.)
 
         do i = 1, size(X)
             call X(i)%rand(ifnorm=ifnorm)
@@ -1082,11 +1076,8 @@ contains
     subroutine rand_basis_csp(X, ifnorm)
         class(abstract_vector_csp), intent(inout) :: X(:)
         logical, optional, intent(in) :: ifnorm
-        logical                       :: if_normalize
         ! internal
         integer :: i
-
-        if_normalize = optval(ifnorm, .true.)
 
         do i = 1, size(X)
             call X(i)%rand(ifnorm=ifnorm)
@@ -1266,11 +1257,8 @@ contains
     subroutine rand_basis_cdp(X, ifnorm)
         class(abstract_vector_cdp), intent(inout) :: X(:)
         logical, optional, intent(in) :: ifnorm
-        logical                       :: if_normalize
         ! internal
         integer :: i
-
-        if_normalize = optval(ifnorm, .true.)
 
         do i = 1, size(X)
             call X(i)%rand(ifnorm=ifnorm)

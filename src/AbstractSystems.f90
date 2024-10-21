@@ -7,25 +7,25 @@ module LightKrylov_AbstractSystems
 
     character(len=128), parameter :: this_module = 'LightKrylov_AbstractSystems'
 
-    ! Base type for dynamical systems.
-    type, abstract, public :: abstract_dynamical_system
-    end type abstract_dynamical_system
+    ! Base type for abstract systems.
+    type, abstract, public :: abstract_system
+    end type abstract_system
 
-    !----------------------------------------------------------------------------------------
-    !-----     ABSTRACT GENERAL real(sp) DYNAMICAL SYSTEM DEFINITION WITH kind=sp     -----
-    !----------------------------------------------------------------------------------------
+    !----------------------------------------------------------------------------
+    !-----     ABSTRACT GENERAL real(sp) SYSTEM DEFINITION WITH kind=sp     -----
+    !----------------------------------------------------------------------------
 
     ! Abstract Jacobian linop for kind=sp
     type, abstract, extends(abstract_linop_rsp), public :: abstract_jacobian_linop_rsp
-        !! Abstract type for the local linearization of the dynamical system around the state X
+        !! Abstract type for the local linearization of the system around the state X
         class(abstract_vector_rsp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
     end type
 
-    ! Abstract continuous system for kind=sp.
-    type, abstract, extends(abstract_dynamical_system), public :: abstract_system_rsp
-        !! Continuous-time dynamical system for Newton fixed-point iteration via the Jacobian
+    ! Abstract system for kind=sp.
+    type, abstract, extends(abstract_system), public :: abstract_system_rsp
+        !! System for Newton fixed-point iteration via the Jacobian
         class(abstract_jacobian_linop_rsp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -45,26 +45,26 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_rsp), intent(out) :: vec_out
             !! Response
-            real(sp),                                   intent(in)  :: atol
+            real(sp),                   intent(in)  :: atol
             !! Solver tolerance
         end subroutine abstract_eval_rsp
     end interface
 
-    !----------------------------------------------------------------------------------------
-    !-----     ABSTRACT GENERAL real(dp) DYNAMICAL SYSTEM DEFINITION WITH kind=dp     -----
-    !----------------------------------------------------------------------------------------
+    !----------------------------------------------------------------------------
+    !-----     ABSTRACT GENERAL real(dp) SYSTEM DEFINITION WITH kind=dp     -----
+    !----------------------------------------------------------------------------
 
     ! Abstract Jacobian linop for kind=dp
     type, abstract, extends(abstract_linop_rdp), public :: abstract_jacobian_linop_rdp
-        !! Abstract type for the local linearization of the dynamical system around the state X
+        !! Abstract type for the local linearization of the system around the state X
         class(abstract_vector_rdp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
     end type
 
-    ! Abstract continuous system for kind=dp.
-    type, abstract, extends(abstract_dynamical_system), public :: abstract_system_rdp
-        !! Continuous-time dynamical system for Newton fixed-point iteration via the Jacobian
+    ! Abstract system for kind=dp.
+    type, abstract, extends(abstract_system), public :: abstract_system_rdp
+        !! System for Newton fixed-point iteration via the Jacobian
         class(abstract_jacobian_linop_rdp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -84,26 +84,26 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_rdp), intent(out) :: vec_out
             !! Response
-            real(dp),                                   intent(in)  :: atol
+            real(dp),                   intent(in)  :: atol
             !! Solver tolerance
         end subroutine abstract_eval_rdp
     end interface
 
-    !----------------------------------------------------------------------------------------
-    !-----     ABSTRACT GENERAL complex(sp) DYNAMICAL SYSTEM DEFINITION WITH kind=sp     -----
-    !----------------------------------------------------------------------------------------
+    !----------------------------------------------------------------------------
+    !-----     ABSTRACT GENERAL complex(sp) SYSTEM DEFINITION WITH kind=sp     -----
+    !----------------------------------------------------------------------------
 
     ! Abstract Jacobian linop for kind=sp
     type, abstract, extends(abstract_linop_csp), public :: abstract_jacobian_linop_csp
-        !! Abstract type for the local linearization of the dynamical system around the state X
+        !! Abstract type for the local linearization of the system around the state X
         class(abstract_vector_csp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
     end type
 
-    ! Abstract continuous system for kind=sp.
-    type, abstract, extends(abstract_dynamical_system), public :: abstract_system_csp
-        !! Continuous-time dynamical system for Newton fixed-point iteration via the Jacobian
+    ! Abstract system for kind=sp.
+    type, abstract, extends(abstract_system), public :: abstract_system_csp
+        !! System for Newton fixed-point iteration via the Jacobian
         class(abstract_jacobian_linop_csp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -123,26 +123,26 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_csp), intent(out) :: vec_out
             !! Response
-            real(sp),                                   intent(in)  :: atol
+            real(sp),                   intent(in)  :: atol
             !! Solver tolerance
         end subroutine abstract_eval_csp
     end interface
 
-    !----------------------------------------------------------------------------------------
-    !-----     ABSTRACT GENERAL complex(dp) DYNAMICAL SYSTEM DEFINITION WITH kind=dp     -----
-    !----------------------------------------------------------------------------------------
+    !----------------------------------------------------------------------------
+    !-----     ABSTRACT GENERAL complex(dp) SYSTEM DEFINITION WITH kind=dp     -----
+    !----------------------------------------------------------------------------
 
     ! Abstract Jacobian linop for kind=dp
     type, abstract, extends(abstract_linop_cdp), public :: abstract_jacobian_linop_cdp
-        !! Abstract type for the local linearization of the dynamical system around the state X
+        !! Abstract type for the local linearization of the system around the state X
         class(abstract_vector_cdp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
     end type
 
-    ! Abstract continuous system for kind=dp.
-    type, abstract, extends(abstract_dynamical_system), public :: abstract_system_cdp
-        !! Continuous-time dynamical system for Newton fixed-point iteration via the Jacobian
+    ! Abstract system for kind=dp.
+    type, abstract, extends(abstract_system), public :: abstract_system_cdp
+        !! System for Newton fixed-point iteration via the Jacobian
         class(abstract_jacobian_linop_cdp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -162,7 +162,7 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_cdp), intent(out) :: vec_out
             !! Response
-            real(dp),                                   intent(in)  :: atol
+            real(dp),                   intent(in)  :: atol
             !! Solver tolerance
         end subroutine abstract_eval_cdp
     end interface

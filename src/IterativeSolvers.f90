@@ -18,7 +18,7 @@ module lightkrylov_IterativeSolvers
     implicit none
     private
 
-    character*128, parameter :: this_module = 'LightKrylov_IterativeSolvers'
+    character(len=128), parameter :: this_module = 'LightKrylov_IterativeSolvers'
 
     public :: abstract_linear_solver_rsp
     public :: abstract_linear_solver_rdp

@@ -9,26 +9,26 @@ module LightKrylov_AbstractSystems
 
     character(len=128), parameter :: this_module = 'LightKrylov_AbstractSystems'
 
-    ! Base type for dynamical systems.
-    type, abstract, public :: abstract_dynamical_system
-    end type abstract_dynamical_system
+    ! Base type for abstract systems.
+    type, abstract, public :: abstract_system
+    end type abstract_system
 
     #:for kind, type in RC_KINDS_TYPES
-    !----------------------------------------------------------------------------------------
-    !-----     ABSTRACT GENERAL ${type}$ DYNAMICAL SYSTEM DEFINITION WITH kind=${kind}$     -----
-    !----------------------------------------------------------------------------------------
+    !----------------------------------------------------------------------------
+    !-----     ABSTRACT GENERAL ${type}$ SYSTEM DEFINITION WITH kind=${kind}$     -----
+    !----------------------------------------------------------------------------
 
     ! Abstract Jacobian linop for kind=${kind}$
     type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_jacobian_linop_${type[0]}$${kind}$
-        !! Abstract type for the local linearization of the dynamical system around the state X
+        !! Abstract type for the local linearization of the system around the state X
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
     end type
 
-    ! Abstract continuous system for kind=${kind}$.
-    type, abstract, extends(abstract_dynamical_system), public :: abstract_system_${type[0]}$${kind}$
-        !! Continuous-time dynamical system for Newton fixed-point iteration via the Jacobian
+    ! Abstract system for kind=${kind}$.
+    type, abstract, extends(abstract_system), public :: abstract_system_${type[0]}$${kind}$
+        !! System for Newton fixed-point iteration via the Jacobian
         class(abstract_jacobian_linop_${type[0]}$${kind}$), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -48,7 +48,7 @@ module LightKrylov_AbstractSystems
             !! State
             class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
             !! Response
-            real(${kind}$),                                   intent(in)  :: atol
+            real(${kind}$),                   intent(in)  :: atol
             !! Solver tolerance
         end subroutine abstract_eval_${type[0]}$${kind}$
     end interface

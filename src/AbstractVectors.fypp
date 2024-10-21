@@ -373,11 +373,8 @@ contains
     subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
         logical, optional, intent(in) :: ifnorm
-        logical                       :: if_normalize
         ! internal
         integer :: i
-
-        if_normalize = optval(ifnorm, .true.)
 
         do i = 1, size(X)
             call X(i)%rand(ifnorm=ifnorm)
