@@ -5,7 +5,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, inv
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -192,7 +192,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
+        invQ = inv(Q) ! ; call inv(invQ)
         E = matmul(invQ, E)
 
         do k = 1, s
@@ -523,7 +523,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
+        invQ = inv(Q) ! ; call inv(invQ)
         E = matmul(invQ, E)
 
         do k = 1, s
@@ -854,7 +854,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
+        invQ = inv(Q) ! ; call inv(invQ)
         E = matmul(invQ, E)
 
         do k = 1, s
@@ -1185,7 +1185,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
+        invQ = inv(Q) ! ; call inv(invQ)
         E = matmul(invQ, E)
 
         do k = 1, s

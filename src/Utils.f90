@@ -25,8 +25,8 @@ module lightkrylov_utils
 
     public :: assert_shape, norml, log2
     ! Compute B = inv(A) in-place for dense matrices.
-    public :: inv
-    ! Compute AX = XD for general dense matrices.
+    ! public :: inv
+    ! ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
     public :: eigh
@@ -61,12 +61,11 @@ module lightkrylov_utils
         module procedure log2_rdp
     end interface
 
-    interface inv
-        module procedure inv_rsp
-        module procedure inv_rdp
-        module procedure inv_csp
-        module procedure inv_cdp
-    end interface
+    ! interface inv
+    !     #:for kind, type in RC_KINDS_TYPES
+    !     module procedure inv_rdp
+    !     #:endfor
+    ! end interface
 
     interface eig
         module procedure eig_rsp
@@ -348,27 +347,27 @@ contains
     !-----     LAPACK MATRIX INVERSION     -----
     !-------------------------------------------
 
-    subroutine inv_rsp(A)
-        !! In-place inversion of A using LAPACK.
-        real(sp), intent(inout) :: A(:, :)
-        !! Matrix to be inverted (in-place).
-
-        ! Internal variables.
-        integer :: n, info
-        real(sp) :: work(size(A, 1))
-        integer  :: ipiv(size(A, 1))
-
-        ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
-        call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
-
-        ! Compute inv(A) (in-place).
-        call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module=this_module, procedure='inv_rsp')
-
-        return
-    end subroutine inv_rsp
+    ! subroutine inv_rsp(A)
+    !     !! In-place inversion of A using LAPACK.
+    !     real(sp), intent(inout) :: A(:, :)
+    !     !! Matrix to be inverted (in-place).
+    !
+    !     ! Internal variables.
+    !     integer :: n, info
+    !     real(sp) :: work(size(A, 1))
+    !     integer  :: ipiv(size(A, 1))
+    !
+    !     ! Compute A = LU (in-place).
+    !     n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
+    !     call getrf(n, n, A, n, ipiv, info)
+    !     call check_info(info, 'GETREF', module=this_module, procedure='inv_rsp')
+    !
+    !     ! Compute inv(A) (in-place).
+    !     call getri(n, A, n, ipiv, work, n, info)
+    !     call check_info(info, 'GETRI', module=this_module, procedure='inv_rsp')
+    !
+    !     return
+    ! end subroutine inv_rsp
 
     subroutine eig_rsp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
@@ -587,27 +586,27 @@ contains
 
       return
     end subroutine
-    subroutine inv_rdp(A)
-        !! In-place inversion of A using LAPACK.
-        real(dp), intent(inout) :: A(:, :)
-        !! Matrix to be inverted (in-place).
-
-        ! Internal variables.
-        integer :: n, info
-        real(dp) :: work(size(A, 1))
-        integer  :: ipiv(size(A, 1))
-
-        ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
-        call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
-
-        ! Compute inv(A) (in-place).
-        call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module=this_module, procedure='inv_rdp')
-
-        return
-    end subroutine inv_rdp
+    ! subroutine inv_rdp(A)
+    !     !! In-place inversion of A using LAPACK.
+    !     real(dp), intent(inout) :: A(:, :)
+    !     !! Matrix to be inverted (in-place).
+    !
+    !     ! Internal variables.
+    !     integer :: n, info
+    !     real(dp) :: work(size(A, 1))
+    !     integer  :: ipiv(size(A, 1))
+    !
+    !     ! Compute A = LU (in-place).
+    !     n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
+    !     call getrf(n, n, A, n, ipiv, info)
+    !     call check_info(info, 'GETREF', module=this_module, procedure='inv_rdp')
+    !
+    !     ! Compute inv(A) (in-place).
+    !     call getri(n, A, n, ipiv, work, n, info)
+    !     call check_info(info, 'GETRI', module=this_module, procedure='inv_rdp')
+    !
+    !     return
+    ! end subroutine inv_rdp
 
     subroutine eig_rdp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
@@ -826,27 +825,27 @@ contains
 
       return
     end subroutine
-    subroutine inv_csp(A)
-        !! In-place inversion of A using LAPACK.
-        complex(sp), intent(inout) :: A(:, :)
-        !! Matrix to be inverted (in-place).
-
-        ! Internal variables.
-        integer :: n, info
-        complex(sp) :: work(size(A, 1))
-        integer  :: ipiv(size(A, 1))
-
-        ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
-        call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
-
-        ! Compute inv(A) (in-place).
-        call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module=this_module, procedure='inv_csp')
-
-        return
-    end subroutine inv_csp
+    ! subroutine inv_csp(A)
+    !     !! In-place inversion of A using LAPACK.
+    !     complex(sp), intent(inout) :: A(:, :)
+    !     !! Matrix to be inverted (in-place).
+    !
+    !     ! Internal variables.
+    !     integer :: n, info
+    !     complex(sp) :: work(size(A, 1))
+    !     integer  :: ipiv(size(A, 1))
+    !
+    !     ! Compute A = LU (in-place).
+    !     n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
+    !     call getrf(n, n, A, n, ipiv, info)
+    !     call check_info(info, 'GETREF', module=this_module, procedure='inv_csp')
+    !
+    !     ! Compute inv(A) (in-place).
+    !     call getri(n, A, n, ipiv, work, n, info)
+    !     call check_info(info, 'GETRI', module=this_module, procedure='inv_csp')
+    !
+    !     return
+    ! end subroutine inv_csp
 
     subroutine eig_csp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
@@ -1060,27 +1059,27 @@ contains
 
       return
     end subroutine
-    subroutine inv_cdp(A)
-        !! In-place inversion of A using LAPACK.
-        complex(dp), intent(inout) :: A(:, :)
-        !! Matrix to be inverted (in-place).
-
-        ! Internal variables.
-        integer :: n, info
-        complex(dp) :: work(size(A, 1))
-        integer  :: ipiv(size(A, 1))
-
-        ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
-        call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
-
-        ! Compute inv(A) (in-place).
-        call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module=this_module, procedure='inv_cdp')
-
-        return
-    end subroutine inv_cdp
+    ! subroutine inv_cdp(A)
+    !     !! In-place inversion of A using LAPACK.
+    !     complex(dp), intent(inout) :: A(:, :)
+    !     !! Matrix to be inverted (in-place).
+    !
+    !     ! Internal variables.
+    !     integer :: n, info
+    !     complex(dp) :: work(size(A, 1))
+    !     integer  :: ipiv(size(A, 1))
+    !
+    !     ! Compute A = LU (in-place).
+    !     n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
+    !     call getrf(n, n, A, n, ipiv, info)
+    !     call check_info(info, 'GETREF', module=this_module, procedure='inv_cdp')
+    !
+    !     ! Compute inv(A) (in-place).
+    !     call getri(n, A, n, ipiv, work, n, info)
+    !     call check_info(info, 'GETRI', module=this_module, procedure='inv_cdp')
+    !
+    !     return
+    ! end subroutine inv_cdp
 
     subroutine eig_cdp(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.

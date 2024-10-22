@@ -26,8 +26,6 @@ module lightkrylov_utils
     character(len=128), parameter :: this_module = 'LightKrylov_Utils'
 
     public :: assert_shape, norml, log2
-    ! Compute B = inv(A) in-place for dense matrices.
-    public :: inv
     ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute AX = XD for symmetric/hermitian matrices.
@@ -59,11 +57,11 @@ module lightkrylov_utils
         #:endfor
     end interface
 
-    interface inv
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure inv_${type[0]}$${kind}$
-        #:endfor
-    end interface
+    ! interface inv
+    !     #:for kind, type in RC_KINDS_TYPES
+    !     module procedure inv_${type[0]}$${kind}$
+    !     #:endfor
+    ! end interface
 
     interface eig
         #:for kind, type in RC_KINDS_TYPES
@@ -193,28 +191,6 @@ contains
     !-------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine inv_${type[0]}$${kind}$(A)
-        !! In-place inversion of A using LAPACK.
-        ${type}$, intent(inout) :: A(:, :)
-        !! Matrix to be inverted (in-place).
-
-        ! Internal variables.
-        integer :: n, info
-        ${type}$ :: work(size(A, 1))
-        integer  :: ipiv(size(A, 1))
-
-        ! Compute A = LU (in-place).
-        n = size(A, 1) ; call assert_shape(A, [n, n], "A", this_module, "inv")
-        call getrf(n, n, A, n, ipiv, info)
-        call check_info(info, 'GETREF', module=this_module, procedure='inv_${type[0]}$${kind}$')
-
-        ! Compute inv(A) (in-place).
-        call getri(n, A, n, ipiv, work, n, info)
-        call check_info(info, 'GETRI', module=this_module, procedure='inv_${type[0]}$${kind}$')
-
-        return
-    end subroutine inv_${type[0]}$${kind}$
-
     subroutine eig_${type[0]}$${kind}$(A, vecs, vals)
         !! Eigenvalue decomposition of a dense matrix using LAPACK.
         ${type}$, intent(in) :: A(:, :)
