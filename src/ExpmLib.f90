@@ -250,7 +250,7 @@ contains
             err_est = 0.0_sp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_rsp / beta)
             H = 0.0_sp
 
@@ -364,9 +364,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_sp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_sp
@@ -376,10 +374,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_sp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_sp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -577,7 +572,7 @@ contains
             err_est = 0.0_dp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_rdp / beta)
             H = 0.0_dp
 
@@ -691,9 +686,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_dp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_dp
@@ -703,10 +696,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_dp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_dp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -904,7 +894,7 @@ contains
             err_est = 0.0_sp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_csp / beta)
             H = 0.0_sp
 
@@ -1018,9 +1008,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_sp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_sp
@@ -1030,10 +1018,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_sp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_sp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -1231,7 +1216,7 @@ contains
             err_est = 0.0_dp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_cdp / beta)
             H = 0.0_dp
 
@@ -1345,9 +1330,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_dp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_dp
@@ -1357,10 +1340,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_dp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_dp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)

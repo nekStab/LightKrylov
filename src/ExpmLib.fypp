@@ -52,9 +52,9 @@ module lightkrylov_expmlib
     end interface
 
     interface expm
-    #:for kind, type in RC_KINDS_TYPES
+        #:for kind, type in RC_KINDS_TYPES
         module procedure expm_${type[0]}$${kind}$
-    #:endfor
+        #:endfor
     end interface
 
     interface kexpm
@@ -191,7 +191,7 @@ contains
             err_est = 0.0_${kind}$
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_${type[0]}$${kind}$ / beta)
             H = 0.0_${kind}$
 
@@ -305,9 +305,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_${kind}$) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_${kind}$ ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_${kind}$
@@ -317,10 +315,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_${kind}$
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_${kind}$ ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
