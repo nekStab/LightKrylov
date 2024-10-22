@@ -3,9 +3,9 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd
-    ! Eigenvalue problem (general + symmetric).
-    use stdlib_linalg_lapack, only: geev, syev, heev
+    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd, eigh
+    ! Eigenvalue problem.
+    use stdlib_linalg_lapack, only: geev
     ! Schur factorization.
     use stdlib_linalg_lapack, only: gees, trsen
 
@@ -24,8 +24,6 @@ module lightkrylov_utils
     public :: assert_shape, norml, log2
     ! Compute AX = XD for general dense matrices.
     public :: eig
-    ! Compute AX = XD for symmetric/hermitian matrices.
-    public :: eigh
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
     public :: sqrtm
     public :: sqrtm_eig
@@ -62,13 +60,6 @@ module lightkrylov_utils
         module procedure eig_rdp
         module procedure eig_csp
         module procedure eig_cdp
-    end interface
-
-   interface eigh
-        module procedure eigh_rsp
-        module procedure eigh_rdp
-        module procedure eigh_csp
-        module procedure eigh_cdp
     end interface
 
     interface schur
@@ -365,36 +356,6 @@ contains
         return
     end subroutine eig_rsp
 
-    subroutine eigh_rsp(A, vecs, vals)
-        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
-        real(sp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        real(sp), intent(out) :: vecs(:, :)
-        !! Eigenvectors.
-        real(sp), intent(out) :: vals(:)
-        !! Eigenvalues.
-
-        ! Internal variables.
-        character :: jobz = "v", uplo = "u"
-        integer :: n, lwork, info, lda
-        real(sp) :: A_tilde(size(A, 1), size(A, 2))
-        real(sp), allocatable :: work(:)
-
-        ! Setup variables.
-        n = size(A, 1) ; lda = n ; a_tilde = a
-        lwork = max(1, 3*n-1)
-        allocate(work(lwork))
-
-        ! Eigendecomposition.
-        call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rsp')
-
-        ! Extract eigenvectors
-        vecs = a_tilde
-
-        return
-    end subroutine eigh_rsp
-
     subroutine schur_rsp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
         real(sp), intent(inout) :: A(:, :)
@@ -479,7 +440,7 @@ contains
       info = 0
 
       ! Check if the matrix is symmetric
-      symmetry_error = 0.5*maxval(X - transpose(X))
+      symmetry_error = 0.5_sp*maxval(X - transpose(X))
       if (symmetry_error > rtol_sp) then
         write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
             & symmetry_error, ", tol = ", rtol_sp
@@ -510,7 +471,7 @@ contains
 
     subroutine sqrtm_eig_rsp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      real(sp), intent(in)  :: X(:,:)
+      real(sp), intent(inout)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       real(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
@@ -532,7 +493,7 @@ contains
       end if
 
       ! Perform eigenvalue decomposition
-      call eigh(X, V, lambda)
+      call eigh(X, lambda, vectors=V)
 
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
@@ -581,36 +542,6 @@ contains
 
         return
     end subroutine eig_rdp
-
-    subroutine eigh_rdp(A, vecs, vals)
-        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
-        real(dp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        real(dp), intent(out) :: vecs(:, :)
-        !! Eigenvectors.
-        real(dp), intent(out) :: vals(:)
-        !! Eigenvalues.
-
-        ! Internal variables.
-        character :: jobz = "v", uplo = "u"
-        integer :: n, lwork, info, lda
-        real(dp) :: A_tilde(size(A, 1), size(A, 2))
-        real(dp), allocatable :: work(:)
-
-        ! Setup variables.
-        n = size(A, 1) ; lda = n ; a_tilde = a
-        lwork = max(1, 3*n-1)
-        allocate(work(lwork))
-
-        ! Eigendecomposition.
-        call syev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-        call check_info(info, 'SYEV', module=this_module, procedure='eigh_rdp')
-
-        ! Extract eigenvectors
-        vecs = a_tilde
-
-        return
-    end subroutine eigh_rdp
 
     subroutine schur_rdp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -696,7 +627,7 @@ contains
       info = 0
 
       ! Check if the matrix is symmetric
-      symmetry_error = 0.5*maxval(X - transpose(X))
+      symmetry_error = 0.5_dp*maxval(X - transpose(X))
       if (symmetry_error > rtol_dp) then
         write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
             & symmetry_error, ", tol = ", rtol_dp
@@ -727,7 +658,7 @@ contains
 
     subroutine sqrtm_eig_rdp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      real(dp), intent(in)  :: X(:,:)
+      real(dp), intent(inout)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       real(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
@@ -749,7 +680,7 @@ contains
       end if
 
       ! Perform eigenvalue decomposition
-      call eigh(X, V, lambda)
+      call eigh(X, lambda, vectors=V)
 
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
@@ -797,38 +728,6 @@ contains
 
         return
     end subroutine eig_csp
-
-    subroutine eigh_csp(A, vecs, vals)
-        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
-        complex(sp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        complex(sp), intent(out) :: vecs(:, :)
-        !! Eigenvectors.
-        real(sp), intent(out) :: vals(:)
-        !! Eigenvalues.
-
-        ! Internal variables.
-        character :: jobz = "v", uplo = "u"
-        integer :: n, lwork, info, lda
-        complex(sp) :: A_tilde(size(A, 1), size(A, 2))
-        complex(sp), allocatable :: work(:)
-        real(sp), allocatable :: rwork(:)
-
-        ! Setup variables.
-        n = size(A, 1) ; lda = n ; a_tilde = a
-        lwork = max(1, 2*n-1)
-        allocate(rwork(max(1, 3*n-2)))
-        allocate(work(lwork))
-
-        ! Eigendecomposition.
-        call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module=this_module, procedure='eigh_csp')
-
-        ! Extract eigenvectors
-        vecs = a_tilde
-
-        return
-    end subroutine eigh_csp
 
     subroutine schur_csp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -908,7 +807,7 @@ contains
       info = 0
 
       ! Check if the matrix is hermitian
-      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      symmetry_error = 0.5_sp*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_sp) then
         write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
             & symmetry_error, ", tol = ", rtol_sp
@@ -939,7 +838,7 @@ contains
 
     subroutine sqrtm_eig_csp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      complex(sp), intent(in)  :: X(:,:)
+      complex(sp), intent(inout)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
@@ -961,7 +860,7 @@ contains
       end if
 
       ! Perform eigenvalue decomposition
-      call eigh(X, V, lambda)
+      call eigh(X, lambda, vectors=V)
 
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
@@ -1009,38 +908,6 @@ contains
 
         return
     end subroutine eig_cdp
-
-    subroutine eigh_cdp(A, vecs, vals)
-        !! Eigenvalue decomposition of a dense symmetric/hermitian matrix using LAPACK.
-        complex(dp), intent(in) :: A(:, :)
-        !! Matrix to be factorized.
-        complex(dp), intent(out) :: vecs(:, :)
-        !! Eigenvectors.
-        real(dp), intent(out) :: vals(:)
-        !! Eigenvalues.
-
-        ! Internal variables.
-        character :: jobz = "v", uplo = "u"
-        integer :: n, lwork, info, lda
-        complex(dp) :: A_tilde(size(A, 1), size(A, 2))
-        complex(dp), allocatable :: work(:)
-        real(dp), allocatable :: rwork(:)
-
-        ! Setup variables.
-        n = size(A, 1) ; lda = n ; a_tilde = a
-        lwork = max(1, 2*n-1)
-        allocate(rwork(max(1, 3*n-2)))
-        allocate(work(lwork))
-
-        ! Eigendecomposition.
-        call heev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, rwork, info)
-        call check_info(info, 'HEEV', module=this_module, procedure='eigh_cdp')
-
-        ! Extract eigenvectors
-        vecs = a_tilde
-
-        return
-    end subroutine eigh_cdp
 
     subroutine schur_cdp(A, Z, eigvals)
         !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
@@ -1120,7 +987,7 @@ contains
       info = 0
 
       ! Check if the matrix is hermitian
-      symmetry_error = 0.5*maxval(abs(X - conjg(transpose(X))))
+      symmetry_error = 0.5_dp*maxval(abs(X - conjg(transpose(X))))
       if (symmetry_error > rtol_dp) then
         write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
             & symmetry_error, ", tol = ", rtol_dp
@@ -1151,7 +1018,7 @@ contains
 
     subroutine sqrtm_eig_cdp(X, sqrtmX, info)
       !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      complex(dp), intent(in)  :: X(:,:)
+      complex(dp), intent(inout)  :: X(:,:)
       !! Matrix of which to compute the sqrt
       complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
       !! Return matrix
@@ -1173,7 +1040,7 @@ contains
       end if
 
       ! Perform eigenvalue decomposition
-      call eigh(X, V, lambda)
+      call eigh(X, lambda, vectors=V)
 
       ! Check if the matrix is positive definite (up to tol)
       do i = 1, size(lambda)
