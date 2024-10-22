@@ -4,8 +4,6 @@ module lightkrylov_utils
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
     use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd
-    ! Matrix inversion.
-    use stdlib_linalg_lapack, only: getrf, getri
     ! Eigenvalue problem (general + symmetric).
     use stdlib_linalg_lapack, only: geev, syev, heev
     ! Schur factorization.
