@@ -75,7 +75,9 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Syntax
         !!
-        !!  `call qr(Q [, R] [, perm], info [, tol])`
+        !!  ```fortran
+        !!      call qr(Q [, R] [, perm], info [, tol])
+        !!  ```
         !!
         !!  ### Arguments
         !!
@@ -127,7 +129,9 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Syntax
         !!
-        !!  `call apply_permutation_matrix(X, perm)`
+        !!  ```fortran
+        !!      call apply_permutation_matrix(X, perm)
+        !!  ```
         !!
         !!  ### Arguments
         !!
@@ -162,7 +166,9 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Syntax
         !!
-        !!  `call apply_inverse_permutation_matrix(X, perm)`
+        !!  ```fortran
+        !!      call apply_inverse_permutation_matrix(X, perm)
+        !!  ```
         !!
         !!  ### Arguments
         !!
@@ -208,7 +214,9 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Syntax
         !!
-        !!  `call arnoldi(A, X, H, info [, kstart] [, kend] [, tol] [, transpose] [, blksize])`
+        !!  ```fortran
+        !!      call arnoldi(A, X, H, info [, kstart] [, kend] [, tol] [, transpose] [, blksize])
+        !!  ```
         !!
         !!  ### Arguments
         !!
@@ -253,6 +261,25 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface initialize_krylov_subspace
+        !!  ### Description
+        !!
+        !!  Utility function to initialize a basis for a Krylov subspace.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call initialize_krylov_subspace(X [, X0])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of vectors that needs to be initialized. It is an `intent(inout)`
+        !!        argument. Note that the first action in the subroutine is
+        !!        `call zero_basis(X)`, effectively zeroing-out any data stored.
+        !!
+        !!  `X0` (*optional*) : Collection of vectors which will form the first few
+        !!                      Krylov vectors. Note that `X0` need not be an orthonormal
+        !!                      basis as this subroutine includes a `call qr(X0)`.
         module procedure initialize_krylov_subspace_rsp
         module procedure initialize_krylov_subspace_rdp
         module procedure initialize_krylov_subspace_csp
@@ -260,6 +287,21 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface is_orthonormal
+        !!  ### Description
+        !!
+        !!  Utility function returning a logical `.true.` if the set of vectors stored in \( X \) form
+        !!  an orthonormal set of vectors and `.false.` otherwise.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      out = is_orthonormal(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of derived types extended from the base types provided in the
+        !!        `AbstractVectors` module.
         module procedure is_orthonormal_rsp
         module procedure is_orthonormal_rdp
         module procedure is_orthonormal_csp
@@ -322,7 +364,9 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Syntax
         !!
-        !!  `call lanczos(A, X, T, info [, kstart] [, kend] [, tol])`
+        !!  ```fortran
+        !!      call lanczos(A, X, T, info [, kstart] [, kend] [, tol])
+        !!  ```
         !!
         !!  ### Arguments
         !!
@@ -391,7 +435,9 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Syntax
         !!
-        !!  `call bidiagonalization(A, U, V, B, info [, kstart] [, kend] [, tol])`
+        !!  ```fortran
+        !!      call bidiagonalization(A, U, V, B, info [, kstart] [, kend] [, tol])
+        !!  ```
         !!
         !!  ### Arguments
         !!
