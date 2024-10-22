@@ -113,6 +113,30 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface apply_permutation_matrix
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) and a permutation vector \( p \), this function computes
+        !!  *in-place* the column-permuted matrix
+        !!
+        !!  \[
+        !!      X = X P
+        !!  \]
+        !!
+        !!  where \( P \) is the column-permutation matrix constructed from the permutation
+        !!  vector \( p \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call apply_permutation_matrix(X, perm)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!       module. On entry, it is the original array. On exit, it contains the
+        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
+        !!
+        !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
+        !!          It is an `intent(in)` argument.
         module procedure apply_permutation_matrix_rsp
         module procedure apply_permutation_matrix_array_rsp
         module procedure apply_permutation_matrix_rdp
@@ -124,6 +148,30 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface apply_inverse_permutation_matrix
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) and a permutation vector \( p \), this function computes
+        !!  *in-place* the column-permuted matrix
+        !!
+        !!  \[
+        !!      X = X P^{-1}
+        !!  \]
+        !!
+        !!  where \( P \) is the column-permutation matrix constructed from the permutation
+        !!  vector \( p \) and \( P^{-1} \) its inverse.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call apply_inverse_permutation_matrix(X, perm)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!       module. On entry, it is the original array. On exit, it contains the
+        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
+        !!
+        !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
+        !!          It is an `intent(in)` argument.
         module procedure apply_inverse_permutation_matrix_rsp
         module procedure apply_inverse_permutation_matrix_array_rsp
         module procedure apply_inverse_permutation_matrix_rdp
