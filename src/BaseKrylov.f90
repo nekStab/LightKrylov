@@ -1,16 +1,35 @@
 module lightkrylov_BaseKrylov
+    !!  This module provides a collection of Krylov-based factorizations forming the
+    !!  computational core of `LightKrylov`. It also provides a set of utility functions
+    !!  to operate on arrays of `abstract_vector`. The most important ones are:
+    !!
+    !!  - `arnoldi(A, X, H, info)`: Arnoldi factorization for general square matrices.
+    !!  - `lanczos(A, X, H, info)`: Lanczos factorization for general symmetric/hermitian matrices.
+    !!  - `lanczos_bidiagonalization(A, U, V, B)`: Lanczos bidiagonalization for arbitrary matrices.
+    !!  - `qr(X, R, perm, info)`: QR factorization (with and without column pivoting) of an array of `abstract_vector`.
+
+
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
     use iso_fortran_env
     use stdlib_optval, only: optval
     use stdlib_linalg, only: eye
+
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
     use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
+
     implicit none
     private
     
     character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
+
     public :: qr
     public :: apply_permutation_matrix
     public :: apply_inverse_permutation_matrix
@@ -67,6 +86,69 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface arnoldi
+        !!  ### Description
+        !!
+        !!  Given a square linear operator \( A \), find matrices \( X \) and \( H \) such that
+        !!
+        !!  \[
+        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^T,
+        !!  \]
+        !!
+        !!  where \( X \) is an orthogonal basis and \( H \) is upper Hessenberg.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( X \) via the Gram-Schmidt process.
+        !!  - Constructs an upper Hessenberg matrix \( H \) whose eigenvalues approximates those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !   - Block version available (experimental).
+        !!
+        !!  **References**
+        !!
+        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+        !!    see Chapter 6.3: Arnoldi's method.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call arnoldi(A, X, H, info [, kstart] [, kend] [, tol] [, transpose] [, blksize])`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
+        !!        module. The operator needs to be square, i.e. the dimension of its domain and
+        !!        co-domain is the same. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!        the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
+        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!
+        !!  `H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         upper Hessenberg matrix computed from the Arnoldi factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
+        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!            dimension `info`.
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Arnoldi
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Arnoldi step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
+        !!
+        !!  `transpose` (*optional*): `logical` flag determining whether the Arnoldi factorization
+        !!                             is applied to \( A \) or \( A^H \). Default `transpose = .false.`
+        !!
+        !!  `blksize` (*optional*): `integer` value determining the dimension of a block for the
+        !!                          block Arnoldi factorization. Default is `blksize=1`.
         module procedure arnoldi_rsp
         module procedure arnoldi_rdp
         module procedure arnoldi_csp
@@ -206,7 +288,6 @@ contains
         class(abstract_vector_rsp), optional, intent(in) :: X0(:)
 
         ! Internal variables.
-        class(abstract_vector_rsp), allocatable :: Q(:)
         integer :: p
 
         ! Zero-out X.
@@ -216,10 +297,9 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            allocate(Q(p), source=X0)   
+            call copy_basis(X(:p), X0)
             ! Orthonormalize.
-            call orthonormalize_basis(Q)
-            call copy_basis(X(:p), Q)
+            call orthonormalize_basis(X(:p))
         endif
 
         return
@@ -453,7 +533,6 @@ contains
         class(abstract_vector_rdp), optional, intent(in) :: X0(:)
 
         ! Internal variables.
-        class(abstract_vector_rdp), allocatable :: Q(:)
         integer :: p
 
         ! Zero-out X.
@@ -463,10 +542,9 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            allocate(Q(p), source=X0)   
+            call copy_basis(X(:p), X0)
             ! Orthonormalize.
-            call orthonormalize_basis(Q)
-            call copy_basis(X(:p), Q)
+            call orthonormalize_basis(X(:p))
         endif
 
         return
@@ -700,7 +778,6 @@ contains
         class(abstract_vector_csp), optional, intent(in) :: X0(:)
 
         ! Internal variables.
-        class(abstract_vector_csp), allocatable :: Q(:)
         integer :: p
 
         ! Zero-out X.
@@ -710,10 +787,9 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            allocate(Q(p), source=X0)   
+            call copy_basis(X(:p), X0)
             ! Orthonormalize.
-            call orthonormalize_basis(Q)
-            call copy_basis(X(:p), Q)
+            call orthonormalize_basis(X(:p))
         endif
 
         return
@@ -947,7 +1023,6 @@ contains
         class(abstract_vector_cdp), optional, intent(in) :: X0(:)
 
         ! Internal variables.
-        class(abstract_vector_cdp), allocatable :: Q(:)
         integer :: p
 
         ! Zero-out X.
@@ -957,10 +1032,9 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            allocate(Q(p), source=X0)   
+            call copy_basis(X(:p), X0)
             ! Orthonormalize.
-            call orthonormalize_basis(Q)
-            call copy_basis(X(:p), Q)
+            call orthonormalize_basis(X(:p))
         endif
 
         return
@@ -2558,7 +2632,6 @@ contains
         real(sp) :: alpha, beta
         integer :: k, kdim
 
-
         info = 0
 
         ! Krylov subspace dimension.
@@ -2576,7 +2649,6 @@ contains
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-            
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rsp, right basis')
@@ -2638,7 +2710,6 @@ contains
         real(dp) :: alpha, beta
         integer :: k, kdim
 
-
         info = 0
 
         ! Krylov subspace dimension.
@@ -2656,7 +2727,6 @@ contains
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-            
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rdp, right basis')
@@ -2718,7 +2788,6 @@ contains
         complex(sp) :: alpha, beta
         integer :: k, kdim
 
-
         info = 0
 
         ! Krylov subspace dimension.
@@ -2736,7 +2805,6 @@ contains
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-            
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_csp, right basis')
@@ -2798,7 +2866,6 @@ contains
         complex(dp) :: alpha, beta
         integer :: k, kdim
 
-
         info = 0
 
         ! Krylov subspace dimension.
@@ -2816,7 +2883,6 @@ contains
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1 ) then
-            
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_cdp, right basis')
@@ -3177,13 +3243,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_rsp, Xwrk(i), one_rsp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_rsp, X(kdim+1), one_rsp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3241,13 +3302,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_rdp, Xwrk(i), one_rdp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_rdp, X(kdim+1), one_rdp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3305,13 +3361,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_csp, Xwrk(i), one_csp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_csp, X(kdim+1), one_csp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3369,13 +3420,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_cdp, Xwrk(i), one_cdp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_cdp, X(kdim+1), one_cdp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
