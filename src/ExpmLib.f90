@@ -145,7 +145,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -157,9 +157,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -192,9 +190,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = inv(Q) ! ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -476,7 +472,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(dp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -488,9 +484,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -523,9 +517,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = inv(Q) ! ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -807,7 +799,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -819,9 +811,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -854,9 +844,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = inv(Q) ! ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -1138,7 +1126,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(dp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -1150,9 +1138,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -1185,9 +1171,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = inv(Q) ! ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
