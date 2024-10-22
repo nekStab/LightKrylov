@@ -46,6 +46,55 @@ module lightkrylov_BaseKrylov
     public :: eigvals_select_dp
 
     interface qr
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of types derived from `abstract_vector`, it computes the
+        !!  *in-place* QR factorization of \( X \), i.e.
+        !!
+        !!  \[
+        !!      X = QR,
+        !!  \]
+        !!
+        !!  where \( Q \) is an orthonormal arrays of vectors such that \( Q^H Q = I \) and
+        !!  \( R \) is upper triangular. Note that it can also perform the QR factorization
+        !!  with column pivoting
+        !!
+        !!  \[
+        !!      XP = QR
+        !!  \]
+        !!
+        !!  where \( P \) is a permutation matrix ensuring that the diagonal entries of \( R \)
+        !!  have non-increasing absolute values. This amounts to using the pivoting QR as a
+        !!  rank-revealing factorization.
+        !!
+        !!  **References**
+        !!
+        !!  - G. H. Golub & C. F. Van Loan. "Matrix Computations". 4th edition, The John Hopkins
+        !!   University Press, 2013.
+        !!   See Chapter 5.2.8: Modified Gram-Schmidt algorithm.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call qr(Q [, R] [, perm], info [, tol])`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `Q`: Array of types derived from one of the base types provided in the
+        !!       `AbstractVectors` module. On entry, it contains the original array.
+        !!       On exit, it is overwritten by the orthogonal basis for its span.
+        !!       It is an `intent(inout)` argument.
+        !!
+        !!  `R`: `real` or `complex` rank-2 array. On exit, its contains the upper triangular
+        !!        matrix resulting from the QR factorization. It is an `intent(out)` argument.
+        !!
+        !!  `perm` (*optional*): Rank-1 array of `integer` corresponding to the indices of
+        !!                       permuted columns. If `perm` is absent, the naive QR factorization
+        !!                       is being computed.
+        !!
+        !!  `info`: `integer` information flag.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance to determine whether two vectors are colinear
+        !!                      or not. Default `tol = atol_sp` or `tol = atol_dp`.
         module procedure qr_no_pivoting_rsp
         module procedure qr_with_pivoting_rsp
         module procedure qr_no_pivoting_rdp
