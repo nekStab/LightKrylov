@@ -5,7 +5,7 @@ module lightkrylov_BaseKrylov
     !!
     !!  - `arnoldi(A, X, H, info)`: Arnoldi factorization for general square matrices.
     !!  - `lanczos(A, X, H, info)`: Lanczos factorization for general symmetric/hermitian matrices.
-    !!  - `lanczos_bidiagonalization(A, U, V, B)`: Lanczos bidiagonalization for arbitrary matrices.
+    !!  - `bidiagonalization(A, U, V, B)`: Lanczos bidiagonalization for arbitrary matrices.
     !!  - `qr(X, R, perm, info)`: QR factorization (with and without column pivoting) of an array of `abstract_vector`.
 
 
@@ -199,6 +199,63 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface lanczos_tridiagonalization
+        !!  ### Description
+        !!
+        !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
+        !!  \( T \) such that
+        !!
+        !!  \[
+        !!      AX_k = X_k T_k + t_{k+1, k} x_{k+1} e_k^T,
+        !!  \]
+        !!
+        !!  where \( X \) is an orthogonal basis and \( T \) is symmetric tridiagonal.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( X \) via the Lanczos process with full
+        !!    reorthogonalization.
+        !!  - Constructs a symmetric tridiagonal matrix \( T \) whose eigenvalues approximates those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+        !!    see Chapter 6.6: The symmetric Lanczos algorithm.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call lanczos(A, X, T, info [, kstart] [, kend] [, tol])`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
+        !!        provided by the `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!        the Lanczos factorization. Additionally, the maximum number of Lanczos steps
+        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!
+        !!  `T` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         symmetric tridiagonal matrix computed from the Arnoldi factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!            dimension `info`.
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
         module procedure lanczos_tridiagonalization_rsp
         module procedure lanczos_tridiagonalization_rdp
         module procedure lanczos_tridiagonalization_csp
@@ -206,6 +263,72 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface lanczos_bidiagonalization
+        !!  ### Description
+        !!
+        !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
+        !!  \( B \) such that
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!          AV_k & = U_k T_k + t_{k+1, k} v_{k+1} e_k^T, \\
+        !!          A^H U_k & = V_k T_k^T + t_{k+1, k} u_{k+1} e_k^T
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  where \( U \) and \( V \) are orthogonal bases for the column span and row span
+        !!  of \( A \), respectively, and \( B \) is a bidiagonal matrix.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( U \) for the column span of \( A \).
+        !!  - Constructs an orthonormal Krylov basis \( V \) for the row span of \( A \).
+        !!  - Constructs a bidiagonal matrix \( B \) whose singular values approximates 
+        !!    those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." 
+        !!    Technical Report, 1998. [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call bidiagonalization(A, U, V, B, info [, kstart] [, kend] [, tol])`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one the base types provided by the 
+        !!        `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
+        !!        is the starting vector for the Lanczos factorization. Additionally, the 
+        !!        maximum number of Lanczos steps is equal to `size(X) - 1`. 
+        !!        It is an `intent(inout)` argument.
+        !!
+        !!  `V` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
+        !!        argument.
+        !!
+        !!  `B` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         bidiagonal matrix computed from the Lanczos factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
         module procedure lanczos_bidiagonalization_rsp
         module procedure lanczos_bidiagonalization_rdp
         module procedure lanczos_bidiagonalization_csp
