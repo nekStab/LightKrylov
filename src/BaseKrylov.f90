@@ -327,6 +327,45 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface double_gram_schmidt_step
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of `abstract_vector` and an `abstract_vector` 
+        !!  (or array of `abstract_vectors`) \( y \), this subroutine returns a modified 
+        !!  vector \( y \) orthogonal to all columns of \( X \), i.e.
+        !!
+        !!  \[
+        !!      y \leftarrow \left( I - XX^H \right) y,
+        !!  \]
+        !!
+        !!  using a double Gram-Schmidt process. On exit, \( y \) is orthogonal to \( X \) albeit
+        !!  does not have unit-norm. Note moreover that \( X \) is assumed to be an orthonormal 
+        !!  set of vectors. The function can also return the projection coefficients 
+        !!  \( \beta = X^H y \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call double_gram_schmidt_step(y, X, info [, if_chk_orthonormal] [, beta])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `y` : `abstract_vector` (or array of `abstract_vector`) that needs to be
+        !!        orthogonalize **in-place** against \( X \).
+        !!
+        !!  `X` : Array of `abstract_vector` against which \( y \) needs to be orthogonalized.
+        !!        Note the function assumes that \( X \) is an orthonormal set of vectors, i.e.
+        !!        \( X^H X = I \). If it this is not the case, the result are meaningless.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `if_chk_orthonormal` (*optional*) : `logical` flag (default `.true.`) to check
+        !!      whether \( X \) is an orthonormal set of vectors or not. If the orthonormality
+        !!      returns `.false.`, the function throws an error. Note that this check is however
+        !!      computationally expensive and can be disable for the sake of performances.
+        !!
+        !!  `beta` (*optional*) : `real` or `complex` array containing the coefficients
+        !!      \( \beta = X^H y \).
         module procedure DGS_vector_against_basis_rsp
         module procedure DGS_basis_against_basis_rsp
         module procedure DGS_vector_against_basis_rdp
