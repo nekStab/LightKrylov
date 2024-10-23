@@ -302,7 +302,7 @@ contains
                ierr = -1
             else if (info == -2) then
                write(msg,'(A)') 'Orthogonalization: The last column of the input basis is zero.'
-               call logger%log_warning(trim(msg), module=module, procedure=procedure)
+               call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -362,7 +362,8 @@ contains
          else if (trim(to_lower(origin)) == 'qr') then
             ! qr
             if (info > 0) then
-               write(msg,'(A,I0)') 'QR factorization: Colinear column detected in column ', info
+               write(msg,'(A,I0,A)') 'QR factorization: Colinear column detected in column ', info,  &
+                           & '. NOTE: Other subsequent columns may also be colinear.'
                call logger%log_debug(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)

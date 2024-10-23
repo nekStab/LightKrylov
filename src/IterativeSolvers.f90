@@ -999,7 +999,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1099,7 +1099,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1199,7 +1199,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1299,7 +1299,7 @@ contains
             !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
             ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(1:nev) ; residuals = residuals_wrk(:nev)
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
 
         ! Construct eigenvectors.
@@ -1816,7 +1816,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -1987,7 +1987,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -2158,7 +2158,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
@@ -2329,7 +2329,7 @@ contains
                 endif
 
                 ! Double Gram-Schmid orthogonalization
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(1:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
