@@ -1220,7 +1220,6 @@ contains
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rsp')
-                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
             end if        
 
             ! Check for breakdown.
@@ -1486,7 +1485,6 @@ contains
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rdp')
-                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
             end if        
 
             ! Check for breakdown.
@@ -1752,7 +1750,6 @@ contains
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_csp')
-                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
             end if        
 
             ! Check for breakdown.
@@ -2018,7 +2015,6 @@ contains
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_cdp')
-                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
             end if        
 
             ! Check for breakdown.
