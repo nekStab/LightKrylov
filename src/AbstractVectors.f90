@@ -27,18 +27,20 @@ module lightkrylov_AbstractVectors
     !!
     !! This module also provides the following utility subroutines:
     !!
-    !! - `innerprod(v, X, y)` / `innerprod(M, X, Y)`: Subroutine to compute the 
+    !! - `innerprod(v, X, y)` and `innerprod(M, X, Y)`: Subroutine to compute the 
     !! inner-product matrix/vector between a Krylov basis `X` and a Krylov vector 
     !! (resp. basis) `y` (resp. `Y`).
-    !! - `linear_combination(y, X, v)` / `linear_combination(Y, X, B)`: Subroutine to 
+    !! - `linear_combination(y, X, v)` and `linear_combination(Y, X, B)`: Subroutine to 
     !! compute the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
     !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
     !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
-    !! - `zero_basis(X)`: Self explanatory.
-    !! - `copy_basis(out, from)`: Self explanatory.
+    !! - `zero_basis(X)`: Zero-out a collection of `abstract_vectors`.
+    !! - `copy_basis(out, from)`: Copy a collection of `abstract_vectors`.
+    !! - `rand_basis(X, ifnorm)`: Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
+
     use stdlib_optval, only: optval
-    use lightkrylov_constants
-    use lightkrylov_utils
+    use LightKrylov_Constants
+    use LightKrylov_Utils
     use LightKrylov_Logger
     implicit none
     private
@@ -53,6 +55,49 @@ module lightkrylov_AbstractVectors
     public :: rand_basis
 
     interface innerprod
+        !!  Compute the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{y} \) or matrix
+        !!  \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \).
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods for computing the inner products between a basis
+        !!  of `real` or `complex` vectors \( \mathbf{X} \) and a single vector 
+        !!  \( \mathbf{y} \) or another basis \( \mathbf{Y} \). Depending on the case, it
+        !!  returns a one-dimensional array \( \mathbf{v} \) or a two-dimensional array
+        !!  \( \mathbf{M} \) with the same type as \( \mathbf{X} \).
+        !!
+        !!  ### Example
+        !!
+        !!  The example below assumes that you have already extended the `abstract_vector_rdp`
+        !!  class to define your own `my_real_vector` type. It then computes the inner product
+        !!  vector \( \mathbf{v} \) defined as \( v_i = \mathbf{x}_i^H \mathbf{y} \).
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector)                :: y
+        !!      real(dp), dimension(:), allocatable :: v
+        !!
+        !!      ! ... Part of your code where you initialize everything ...
+        !!
+        !!      call innerprod(v, X, y)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
+        !!
+        !!  Similarly, computing the matrix of inner products between two bases can be done
+        !!  as shown below.
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!      real(dp), dimension(:, :), allocatable :: M
+        !!
+        !!      ! ... Part of your code where you initialize everything ...
+        !!
+        !!      call innerprod(M, X, Y)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
         module procedure innerprod_vector_rsp
         module procedure innerprod_matrix_rsp
         module procedure innerprod_vector_rdp
@@ -64,6 +109,39 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface linear_combination
+        !!  Given a set of extended `abstract_vectors` and coefficients, return the corresponding
+        !!  linear combinations.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods for computing linear combinations of a set of extended
+        !!  `abstract_vectors`. Depending on its input, it either computes
+        !!
+        !!  \[
+        !!      \mathbf{y} = \sum_{i=1}^n \alpha_i \mathbf{x}_i,
+        !!  \]
+        !!
+        !!  i.e. a single vector, or
+        !!
+        !!  \[
+        !!      \mathbf{y}_j = \sum_{i=1}^n \alpha_{ij} \mathbf{x}_i,
+        !!  \]
+        !!
+        !!  i.e. a set of vectors of the same type as \( \mathbf{X} \).
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      real(dp), dimension(m, n)           :: B
+        !!      type(my_real_vector)                :: Y
+        !!
+        !!      ! ... Whatever your code is doing ...
+        !!
+        !!      call linear_combination(Y, X, B)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
         module procedure linear_combination_vector_rsp
         module procedure linear_combination_matrix_rsp
         module procedure linear_combination_vector_rdp
@@ -75,6 +153,34 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface axpby_basis
+        !!  In-place addition of two arrays of extended `abstract_vector`.
+        !!  
+        !!  ### Description
+        !!
+        !!  This interface provides methods to add in-place two arrays of
+        !!  extended `abstract_vector`, i.e.
+        !!
+        !!  \[
+        !!      \mathbf{x}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
+        !!  \]
+        !!
+        !!  No out-of-place alternative is currently available in `LightKrylov`.
+        !!  If you do need an out-of-place version, you can combine `axpby_basis`
+        !!  with `copy_basis`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!      real(dp), dimension(10)             :: alpha, beta
+        !!
+        !!      ! ... Whatever your code is doing ...
+        !!
+        !!      call axpby_basis(X, alpha, Y, beta)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
         module procedure axpby_basis_rsp
         module procedure axpby_basis_rdp
         module procedure axpby_basis_csp
@@ -82,6 +188,20 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface zero_basis
+        !!  This interface provides methods to zero-out a collection of `abstract_vector` `X`.
+        !!  It is a simple wrapper around `X(i)%zero()`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call zero_basis(X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
         module procedure zero_basis_rsp
         module procedure zero_basis_rdp
         module procedure zero_basis_csp
@@ -89,20 +209,56 @@ module lightkrylov_AbstractVectors
     end interface
 
     interface copy_basis
+        !!  This interface provides methods to copy an array `X` of `abstract_vector` into
+        !!  another array `Y`. Note that `Y` needs to be pre-allocated.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call copy_basis(Y, X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
         module procedure copy_basis_rsp
         module procedure copy_basis_rdp
         module procedure copy_basis_csp
         module procedure copy_basis_cdp
     end interface
-    
+
     interface rand_basis
+        !!  This interface provides methods to create an array `X` of random `abstract_vector`.
+        !!  It is a simple wrapper around `X(i)%rand(ifnorm)`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      logical                             :: ifnorm = .true.
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call rand_basis(X, ifnorm)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
         module procedure rand_basis_rsp
         module procedure rand_basis_rdp
         module procedure rand_basis_csp
         module procedure rand_basis_cdp
     end interface
-    
+
     type, abstract, public :: abstract_vector
+        !!  Base abstract type from which all other types of vectors used in `LightKrylov`
+        !!  are being derived from.
+        !!
+        !!  @warning
+        !!  Users should not extend this abstract class to define their own types.
+        !!  @endwarning
     end type abstract_vector
 
     !----------------------------------------------------------------------------
@@ -110,12 +266,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_rsp
+        !!  Abstract type to define real(sp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_rsp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_rsp` to zero.
+        !! Sets an `abstract_vector_rsp` to zero.
         procedure(abstract_rand_rsp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_rsp.
+        !! Creates a random `abstract_vector_rsp`.
         procedure(abstract_scal_rsp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_rsp), pass(self), deferred, public :: axpby
@@ -192,12 +350,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_rdp
+        !!  Abstract type to define real(dp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_rdp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_rdp` to zero.
+        !! Sets an `abstract_vector_rdp` to zero.
         procedure(abstract_rand_rdp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_rdp.
+        !! Creates a random `abstract_vector_rdp`.
         procedure(abstract_scal_rdp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_rdp), pass(self), deferred, public :: axpby
@@ -274,12 +434,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_csp
+        !!  Abstract type to define complex(sp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_csp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_csp` to zero.
+        !! Sets an `abstract_vector_csp` to zero.
         procedure(abstract_rand_csp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_csp.
+        !! Creates a random `abstract_vector_csp`.
         procedure(abstract_scal_csp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_csp), pass(self), deferred, public :: axpby
@@ -356,12 +518,14 @@ module lightkrylov_AbstractVectors
     !----------------------------------------------------------------------------
 
     type, abstract, extends(abstract_vector), public :: abstract_vector_cdp
+        !!  Abstract type to define complex(dp)-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
     contains
         private
         procedure(abstract_zero_cdp), pass(self), deferred, public :: zero
-        !! Sets and `abstract_vector_cdp` to zero.
+        !! Sets an `abstract_vector_cdp` to zero.
         procedure(abstract_rand_cdp), pass(self), deferred, public :: rand
-        !! Creates a random `abstract_vector_cdp.
+        !! Creates a random `abstract_vector_cdp`.
         procedure(abstract_scal_cdp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_cdp), pass(self), deferred, public :: axpby
@@ -450,7 +614,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_sp, vec, -1.0_sp)
+        call self%axpby(one_rsp, vec, -one_rsp)
     end subroutine sub_rsp
 
     subroutine add_rsp(self, vec)
@@ -459,14 +623,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_sp, vec, 1.0_sp)
+        call self%axpby(one_rsp, vec, one_rsp)
     end subroutine add_rsp
 
     subroutine chsgn_rsp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rsp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(-1.0_sp)
+        call self%scal(-one_rsp)
     end subroutine chsgn_rsp
 
     function norm_rdp(self) result(alpha)
@@ -484,7 +648,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_dp, vec, -1.0_dp)
+        call self%axpby(one_rdp, vec, -one_rdp)
     end subroutine sub_rdp
 
     subroutine add_rdp(self, vec)
@@ -493,14 +657,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(1.0_dp, vec, 1.0_dp)
+        call self%axpby(one_rdp, vec, one_rdp)
     end subroutine add_rdp
 
     subroutine chsgn_rdp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rdp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(-1.0_dp)
+        call self%scal(-one_rdp)
     end subroutine chsgn_rdp
 
     function norm_csp(self) result(alpha)
@@ -518,7 +682,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), vec, cmplx(-1.0_sp, 0.0_sp, kind=sp))
+        call self%axpby(one_csp, vec, -one_csp)
     end subroutine sub_csp
 
     subroutine add_csp(self, vec)
@@ -527,14 +691,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_sp, 0.0_sp, kind=sp), vec, cmplx(1.0_sp, 0.0_sp, kind=sp))
+        call self%axpby(one_csp, vec, one_csp)
     end subroutine add_csp
 
     subroutine chsgn_csp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_csp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(cmplx(-1.0_sp, 0.0_sp, kind=sp))
+        call self%scal(-one_csp)
     end subroutine chsgn_csp
 
     function norm_cdp(self) result(alpha)
@@ -552,7 +716,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), vec, cmplx(-1.0_dp, 0.0_dp, kind=dp))
+        call self%axpby(one_cdp, vec, -one_cdp)
     end subroutine sub_cdp
 
     subroutine add_cdp(self, vec)
@@ -561,14 +725,14 @@ contains
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(cmplx(1.0_dp, 0.0_dp, kind=dp), vec, cmplx(1.0_dp, 0.0_dp, kind=dp))
+        call self%axpby(one_cdp, vec, one_cdp)
     end subroutine add_cdp
 
     subroutine chsgn_cdp(self)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_cdp), intent(inout) :: self
         !! Vector whose entries need to change sign.
-        call self%scal(cmplx(-1.0_dp, 0.0_dp, kind=dp))
+        call self%scal(-one_cdp)
     end subroutine chsgn_cdp
 
     
@@ -600,7 +764,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_rsp, x(i), v(i))
+            call y%axpby(one_rsp, X(i), v(i))
         enddo
 
         return
@@ -656,7 +820,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_sp
+        v = zero_rsp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -675,7 +839,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_sp
+        M = zero_rsp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -737,7 +901,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_rsp, from(i), one_rsp)
         enddo
 
         return
@@ -780,7 +944,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_rdp, x(i), v(i))
+            call y%axpby(one_rdp, X(i), v(i))
         enddo
 
         return
@@ -836,7 +1000,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_dp
+        v = zero_rdp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -855,7 +1019,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_dp
+        M = zero_rdp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -917,7 +1081,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_rdp, from(i), one_rdp)
         enddo
 
         return
@@ -960,7 +1124,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_csp, x(i), v(i))
+            call y%axpby(one_csp, X(i), v(i))
         enddo
 
         return
@@ -1016,7 +1180,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_sp
+        v = zero_csp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -1035,7 +1199,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_sp
+        M = zero_csp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -1097,7 +1261,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_csp, from(i), one_csp)
         enddo
 
         return
@@ -1140,7 +1304,7 @@ contains
         if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_cdp, x(i), v(i))
+            call y%axpby(one_cdp, X(i), v(i))
         enddo
 
         return
@@ -1196,7 +1360,7 @@ contains
         ! Local variables.
         integer :: i
 
-        v = 0.0_dp
+        v = zero_cdp
         do i = 1, size(X)
             v(i) = X(i)%dot(y)
         enddo
@@ -1215,7 +1379,7 @@ contains
         ! Local variables.
         integer :: i, j
 
-        M = 0.0_dp
+        M = zero_cdp
         do j = 1, size(Y)
             do i = 1, size(X)
                 M(i, j) = X(i)%dot(Y(j))
@@ -1277,7 +1441,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%zero() ; call out(i)%add(from(i))
+            call out(i)%axpby(zero_cdp, from(i), one_cdp)
         enddo
 
         return

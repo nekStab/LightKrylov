@@ -1,4 +1,6 @@
 module LightKrylov_AbstractSystems
+    !!  This module provides the abstract types necessary to define an algebraic system of
+    !!  nonlinear equations to be solved using the Newton method.
     use LightKrylov_Constants
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops

@@ -5,7 +5,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, inv
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -145,7 +145,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -157,9 +157,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -192,9 +190,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -254,7 +250,7 @@ contains
             err_est = 0.0_sp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_rsp / beta)
             H = 0.0_sp
 
@@ -368,9 +364,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_sp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_sp
@@ -380,10 +374,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_sp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_sp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -476,7 +467,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(dp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -488,9 +479,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -523,9 +512,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -585,7 +572,7 @@ contains
             err_est = 0.0_dp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_rdp / beta)
             H = 0.0_dp
 
@@ -699,9 +686,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_dp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_dp
@@ -711,10 +696,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_dp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_dp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -807,7 +789,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -819,9 +801,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -854,9 +834,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -916,7 +894,7 @@ contains
             err_est = 0.0_sp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_csp / beta)
             H = 0.0_sp
 
@@ -1030,9 +1008,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_sp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_sp
@@ -1042,10 +1018,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_sp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_sp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -1138,7 +1111,7 @@ contains
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
-        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :), invQ(:, :), wrk(:)
+        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(dp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
@@ -1150,9 +1123,7 @@ contains
         n = size(A, 1)
 
         ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n))
-        allocate(Q(n, n)) ; allocate(invQ(n, n))
-        allocate(wrk(n))
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
         a_norm = norml(A)
@@ -1185,9 +1156,7 @@ contains
             p = .not. p
         enddo
 
-        invQ = Q ; call inv(invQ)
-        E = matmul(invQ, E)
-
+        E = matmul(inv(Q), E)
         do k = 1, s
             E = matmul(E, E)
         enddo
@@ -1247,7 +1216,7 @@ contains
             err_est = 0.0_dp
             kp = 1
         else
-            call initialize_krylov_subspace(X)
+            call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_cdp / beta)
             H = 0.0_dp
 
@@ -1361,9 +1330,7 @@ contains
 
         if (norm2(abs(R)) == 0.0_dp) then
             ! Input matrix is zero.
-            do i = 1, size(C)
-                call C(i)%zero()
-            enddo
+            call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
         else
             call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_dp
@@ -1373,10 +1340,7 @@ contains
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_dp
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                enddo
+                E = 0.0_dp ; call zero_basis(Xwrk)
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)

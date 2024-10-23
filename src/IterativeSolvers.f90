@@ -5,7 +5,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: lstsq, svd
+    use stdlib_linalg, only: lstsq, svd, eigh
     use stdlib_stats, only: median
 
     use LightKrylov_Constants
@@ -975,7 +975,7 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
-            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.
             beta = T(k+1, k)
@@ -1075,7 +1075,7 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
-            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.
             beta = T(k+1, k)
@@ -1175,7 +1175,7 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
-            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.
             beta = T(k+1, k)
@@ -1275,7 +1275,7 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
-            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.
             beta = T(k+1, k)

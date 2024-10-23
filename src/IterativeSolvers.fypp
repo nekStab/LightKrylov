@@ -7,7 +7,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: lstsq, svd
+    use stdlib_linalg, only: lstsq, svd, eigh
     use stdlib_stats, only: median
 
     use LightKrylov_Constants
@@ -409,7 +409,7 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
-            call eigh(T(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.
             beta = T(k+1, k)

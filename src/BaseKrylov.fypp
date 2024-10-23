@@ -1,18 +1,37 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_BaseKrylov
+    !!  This module provides a collection of Krylov-based factorizations forming the
+    !!  computational core of `LightKrylov`. It also provides a set of utility functions
+    !!  to operate on arrays of `abstract_vector`. The most important ones are:
+    !!
+    !!  - `arnoldi(A, X, H, info)`: Arnoldi factorization for general square matrices.
+    !!  - `lanczos(A, X, H, info)`: Lanczos factorization for general symmetric/hermitian matrices.
+    !!  - `bidiagonalization(A, U, V, B)`: Lanczos bidiagonalization for arbitrary matrices.
+    !!  - `qr(X, R, perm, info)`: QR factorization (with and without column pivoting) of an array of `abstract_vector`.
+
+
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
     use iso_fortran_env
     use stdlib_optval, only: optval
     use stdlib_linalg, only: eye
+
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
     use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
+
     implicit none
     private
     
     character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
+
     public :: qr
     public :: apply_permutation_matrix
     public :: apply_inverse_permutation_matrix
@@ -30,6 +49,57 @@ module lightkrylov_BaseKrylov
     #:endfor
 
     interface qr
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of types derived from `abstract_vector`, it computes the
+        !!  *in-place* QR factorization of \( X \), i.e.
+        !!
+        !!  \[
+        !!      X = QR,
+        !!  \]
+        !!
+        !!  where \( Q \) is an orthonormal arrays of vectors such that \( Q^H Q = I \) and
+        !!  \( R \) is upper triangular. Note that it can also perform the QR factorization
+        !!  with column pivoting
+        !!
+        !!  \[
+        !!      XP = QR
+        !!  \]
+        !!
+        !!  where \( P \) is a permutation matrix ensuring that the diagonal entries of \( R \)
+        !!  have non-increasing absolute values. This amounts to using the pivoting QR as a
+        !!  rank-revealing factorization.
+        !!
+        !!  **References**
+        !!
+        !!  - G. H. Golub & C. F. Van Loan. "Matrix Computations". 4th edition, The John Hopkins
+        !!   University Press, 2013.
+        !!   See Chapter 5.2.8: Modified Gram-Schmidt algorithm.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call qr(Q [, R] [, perm], info [, tol])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `Q`: Array of types derived from one of the base types provided in the
+        !!       `AbstractVectors` module. On entry, it contains the original array.
+        !!       On exit, it is overwritten by the orthogonal basis for its span.
+        !!       It is an `intent(inout)` argument.
+        !!
+        !!  `R`: `real` or `complex` rank-2 array. On exit, its contains the upper triangular
+        !!        matrix resulting from the QR factorization. It is an `intent(out)` argument.
+        !!
+        !!  `perm` (*optional*): Rank-1 array of `integer` corresponding to the indices of
+        !!                       permuted columns. If `perm` is absent, the naive QR factorization
+        !!                       is being computed.
+        !!
+        !!  `info`: `integer` information flag.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance to determine whether two vectors are colinear
+        !!                      or not. Default `tol = atol_sp` or `tol = atol_dp`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure qr_no_pivoting_${type[0]}$${kind}$
         module procedure qr_with_pivoting_${type[0]}$${kind}$
@@ -43,6 +113,32 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface apply_permutation_matrix
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) and a permutation vector \( p \), this function computes
+        !!  *in-place* the column-permuted matrix
+        !!
+        !!  \[
+        !!      X = X P
+        !!  \]
+        !!
+        !!  where \( P \) is the column-permutation matrix constructed from the permutation
+        !!  vector \( p \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call apply_permutation_matrix(X, perm)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!       module. On entry, it is the original array. On exit, it contains the
+        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
+        !!
+        !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
+        !!          It is an `intent(in)` argument.
         #: for kind, type in RC_KINDS_TYPES
         module procedure apply_permutation_matrix_${type[0]}$${kind}$
         module procedure apply_permutation_matrix_array_${type[0]}$${kind}$
@@ -50,6 +146,32 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface apply_inverse_permutation_matrix
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) and a permutation vector \( p \), this function computes
+        !!  *in-place* the column-permuted matrix
+        !!
+        !!  \[
+        !!      X = X P^{-1}
+        !!  \]
+        !!
+        !!  where \( P \) is the column-permutation matrix constructed from the permutation
+        !!  vector \( p \) and \( P^{-1} \) its inverse.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call apply_inverse_permutation_matrix(X, perm)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!       module. On entry, it is the original array. On exit, it contains the
+        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
+        !!
+        !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
+        !!          It is an `intent(in)` argument.
         #:for kind, type in RC_KINDS_TYPES
         module procedure apply_inverse_permutation_matrix_${type[0]}$${kind}$
         module procedure apply_inverse_permutation_matrix_array_${type[0]}$${kind}$
@@ -57,18 +179,117 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface arnoldi
+        !!  ### Description
+        !!
+        !!  Given a square linear operator \( A \), find matrices \( X \) and \( H \) such that
+        !!
+        !!  \[
+        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^T,
+        !!  \]
+        !!
+        !!  where \( X \) is an orthogonal basis and \( H \) is upper Hessenberg.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( X \) via the Gram-Schmidt process.
+        !!  - Constructs an upper Hessenberg matrix \( H \) whose eigenvalues approximates those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !   - Block version available (experimental).
+        !!
+        !!  **References**
+        !!
+        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+        !!    see Chapter 6.3: Arnoldi's method.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call arnoldi(A, X, H, info [, kstart] [, kend] [, tol] [, transpose] [, blksize])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
+        !!        module. The operator needs to be square, i.e. the dimension of its domain and
+        !!        co-domain is the same. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!        the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
+        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!
+        !!  `H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         upper Hessenberg matrix computed from the Arnoldi factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
+        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!            dimension `info`.
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Arnoldi
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Arnoldi step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
+        !!
+        !!  `transpose` (*optional*): `logical` flag determining whether the Arnoldi factorization
+        !!                             is applied to \( A \) or \( A^H \). Default `transpose = .false.`
+        !!
+        !!  `blksize` (*optional*): `integer` value determining the dimension of a block for the
+        !!                          block Arnoldi factorization. Default is `blksize=1`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure arnoldi_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface initialize_krylov_subspace
+        !!  ### Description
+        !!
+        !!  Utility function to initialize a basis for a Krylov subspace.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call initialize_krylov_subspace(X [, X0])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of vectors that needs to be initialized. It is an `intent(inout)`
+        !!        argument. Note that the first action in the subroutine is
+        !!        `call zero_basis(X)`, effectively zeroing-out any data stored.
+        !!
+        !!  `X0` (*optional*) : Collection of vectors which will form the first few
+        !!                      Krylov vectors. Note that `X0` need not be an orthonormal
+        !!                      basis as this subroutine includes a `call qr(X0)`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure initialize_krylov_subspace_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface is_orthonormal
+        !!  ### Description
+        !!
+        !!  Utility function returning a logical `.true.` if the set of vectors stored in \( X \) form
+        !!  an orthonormal set of vectors and `.false.` otherwise.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      out = is_orthonormal(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of derived types extended from the base types provided in the
+        !!        `AbstractVectors` module.
         #:for kind, type in RC_KINDS_TYPES
         module procedure is_orthonormal_${type[0]}$${kind}$
         #:endfor
@@ -88,6 +309,45 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface double_gram_schmidt_step
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of `abstract_vector` and an `abstract_vector` 
+        !!  (or array of `abstract_vectors`) \( y \), this subroutine returns a modified 
+        !!  vector \( y \) orthogonal to all columns of \( X \), i.e.
+        !!
+        !!  \[
+        !!      y \leftarrow \left( I - XX^H \right) y,
+        !!  \]
+        !!
+        !!  using a double Gram-Schmidt process. On exit, \( y \) is orthogonal to \( X \) albeit
+        !!  does not have unit-norm. Note moreover that \( X \) is assumed to be an orthonormal 
+        !!  set of vectors. The function can also return the projection coefficients 
+        !!  \( \beta = X^H y \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call double_gram_schmidt_step(y, X, info [, if_chk_orthonormal] [, beta])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `y` : `abstract_vector` (or array of `abstract_vector`) that needs to be
+        !!        orthogonalize **in-place** against \( X \).
+        !!
+        !!  `X` : Array of `abstract_vector` against which \( y \) needs to be orthogonalized.
+        !!        Note the function assumes that \( X \) is an orthonormal set of vectors, i.e.
+        !!        \( X^H X = I \). If it this is not the case, the result are meaningless.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `if_chk_orthonormal` (*optional*) : `logical` flag (default `.true.`) to check
+        !!      whether \( X \) is an orthonormal set of vectors or not. If the orthonormality
+        !!      returns `.false.`, the function throws an error. Note that this check is however
+        !!      computationally expensive and can be disable for the sake of performances.
+        !!
+        !!  `beta` (*optional*) : `real` or `complex` array containing the coefficients
+        !!      \( \beta = X^H y \).
         #:for kind, type in RC_KINDS_TYPES
         module procedure DGS_vector_against_basis_${type[0]}$${kind}$
         module procedure DGS_basis_against_basis_${type[0]}$${kind}$
@@ -95,12 +355,139 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface lanczos_tridiagonalization
+        !!  ### Description
+        !!
+        !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
+        !!  \( T \) such that
+        !!
+        !!  \[
+        !!      AX_k = X_k T_k + t_{k+1, k} x_{k+1} e_k^T,
+        !!  \]
+        !!
+        !!  where \( X \) is an orthogonal basis and \( T \) is symmetric tridiagonal.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( X \) via the Lanczos process with full
+        !!    reorthogonalization.
+        !!  - Constructs a symmetric tridiagonal matrix \( T \) whose eigenvalues approximates those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+        !!    see Chapter 6.6: The symmetric Lanczos algorithm.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call lanczos(A, X, T, info [, kstart] [, kend] [, tol])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
+        !!        provided by the `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!        the Lanczos factorization. Additionally, the maximum number of Lanczos steps
+        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!
+        !!  `T` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         symmetric tridiagonal matrix computed from the Arnoldi factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!            dimension `info`.
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure lanczos_tridiagonalization_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface lanczos_bidiagonalization
+        !!  ### Description
+        !!
+        !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
+        !!  \( B \) such that
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!          AV_k & = U_k T_k + t_{k+1, k} v_{k+1} e_k^T, \\
+        !!          A^H U_k & = V_k T_k^T + t_{k+1, k} u_{k+1} e_k^T
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  where \( U \) and \( V \) are orthogonal bases for the column span and row span
+        !!  of \( A \), respectively, and \( B \) is a bidiagonal matrix.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( U \) for the column span of \( A \).
+        !!  - Constructs an orthonormal Krylov basis \( V \) for the row span of \( A \).
+        !!  - Constructs a bidiagonal matrix \( B \) whose singular values approximates 
+        !!    those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." 
+        !!    Technical Report, 1998. [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call bidiagonalization(A, U, V, B, info [, kstart] [, kend] [, tol])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one the base types provided by the 
+        !!        `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
+        !!        is the starting vector for the Lanczos factorization. Additionally, the 
+        !!        maximum number of Lanczos steps is equal to `size(X) - 1`. 
+        !!        It is an `intent(inout)` argument.
+        !!
+        !!  `V` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
+        !!        argument.
+        !!
+        !!  `B` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         bidiagonal matrix computed from the Lanczos factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
         #:endfor
@@ -151,7 +538,6 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: X0(:)
 
         ! Internal variables.
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Q(:)
         integer :: p
 
         ! Zero-out X.
@@ -161,10 +547,9 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            allocate(Q(p), source=X0)   
+            call copy_basis(X(:p), X0)
             ! Orthonormalize.
-            call orthonormalize_basis(Q)
-            call copy_basis(X(:p), Q)
+            call orthonormalize_basis(X(:p))
         endif
 
         return
@@ -787,7 +1172,6 @@ contains
         real(${kind}$) :: tolerance
         ${type}$ :: alpha, beta
         integer :: k, kdim
-
 
         info = 0
 
