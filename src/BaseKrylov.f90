@@ -1206,31 +1206,44 @@ contains
         real(sp)                       :: tolerance
 
         ! Internal variables.
-        real(sp) :: alpha
-        real(sp) :: beta(size(Q))
+        real(sp) :: beta
         integer :: j
+        logical :: flag
+        character(len=128) :: msg
 
         ! Deals with the optional args.
-        tolerance = optval(tol, rtol_sp)
+        tolerance = optval(tol, atol_sp)
 
-        info = 0 ; R = zero_rsp ; beta = zero_rsp
+        info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rsp')
-            end if
-
-            ! Normalize column.
-            alpha = Q(j)%norm()
+                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
+            end if        
 
             ! Check for breakdown.
-            if (abs(alpha) < tolerance) then
-                info = j
-                R(j, j) = zero_rsp ; call Q(j)%zero()
+            beta = Q(j)%norm()
+            if (abs(beta) < tolerance) then
+                if (.not.flag) then
+                    flag = .true.
+                    info = j
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_rsp')
+                end if
+                R(j, j) = zero_rsp
+                call Q(j)%rand()
+                if (j > 1) then
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                end if
+                beta = Q(j)%norm()
             else
-                call Q(j)%scal(one_rsp / alpha) ; R(j, j) = alpha
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rsp / beta)
         enddo
 
         return
@@ -1255,12 +1268,13 @@ contains
         integer :: idx, i, j, kdim
         integer :: idxv(1)
         real(sp)  :: Rii(size(Q))
+        character(len=128) :: msg
 
         info = 0 ; kdim = size(Q)
         R = zero_rsp ; Rii = zero_rsp
         
         ! Deals with the optional arguments.
-        tolerance = optval(tol, rtol_sp)
+        tolerance = optval(tol, atol_sp)
 
         ! Initialize diagonal entries.
         do i = 1, kdim
@@ -1272,14 +1286,14 @@ contains
             idxv = maxloc(abs(Rii)) ; idx = idxv(1)
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
-                    call Q(i)%rand(.false.)
-                    if (i > 1) then
-                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
-                    end if
+                    call Q(i)%rand()
+                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
+                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_rsp')
                 exit qr_step
             endif
 
@@ -1287,22 +1301,27 @@ contains
 
             ! Normalize column.
             beta = Q(j)%norm()
-
             if (abs(beta) < tolerance) then
-               info = j
-                R(j, j) = zero_rsp ; call Q(j)%zero()
+                info = j
+                R(j, j) = zero_rsp
+                call Q(j)%rand()
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                beta = Q(j)%norm()
             else
-                R(j, j) = beta ; call Q(j)%scal(one_rsp / beta)
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rsp / beta)
 
-            ! Orthonormalize all columns against new vector (MGS)
+            ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(one_rsp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
-            ! Update Rii
+            ! Update Rii.
             Rii(j) = zero_rsp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
@@ -1335,7 +1354,7 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rsp
+        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
         call Qwrk%axpby(zero_rsp, Q(j), one_rsp)
@@ -1346,7 +1365,7 @@ contains
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
-            Rwrk = R(1:n, j) ; R(1:n, j) = R(1:n, i) ; R(1:n, i) = Rwrk
+            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
 
         return
@@ -1453,31 +1472,44 @@ contains
         real(dp)                       :: tolerance
 
         ! Internal variables.
-        real(dp) :: alpha
-        real(dp) :: beta(size(Q))
+        real(dp) :: beta
         integer :: j
+        logical :: flag
+        character(len=128) :: msg
 
         ! Deals with the optional args.
-        tolerance = optval(tol, rtol_dp)
+        tolerance = optval(tol, atol_dp)
 
-        info = 0 ; R = zero_rdp ; beta = zero_rdp
+        info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rdp')
-            end if
-
-            ! Normalize column.
-            alpha = Q(j)%norm()
+                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
+            end if        
 
             ! Check for breakdown.
-            if (abs(alpha) < tolerance) then
-                info = j
-                R(j, j) = zero_rdp ; call Q(j)%zero()
+            beta = Q(j)%norm()
+            if (abs(beta) < tolerance) then
+                if (.not.flag) then
+                    flag = .true.
+                    info = j
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_rdp')
+                end if
+                R(j, j) = zero_rdp
+                call Q(j)%rand()
+                if (j > 1) then
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                end if
+                beta = Q(j)%norm()
             else
-                call Q(j)%scal(one_rdp / alpha) ; R(j, j) = alpha
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rdp / beta)
         enddo
 
         return
@@ -1502,12 +1534,13 @@ contains
         integer :: idx, i, j, kdim
         integer :: idxv(1)
         real(dp)  :: Rii(size(Q))
+        character(len=128) :: msg
 
         info = 0 ; kdim = size(Q)
         R = zero_rdp ; Rii = zero_rdp
         
         ! Deals with the optional arguments.
-        tolerance = optval(tol, rtol_dp)
+        tolerance = optval(tol, atol_dp)
 
         ! Initialize diagonal entries.
         do i = 1, kdim
@@ -1519,14 +1552,14 @@ contains
             idxv = maxloc(abs(Rii)) ; idx = idxv(1)
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
-                    call Q(i)%rand(.false.)
-                    if (i > 1) then
-                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
-                    end if
+                    call Q(i)%rand()
+                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
+                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_rdp')
                 exit qr_step
             endif
 
@@ -1534,22 +1567,27 @@ contains
 
             ! Normalize column.
             beta = Q(j)%norm()
-
             if (abs(beta) < tolerance) then
-               info = j
-                R(j, j) = zero_rdp ; call Q(j)%zero()
+                info = j
+                R(j, j) = zero_rdp
+                call Q(j)%rand()
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                beta = Q(j)%norm()
             else
-                R(j, j) = beta ; call Q(j)%scal(one_rdp / beta)
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rdp / beta)
 
-            ! Orthonormalize all columns against new vector (MGS)
+            ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(one_rdp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
-            ! Update Rii
+            ! Update Rii.
             Rii(j) = zero_rdp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
@@ -1582,7 +1620,7 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rdp
+        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
         call Qwrk%axpby(zero_rdp, Q(j), one_rdp)
@@ -1593,7 +1631,7 @@ contains
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
-            Rwrk = R(1:n, j) ; R(1:n, j) = R(1:n, i) ; R(1:n, i) = Rwrk
+            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
 
         return
@@ -1700,31 +1738,44 @@ contains
         real(sp)                       :: tolerance
 
         ! Internal variables.
-        complex(sp) :: alpha
-        complex(sp) :: beta(size(Q))
+        complex(sp) :: beta
         integer :: j
+        logical :: flag
+        character(len=128) :: msg
 
         ! Deals with the optional args.
-        tolerance = optval(tol, rtol_sp)
+        tolerance = optval(tol, atol_sp)
 
-        info = 0 ; R = zero_rsp ; beta = zero_rsp
+        info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_csp')
-            end if
-
-            ! Normalize column.
-            alpha = Q(j)%norm()
+                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
+            end if        
 
             ! Check for breakdown.
-            if (abs(alpha) < tolerance) then
-                info = j
-                R(j, j) = zero_rsp ; call Q(j)%zero()
+            beta = Q(j)%norm()
+            if (abs(beta) < tolerance) then
+                if (.not.flag) then
+                    flag = .true.
+                    info = j
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_csp')
+                end if
+                R(j, j) = zero_rsp
+                call Q(j)%rand()
+                if (j > 1) then
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                end if
+                beta = Q(j)%norm()
             else
-                call Q(j)%scal(one_rsp / alpha) ; R(j, j) = alpha
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rsp / beta)
         enddo
 
         return
@@ -1749,12 +1800,13 @@ contains
         integer :: idx, i, j, kdim
         integer :: idxv(1)
         complex(sp)  :: Rii(size(Q))
+        character(len=128) :: msg
 
         info = 0 ; kdim = size(Q)
         R = zero_rsp ; Rii = zero_rsp
         
         ! Deals with the optional arguments.
-        tolerance = optval(tol, rtol_sp)
+        tolerance = optval(tol, atol_sp)
 
         ! Initialize diagonal entries.
         do i = 1, kdim
@@ -1766,14 +1818,14 @@ contains
             idxv = maxloc(abs(Rii)) ; idx = idxv(1)
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
-                    call Q(i)%rand(.false.)
-                    if (i > 1) then
-                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
-                    end if
+                    call Q(i)%rand()
+                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
                 enddo
                 info = j
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
+                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_csp')
                 exit qr_step
             endif
 
@@ -1781,22 +1833,27 @@ contains
 
             ! Normalize column.
             beta = Q(j)%norm()
-
             if (abs(beta) < tolerance) then
-               info = j
-                R(j, j) = zero_rsp ; call Q(j)%zero()
+                info = j
+                R(j, j) = zero_rsp
+                call Q(j)%rand()
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                beta = Q(j)%norm()
             else
-                R(j, j) = beta ; call Q(j)%scal(one_rsp / beta)
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rsp / beta)
 
-            ! Orthonormalize all columns against new vector (MGS)
+            ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(one_csp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
-            ! Update Rii
+            ! Update Rii.
             Rii(j) = zero_rsp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
@@ -1829,7 +1886,7 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rsp
+        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
         call Qwrk%axpby(zero_csp, Q(j), one_csp)
@@ -1840,7 +1897,7 @@ contains
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
-            Rwrk = R(1:n, j) ; R(1:n, j) = R(1:n, i) ; R(1:n, i) = Rwrk
+            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
 
         return
@@ -1947,31 +2004,44 @@ contains
         real(dp)                       :: tolerance
 
         ! Internal variables.
-        complex(dp) :: alpha
-        complex(dp) :: beta(size(Q))
+        complex(dp) :: beta
         integer :: j
+        logical :: flag
+        character(len=128) :: msg
 
         ! Deals with the optional args.
-        tolerance = optval(tol, rtol_dp)
+        tolerance = optval(tol, atol_dp)
 
-        info = 0 ; R = zero_rdp ; beta = zero_rdp
+        info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(1:j-1), info, if_chk_orthonormal=.false., beta=R(1:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_cdp')
-            end if
-
-            ! Normalize column.
-            alpha = Q(j)%norm()
+                !R(:j-1,j) = R(:j-1,j) + wrk(:j-1)
+            end if        
 
             ! Check for breakdown.
-            if (abs(alpha) < tolerance) then
-                info = j
-                R(j, j) = zero_rdp ; call Q(j)%zero()
+            beta = Q(j)%norm()
+            if (abs(beta) < tolerance) then
+                if (.not.flag) then
+                    flag = .true.
+                    info = j
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_cdp')
+                end if
+                R(j, j) = zero_rdp
+                call Q(j)%rand()
+                if (j > 1) then
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                end if
+                beta = Q(j)%norm()
             else
-                call Q(j)%scal(one_rdp / alpha) ; R(j, j) = alpha
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rdp / beta)
         enddo
 
         return
@@ -1996,12 +2066,13 @@ contains
         integer :: idx, i, j, kdim
         integer :: idxv(1)
         complex(dp)  :: Rii(size(Q))
+        character(len=128) :: msg
 
         info = 0 ; kdim = size(Q)
         R = zero_rdp ; Rii = zero_rdp
         
         ! Deals with the optional arguments.
-        tolerance = optval(tol, rtol_dp)
+        tolerance = optval(tol, atol_dp)
 
         ! Initialize diagonal entries.
         do i = 1, kdim
@@ -2013,14 +2084,14 @@ contains
             idxv = maxloc(abs(Rii)) ; idx = idxv(1)
             if (abs(Rii(idx)) < tolerance) then
                 do i = j, kdim
-                    call Q(i)%rand(.false.)
-                    if (i > 1) then
-                        call double_gram_schmidt_step(Q(i), Q(1:i-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
-                    end if
+                    call Q(i)%rand()
+                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
+                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
                     beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
                 enddo
                 info = j
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
+                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_cdp')
                 exit qr_step
             endif
 
@@ -2028,22 +2099,27 @@ contains
 
             ! Normalize column.
             beta = Q(j)%norm()
-
             if (abs(beta) < tolerance) then
-               info = j
-                R(j, j) = zero_rdp ; call Q(j)%zero()
+                info = j
+                R(j, j) = zero_rdp
+                call Q(j)%rand()
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                beta = Q(j)%norm()
             else
-                R(j, j) = beta ; call Q(j)%scal(one_rdp / beta)
+                R(j, j) = beta
             endif
+            ! Normalize column.
+            call Q(j)%scal(one_rdp / beta)
 
-            ! Orthonormalize all columns against new vector (MGS)
+            ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(one_cdp, Q(j), -beta)
                 R(j, i) = beta
             enddo
 
-            ! Update Rii
+            ! Update Rii.
             Rii(j) = zero_rdp
             do i = j+1, kdim
                 Rii(i) = Rii(i) - R(j, i)**2
@@ -2076,7 +2152,7 @@ contains
 
         ! Allocations.
         allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(1:max(1, n))) ; Rwrk = zero_rdp
+        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
         call Qwrk%axpby(zero_cdp, Q(j), one_cdp)
@@ -2087,7 +2163,7 @@ contains
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
-            Rwrk = R(1:n, j) ; R(1:n, j) = R(1:n, i) ; R(1:n, i) = Rwrk
+            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
 
         return
@@ -2217,8 +2293,8 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rsp
-        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
+        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -2245,7 +2321,7 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rsp')
 
             ! Orthogonalize current blk vectors.
@@ -2302,8 +2378,8 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rdp
-        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
+        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -2330,7 +2406,7 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rdp')
 
             ! Orthogonalize current blk vectors.
@@ -2387,8 +2463,8 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rsp
-        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
+        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -2415,7 +2491,7 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_csp')
 
             ! Orthogonalize current blk vectors.
@@ -2472,8 +2548,8 @@ contains
         integer :: k, i, kdim, kpm, kp, kpp
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(1:p)) ; res = zero_rdp
-        allocate(perm(1:size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
+        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -2500,7 +2576,7 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(1:kp), info, if_chk_orthonormal=.false., beta=H(1:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_cdp')
 
             ! Orthogonalize current blk vectors.
@@ -2575,8 +2651,7 @@ contains
             call A%rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1 ) then
-            
+            if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rsp, right basis')
@@ -2655,8 +2730,7 @@ contains
             call A%rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1 ) then
-            
+            if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_rdp, right basis')
@@ -2735,8 +2809,7 @@ contains
             call A%rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1 ) then
-            
+            if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_csp, right basis')
@@ -2815,8 +2888,7 @@ contains
             call A%rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1 ) then
-            
+            if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
                 call check_info(info, 'double_gram_schmidt_step', module=this_module, &
                                     & procedure='lanczos_bidiagonalization_cdp, right basis')
@@ -3177,13 +3249,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_rsp, Xwrk(i), one_rsp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_rsp, X(kdim+1), one_rsp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3241,13 +3308,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_rdp, Xwrk(i), one_rdp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_rdp, X(kdim+1), one_rdp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3305,13 +3367,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_csp, Xwrk(i), one_csp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_csp, X(kdim+1), one_csp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3369,13 +3426,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-
-        do i = 1, n
-            call X(i)%axpby(zero_cdp, Xwrk(i), one_cdp)
-        enddo
-
+        call copy_basis(X(:n), Xwrk(:n))
         call X(n+1)%axpby(zero_cdp, X(kdim+1), one_cdp)
-
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
