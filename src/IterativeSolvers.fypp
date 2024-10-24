@@ -1,7 +1,24 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_IterativeSolvers
+    !!  This module provides some of the most important computational routines provided by
+    !!  `LightKrylov`. These include:
+    !!
+    !!  - `eigs` : Compute the leading eigenpairs of a square linear operator \( A \).
+    !!  - `eighs` : Compute the leading eigenpairs of a symmetric positive definite 
+    !!              operator \( A \).
+    !!  - `svds` : Compute the leading singular triplets of a linear operator \( A \).
+    !!  - `gmres` : Solve the linear system \( Ax = b \) using the *generalized minimum
+    !!              residual method*.
+    !!  - `cg` : Solve the linear system \( Ax = b \) where \( A \) is symmetric
+    !!           positive definite using the *Conjugate Gradient* method.
+    !!
+    !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
+    !!  to `LightKrylov`. Note that these features are still experimental however.
 
+    !--------------------------------------------
+    !-----     Fortran Standard Library     -----
+    !--------------------------------------------
     use iso_fortran_env, only: output_unit
     
     use stdlib_sorting, only: sort_index
@@ -10,6 +27,9 @@ module lightkrylov_IterativeSolvers
     use stdlib_linalg, only: lstsq, svd, eigh
     use stdlib_stats, only: median
 
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
     use LightKrylov_Constants
     Use LightKrylov_Logger
     use LightKrylov_Utils
@@ -45,6 +65,56 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface eighs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a symmetric positive definite operator \(A\)
+        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectorss such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Lanczos factorization, resulting in a symmetric
+        !!  tridiagonal matrix \(T\). The eigenvalues of \(A\) are approximated by those of \(T\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
+        !!  of Linear Differential and Integral Operators". United States Governm. Press Office.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure eighs_${type[0]}$${kind}$
         #:endfor
