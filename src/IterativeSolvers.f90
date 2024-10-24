@@ -54,12 +54,30 @@ module lightkrylov_IterativeSolvers
     public :: gmres_csp
     public :: gmres_cdp
     public :: cg
-    public :: cg_rsp
-    public :: cg_rdp
-    public :: cg_csp
-    public :: cg_cdp
+    ! #:for kind, type in RC_KINDS_TYPES
+    ! public :: cg_cdp
+    ! #:endfor
 
     interface save_eigenspectrum
+        !!  ### Description
+        !!
+        !!  Utility function to save the eigenspectrum computed from the Arnoldi factorization.
+        !!  It outpost a .npy file.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call save_eigenspectrum(eigvals, residuals, fname)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `eigvals` : `complex` rank-1 array containing the eigenvalues.
+        !!
+        !!  `residuals` : `real` rank-1 array containing the residuals associated to each
+        !!                eigenvalues.
+        !!
+        !!  `fname` : Name of the file to save the eigenspectrum.
         module procedure save_eigenspectrum_sp
         module procedure save_eigenspectrum_dp
     end interface
@@ -258,6 +276,57 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface gmres
+        !!  ### Description
+        !!
+        !!  Solve a square linear system of equations
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Generalized Minimum RESidual* (GMRES) method.
+        !!
+        !!  **References**
+        !!
+        !!  - Saad Y. and Schultz M. H. "GMRES: A generalized minimal residual algorithm for
+        !!  solving nonsymmetric linear systems." SIAM Journal on Scientific and Statistical
+        !!  Computing, 7(3), 1986.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
+        !!  `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
+        !!  \( A^H x = b \) is being solver.
         module procedure gmres_rsp
         module procedure gmres_rdp
         module procedure gmres_csp
@@ -265,6 +334,60 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface cg
+        !!  ### Description
+        !!
+        !!  Given a symmetric (positive definite) matrix \( A \), solves the linear system
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Conjugate Gradient* method.
+        !!
+        !!  **References**
+        !!
+        !!  - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
+        !!  Linear Systems," Journal of Research of the National Bureau of Standards,
+        !!  49(6), 409–436.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
+        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
+        !!  `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  @note
+        !!  Although the interface to pass a preconditioner is exposed, it is not currently
+        !!  implemented.
+        !!  @endnote
         module procedure cg_rsp
         module procedure cg_rdp
         module procedure cg_csp
