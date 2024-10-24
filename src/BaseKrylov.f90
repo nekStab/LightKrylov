@@ -309,6 +309,22 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface orthonormalize_basis
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of vectors, it computes an orthonormal basis for its
+        !!  column-span using the `double_gram_schmidt` process. All computations are done
+        !!  in-place.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call orthonormalize_basis(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of `abstract_vector` to orthonormalize. Note that this process is done
+        !!        in-place. It is an `intent(inout)` argument.
         module procedure orthonormalize_basis_rsp
         module procedure orthonormalize_basis_rdp
         module procedure orthonormalize_basis_csp
