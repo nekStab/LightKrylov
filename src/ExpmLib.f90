@@ -1,4 +1,6 @@
 module lightkrylov_expmlib
+    !!  This module implements the evaluation of the "matrix-exponential times vector" procedure
+    !!  using Krylov methods.
 
     ! Iso Fortran.
     use iso_fortran_env, only: output_unit
@@ -16,6 +18,7 @@ module lightkrylov_expmlib
     use LightKrylov_BaseKrylov
 
     implicit none
+    private
     
     character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
     public :: abstract_exptA_rsp
@@ -106,6 +109,24 @@ module lightkrylov_expmlib
     end interface
 
     interface expm
+        !!  ### Description
+        !!
+        !!  Evaluate the exponential of a dense matrix using Pade approximations.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call expm(E, A, order)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \). It is an `intent(out)`
+        !!        argument.
+        !!
+        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
+        !!
+        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
         module procedure expm_rsp
         module procedure expm_rdp
         module procedure expm_csp
