@@ -449,7 +449,7 @@ contains
         real(sp) :: tol
         integer :: kdim
 
-        tol = rtol_sp
+        tol = atol_sp
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
@@ -771,7 +771,7 @@ contains
         real(dp) :: tol
         integer :: kdim
 
-        tol = rtol_dp
+        tol = atol_dp
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
@@ -1093,7 +1093,7 @@ contains
         real(sp) :: tol
         integer :: kdim
 
-        tol = rtol_sp
+        tol = atol_sp
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
@@ -1415,7 +1415,7 @@ contains
         real(dp) :: tol
         integer :: kdim
 
-        tol = rtol_dp
+        tol = atol_dp
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
