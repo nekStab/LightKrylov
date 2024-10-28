@@ -62,7 +62,7 @@ module lightkrylov_expmlib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call expm(E, A, order)
+        !!      E expm(A, order)
         !!  ```
         !!
         !!  ### Arguments
@@ -124,12 +124,12 @@ contains
     !--------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine expm_${type[0]}$${kind}$(E, A, order)
+    function expm_${type[0]}$${kind}$(A, order) result(E)
         ${type}$, intent(in) :: A(:, :)
         !! Matrix to be exponentiated.
-        ${type}$, intent(out) :: E(:, :)
+        ${type}$ :: E(size(A, 1), size(A, 1))
         !! Output matrix E = exp(tA).
-        integer, optional :: order
+        integer, intent(in), optional :: order
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
@@ -184,7 +184,7 @@ contains
         enddo
 
         return
-    end subroutine expm_${type[0]}$${kind}$
+    end function expm_${type[0]}$${kind}$
 
     subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: c
@@ -260,7 +260,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kp, :kp), tau*H(:kp, :kp))
+                E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
@@ -375,7 +375,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kpp, :kpp), tau*H(:kpp, :kpp))
+                E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
                 ! Project back to original space.
                 do i = 1, size(Xwrk)

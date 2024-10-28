@@ -73,7 +73,7 @@ contains
         enddo
 
         ! Compute matrix exponential.
-        call expm(E, A)
+        E = expm(A)
 
         ! Check result.
         err = maxval(abs(E-Eref))
@@ -109,7 +109,7 @@ contains
         allocate(XKryl) ; call Xkryl%zero()
 
         ! Dense computation.
-        allocate(E(kdim, kdim)) ; call expm(E, tau*A%data)
+        allocate(E(kdim, kdim)) ; E = expm(tau*A%data)
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
@@ -172,7 +172,7 @@ contains
         allocate(Qdata(test_size, p)) ; call get_data(Qdata, B)
 
         ! Comparison is dense computation (10th order Pade approximation)
-        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+        Edata = expm(tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
@@ -251,7 +251,7 @@ contains
         enddo
 
         ! Compute matrix exponential.
-        call expm(E, A)
+        E = expm(A)
 
         ! Check result.
         err = maxval(abs(E-Eref))
@@ -287,7 +287,7 @@ contains
         allocate(XKryl) ; call Xkryl%zero()
 
         ! Dense computation.
-        allocate(E(kdim, kdim)) ; call expm(E, tau*A%data)
+        allocate(E(kdim, kdim)) ; E = expm(tau*A%data)
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
@@ -350,7 +350,7 @@ contains
         allocate(Qdata(test_size, p)) ; call get_data(Qdata, B)
 
         ! Comparison is dense computation (10th order Pade approximation)
-        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+        Edata = expm(tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
@@ -429,7 +429,7 @@ contains
         enddo
 
         ! Compute matrix exponential.
-        call expm(E, A)
+        E = expm(A)
 
         ! Check result.
         err = maxval(abs(E-Eref))
@@ -465,7 +465,7 @@ contains
         allocate(XKryl) ; call Xkryl%zero()
 
         ! Dense computation.
-        allocate(E(kdim, kdim)) ; call expm(E, tau*A%data)
+        allocate(E(kdim, kdim)) ; E = expm(tau*A%data)
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
@@ -528,7 +528,7 @@ contains
         allocate(Qdata(test_size, p)) ; call get_data(Qdata, B)
 
         ! Comparison is dense computation (10th order Pade approximation)
-        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+        Edata = expm(tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
@@ -607,7 +607,7 @@ contains
         enddo
 
         ! Compute matrix exponential.
-        call expm(E, A)
+        E = expm(A)
 
         ! Check result.
         err = maxval(abs(E-Eref))
@@ -643,7 +643,7 @@ contains
         allocate(XKryl) ; call Xkryl%zero()
 
         ! Dense computation.
-        allocate(E(kdim, kdim)) ; call expm(E, tau*A%data)
+        allocate(E(kdim, kdim)) ; E = expm(tau*A%data)
         Xref%data = matmul(E, Q%data)
 
         ! Krylov exponential.
@@ -706,7 +706,7 @@ contains
         allocate(Qdata(test_size, p)) ; call get_data(Qdata, B)
 
         ! Comparison is dense computation (10th order Pade approximation)
-        call expm(Edata, tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
+        Edata = expm(tau*Adata) ; Xdata = matmul(Edata,Qdata) ; call put_data(Cref, Xdata)
 
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
