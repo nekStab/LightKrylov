@@ -1,0 +1,475 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_expmlib
+    !!  This module implements the evaluation of the "matrix-exponential times vector" procedure
+    !!  using Krylov methods.
+
+    ! Iso Fortran.
+    use iso_fortran_env, only: output_unit
+
+    ! Fortran standard library.
+    use stdlib_optval, only: optval
+    use stdlib_linalg, only: eye, inv
+
+    ! LightKrylov.
+    use LightKrylov_Constants
+    use LightKrylov_Logger
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
+    use LightKrylov_AbstractLinops
+    use LightKrylov_BaseKrylov
+
+    implicit none
+    private
+    
+    character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
+    #:for kind, type in RC_KINDS_TYPES
+    public :: abstract_exptA_${type[0]}$${kind}$
+    #:endfor
+    public :: expm
+    public :: kexpm
+    public :: k_exptA
+
+    abstract interface
+        #:for kind, type in RC_KINDS_TYPES
+        subroutine abstract_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+            import ${kind}$
+            import abstract_vector_${type[0]}$${kind}$
+            import abstract_linop_${type[0]}$${kind}$
+            !! Abstract interface to define the matrix exponential-vector product.
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+            !! Solution vector.
+            class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+            !! Linear operator to be exponentiated.
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+            !! Input vector.
+            real(${kind}$), intent(in) :: tau
+            !! Time horizon for integration.
+            integer, intent(out) :: info
+            !! Information flag.
+            logical, optional, intent(in) :: trans
+            !! Use transpose ?
+        end subroutine abstract_exptA_${type[0]}$${kind}$
+
+        #:endfor
+    end interface
+
+    interface expm
+        !!  ### Description
+        !!
+        !!  Evaluate the exponential of a dense matrix using Pade approximations.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      E = expm(A, order)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
+        !!
+        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
+        !!
+        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure expm_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface kexpm
+        !!  ### Description
+        !!
+        !!  This interface provides methods to evaluate the matrix-vector product
+        !!  \( c = \exp(\tau A) b \) based on the Arnoldi method.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `c` : Output vector (or vectors). It is an `intent(out)` argument.
+        !!
+        !!  `A` : Linear operator to be exponentiated. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
+        !!
+        !!  `tau` : `real` (singe or double) time over which the matrix exponential needs to
+        !!          be computed. It is an `intent(in)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `trans` (optional) : Whether \( A \) or \( A^H \) is being used.
+        !!                      (default `trans=.false.`)
+        !!
+        !!  `kdim` (optional) : Dimension of the Krylov subspace used in the Arnoldi method.
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure kexpm_vec_${type[0]}$${kind}$
+        module procedure kexpm_mat_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface k_exptA
+        !!  ### Description
+        !!
+        !!  Utility function to evaluate the matrix-exponential times vector.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm(vec_out, A, vec_in, tau, info, trans)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `vec_out` : Output vector.
+        !!
+        !!  `A` : Matrix to be exponentiated.
+        !!
+        !!  `vec_in` : Input vector.
+        !!
+        !!  `tau` : Integration time.
+        !!
+        !!  `info` : Information flag.
+        !!
+        !!  `trans` : Whether \( A \) or \( A^H \) is being used.
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure k_exptA_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+contains
+
+    !--------------------------------------------
+    !-----     DENSE MATRIX EXPONENTIAL     -----
+    !--------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    function expm_${type[0]}$${kind}$(A, order) result(E)
+        ${type}$, intent(in) :: A(:, :)
+        !! Matrix to be exponentiated.
+        ${type}$ :: E(size(A, 1), size(A, 1))
+        !! Output matrix E = exp(tA).
+        integer, intent(in), optional :: order
+        !! Order of the Pade approximation.
+
+        !----- Internal variables -----
+        ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :)
+        real(${kind}$) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
+
+        ! Compute the L-infinity norm.
+        a_norm = norml(A)
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_${kind}$**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_${kind}$
+        E = eye(n) ; E = E + c*A2
+
+        Q = eye(n) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        E = matmul(inv(Q), E)
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
+
+        return
+    end function expm_${type[0]}$${kind}$
+
+    subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, kdim)
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: c
+        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
+        !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
+        real(${kind}$), intent(in) :: tau
+        !! Time horizon for the exponentiation.
+        real(${kind}$), intent(in) :: tol
+        !! Solution tolerance based on error estimates.
+        integer, intent(out) :: info
+        !! Information flag.
+        logical, optional, intent(in) :: trans
+        !! Use transpose?
+        integer, optional, intent(in) :: kdim
+        !! Maximum size of the Krylov subspace.
+
+        ! ----- Internal variables -----
+        integer, parameter :: kmax = 100
+        integer :: k, km, kp, nk
+        ! Arnoldi factorization.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ${type}$, allocatable :: H(:, :)
+        ! Normaliztion & temporary arrays.
+        ${type}$, allocatable :: E(:, :)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk
+        real(${kind}$) :: err_est, beta
+        ! Optional arguments.
+        logical :: transpose
+        integer :: nsteps
+        character(len=256) :: msg
+    
+        ! Deals with optional args.
+        transpose = optval(trans, .false.)
+        nsteps    = optval(kdim, kmax)
+        nk        = nsteps
+
+        info = 0
+
+        ! Allocate arrays.
+        allocate(X(nk+1), source=b) ; allocate(H(nk+1, nk+1))
+        allocate(E(nk+1, nk+1)) ; allocate(Xwrk, source=b)
+
+        ! Normalize input vector and initialize Krylov subspace.
+        beta = b%norm()
+        if (beta == 0.0_${kind}$) then
+            ! Input is zero => Output is zero.
+            call c%zero()
+            err_est = 0.0_${kind}$
+            kp = 1
+        else
+            call zero_basis(X)
+            call X(1)%add(b) ; call X(1)%scal(one_${type[0]}$${kind}$ / beta)
+            H = 0.0_${kind}$
+
+            expm_arnoldi: do k = 1, nk
+                km = k-1 ; kp = k+1
+
+                ! Reset work arrays.
+                E = 0.0_${kind}$
+
+                ! Compute k-th step Arnoldi factorization.
+                call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+
+                ! Compute approximation.
+                if (info == k) then
+                    ! Arnoldi breakdown, do not consider extended matrix.
+                    kp = k
+                    info = -2
+                endif
+
+                ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
+                E(:kp, :kp) = expm(tau*H(:kp, :kp))
+
+                ! Project back into original space.
+                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
+                call c%axpby(zero_${type[0]}$${kind}$, Xwrk, one_${type[0]}$${kind}$*beta)
+
+                ! Cheap error esimate (this actually is the magnitude of the included correction
+                ! and thus is very conservative).
+                if (info == k) then
+                    ! Approximation is exact.
+                    err_est = 0.0_${kind}$
+                else
+                    err_est = abs(E(kp, 1) * beta)
+                endif
+
+                ! Check convergence.
+                if (err_est <= tol) exit expm_arnoldi
+
+            enddo expm_arnoldi
+        endif
+
+        if (err_est <= tol) then
+            info = kp
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+        else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+            info = -1
+        endif
+
+        return
+    end subroutine kexpm_vec_${type[0]}$${kind}$
+
+    subroutine kexpm_mat_${type[0]}$${kind}$(C, A, B, tau, tol, info, trans, kdim)
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: C(:)
+        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: B(:)
+        !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).
+        real(${kind}$), intent(in) :: tau
+        !! Time horizon for the exponentiation.
+        real(${kind}$), intent(in) :: tol
+        !! Solution toleance based on error estimates.
+        integer, intent(out) :: info
+        !! Information flag.
+        logical, optional, intent(in) :: trans
+        !! Use transpose ?
+        integer, optional, intent(in) :: kdim
+        !! Maximum size of the Krylov subspace.
+
+        ! ----- Internal variables -----
+        integer, parameter :: kmax = 100
+        integer :: i, j, k, p, kpm, kp, kpp, nk
+        ! Block-Arnoldi factorization.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ${type}$, allocatable :: H(:, :)
+        ! Normalization & temporary arrays.
+        ${type}$, allocatable :: R(:, :), E(:, :), em(:, :)
+        integer, allocatable :: perm(:), ptrans(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:), Cwrk(:)
+        real(${kind}$) :: err_est
+        ! Optional arguments.
+        logical :: transpose
+        integer :: nsteps
+        character(len=256) :: msg
+
+        ! Determine block size.
+        p = size(B)
+
+        ! Deals with the optional args.
+        transpose = optval(trans, .false.)
+        nsteps    = optval(kdim, kmax)
+        nk        = nsteps*p
+        
+        info = 0
+
+        ! Allocate arrays.
+        allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
+        allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
+        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+
+        ! Scratch arrays.
+        allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
+
+        ! Normalize input matrix and initialize Krylov subspace.
+        R = 0.0_${kind}$
+        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+
+        if (norm2(abs(R)) == 0.0_${kind}$) then
+            ! Input matrix is zero.
+            call zero_basis(C)
+            err_est = 0.0_${kind}$ ; k = 0 ; kpp = p
+        else
+            call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_${kind}$
+
+            expm_arnoldi: do k = 1, nk
+                ! Set counters.
+                kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
+
+                ! Reset working arrays.
+                E = 0.0_${kind}$ ; call zero_basis(Xwrk)
+
+                ! Compute the k-th step of the Arnoldi factorization.
+                call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
+                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+
+                if (info == kp) then
+                    ! Arnoldi breakdown. Do not consider extended matrix.
+                    kpp = kp
+                    info = -2
+                endif
+
+                ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
+                E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
+
+                ! Project back to original space.
+                do i = 1, size(Xwrk)
+                    call Xwrk(i)%zero()
+                    do j = 1, kpp
+                        call Xwrk(i)%axpby(one_${type[0]}$${kind}$, X(j), E(j, i))
+                    enddo
+                enddo
+
+                do i = 1, p
+                    call C(i)%zero()
+                    do j = 1, p
+                        call C(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), R(j, i))
+                    enddo
+                enddo
+
+                ! Cheap error estimate.
+                if (info == kp) then
+                    ! Approximation is exact.
+                    err_est = 0.0_${kind}$
+                else
+                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
+                    err_est = norm2(abs(em))
+                endif
+
+                if (err_est <= tol) exit expm_arnoldi
+
+            enddo expm_arnoldi
+        endif
+
+        if (err_est .le. tol) then
+            info = kpp
+            write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+        else
+            write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+            info = -1
+        endif
+
+        return
+    end subroutine kexpm_mat_${type[0]}$${kind}$
+
+    subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        !! Solution vector.
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        !! Input vector to be multiplied by \( \exp(\tau \mathbf{A}) \).
+        real(${kind}$), intent(in) :: tau
+        !! Time horizon for the exponentiation.
+        integer, intent(out) :: info
+        !! Information flag.
+        logical, optional, intent(in) :: trans
+        !! Use adjoint ?
+
+        ! ----- Internal variables -----
+        real(${kind}$) :: tol
+        integer :: kdim
+
+        tol = atol_${kind}$
+        kdim = 30
+
+        call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
+        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_${type[0]}$${kind}$')
+
+        return
+    end subroutine k_exptA_${type[0]}$${kind}$
+
+    #:endfor
+
+end module lightkrylov_expmlib

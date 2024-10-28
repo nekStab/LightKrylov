@@ -11,8 +11,7 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
-link = ["blas", "lapack"]
-#link = ["openblas"]
+external-modules = "mpi_f08"
 
 [install]
 library = true
@@ -22,16 +21,13 @@ implicit-typing = false
 implicit-external = true
 source-form = "free"
 
-[preprocess]
-[preprocess.cpp]
-directories = ["test/TestExpm.f90"]
-
 [dependencies]
 stdlib = "*"
+FACE = {git="https://github.com/szaghi/FACE.git"}
 
 [dev-dependencies]
-test-drive.git = "https://github.com/fortran-lang/test-drive"
-test-drive.tag = "v0.4.0"
+test-drive.git = "https://github.com/nekStab/test-drive.git"
+FACE = {git="https://github.com/szaghi/FACE.git"}
 
 [[example]]
 
@@ -41,6 +37,18 @@ test-drive.tag = "v0.4.0"
 
 name = "Ginzburg-Landau"
 source-dir = "example/ginzburg_landau"
+
+[example.dependencies]
+rklib = { git="https://github.com/jacobwilliams/rklib.git" }
+
+[[example]]
+
+#----------------------------------------------
+#-----     SETUP FOR ROESSLER EXAMPLE     -----
+#----------------------------------------------
+
+name = "Roessler"
+source-dir = "example/roessler"
 
 [example.dependencies]
 rklib = { git="https://github.com/jacobwilliams/rklib.git" }

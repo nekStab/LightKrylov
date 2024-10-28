@@ -1,741 +1,1280 @@
 module lightkrylov_utils
-   !! This module provides a set of utilities used throughout `LightKrylov`.
-   !! It also provides a selection wrapper around LAPACK to perform standard linear algebra computations.
-   use stdlib_linalg, only: diag, is_symmetric
-   use iso_fortran_env, only: output_unit
-   implicit none
-   include "dtypes.h"
+    !!  This module provides a set of utility functions used throughout `LightKrylov`.
+    !!  It includes:
+    !!
+    !!  - `assert_shape`: Assert that the shape of the argument is the expected shape.
+    !!  - `eig`: Compute the eigenvalue decomposition of a general matrix.
+    !!  - `sqrtm`: Compute the non-negative square root of a symmetric positive definite matrix using its SVD.
+    !!  - `sqrtm_eig`: Compute the non-negative square root of a symmetric positive definite matrix using its eigenvalue decomposition.
+    !!  - `schur`: Compute the Schur factorization of a general square matrix.
+    !!  - `ordschur`: Re-order the Schur factorization to have the selected eigenvalues in the upper left block.
+    !!
+    !!  Note that as the development of `stdlib` progresses, some of these functions
+    !!  will be deprecated in favor of the `stdlib` implementations.
 
-   private
-   ! General-purpose utilities.
-   public :: assert_shape, stop_error, iargsort, norml, log2
-   ! Print matrices
-   public :: print_mat
-   ! Linear Algebra Utilities.
-   public :: inv, svd, eig, eigh, lstsq, schur, ordschur, sqrtm
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
+    use iso_fortran_env, only: output_unit
+    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd, eigh
+    ! Eigenvalue problem.
+    use stdlib_linalg_lapack, only: geev
+    ! Schur factorization.
+    use stdlib_linalg_lapack, only: gees, trsen
 
-   !-------------------------------------------------------
-   !-----                                             -----
-   !-----     OPTS TYPE OBJECT FOR LINEAR SOLVERS     -----
-   !-----                                             -----
-   !-------------------------------------------------------
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    ! Various constants.
+    use LightKrylov_Logger
+    use LightKrylov_Constants
 
-   type, abstract, public :: abstract_opts
-      !! Abstract type container for options to be passed to the various iterative solvers.
-   end type abstract_opts
+    implicit none
+    private
 
-   type, extends(abstract_opts), public :: gmres_opts
-      !! Extended `abstract_opts` type to pass options to the `gmres` solver.
-      integer :: kdim = 30
-      !! Dimension of the Krylov subspace (default: 30).
-      integer :: maxiter = 10
-      !! Maximum number of `gmres` restarts (default: 10)
-      real(kind=wp) :: atol = atol
-      !! Absolute tolerance (default: `epsilon(1.0_wp)`).
-      real(kind=wp) :: rtol = rtol
-      !! Relative tolerance (default: `sqrt(atol)`).
-      logical :: verbose = .false.
-      !! Verbosity control (default: `.false.`).
-   end type gmres_opts
+    character(len=128), parameter :: this_module = 'LightKrylov_Utils'
 
-   type, extends(abstract_opts), public :: cg_opts
-      !! Extended `abstract_opts` type to pass options to the `cg` solver.
-      integer :: maxiter = 100
-      !! Maximum number of `cg` iterations (default: 100).
-      real(kind=wp) :: rtol = rtol
-      !! Relative tolerance (default: `sqrt(atol)`).
-      real(kind=wp) :: atol = atol
-      !! Absolute tolerance (default: `epsilon(1.0_wp)`).
-      logical :: verbose = .false.
-      !! Verbosity control (default: `.false.`).
-   end type cg_opts
+    public :: assert_shape, norml, log2
+    ! Compute AX = XD for general dense matrices.
+    public :: eig
+    ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
+    public :: sqrtm
+    public :: sqrtm_eig
+    ! Compute AX = XS where S is in Schur form.
+    public :: schur
+    ! Re-orders the Schur factorization of A.
+    public :: ordschur
 
-   !------------------------------
-   !-----     INTERFACES     -----
-   !------------------------------
+    interface assert_shape
+        !! This interface provides methods to assert that the shape of its input vector
+        !! or matrix is the expected shape. It throws an error if not.
+        module procedure assert_shape_vector_rsp
+        module procedure assert_shape_matrix_rsp
+        module procedure assert_shape_vector_rdp
+        module procedure assert_shape_matrix_rdp
+        module procedure assert_shape_vector_csp
+        module procedure assert_shape_matrix_csp
+        module procedure assert_shape_vector_cdp
+        module procedure assert_shape_matrix_cdp
+    end interface
 
-   interface assert_shape
-      !! Interface to assert the shape of a matrix.
-      module procedure dassert_shape
-      module procedure zassert_shape
-   end interface assert_shape
+    interface norml
+        !! This interface provides methods to compute the infinity norm of a matrix.
+        !! Note that it'll eventually be superseeded by the `stdlib` implementation.
+        module procedure norml_rsp
+        module procedure norml_rdp
+        module procedure norml_csp
+        module procedure norml_cdp
+    end interface
 
-   interface inv
-      !! Interface to compute the inverse of a matrix (in-place).
-      module procedure dinv
-      module procedure zinv
-   end interface inv
+    interface log2
+        !! Utility function to compute the base-2 logarithm of a real number.
+        module procedure log2_rsp
+        module procedure log2_rdp
+    end interface
 
-   interface svd
-      !! Interface to compute the SVD of a matrix.
-      module procedure dsvd
-      module procedure zsvd
-   end interface svd
+    interface eig
+        !!  Computes the eigenvalue decomposition of a general square matrix.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the solution to the eigenproblem
+        !!  \( \mathbf{Ax} = \lambda \mathbf{x} \), where $\mathbf{A}$ is a square `real`
+        !!  or `complex` matrix.
+        !!
+        !!  Result array `lambda` returns the eigenvalues of \( \mathbf{A} \), while `vecs`
+        !!  returns the corresponding eigenvectors. Note that it follows the LAPACK convention
+        !!  when \( \mathbf{A} \) is `real`. The solver is based on LAPACK's `*GEEV` backends.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call eig(A, vecs, lambda)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an `intent(in)` argument.
+        !!
+        !!  `vecs`: Square array of the same size, type, and kind as `A` containing the eigenvectors
+        !!  (following LAPACK's convention for `real` matrices). It is an `intent(out)` argument.
+        !!
+        !!  `lambda`: `complex` rank-1 array of the same kind as `A` containing the eigenvalues.
+        !!  It is an `intent(out)` argument.
+        !!
+        !!  @note
+        !!  Due to the abstrct nature of the vector types defined in `LightKrylov`, it is unlikely
+        !!  that this implementation will be superseeded in favor of the `stdlib` one as the latter
+        !!  does not follow the LAPACK's convention.
+        !!  @endnote
+        module procedure eig_rsp
+        module procedure eig_rdp
+        module procedure eig_csp
+        module procedure eig_cdp
+    end interface
 
-   interface eig
-      !! Interface to compute the EVD of a matrix.
-      module procedure deig
-   end interface eig
+    interface schur
+        !!  Computes the Schur factorization of a general square matrix.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the Schur factorization of a `real` or
+        !!  `complex` square matrix. Note that, if \( \mathbf{A} \) is `real`, it returns the
+        !!  real Schur form.
+        !!
+        !!  Result array `eigvals` returns the eigenvalues of \( \mathbf{A} \) while `Z`
+        !!  contains the Schur basis.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call schur(A, Z, eigvals)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. On exit, it
+        !!  is overwritten with its (real) Schur factorization. It is an `intent(inout)` argument.
+        !!  
+        !!  `Z`: Two-dimensional square array of the same size, type and kind as `A`. It contains
+        !!  the Schur basis. It is an `intent(out)` argument.
+        !!
+        !!  `eigvals`: `complex` rank-1 array of the same kind as `A` containing the eigenvalues.
+        !!  It is an `intent(out)` arguement.
+        module procedure schur_rsp
+        module procedure schur_rdp
+        module procedure schur_csp
+        module procedure schur_cdp
+    end interface
 
-   interface eigh
-      !! Interface to compute the EVD of a sym. pos. def. matrix.
-      module procedure deigh
-   end interface eigh
+    interface ordschur
+        !!  Given the Schur factorization and basis of a matrix, reorders it to have the selected
+        !!  eigenvalues in the upper left block.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to re-order the Schur factorization of a `real` or
+        !!  `complex` square matrix. Note that, if \( \mathbf{A} \) is `real`, it returns the
+        !!  real Schur form.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call ordschur(T, Q, selected)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix. 
+        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` argument.
+        !!  
+        !!  `Q`: Two-dimensional square array of the same size, type and kind as `A`. It contains
+        !!  the original Schur basis on entry and the re-ordered one on exit.
+        !!  It is an `intent(inout)` argument.
+        !!
+        !!  `selected`: `logical` rank-1 array selecting which eigenvalues need to be moved in the
+        !!  upper left block of the Schur factorization.
+        !!  It is an `intent(in)` arguement.
+        module procedure ordschur_rsp
+        module procedure ordschur_rdp
+        module procedure ordschur_csp
+        module procedure ordschur_cdp
+    end interface
+
+    interface sqrtm
+        !!  Computes the non-negative square root of a symmetric positive definite matrix
+        !!  using its singular value decomposition.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the non-negative square root of a symmetric
+        !!  (hermitian) positive definite matrix \( \mathbf{A} \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call sqrtm(A, sqrtmA, info)`
+        !!
+        !!  ### Arguments
+        !!  
+        !!  `A`: Symmetric (hermitian) positive definite matrix whose non-negative square root
+        !!  needs to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `sqrtmA`: Non-negative square root of `A`. It has the same size, kind and type as `A`.
+        !!  It is an `intent(out)` argument.
+        !!
+        !!  `info`: Information flag. It is an `intent(out)` argument.
+        module procedure sqrtm_rsp
+        module procedure sqrtm_rdp
+        module procedure sqrtm_csp
+        module procedure sqrtm_cdp
+    end interface
+
+    interface sqrtm_eig
+        !!  Computes the non-negative square root of a symmetric positive definite matrix
+        !!  using its eigenvalue decomposition.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the non-negative square root of a symmetric
+        !!  (hermitian) positive definite matrix \( \mathbf{A} \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call sqrtm_eig(A, sqrtmA, info)`
+        !!
+        !!  ### Arguments
+        !!  
+        !!  `A`: Symmetric (hermitian) positive definite matrix whose non-negative square root
+        !!  needs to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `sqrtmA`: Non-negative square root of `A`. It has the same size, kind and type as `A`.
+        !!  It is an `intent(out)` argument.
+        !!
+        !!  `info`: Information flag. It is an `intent(out)` argument.
+        module procedure sqrtm_eig_rsp
+        module procedure sqrtm_eig_rdp
+        module procedure sqrtm_eig_csp
+        module procedure sqrtm_eig_cdp
+    end interface
+
+    !------------------------------------------------
+    !-----     OPTS TYPE FOR LINEAR SOLVERS     -----
+    !------------------------------------------------
+
+    type, abstract, public :: abstract_opts
+        !! Abstract type container for options from which all others are being extended.
+    end type
+
+    type, extends(abstract_opts), public :: gmres_sp_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+    end type
+
+    type, extends(abstract_opts), public :: cg_sp_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
+    end type
+
+    type, extends(abstract_opts), public :: newton_sp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+    end type
+    
+    type, extends(abstract_opts), public :: gmres_dp_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+    end type
+
+    type, extends(abstract_opts), public :: cg_dp_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
+    end type
+
+    type, extends(abstract_opts), public :: newton_dp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+    end type
+    
 
 contains
 
-   !-------------------------------------
-   !-----                           -----
-   !-----     VARIOUS UTILITIES     -----
-   !-----                           -----
-   !-------------------------------------
+    !-------------------------------------
+    !-----     VARIOUS UTILITIES     -----
+    !-------------------------------------
 
-   subroutine stop_error(msg)
-     !! Utility function to print an error message.
-      character(len=*), intent(in) :: msg
-     !! Error message.
-      write (output_unit, *) msg; stop 1
-      return
-   end subroutine stop_error
+    subroutine assert_shape_vector_rsp(v, size, vecname, module, procedure)
+        !! Utility function to assert the shape of a vector.
+        real(sp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: vecname
+        !! Name of the asserted vector.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
 
-   subroutine dassert_shape(A, size, routine, matname)
-     !! Utility function to assert the shape of a real-valued matrix.
-      real(kind=wp), intent(in) :: A(:, :)
-     !! Matrix whose dimensions need to be asserted.
-      integer, intent(in) :: size(:)
-     !! Expected dimensions of A.
-      character(len=*), intent(in) :: routine
-     !! Name of the routine where assertion is done.
-      character(len=*), intent(in) :: matname
-     !! Name of the asserted matrix.
+        if(any(shape(v) /= size)) then
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_vector_rsp
 
-      if (any(shape(A) /= size)) then
-         write (output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-         write (output_unit, *) "Expected shape is ", size
-         call stop_error("Aborting due to illegal matrix operation.")
+    subroutine assert_shape_matrix_rsp(A, size, matname, module, procedure)
+        !! Utility function to assert the shape of a matrix.
+        real(sp), intent(in) :: A(:, :)
+        !! Matrix whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of A.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted matrix.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(A) /= size)) then
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_matrix_rsp
+
+    subroutine assert_shape_vector_rdp(v, size, vecname, module, procedure)
+        !! Utility function to assert the shape of a vector.
+        real(dp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: vecname
+        !! Name of the asserted vector.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(v) /= size)) then
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_vector_rdp
+
+    subroutine assert_shape_matrix_rdp(A, size, matname, module, procedure)
+        !! Utility function to assert the shape of a matrix.
+        real(dp), intent(in) :: A(:, :)
+        !! Matrix whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of A.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted matrix.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(A) /= size)) then
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_matrix_rdp
+
+    subroutine assert_shape_vector_csp(v, size, vecname, module, procedure)
+        !! Utility function to assert the shape of a vector.
+        complex(sp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: vecname
+        !! Name of the asserted vector.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(v) /= size)) then
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_vector_csp
+
+    subroutine assert_shape_matrix_csp(A, size, matname, module, procedure)
+        !! Utility function to assert the shape of a matrix.
+        complex(sp), intent(in) :: A(:, :)
+        !! Matrix whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of A.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted matrix.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(A) /= size)) then
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_matrix_csp
+
+    subroutine assert_shape_vector_cdp(v, size, vecname, module, procedure)
+        !! Utility function to assert the shape of a vector.
+        complex(dp), intent(in) :: v(:)
+        !! Vector whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of v.
+        character(len=*), intent(in) :: vecname
+        !! Name of the asserted vector.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(v) /= size)) then
+            print *, "Vector "//vecname//" has illegal length ", shape(v), &
+                           & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Vector length assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_vector_cdp
+
+    subroutine assert_shape_matrix_cdp(A, size, matname, module, procedure)
+        !! Utility function to assert the shape of a matrix.
+        complex(dp), intent(in) :: A(:, :)
+        !! Matrix whose dimension need to be asserted.
+        integer, intent(in) :: size(:)
+        !! Expected dimensions of A.
+        character(len=*), intent(in) :: matname
+        !! Name of the asserted matrix.
+        character(len=*), intent(in) :: module
+        !! Name of the module where assertion is done.
+        character(len=*), intent(in) :: procedure
+        !! Name of the routine where assertion is done.
+
+        if(any(shape(A) /= size)) then
+            print *, "Matrix "//matname//" has illegal shape ", shape(A), &
+                        & ". Expected shape is ", size, ". Aborting due to illegal vector length."
+            call stop_error('Matrix shape assertion error', module=module, procedure=procedure)
+        endif
+        return
+    end subroutine assert_shape_matrix_cdp
+
+
+    !-------------------------------------------
+    !-----     LAPACK MATRIX INVERSION     -----
+    !-------------------------------------------
+
+    subroutine eig_rsp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense matrix using LAPACK.
+        real(sp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        real(sp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        complex(sp), intent(out) :: vals(:)
+
+        ! Internal variables
+        character :: jobvl = "n", jobvr = "v"
+        integer :: n, lwork, info, lda, ldvl, ldvr
+        real(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        real(sp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
+        lwork = 4*n
+
+        ! Eigendecomposition.
+        call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rsp')
+
+        ! Reconstruct eigenvalues
+        vals = one_csp*wr + one_im_csp*wi
+
+        return
+    end subroutine eig_rsp
+
+    subroutine schur_rsp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        real(sp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        real(sp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(sp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        real(sp), allocatable :: work(:)
+        real(sp), allocatable :: wr(:), wi(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  3*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ; 
+
+        allocate(wr(size(eigvals)), wi(size(eigvals)))
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rsp')
+
+        ! Reconstruct eigenvalues
+        eigvals = cmplx(wr, wi, kind=sp)
+
+        return
+    contains
+        pure function dummy_select(wre, wim) result(out)
+            real(sp), intent(in) :: wre
+            real(sp), intent(in) :: wim
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_rsp
+
+    subroutine ordschur_rsp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        real(sp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        real(sp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(sp) :: s, sep
+        integer :: iwork(size(T, 1)), liwork
+        real(sp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rsp')
+
+        return
+    end subroutine ordschur_rsp
+
+    subroutine sqrtm_rsp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(sp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(sp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(sp) :: S(size(X,1))
+      real(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(sp) :: symmetry_error
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is symmetric
+      symmetry_error = 0.5_sp*maxval(X - transpose(X))
+      if (symmetry_error > rtol_sp) then
+        write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_sp
+        call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
+      else if (symmetry_error > 10*atol_sp) then
+        write(msg,'(A,E9.2)') "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
-      return
-   end subroutine dassert_shape
+      ! Perform svd
+      call svd(X, S, U, VT)
 
-   subroutine zassert_shape(A, size, routine, matname)
-     !! Utility function to assert the shape of a complex-valued matrix.
-      complex(kind=wp), intent(in) :: A(:, :)
-     !! Matrix whose dimensions need to be asserted.
-      integer, intent(in) :: size(:)
-     !! Expected dimensions of A.
-      character(len=*), intent(in) :: routine
-     !! Name of the routine where assertion is done.
-      character(len=*), intent(in) :: matname
-     !! Name of the asserted matrix.
-
-      if (any(shape(A) /= size)) then
-         write (output_unit, *) "In routine "//routine//" matrix "//matname//" has illegal shape ", shape(A)
-         write (output_unit, *) "Expected shape is ", size
-         call stop_error("Aborting due to illegal matrix operation.")
-      end if
-
-      return
-   end subroutine zassert_shape
-
-   subroutine print_mat(m, n, A, name)
-      !! Utility function to print a m-by-n matrix with a title
-      integer , intent(in)                         :: n
-      integer , intent(in)                         :: m
-      real (kind=wp)  , intent(in)                 :: a(m,n)
-      character(*) , optional,  intent(in)         :: name
-
-      ! internal variables
-      real (kind=wp) :: amin, amax
-      character ( len = 10 ) iform
-      integer :: i, ihi, ilo, j, jhi, jlo, lmax, npline
-      logical :: integ
-      
-      write(*,*)
-      if (present(name)) then
-         write(*,*) 'Output matrix: ', trim(name)
-      endif
-      
-      ! Check if all entries are integral. 
-      integ = .true.
-
-      do i = 1, m
-         do j = 1, n
-            if ( integ ) then
-               if ( a(i,j) /= real ( int ( a(i,j) ),kind=wp) ) then
-                  integ = .false.
-               end if
-            end if
-         end do
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_sp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rsp
+            info = 1
+         end if
       end do
 
-      ! Find the maximum and minimum entries.
-      amax = maxval ( a(1:m,1:n) )
-      amin = minval ( a(1:m,1:n) )
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
 
-      ! Use the information about the maximum size of an entry to
-      ! compute an intelligent format for use with integer entries.      
-      if ( amax .lt. 1e-12) amax = 1e-12 
-      ! to avoid problems with zero matrix
-      lmax = int ( log10 ( amax ) )
-      if ( lmax .lt. -2 ) lmax = 0
-   
-      if ( integ ) then
-         npline = 79 / ( lmax + 3 )
-         write ( iform, '(''('',i2,''I'',i2,'')'')' ) npline, lmax+3
-      else
-         npline = 8
-         iform = ' '
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_rsp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(sp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internals
+      real(sp) :: Xtmp(size(X, 1), size(X, 1))
+      real(sp) :: lambda(size(X,1))
+      real(sp) :: V(size(X,1), size(X,1))
+      integer :: i
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(msg,'(A)') "Input matrix is not symmetric."
+        call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
       end if
 
-      ! Print a scalar quantity.
-      if ( m == 1 .and. n == 1 ) then
-         if ( integ ) then
-            write ( *, iform ) int ( a(1,1) )
-         else
-            write ( *, '(2x,g10.2)' ) a(1,1)
-         end if
+      ! Perform eigenvalue decomposition
+      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
 
-      ! Column vector of length M,
-      else if ( n == 1 ) then
-         do ilo = 1, m, npline
-            ihi = min ( ilo+npline-1, m )
-            if ( integ ) then
-               write ( *, iform ) ( int ( a(i,1) ), i = ilo, ihi )
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_sp ) then
+            if (lambda(i) .gt. zero_rsp) then
+               lambda(i) = sqrt(lambda(i))
             else
-               write ( *, '(2x,8g10.2)' ) a(ilo:ihi,1)
+               lambda(i) = zero_rsp
+               info = -1
             end if
-         end do
+         else
+            lambda(i) = zero_rsp
+            info = 1
+         end if
+      end do
 
-      ! Row vector of length N,
-      else if ( m == 1 ) then
-         do jlo = 1, n, npline
-            jhi = min ( jlo+npline-1, n )
-            if ( integ ) then
-               write ( *, iform ) int ( a(1,jlo:jhi) )
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))
+
+      return
+    end subroutine
+    subroutine eig_rdp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense matrix using LAPACK.
+        real(dp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        real(dp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        complex(dp), intent(out) :: vals(:)
+
+        ! Internal variables
+        character :: jobvl = "n", jobvr = "v"
+        integer :: n, lwork, info, lda, ldvl, ldvr
+        real(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        real(dp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
+        lwork = 4*n
+
+        ! Eigendecomposition.
+        call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_rdp')
+
+        ! Reconstruct eigenvalues
+        vals = one_cdp*wr + one_im_cdp*wi
+
+        return
+    end subroutine eig_rdp
+
+    subroutine schur_rdp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        real(dp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        real(dp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(dp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        real(dp), allocatable :: work(:)
+        real(dp), allocatable :: wr(:), wi(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  3*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ; 
+
+        allocate(wr(size(eigvals)), wi(size(eigvals)))
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
+        call check_info(info, 'GEES', module=this_module, procedure='schur_rdp')
+
+        ! Reconstruct eigenvalues
+        eigvals = cmplx(wr, wi, kind=dp)
+
+        return
+    contains
+        pure function dummy_select(wre, wim) result(out)
+            real(dp), intent(in) :: wre
+            real(dp), intent(in) :: wim
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_rdp
+
+    subroutine ordschur_rdp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        real(dp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        real(dp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(dp) :: s, sep
+        integer :: iwork(size(T, 1)), liwork
+        real(dp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_rdp')
+
+        return
+    end subroutine ordschur_rdp
+
+    subroutine sqrtm_rdp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(dp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(dp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(dp) :: S(size(X,1))
+      real(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(dp) :: symmetry_error
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is symmetric
+      symmetry_error = 0.5_dp*maxval(X - transpose(X))
+      if (symmetry_error > rtol_dp) then
+        write(msg,'(2(A,E9.2))') "Input matrix is not symmetric. 0.5*max(X-X.T) = ", &
+            & symmetry_error, ", tol = ", rtol_dp
+        call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
+      else if (symmetry_error > 10*atol_dp) then
+        write(msg,'(A,E9.2)') "Input matrix is not exactly symmetric. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_rdp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_dp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rdp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_rdp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      real(dp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      real(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internals
+      real(dp) :: Xtmp(size(X, 1), size(X, 1))
+      real(dp) :: lambda(size(X,1))
+      real(dp) :: V(size(X,1), size(X,1))
+      integer :: i
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is symmetric
+      if (.not. is_symmetric(X)) then
+        write(msg,'(A)') "Input matrix is not symmetric."
+        call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
+      end if
+
+      ! Perform eigenvalue decomposition
+      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_dp ) then
+            if (lambda(i) .gt. zero_rdp) then
+               lambda(i) = sqrt(lambda(i))
             else
-               write ( *, '(2x,8g10.2)' ) a(1,jlo:jhi)
+               lambda(i) = zero_rdp
+               info = -1
             end if
-         end do
-      
-      ! M by N Array
-      else
-         do jlo = 1, n, npline
-            jhi = min ( jlo+npline-1, n )
-            if ( npline < n ) then
-               write ( *, '(a)' ) ' '
-               write ( *, '(a,i8,a,i8)' ) 'Matrix columns ', jlo, ' to ', jhi
-               write ( *, '(a)' ) ' '
+         else
+            lambda(i) = zero_rdp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), transpose(V)))
+
+      return
+    end subroutine
+    subroutine eig_csp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense matrix using LAPACK.
+        complex(sp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(sp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        complex(sp), intent(out) :: vals(:)
+
+        ! Internal variables
+        character :: jobvl = "n", jobvr = "v"
+        integer :: n, lwork, info, lda, ldvl, ldvr
+        complex(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 1))
+        complex(sp) :: work(2*size(A, 1))
+        real(sp) :: rwork(2*size(A, 1))
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
+        lwork = 2*n
+
+        ! Eigendecomposition.
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_csp')
+
+
+        return
+    end subroutine eig_csp
+
+    subroutine schur_csp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        complex(sp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(sp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(sp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        complex(sp), allocatable :: work(:)
+        real(sp), allocatable :: rwork(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  2*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
+
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+        call check_info(info, 'GEES', module=this_module, procedure='schur_csp')
+
+
+        return
+    contains
+        pure function dummy_select(w) result(out)
+            complex(sp), intent(in) :: w
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_csp
+
+    subroutine ordschur_csp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        complex(sp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        complex(sp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(sp) :: s, sep
+        complex(sp) :: w(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_csp')
+
+        return
+    end subroutine ordschur_csp
+
+    subroutine sqrtm_csp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(sp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(sp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(sp) :: S(size(X,1))
+      complex(sp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(sp) :: symmetry_error
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is hermitian
+      symmetry_error = 0.5_sp*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > rtol_sp) then
+        write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_sp
+        call stop_error(msg, module=this_module, procedure='sqrtm_csp')
+      else if (symmetry_error > 10*atol_sp) then
+        write(msg,'(A,E9.2)') "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_csp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_sp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rsp
+            info = 1
+         end if
+      end do
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_csp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(sp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internals
+      complex(sp) :: Xtmp(size(X, 1), size(X, 1))
+      real(sp) :: lambda(size(X,1))
+      complex(sp) :: V(size(X,1), size(X,1))
+      integer :: i
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(msg,'(A)') "Input matrix is not hermitian"
+        call stop_error(msg, module=this_module, procedure='sqrtm_csp')
+      end if
+
+      ! Perform eigenvalue decomposition
+      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_sp ) then
+            if (lambda(i) .gt. zero_rsp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               lambda(i) = zero_rsp
+               info = -1
             end if
-            do i = 1, m
-               if ( integ ) then
-                  write ( *, iform ) int ( a(i,jlo:jhi) )
-               else
-                  write ( *, '(2x,8g14.6)' ) a(i,jlo:jhi)
-               end if
-            end do
-         end do
-      end if
-      write(*,*)
-   
-      return
-   end subroutine print_mat
-
-   !-------------------------------------
-   !-----                           -----
-   !-----     VARIOUS FUNCTIONS     -----
-   !-----                           -----
-   !-------------------------------------
-
-   function log2(x) result(y)
-      !! compute the base-2 logarithm of the input
-      implicit none
-      real(kind=wp), intent(in) :: x
-      real(kind=wp) :: y
-      y = log(x) / log(2.0_wp)
-   end function log2
- 
-   function norml(A) result(norm)
-      !! compute the infinity norm of the real-valued input matrix A
-      implicit none   
-      real(kind=wp), intent(in) :: A(:,:)
-      ! Internal variables
-      integer       :: i, n
-      real(kind=wp) :: row_sum, norm
-      
-      norm = 0.0_wp
-      n = size(A,1)
-      do i = 1, n
-      row_sum = sum ( abs ( A(i,1:n) ) )
-      norm = max ( norm, row_sum )
+         else
+            lambda(i) = zero_rsp
+            info = 1
+         end if
       end do
-   end function norml
 
-   function iargsort(a) result(idx)
-      integer, intent(in):: a(:)    ! array of numbers
-      integer :: idx(size(a))       ! indices into the array 'a' that sort it
-      integer :: N                  ! number of numbers/vectors
-      integer :: i,imin             ! indices: i, i of smallest
-      integer :: temp               ! temporary
-      integer :: a2(size(a))
-      a2 = a
-      N=size(a)
-      do i = 1, N
-          idx(i) = i
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), conjg(transpose(V))))
+
+      return
+    end subroutine
+    subroutine eig_cdp(A, vecs, vals)
+        !! Eigenvalue decomposition of a dense matrix using LAPACK.
+        complex(dp), intent(in) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(dp), intent(out) :: vecs(:, :)
+        !! Eigenvectors.
+        complex(dp), intent(out) :: vals(:)
+
+        ! Internal variables
+        character :: jobvl = "n", jobvr = "v"
+        integer :: n, lwork, info, lda, ldvl, ldvr
+        complex(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 1))
+        complex(dp) :: work(2*size(A, 1))
+        real(dp) :: rwork(2*size(A, 1))
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
+        lwork = 2*n
+
+        ! Eigendecomposition.
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call check_info(info, 'GEEV', module=this_module, procedure='eig_cdp')
+
+
+        return
+    end subroutine eig_cdp
+
+    subroutine schur_cdp(A, Z, eigvals)
+        !! Compute the Schur form (in-place) and Schur vectors of the matrix `A`.
+        complex(dp), intent(inout) :: A(:, :)
+        !! Matrix to be factorized.
+        complex(dp), intent(out) :: Z(:, :)
+        !! Schur basis.
+        complex(dp), intent(out) :: eigvals(:)
+        !! Eigenvalues.
+
+        ! Internal variables.
+        character :: jobvs = "v", sort = "n"
+        integer :: n, lda, sdim, ldvs, lwork, info
+        logical, allocatable :: bwork(:)
+        complex(dp), allocatable :: work(:)
+        real(dp), allocatable :: rwork(:)
+
+        ! Allocate variables.
+        n = size(A, 1) ; lda = n ; ldvs = n ; lwork =  2*n 
+        allocate(bwork(n)) ; allocate(work(lwork)) ;  allocate(rwork(n)) 
+
+        call gees(jobvs, sort, dummy_select, n, A, lda, sdim, eigvals, Z, ldvs, work, lwork, rwork, bwork, info)
+        call check_info(info, 'GEES', module=this_module, procedure='schur_cdp')
+
+
+        return
+    contains
+        pure function dummy_select(w) result(out)
+            complex(dp), intent(in) :: w
+            logical :: out
+            out = .false.
+            return
+        end function
+    end subroutine schur_cdp
+
+    subroutine ordschur_cdp(T, Q, selected)
+        !! Re-order the Schur factorization from `schur` such that the selected eigenvalues
+        !! are in the upper-left block.
+        complex(dp), intent(inout) :: T(:, :)
+        !! Schur matrix to be re-ordered.
+        complex(dp), intent(inout) :: Q(:, :)
+        !! Schur vectors to be re-ordered.
+        logical, intent(in) :: selected(:)
+        !! Boolean array defining the selected eigenvalues.
+
+        ! Internal variables
+        character :: job="n", compq="v"
+        integer info, ldq, ldt, lwork, m, n
+        real(dp) :: s, sep
+        complex(dp) :: w(size(T, 1)), work(size(T, 1))
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        call check_info(info, 'TRSEN', module=this_module, procedure='ordschur_cdp')
+
+        return
+    end subroutine ordschur_cdp
+
+    subroutine sqrtm_cdp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(dp), intent(inout) :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(dp), intent(out)   :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internal
+      real(dp) :: S(size(X,1))
+      complex(dp) :: U(size(X,1), size(X,1)), VT(size(X,1), size(X,1))
+      integer :: i
+      real(dp) :: symmetry_error
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is hermitian
+      symmetry_error = 0.5_dp*maxval(abs(X - conjg(transpose(X))))
+      if (symmetry_error > rtol_dp) then
+        write(msg,'(2(A,E9.2))') "Input matrix is not hermitian. 0.5*max(abs(X-X.H)) = ", &
+            & symmetry_error, ", tol = ", rtol_dp
+        call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
+      else if (symmetry_error > 10*atol_dp) then
+        write(msg,'(A,E9.2)') "Input matrix is not exactly hermitian. 0.5*max(X-X.T) = ", symmetry_error
+        call logger%log_warning(msg, module=this_module, procedure='sqrtm_cdp')
+      end if
+
+      ! Perform svd
+      call svd(X, S, U, VT)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(S)
+         if (S(i) .gt. 10*atol_dp ) then
+            S(i) = sqrt(S(i))
+         else
+            S(i) = zero_rdp
+            info = 1
+         end if
       end do
-      do i = 1, N-1
-          ! find ith smallest in 'a'
-          imin = minloc(a2(i:),1) + i - 1
-          ! swap to position i in 'a' and 'b', if not already there
-          if (imin /= i) then
-              temp = a2(i);a2(i) = a2(imin); a2(imin) = temp
-              temp = idx(i); idx(i) = idx(imin); idx(imin) = temp
-          end if
+
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(U, matmul(diag(S), VT))
+
+      return
+    end subroutine
+
+    subroutine sqrtm_eig_cdp(X, sqrtmX, info)
+      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
+      complex(dp), intent(in)  :: X(:,:)
+      !! Matrix of which to compute the sqrt
+      complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
+      !! Return matrix
+      integer, intent(out) :: info
+      !! Information flag
+
+      ! internals
+      complex(dp) :: Xtmp(size(X, 1), size(X, 1))
+      real(dp) :: lambda(size(X,1))
+      complex(dp) :: V(size(X,1), size(X,1))
+      integer :: i
+      character(len=256) :: msg
+
+      info = 0
+
+      ! Check if the matrix is hermitian
+      if (.not. is_hermitian(X)) then
+        write(msg,'(A)') "Input matrix is not hermitian"
+        call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
+      end if
+
+      ! Perform eigenvalue decomposition
+      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
+
+      ! Check if the matrix is positive definite (up to tol)
+      do i = 1, size(lambda)
+         if (abs(lambda(i)) .gt. 10*atol_dp ) then
+            if (lambda(i) .gt. zero_rdp) then
+               lambda(i) = sqrt(lambda(i))
+            else
+               lambda(i) = zero_rdp
+               info = -1
+            end if
+         else
+            lambda(i) = zero_rdp
+            info = 1
+         end if
       end do
-   end function
 
-   !-------------------------------------------
-   !-----                                 -----
-   !-----     LAPACK MATRIX INVERSION     -----
-   !-----                                 -----
-   !-------------------------------------------
-
-   subroutine dinv(A)
-     !! In-place inversion of a real-valued matrix A using LAPACK.
-      real(kind=wp), intent(inout) :: A(:, :)
-      !! Matrix to be inverted (in-place).
-
-      ! Internal variables.
-      integer :: n, info
-      real(kind=wp) :: work(size(A, 1))
-      integer       :: ipiv(size(A, 1))
-
-      ! Compute A = LU (in-place)
-      n = size(A, 1); call assert_shape(A, [n, n], "inv", "A")
-      call dgetrf(n, n, A, n, ipiv, info)
-      if (info /= 0) then
-         write (output_unit, *) "DGETRF returned info = ", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
-            write (output_unit, *) "has been completed but the factor U is exactly singular."
-            write (output_unit, *) "Division by zero will occur if used to solve Ax = b."
-         end if
-         call stop_error("inv: DGETRF error.")
-      end if
-
-      ! Compute inv(A).
-      call dgetri(n, A, n, ipiv, work, n, info)
-      if (info /= 0) then
-         write (output_unit, *) "DGETRI returned info =", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "U(", info, ",", info, ") is exactly zero."
-            write (output_unit, *) "The matrix is singular and its inverse cannot be computed."
-         end if
-         call stop_error("inv: DGETRI error.")
-      end if
+      ! Reconstruct the square root matrix
+      sqrtmX = matmul(V, matmul(diag(lambda), conjg(transpose(V))))
 
       return
-   end subroutine dinv
+    end subroutine
+
+    !---------------------------------
+    !-----     MISCELLANEOUS     -----
+    !---------------------------------
+
+    pure real(sp) function log2_rsp(x) result(y)
+        real(sp), intent(in) :: x
+        y = log(x) / log(2.0_sp)
+    end function
+
+    pure real(sp) function norml_rsp(A) result(norm)
+        real(sp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(sp) :: row_sum
+
+        norm = zero_rsp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+    pure real(dp) function log2_rdp(x) result(y)
+        real(dp), intent(in) :: x
+        y = log(x) / log(2.0_dp)
+    end function
+
+    pure real(dp) function norml_rdp(A) result(norm)
+        real(dp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(dp) :: row_sum
+
+        norm = zero_rdp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+
+    pure real(sp) function norml_csp(A) result(norm)
+        complex(sp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(sp) :: row_sum
+
+        norm = zero_rsp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
+
+
+    pure real(dp) function norml_cdp(A) result(norm)
+        complex(dp), intent(in) :: A(:, :)
+        integer :: i, n
+        real(dp) :: row_sum
+
+        norm = zero_rdp
+        n = size(A, 1)
+        do i = 1, n
+            row_sum = sum(abs(A(i, :)))
+            norm = max(norm, row_sum)
+        enddo
+    end function
 
-   subroutine zinv(A)
-     !! In-place inversion of a complex-valued matrix using LAPACK.
-      complex(kind=wp), intent(inout) :: A(:, :)
-      !! Matrix be inverted (in-place).
-
-      ! Internal variables.
-      integer :: n, info
-      complex(kind=wp) :: work(size(A, 1))
-      integer          :: ipiv(size(A, 1))
-
-      ! Compute A = LU (in-place).
-      n = size(A, 1); call assert_shape(A, [n, n], "inv", "A")
-      call zgetrf(n, n, A, n, ipiv, info)
-      if (info /= 0) then
-         write (output_unit, *) "ZGETRF returned info = ", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "U(", info, ",", info, ") is exactly zero. The factorization"
-            write (output_unit, *) "has been completed but the factor U is exactly singular."
-            write (output_unit, *) "Division by zero will occur if used to solve Ax = b."
-         end if
-         call stop_error("inv: ZGETRF error.")
-      end if
-
-      ! Compute inv(A).
-      call zgetri(n, A, n, ipiv, work, n, info)
-      if (info /= 0) then
-         write (output_unit, *) "ZGETRI returned info =", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "U(", info, ",", info, ") is exactly zero."
-            write (output_unit, *) "The matrix is singular and its inverse cannot be computed."
-         end if
-         call stop_error("inv: ZGETRI error.")
-      end if
-
-      return
-   end subroutine zinv
-
-   !------------------------------------------
-   !-----                                -----
-   !-----     LAPACK SVD COMPUTATION     -----
-   !-----                                -----
-   !------------------------------------------
-
-   subroutine dsvd(A, U, S, V)
-     !! Singular Value Decomposition of a real-valued matrix using LAPACK.
-      real(kind=wp), intent(in)  :: A(:, :)
-      !! Matrix to be factorized.
-      real(kind=wp), intent(out) :: U(:, :)
-      !! Left singular vectors.
-      real(kind=wp), intent(out) :: S(:)
-      !! Singular values.
-      real(kind=wp), intent(out) :: V(:, :)
-      !! Right singular vectors.
-
-      ! Lapack-related.
-      character :: jobu = "S", jobvt = "S"
-      integer   :: m, n, lda, ldu, ldvt, lwork, info
-      real(kind=wp), allocatable :: work(:)
-      real(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-      ! Setup variables.
-      m = size(A, 1); n = size(A, 2)
-      lda = m; ldu = m; ldvt = n
-      lwork = max(1, 3*min(m, n) + max(m, n), 5*min(m, n)); allocate (work(lwork))
-
-      ! Shape assertions.
-      call assert_shape(U, [m, m], "svd", "U")
-      call assert_shape(V, [n, n], "svd", "V")
-
-      ! SVD computation.
-      a_tilde = a
-      call dgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, info)
-      if (info /= 0) then
-         write (output_unit, *) "DGESVD returned info = ", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "DBSQR did not converge. There are ", info, "superdiagonals"
-            write (output_unit, *) "of an intermediate bidiagonal matrix form B which did not"
-            write (output_unit, *) "converge to zero. See Lapack documentation for more details."
-         end if
-         call stop_error("svd: dgesvd error")
-      end if
-
-      ! Return the transpose of V.
-      v = transpose(vt)
-
-      return
-   end subroutine dsvd
-
-   subroutine zsvd(A, U, S, V)
-     !! Singular Value Decomposition of a complex-valued matrix using LAPACK.
-      complex(kind=wp), intent(in)  :: A(:, :)
-     !! Matrix to be factorized.
-      complex(kind=wp), intent(out) :: U(:, :)
-     !! Left singular vectors.
-      real(kind=wp), intent(out) :: S(:)
-     !! Singular values.
-      complex(kind=wp), intent(out) :: V(:, :)
-     !! Right singular vectors.
-
-      ! Lapack-related.
-      character :: jobu = "S", jobvt = "S"
-      integer   :: m, n, lda, ldu, ldvt, lwork, info
-      complex(kind=wp), allocatable :: work(:)
-      real(kind=wp), allocatable :: rwork(:)
-      complex(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vt(min(size(A, 1), size(A, 2)), size(A, 2))
-
-      ! Setup variables.
-      m = size(A, 1); n = size(A, 2)
-      lda = m; ldu = m; ldvt = n
-      lwork = max(1, 3*min(m, n), 5*min(m, n)); allocate (work(lwork)); allocate (rwork(5*min(m, n)))
-
-      ! Shape assertion.
-      call assert_shape(U, [m, m], "svd", "U")
-      call assert_shape(V, [n, n], "svd", "V")
-
-      ! SVD computation.
-      a_tilde = a
-      call zgesvd(jobu, jobvt, m, n, a_tilde, lda, s, u, ldu, vt, ldvt, work, lwork, rwork, info)
-      if (info /= 0) then
-         write (output_unit, *) "ZGESVD returned info = ", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "ZBSQR did not converge. There are ", info, "superdiagonals"
-            write (output_unit, *) "of an intermediate bidiagonal matrix form B which did not"
-            write (output_unit, *) "converge to zero. See Lapack documentation for more details."
-         end if
-         call stop_error("svd: zgesvd error")
-      end if
-
-      ! Return the transpose of V.
-      v = transpose(vt); v = conjg(v)
-
-      return
-   end subroutine zsvd
-
-   !-------------------------------------------
-   !-----                                 -----
-   !-----     LAPACK EVD COMPUTATIONS     -----
-   !-----                                 -----
-   !-------------------------------------------
-
-   subroutine deig(A, vecs, vals)
-     !! Eigenvalue decomposition of a real-valued matrix using LAPACK.
-      real(kind=wp), intent(in) :: A(:, :)
-      !! Matrix to be factorized.
-      real(kind=wp), intent(out) :: vecs(:, :)
-      !! Eigenvectors.
-      complex(kind=wp), intent(out) :: vals(:)
-      !! Eigenvalues.
-
-      ! Lapack-related.
-      character :: jobvl = "n", jobvr = "v"
-      integer   :: n, lwork, info, lda, ldvl, ldvr
-      real(kind=wp) :: A_tilde(size(A, 1), size(A, 2)), vr(size(A, 1), size(A, 2))
-      real(kind=wp) :: vl(1, size(A, 1))
-      real(kind=wp) :: work(4*size(A, 1))
-      real(kind=wp) :: wr(size(A, 1)), wi(size(A, 1))
-      integer :: i, idx(size(A, 1))
-
-      ! Setup variables.
-      n = size(A, 1); lda = n; ldvl = 1; ldvr = n; lwork = 4*n; a_tilde = a
-
-      ! Shape assertion.
-      call assert_shape(A, [n, n], "eig", "A")
-      call assert_shape(vecs, [n, n], "eig", "vecs")
-
-      ! Eigendecomposition.
-      call dgeev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-
-      if (info /= 0) then
-         write (output_unit, *) "DGEEV returned info = ", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "The QR alg. failed to compute all of the eigenvalues."
-            write (output_unit, *) "No eigenvector has been computed."
-         end if
-         call stop_error("eig: dgeev error")
-      end if
-
-      ! Real to complex arithmetic.
-      ! NOTE : Check if a LAPACK function already exists for that purpose.
-      vals = cmplx(1.0_wp, 0.0_wp, kind=wp)*wr + cmplx(0.0_wp, 1.0_wp, kind=wp)*wi
-      ! vecs = cmplx(0.0_wp, 0.0_wp, kind=wp)*vr
-
-      ! do i = 1, n
-      !    if (wi(i) > 0.0_wp) then
-      !       vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i) + cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i + 1)
-      !    else if (wi(i) < 0.0_wp) then
-      !       vecs(:, i) = cmplx(1.0_wp, 0.0_wp, kind=wp)*vr(:, i - 1) - cmplx(0.0_wp, 1.0_wp, kind=wp)*vr(:, i)
-      !    else
-      !       vecs(:, i) = vr(:, i)
-      !    end if
-      ! end do
-
-      return
-   end subroutine deig
-
-   subroutine deigh(A, vecs, vals)
-      !! Eigenvalue decomposition of a real-valued sym. pos. def. matrix using LAPACK.
-      real(kind=wp), intent(in)  :: A(:, :)
-      !! Matrix to be factorized.
-      real(kind=wp), intent(out) :: vecs(:, :)
-      !! Eigenvectors.
-      real(kind=wp), intent(out) :: vals(:)
-      !! Eigenvalues.
-
-      ! Lapack-related.
-      character :: jobz = "v", uplo = "u"
-      integer   :: n, lwork, info, lda
-      real(kind=wp) :: a_tilde(size(A, 1), size(A, 2))
-      real(kind=wp) :: work(3*size(A, 1) - 1)
-
-      ! Setup variables.
-      n = size(A, 1); lda = n; lwork = 3*n - 1; a_tilde = a
-
-      ! Shape assertion.
-      call assert_shape(A, [n, n], "eigh", "A")
-      call assert_shape(vecs, [n, n], "eigh", "vecs")
-
-      ! Eigendecomposition.
-      call dsyev(jobz, uplo, n, a_tilde, lda, vals, work, lwork, info)
-
-      if (info /= 0) then
-         write (output_unit, *) "DSYEV returned info = ", info
-         if (info < 0) then
-            write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         else
-            write (output_unit, *) "The computation failed. See lapack documentation for more details."
-         end if
-         call stop_error("eigh: dsyev error")
-      else
-         vecs = a_tilde
-      end if
-
-      return
-   end subroutine deigh
-
-   !-----------------------------------------------------
-   !-----                                           -----
-   !-----     LAPACK LEAST-SQUARES COMPUTATIONS     -----
-   !-----                                           -----
-   !-----------------------------------------------------
-
-   subroutine lstsq(A, b, x)
-      !! Solves a linear least-squares problem \( \min~\| \mathbf{Ax} - \mathbf{b} \|_2^2 \) using LAPACK.
-      real(kind=wp), dimension(:, :), intent(in)  :: A
-      !! Matrix to be "pseudo-inverted".
-      real(kind=wp), dimension(:), intent(in)  :: b
-      !! Right-hand side vector.
-      real(kind=wp), dimension(:), intent(out) :: x
-      !! Solution of the least-squares problem.
-
-      ! Lapack job.
-      character :: trans = "N"
-      integer   :: m, n, nrhs, lda, ldb, lwork, info
-      real(kind=wp), dimension(size(A, 1), size(A, 2)) :: A_tilde
-      real(kind=wp), dimension(size(A, 1))             :: b_tilde
-      real(kind=wp), dimension(:), allocatable         :: work
-
-      ! Initialize variables.
-      m = size(A, 1); n = size(A, 2); nrhs = 1
-      lda = m; ldb = m; lwork = max(1, min(m, n) + max(min(m, n), nrhs))
-      A_tilde = A; b_tilde = b
-      allocate (work(1:lwork)); work = 0.0_wp
-
-      ! Solve the least-squares problem.
-      call dgels(trans, m, n, nrhs, A_tilde, lda, b_tilde, ldb, work, lwork, info)
-
-      if (info /= 0) then
-         write (output_unit, *) "The ", -info, "-th argument has an illegal value."
-         call stop_error("lstsq: dgels error")
-      end if
-
-      ! Return solution.
-      x = b_tilde(1:n)
-
-      return
-   end subroutine lstsq
-
-   !----------------------------------------------
-   !-----                                    -----
-   !-----     LAPACK SCHUR DECOMPOSITION     -----
-   !-----                                    -----
-   !----------------------------------------------
-
-   subroutine schur(A, Z, eigvals)
-      !! Compute the Schur form (in-place) and Schur vectors of a real-valued matrix.
-      real(kind=wp), intent(inout) :: A(:, :)
-      !! Matrix to be factorized.
-      real(kind=wp), intent(out)   :: Z(:, :)
-      !! Schur basis.
-      complex(kind=wp), intent(out)   :: eigvals(:)
-      !! Eigenvalues.
-
-      ! LAPACK-related.
-      character :: jobvs = "v", sort = "n"
-      integer   :: n, lda, sdim, ldvs, lwork, info
-      real(kind=wp) :: wr(size(A, 1)), wi(size(A, 1))
-      real(kind=wp) :: work(3*size(A, 1))
-      logical       :: bwork(size(A, 1))
-
-      ! Setup lapack variables.
-      n = size(A, 1); lda = max(1, n); ldvs = max(1, n); lwork = max(1, 3*n)
-
-      ! Perform Schur decomposition.
-      call dgees(jobvs, sort, dummy_select, n, A, lda, sdim, wr, wi, Z, ldvs, work, lwork, bwork, info)
-
-      ! Eigenvalues.
-      eigvals = cmplx(wr, wi, kind=wp)
-
-      return
-   end subroutine schur
-
-   subroutine ordschur(T, Q, selected)
-      !! Re-order the Schur factorization of a real-valued matrix by moving the selected eigenvalues
-      !! in the upper-left block.
-      real(kind=wp), intent(inout) :: T(:, :)
-      !! Schur matrix to be reordered.
-      real(kind=wp), intent(inout) :: Q(:, :)
-      !! Schur vectors to be reordered.
-      logical, intent(in)    :: selected(:)
-      !! Boolean array defining the selected eigenvalues.
-
-      ! LAPACK-related.
-      character :: job = "n", compq = "v"
-      integer   :: info, ldq, ldt, liwork, lwork, m, n, iwork(size(T, 1))
-      real(kind=wp) :: s, sep
-      real(kind=wp) :: work(size(T, 1)), wr(size(T, 1)), wi(size(T, 1))
-
-      ! Setup variables.
-      n = size(T, 2); ldt = n; ldq = n; lwork = max(1, n); liwork = 1
-
-      ! Re-order Schur.
-      call dtrsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-
-      return
-   end subroutine ordschur
-
-   !-------------------------------
-   !-----                     -----
-   !-----     MATRIX SQRT     -----
-   !-----                     -----
-   !-------------------------------
-
-   subroutine sqrtm(sqrtmA, A)
-      !! Compute the matrix square root of a small dense positive semi-definite matrix via eigenvalues
-      real(kind=wp), intent(out) :: sqrtmA(:, :)
-      !! Result
-      real(kind=wp), intent(in) :: A(:, :)
-      !! Matrix of which to compute sqrtm
-      
-      ! internal variables
-      integer :: i, rk
-      real(kind=wp), allocatable :: U(:, :)
-      real(kind=wp), allocatable :: lambda(:)
-
-      rk = size(A,1)
-      call assert_shape(A, [rk, rk], "sqrmt", "A")
-      call assert_shape(sqrtmA, [rk, rk], "sqrmt", "sqrtmA")
-      if (maxval(A - transpose(A)) .gt. atol) then
-         write(*,*) 'sqrtm: Input matrix is not symmetric. Abort.'
-         STOP 1
-      end if
-
-      allocate(U(rk,rk)); allocate(lambda(rk))
-      call eigh(A, U, lambda)
-
-      do i=1,rk
-         if (abs(lambda(i)) .lt. atol) then
-            lambda(i) = 0.0_wp       ! deal with positive semi-definite matrices in eig
-         else if (lambda(i) .lt. 0.0) then
-            write(*,*) 'sqrtm: Input matrix is not SPD. Abort.'
-            STOP 1
-         else
-            lambda(i) = sqrt(lambda(i))
-         end if
-         
-      enddo
-
-      sqrtmA = matmul(U, matmul(diag(lambda), transpose(U)))
-
-      return
-   end subroutine sqrtm
-
-   pure logical function dummy_select(wr, wi) result(out)
-      real(kind=wp), intent(in) :: wr, wi
-      return
-   end function dummy_select
 
 end module lightkrylov_utils

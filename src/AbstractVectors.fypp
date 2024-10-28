@@ -1,0 +1,574 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_AbstractVectors
+    !! This module provides the base class `absract_vector` from which all Krylov vectors
+    !! needs to be derived. To use `LightKrylov`, you need to extend one of the
+    !! followings:
+    !!
+    !! - `abstract_vector_rsp`: Real-valued vector with single precision arithmetic.
+    !! - `abstract_vector_rdp`: Real-valued vector with double precision arithmetic.
+    !! - `abstract_vector_csp`: Complex-valued vector with single precision arithmetic.
+    !! - `abstract_vector_cdp`: Complex-valued vector with double precision arithmetic.
+    !!
+    !! To extend either of these abstract types, you need to provide an associated implementation
+    !! for the following type-bound procedures:
+    !!
+    !! - `zero(self)`: A subroutine zeroing-out the vector.
+    !! - `rand(self, ifnorm)`: A subroutine creating a random vector, possibily normalized to have unit-norm (`ifnorm = .true.`).
+    !! - `scal(self, alpha)`: A subroutine computing *in-place* the scalar multiplication \( \mathbf{x} = \alpha \mathbf{x} \).
+    !! - `axpby(self, alpha, vec, beta)`: A subroutine computing *in-place* the product \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+    !! - `dot(self, vec)`: A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
+    !! - `get_size(self)`: A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
+    !!
+    !! Once these type-bound procedures have been implemented by the user, they will automatically 
+    !! be used to define:
+    !!
+    !! - vector addition `add(self, vec) = axpby(self, 1, vec, 1)`
+    !! - vector subtraction `sub(self, vec) = axpby(self, 1, vec, -1)`
+    !! - vector norm `norm(self) = sqrt(dot_product(self, self))`.
+    !!
+    !! This module also provides the following utility subroutines:
+    !!
+    !! - `innerprod(v, X, y)` and `innerprod(M, X, Y)`: Subroutine to compute the 
+    !! inner-product matrix/vector between a Krylov basis `X` and a Krylov vector 
+    !! (resp. basis) `y` (resp. `Y`).
+    !! - `linear_combination(y, X, v)` and `linear_combination(Y, X, B)`: Subroutine to 
+    !! compute the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
+    !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
+    !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
+    !! - `zero_basis(X)`: Zero-out a collection of `abstract_vectors`.
+    !! - `copy_basis(out, from)`: Copy a collection of `abstract_vectors`.
+    !! - `rand_basis(X, ifnorm)`: Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
+
+    use stdlib_optval, only: optval
+    use LightKrylov_Constants
+    use LightKrylov_Utils
+    use LightKrylov_Logger
+    implicit none
+    private
+
+    character(len=128), parameter :: this_module = 'Lightkrylov_AbstractVectors'
+
+    public :: innerprod
+    public :: linear_combination
+    public :: axpby_basis
+    public :: zero_basis
+    public :: copy
+    public :: rand_basis
+
+    interface innerprod
+        !!  Compute the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{y} \) or matrix
+        !!  \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \).
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods for computing the inner products between a basis
+        !!  of `real` or `complex` vectors \( \mathbf{X} \) and a single vector 
+        !!  \( \mathbf{y} \) or another basis \( \mathbf{Y} \). Depending on the case, it
+        !!  returns a one-dimensional array \( \mathbf{v} \) or a two-dimensional array
+        !!  \( \mathbf{M} \) with the same type as \( \mathbf{X} \).
+        !!
+        !!  ### Example
+        !!
+        !!  The example below assumes that you have already extended the `abstract_vector_rdp`
+        !!  class to define your own `my_real_vector` type. It then computes the inner product
+        !!  vector \( \mathbf{v} \) defined as \( v_i = \mathbf{x}_i^H \mathbf{y} \).
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector)                :: y
+        !!      real(dp), dimension(:), allocatable :: v
+        !!
+        !!      ! ... Part of your code where you initialize everything ...
+        !!
+        !!      call innerprod(v, X, y)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
+        !!
+        !!  Similarly, computing the matrix of inner products between two bases can be done
+        !!  as shown below.
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!      real(dp), dimension(:, :), allocatable :: M
+        !!
+        !!      ! ... Part of your code where you initialize everything ...
+        !!
+        !!      call innerprod(M, X, Y)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure innerprod_vector_${type[0]}$${kind}$
+        module procedure innerprod_matrix_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface linear_combination
+        !!  Given a set of extended `abstract_vectors` and coefficients, return the corresponding
+        !!  linear combinations.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods for computing linear combinations of a set of extended
+        !!  `abstract_vectors`. Depending on its input, it either computes
+        !!
+        !!  \[
+        !!      \mathbf{y} = \sum_{i=1}^n \alpha_i \mathbf{x}_i,
+        !!  \]
+        !!
+        !!  i.e. a single vector, or
+        !!
+        !!  \[
+        !!      \mathbf{y}_j = \sum_{i=1}^n \alpha_{ij} \mathbf{x}_i,
+        !!  \]
+        !!
+        !!  i.e. a set of vectors of the same type as \( \mathbf{X} \).
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      real(dp), dimension(m, n)           :: B
+        !!      type(my_real_vector)                :: Y
+        !!
+        !!      ! ... Whatever your code is doing ...
+        !!
+        !!      call linear_combination(Y, X, B)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure linear_combination_vector_${type[0]}$${kind}$
+        module procedure linear_combination_matrix_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface axpby_basis
+        !!  In-place addition of two arrays of extended `abstract_vector`.
+        !!  
+        !!  ### Description
+        !!
+        !!  This interface provides methods to add in-place two arrays of
+        !!  extended `abstract_vector`, i.e.
+        !!
+        !!  \[
+        !!      \mathbf{x}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
+        !!  \]
+        !!
+        !!  No out-of-place alternative is currently available in `LightKrylov`.
+        !!  If you do need an out-of-place version, you can combine `axpby_basis`
+        !!  with `copy_basis`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!      real(dp), dimension(10)             :: alpha, beta
+        !!
+        !!      ! ... Whatever your code is doing ...
+        !!
+        !!      call axpby_basis(X, alpha, Y, beta)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure axpby_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface zero_basis
+        !!  This interface provides methods to zero-out a collection of `abstract_vector` `X`.
+        !!  It is a simple wrapper around `X(i)%zero()`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call zero_basis(X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure zero_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface copy
+        !!  This interface provides methods to copy an array `X` of `abstract_vector` into
+        !!  another array `Y`. Note that `Y` needs to be pre-allocated.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      type(my_real_vector), dimension(10) :: Y
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call copy_basis(Y, X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure copy_vector_${type[0]}$${kind}$
+        module procedure copy_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface rand_basis
+        !!  This interface provides methods to create an array `X` of random `abstract_vector`.
+        !!  It is a simple wrapper around `X(i)%rand(ifnorm)`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      logical                             :: ifnorm = .true.
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call rand_basis(X, ifnorm)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure rand_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    type, abstract, public :: abstract_vector
+        !!  Base abstract type from which all other types of vectors used in `LightKrylov`
+        !!  are being derived from.
+        !!
+        !!  @warning
+        !!  Users should not extend this abstract class to define their own types.
+        !!  @endwarning
+    end type abstract_vector
+
+    #:for kind, type in RC_KINDS_TYPES
+    !----------------------------------------------------------------------------
+    !-----     Definition of an abstract ${type}$ vector with kind=${kind}$     -----
+    !----------------------------------------------------------------------------
+
+    type, abstract, extends(abstract_vector), public :: abstract_vector_${type[0]}$${kind}$
+        !!  Abstract type to define ${type}$-valued vectors.
+        !!  Derived-types defined by the user should be extending one such class.
+    contains
+        private
+        procedure(abstract_zero_${type[0]}$${kind}$), pass(self), deferred, public :: zero
+        !! Sets an `abstract_vector_${type[0]}$${kind}$` to zero.
+        procedure(abstract_rand_${type[0]}$${kind}$), pass(self), deferred, public :: rand
+        !! Creates a random `abstract_vector_${type[0]}$${kind}$`.
+        procedure(abstract_scal_${type[0]}$${kind}$), pass(self), deferred, public :: scal
+        !! Compute the scalar-vector product.
+        procedure(abstract_axpby_${type[0]}$${kind}$), pass(self), deferred, public :: axpby
+        !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure(abstract_dot_${type[0]}$${kind}$), pass(self), deferred, public :: dot
+        !! Computes the dot product between two `abstract_vector_${type[0]}$${kind}$`.
+        procedure(abstract_get_size_${type[0]}$${kind}$), pass(self), deferred, public :: get_size
+        !! Return size of specific abstract vector
+        procedure, pass(self), public :: norm => norm_${type[0]}$${kind}$
+        !! Computes the norm of the `abstract_vector`.
+        procedure, pass(self), public :: add => add_${type[0]}$${kind}$
+        !! Adds two `abstract_vector`.
+        procedure, pass(self), public :: sub => sub_${type[0]}$${kind}$
+        !! Subtracts two `abstract_vector`.
+        procedure, pass(self), public :: chsgn => chsgn_${type[0]}$${kind}$
+    end type
+
+    abstract interface
+        subroutine abstract_zero_${type[0]}$${kind}$(self)
+            !! Abstract interface to zero-out a vector in-place.
+            import abstract_vector_${type[0]}$${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+            !! Vector to be zeroed-out.
+        end subroutine abstract_zero_${type[0]}$${kind}$
+
+        subroutine abstract_rand_${type[0]}$${kind}$(self, ifnorm)
+            !! Abstract interface to generate a random (normalized) vector.
+            import abstract_vector_${type[0]}$${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+            logical, optional, intent(in) :: ifnorm
+        end subroutine abstract_rand_${type[0]}$${kind}$
+
+        subroutine abstract_scal_${type[0]}$${kind}$(self, alpha)
+            !! Abstract interface to scale a vector.
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+            !! Input/Output vector.
+            ${type}$, intent(in) :: alpha
+            !! Scaling factor.
+        end subroutine abstract_scal_${type[0]}$${kind}$
+
+        subroutine abstract_axpby_${type[0]}$${kind}$(self, alpha, vec, beta)
+            !! Abstract interface to add/scale two vectors in-place.
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+            !! Input/Output vector.
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
+            !! Vector to be added/subtracted.
+            ${type}$, intent(in) :: alpha, beta
+        end subroutine abstract_axpby_${type[0]}$${kind}$
+
+        function abstract_dot_${type[0]}$${kind}$(self, vec) result(alpha)
+            !! Abstract interface to compute the dot product.
+            import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self, vec
+            !! Vectors whose dot product will be computed.
+            ${type}$ :: alpha
+            !! Result of the dot product.
+        end function abstract_dot_${type[0]}$${kind}$
+
+        function abstract_get_size_${type[0]}$${kind}$(self) result(N)
+            !! Abstract interface to return the size of the specific abstract vector.
+            import abstract_vector_${type[0]}$${kind}$
+            class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
+            !! Vectors whose dot product will be computed.
+            integer :: N
+            !! Size of the vector
+        end function abstract_get_size_${type[0]}$${kind}$
+
+    end interface
+
+    #:endfor
+contains
+
+    #:for kind, type in RC_KINDS_TYPES
+    function norm_${type[0]}$${kind}$(self) result(alpha)
+        !! Compute the norm of an `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
+        !! Vector whose norm needs to be computed.
+        real(${kind}$) :: alpha
+        !! Norm of the vector.
+        alpha = abs(self%dot(self)) ; alpha = sqrt(alpha)
+    end function norm_${type[0]}$${kind}$
+
+    subroutine sub_${type[0]}$${kind}$(self, vec)
+        !! Subtract two `abstract_vector` in-place.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+        !! Input/Output vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
+        !! Vector to be added.
+        call self%axpby(one_${type[0]}$${kind}$, vec, -one_${type[0]}$${kind}$)
+    end subroutine sub_${type[0]}$${kind}$
+
+    subroutine add_${type[0]}$${kind}$(self, vec)
+        !! Add two `abstract_vector` in-place.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+        !! Input/Output vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
+        !! Vector to be added.
+        call self%axpby(one_${type[0]}$${kind}$, vec, one_${type[0]}$${kind}$)
+    end subroutine add_${type[0]}$${kind}$
+
+    subroutine chsgn_${type[0]}$${kind}$(self)
+        !! Changes the sign of the `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+        !! Vector whose entries need to change sign.
+        call self%scal(-one_${type[0]}$${kind}$)
+    end subroutine chsgn_${type[0]}$${kind}$
+
+    #:endfor
+    
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine linear_combination_vector_${type[0]}$${kind}$(y, X, v)
+        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
+        !! Fortran array containing the coefficients of the linear combination.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable, intent(out) :: y
+        !! Ouput vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
+        !! Krylov basis.
+        ${type}$, intent(in) :: v(:)
+        !! Coordinates of `y` in the Krylov basis `X`.
+
+        ! Internal variables
+        integer :: i
+
+        ! Check sizes.
+        if (size(X) /= size(v)) then
+            call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
+                              & module=this_module, procedure='linear_combination_vector_${type[0]}$${kind}$')
+        endif
+
+        ! Initialize output vector.
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
+        ! Compute linear combination.
+        do i = 1, size(X)
+            call y%axpby(one_${type[0]}$${kind}$, X(i), v(i))
+        enddo
+
+        return
+    end subroutine linear_combination_vector_${type[0]}$${kind}$
+
+    subroutine linear_combination_matrix_${type[0]}$${kind}$(Y, X, B)
+        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable, intent(out) :: Y(:)
+        !! Output matrix.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
+        !! Krylov basis.
+        ${type}$, intent(in) :: B(:, :)
+        !! Coefficients of the linear combinations.
+
+        ! Internal variables.
+        integer :: i, j
+    
+        ! Check sizes.
+        if (size(X) /= size(B, 1)) then
+            call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_${type[0]}$${kind}$')
+        endif
+
+        ! Initialize output basis.
+        if (.not. allocated(Y)) then
+            allocate(Y(size(B, 2)), source=X(1))
+        else
+            if (size(Y) /= size(B, 2)) then
+                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
+                              & module=this_module, procedure='linear_combination_matrix_${type[0]}$${kind}$')
+            endif
+        endif
+
+        do j = 1, size(Y)
+            call Y(j)%zero()
+            do i = 1, size(X)
+                call Y(j)%axpby(one_${type[0]}$${kind}$, X(i), B(i, j))
+            enddo
+        enddo
+
+        return
+    end subroutine linear_combination_matrix_${type[0]}$${kind}$
+
+    subroutine innerprod_vector_${type[0]}$${kind}$(v, X, y)
+        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+        !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), y
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        ${type}$, intent(out) :: v(size(X))
+        !! Resulting inner-product vector.
+
+        ! Local variables.
+        integer :: i
+
+        v = zero_${type[0]}$${kind}$
+        do i = 1, size(X)
+            v(i) = X(i)%dot(y)
+        enddo
+        
+        return
+    end subroutine innerprod_vector_${type[0]}$${kind}$
+
+    subroutine innerprod_matrix_${type[0]}$${kind}$(M, X, Y)
+        !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
+        !! two bases of `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), Y(:)
+        !! Bases of `abstract_vector` whose inner products need to be computed.
+        ${type}$, intent(out) :: M(size(X), size(Y))
+        !! Resulting inner-product matrix.
+
+        ! Local variables.
+        integer :: i, j
+
+        M = zero_${type[0]}$${kind}$
+        do j = 1, size(Y)
+            do i = 1, size(X)
+                M(i, j) = X(i)%dot(Y(j))
+            enddo
+        enddo
+
+        return
+    end subroutine innerprod_matrix_${type[0]}$${kind}$
+
+    subroutine axpby_basis_${type[0]}$${kind}$(x, alpha, y, beta)
+        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are ${type}$
+        !! numbers.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        !! Input/Ouput array of `abstract_vector`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: Y(:)
+        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        ${type}$, intent(in) :: alpha, beta
+        !! Scalar multipliers.
+
+        ! Internal variable.
+        integer :: i
+
+        ! Check size.
+        if (size(X) /= size(Y)) then
+            call stop_error("X and Y have incompatible dimensions.", &
+                              & module=this_module, procedure='axpby_basis_${type[0]}$${kind}$')
+        endif
+
+        ! Add basis.
+        do i = 1, size(X)
+            call X(i)%axpby(alpha, Y(i), beta)
+        enddo
+
+        return
+    end subroutine axpby_basis_${type[0]}$${kind}$
+
+    subroutine zero_basis_${type[0]}$${kind}$(X)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%zero()
+        end do
+
+        return
+    end subroutine zero_basis_${type[0]}$${kind}$
+
+    subroutine copy_vector_${type[0]}$${kind}$(out, from)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out
+        ! Copy array.
+        call out%axpby(zero_${type[0]}$${kind}$, from, one_${type[0]}$${kind}$)
+        return
+    end subroutine copy_vector_${type[0]}$${kind}$
+
+    subroutine copy_basis_${type[0]}$${kind}$(out, from)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from(:)
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out(:)
+        integer :: i
+
+        ! Check size.
+        if (size(out) /= size(from)) then
+            call stop_error("from and out have incompatible dimensions.", &
+                              & module=this_module, procedure='copy_basis_${type[0]}$${kind}$')
+        endif
+
+        ! Copy array.
+        do i = 1, size(out)
+            call copy_vector_${type[0]}$${kind}$(out(i), from(i))
+        enddo
+
+        return
+    end subroutine copy_basis_${type[0]}$${kind}$
+
+    subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        logical, optional, intent(in) :: ifnorm
+        ! internal
+        integer :: i
+
+        do i = 1, size(X)
+            call X(i)%rand(ifnorm=ifnorm)
+        end do
+
+        return
+    end subroutine rand_basis_${type[0]}$${kind}$
+
+    #:endfor
+end module lightkrylov_AbstractVectors

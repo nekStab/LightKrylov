@@ -1,0 +1,186 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestVectors
+    ! Fortran Standard Library
+    use stdlib_math, only: is_close, all_close
+    use stdlib_stats_distribution_normal, only: normal => rvs_normal
+    use stdlib_optval, only: optval
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! LightKrylov
+    use LightKrylov
+    use LightKrylov_Logger
+    ! Test Utilities
+    use LightKrylov_TestUtils
+    
+    implicit none
+    
+    private
+
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_vector_${type[0]}$${kind}$_testsuite
+    #:endfor
+
+contains
+        
+    !---------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS     -----
+    !---------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_vector_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("Vector norm", test_vector_${type[0]}$${kind}$_norm)      , &
+                    new_unittest("Vector scale", test_vector_${type[0]}$${kind}$_scal)     , &
+                    new_unittest("Vector addition", test_vector_${type[0]}$${kind}$_add)   , &
+                    new_unittest("Vector subtraction", test_vector_${type[0]}$${kind}$_sub), &
+                    new_unittest("Vector dot product", test_vector_${type[0]}$${kind}$_dot)  &
+                    ]
+        return
+    end subroutine collect_vector_${type[0]}$${kind}$_testsuite
+
+    subroutine test_vector_${type[0]}$${kind}$_norm(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vector.
+        type(vector_${type[0]}$${kind}$), allocatable :: x
+        real(${kind}$) :: alpha
+
+        ! Initialize vector.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        
+        ! Compute its norm.
+        alpha = x%norm()
+
+        ! Check result.
+        #:if type[0] == "c"
+        call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, sqrt(sum(Re(x)^2 + Im(x)^2)))')
+        #:else
+        call check(error, is_close(alpha, norm2(x%data)))
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(x))')
+        #:endif
+        
+        
+        return
+    end subroutine test_vector_${type[0]}$${kind}$_norm
+
+    subroutine test_vector_${type[0]}$${kind}$_add(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y, z
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
+        z = x
+
+        ! Vector addition.
+        call z%add(y)
+
+        ! Check correctness.
+        #:if type[0] == "c"
+        call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm,  sqrt(sum(Re(z - (x+y))^2 + Im(z - (x+y))^2)))')
+        #:else
+        call check(error, norm2(z%data - x%data - y%data) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(z - (x+y)))')
+        #:endif
+
+        return
+    end subroutine test_vector_${type[0]}$${kind}$_add
+ 
+    subroutine test_vector_${type[0]}$${kind}$_sub(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y, z
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
+        z = x
+
+        ! Vector addition.
+        call z%sub(y)
+
+        ! Check correctness.
+        #:if type[0] == "c"
+        call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
+        #:else
+        call check(error, norm2(z%data - x%data + y%data) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
+        #:endif
+
+        return
+    end subroutine test_vector_${type[0]}$${kind}$_sub
+
+    subroutine test_vector_${type[0]}$${kind}$_dot(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        ${type}$ :: alpha
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
+
+        ! Compute inner-product.
+        alpha = x%dot(y)
+
+        ! Check correctness.
+        call check(error, abs(alpha - dot_product(x%data, y%data)) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_dot', eq='abs(x%dot(y) - dot_product(x, y))')
+
+        return
+    end subroutine test_vector_${type[0]}$${kind}$_dot
+
+    subroutine test_vector_${type[0]}$${kind}$_scal(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+
+        ! Test vector.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        ${type}$ :: alpha
+        #:if type[0] == "c"
+        ${type}$ :: tmp(test_size)
+        #:endif
+
+        ! Initialize vector.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = x
+        #:if type[0] == "c"
+        alpha = 0.0_${kind}$ ; call random_number(alpha%re) ; call random_number(alpha%im)
+        #:else
+        call random_number(alpha)
+        #:endif
+        
+        ! Scale the vector.
+        call x%scal(alpha)
+
+        ! Check correctness.
+        #:if type[0] == "c"
+        tmp = x%data - alpha*y%data
+        call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', eq='sqrt(sum(Re(x - alpha*y)**2 + Im(x - alpha*y)**2))')
+        #:else
+        call check(error, norm2(x%data - alpha*y%data) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', eq='norm2(x - alpha*y)')
+        #:endif
+
+        return
+    end subroutine test_vector_${type[0]}$${kind}$_scal
+
+    #:endfor
+
+end module TestVectors
