@@ -46,7 +46,7 @@ module LightKrylov
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
-    public :: copy_basis
+    public :: copy
     public :: rand_basis
     
     ! AbstractLinops exports.

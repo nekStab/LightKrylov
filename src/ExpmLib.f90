@@ -134,6 +134,19 @@ module lightkrylov_expmlib
     end interface
 
     interface kexpm
+        !!  ### Description
+        !!
+        !!  blabla
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` :
         module procedure kexpm_vec_rsp
         module procedure kexpm_mat_rsp
         module procedure kexpm_vec_rdp
@@ -145,6 +158,19 @@ module lightkrylov_expmlib
     end interface
 
     interface k_exptA
+        !!  ### Description
+        !!
+        !!  blabla
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` :
         module procedure k_exptA_rsp
         module procedure k_exptA_rdp
         module procedure k_exptA_csp

@@ -169,7 +169,7 @@ contains
         class(Id_${type[0]}$${kind}$), intent(in) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
-        call vec_out%axpby(zero_${type[0]}$${kind}$, vec_in, one_${type[0]}$${kind}$)
+        call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_${type[0]}$${kind}$
     #:endfor

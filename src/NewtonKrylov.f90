@@ -670,7 +670,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_rsp, Xin, one_rsp)
+            call copy(X, Xin)
             call X%axpby(one_rsp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -687,7 +687,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_rsp, Xin, one_rsp)
+               call copy(X, Xin)
                call X%axpby(one_rsp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -700,7 +700,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_rsp, Xin, one_rsp)
+               call copy(X, Xin)
                call X%axpby(one_rsp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -712,7 +712,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
-         call X%axpby(zero_rsp, Xin, one_rsp)
+         call copy(X, Xin)
          call X%axpby(one_rsp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
@@ -763,7 +763,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_rdp, Xin, one_rdp)
+            call copy(X, Xin)
             call X%axpby(one_rdp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -780,7 +780,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_rdp, Xin, one_rdp)
+               call copy(X, Xin)
                call X%axpby(one_rdp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -793,7 +793,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_rdp, Xin, one_rdp)
+               call copy(X, Xin)
                call X%axpby(one_rdp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -805,7 +805,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
-         call X%axpby(zero_rdp, Xin, one_rdp)
+         call copy(X, Xin)
          call X%axpby(one_rdp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
@@ -856,7 +856,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_csp, Xin, one_csp)
+            call copy(X, Xin)
             call X%axpby(one_csp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -873,7 +873,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_csp, Xin, one_csp)
+               call copy(X, Xin)
                call X%axpby(one_csp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -886,7 +886,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_csp, Xin, one_csp)
+               call copy(X, Xin)
                call X%axpby(one_csp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -898,7 +898,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
-         call X%axpby(zero_csp, Xin, one_csp)
+         call copy(X, Xin)
          call X%axpby(one_csp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
@@ -949,7 +949,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_cdp, Xin, one_cdp)
+            call copy(X, Xin)
             call X%axpby(one_cdp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -966,7 +966,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_cdp, Xin, one_cdp)
+               call copy(X, Xin)
                call X%axpby(one_cdp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -979,7 +979,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_cdp, Xin, one_cdp)
+               call copy(X, Xin)
                call X%axpby(one_cdp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -991,7 +991,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
-         call X%axpby(zero_cdp, Xin, one_cdp)
+         call copy(X, Xin)
          call X%axpby(one_cdp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'

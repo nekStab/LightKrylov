@@ -79,6 +79,19 @@ module lightkrylov_expmlib
     end interface
 
     interface kexpm
+        !!  ### Description
+        !!
+        !!  blabla
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` :
         #:for kind, type in RC_KINDS_TYPES
         module procedure kexpm_vec_${type[0]}$${kind}$
         module procedure kexpm_mat_${type[0]}$${kind}$
@@ -86,6 +99,19 @@ module lightkrylov_expmlib
     end interface
 
     interface k_exptA
+        !!  ### Description
+        !!
+        !!  blabla
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` :
         #:for kind, type in RC_KINDS_TYPES
         module procedure k_exptA_${type[0]}$${kind}$
         #:endfor

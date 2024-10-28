@@ -657,7 +657,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -902,7 +902,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1147,7 +1147,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1392,7 +1392,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1790,9 +1790,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_rsp, Q(j), one_rsp)
-        call Q(j)%axpby(zero_rsp, Q(i), one_rsp)
-        call Q(i)%axpby(zero_rsp, Qwrk, one_rsp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1816,7 +1816,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rsp, Qwrk(perm(i)), one_rsp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -1842,7 +1842,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rsp, Qwrk(inv_perm(i)), one_rsp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -2055,9 +2055,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_rdp, Q(j), one_rdp)
-        call Q(j)%axpby(zero_rdp, Q(i), one_rdp)
-        call Q(i)%axpby(zero_rdp, Qwrk, one_rdp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -2081,7 +2081,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rdp, Qwrk(perm(i)), one_rdp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -2107,7 +2107,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rdp, Qwrk(inv_perm(i)), one_rdp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -2320,9 +2320,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_csp, Q(j), one_csp)
-        call Q(j)%axpby(zero_csp, Q(i), one_csp)
-        call Q(i)%axpby(zero_csp, Qwrk, one_csp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -2346,7 +2346,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_csp, Qwrk(perm(i)), one_csp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -2372,7 +2372,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_csp, Qwrk(inv_perm(i)), one_csp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -2585,9 +2585,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_cdp, Q(j), one_cdp)
-        call Q(j)%axpby(zero_cdp, Q(i), one_cdp)
-        call Q(i)%axpby(zero_cdp, Qwrk, one_cdp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -2611,7 +2611,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_cdp, Qwrk(perm(i)), one_cdp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -2637,7 +2637,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_cdp, Qwrk(inv_perm(i)), one_cdp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -3675,8 +3675,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_rsp, X(kdim+1), one_rsp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3734,8 +3734,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_rdp, X(kdim+1), one_rdp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3793,8 +3793,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_csp, X(kdim+1), one_csp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3852,8 +3852,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_cdp, X(kdim+1), one_cdp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.

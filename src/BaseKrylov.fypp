@@ -602,7 +602,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1000,9 +1000,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_r${kind}$
 
         ! Swap columns.
-        call Qwrk%axpby(zero_${type[0]}$${kind}$, Q(j), one_${type[0]}$${kind}$)
-        call Q(j)%axpby(zero_${type[0]}$${kind}$, Q(i), one_${type[0]}$${kind}$)
-        call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk, one_${type[0]}$${kind}$)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1026,7 +1026,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk(perm(i)), one_${type[0]}$${kind}$)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -1052,7 +1052,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk(inv_perm(i)), one_${type[0]}$${kind}$)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -1412,8 +1412,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_${type[0]}$${kind}$, X(kdim+1), one_${type[0]}$${kind}$)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
