@@ -40,3 +40,5 @@
 
 # test/debug folder
 debug/
+*.css
+doc/
