@@ -62,13 +62,12 @@ module lightkrylov_expmlib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      E expm(A, order)
+        !!      E = expm(A, order)
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \). It is an `intent(out)`
-        !!        argument.
+        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
         !!
         !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
         !!
@@ -81,17 +80,32 @@ module lightkrylov_expmlib
     interface kexpm
         !!  ### Description
         !!
-        !!  blabla
+        !!  This interface provides methods to evaluate the matrix-vector product
+        !!  \( c = \exp(\tau A) b \) based on the Arnoldi method.
         !!
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm
+        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim])
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `A` :
+        !!  `c` : Output vector (or vectors). It is an `intent(out)` argument.
+        !!
+        !!  `A` : Linear operator to be exponentiated. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
+        !!
+        !!  `tau` : `real` (singe or double) time over which the matrix exponential needs to
+        !!          be computed. It is an `intent(in)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `trans` (optional) : Whether \( A \) or \( A^H \) is being used.
+        !!                      (default `trans=.false.`)
+        !!
+        !!  `kdim` (optional) : Dimension of the Krylov subspace used in the Arnoldi method.
         #:for kind, type in RC_KINDS_TYPES
         module procedure kexpm_vec_${type[0]}$${kind}$
         module procedure kexpm_mat_${type[0]}$${kind}$
@@ -101,17 +115,27 @@ module lightkrylov_expmlib
     interface k_exptA
         !!  ### Description
         !!
-        !!  blabla
+        !!  Utility function to evaluate the matrix-exponential times vector.
         !!
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm
+        !!      call kexpm(vec_out, A, vec_in, tau, info, trans)
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `A` :
+        !!  `vec_out` : Output vector.
+        !!
+        !!  `A` : Matrix to be exponentiated.
+        !!
+        !!  `vec_in` : Input vector.
+        !!
+        !!  `tau` : Integration time.
+        !!
+        !!  `info` : Information flag.
+        !!
+        !!  `trans` : Whether \( A \) or \( A^H \) is being used.
         #:for kind, type in RC_KINDS_TYPES
         module procedure k_exptA_${type[0]}$${kind}$
         #:endfor
