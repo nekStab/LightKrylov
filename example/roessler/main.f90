@@ -67,7 +67,7 @@ program demo
    sys%jacobian%X = bf
 
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
-   call newton(sys, bf, info, tolerance=tol, options=opts, linear_solver=gmres_rdp, scheduler=constant_atol_dp)
+   call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=constant_atol_dp)
 
    call sys%eval(bf, residual, tol)
    print *, ''
@@ -88,7 +88,7 @@ program demo
    print *,''
    sys%jacobian%X = bf
    
-   call newton(sys, bf, info, tolerance=tol, options=opts, linear_solver=gmres_rdp, scheduler=dynamic_tol_dp)
+   call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=dynamic_tol_dp)
 
    call sys%eval(bf, residual, tol)
    print *, ''

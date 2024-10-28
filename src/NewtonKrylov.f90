@@ -112,11 +112,13 @@ module LightKrylov_NewtonKrylov
 
 contains
 
-   subroutine newton_rsp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rsp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_rsp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rsp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_rsp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(sp),                                 optional, intent(in)    :: tolerance
@@ -125,8 +127,6 @@ contains
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_rsp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_rsp),              optional, intent(in)    :: preconditioner
@@ -137,7 +137,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_rsp), pointer :: solver => null()
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rsp), allocatable        :: residual, increment
       real(sp)           :: rnorm, tol
@@ -152,12 +151,6 @@ contains
          opts = options
       else
          opts = newton_sp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_rsp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -241,11 +234,13 @@ contains
       return
    end subroutine newton_rsp
 
-   subroutine newton_rdp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_rdp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(dp),                                 optional, intent(in)    :: tolerance
@@ -254,8 +249,6 @@ contains
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_rdp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_rdp),              optional, intent(in)    :: preconditioner
@@ -266,7 +259,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_rdp), pointer :: solver => null()
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rdp), allocatable        :: residual, increment
       real(dp)           :: rnorm, tol
@@ -281,12 +273,6 @@ contains
          opts = options
       else
          opts = newton_dp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_rdp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -370,11 +356,13 @@ contains
       return
    end subroutine newton_rdp
 
-   subroutine newton_csp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_csp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_csp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_csp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_csp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(sp),                                 optional, intent(in)    :: tolerance
@@ -383,8 +371,6 @@ contains
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_csp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_csp),              optional, intent(in)    :: preconditioner
@@ -395,7 +381,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_csp), pointer :: solver => null()
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_csp), allocatable        :: residual, increment
       real(sp)           :: rnorm, tol
@@ -410,12 +395,6 @@ contains
          opts = options
       else
          opts = newton_sp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_csp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -499,11 +478,13 @@ contains
       return
    end subroutine newton_csp
 
-   subroutine newton_cdp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_cdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_cdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_cdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_cdp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(dp),                                 optional, intent(in)    :: tolerance
@@ -512,8 +493,6 @@ contains
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_cdp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_cdp),              optional, intent(in)    :: preconditioner
@@ -524,7 +503,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_cdp), pointer :: solver => null()
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_cdp), allocatable        :: residual, increment
       real(dp)           :: rnorm, tol
@@ -539,12 +517,6 @@ contains
          opts = options
       else
          opts = newton_dp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_cdp
       end if
       ! Scheduler
       if (present(scheduler)) then

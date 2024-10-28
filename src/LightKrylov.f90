@@ -109,6 +109,10 @@ module LightKrylov
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
+    public :: gmres_rsp
+    public :: gmres_rdp
+    public :: gmres_csp
+    public :: gmres_cdp
     public :: cg
 
     ! Newton-Krylov exports.

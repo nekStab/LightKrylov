@@ -478,6 +478,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp, sp
+
             class(abstract_linop_rsp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_rsp), intent(in) :: b
@@ -490,10 +491,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_rsp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_rsp
@@ -501,6 +502,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp, dp
+
             class(abstract_linop_rdp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_rdp), intent(in) :: b
@@ -513,10 +515,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_rdp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_rdp
@@ -524,6 +526,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp, sp
+
             class(abstract_linop_csp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_csp), intent(in) :: b
@@ -536,10 +539,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_csp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_csp
@@ -547,6 +550,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp, dp
+
             class(abstract_linop_cdp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_cdp), intent(in) :: b
@@ -559,10 +563,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_cdp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_cdp
@@ -2033,7 +2037,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_rsp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_sp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
@@ -2204,7 +2207,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_rdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_dp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
@@ -2375,7 +2377,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_csp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_sp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
@@ -2546,7 +2547,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_cdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_dp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose

@@ -91,6 +91,9 @@ module LightKrylov
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
+    #:for kind, type in RC_KINDS_TYPES
+    public :: gmres_${type[0]}$${kind}$
+    #:endfor
     public :: cg
 
     ! Newton-Krylov exports.
