@@ -54,9 +54,9 @@ module lightkrylov_IterativeSolvers
     public :: gmres_${type[0]}$${kind}$
     #:endfor
     public :: cg
-    ! #:for kind, type in RC_KINDS_TYPES
-    ! public :: cg_${type[0]}$${kind}$
-    ! #:endfor
+    #:for kind, type in RC_KINDS_TYPES
+    public :: cg_${type[0]}$${kind}$
+    #:endfor
 
     interface save_eigenspectrum
         !!  ### Description
@@ -718,10 +718,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_${type[0]}$${kind}$')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_${type[0]}$${kind}$')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
@@ -736,8 +736,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_${type[0]}$${kind}$')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -826,10 +826,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
@@ -848,8 +848,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----

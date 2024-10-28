@@ -1307,8 +1307,8 @@ contains
         B = zero_rsp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_sp)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+        call bidiagonalization(A, U, V, B, info, tol=atol_sp)
+        call check_info(info, 'bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_rsp')
 
         ! Check correctness.
@@ -1384,8 +1384,8 @@ contains
         B = zero_rdp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_dp)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+        call bidiagonalization(A, U, V, B, info, tol=atol_dp)
+        call check_info(info, 'bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_rdp')
 
         ! Check correctness.
@@ -1461,8 +1461,8 @@ contains
         B = zero_csp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_sp)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+        call bidiagonalization(A, U, V, B, info, tol=atol_sp)
+        call check_info(info, 'bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_csp')
 
         ! Check correctness.
@@ -1538,8 +1538,8 @@ contains
         B = zero_cdp
 
         ! Lanczos bidiagonalization.
-        call lanczos_bidiagonalization(A, U, V, B, info, tol=atol_dp)
-        call check_info(info, 'lanczos_bidiagonalization', module=this_module, &
+        call bidiagonalization(A, U, V, B, info, tol=atol_dp)
+        call check_info(info, 'bidiagonalization', module=this_module, &
                         & procedure='test_lanczos_bidiag_factorization_cdp')
 
         ! Check correctness.
@@ -1624,8 +1624,8 @@ contains
         allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+        call lanczos(A, X, T, info, tol=atol_sp)
+        call check_info(info, 'lanczos', module=this_module, & 
                         & procedure='test_lanczos_tridiag_factorization_rsp')
 
         ! Check correctness.
@@ -1694,8 +1694,8 @@ contains
         allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+        call lanczos(A, X, T, info, tol=atol_dp)
+        call check_info(info, 'lanczos', module=this_module, & 
                         & procedure='test_lanczos_tridiag_factorization_rdp')
 
         ! Check correctness.
@@ -1764,8 +1764,8 @@ contains
         allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info, tol=atol_sp)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+        call lanczos(A, X, T, info, tol=atol_sp)
+        call check_info(info, 'lanczos', module=this_module, & 
                         & procedure='test_lanczos_tridiag_factorization_csp')
 
         ! Check correctness.
@@ -1834,8 +1834,8 @@ contains
         allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
 
         ! Lanczos factorization.
-        call lanczos_tridiagonalization(A, X, T, info, tol=atol_dp)
-        call check_info(info, 'lanczos_tridiagonalization', module=this_module, & 
+        call lanczos(A, X, T, info, tol=atol_dp)
+        call check_info(info, 'lanczos', module=this_module, & 
                         & procedure='test_lanczos_tridiag_factorization_cdp')
 
         ! Check correctness.

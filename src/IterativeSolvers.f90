@@ -54,9 +54,10 @@ module lightkrylov_IterativeSolvers
     public :: gmres_csp
     public :: gmres_cdp
     public :: cg
-    ! #:for kind, type in RC_KINDS_TYPES
-    ! public :: cg_cdp
-    ! #:endfor
+    public :: cg_rsp
+    public :: cg_rdp
+    public :: cg_csp
+    public :: cg_cdp
 
     interface save_eigenspectrum
         !!  ### Description
@@ -1283,10 +1284,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rsp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
@@ -1301,8 +1302,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1383,10 +1384,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rdp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
@@ -1401,8 +1402,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1483,10 +1484,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_csp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
@@ -1501,8 +1502,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_csp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1583,10 +1584,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_cdp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
@@ -1601,8 +1602,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1689,10 +1690,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1707,8 +1708,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_rsp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1783,10 +1784,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1801,8 +1802,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_rdp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1877,10 +1878,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1895,8 +1896,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_csp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1971,10 +1972,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1989,8 +1990,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_cdp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----

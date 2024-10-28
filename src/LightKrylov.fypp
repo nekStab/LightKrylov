@@ -77,8 +77,8 @@ module LightKrylov
     public :: initialize_krylov_subspace
     public :: orthogonalize_against_basis
     public :: orthonormalize_basis
-    public :: lanczos_bidiagonalization
-    public :: lanczos_tridiagonalization
+    public :: bidiagonalization
+    public :: lanczos
     public :: krylov_schur
 
     ! IterativeSolvers exports.

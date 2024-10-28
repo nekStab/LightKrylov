@@ -38,8 +38,8 @@ module lightkrylov_BaseKrylov
     public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
-    public :: lanczos_bidiagonalization
-    public :: lanczos_tridiagonalization
+    public :: bidiagonalization
+    public :: lanczos
     public :: krylov_schur
     public :: double_gram_schmidt_step
     public :: eigvals_select_sp
@@ -392,7 +392,7 @@ module lightkrylov_BaseKrylov
         module procedure DGS_basis_against_basis_cdp
     end interface
 
-    interface lanczos_tridiagonalization
+    interface lanczos
         !!  ### Description
         !!
         !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
@@ -458,7 +458,7 @@ module lightkrylov_BaseKrylov
         module procedure lanczos_tridiagonalization_cdp
     end interface
 
-    interface lanczos_bidiagonalization
+    interface bidiagonalization
         !!  ### Description
         !!
         !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
