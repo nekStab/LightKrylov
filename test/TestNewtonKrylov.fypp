@@ -1,0 +1,117 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestNewtonKrylov
+    ! Fortran Standard library.
+    use iso_fortran_env
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! LightKrylov
+    use LightKrylov
+    use LightKrylov_Constants
+    use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
+    use LightKrylov_NewtonKrylov
+    use LightKrylov_Utils
+    ! Test Utilities
+    use LightKrylov_TestUtils
+
+    implicit none
+    
+    private
+
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestNewtonKrylov'
+
+    #:for kind in REAL_KINDS
+    public :: collect_newton_r${kind}$_testsuite
+    #:endfor
+
+contains
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR NEWTON    -----
+    !----------------------------------------------------------
+
+    #:for kind in REAL_KINDS
+    subroutine collect_newton_r${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+         testsuite = [ &
+                    new_unittest("Fixed point calculation", test_fixedp_r${kind}$) &
+                    ]
+        return
+    end subroutine collect_newton_r${kind}$_testsuite
+
+    subroutine test_fixedp_r${kind}$(error)
+       ! Error type.
+       type(error_type), allocatable, intent(out) :: error
+       ! Roessler system
+       type(roessler_r${kind}$), allocatable :: sys
+       ! Initial guess
+       type(state_vector_r${kind}$), allocatable :: X, fp1, fp2
+       ! Newton options
+       type(newton_${kind}$_opts) :: opts
+       ! Information flag.
+       integer :: info
+       ! Misc
+       real(${kind}$) :: err
+       character(len=256) :: msg, infomsg
+
+       ! Allocate solution variables and reference values
+       allocate(X, fp1, fp2);
+
+       ! Newton opts
+       opts = newton_${kind}$_opts(maxiter=10, ifbisect=.false.) 
+
+       ! Allocate and set Roessler system and Jacobian
+       sys = roessler_r${kind}$()
+       sys%jacobian = jacobian_r${kind}$()
+       
+       call roessler_analytical_fp_r${kind}$(fp1, fp2)
+
+       X%x = zero_r${kind}$
+       X%y = zero_r${kind}$
+       X%z = zero_r${kind}$
+       call newton(sys, X, gmres_r${kind}$, info, tolerance=atol_${kind}$, options=opts)
+       call X%sub(fp1)
+
+       ! check fixed point 1
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
+       !write(infomsg, *) '|| X_newton - fp1 ||_2'
+       err = X%norm()
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
+       call check_test(error, 'test_fixedp_r${kind}$', info=infomsg, context=msg)
+       
+       X%x = 10.0_${kind}$
+       X%y = -5.0_${kind}$
+       X%z = 20.0_${kind}$
+       call newton(sys, X, gmres_r${kind}$, info, tolerance=atol_${kind}$, options=opts)
+       call X%sub(fp2)
+
+       ! check fixed point 2
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp2%x,',',fp2%y,',',fp2%z,')'
+       !write(infomsg, *) '|| X_newton - fp2 ||_2'
+       err = X%norm()
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
+       call check_test(error, 'test_fixedp_r${kind}$', info=infomsg, context=msg)
+
+       X%x = zero_r${kind}$
+       X%y = zero_r${kind}$
+       X%z = zero_r${kind}$
+       opts%ifbisect = .true.
+       call newton(sys, X, gmres_r${kind}$, info, tolerance=atol_${kind}$, options=opts)
+       call X%sub(fp1)
+
+       ! check fixed point 1 with bisection (if necessary)
+       err = X%norm()
+       call get_err_str(msg, "max err: ", err)
+       call check(error, err < rtol_${kind}$)
+       call check_test(error, 'test_fixedp_r${kind}$', info='Newton with step bisection', context=msg)
+
+       return
+   end subroutine test_fixedp_r${kind}$
+   #:endfor
+
+end module TestNewtonKrylov
+

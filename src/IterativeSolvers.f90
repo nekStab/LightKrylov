@@ -1,921 +1,3098 @@
 module lightkrylov_IterativeSolvers
-  !! This module provides some of the most important computational routines provided by `LightKrylov`.
-  !! These include:
-  !!
-  !! - `eigs` : Compute the leading eigenpairs of a square linear operator \(\mathbf{A}\).
-  !! - `eighs` : Compute the leading eigenpairs of a symmetric positive definite operator \(\mathbf{A}\).
-  !! - `svds` : Compute the leading singular triplets of a linear operator \(\mathbf{A}\).
-  !! - `gmres` : Solve the linear system \( \mathbf{Ax} = \mathbf{b}\) using the *generalized minimum
-  !!    residual method*.
-  !! - `cg` : Solve the linear system \( \mathbf{Ax} = \mathbf{b} \) where \(\mathbf{A}\) is symmetric
-  !!   positive definite using the *Conjugate Gradient* method.
-  !!
-  !! It also provides abstract interfaces to pass user-defined linear solvers and preconditioners to
-  !! `LightKrylov`. Note that these features are still experimental however.
-   use iso_fortran_env, only: output_unit
+    !!  This module provides some of the most important computational routines provided by
+    !!  `LightKrylov`. These include:
+    !!
+    !!  - `eigs` : Compute the leading eigenpairs of a square linear operator \( A \).
+    !!  - `eighs` : Compute the leading eigenpairs of a symmetric positive definite 
+    !!              operator \( A \).
+    !!  - `svds` : Compute the leading singular triplets of a linear operator \( A \).
+    !!  - `gmres` : Solve the linear system \( Ax = b \) using the *generalized minimum
+    !!              residual method*.
+    !!  - `cg` : Solve the linear system \( Ax = b \) where \( A \) is symmetric
+    !!           positive definite using the *Conjugate Gradient* method.
+    !!
+    !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
+    !!  to `LightKrylov`. Note that these features are still experimental however.
 
-   ! LightKrylov modules.
-   use lightkrylov_Utils
-   use lightkrylov_AbstractVector
-   use lightkrylov_LinearOperator
-   use lightkrylov_BaseKrylov
+    !--------------------------------------------
+    !-----     Fortran Standard Library     -----
+    !--------------------------------------------
+    use iso_fortran_env, only: output_unit
+    
+    use stdlib_sorting, only: sort_index
+    use stdlib_optval, only: optval
+    use stdlib_io_npy, only: save_npy
+    use stdlib_linalg, only: lstsq, svd, eigh
+    use stdlib_stats, only: median
 
-   ! Fortran standard library.
-   use stdlib_sorting, only: sort_index, int_size
-   use stdlib_optval, only: optval
-   use stdlib_io_npy, only: save_npy
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    use LightKrylov_Constants
+    Use LightKrylov_Logger
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
+    use LightKrylov_AbstractLinops
+    use LightKrylov_BaseKrylov
 
-   implicit none
-   include "dtypes.h"
+    implicit none
+    private
 
-   private
-   ! Eigenvalue analysis.
-   public :: eigs, eighs, save_eigenspectrum
-   ! Singular value decomposition.
-   public :: svds
-   ! Linear solvers.
-   public :: gmres, cg, abstract_linear_solver
+    character(len=128), parameter :: this_module = 'LightKrylov_IterativeSolvers'
 
-   !------------------------------------------------
-   !-----                                      -----
-   !-----     ABSTRACT PRECONDITIONER TYPE     -----
-   !-----                                      -----
-   !------------------------------------------------
+    public :: abstract_linear_solver_rsp
+    public :: abstract_linear_solver_rdp
+    public :: abstract_linear_solver_csp
+    public :: abstract_linear_solver_cdp
+    public :: save_eigenspectrum
+    public :: eigs
+    public :: eighs
+    public :: svds
+    public :: gmres
+    public :: gmres_rsp
+    public :: gmres_rdp
+    public :: gmres_csp
+    public :: gmres_cdp
+    public :: cg
+    public :: cg_rsp
+    public :: cg_rdp
+    public :: cg_csp
+    public :: cg_cdp
 
-   type, abstract, public :: abstract_preconditioner
-      !! Abstract type that needs to be extended to define a preconditioner usable by `LightKrylov`.
-      !! Upon extension, the user needs to provide a type-bound procedure `apply`.
-   contains
-      private
-      procedure(abstract_apply_precond), deferred, pass(self), public :: apply
-      !! In-place application of the preconditioner.
-      procedure(abstract_undo_precond), deferred, pass(self), public :: undo
-      !! Deprecated.
-   end type abstract_preconditioner
+    interface save_eigenspectrum
+        !!  ### Description
+        !!
+        !!  Utility function to save the eigenspectrum computed from the Arnoldi factorization.
+        !!  It outpost a .npy file.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call save_eigenspectrum(eigvals, residuals, fname)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `eigvals` : `complex` rank-1 array containing the eigenvalues.
+        !!
+        !!  `residuals` : `real` rank-1 array containing the residuals associated to each
+        !!                eigenvalues.
+        !!
+        !!  `fname` : Name of the file to save the eigenspectrum.
+        module procedure save_eigenspectrum_sp
+        module procedure save_eigenspectrum_dp
+    end interface
 
-   abstract interface
-      subroutine abstract_apply_precond(self, vec_inout)
-        !! Abstract interface to apply a preconditioner in `LightKrylov`.
-         import abstract_preconditioner, abstract_vector
-         class(abstract_preconditioner), intent(in) :: self
-         !! Preconditioner.
-         class(abstract_vector), intent(inout) :: vec_inout
-         !! Input/Output vector.
-      end subroutine abstract_apply_precond
+    interface eighs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a symmetric operator \(A\)
+        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectors such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Lanczos factorization, resulting in a symmetric
+        !!  tridiagonal matrix \(T\). The eigenvalues of \(A\) are approximated by those of \(T\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
+        !!  of Linear Differential and Integral Operators". United States Governm. Press Office.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        module procedure eighs_rsp
+        module procedure eighs_rdp
+        module procedure eighs_csp
+        module procedure eighs_cdp
+    end interface
 
-      subroutine abstract_undo_precond(self, vec_inout)
-        !! Deprecated.
-         import abstract_preconditioner, abstract_vector
-         class(abstract_preconditioner), intent(in) :: self
-         class(abstract_vector), intent(inout) :: vec_inout
-      end subroutine abstract_undo_precond
-   end interface
+    interface eigs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a square linear operator \(A\)
+        !!  using the Arnoldi iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectorss such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  or
+        !!
+        !!  \[
+        !!      A^H x = \lambda x.
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Arnoldi factorization, resulting in an upper
+        !!  Hessenberg matrix \(H\). The eigenvalues of \(A\) are approximated by those of \(H\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Arnoldi, W. E. (1951). "The Principle of Minimized Iterations in the Solution of
+        !!    the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eigs(A, X, eigvals, residuals, info [, kdim] [, select] [,tolerance] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `select` (*optional*) : Function to select which eigenvalues to compute.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!
+        !!  `transpose` (*optional*) : `logical` flag determining whether the eigenvalues of \(A\)
+        !!                             or \(A^H\) need to be computed.
+        module procedure eigs_rsp
+        module procedure eigs_rdp
+        module procedure eigs_csp
+        module procedure eigs_cdp
+    end interface
 
-   !--------------------------------------------------------
-   !-----                                              -----
-   !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
-   !-----                                              -----
-   !--------------------------------------------------------
+    interface svds
+        !!  ### Description
+        !!
+        !!  Computes the leading singular triplets of an arbitrary linear operator \(A\)
+        !!  using the Lanczos iterative process. Given a linear operator \(A\), it finds
+        !!  the leading singular values and singular vectors such that:
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!      Av & = \sigma u \\
+        !!      A^H u & = \sigma v.
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  The subspaces \(U\) and \(V\) are constructed via Lanczos factorization, resulting in
+        !!  a bidiagonal matrix \(B\). The singular values of \(A\) are approximated by those of
+        !!  \(B\) and the singular vectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and
+        !!   Pseudo-Inverse of a Matrix."
+        !!  - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos
+        !!   bidiagonalization methods."
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization."
+        !!   Technical Report, 1998.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call svds(A, U, S, V, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `S` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!        singular values of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `V` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each singular triplet. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading singular triplets. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        module procedure svds_rsp
+        module procedure svds_rdp
+        module procedure svds_csp
+        module procedure svds_cdp
+    end interface
 
-   abstract interface
-      subroutine abstract_linear_solver(A, b, x, info, preconditioner, options, transpose)
-        !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-         import abstract_linop, abstract_vector, abstract_opts, abstract_preconditioner
-         class(abstract_linop), intent(in) :: A
-         !! Linear operator to invert.
-         class(abstract_vector), intent(in) :: b
-         !! Right-hand side vector.
-         class(abstract_vector), intent(inout) :: x
-         !! Solution vector.
-         integer, intent(out) :: info
-         !! Information flag.
-         class(abstract_opts), optional, intent(in) :: options
-         !! Options passed to the linear solver.
-         class(abstract_preconditioner), optional, intent(in) :: preconditioner
-         !! Preconditioner.
-         logical, optional, intent(in) :: transpose
-         !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
-      end subroutine abstract_linear_solver
-   end interface
+    interface gmres
+        !!  ### Description
+        !!
+        !!  Solve a square linear system of equations
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Generalized Minimum RESidual* (GMRES) method.
+        !!
+        !!  **References**
+        !!
+        !!  - Saad Y. and Schultz M. H. "GMRES: A generalized minimal residual algorithm for
+        !!  solving nonsymmetric linear systems." SIAM Journal on Scientific and Statistical
+        !!  Computing, 7(3), 1986.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
+        !!  `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
+        !!  \( A^H x = b \) is being solver.
+        module procedure gmres_rsp
+        module procedure gmres_rdp
+        module procedure gmres_csp
+        module procedure gmres_cdp
+    end interface
 
-   !----------------------------------------
-   !-----                              -----
-   !-----     REFINED RITZ VECTORS     -----
-   !-----                              -----
-   !----------------------------------------
+    interface cg
+        !!  ### Description
+        !!
+        !!  Given a symmetric (positive definite) matrix \( A \), solves the linear system
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Conjugate Gradient* method.
+        !!
+        !!  **References**
+        !!
+        !!  - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
+        !!  Linear Systems," Journal of Research of the National Bureau of Standards,
+        !!  49(6), 409–436.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
+        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
+        !!  `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  @note
+        !!  Although the interface to pass a preconditioner is exposed, it is not currently
+        !!  implemented.
+        !!  @endnote
+        module procedure cg_rsp
+        module procedure cg_rdp
+        module procedure cg_csp
+        module procedure cg_cdp
+    end interface
 
-   interface refined_ritz_vector
-      module procedure refined_real_ritz_vector
-      module procedure refined_cmplx_ritz_vector
-   end interface refined_ritz_vector
+    !------------------------------------------------------
+    !-----     ABSTRACT PRECONDITIONER DEFINITION     -----
+    !------------------------------------------------------
+
+    type, abstract, public :: abstract_precond_rsp
+    contains
+        private
+        procedure(abstract_apply_rsp), pass(self), public, deferred :: apply
+    end type
+
+    abstract interface
+        subroutine abstract_apply_rsp(self, vec)
+            !! Abstract interface to apply a preconditioner in `LightKrylov`.
+            import abstract_precond_rsp, abstract_vector_rsp
+            class(abstract_precond_rsp), intent(in) :: self
+            !! Preconditioner.
+            class(abstract_vector_rsp), intent(inout) :: vec
+            !! Input/Output vector.
+        end subroutine abstract_apply_rsp
+    end interface
+    
+    type, abstract, public :: abstract_precond_rdp
+    contains
+        private
+        procedure(abstract_apply_rdp), pass(self), public, deferred :: apply
+    end type
+
+    abstract interface
+        subroutine abstract_apply_rdp(self, vec)
+            !! Abstract interface to apply a preconditioner in `LightKrylov`.
+            import abstract_precond_rdp, abstract_vector_rdp
+            class(abstract_precond_rdp), intent(in) :: self
+            !! Preconditioner.
+            class(abstract_vector_rdp), intent(inout) :: vec
+            !! Input/Output vector.
+        end subroutine abstract_apply_rdp
+    end interface
+    
+    type, abstract, public :: abstract_precond_csp
+    contains
+        private
+        procedure(abstract_apply_csp), pass(self), public, deferred :: apply
+    end type
+
+    abstract interface
+        subroutine abstract_apply_csp(self, vec)
+            !! Abstract interface to apply a preconditioner in `LightKrylov`.
+            import abstract_precond_csp, abstract_vector_csp
+            class(abstract_precond_csp), intent(in) :: self
+            !! Preconditioner.
+            class(abstract_vector_csp), intent(inout) :: vec
+            !! Input/Output vector.
+        end subroutine abstract_apply_csp
+    end interface
+    
+    type, abstract, public :: abstract_precond_cdp
+    contains
+        private
+        procedure(abstract_apply_cdp), pass(self), public, deferred :: apply
+    end type
+
+    abstract interface
+        subroutine abstract_apply_cdp(self, vec)
+            !! Abstract interface to apply a preconditioner in `LightKrylov`.
+            import abstract_precond_cdp, abstract_vector_cdp
+            class(abstract_precond_cdp), intent(in) :: self
+            !! Preconditioner.
+            class(abstract_vector_cdp), intent(inout) :: vec
+            !! Input/Output vector.
+        end subroutine abstract_apply_cdp
+    end interface
+    
+
+    !--------------------------------------------------------
+    !-----                                              -----
+    !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
+    !-----                                              -----
+    !--------------------------------------------------------
+
+    abstract interface
+        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp, sp
+
+            class(abstract_linop_rsp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_rsp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rsp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_rsp
+
+        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp, dp
+
+            class(abstract_linop_rdp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_rdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_rdp
+
+        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp, sp
+
+            class(abstract_linop_csp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_csp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_csp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_csp
+
+        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp, dp
+
+            class(abstract_linop_cdp), intent(in) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_cdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+        end subroutine abstract_linear_solver_cdp
+
+    end interface
 
 contains
 
-   elemental pure function compute_residual(beta, x) result(residual)
-      !! Computes the residual associated with an eigenpair, useful for assessing the quality
-      !! of the approximated eigenvalues and eigenvectors. Given the norm of the Krylov residual
-      !! vector (beta) and the last element of the Ritz eigenvector (x), the residual is calculated
-      !! as follows \( r = \vert \beta x \vert \).
-      real(kind=wp), intent(in) :: beta
-      !! Norm of the residual Krylov vector.
-      real(kind=wp), intent(in) :: x
-      !! Last entry of the low-dimensional Ritz eigenvector.
-      real(kind=wp) :: residual
-      !! Residual associated to the corresponding Ritz eigenpair.
-      residual = abs(beta*x)
-      return
-   end function compute_residual
-
-   subroutine save_eigenspectrum(real_part, imag_part, residuals, filename)
-     !! Saves the eigenvalues and corresponding residuals to disk using the `npy` binary format
-     !! to be compatible with `Python`.
-      real(kind=wp), intent(in) :: real_part(:)
-      !! Real parts of the eigenvalues.
-      real(kind=wp), intent(in) :: imag_part(:)
-      !! Imaginary parts of the eigenvalues.
-      real(kind=wp), intent(in) :: residuals(:)
-      !! Residual of the corresponding Ritz eigenpairs.
-      character(len=*), intent(in) :: filename
-      !! Name of the output file.
-
-      ! Miscellaneous.
-      real(kind=wp), dimension(size(real_part), 3) :: data
-
-      ! Store the data.
-      data(:, 1) = real_part; data(:, 2) = imag_part; data(:, 3) = residuals
-      ! Save the eigenspectrum to disk using npy file format.
-      call save_npy(filename, data)
-
-      return
-   end subroutine save_eigenspectrum
-
-   function refined_real_ritz_vector(H, theta) result(x)
-      real(kind=wp), intent(in) :: H(:, :)
-      !! Matrix resulting from the Krylov factorization.
-      real(kind=wp), intent(in) :: theta
-      !! Eigenvalue for which refinement needs to be done.
-      real(kind=wp)             :: x(size(H, 2))
-      !! Low-dimensional refined Ritz eigenvector.
-
-      ! Internal variables.
-      real(kind=wp) :: A(size(H, 1), size(H, 2))
-      real(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
-      real(kind=wp) :: S(size(H, 2))
-      integer       :: i
-
-      ! Build H - theta*Id.
-      A = H
-      do i = 1, size(A, 2)
-         A(i, i) = A(i, i) - theta
-      end do
-
-      ! USV.T = svd(A).
-      call svd(A, U, S, V)
-
-      ! Refined Ritz vector.
-      x = V(:, size(H, 2))
-
-      return
-   end function refined_real_ritz_vector
-
-   function refined_cmplx_ritz_vector(H, theta) result(x)
-      real(kind=wp), intent(in) :: H(:, :)
-      !! Matrix resulting from the Krylov factorization.
-      complex(kind=wp), intent(in) :: theta
-      !! Eigenvalue for which refinement needs to be done.
-      complex(kind=wp)             :: x(size(H, 2))
-      !! Low-dimensional refined Ritz eigenvector.
-
-      ! Internal variables.
-      complex(kind=wp) :: A(size(H, 1), size(H, 2))
-      complex(kind=wp) :: U(size(H, 1), size(H, 1)), V(size(H, 2), size(H, 2))
-      real(kind=wp)    :: S(size(H, 2))
-      integer          :: i
-
-      ! Build H - theta*Id.
-      A = H
-      do i = 1, size(A, 2)
-         A(i, i) = A(i, i) - theta
-      end do
-
-      ! USV.H = svd(A).
-      call svd(A, U, S, V)
-
-      ! Refined Ritz vector.
-      x = V(:, size(H, 2))
-
-      return
-   end function refined_cmplx_ritz_vector
-
-   subroutine eigs(A, X, eigvals, residuals, info, nev, tolerance, verbosity, transpose)
-     !! Computes the leading eigenpairs of a linear operator A using its Arnoldi factorization.
-     !! Given a square linear operator A of size (n x n), find eigvals and eigvecs such that:
-     !!
-     !! \[
-     !!    \mathbf{Ax} = \lambda \mathbf{x}
-     !! \]
-     !!
-     !! or
-     !!
-     !! \[
-     !!    \mathbf{A}^T \mathbf{x} = \lambda \mathbf{x}.
-     !! \]
-     !!
-     !! The Krylov subspace X is constructed via Arnoldi factorization, resulting in an upper
-     !! Hessenberg matrix H. The eigenvalues of A are approximated by the eigenvalues of H,
-     !! and the eigenvectors are computed accordingly.
-     !!
-     !! **Algorithmic Features**
-     !!
-     !! - Builds a Krylov subspace (X) using Arnoldi factorization.
-     !! - Computes eigenpairs of the reduced upper Hessenberg matrix (H).
-     !! - Sorts eigvals and associated eigvecs based on magnitude.
-     !!
-     !! **Advantages**
-     !!
-     !! - Suitable for a wide range of square matrices A, including non-symmetric ones.
-     !! - Efficient for large-scale problems.
-     !! - Allows user-specified initial Krylov vector (X(1)).
-     !!
-     !! **Limitations**
-     !!
-     !! - Accuracy is dependent on the quality of the initial Krylov vector.
-     !! - No preconditioning capabilities in the current implementation.
-     !!
-     !! **References**
-     !!
-     !! - Arnoldi, W. E. (1951). "The Principle of Minimized Iterations in the Solution of
-     !!   the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
-      class(abstract_linop), intent(in) :: A
-      !! Linear operator whose leading eigenpairs need to be computed.
-      class(abstract_vector), intent(inout) :: X(:)
-      !! Leading eigenvectors of \(\mathbf{A}\). On entry, `X(1)` needs to be set to the starting Krylov vector.
-      !! On exit, storage of the real and imaginary parts of the eigenvectors follows the LAPACK convention.
-      complex(kind=wp), intent(out) :: eigvals(:)
-      !! Leading eigenvalues of \( \mathbf{A} \).
-      real(kind=wp), intent(out) :: residuals(:)
-      !! Residual associated with each computed Ritz eigenpair.
-      integer, intent(out) :: info
-      !! Information flag.
-      integer, optional, intent(in) :: nev
-      !! Desired number of eigenpairs.
-      real(kind=wp), optional, intent(in) :: tolerance
-      !! Tolerance to determine whether a Ritz eigenpair has converged or not (default `sqrt(epsilon(1.0_wp))`).
-      logical, optional, intent(in) :: verbosity
-      !! Verbosity control (default `.false.`)
-      logical, optional, intent(in) :: transpose
-      !! Determine whether \(\mathbf{A}\) (default `.false.`) or \( \mathbf{A}^T\) (`.true.`) is used.
-
-      ! Internal variables.
-      class(abstract_vector), allocatable   :: Xwrk(:)
-      real(kind=wp), allocatable :: eigvecs(:, :)
-      integer                       :: nev_, conv
-      real(kind=wp)                       :: tol
-      logical :: verbose
-      real(kind=wp) :: H(size(X), size(X) - 1)
-      real(kind=wp) :: beta
-      integer :: kdim
-      integer :: i, j, k
-      integer(int_size) :: indices(size(X) - 1)
-      real(kind=wp)     :: abs_eigvals(size(X) - 1)
-      real(kind=wp)     :: alpha
-      logical :: trans
-
-      ! Dimension of the Krylov subspace.
-      kdim = size(X) - 1
-
-      ! Deals with the optional arguments.
-      verbose = optval(verbosity, .false.)
-      trans = optval(transpose, .false.)
-      nev_ = optval(nev, size(X) - 1)
-      tol = optval(tolerance, rtol)
-
-      ! Initialize variables.
-      allocate (eigvecs(kdim, kdim))
-      H = 0.0_wp; residuals = 0.0_wp; eigvals = cmplx(0.0_wp, 0.0_wp, kind=wp); eigvecs = 0.0_wp
-      ! Make sure the first Krylov vector has unit-norm.
-      alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
-      call initialize_krylov_subspace(X(2:kdim + 1))
-
-      arnoldi: do k = 1, kdim
-         ! Arnoldi step.
-         call arnoldi_factorization(A, X, H, info, kstart=k, kend=k, verbosity=verbose, transpose=trans)
-
-         if (info < 0) then
-            if (verbose) then
-               write (output_unit, *) "INFO : Arnoldi iteration failed. Exiting the eig subroutine."
-               write (output_unit, *) "       Arnoldi exit code :", info
-            end if
-            info = -1
-            return
-         end if
-
-         ! Spectral decomposition of the k x k Hessenberg matrix.
-         eigvals = 0.0_wp; eigvecs = cmplx(0.0_wp, 0.0_wp, kind=wp)
-         call eig(H(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
-
-         ! Sort eigenvalues.
-         abs_eigvals = abs(eigvals); call sort_index(abs_eigvals, indices, reverse=.true.)
-         eigvals = eigvals(indices); eigvecs = eigvecs(:, indices)
-
-         ! Compute residuals.
-         beta = H(k + 1, k) ! Get Krylov residual vector norm.
-         do i = 1, k
-            if (eigvals(i)%im > 0.0_wp) then
-               alpha = abs(cmplx(eigvecs(k, i), eigvecs(k, i+1), kind=wp))
-            else if (eigvals(i)%im < 0.0_wp) then
-               alpha = abs(cmplx(eigvecs(k, i-1), -eigvecs(k, i), kind=wp))
-            else
-               alpha = abs(eigvecs(k, i))
-            endif
-            residuals(i) = compute_residual(beta, alpha)
-         end do
-
-         ! Check convergence.
-         conv = count(residuals(1:k) < tol)
-         if (conv >= nev_) then
-            if (verbose) then
-               write (output_unit, *) "INFO : The first ", conv, "eigenpairs have converged."
-               write (output_unit, *) "       Exiting the computation."
-            end if
-            exit arnoldi
-         end if
-
-      end do arnoldi
-
-      ! Reconstruct the eigenvectors from the Krylov basis.
-      allocate (Xwrk, source=X); call mat_mult(X(1:k), Xwrk(1:k), eigvecs(1:k, 1:k))
-
-      return
-   end subroutine eigs
-
-   subroutine eighs(A, X, eigvals, residuals, info, nev, tolerance, verbosity)
-     !! Computes the leading eigenpairs of a symmetric positive definite operator \( \mathbf{A} \) using the
-     !! iterative Lanczos factorization.
-     !!
-     !! **Algorithmic Features**
-     !!
-     !! - Employs Lanczos tridiagonalization.
-     !! - Sorts eigvals and eigvecs based on magnitude.
-     !! - Computes residuals to assess the quality of approximations.
-     !!
-     !! **Advantages**
-     !!
-     !! - Efficient for large, sparse, sym. pos. def. matrices (A).
-     !! - Lower memory requirements compared to full spectrum methods like QR.
-     !! - Faster convergence rates for extreme eigvals.
-     !!
-     !! **Limitations**
-     !!
-     !! - Only applicable to sym. pos. def. matrices (A).
-     !! - Eigenpairs are approximations and may require refinement.
-     !! - Not suitable for finding all eigvals in large dense matrices.
-     !!
-     !! **References**
-     !!
-     !! - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
-     !!   of Linear Differential and Integral Operators". United States Governm. Press Office.
-      class(abstract_spd_linop), intent(in) :: A
-      !! Linear operator whose leading eigenpairs need to be computed.
-      class(abstract_vector), intent(inout) :: X(:)
-      !! Leading eigenvectors of \(\mathbf{A}\). On entry, `X(1)` needs to be set to the starting
-      !! Krylov vector.
-      real(kind=wp), intent(out) :: eigvals(:)
-      !! Leading eigenvalues of \(\mathbf{A}\).
-      real(kind=wp), intent(out) :: residuals(:)
-      !! Residual associated to each Ritz eigenpair computed.
-      integer, intent(out) :: info
-      !! Information flag.
-      integer, optional, intent(in) :: nev
-      !! Desired number of eigenpairs. If not specified, `k = size(X)` Lanczos iterations are done
-      !! and all the eigenpairs are reported even if not converged.
-      real(kind=wp), optional, intent(in) :: tolerance
-      !! Tolerance to check convergence of a given eigenpair (default `sqrt(epsilon(1.0_wp))`).
-      logical, optional, intent(in) :: verbosity
-      !! Verbosity control (default `.false.`).
-
-      ! Internal variables
-      class(abstract_vector), allocatable   :: Xwrk(:)
-      real(kind=wp), allocatable :: eigvecs(:, :)
-      integer                       :: nev_, conv
-      real(kind=wp)                       :: tol
-      logical :: verbose
-      real(kind=wp), dimension(size(X), size(X) - 1) :: T
-      real(kind=wp)                                :: beta
-      integer :: kdim
-      integer :: i, j, k
-      integer(int_size), dimension(size(X) - 1) :: indices
-      real(kind=wp) :: alpha
-
-      ! Dimension of the Krylov subspace.
-      kdim = size(X) - 1
-
-      ! Deals with the optional argument.
-      verbose = optval(verbosity, .false.)
-      nev_ = optval(nev, size(X) - 1)
-      tol = optval(tolerance, rtol)
-
-      ! Initialize all variables.
-      allocate (eigvecs(1:kdim, 1:kdim))
-      T = 0.0_wp; residuals = 0.0_wp; eigvecs = 0.0_wp; eigvals = 0.0_wp
-      ! Make sure the first Krylov vector has unit-norm.
-      alpha = X(1)%norm(); call X(1)%scal(1.0_wp/alpha)
-      call initialize_krylov_subspace(X(2:kdim + 1))
-
-      lanczos: do k = 1, kdim
-         ! Compute Lanczos tridiagonalization.
-         call lanczos_tridiagonalization(A, X, T, info, kstart=k, kend=k, verbosity=verbose)
-
-         if (info < 0) then
-            if (verbose) then
-               write (output_unit, *) "INFO : Lanczos iteration failed. Exiting the eigh subroutine."
-               write (output_unit, *) "       Lanczos exit code :", info
-            end if
-            info = -1
-            return
-         end if
-
-         ! Compute spectral decomposition of the tridiagonal matrix.
-         eigvals = 0.0_wp; eigvecs = 0.0_wp
-         call eigh(T(1:k, 1:k), eigvecs(1:k, 1:k), eigvals(1:k))
-
-         ! Sort eigenvalues in decreasing order.
-         call sort_index(eigvals, indices, reverse=.true.); eigvecs = eigvecs(:, indices)
-
-         ! Compute the residual associated with each eigenpair.
-         beta = T(k + 1, k) ! Get Krylov residual vector norm.
-         residuals(1:k) = compute_residual(beta, eigvecs(k, 1:k))
-
-         ! Check convergence.
-         conv = count(residuals(1:k) < tol)
-         if (conv >= nev_) then
-            if (verbose) then
-               write (output_unit, *) "INFO : The first", conv, "eigenpairs have converged."
-               write (output_unit, *) "Exiting the computation."
-            end if
-            exit lanczos
-         end if
-
-      end do lanczos
-
-      ! Compute refined Ritz vectors.
-      deallocate (eigvecs); allocate (eigvecs(k, conv)); eigvecs = 0.0_wp
-      do i = 1, conv
-         eigvecs(:, i) = refined_ritz_vector(T(1:k + 1, 1:k), eigvals(i))
-      end do
-
-      ! Compute and returns the eigenvectors constructed from the Krylov basis.
-      allocate (Xwrk, source=X(1:k)); call initialize_krylov_subspace(X)
-      call mat_mult(X(1:conv), Xwrk(1:k), eigvecs)
-
-      return
-   end subroutine eighs
-
-   subroutine svds(A, U, V, sigma, residuals, info, nev, tolerance, verbosity)
-     !! Computes the singular value decomposition of a given linear operator \(\mathbf{A}\) using Lanczos
-     !! bidiagonalization. The subroutine finds matrices \(\mathbf{U}\), \(\boldsymbol{\Sigma}\), and \(\mathbf{V}\)
-     !! such that
-     !!
-     !! \[
-     !!    \mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T.
-     !! \]
-     !!
-     !! **Algorithmic Features**
-     !!
-     !! - Relies on Lanczos bidiagonalization.
-     !! - Computes the singular value decomposition of of a small bidiagonal matrix to obtain approximate
-     !!   singular values and vectors of \(\mathbf{A}\).
-     !! - Calculates residuals for singular triplets.
-     !! - Optionally verbose, providing runtime diagnostics.
-     !!
-     !! **Advantages**
-     !!
-     !! - Efficient for large, sparse matrices.
-     !! - Suitable for problems requiring only a subset of singular values and vectors.
-     !! - Can be adapted for preconditioning techniques.
-     !!
-     !! **Limitations**
-     !!
-     !! - Not optimized for dense matrices or those with special structures (e.g., Toeplitz, circulant).
-     !! - May require many iterations for ill-conditioned matrices.
-     !! - Only a full re-orthogonalization scheme is implemented.
-     !!
-     !! **References**
-     !!
-     !! - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and Pseudo-Inverse of a Matrix."
-     !! - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos bidiagonalization methods."
-     !! - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." Technical Report, 1998.
-     !!   [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
-      class(abstract_linop), intent(in) :: A
-      !! Linear operator whose leading singular triplets are to be computed.
-      class(abstract_vector), intent(inout) :: U(:)
-      !! Leading left singular vectors of \(\mathbf{A}\). On entry, `U(1)` needs to be set to the starting
-      !! Krylov vector.
-      class(abstract_vector), intent(inout) :: V(:)
-      !! Leading right singular vectors of \(\mathbf{A}\).
-      real(kind=wp), intent(out) :: sigma(:)
-      !! Leading singular values.
-      real(kind=wp), intent(out) :: residuals(:)
-      !! Residual associated to each Ritz singular triplet.
-      integer, intent(out) :: info
-      !! Information flag.
-      integer, optional, intent(in) :: nev
-      !! Desired number of converged singular triplets.
-      real(kind=wp), optional, intent(in) :: tolerance
-      !! Tolerance to check convergence of each triplet.
-      logical, optional, intent(in) :: verbosity
-      !! Verbosity control.
-
-      ! Internal variables.
-      real(kind=wp) :: B(size(U), size(U) - 1)
-      real(kind=wp) :: beta
-      integer :: kdim
-      integer :: i, j, k
-      integer(int_size) :: indices(size(U) - 1)
-      class(abstract_vector), allocatable   :: Uwrk(:), Vwrk(:)
-      real(kind=wp), allocatable :: uvecs(:, :), vvecs(:, :)
-      integer                       :: nev_, conv
-      real(kind=wp)                       :: tol
-      logical verbose
-
-      ! Deals with the optional args.
-      nev_ = optval(nev, size(U) - 1)
-      tol = optval(tolerance, rtol)
-      verbose = optval(verbosity, .false.)
-      ! Assert size(U) == size(V).
-      if (size(U) .ne. size(V)) then
-         info = -1
-         if (verbose) then
-            write (output_unit, *) "INFO : Left and Right Krylov subspaces have different dimensions."
-            write (output_unit, *) "       Exiting svds with exit code info =", info
-         end if
-      else
-         kdim = size(U) - 1
-      end if
-
-      ! Initialize variables.
-      B = 0.0_wp; residuals = 0.0_wp; sigma = 0.0_wp
-      ! Make sure the first Krylov vector has unit-norm.
-      beta = U(1)%norm(); call U(1)%scal(1.0_wp/beta)
-      call initialize_krylov_subspace(U(2:kdim + 1))
-      call initialize_krylov_subspace(V(2:kdim + 1))
-
-      allocate (uvecs(kdim, kdim)); uvecs = 0.0_wp
-      allocate (vvecs(kdim, kdim)); vvecs = 0.0_wp
-
-      lanczos: do k = 1, kdim
-         ! Compute the Lanczos bidiagonalization.
-         call lanczos_bidiagonalization(A, U, V, B, info, kstart=k, kend=k, verbosity=verbose)
-
-         ! --> Compute the singular value decomposition of the bidiagonal matrix.
-         sigma = 0.0_wp; uvecs = 0.0_wp; vvecs = 0.0_wp
-         call svd(B(1:k, 1:k), uvecs(1:k, 1:k), sigma(1:k), vvecs(1:k, 1:k))
-
-         ! Compute the residual associated with each singular triplet.
-         beta = B(k + 1, k) ! Get Krylov residual vector norm.
-         residuals(1:k) = compute_residual(beta, vvecs(k, 1:k))
-
-         ! Check convergence.
-         conv = count(residuals(1:k) < tol)
-         if (conv >= nev_) then
-            if (verbose) then
-               write (output_unit, *) "INFO : The first ", conv, "singular triplets have converged."
-               write (output_unit, *) "       Exiting the computation."
-            end if
-            exit lanczos
-         end if
-
-      end do lanczos
-
-      info = k
-
-      ! Compute and return the low-rank factors from the Krylov bases.
-      allocate (Uwrk, source=U(1:k)); allocate (Vwrk, source=V(1:k))
-      call mat_mult(U(1:k), Uwrk, uvecs(1:k, 1:k))
-      call mat_mult(V(1:k), Vwrk, vvecs(1:k, 1:k))
-      
-      return
-   end subroutine svds
-
-   subroutine gmres(A, b, x, info, preconditioner, options, transpose)
-     !! Implements the classic, unpreconditioned Generalized Minimal Residual (GMRES) algorithm
-     !! for solving nonsymmetric linear systems of equations \( \mathbf{Ax} = \mathbf{b}\).
-     !!
-     !! **Algorithmic Features**
-     !!
-     !! - Constructs a size-m Krylov subspace.
-     !! - Utilizes Arnoldi factorization to generate an orthonormal basis for the Krylov subspace.
-     !! - Employs a least-squares solve to determine the optimal linear combination of the Krylov vectors.
-     !! - Updates the approximate solution based on the least-squares solution.
-     !!
-     !! **Advantages*
-     !!
-     !! - Suitable for nonsymmetric and ill-conditioned matrices.
-     !! - Produces monotonically decreasing residuals.
-     !!
-     !! **Limitations**
-     !!
-     !! - Original gmres uses Givens rotations to update the least-squares solution. For the
-     !!   sake of simplicity, we use directly the lstsq solver from LAPACK.
-     !!
-     !! **References**
-     !!
-     !! - Saad, Y., and Schultz, M. H. (1986). "GMRES: A Generalized Minimal Residual Algorithm
-     !!   for Solving Nonsymmetric Linear Systems," SIAM Journal on Scientific and Statistical
-     !!   Computing, 7(3), 856–869.
-      class(abstract_linop), intent(in)     :: A
-      !! Linear operator to be inverted.
-      class(abstract_vector), intent(in)    :: b
-      !! Right-hand side vector.
-      class(abstract_vector), intent(inout) :: x
-      !! Solution vector.
-      integer, intent(out)   :: info
-      !! Information flag.
-      class(abstract_preconditioner), optional, intent(in) :: preconditioner
-      !! Preconditioner.
-      class(abstract_opts), optional, intent(in) :: options
-      !! Options.
-      logical, optional, intent(in) :: transpose
-      !! Whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is used.
-
-      ! Internal variables.
-      integer                                :: k_dim
-      integer                                :: maxiter
-      real(kind=wp)                          :: tol
-      logical                                :: verbose
-
-      ! Krylov subspace.
-      class(abstract_vector), allocatable :: V(:)
-      ! Upper Hessenberg matrix.
-      real(kind=wp), allocatable :: H(:, :)
-      ! Least-squares related variables.
-      real(kind=wp), allocatable :: y(:)
-      real(kind=wp), allocatable :: e(:)
-      real(kind=wp)                       :: beta
-      ! Miscellaneous.
-      integer                             :: i, j, k, l, m
-      real(kind=wp)                       :: alpha
-      class(abstract_vector), allocatable :: dx, wrk
-      logical                                              :: has_precond
-      class(abstract_preconditioner), allocatable          :: precond
-      type(gmres_opts)                           :: opts
-      logical                                    :: trans
-
-      ! Deals with the optional arguments.
-      if (present(options)) then
-         select type (options)
-         type is (gmres_opts)
-            opts = gmres_opts( &
-                   kdim=options%kdim, &
-                   maxiter=options%maxiter, &
-                   atol=options%atol, &
-                   rtol=options%rtol, &
-                   verbose=options%verbose &
-                   )
-         end select
-      else
-         opts = gmres_opts()
-      end if
-      k_dim = opts%kdim; maxiter = opts%maxiter
-      tol = opts%atol + opts%rtol*b%norm(); verbose = opts%verbose
-      trans = optval(transpose, .false.)
-
-      if (present(preconditioner)) then
-         allocate (precond, source=preconditioner)
-         has_precond = .true.
-      else
-         has_precond = .false.
-      end if
-
-      ! Initialize Krylov subspace.
-      allocate (wrk, source=b); call wrk%zero()
-      allocate (V(1:k_dim + 1), source=b)
-      call initialize_krylov_subspace(V)
-      allocate (H(k_dim + 1, k_dim)); H = 0.0_wp
-      allocate (y(1:k_dim)); y = 0.0_wp
-      allocate (e(1:k_dim + 1)); e = 0.0_wp
-
-      info = 0
-
-      ! Initial Krylov vector.
-      if (x%norm() .ne. 0.0_wp) then
-         if (trans) then
-            call A%rmatvec(x, V(1))
-         else
-            call A%matvec(x, V(1))
-         end if
-      endif
-      call V(1)%sub(b); call V(1)%scal(-1.0_wp)
-      beta = V(1)%norm(); call V(1)%scal(1.0_wp/beta)
-      gmres_iterations: do i = 1, maxiter
-         ! Zero-out variables.
-         H = 0.0_wp; y = 0.0_wp; e = 0.0_wp; e(1) = beta
-         call initialize_krylov_subspace(V(2:k_dim + 1))
-
-         ! Arnoldi factorization.
-         arnoldi: do k = 1, k_dim
-            wrk = V(k); if (has_precond) call precond%apply(wrk)
-
-            ! Matrix-vector product.
+    !-------------------------------------
+    !-----     UTILITY FUNCTIONS     -----
+    !-------------------------------------
+
+    elemental pure function compute_residual_rsp(beta, x) result(residual)
+        !! Computes the residual associated with a Ritz eigenpair.
+        real(sp), intent(in) :: beta
+        !! Norm of the residual Krylov vector.
+        real(sp), intent(in) :: x
+        !! Last entry of the low-dimensional Ritz eigenvector.
+        real(sp) :: residual
+        !! Residual associated to the corresponding Ritz eigenpair.
+        residual = abs(beta*x)
+        return
+    end function compute_residual_rsp
+
+    elemental pure function compute_residual_rdp(beta, x) result(residual)
+        !! Computes the residual associated with a Ritz eigenpair.
+        real(dp), intent(in) :: beta
+        !! Norm of the residual Krylov vector.
+        real(dp), intent(in) :: x
+        !! Last entry of the low-dimensional Ritz eigenvector.
+        real(dp) :: residual
+        !! Residual associated to the corresponding Ritz eigenpair.
+        residual = abs(beta*x)
+        return
+    end function compute_residual_rdp
+
+    elemental pure function compute_residual_csp(beta, x) result(residual)
+        !! Computes the residual associated with a Ritz eigenpair.
+        complex(sp), intent(in) :: beta
+        !! Norm of the residual Krylov vector.
+        complex(sp), intent(in) :: x
+        !! Last entry of the low-dimensional Ritz eigenvector.
+        real(sp) :: residual
+        !! Residual associated to the corresponding Ritz eigenpair.
+        residual = abs(beta*x)
+        return
+    end function compute_residual_csp
+
+    elemental pure function compute_residual_cdp(beta, x) result(residual)
+        !! Computes the residual associated with a Ritz eigenpair.
+        complex(dp), intent(in) :: beta
+        !! Norm of the residual Krylov vector.
+        complex(dp), intent(in) :: x
+        !! Last entry of the low-dimensional Ritz eigenvector.
+        real(dp) :: residual
+        !! Residual associated to the corresponding Ritz eigenpair.
+        residual = abs(beta*x)
+        return
+    end function compute_residual_cdp
+
+
+    subroutine save_eigenspectrum_sp(eigvals, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        complex(sp), intent(in) :: eigvals(:)
+        !! Eigenalues.
+        real(sp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
+
+        ! Internal variables.
+        real(sp) :: data(size(eigvals), 3)
+
+        ! Store data.
+        data(:, 1) = eigvals%re ; data(:, 2) = eigvals%im ; data(:, 3) = residuals
+        ! Save the eigenspectrum to disk.
+        call save_npy(fname, data)
+
+        return
+    end subroutine save_eigenspectrum_sp
+
+    function median_eigvals_selector_sp(lambda) result(selected)
+        complex(sp), intent(in) :: lambda(:)
+        logical :: selected(size(lambda))
+        selected = abs(lambda) > median(abs(lambda))
+        return
+    end function median_eigvals_selector_sp
+
+    subroutine save_eigenspectrum_dp(eigvals, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        complex(dp), intent(in) :: eigvals(:)
+        !! Eigenalues.
+        real(dp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
+
+        ! Internal variables.
+        real(dp) :: data(size(eigvals), 3)
+
+        ! Store data.
+        data(:, 1) = eigvals%re ; data(:, 2) = eigvals%im ; data(:, 3) = residuals
+        ! Save the eigenspectrum to disk.
+        call save_npy(fname, data)
+
+        return
+    end subroutine save_eigenspectrum_dp
+
+    function median_eigvals_selector_dp(lambda) result(selected)
+        complex(dp), intent(in) :: lambda(:)
+        logical :: selected(size(lambda))
+        selected = abs(lambda) > median(abs(lambda))
+        return
+    end function median_eigvals_selector_dp
+
+
+    !---------------------------------------------------
+    !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
+    !---------------------------------------------------
+
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+        class(abstract_linop_rsp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rsp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_sp), optional :: select
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Krylov subspace and Krylov subspace dimension.
+        class(abstract_vector_rsp), allocatable :: Xwrk(:)
+        integer :: kdim_, kstart
+        ! Hessenberg matrix.
+        real(sp), allocatable :: H(:, :)
+        ! Working arrays for the eigenvectors and eigenvalues.
+        real(sp), allocatable :: eigvecs_wrk(:, :)
+        complex(sp), allocatable :: eigvals_wrk(:)
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nev, conv
+        integer :: i, j, k, niter, krst
+        real(sp) :: tol
+        real(sp) :: beta
+        real(sp) :: alpha
+        character(len=256) :: msg
+        ! Eigenvalue selection.
+        procedure(eigvals_select_sp), pointer :: select_
+
+        ! Deals with optional parameters.
+        nev = size(X)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_sp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_sp
+        endif
+
+        ! Allocate eigenvalues.
+        allocate(eigvals(nev)) ; eigvals = 0.0_sp
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+
+        ! Ritz eigenpairs computation.
+        H = 0.0_sp
+
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
+        krylovschur: do while (conv < nev)
+
+           arnoldi_factorization: do k = kstart, kdim_
+                ! Arnoldi step.
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
+
+                ! Spectral decomposition of the k x k Hessenberg matrix.
+                eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+
+                ! Compute residuals.
+                beta = H(k+1, k)
+                do i = 1, k
+                    if (eigvals_wrk(i)%im > 0) then
+                        alpha = abs(cmplx(eigvecs_wrk(k, i), eigvecs_wrk(k, i+1), kind=sp))
+                    else if (eigvals_wrk(i)%im < 0) then
+                        alpha = abs(cmplx(eigvecs_wrk(k, i-1), eigvecs_wrk(k, i), kind=sp))
+                    else
+                        alpha = abs(eigvecs_wrk(k, i))
+                    endif
+                    residuals_wrk(i) = compute_residual_rsp(beta, alpha)
+                enddo
+
+                ! Check convergence.
+                niter = niter + 1
+                conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
+                if (conv >= nev) exit arnoldi_factorization
+            enddo arnoldi_factorization
+
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
+            ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
+        end do krylovschur
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+        integer :: indices(kdim_)
+        real(sp) :: abs_eigvals(kdim_)
+       
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        ! Sort eigenvalues.
+        abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+        eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
+
+        ! Store converged eigenvalues.
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        info = niter
+
+        return
+    end subroutine eigs_rsp
+
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+        class(abstract_linop_rdp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rdp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_dp), optional :: select
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Krylov subspace and Krylov subspace dimension.
+        class(abstract_vector_rdp), allocatable :: Xwrk(:)
+        integer :: kdim_, kstart
+        ! Hessenberg matrix.
+        real(dp), allocatable :: H(:, :)
+        ! Working arrays for the eigenvectors and eigenvalues.
+        real(dp), allocatable :: eigvecs_wrk(:, :)
+        complex(dp), allocatable :: eigvals_wrk(:)
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nev, conv
+        integer :: i, j, k, niter, krst
+        real(dp) :: tol
+        real(dp) :: beta
+        real(dp) :: alpha
+        character(len=256) :: msg
+        ! Eigenvalue selection.
+        procedure(eigvals_select_dp), pointer :: select_
+
+        ! Deals with optional parameters.
+        nev = size(X)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_dp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_dp
+        endif
+
+        ! Allocate eigenvalues.
+        allocate(eigvals(nev)) ; eigvals = 0.0_dp
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+
+        ! Ritz eigenpairs computation.
+        H = 0.0_dp
+
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
+        krylovschur: do while (conv < nev)
+
+           arnoldi_factorization: do k = kstart, kdim_
+                ! Arnoldi step.
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
+
+                ! Spectral decomposition of the k x k Hessenberg matrix.
+                eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+
+                ! Compute residuals.
+                beta = H(k+1, k)
+                do i = 1, k
+                    if (eigvals_wrk(i)%im > 0) then
+                        alpha = abs(cmplx(eigvecs_wrk(k, i), eigvecs_wrk(k, i+1), kind=dp))
+                    else if (eigvals_wrk(i)%im < 0) then
+                        alpha = abs(cmplx(eigvecs_wrk(k, i-1), eigvecs_wrk(k, i), kind=dp))
+                    else
+                        alpha = abs(eigvecs_wrk(k, i))
+                    endif
+                    residuals_wrk(i) = compute_residual_rdp(beta, alpha)
+                enddo
+
+                ! Check convergence.
+                niter = niter + 1
+                conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
+                if (conv >= nev) exit arnoldi_factorization
+            enddo arnoldi_factorization
+
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
+            ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
+        end do krylovschur
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+        integer :: indices(kdim_)
+        real(dp) :: abs_eigvals(kdim_)
+       
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        ! Sort eigenvalues.
+        abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+        eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
+
+        ! Store converged eigenvalues.
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        info = niter
+
+        return
+    end subroutine eigs_rdp
+
+    subroutine eigs_csp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+        class(abstract_linop_csp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_csp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_sp), optional :: select
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Krylov subspace and Krylov subspace dimension.
+        class(abstract_vector_csp), allocatable :: Xwrk(:)
+        integer :: kdim_, kstart
+        ! Hessenberg matrix.
+        complex(sp), allocatable :: H(:, :)
+        ! Working arrays for the eigenvectors and eigenvalues.
+        complex(sp), allocatable :: eigvecs_wrk(:, :)
+        complex(sp), allocatable :: eigvals_wrk(:)
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nev, conv
+        integer :: i, j, k, niter, krst
+        real(sp) :: tol
+        complex(sp) :: beta
+        character(len=256) :: msg
+        ! Eigenvalue selection.
+        procedure(eigvals_select_sp), pointer :: select_
+
+        ! Deals with optional parameters.
+        nev = size(X)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_sp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_sp
+        endif
+
+        ! Allocate eigenvalues.
+        allocate(eigvals(nev)) ; eigvals = 0.0_sp
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+
+        ! Ritz eigenpairs computation.
+        H = 0.0_sp
+
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
+        krylovschur: do while (conv < nev)
+
+           arnoldi_factorization: do k = kstart, kdim_
+                ! Arnoldi step.
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
+
+                ! Spectral decomposition of the k x k Hessenberg matrix.
+                eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+
+                ! Compute residuals.
+                beta = H(k+1, k)
+                residuals_wrk(:k) = compute_residual_csp(beta, eigvecs_wrk(k,:k))
+
+                ! Check convergence.
+                niter = niter + 1
+                conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_csp')
+                if (conv >= nev) exit arnoldi_factorization
+            enddo arnoldi_factorization
+
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_csp')
+            ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
+        end do krylovschur
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+        integer :: indices(kdim_)
+        real(sp) :: abs_eigvals(kdim_)
+       
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        ! Sort eigenvalues.
+        abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+        eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
+
+        ! Store converged eigenvalues.
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        info = niter
+
+        return
+    end subroutine eigs_csp
+
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+        class(abstract_linop_cdp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_cdp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_dp), optional :: select
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Krylov subspace and Krylov subspace dimension.
+        class(abstract_vector_cdp), allocatable :: Xwrk(:)
+        integer :: kdim_, kstart
+        ! Hessenberg matrix.
+        complex(dp), allocatable :: H(:, :)
+        ! Working arrays for the eigenvectors and eigenvalues.
+        complex(dp), allocatable :: eigvecs_wrk(:, :)
+        complex(dp), allocatable :: eigvals_wrk(:)
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nev, conv
+        integer :: i, j, k, niter, krst
+        real(dp) :: tol
+        complex(dp) :: beta
+        character(len=256) :: msg
+        ! Eigenvalue selection.
+        procedure(eigvals_select_dp), pointer :: select_
+
+        ! Deals with optional parameters.
+        nev = size(X)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_dp)
+
+        if (present(select)) then
+            select_ => select
+        else
+            select_ => median_eigvals_selector_dp
+        endif
+
+        ! Allocate eigenvalues.
+        allocate(eigvals(nev)) ; eigvals = 0.0_dp
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+
+        ! Ritz eigenpairs computation.
+        H = 0.0_dp
+
+        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
+        krylovschur: do while (conv < nev)
+
+           arnoldi_factorization: do k = kstart, kdim_
+                ! Arnoldi step.
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
+                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
+
+                ! Spectral decomposition of the k x k Hessenberg matrix.
+                eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
+                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+
+                ! Compute residuals.
+                beta = H(k+1, k)
+                residuals_wrk(:k) = compute_residual_cdp(beta, eigvecs_wrk(k,:k))
+
+                ! Check convergence.
+                niter = niter + 1
+                conv = count(residuals_wrk(:k) < tol)
+                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
+                            & ' steps of the Arnoldi process.'
+                call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
+                if (conv >= nev) exit arnoldi_factorization
+            enddo arnoldi_factorization
+
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
+                            & ' Krylov-Schur restarts of the Arnoldi process.'
+            call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
+            ! Krylov-Schur restarting procedure.
+            krst  = krst + 1
+            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            
+        end do krylovschur
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+        integer :: indices(kdim_)
+        real(dp) :: abs_eigvals(kdim_)
+       
+        ! Re-compute eigenvalues and eigenvectors.
+        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        ! Sort eigenvalues.
+        abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
+        eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
+        residuals_wrk = residuals_wrk(indices)
+
+        ! Store converged eigenvalues.
+        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+
+        info = niter
+
+        return
+    end subroutine eigs_cdp
+
+
+    !-----------------------------------------------------------------------------
+    !-----      EIGENVALUE COMPUTATIONS FOR SYMMETRIC/HERMITIAN MATRICES     -----
+    !-----------------------------------------------------------------------------
+
+    subroutine eighs_rsp(A, X, eigvals, residuals, info, kdim, tolerance)
+        class(abstract_sym_linop_rsp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rsp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_rsp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        real(sp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        real(sp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(sp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        real(sp) :: tol
+        real(sp) :: beta
+        character(len=256) :: msg
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        tol = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_rsp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rsp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+
+        ! Ritz eigenpairs computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rsp')
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(:k) = compute_residual_rsp(beta, eigvecs_wrk(k, :k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+        
+        info = k
+
+        return
+    end subroutine eighs_rsp
+
+    subroutine eighs_rdp(A, X, eigvals, residuals, info, kdim, tolerance)
+        class(abstract_sym_linop_rdp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rdp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_rdp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        real(dp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        real(dp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(dp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        real(dp) :: tol
+        real(dp) :: beta
+        character(len=256) :: msg
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        tol = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_rdp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rdp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+
+        ! Ritz eigenpairs computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rdp')
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(:k) = compute_residual_rdp(beta, eigvecs_wrk(k, :k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+        
+        info = k
+
+        return
+    end subroutine eighs_rdp
+
+    subroutine eighs_csp(A, X, eigvals, residuals, info, kdim, tolerance)
+        class(abstract_hermitian_linop_csp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_csp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_csp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        complex(sp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        complex(sp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(sp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        real(sp) :: tol
+        complex(sp) :: beta
+        character(len=256) :: msg
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        tol = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_csp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_csp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+
+        ! Ritz eigenpairs computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_csp')
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(:k) = compute_residual_csp(beta, eigvecs_wrk(k, :k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_csp')
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+        
+        info = k
+
+        return
+    end subroutine eighs_csp
+
+    subroutine eighs_cdp(A, X, eigvals, residuals, info, kdim, tolerance)
+        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_cdp), intent(out) :: X(:)
+        !! Leading eigevectors of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \( \mathbf{A} \).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpairs.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        class(abstract_vector_cdp), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        complex(dp), allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        complex(dp), allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(dp), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+
+        ! Miscellaneous.
+        integer :: i, j, k, nev, conv
+        real(dp) :: tol
+        complex(dp) :: beta
+        character(len=256) :: msg
+
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_ = optval(kdim, 4*nev)
+        tol = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(T(kdim_+1, kdim_)) ; T = zero_cdp
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_cdp
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+
+        ! Ritz eigenpairs computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_cdp')
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(:k) = compute_residual_cdp(beta, eigvecs_wrk(k, :k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            !eigvals_wrk = eigvals_wrk(indices) ; 
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
+            enddo
+        enddo
+        
+        info = k
+
+        return
+    end subroutine eighs_cdp
+
+
+    !------------------------------------------------
+    !-----     SINGULAR VALUE DECOMPOSITION     -----
+    !------------------------------------------------
+
+    subroutine svds_rsp(A, U, S, V, residuals, info, kdim, tolerance)
+        class(abstract_linop_rsp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_rsp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(sp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_rsp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_rsp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        real(sp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(sp), allocatable :: svdvals_wrk(:)
+        real(sp), allocatable :: umat(:, :), vmat(:, :)
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        real(sp) :: tol
+        character(len=256) :: msg
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        tol     = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
+
+        info = 0
+
+        ! Ritz singular triplets computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rsp')
+
+            ! SVD of the k x k bidiagonal matrix and residual computation.
+            svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
+
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = transpose(vmat(:k, :k))
+
+            residuals_wrk(:k) = compute_residual_rsp(B(k+1, k), vmat(k, :k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_rsp')
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_) ; info = k
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(one_rsp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_rsp, Vwrk(j), vmat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_rsp
+
+    subroutine svds_rdp(A, U, S, V, residuals, info, kdim, tolerance)
+        class(abstract_linop_rdp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_rdp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(dp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_rdp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_rdp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        real(dp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(dp), allocatable :: svdvals_wrk(:)
+        real(dp), allocatable :: umat(:, :), vmat(:, :)
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        real(dp) :: tol
+        character(len=256) :: msg
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        tol     = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
+
+        info = 0
+
+        ! Ritz singular triplets computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rdp')
+
+            ! SVD of the k x k bidiagonal matrix and residual computation.
+            svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
+
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = transpose(vmat(:k, :k))
+
+            residuals_wrk(:k) = compute_residual_rdp(B(k+1, k), vmat(k, :k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_rdp')
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_) ; info = k
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(one_rdp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_rdp, Vwrk(j), vmat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_rdp
+
+    subroutine svds_csp(A, U, S, V, residuals, info, kdim, tolerance)
+        class(abstract_linop_csp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_csp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(sp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_csp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_csp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        complex(sp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(sp), allocatable :: svdvals_wrk(:)
+        complex(sp), allocatable :: umat(:, :), vmat(:, :)
+        real(sp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        real(sp) :: tol
+        character(len=256) :: msg
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        tol     = optval(tolerance, rtol_sp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
+
+        info = 0
+
+        ! Ritz singular triplets computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_csp')
+
+            ! SVD of the k x k bidiagonal matrix and residual computation.
+            svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
+
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+
+            residuals_wrk(:k) = compute_residual_csp(B(k+1, k), vmat(k, :k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_csp')
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_) ; info = k
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(one_csp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_csp, Vwrk(j), vmat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_csp
+
+    subroutine svds_cdp(A, U, S, V, residuals, info, kdim, tolerance)
+        class(abstract_linop_cdp), intent(in) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_cdp), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(dp), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_cdp), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+        ! Left and right Krylov subspaces.
+        integer :: kdim_
+        class(abstract_vector_cdp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Bidiagonal matrix.
+        complex(dp), allocatable :: B(:, :)
+        ! Working arrays for the singular vectors and singular values.
+        real(dp), allocatable :: svdvals_wrk(:)
+        complex(dp), allocatable :: umat(:, :), vmat(:, :)
+        real(dp), allocatable :: residuals_wrk(:)
+        ! Miscellaneous.
+        integer :: nsv, conv
+        integer :: i, j, k
+        real(dp) :: tol
+        character(len=256) :: msg
+
+        ! Deals with the optional arguments.
+        nsv = size(U)
+        kdim_ = optval(kdim, 4*nsv)
+        tol     = optval(tolerance, rtol_dp)
+
+        ! Allocate working variables.
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
+        allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
+        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
+
+        info = 0
+
+        ! Ritz singular triplets computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Lanczos bidiag. step.
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_cdp')
+
+            ! SVD of the k x k bidiagonal matrix and residual computation.
+            svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
+
+            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
+
+            residuals_wrk(:k) = compute_residual_cdp(B(k+1, k), vmat(k, :k))
+
+            ! Check for convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call logger%log_information(msg, module=this_module, procedure='svds_cdp')
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        ! Singular values.
+        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
+
+        ! Singular vectors.
+        k = min(k, kdim_) ; info = k
+        do i = 1, nsv
+            call U(i)%zero() ; call V(i)%zero()
+            do j = 1, k
+                call U(i)%axpby(one_cdp, Uwrk(j), umat(j, i))
+                call V(i)%axpby(one_cdp, Vwrk(j), vmat(j, i))
+            enddo
+        enddo
+
+        return
+    end subroutine svds_cdp
+
+
+    !-------------------------------------------------------
+    !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
+    !-------------------------------------------------------
+
+    subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        class(abstract_linop_rsp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_rsp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_rsp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+        !! Preconditioner (optional).
+        class(abstract_opts), optional, intent(in) :: options
+        !! GMRES options.   
+        logical, optional, intent(in) :: transpose
+        !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Options.
+        integer :: kdim, maxiter
+        real(sp) :: tol, rtol_, atol_
+        logical :: trans
+        type(gmres_sp_opts) :: opts
+
+        ! Krylov subspace
+        class(abstract_vector_rsp), allocatable :: V(:)
+        ! Hessenberg matrix.
+        real(sp), allocatable :: H(:, :)
+        ! Least-squares variables.
+        real(sp), allocatable :: y(:), e(:)
+        real(sp) :: beta
+
+        ! Preconditioner
+        logical :: has_precond
+        class(abstract_precond_rsp), allocatable :: precond
+
+        ! Miscellaneous.
+        integer :: i, k, niter
+        real(sp), allocatable :: alpha(:)
+        class(abstract_vector_rsp), allocatable :: dx, wrk
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
+        if (present(options)) then
+            select type (options)
+            type is (gmres_sp_opts)
+                opts = options
+            end select
+        else
+            opts = gmres_sp_opts()
+        endif
+
+        kdim = opts%kdim ; maxiter = opts%maxiter
+        tol = atol_ + rtol_ * b%norm()
+        trans = optval(transpose, .false.)
+
+        ! Deals with the preconditioner.
+        if (present(preconditioner)) then
+            has_precond = .true.
+            allocate(precond, source=preconditioner)
+        else
+            has_precond = .false.
+        endif
+
+        ! Initialize working variables.
+        allocate(wrk, source=b) ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
+        allocate(H(kdim+1, kdim)) ; H = 0.0_sp
+        allocate(y(kdim)) ; y = 0.0_sp
+        allocate(alpha(kdim)) ; alpha = 0.0_sp
+        allocate(e(kdim+1)) ; e = 0.0_sp
+
+        info = 0 ; niter = 0
+
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
             if (trans) then
-               call A%rmatvec(wrk, V(k + 1))
+                call A%rmatvec(x, V(1))
             else
-               call A%matvec(wrk, V(k + 1))
-            end if
+                call A%matvec(x, V(1))
+            endif
+        endif
 
-            ! Gram-Schmid orthogonalization (twice is enough).
-            do j = 1, k
-               alpha = V(k + 1)%dot(V(j)); call V(k + 1)%axpby(1.0_wp, V(j), -alpha)
-               H(j, k) = alpha
-            end do
-            do j = 1, k
-               alpha = V(k + 1)%dot(V(j)); call V(k + 1)%axpby(1.0_wp, V(j), -alpha)
-               H(j, k) = H(j, k) + alpha
-            end do
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
 
-            ! Update Hessenberg matrix and normalize new Krylov vector.
-            H(k + 1, k) = V(k + 1)%norm()
-            if (H(k + 1, k) > tol) then
-               call V(k + 1)%scal(1.0_wp/H(k + 1, k))
-            end if
+        ! Iterative solver.
+        gmres_iter : do i = 1, maxiter
+            ! Zero-out variables.
+            H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
+            call zero_basis(V(2:))
 
-            ! Least-squares problem.
-            call lstsq(H(1:k + 1, 1:k), e(1:k + 1), y(1:k))
+            ! Arnoldi factorization.
+            arnoldi_fact: do k = 1, kdim
+                ! Preconditioner.
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
 
-            ! Compute residual.
-            beta = norm2(e(1:k + 1) - matmul(H(1:k + 1, 1:k), y(1:k)))
-            if (verbose) then
-               write (*, *) "INFO : GMRES residual after ", info + 1, "iteration : ", beta
-            end if
+                ! Matrix-vector product.
+                if (trans) then
+                    call A%rmatvec(wrk, V(k+1))
+                else
+                    call A%matvec(wrk, V(k+1))
+                endif
 
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rsp')
+
+                ! Update Hessenberg matrix and normalize residual Krylov vector.
+                H(k+1, k) = V(k+1)%norm()
+                if (abs(H(k+1, k)) > tol) then
+                    call V(k+1)%scal(one_rsp / H(k+1, k))
+                endif
+
+                ! Least-squares problem.
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
+
+                ! Compute residual.
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
+
+                ! Current number of iterations performed.
+                niter = niter + 1
+
+                ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+                if (abs(beta) <= tol) then
+                    exit arnoldi_fact
+                endif
+            enddo arnoldi_fact
+
+            ! Update solution.
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+
+            ! Recompute residual for sanity check.
+            if (trans) then
+                call A%rmatvec(x, v(1))
+            else
+                call A%matvec(x, v(1))
+            endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
+
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+
+            ! Exit gmres if desired accuracy is reached.
+            if (abs(beta) <= tol) exit gmres_iter
+
+        enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
+
+        return
+    end subroutine gmres_rsp
+
+    subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        class(abstract_linop_rdp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_rdp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_rdp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+        !! Preconditioner (optional).
+        class(abstract_opts), optional, intent(in) :: options
+        !! GMRES options.   
+        logical, optional, intent(in) :: transpose
+        !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Options.
+        integer :: kdim, maxiter
+        real(dp) :: tol, rtol_, atol_
+        logical :: trans
+        type(gmres_dp_opts) :: opts
+
+        ! Krylov subspace
+        class(abstract_vector_rdp), allocatable :: V(:)
+        ! Hessenberg matrix.
+        real(dp), allocatable :: H(:, :)
+        ! Least-squares variables.
+        real(dp), allocatable :: y(:), e(:)
+        real(dp) :: beta
+
+        ! Preconditioner
+        logical :: has_precond
+        class(abstract_precond_rdp), allocatable :: precond
+
+        ! Miscellaneous.
+        integer :: i, k, niter
+        real(dp), allocatable :: alpha(:)
+        class(abstract_vector_rdp), allocatable :: dx, wrk
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
+        if (present(options)) then
+            select type (options)
+            type is (gmres_dp_opts)
+                opts = options
+            end select
+        else
+            opts = gmres_dp_opts()
+        endif
+
+        kdim = opts%kdim ; maxiter = opts%maxiter
+        tol = atol_ + rtol_ * b%norm()
+        trans = optval(transpose, .false.)
+
+        ! Deals with the preconditioner.
+        if (present(preconditioner)) then
+            has_precond = .true.
+            allocate(precond, source=preconditioner)
+        else
+            has_precond = .false.
+        endif
+
+        ! Initialize working variables.
+        allocate(wrk, source=b) ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
+        allocate(H(kdim+1, kdim)) ; H = 0.0_dp
+        allocate(y(kdim)) ; y = 0.0_dp
+        allocate(alpha(kdim)) ; alpha = 0.0_dp
+        allocate(e(kdim+1)) ; e = 0.0_dp
+
+        info = 0 ; niter = 0
+
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%rmatvec(x, V(1))
+            else
+                call A%matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
+
+        ! Iterative solver.
+        gmres_iter : do i = 1, maxiter
+            ! Zero-out variables.
+            H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
+            call zero_basis(V(2:))
+
+            ! Arnoldi factorization.
+            arnoldi_fact: do k = 1, kdim
+                ! Preconditioner.
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+
+                ! Matrix-vector product.
+                if (trans) then
+                    call A%rmatvec(wrk, V(k+1))
+                else
+                    call A%matvec(wrk, V(k+1))
+                endif
+
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_rdp')
+
+                ! Update Hessenberg matrix and normalize residual Krylov vector.
+                H(k+1, k) = V(k+1)%norm()
+                if (abs(H(k+1, k)) > tol) then
+                    call V(k+1)%scal(one_rdp / H(k+1, k))
+                endif
+
+                ! Least-squares problem.
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
+
+                ! Compute residual.
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
+
+                ! Current number of iterations performed.
+                niter = niter + 1
+
+                ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+                if (abs(beta) <= tol) then
+                    exit arnoldi_fact
+                endif
+            enddo arnoldi_fact
+
+            ! Update solution.
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+
+            ! Recompute residual for sanity check.
+            if (trans) then
+                call A%rmatvec(x, v(1))
+            else
+                call A%matvec(x, v(1))
+            endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
+
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+
+            ! Exit gmres if desired accuracy is reached.
+            if (abs(beta) <= tol) exit gmres_iter
+
+        enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
+
+        return
+    end subroutine gmres_rdp
+
+    subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        class(abstract_linop_csp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_csp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_csp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_csp), optional, intent(in) :: preconditioner
+        !! Preconditioner (optional).
+        class(abstract_opts), optional, intent(in) :: options
+        !! GMRES options.   
+        logical, optional, intent(in) :: transpose
+        !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Options.
+        integer :: kdim, maxiter
+        real(sp) :: tol, rtol_, atol_
+        logical :: trans
+        type(gmres_sp_opts) :: opts
+
+        ! Krylov subspace
+        class(abstract_vector_csp), allocatable :: V(:)
+        ! Hessenberg matrix.
+        complex(sp), allocatable :: H(:, :)
+        ! Least-squares variables.
+        complex(sp), allocatable :: y(:), e(:)
+        complex(sp) :: beta
+
+        ! Preconditioner
+        logical :: has_precond
+        class(abstract_precond_csp), allocatable :: precond
+
+        ! Miscellaneous.
+        integer :: i, k, niter
+        complex(sp), allocatable :: alpha(:)
+        class(abstract_vector_csp), allocatable :: dx, wrk
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
+        if (present(options)) then
+            select type (options)
+            type is (gmres_sp_opts)
+                opts = options
+            end select
+        else
+            opts = gmres_sp_opts()
+        endif
+
+        kdim = opts%kdim ; maxiter = opts%maxiter
+        tol = atol_ + rtol_ * b%norm()
+        trans = optval(transpose, .false.)
+
+        ! Deals with the preconditioner.
+        if (present(preconditioner)) then
+            has_precond = .true.
+            allocate(precond, source=preconditioner)
+        else
+            has_precond = .false.
+        endif
+
+        ! Initialize working variables.
+        allocate(wrk, source=b) ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
+        allocate(H(kdim+1, kdim)) ; H = 0.0_sp
+        allocate(y(kdim)) ; y = 0.0_sp
+        allocate(alpha(kdim)) ; alpha = 0.0_sp
+        allocate(e(kdim+1)) ; e = 0.0_sp
+
+        info = 0 ; niter = 0
+
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%rmatvec(x, V(1))
+            else
+                call A%matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
+
+        ! Iterative solver.
+        gmres_iter : do i = 1, maxiter
+            ! Zero-out variables.
+            H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
+            call zero_basis(V(2:))
+
+            ! Arnoldi factorization.
+            arnoldi_fact: do k = 1, kdim
+                ! Preconditioner.
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+
+                ! Matrix-vector product.
+                if (trans) then
+                    call A%rmatvec(wrk, V(k+1))
+                else
+                    call A%matvec(wrk, V(k+1))
+                endif
+
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_csp')
+
+                ! Update Hessenberg matrix and normalize residual Krylov vector.
+                H(k+1, k) = V(k+1)%norm()
+                if (abs(H(k+1, k)) > tol) then
+                    call V(k+1)%scal(one_csp / H(k+1, k))
+                endif
+
+                ! Least-squares problem.
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
+
+                ! Compute residual.
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
+
+                ! Current number of iterations performed.
+                niter = niter + 1
+
+                ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+                if (abs(beta) <= tol) then
+                    exit arnoldi_fact
+                endif
+            enddo arnoldi_fact
+
+            ! Update solution.
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+
+            ! Recompute residual for sanity check.
+            if (trans) then
+                call A%rmatvec(x, v(1))
+            else
+                call A%matvec(x, v(1))
+            endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
+
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+
+            ! Exit gmres if desired accuracy is reached.
+            if (abs(beta) <= tol) exit gmres_iter
+
+        enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
+
+        return
+    end subroutine gmres_csp
+
+    subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        class(abstract_linop_cdp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_cdp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_cdp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+        !! Preconditioner (optional).
+        class(abstract_opts), optional, intent(in) :: options
+        !! GMRES options.   
+        logical, optional, intent(in) :: transpose
+        !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Options.
+        integer :: kdim, maxiter
+        real(dp) :: tol, rtol_, atol_
+        logical :: trans
+        type(gmres_dp_opts) :: opts
+
+        ! Krylov subspace
+        class(abstract_vector_cdp), allocatable :: V(:)
+        ! Hessenberg matrix.
+        complex(dp), allocatable :: H(:, :)
+        ! Least-squares variables.
+        complex(dp), allocatable :: y(:), e(:)
+        complex(dp) :: beta
+
+        ! Preconditioner
+        logical :: has_precond
+        class(abstract_precond_cdp), allocatable :: precond
+
+        ! Miscellaneous.
+        integer :: i, k, niter
+        complex(dp), allocatable :: alpha(:)
+        class(abstract_vector_cdp), allocatable :: dx, wrk
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
+        if (present(options)) then
+            select type (options)
+            type is (gmres_dp_opts)
+                opts = options
+            end select
+        else
+            opts = gmres_dp_opts()
+        endif
+
+        kdim = opts%kdim ; maxiter = opts%maxiter
+        tol = atol_ + rtol_ * b%norm()
+        trans = optval(transpose, .false.)
+
+        ! Deals with the preconditioner.
+        if (present(preconditioner)) then
+            has_precond = .true.
+            allocate(precond, source=preconditioner)
+        else
+            has_precond = .false.
+        endif
+
+        ! Initialize working variables.
+        allocate(wrk, source=b) ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
+        allocate(H(kdim+1, kdim)) ; H = 0.0_dp
+        allocate(y(kdim)) ; y = 0.0_dp
+        allocate(alpha(kdim)) ; alpha = 0.0_dp
+        allocate(e(kdim+1)) ; e = 0.0_dp
+
+        info = 0 ; niter = 0
+
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%rmatvec(x, V(1))
+            else
+                call A%matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
+
+        ! Iterative solver.
+        gmres_iter : do i = 1, maxiter
+            ! Zero-out variables.
+            H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
+            call zero_basis(V(2:))
+
+            ! Arnoldi factorization.
+            arnoldi_fact: do k = 1, kdim
+                ! Preconditioner.
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+
+                ! Matrix-vector product.
+                if (trans) then
+                    call A%rmatvec(wrk, V(k+1))
+                else
+                    call A%matvec(wrk, V(k+1))
+                endif
+
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='gmres_cdp')
+
+                ! Update Hessenberg matrix and normalize residual Krylov vector.
+                H(k+1, k) = V(k+1)%norm()
+                if (abs(H(k+1, k)) > tol) then
+                    call V(k+1)%scal(one_cdp / H(k+1, k))
+                endif
+
+                ! Least-squares problem.
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
+
+                ! Compute residual.
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
+
+                ! Current number of iterations performed.
+                niter = niter + 1
+
+                ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+                if (abs(beta) <= tol) then
+                    exit arnoldi_fact
+                endif
+            enddo arnoldi_fact
+
+            ! Update solution.
+            k = min(k, kdim) ; call linear_combination(dx, V(:k), y(:k))
+            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+
+            ! Recompute residual for sanity check.
+            if (trans) then
+                call A%rmatvec(x, v(1))
+            else
+                call A%matvec(x, v(1))
+            endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
+
+            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+
+            ! Exit gmres if desired accuracy is reached.
+            if (abs(beta) <= tol) exit gmres_iter
+
+        enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = niter
+
+        return
+    end subroutine gmres_cdp
+
+
+
+
+
+    !---------------------------------------------
+    !-----     CONJUGATE GRADIENT METHOD     -----
+    !---------------------------------------------
+
+    subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options)
+        class(abstract_sym_linop_rsp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_rsp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_rsp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_sp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
+
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
+
+        ! Options.
+        integer :: maxiter
+        real(sp) :: tol, rtol_, atol_
+        type(cg_sp_opts) :: opts
+
+        ! Working variables.
+        class(abstract_vector_rsp), allocatable :: r, p, Ap
+        real(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(sp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_sp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
+
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
+
+        info = 0
+
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_rsp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_rsp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(r_dot_r_new)
             ! Current number of iterations performed.
             info = info + 1
 
-            ! Check convergence.
-            if (beta .lt. tol) then
-               exit arnoldi
-            end if
-         end do arnoldi
+            if (residual < tol) exit cg_loop
 
-         ! Update solution.
-         k = min(k, k_dim)
-         if (allocated(dx) .eqv. .false.) allocate (dx, source=x); call dx%zero()
-         call get_vec(dx, V(1:k), y(1:k)); if (has_precond) call precond%apply(dx)
-         call x%add(dx)
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_rsp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
 
-         ! Recompute residual for sanity check.
-         if (trans) then
-            call A%rmatvec(x, V(1))
-         else
-            call A%matvec(x, V(1))
-         end if
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_rsp')
+        enddo cg_loop
+        
+        return
+    end subroutine cg_rsp
 
-         call V(1)%sub(b); call V(1)%scal(-1.0_wp)
+    subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options)
+        class(abstract_sym_linop_rdp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_rdp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_rdp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_dp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
 
-         ! Initialize new starting Krylov vector if needed.
-         beta = V(1)%norm(); call V(1)%scal(1.0_wp/beta)
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
 
-         ! Exit GMRES if desired accuracy is reached.
-         if (beta .lt. tol) exit gmres_iterations
+        ! Options.
+        integer :: maxiter
+        real(dp) :: tol, rtol_, atol_
+        type(cg_dp_opts) :: opts
 
-      end do gmres_iterations
+        ! Working variables.
+        class(abstract_vector_rdp), allocatable :: r, p, Ap
+        real(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(dp) :: residual
 
-      ! Convergence information.
-      if (verbose) then
-         write (output_unit, *) "INFO : GMRES converged with residual ", beta
-         write (output_unit, *) "       Computation required ", info, "iterations"
-      end if
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
 
-      return
-   end subroutine gmres
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_dp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
-   subroutine cg(A, b, x, info, preconditioner, options)
-     !! Implements the classic Conjugate Gradient (CG) algorithm for solving symmetric positive
-     !! definite linear systems of equations, \(\mathbf{Ax} = \mathbf{b}\).
-     !!
-     !! **Advantages**
-     !!
-     !! - Well-suited for large, sparse, symmetric positive definite (SPD) matrices.
-     !! - Memory-efficient, requiring storage for only a few vectors in comparison to GMRES.
-     !! - Under exact arithmetic, finds the exact solution within 'n' iterations for an
-     !!   n-dimensional SPD matrix.
-     !!
-     !! **Limitations**
-     !!
-     !! - Applicability restricted to SPD matrices.
-     !! - Might take a large number of iterations for ill-conditioned problems.
-     !!
-     !! **References**
-     !!
-     !! - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
-     !!   Linear Systems," Journal of Research of the National Bureau of Standards, 49(6), 409–436.
-      class(abstract_spd_linop), intent(in) :: A
-      !! Linear operator to be inverted.
-      class(abstract_vector), intent(in) :: b
-      !! Right-hand side vector.
-      class(abstract_vector), intent(inout) :: x
-      !! Solution vector.
-      integer, intent(out)   :: info
-      !! Information flag.
-      class(abstract_preconditioner), optional, intent(in) :: preconditioner
-      !! Preconditioner (not yet supported).
-      class(abstract_preconditioner), allocatable          :: precond
-      logical                                              :: has_precond
-      class(abstract_opts), optional, intent(in) :: options
-      !! Options.
-      type(cg_opts)                              :: opts
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
 
-      integer       :: maxiter
-      real(kind=wp) :: tol
-      logical       :: verbose
+        info = 0
 
-      ! Residual and direction vectors.
-      class(abstract_vector), allocatable :: r, p, Ap
-      ! Scalars used in the CG algorithm.
-      real(kind=wp) :: alpha, beta, r_dot_r_old, r_dot_r_new, residual
-      integer :: i, j, k
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
 
-      ! Handle optional arguments.
-      if (present(options)) then
-         select type (options)
-         type is (cg_opts)
-            opts = cg_opts( &
-                   maxiter=options%maxiter, &
-                   atol=options%atol, &
-                   rtol=options%rtol, &
-                   verbose=options%verbose &
-                   )
-         end select
-      else
-         opts = cg_opts()
-      end if
-      tol = opts%atol + opts%rtol*b%norm(); maxiter = opts%maxiter; verbose = opts%verbose
+        ! Initialize direction vector.
+        p = r
 
-      if (present(preconditioner)) then
-         write (output_unit, *) "INFO: CG does not support preconditioning yet. Precond is thus ignored."
-         write (output_unit, *)
-      end if
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
 
-      ! Initialize vectors.
-      allocate (r, source=b); call r%zero()
-      allocate (p, source=b); call p%zero()
-      allocate (Ap, source=b); call Ap%zero()
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_rdp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_rdp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(r_dot_r_new)
+            ! Current number of iterations performed.
+            info = info + 1
 
-      ! Compute initial residual: r = b - Ax.
-      call A%matvec(x, r); call r%axpby(-1.0_wp, b, 1.0_wp)
+            if (residual < tol) exit cg_loop
 
-      ! Initialize direction vector: p = r.
-      p = r
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_rdp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
 
-      ! Initialize dot product of residual: r_dot_r_old = r' * r.
-      r_dot_r_old = r%dot(r)
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_rdp')
+        enddo cg_loop
+        
+        return
+    end subroutine cg_rdp
 
-      ! CG Iteration Loop.
-      cg_iterations: do i = 1, maxiter
+    subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options)
+        class(abstract_hermitian_linop_csp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_csp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_csp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(sp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(sp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_csp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_sp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
 
-         ! Compute A * p.
-         call A%matvec(p, Ap)
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
 
-         ! Compute step size alpha = r_dot_r_old / (p' * Ap).
-         alpha = r_dot_r_old/p%dot(Ap)
+        ! Options.
+        integer :: maxiter
+        real(sp) :: tol, rtol_, atol_
+        type(cg_sp_opts) :: opts
 
-         ! Update solution x = x + alpha * p.
-         call x%axpby(1.0_wp, p, alpha)
+        ! Working variables.
+        class(abstract_vector_csp), allocatable :: r, p, Ap
+        complex(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(sp) :: residual
 
-         ! Update residual r = r - alpha * Ap.
-         call r%axpby(1.0_wp, Ap, -alpha)
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
 
-         ! Compute new dot product of residual r_dot_r_new = r' * r.
-         r_dot_r_new = r%dot(r)
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_sp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
-         ! Check for convergence.
-         residual = sqrt(r_dot_r_new)
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
 
-         if (verbose) then
-            write (output_unit, *) "INFO : CG residual after ", (i), "iterations : ", residual
-         end if
+        info = 0
 
-         if (residual < tol) then
-            if (verbose) then
-               write (output_unit, *) "INFO : CG Converged: residual ", residual, "< tolerance: ", tol
-            end if
-            exit cg_iterations
-         end if
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
 
-         ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
-         beta = r_dot_r_new/r_dot_r_old
+        ! Initialize direction vector.
+        p = r
 
-         ! Update direction p = r + beta * p.
-         call p%axpby(beta, r, 1.0_wp)
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
 
-         ! Update r_dot_r_old for next iteration.
-         r_dot_r_old = r_dot_r_new
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_csp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_csp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(abs(r_dot_r_new))
+            ! Current number of iterations performed.
+            info = info + 1
 
-      end do cg_iterations
+            if (residual < tol) exit cg_loop
 
-      deallocate (r, p, Ap)
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_csp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
 
-      return
-   end subroutine cg
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_csp')
+        enddo cg_loop
+        
+        return
+    end subroutine cg_csp
+
+    subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options)
+        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_cdp), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_cdp), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(dp), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(dp), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+        !! Preconditioner (not yet supported).
+        type(cg_dp_opts), optional, intent(in) :: options
+        !! Options for the conjugate gradient solver.
+
+        !----------------------------------------
+        !-----     Internal variables      ------
+        !----------------------------------------
+
+        ! Options.
+        integer :: maxiter
+        real(dp) :: tol, rtol_, atol_
+        type(cg_dp_opts) :: opts
+
+        ! Working variables.
+        class(abstract_vector_cdp), allocatable :: r, p, Ap
+        complex(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(dp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_dp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
+
+        ! Initialize vectors.
+        allocate(r, source=b)  ; call r%zero()
+        allocate(p, source=b)  ; call p%zero()
+        allocate(Ap, source=b) ; call Ap%zero()
+
+        info = 0
+
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_cdp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_cdp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(abs(r_dot_r_new))
+            ! Current number of iterations performed.
+            info = info + 1
+
+            if (residual < tol) exit cg_loop
+
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_cdp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_cdp')
+        enddo cg_loop
+        
+        return
+    end subroutine cg_cdp
+
 
 end module lightkrylov_IterativeSolvers

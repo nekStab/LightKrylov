@@ -1,0 +1,546 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestIterativeSolvers
+    ! Fortran Standard library.
+    use iso_fortran_env
+    use stdlib_io_npy, only: save_npy
+    use stdlib_math, only: is_close, all_close
+    use stdlib_linalg, only: eye, diag
+    use stdlib_stats, only : median
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! LightKrylov
+    use LightKrylov
+    use LightKrylov_Constants
+    use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
+    ! Test Utilities
+    use LightKrylov_TestUtils
+
+    implicit none
+    
+    private
+
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_eig_${type[0]}$${kind}$_testsuite
+    public :: collect_svd_${type[0]}$${kind}$_testsuite
+    public :: collect_gmres_${type[0]}$${kind}$_testsuite
+    public :: collect_cg_${type[0]}$${kind}$_testsuite
+    #:endfor
+
+contains
+
+    !---------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR EIGS     -----
+    !---------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_eig_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+         testsuite = [ &
+                    new_unittest("Eigs computation", test_evp_${type[0]}$${kind}$), &
+                    #:if type[0] == "r"
+                    new_unittest("Sym. eigs computation", test_sym_evp_${type[0]}$${kind}$), &
+                    #:endif
+                    new_unittest("KS eigs computation", test_ks_evp_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_eig_${type[0]}$${kind}$_testsuite
+
+   subroutine test_ks_evp_${type[0]}$${kind}$(error)
+        ! Error type.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Eigenvectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! evals.
+        complex(${kind}$), allocatable :: eigvals(:)
+        ! Residuals.
+        real(${kind}$), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer :: i, k, n
+        integer, parameter :: nev = 8
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
+        complex(${kind}$) :: true_eigvals(test_size)
+        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+        #:if type[0] == "r"
+        ${type}$ :: a_, b_
+
+        ! Allocate eigenvectors.
+        allocate(X(nev)) ; call zero_basis(X)
+        
+        ! Initialize linear operator with random tridiagonal Toeplitz matrix.
+        A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
+
+        call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = a_
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = b_
+                A%data(i+1, i) = -b_
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
+        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
+
+        ! Analytical eigenvalues.
+        true_eigvals = zero_c${kind}$; k = 1
+        do i = 1, test_size, 2
+            true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            k = k+1
+        enddo
+
+        ! check eigenvalues
+        err = maxval(abs(eigvals - true_eigvals(:nev)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_ks_evp_${type[0]}$${kind}$', info='eval correctness.', context=msg)
+        !! check eigenvectors
+        !allocate(AX(nev))
+        !allocate(eigvec_residuals(test_size, nev))
+        !do i = 1, nev
+        !    call A%matvec(X(i), AX(i))
+        !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        !end do
+        !err = norm2(abs(eigvec_residuals))
+        !call get_err_str(msg, "max err: ", err)
+        !call check(error, err < rtol_${kind}$)
+        !call check_test(error, 'test_ks_evp_${type[0]}$${kind}$', & 
+        !                      & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+        #:endif
+
+        return
+    end subroutine test_ks_evp_${type[0]}$${kind}$
+
+    subroutine test_evp_${type[0]}$${kind}$(error)
+        ! Error type.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Eigenvectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! evals.
+        complex(${kind}$), allocatable :: eigvals(:)
+        ! Residuals.
+        real(${kind}$), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer :: i, k, n
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
+        complex(${kind}$) :: true_eigvals(test_size)
+        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+        #:if type[0] == "r"
+        ${type}$ :: a_, b_
+
+        ! Allocate eigenvectors.
+        allocate(X(test_size)) ; call zero_basis(X)
+        
+        ! Initialize linear operator with random tridiagonal Toeplitz matrix.
+        A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
+
+        call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = a_
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = b_
+                A%data(i+1, i) = -b_
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
+        call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
+
+        ! Analytical eigenvalues.
+        true_eigvals = zero_c${kind}$; k = 1
+        do i = 1, test_size, 2
+            true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
+            k = k+1
+        enddo
+
+        err = maxval(abs(eigvals - true_eigvals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_evp_${type[0]}$${kind}$', info='eval correctness', context=msg)
+
+!        ! check eigenvectors
+!        allocate(AX(test_size))
+!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+!        do i = 1, test_size
+!            call A%matvec(X(i), AX(i))
+!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+!        end do
+!        err = norm2(abs(eigvec_residuals))
+!        call get_err_str(msg, "max err: ", err)
+!        call check(error, err < rtol_${kind}$)
+!        call check_test(error, 'test_evp_${type[0]}$${kind}$', &
+!                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+        #:endif
+
+        return
+    end subroutine test_evp_${type[0]}$${kind}$
+
+    #:if type[0] == "r"
+    subroutine test_sym_evp_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        ! Eigenvectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! evals.
+        ${type}$, allocatable :: evals(:)
+        ! Residuals.
+        ${type}$, allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Toeplitz matrix.
+        ${type}$, allocatable :: T(:, :)
+        ${type}$ :: a_, b_
+        ! Miscellaneous.
+        integer :: i
+        ${type}$ :: alpha, true_evals(test_size)
+        ${type}$, parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
+        ${type}$, allocatable, dimension(:,:) :: G
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Create the sym. pos. def. Toeplitz matrix.
+        call random_number(a_) ; call random_number(b_) ; b_ = -abs(b_)
+        allocate(T(test_size, test_size)) ; T = 0.0_${kind}$
+        do i = 1, test_size
+            ! Diagonal entry.
+            T(i, i) = a_
+            if (i < test_size) then
+                ! Upper diagonal entry.
+                T(i, i+1) = b_
+                ! Lower diagonal entry.
+                T(i+1, i) = b_
+            endif
+        enddo
+
+        ! Allocations.
+        A = spd_linop_${type[0]}$${kind}$(T)
+        allocate(X(test_size)) ; call zero_basis(X)
+
+        ! Spectral decomposition.
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_${kind}$)
+        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_${type[0]}$${kind}$')
+
+        ! Analytical eigenvalues.
+        true_evals = 0.0_${kind}$
+        do i = 1, test_size
+            true_evals(i) = a_ + 2*abs(b_) * cos(i*pi/(test_size+1))
+        enddo
+
+        ! Check error.
+        err = maxval(abs(true_evals - evals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='eval correctness', context=msg)
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        do i = 1, test_size
+            call A%matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        err = norm2(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
+        call innerprod(G, X, X)
+
+        ! Check orthonormality of the eigenvectors.
+        err = maxval(abs(G - eye(test_size)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
+
+        return
+    end subroutine test_sym_evp_${type[0]}$${kind}$
+    #:endif
+
+    #:endfor
+
+
+    !---------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR SVDS     -----
+    !---------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_svd_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("SVDS computation", test_svd_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_svd_${type[0]}$${kind}$_testsuite
+
+    subroutine test_svd_${type[0]}$${kind}$(error)
+        ! Error type.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Singular vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:)
+        ! Singular values.
+        real(${kind}$), allocatable :: S(:)
+        ! Residuals.
+        real(${kind}$), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer :: i, k, n
+        real(${kind}$) :: true_svdvals(test_size)
+        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        ${type}$, allocatable :: G(:, :)
+        ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+        #:if type[0] == "r"
+
+        ! Allocate eigenvectors.
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
+        
+        ! Initialize linear operator with the Strang matrix.
+        A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = 2.0_${kind}$
+            ! Upper diagonal entry.
+            if (i < n) then
+                A%data(i, i+1) = -one_r${kind}$
+                A%data(i+1, i) = -one_r${kind}$
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
+        call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
+
+        ! Check correctness of full factorization.
+        allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='Factorization', eq='A = U @ S @ V.H', context=msg)
+
+        ! Check against analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2.0_${kind}$ * (1.0_${kind}$ + cos(i*pi/(test_size+1)))
+        enddo
+        err = maxval(abs(S - true_svdvals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', 'Singular values', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
+        call innerprod(G, U(1:test_size), U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        err = maxval(abs(G - eye(test_size)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = zero_${type[0]}$${kind}$
+        call innerprod(G, V(1:test_size), V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        err = maxval(abs(G - eye(test_size)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+
+        
+        #:endif
+
+        return
+    end subroutine test_svd_${type[0]}$${kind}$
+
+    #:endfor
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR GMRES     -----
+    !----------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_gmres_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full GMRES", test_gmres_${type[0]}$${kind}$), &
+                    new_unittest("Full (SPD) GMRES", test_gmres_spd_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_gmres_${type[0]}$${kind}$_testsuite
+
+    subroutine test_gmres_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        type(linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
+        type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
+        type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
+        ! GMRES options.
+        type(gmres_${kind}$_opts) :: opts
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        A = linop_${type[0]}$${kind}$()  ; call init_rand(A)
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        x = vector_${type[0]}$${kind}$() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_${kind}$_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
+
+        ! Check convergence.
+        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < b%norm() * rtol_${kind}$)
+        call check_test(error, 'test_gmres_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_gmres_${type[0]}$${kind}$
+    
+    subroutine test_gmres_spd_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
+        type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
+        ! GMRES options.
+        type(gmres_${kind}$_opts) :: opts
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        #:if type[0] == "r"
+        A = spd_linop_${type[0]}$${kind}$()  ; call init_rand(A)
+        #:else
+        A = hermitian_linop_${type[0]}$${kind}$() ; call init_rand(A)
+        #:endif
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        x = vector_${type[0]}$${kind}$() ; call x%zero()
+
+        ! GMRES solver.
+        opts = gmres_${kind}$_opts(kdim=test_size)
+        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
+        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
+
+        ! Check convergence.
+        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < b%norm() * rtol_${kind}$)
+        call check_test(error, 'test_gmres_spd_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_gmres_spd_${type[0]}$${kind}$
+
+    #:endfor
+
+    !-----------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR CONJUGATE GRADIENT     -----
+    !-----------------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_cg_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Cong. Gradient", test_cg_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_cg_${type[0]}$${kind}$_testsuite
+
+    subroutine test_cg_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        type(vector_${type[0]}$${kind}$), allocatable :: b
+        type(vector_${type[0]}$${kind}$), allocatable :: x
+        type(cg_${kind}$_opts) :: opts
+        ! Information flag
+        integer :: info
+        ! Misc
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        #:if type[0] == "r"
+        A = spd_linop_${type[0]}$${kind}$() ; call init_rand(A)
+        #:else
+        A = hermitian_linop_${type[0]}$${kind}$() ; call init_rand(A)
+        #:endif
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        x = vector_${type[0]}$${kind}$() ; call x%zero()
+
+        ! CG solver.
+        opts = cg_${kind}$_opts(maxiter=2*test_size)
+        call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
+        call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
+
+        ! Check convergence.
+        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < b%norm() * rtol_${kind}$)
+        call check_test(error, 'test_cg_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_cg_${type[0]}$${kind}$
+
+    #:endfor
+
+end module TestIterativeSolvers
+

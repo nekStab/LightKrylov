@@ -1,0 +1,222 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestLinops
+    ! Fortran Standard Library
+    use stdlib_math, only: is_close, all_close
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! LightKrylov
+    use LightKrylov
+    use LightKrylov_Constants
+    use LightKrylov_Logger
+    ! Test Utilities
+    use LightKrylov_TestUtils
+
+    implicit none
+    
+    private
+
+    character(len=128), parameter, private :: this_module = 'LightKrylov_TestLinops'
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_linop_${type[0]}$${kind}$_testsuite
+    #:endfor
+
+contains
+
+    !---------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS     -----
+    !---------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_linop_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+                    new_unittest("Matrix-vector product", test_matvec_${type[0]}$${kind}$), &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${type[0]}$${kind}$),  &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${type[0]}$${kind}$),  &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_linop_${type[0]}$${kind}$_testsuite
+
+    subroutine test_matvec_${type[0]}$${kind}$(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: Adata(:, :, :)
+        #:endif
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
+
+        ! Initialize matrix.
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Compute matrix-vector product.
+        call A%matvec(x, y)
+
+        ! Check result.
+        #:if type[0] == "c"
+        call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_${kind}$)
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', eq='norm2(|y - A @ x|)')
+        #:else
+        call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_${kind}$)
+        call check_test(error, 'test_matvec_${type[0]}$${kind}$', eq='norm2(y - A @ x)')
+        #:endif
+        
+        return
+    end subroutine test_matvec_${type[0]}$${kind}$
+
+    subroutine test_rmatvec_${type[0]}$${kind}$(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: Adata(:, :, :)
+        #:endif
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%rand()
+
+        ! Initialize matrix.
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Compute matrix-vector product.
+        call A%rmatvec(x, y)
+
+        ! Check result.
+        #:if type[0] == "c"
+        call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_${kind}$)
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', eq='norm2(|y - A.H @ x|)')
+        #:else
+        call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_${kind}$)
+        call check_test(error, 'test_rmatvec_${type[0]}$${kind}$', eq='norm2(y - A.T @ x)')
+        #:endif
+        
+        return
+    end subroutine test_rmatvec_${type[0]}$${kind}$
+
+    subroutine test_adjoint_matvec_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: Adata(:, :, :)
+        #:endif
+
+        ! Internal variable.
+        real(${kind}$) :: alpha
+
+        ! Initialize matrix.
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%matvec(x, y)
+
+        ! Check result.
+        #:if type[0] == "c"
+        alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', eq='norm2(|y - A.H @ x|)')
+        #:else
+        alpha = norm2(y%data - matmul(transpose(A%data), x%data))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_matvec_${type[0]}$${kind}$', eq='norm2(y - A.T @ x)')
+        #:endif
+
+        
+
+       return
+    end subroutine test_adjoint_matvec_${type[0]}$${kind}$
+
+    subroutine test_adjoint_rmatvec_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        ! Test LinOp.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
+        #:if type[0] == "c"
+        real(${kind}$), allocatable :: Adata(:, :, :)
+        #:endif
+
+        ! Internal variable.
+        real(${kind}$) :: alpha
+
+        ! Initialize matrix.
+        A = linop_${type[0]}$${kind}$()
+        #:if type[0] == "c"
+        allocate(Adata(test_size, test_size, 2))
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        #:else
+        call random_number(A%data)
+        #:endif
+
+        ! Adjoint operator.
+        allocate(B) ; B%A = A
+
+        ! Initialize vectors.
+        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        y = vector_${type[0]}$${kind}$() ; call y%zero()
+
+        ! Compute adjoint matrix-vector product
+        call B%rmatvec(x, y)
+
+        ! Check result.
+        #:if type[0] == "c"
+        alpha = norm2(abs(y%data - matmul(A%data, x%data)))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', eq='norm2(|y - A @ x|)')
+        #:else
+        alpha = norm2(y%data - matmul(A%data, x%data))
+        call check(error, alpha < rtol_${kind}$)
+        call check_test(error, 'test_adjoint_rmatvec_${type[0]}$${kind}$', eq='norm2(y - A @ x)')
+        #:endif
+
+       return
+    end subroutine test_adjoint_rmatvec_${type[0]}$${kind}$
+
+    #:endfor
+end module TestLinops
+
