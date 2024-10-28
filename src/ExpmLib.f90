@@ -28,6 +28,10 @@ module lightkrylov_expmlib
     public :: expm
     public :: kexpm
     public :: k_exptA
+    public :: k_exptA_rsp
+    public :: k_exptA_rdp
+    public :: k_exptA_csp
+    public :: k_exptA_cdp
 
     abstract interface
         subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, info, trans)

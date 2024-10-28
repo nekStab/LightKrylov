@@ -29,6 +29,9 @@ module lightkrylov_expmlib
     public :: expm
     public :: kexpm
     public :: k_exptA
+    #:for kind, type in RC_KINDS_TYPES
+    public :: k_exptA_${type[0]}$${kind}$
+    #:endfor
 
     abstract interface
         #:for kind, type in RC_KINDS_TYPES
