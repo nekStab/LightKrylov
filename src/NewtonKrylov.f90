@@ -26,6 +26,7 @@ module LightKrylov_NewtonKrylov
       !! (the Jacobian) of the nonlinear function in the vicinity of the current solution.
       !!
       !! **Algorthmic Features**
+      !!
       !! - At iteration \(k\), the standard Newton step \( \mathbf{\delta x}_k\) is computed as the solution of the linear system
       !!   
       !! $$ \mathbf{J}_\mathbf{X_k} \mathbf{\delta x}_k = \mathbf{r}_k $$
@@ -35,7 +36,7 @@ module LightKrylov_NewtonKrylov
       !!
       !! $$ \mathbf{X}_{k+1} = \mathbf{X}_k + \alpha \mathbf{\delta x}_k$$
       !!
-      !!   where \( \alpha \in ( 0, 1 \] \) parametrizes the step length. The standard Newton algorithm sets \( \alpha = 1 \).
+      !!   where \( \alpha \in \left( 0, 1 \right] \) parametrizes the step length. The standard Newton algorithm sets \( \alpha = 1 \).
       !!
       !! - The Jacobian is never assembled and the linear system is solved using one of the available iterative solvers.
       !! - When the residual norm does not decrease during iteration indicating that the linearization is not a very
@@ -48,11 +49,13 @@ module LightKrylov_NewtonKrylov
       !!   in the iteration.
       !!
       !! **Advantages**
+      !!
       !! - The iterative solution of the linear systems has a comparatively low storage footprint.
       !! - If the Newton iteration converges, the convergence is formally asymptotically of second order. Using dynamic
       !!   tolerances and line searches slightly reduce this convergence rate in exchange for a larger convergence region.
       !! 
       !! **Limitations**
+      !!
       !! - The method is not guaranteed to converge if the initial guess is too far from the fixed point. 
       !!   If the Newton iteration diverges even with step bisection, the best suggestion is to find a 
       !!   better initial guess. If this is not feasible, some alternatives to improve the convergence 
@@ -60,6 +63,7 @@ module LightKrylov_NewtonKrylov
       !!   algorithms and trust region methods (doglog, double dogleg, hookstep, ...).
       !!
       !! **References**
+      !!
       !! - Sánchez, J., Net, M., Garcıa-Archilla, B., & Simó, C. (2004). "Newton–Krylov continuation of periodic orbits 
       !!   for Navier–Stokes flows". Journal of Computational Physics, 201(1), 13-33.
       !! - Viswanath, D. (2007). "Recurrent motions within plane Couette turbulence". Journal of Fluid Mechanics, 580, 339-358.
@@ -67,7 +71,6 @@ module LightKrylov_NewtonKrylov
       !!   of Fluids, 20(11), 114102.
       !! - Frantz, R. A., Loiseau, J. C., & Robinet, J. C. (2023). "Krylov methods for large-scale dynamical systems: Application 
       !!   in fluid dynamics". Applied Mechanics Reviews, 75(3), 030802.
-      !!
       module procedure newton_rsp
       module procedure newton_rdp
       module procedure newton_csp
@@ -109,11 +112,13 @@ module LightKrylov_NewtonKrylov
 
 contains
 
-   subroutine newton_rsp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rsp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_rsp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rsp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_rsp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(sp),                                 optional, intent(in)    :: tolerance
@@ -122,8 +127,6 @@ contains
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_rsp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_rsp),              optional, intent(in)    :: preconditioner
@@ -134,7 +137,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_rsp), pointer :: solver => null()
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rsp), allocatable        :: residual, increment
       real(sp)           :: rnorm, tol
@@ -149,12 +151,6 @@ contains
          opts = options
       else
          opts = newton_sp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_rsp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -238,11 +234,13 @@ contains
       return
    end subroutine newton_rsp
 
-   subroutine newton_rdp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_rdp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(dp),                                 optional, intent(in)    :: tolerance
@@ -251,8 +249,6 @@ contains
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_rdp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_rdp),              optional, intent(in)    :: preconditioner
@@ -263,7 +259,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_rdp), pointer :: solver => null()
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rdp), allocatable        :: residual, increment
       real(dp)           :: rnorm, tol
@@ -278,12 +273,6 @@ contains
          opts = options
       else
          opts = newton_dp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_rdp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -367,11 +356,13 @@ contains
       return
    end subroutine newton_rdp
 
-   subroutine newton_csp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_csp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_csp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_csp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_csp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(sp),                                 optional, intent(in)    :: tolerance
@@ -380,8 +371,6 @@ contains
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_csp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_csp),              optional, intent(in)    :: preconditioner
@@ -392,7 +381,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_csp), pointer :: solver => null()
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_csp), allocatable        :: residual, increment
       real(sp)           :: rnorm, tol
@@ -407,12 +395,6 @@ contains
          opts = options
       else
          opts = newton_sp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_csp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -496,11 +478,13 @@ contains
       return
    end subroutine newton_csp
 
-   subroutine newton_cdp(sys, X, info, tolerance, options, linear_solver, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_cdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
       class(abstract_system_cdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_cdp),                         intent(inout) :: X
       !! Initial guess for the fixed point, will be overwritten with solution
+      procedure(abstract_linear_solver_cdp)                :: solver
+      !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
       real(dp),                                 optional, intent(in)    :: tolerance
@@ -509,8 +493,6 @@ contains
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
       !! Options for the Newton-Krylov iteration
-      procedure(abstract_linear_solver_cdp),    optional                :: linear_solver
-      !! Linear solver to be used to find Newton step
       class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
       !! Options for the linear solver
       class(abstract_precond_cdp),              optional, intent(in)    :: preconditioner
@@ -521,7 +503,6 @@ contains
       !-----     Internal variables     -----
       !--------------------------------------
       
-      procedure(abstract_linear_solver_cdp), pointer :: solver => null()
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_cdp), allocatable        :: residual, increment
       real(dp)           :: rnorm, tol
@@ -536,12 +517,6 @@ contains
          opts = options
       else
          opts = newton_dp_opts()
-      end if
-      ! Linear solver
-      if (present(linear_solver)) then
-         solver => linear_solver
-      else
-         solver => gmres_cdp
       end if
       ! Scheduler
       if (present(scheduler)) then
@@ -667,7 +642,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_rsp, Xin, one_rsp)
+            call copy(X, Xin)
             call X%axpby(one_rsp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -684,7 +659,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_rsp, Xin, one_rsp)
+               call copy(X, Xin)
                call X%axpby(one_rsp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -697,7 +672,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_rsp, Xin, one_rsp)
+               call copy(X, Xin)
                call X%axpby(one_rsp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -709,7 +684,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
-         call X%axpby(zero_rsp, Xin, one_rsp)
+         call copy(X, Xin)
          call X%axpby(one_rsp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
@@ -760,7 +735,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_rdp, Xin, one_rdp)
+            call copy(X, Xin)
             call X%axpby(one_rdp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -777,7 +752,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_rdp, Xin, one_rdp)
+               call copy(X, Xin)
                call X%axpby(one_rdp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -790,7 +765,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_rdp, Xin, one_rdp)
+               call copy(X, Xin)
                call X%axpby(one_rdp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -802,7 +777,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
-         call X%axpby(zero_rdp, Xin, one_rdp)
+         call copy(X, Xin)
          call X%axpby(one_rdp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
@@ -853,7 +828,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_csp, Xin, one_csp)
+            call copy(X, Xin)
             call X%axpby(one_csp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -870,7 +845,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_csp, Xin, one_csp)
+               call copy(X, Xin)
                call X%axpby(one_csp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -883,7 +858,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_csp, Xin, one_csp)
+               call copy(X, Xin)
                call X%axpby(one_csp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -895,7 +870,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
-         call X%axpby(zero_csp, Xin, one_csp)
+         call copy(X, Xin)
          call X%axpby(one_csp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
@@ -946,7 +921,7 @@ contains
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          ! compute new trial solutions
          do j = 2, 3
-            call X%axpby(zero_cdp, Xin, one_cdp)
+            call copy(X, Xin)
             call X%axpby(one_cdp, increment, alpha(j))
             call sys%eval(X, residual, tol)
             res(j) = residual%norm()
@@ -963,7 +938,7 @@ contains
                res(3:4) = res(2:3)
                ! new point --> a2, r2
                alpha(2) = alpha(1) + step * invphi2
-               call X%axpby(zero_cdp, Xin, one_cdp)
+               call copy(X, Xin)
                call X%axpby(one_cdp, increment, alpha(2))
                call sys%eval(X, residual, tol)
                res(2) = residual%norm()
@@ -976,7 +951,7 @@ contains
                ! r4 is kept
                ! new point --> a3, r3
                alpha(3) = alpha(1) + step * invphi
-               call X%axpby(zero_cdp, Xin, one_cdp)
+               call copy(X, Xin)
                call X%axpby(one_cdp, increment, alpha(3))
                call sys%eval(X, residual, tol)
                res(3) = residual%norm()
@@ -988,7 +963,7 @@ contains
          idx = minloc(res)
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
-         call X%axpby(zero_cdp, Xin, one_cdp)
+         call copy(X, Xin)
          call X%axpby(one_cdp, increment, alpha(idx(1)))
       else
          write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'

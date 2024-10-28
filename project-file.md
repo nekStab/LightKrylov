@@ -6,6 +6,9 @@ media_dir: ./imgs
 graph: false
 license: bsd
 project_github: https://github.com/nekStab/LightKrylov
+display: public
+sort: permission-alpha
+css: ./bootstrap.min.css
 ---
 
 @note

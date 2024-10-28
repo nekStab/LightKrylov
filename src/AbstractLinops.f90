@@ -402,28 +402,28 @@ contains
         class(Id_rsp), intent(in) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-        call vec_out%axpby(zero_rsp, vec_in, one_rsp)
+        call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_rsp
     subroutine id_matvec_rdp(self, vec_in, vec_out)
         class(Id_rdp), intent(in) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-        call vec_out%axpby(zero_rdp, vec_in, one_rdp)
+        call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_rdp
     subroutine id_matvec_csp(self, vec_in, vec_out)
         class(Id_csp), intent(in) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-        call vec_out%axpby(zero_csp, vec_in, one_csp)
+        call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_csp
     subroutine id_matvec_cdp(self, vec_in, vec_out)
         class(Id_cdp), intent(in) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-        call vec_out%axpby(zero_cdp, vec_in, one_cdp)
+        call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_cdp
 

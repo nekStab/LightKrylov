@@ -276,7 +276,7 @@ contains
                FTLE_in = 0.0_wp                                   ! reset FTLE computation
                if (if_rst) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
             endif
-            call copy_basis(vec_in, vec_out)
+            call copy(vec_in, vec_out)
          end do
          t_complete = modulo(t2, t1)
          if (t_complete > 1e-4_wp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)
@@ -289,7 +289,7 @@ contains
             FTLE_in = 0.0_wp                                      ! reset FTLE computation
             if (if_rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
          endif
-         call copy_basis(vec_in, vec_out)
+         call copy(vec_in, vec_out)
       end do
       t_complete = modulo(Tend, t2)
       if (t_complete > 1e-4_wp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)

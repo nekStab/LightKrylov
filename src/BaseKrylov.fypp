@@ -40,8 +40,8 @@ module lightkrylov_BaseKrylov
     public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
-    public :: lanczos_bidiagonalization
-    public :: lanczos_tridiagonalization
+    public :: bidiagonalization
+    public :: lanczos
     public :: krylov_schur
     public :: double_gram_schmidt_step
     #:for kind in REAL_KINDS
@@ -296,6 +296,22 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface orthonormalize_basis
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of vectors, it computes an orthonormal basis for its
+        !!  column-span using the `double_gram_schmidt` process. All computations are done
+        !!  in-place.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call orthonormalize_basis(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of `abstract_vector` to orthonormalize. Note that this process is done
+        !!        in-place. It is an `intent(inout)` argument.
         #:for kind, type in RC_KINDS_TYPES
         module procedure orthonormalize_basis_${type[0]}$${kind}$
         #:endfor
@@ -354,7 +370,7 @@ module lightkrylov_BaseKrylov
         #:endfor
     end interface
 
-    interface lanczos_tridiagonalization
+    interface lanczos
         !!  ### Description
         !!
         !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
@@ -419,7 +435,7 @@ module lightkrylov_BaseKrylov
         #:endfor
     end interface
 
-    interface lanczos_bidiagonalization
+    interface bidiagonalization
         !!  ### Description
         !!
         !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
@@ -494,6 +510,45 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface krylov_schur
+        !!  ### Description
+        !!
+        !!  Given a partial Krylov decomposition
+        !!
+        !!  \[
+        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^H,
+        !!  \]
+        !!
+        !!  this subroutine implements the Krylov-Schur restarting strategy proposed by
+        !!  Stewart [1].
+        !!
+        !!  **References**
+        !!
+        !!  - G. W. Stewart. "A Krylov-Schur algorithm for large eigenproblems".
+        !!    SIAM Journal on Matrix Analysis and Applications, vol 23 (3), 2002.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call krylov_schur(n, X, H, select_eigs)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `n` : Number of selected eigenvalues moved to the upper left-block of the 
+        !!        Schur matrix. It is an `intent(out)` argument.
+        !!
+        !!  `X` : On entry, array of `abstract_vector` computed using the Arnoldi process.
+        !!        On exit, the first `n` columns form an orthonormal basis for the eigenspace
+        !!        associated with eigenvalues moved to the upper left-block of the Schur matrix.
+        !!        It is an `intent(inout)` argument.
+        !!
+        !!  `H` : On entry, `real` of `complex` upper Hessenberg matrix computed using the
+        !!        Arnoldi process. On exit, the leading \( n \times n\) block contains the
+        !!        \( S_{11} \) block of the re-ordered Schur matrix containing the selected
+        !!        eigenvalues. It is an `intent(inout)` argument.
+        !!
+        !!  `select_eigs` : Procedure to select which eigenvalues to move in the upper-left
+        !!                  block. It is an `intent(inout)` argument.
         #:for kind, type in RC_KINDS_TYPES
         module procedure krylov_schur_${type[0]}$${kind}$
         #:endfor
@@ -547,7 +602,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -945,9 +1000,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_r${kind}$
 
         ! Swap columns.
-        call Qwrk%axpby(zero_${type[0]}$${kind}$, Q(j), one_${type[0]}$${kind}$)
-        call Q(j)%axpby(zero_${type[0]}$${kind}$, Q(i), one_${type[0]}$${kind}$)
-        call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk, one_${type[0]}$${kind}$)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -971,7 +1026,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk(perm(i)), one_${type[0]}$${kind}$)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -997,7 +1052,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_${type[0]}$${kind}$, Qwrk(inv_perm(i)), one_${type[0]}$${kind}$)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -1357,8 +1412,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_${type[0]}$${kind}$, X(kdim+1), one_${type[0]}$${kind}$)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.

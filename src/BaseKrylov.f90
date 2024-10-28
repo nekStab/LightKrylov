@@ -38,8 +38,8 @@ module lightkrylov_BaseKrylov
     public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
-    public :: lanczos_bidiagonalization
-    public :: lanczos_tridiagonalization
+    public :: bidiagonalization
+    public :: lanczos
     public :: krylov_schur
     public :: double_gram_schmidt_step
     public :: eigvals_select_sp
@@ -309,6 +309,22 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface orthonormalize_basis
+        !!  ### Description
+        !!
+        !!  Given an array \( X \) of vectors, it computes an orthonormal basis for its
+        !!  column-span using the `double_gram_schmidt` process. All computations are done
+        !!  in-place.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call orthonormalize_basis(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `X` : Array of `abstract_vector` to orthonormalize. Note that this process is done
+        !!        in-place. It is an `intent(inout)` argument.
         module procedure orthonormalize_basis_rsp
         module procedure orthonormalize_basis_rdp
         module procedure orthonormalize_basis_csp
@@ -376,7 +392,7 @@ module lightkrylov_BaseKrylov
         module procedure DGS_basis_against_basis_cdp
     end interface
 
-    interface lanczos_tridiagonalization
+    interface lanczos
         !!  ### Description
         !!
         !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
@@ -442,7 +458,7 @@ module lightkrylov_BaseKrylov
         module procedure lanczos_tridiagonalization_cdp
     end interface
 
-    interface lanczos_bidiagonalization
+    interface bidiagonalization
         !!  ### Description
         !!
         !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
@@ -518,6 +534,45 @@ module lightkrylov_BaseKrylov
     end interface
 
     interface krylov_schur
+        !!  ### Description
+        !!
+        !!  Given a partial Krylov decomposition
+        !!
+        !!  \[
+        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^H,
+        !!  \]
+        !!
+        !!  this subroutine implements the Krylov-Schur restarting strategy proposed by
+        !!  Stewart [1].
+        !!
+        !!  **References**
+        !!
+        !!  - G. W. Stewart. "A Krylov-Schur algorithm for large eigenproblems".
+        !!    SIAM Journal on Matrix Analysis and Applications, vol 23 (3), 2002.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call krylov_schur(n, X, H, select_eigs)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `n` : Number of selected eigenvalues moved to the upper left-block of the 
+        !!        Schur matrix. It is an `intent(out)` argument.
+        !!
+        !!  `X` : On entry, array of `abstract_vector` computed using the Arnoldi process.
+        !!        On exit, the first `n` columns form an orthonormal basis for the eigenspace
+        !!        associated with eigenvalues moved to the upper left-block of the Schur matrix.
+        !!        It is an `intent(inout)` argument.
+        !!
+        !!  `H` : On entry, `real` of `complex` upper Hessenberg matrix computed using the
+        !!        Arnoldi process. On exit, the leading \( n \times n\) block contains the
+        !!        \( S_{11} \) block of the re-ordered Schur matrix containing the selected
+        !!        eigenvalues. It is an `intent(inout)` argument.
+        !!
+        !!  `select_eigs` : Procedure to select which eigenvalues to move in the upper-left
+        !!                  block. It is an `intent(inout)` argument.
         module procedure krylov_schur_rsp
         module procedure krylov_schur_rdp
         module procedure krylov_schur_csp
@@ -602,7 +657,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -847,7 +902,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1092,7 +1147,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1337,7 +1392,7 @@ contains
         if(present(X0)) then
             p = size(X0)
             ! Initialize.
-            call copy_basis(X(:p), X0)
+            call copy(X(:p), X0)
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
@@ -1735,9 +1790,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_rsp, Q(j), one_rsp)
-        call Q(j)%axpby(zero_rsp, Q(i), one_rsp)
-        call Q(i)%axpby(zero_rsp, Qwrk, one_rsp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -1761,7 +1816,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rsp, Qwrk(perm(i)), one_rsp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -1787,7 +1842,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rsp, Qwrk(inv_perm(i)), one_rsp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -2000,9 +2055,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_rdp, Q(j), one_rdp)
-        call Q(j)%axpby(zero_rdp, Q(i), one_rdp)
-        call Q(i)%axpby(zero_rdp, Qwrk, one_rdp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -2026,7 +2081,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rdp, Qwrk(perm(i)), one_rdp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -2052,7 +2107,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_rdp, Qwrk(inv_perm(i)), one_rdp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -2265,9 +2320,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_csp, Q(j), one_csp)
-        call Q(j)%axpby(zero_csp, Q(i), one_csp)
-        call Q(i)%axpby(zero_csp, Qwrk, one_csp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -2291,7 +2346,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_csp, Qwrk(perm(i)), one_csp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -2317,7 +2372,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_csp, Qwrk(inv_perm(i)), one_csp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -2530,9 +2585,9 @@ contains
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
-        call Qwrk%axpby(zero_cdp, Q(j), one_cdp)
-        call Q(j)%axpby(zero_cdp, Q(i), one_cdp)
-        call Q(i)%axpby(zero_cdp, Qwrk, one_cdp)
+        call copy(Qwrk, Q(j))
+        call copy(Q(j), Q(i))
+        call copy(Q(i), Qwrk)
         
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -2556,7 +2611,7 @@ contains
 
         allocate(Qwrk, source=Q)
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_cdp, Qwrk(perm(i)), one_cdp)
+            call copy(Q(i), Qwrk(perm(i)))
         enddo
 
         return
@@ -2582,7 +2637,7 @@ contains
 
         ! Undo permutation.
         do i = 1, size(perm)
-            call Q(i)%axpby(zero_cdp, Qwrk(inv_perm(i)), one_cdp)
+            call copy(Q(i), Qwrk(inv_perm(i)))
         enddo
 
         return
@@ -3620,8 +3675,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_rsp, X(kdim+1), one_rsp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3679,8 +3734,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_rdp, X(kdim+1), one_rdp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3738,8 +3793,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_csp, X(kdim+1), one_csp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.
@@ -3797,8 +3852,8 @@ contains
         
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy_basis(X(:n), Xwrk(:n))
-        call X(n+1)%axpby(zero_cdp, X(kdim+1), one_cdp)
+        call copy(X(:n), Xwrk(:n))
+        call copy(X(n+1), X(kdim+1))
         call zero_basis(X(n+2:))
 
         ! Update the Hessenberg matrix.

@@ -1,7 +1,24 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_IterativeSolvers
+    !!  This module provides some of the most important computational routines provided by
+    !!  `LightKrylov`. These include:
+    !!
+    !!  - `eigs` : Compute the leading eigenpairs of a square linear operator \( A \).
+    !!  - `eighs` : Compute the leading eigenpairs of a symmetric positive definite 
+    !!              operator \( A \).
+    !!  - `svds` : Compute the leading singular triplets of a linear operator \( A \).
+    !!  - `gmres` : Solve the linear system \( Ax = b \) using the *generalized minimum
+    !!              residual method*.
+    !!  - `cg` : Solve the linear system \( Ax = b \) where \( A \) is symmetric
+    !!           positive definite using the *Conjugate Gradient* method.
+    !!
+    !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
+    !!  to `LightKrylov`. Note that these features are still experimental however.
 
+    !--------------------------------------------
+    !-----     Fortran Standard Library     -----
+    !--------------------------------------------
     use iso_fortran_env, only: output_unit
     
     use stdlib_sorting, only: sort_index
@@ -10,6 +27,9 @@ module lightkrylov_IterativeSolvers
     use stdlib_linalg, only: lstsq, svd, eigh
     use stdlib_stats, only: median
 
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
     use LightKrylov_Constants
     Use LightKrylov_Logger
     use LightKrylov_Utils
@@ -39,36 +59,332 @@ module lightkrylov_IterativeSolvers
     #:endfor
 
     interface save_eigenspectrum
+        !!  ### Description
+        !!
+        !!  Utility function to save the eigenspectrum computed from the Arnoldi factorization.
+        !!  It outpost a .npy file.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call save_eigenspectrum(eigvals, residuals, fname)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `eigvals` : `complex` rank-1 array containing the eigenvalues.
+        !!
+        !!  `residuals` : `real` rank-1 array containing the residuals associated to each
+        !!                eigenvalues.
+        !!
+        !!  `fname` : Name of the file to save the eigenspectrum.
         #:for kind in REAL_KINDS
         module procedure save_eigenspectrum_${kind}$
         #:endfor
     end interface
 
     interface eighs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a symmetric operator \(A\)
+        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectors such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Lanczos factorization, resulting in a symmetric
+        !!  tridiagonal matrix \(T\). The eigenvalues of \(A\) are approximated by those of \(T\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
+        !!  of Linear Differential and Integral Operators". United States Governm. Press Office.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure eighs_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface eigs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a square linear operator \(A\)
+        !!  using the Arnoldi iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectorss such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  or
+        !!
+        !!  \[
+        !!      A^H x = \lambda x.
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Arnoldi factorization, resulting in an upper
+        !!  Hessenberg matrix \(H\). The eigenvalues of \(A\) are approximated by those of \(H\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Arnoldi, W. E. (1951). "The Principle of Minimized Iterations in the Solution of
+        !!    the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eigs(A, X, eigvals, residuals, info [, kdim] [, select] [,tolerance] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `select` (*optional*) : Function to select which eigenvalues to compute.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!
+        !!  `transpose` (*optional*) : `logical` flag determining whether the eigenvalues of \(A\)
+        !!                             or \(A^H\) need to be computed.
         #:for kind, type in RC_KINDS_TYPES
         module procedure eigs_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface svds
+        !!  ### Description
+        !!
+        !!  Computes the leading singular triplets of an arbitrary linear operator \(A\)
+        !!  using the Lanczos iterative process. Given a linear operator \(A\), it finds
+        !!  the leading singular values and singular vectors such that:
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!      Av & = \sigma u \\
+        !!      A^H u & = \sigma v.
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  The subspaces \(U\) and \(V\) are constructed via Lanczos factorization, resulting in
+        !!  a bidiagonal matrix \(B\). The singular values of \(A\) are approximated by those of
+        !!  \(B\) and the singular vectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and
+        !!   Pseudo-Inverse of a Matrix."
+        !!  - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos
+        !!   bidiagonalization methods."
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization."
+        !!   Technical Report, 1998.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call svds(A, U, S, V, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `S` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!        singular values of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `V` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each singular triplet. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading singular triplets. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure svds_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface gmres
+        !!  ### Description
+        !!
+        !!  Solve a square linear system of equations
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Generalized Minimum RESidual* (GMRES) method.
+        !!
+        !!  **References**
+        !!
+        !!  - Saad Y. and Schultz M. H. "GMRES: A generalized minimal residual algorithm for
+        !!  solving nonsymmetric linear systems." SIAM Journal on Scientific and Statistical
+        !!  Computing, 7(3), 1986.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
+        !!  `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
+        !!  \( A^H x = b \) is being solver.
         #:for kind, type in RC_KINDS_TYPES
         module procedure gmres_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface cg
+        !!  ### Description
+        !!
+        !!  Given a symmetric (positive definite) matrix \( A \), solves the linear system
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Conjugate Gradient* method.
+        !!
+        !!  **References**
+        !!
+        !!  - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
+        !!  Linear Systems," Journal of Research of the National Bureau of Standards,
+        !!  49(6), 409–436.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
+        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
+        !!  `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  @note
+        !!  Although the interface to pass a preconditioner is exposed, it is not currently
+        !!  implemented.
+        !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
         module procedure cg_${type[0]}$${kind}$
         #:endfor
@@ -109,6 +425,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$, abstract_opts, abstract_precond_${type[0]}$${kind}$, ${kind}$
+
             class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
@@ -121,10 +438,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_${type[0]}$${kind}$
@@ -402,10 +719,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_${type[0]}$${kind}$')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_${type[0]}$${kind}$')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
@@ -420,8 +737,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_${type[0]}$${kind}$')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -510,10 +827,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
@@ -532,8 +849,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -577,7 +894,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_${kind}$_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose

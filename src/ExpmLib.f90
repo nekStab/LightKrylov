@@ -1,4 +1,6 @@
 module lightkrylov_expmlib
+    !!  This module implements the evaluation of the "matrix-exponential times vector" procedure
+    !!  using Krylov methods.
 
     ! Iso Fortran.
     use iso_fortran_env, only: output_unit
@@ -16,6 +18,7 @@ module lightkrylov_expmlib
     use LightKrylov_BaseKrylov
 
     implicit none
+    private
     
     character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
     public :: abstract_exptA_rsp
@@ -106,6 +109,23 @@ module lightkrylov_expmlib
     end interface
 
     interface expm
+        !!  ### Description
+        !!
+        !!  Evaluate the exponential of a dense matrix using Pade approximations.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      E = expm(A, order)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
+        !!
+        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
+        !!
+        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
         module procedure expm_rsp
         module procedure expm_rdp
         module procedure expm_csp
@@ -113,6 +133,34 @@ module lightkrylov_expmlib
     end interface
 
     interface kexpm
+        !!  ### Description
+        !!
+        !!  This interface provides methods to evaluate the matrix-vector product
+        !!  \( c = \exp(\tau A) b \) based on the Arnoldi method.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `c` : Output vector (or vectors). It is an `intent(out)` argument.
+        !!
+        !!  `A` : Linear operator to be exponentiated. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
+        !!
+        !!  `tau` : `real` (singe or double) time over which the matrix exponential needs to
+        !!          be computed. It is an `intent(in)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `trans` (optional) : Whether \( A \) or \( A^H \) is being used.
+        !!                      (default `trans=.false.`)
+        !!
+        !!  `kdim` (optional) : Dimension of the Krylov subspace used in the Arnoldi method.
         module procedure kexpm_vec_rsp
         module procedure kexpm_mat_rsp
         module procedure kexpm_vec_rdp
@@ -124,6 +172,29 @@ module lightkrylov_expmlib
     end interface
 
     interface k_exptA
+        !!  ### Description
+        !!
+        !!  Utility function to evaluate the matrix-exponential times vector.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call kexpm(vec_out, A, vec_in, tau, info, trans)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `vec_out` : Output vector.
+        !!
+        !!  `A` : Matrix to be exponentiated.
+        !!
+        !!  `vec_in` : Input vector.
+        !!
+        !!  `tau` : Integration time.
+        !!
+        !!  `info` : Information flag.
+        !!
+        !!  `trans` : Whether \( A \) or \( A^H \) is being used.
         module procedure k_exptA_rsp
         module procedure k_exptA_rdp
         module procedure k_exptA_csp
@@ -136,12 +207,12 @@ contains
     !-----     DENSE MATRIX EXPONENTIAL     -----
     !--------------------------------------------
 
-    subroutine expm_rsp(E, A, order)
+    function expm_rsp(A, order) result(E)
         real(sp), intent(in) :: A(:, :)
         !! Matrix to be exponentiated.
-        real(sp), intent(out) :: E(:, :)
+        real(sp) :: E(size(A, 1), size(A, 1))
         !! Output matrix E = exp(tA).
-        integer, optional :: order
+        integer, intent(in), optional :: order
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
@@ -196,7 +267,7 @@ contains
         enddo
 
         return
-    end subroutine expm_rsp
+    end function expm_rsp
 
     subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rsp), intent(out) :: c
@@ -272,7 +343,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kp, :kp), tau*H(:kp, :kp))
+                E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
@@ -387,7 +458,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kpp, :kpp), tau*H(:kpp, :kpp))
+                E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
                 ! Project back to original space.
                 do i = 1, size(Xwrk)
@@ -458,12 +529,12 @@ contains
         return
     end subroutine k_exptA_rsp
 
-    subroutine expm_rdp(E, A, order)
+    function expm_rdp(A, order) result(E)
         real(dp), intent(in) :: A(:, :)
         !! Matrix to be exponentiated.
-        real(dp), intent(out) :: E(:, :)
+        real(dp) :: E(size(A, 1), size(A, 1))
         !! Output matrix E = exp(tA).
-        integer, optional :: order
+        integer, intent(in), optional :: order
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
@@ -518,7 +589,7 @@ contains
         enddo
 
         return
-    end subroutine expm_rdp
+    end function expm_rdp
 
     subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rdp), intent(out) :: c
@@ -594,7 +665,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kp, :kp), tau*H(:kp, :kp))
+                E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
@@ -709,7 +780,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kpp, :kpp), tau*H(:kpp, :kpp))
+                E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
                 ! Project back to original space.
                 do i = 1, size(Xwrk)
@@ -780,12 +851,12 @@ contains
         return
     end subroutine k_exptA_rdp
 
-    subroutine expm_csp(E, A, order)
+    function expm_csp(A, order) result(E)
         complex(sp), intent(in) :: A(:, :)
         !! Matrix to be exponentiated.
-        complex(sp), intent(out) :: E(:, :)
+        complex(sp) :: E(size(A, 1), size(A, 1))
         !! Output matrix E = exp(tA).
-        integer, optional :: order
+        integer, intent(in), optional :: order
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
@@ -840,7 +911,7 @@ contains
         enddo
 
         return
-    end subroutine expm_csp
+    end function expm_csp
 
     subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_csp), intent(out) :: c
@@ -916,7 +987,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kp, :kp), tau*H(:kp, :kp))
+                E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
@@ -1031,7 +1102,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kpp, :kpp), tau*H(:kpp, :kpp))
+                E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
                 ! Project back to original space.
                 do i = 1, size(Xwrk)
@@ -1102,12 +1173,12 @@ contains
         return
     end subroutine k_exptA_csp
 
-    subroutine expm_cdp(E, A, order)
+    function expm_cdp(A, order) result(E)
         complex(dp), intent(in) :: A(:, :)
         !! Matrix to be exponentiated.
-        complex(dp), intent(out) :: E(:, :)
+        complex(dp) :: E(size(A, 1), size(A, 1))
         !! Output matrix E = exp(tA).
-        integer, optional :: order
+        integer, intent(in), optional :: order
         !! Order of the Pade approximation.
 
         !----- Internal variables -----
@@ -1162,7 +1233,7 @@ contains
         enddo
 
         return
-    end subroutine expm_cdp
+    end function expm_cdp
 
     subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_cdp), intent(out) :: c
@@ -1238,7 +1309,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kp, :kp), tau*H(:kp, :kp))
+                E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
@@ -1353,7 +1424,7 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                call expm(E(:kpp, :kpp), tau*H(:kpp, :kpp))
+                E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
                 ! Project back to original space.
                 do i = 1, size(Xwrk)

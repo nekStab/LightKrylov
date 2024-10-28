@@ -46,7 +46,7 @@ module LightKrylov
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
-    public :: copy_basis
+    public :: copy
     public :: rand_basis
     
     ! AbstractLinops exports.
@@ -93,8 +93,8 @@ module LightKrylov
     public :: initialize_krylov_subspace
     public :: orthogonalize_against_basis
     public :: orthonormalize_basis
-    public :: lanczos_bidiagonalization
-    public :: lanczos_tridiagonalization
+    public :: bidiagonalization
+    public :: lanczos
     public :: krylov_schur
 
     ! IterativeSolvers exports.
@@ -109,6 +109,10 @@ module LightKrylov
     public :: eigs, eighs, save_eigenspectrum
     public :: svds
     public :: gmres
+    public :: gmres_rsp
+    public :: gmres_rdp
+    public :: gmres_csp
+    public :: gmres_cdp
     public :: cg
 
     ! Newton-Krylov exports.

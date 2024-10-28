@@ -51,7 +51,7 @@ module lightkrylov_AbstractVectors
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
-    public :: copy_basis
+    public :: copy
     public :: rand_basis
 
     interface innerprod
@@ -208,7 +208,7 @@ module lightkrylov_AbstractVectors
         module procedure zero_basis_cdp
     end interface
 
-    interface copy_basis
+    interface copy
         !!  This interface provides methods to copy an array `X` of `abstract_vector` into
         !!  another array `Y`. Note that `Y` needs to be pre-allocated.
         !!
@@ -224,9 +224,13 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!  ```
+        module procedure copy_vector_rsp
         module procedure copy_basis_rsp
+        module procedure copy_vector_rdp
         module procedure copy_basis_rdp
+        module procedure copy_vector_csp
         module procedure copy_basis_csp
+        module procedure copy_vector_cdp
         module procedure copy_basis_cdp
     end interface
 
@@ -888,6 +892,14 @@ contains
         return
     end subroutine zero_basis_rsp
 
+    subroutine copy_vector_rsp(out, from)
+        class(abstract_vector_rsp), intent(in) :: from
+        class(abstract_vector_rsp), intent(out) :: out
+        ! Copy array.
+        call out%axpby(zero_rsp, from, one_rsp)
+        return
+    end subroutine copy_vector_rsp
+
     subroutine copy_basis_rsp(out, from)
         class(abstract_vector_rsp), intent(in) :: from(:)
         class(abstract_vector_rsp), intent(out) :: out(:)
@@ -901,7 +913,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%axpby(zero_rsp, from(i), one_rsp)
+            call copy_vector_rsp(out(i), from(i))
         enddo
 
         return
@@ -1068,6 +1080,14 @@ contains
         return
     end subroutine zero_basis_rdp
 
+    subroutine copy_vector_rdp(out, from)
+        class(abstract_vector_rdp), intent(in) :: from
+        class(abstract_vector_rdp), intent(out) :: out
+        ! Copy array.
+        call out%axpby(zero_rdp, from, one_rdp)
+        return
+    end subroutine copy_vector_rdp
+
     subroutine copy_basis_rdp(out, from)
         class(abstract_vector_rdp), intent(in) :: from(:)
         class(abstract_vector_rdp), intent(out) :: out(:)
@@ -1081,7 +1101,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%axpby(zero_rdp, from(i), one_rdp)
+            call copy_vector_rdp(out(i), from(i))
         enddo
 
         return
@@ -1248,6 +1268,14 @@ contains
         return
     end subroutine zero_basis_csp
 
+    subroutine copy_vector_csp(out, from)
+        class(abstract_vector_csp), intent(in) :: from
+        class(abstract_vector_csp), intent(out) :: out
+        ! Copy array.
+        call out%axpby(zero_csp, from, one_csp)
+        return
+    end subroutine copy_vector_csp
+
     subroutine copy_basis_csp(out, from)
         class(abstract_vector_csp), intent(in) :: from(:)
         class(abstract_vector_csp), intent(out) :: out(:)
@@ -1261,7 +1289,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%axpby(zero_csp, from(i), one_csp)
+            call copy_vector_csp(out(i), from(i))
         enddo
 
         return
@@ -1428,6 +1456,14 @@ contains
         return
     end subroutine zero_basis_cdp
 
+    subroutine copy_vector_cdp(out, from)
+        class(abstract_vector_cdp), intent(in) :: from
+        class(abstract_vector_cdp), intent(out) :: out
+        ! Copy array.
+        call out%axpby(zero_cdp, from, one_cdp)
+        return
+    end subroutine copy_vector_cdp
+
     subroutine copy_basis_cdp(out, from)
         class(abstract_vector_cdp), intent(in) :: from(:)
         class(abstract_vector_cdp), intent(out) :: out(:)
@@ -1441,7 +1477,7 @@ contains
 
         ! Copy array.
         do i = 1, size(out)
-            call out(i)%axpby(zero_cdp, from(i), one_cdp)
+            call copy_vector_cdp(out(i), from(i))
         enddo
 
         return

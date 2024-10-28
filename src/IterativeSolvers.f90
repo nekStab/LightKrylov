@@ -1,5 +1,22 @@
 module lightkrylov_IterativeSolvers
+    !!  This module provides some of the most important computational routines provided by
+    !!  `LightKrylov`. These include:
+    !!
+    !!  - `eigs` : Compute the leading eigenpairs of a square linear operator \( A \).
+    !!  - `eighs` : Compute the leading eigenpairs of a symmetric positive definite 
+    !!              operator \( A \).
+    !!  - `svds` : Compute the leading singular triplets of a linear operator \( A \).
+    !!  - `gmres` : Solve the linear system \( Ax = b \) using the *generalized minimum
+    !!              residual method*.
+    !!  - `cg` : Solve the linear system \( Ax = b \) where \( A \) is symmetric
+    !!           positive definite using the *Conjugate Gradient* method.
+    !!
+    !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
+    !!  to `LightKrylov`. Note that these features are still experimental however.
 
+    !--------------------------------------------
+    !-----     Fortran Standard Library     -----
+    !--------------------------------------------
     use iso_fortran_env, only: output_unit
     
     use stdlib_sorting, only: sort_index
@@ -8,6 +25,9 @@ module lightkrylov_IterativeSolvers
     use stdlib_linalg, only: lstsq, svd, eigh
     use stdlib_stats, only: median
 
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
     use LightKrylov_Constants
     Use LightKrylov_Logger
     use LightKrylov_Utils
@@ -40,11 +60,80 @@ module lightkrylov_IterativeSolvers
     public :: cg_cdp
 
     interface save_eigenspectrum
+        !!  ### Description
+        !!
+        !!  Utility function to save the eigenspectrum computed from the Arnoldi factorization.
+        !!  It outpost a .npy file.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call save_eigenspectrum(eigvals, residuals, fname)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `eigvals` : `complex` rank-1 array containing the eigenvalues.
+        !!
+        !!  `residuals` : `real` rank-1 array containing the residuals associated to each
+        !!                eigenvalues.
+        !!
+        !!  `fname` : Name of the file to save the eigenspectrum.
         module procedure save_eigenspectrum_sp
         module procedure save_eigenspectrum_dp
     end interface
 
     interface eighs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a symmetric operator \(A\)
+        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectors such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Lanczos factorization, resulting in a symmetric
+        !!  tridiagonal matrix \(T\). The eigenvalues of \(A\) are approximated by those of \(T\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
+        !!  of Linear Differential and Integral Operators". United States Governm. Press Office.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         module procedure eighs_rsp
         module procedure eighs_rdp
         module procedure eighs_csp
@@ -52,6 +141,67 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface eigs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a square linear operator \(A\)
+        !!  using the Arnoldi iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectorss such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  or
+        !!
+        !!  \[
+        !!      A^H x = \lambda x.
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Arnoldi factorization, resulting in an upper
+        !!  Hessenberg matrix \(H\). The eigenvalues of \(A\) are approximated by those of \(H\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Arnoldi, W. E. (1951). "The Principle of Minimized Iterations in the Solution of
+        !!    the Matrix Eigenvalue Problem." Quarterly of Applied Mathematics, 9(1), 17–29.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eigs(A, X, eigvals, residuals, info [, kdim] [, select] [,tolerance] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `select` (*optional*) : Function to select which eigenvalues to compute.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!
+        !!  `transpose` (*optional*) : `logical` flag determining whether the eigenvalues of \(A\)
+        !!                             or \(A^H\) need to be computed.
         module procedure eigs_rsp
         module procedure eigs_rdp
         module procedure eigs_csp
@@ -59,6 +209,67 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface svds
+        !!  ### Description
+        !!
+        !!  Computes the leading singular triplets of an arbitrary linear operator \(A\)
+        !!  using the Lanczos iterative process. Given a linear operator \(A\), it finds
+        !!  the leading singular values and singular vectors such that:
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!      Av & = \sigma u \\
+        !!      A^H u & = \sigma v.
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  The subspaces \(U\) and \(V\) are constructed via Lanczos factorization, resulting in
+        !!  a bidiagonal matrix \(B\). The singular values of \(A\) are approximated by those of
+        !!  \(B\) and the singular vectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and
+        !!   Pseudo-Inverse of a Matrix."
+        !!  - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos
+        !!   bidiagonalization methods."
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization."
+        !!   Technical Report, 1998.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call svds(A, U, S, V, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `S` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!        singular values of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `V` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each singular triplet. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading singular triplets. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         module procedure svds_rsp
         module procedure svds_rdp
         module procedure svds_csp
@@ -66,6 +277,57 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface gmres
+        !!  ### Description
+        !!
+        !!  Solve a square linear system of equations
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Generalized Minimum RESidual* (GMRES) method.
+        !!
+        !!  **References**
+        !!
+        !!  - Saad Y. and Schultz M. H. "GMRES: A generalized minimal residual algorithm for
+        !!  solving nonsymmetric linear systems." SIAM Journal on Scientific and Statistical
+        !!  Computing, 7(3), 1986.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
+        !!  `AbstractLinops` module. It is an `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
+        !!  \( A^H x = b \) is being solver.
         module procedure gmres_rsp
         module procedure gmres_rdp
         module procedure gmres_csp
@@ -73,6 +335,60 @@ module lightkrylov_IterativeSolvers
     end interface
 
     interface cg
+        !!  ### Description
+        !!
+        !!  Given a symmetric (positive definite) matrix \( A \), solves the linear system
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Conjugate Gradient* method.
+        !!
+        !!  **References**
+        !!
+        !!  - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
+        !!  Linear Systems," Journal of Research of the National Bureau of Standards,
+        !!  49(6), 409–436.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
+        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
+        !!  `intent(in)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  @note
+        !!  Although the interface to pass a preconditioner is exposed, it is not currently
+        !!  implemented.
+        !!  @endnote
         module procedure cg_rsp
         module procedure cg_rdp
         module procedure cg_csp
@@ -162,6 +478,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp, sp
+
             class(abstract_linop_rsp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_rsp), intent(in) :: b
@@ -174,10 +491,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_rsp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_rsp
@@ -185,6 +502,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp, dp
+
             class(abstract_linop_rdp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_rdp), intent(in) :: b
@@ -197,10 +515,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_rdp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_rdp
@@ -208,6 +526,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp, sp
+
             class(abstract_linop_csp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_csp), intent(in) :: b
@@ -220,10 +539,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_csp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_csp
@@ -231,6 +550,7 @@ module lightkrylov_IterativeSolvers
         subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp, dp
+
             class(abstract_linop_cdp), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_cdp), intent(in) :: b
@@ -243,10 +563,10 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
             class(abstract_precond_cdp), optional, intent(in) :: preconditioner
             !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
         end subroutine abstract_linear_solver_cdp
@@ -968,10 +1288,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rsp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rsp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
@@ -986,8 +1306,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1068,10 +1388,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_rdp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rdp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
@@ -1086,8 +1406,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1168,10 +1488,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_csp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_csp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
@@ -1186,8 +1506,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_csp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1268,10 +1588,10 @@ contains
         allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
 
         ! Ritz eigenpairs computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
-            call lanczos_tridiagonalization(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos_tridiagonalization', module=this_module, procedure='eighs_cdp')
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', module=this_module, procedure='eighs_cdp')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
@@ -1286,8 +1606,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
-            if (conv >= nev) exit lanczos
-        enddo lanczos
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1374,10 +1694,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rsp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rsp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1392,8 +1712,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_rsp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1468,10 +1788,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_rdp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1486,8 +1806,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_rdp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1562,10 +1882,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_csp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_csp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -1580,8 +1900,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_csp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1656,10 +1976,10 @@ contains
         info = 0
 
         ! Ritz singular triplets computation.
-        lanczos : do k = 1, kdim_
+        lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
-            call lanczos_bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'lanczos_bidiagonalization', module=this_module, procedure='svds_cdp')
+            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
+            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_cdp')
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -1674,8 +1994,8 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call logger%log_information(msg, module=this_module, procedure='svds_cdp')
-            if (conv >= nsv) exit lanczos
-        enddo lanczos
+            if (conv >= nsv) exit lanczos_iter
+        enddo lanczos_iter
 
         !--------------------------------
         !-----     POST-PROCESS     -----
@@ -1717,7 +2037,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_rsp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_sp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
@@ -1888,7 +2207,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_rdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_dp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
@@ -2059,7 +2377,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_csp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_sp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
@@ -2230,7 +2547,6 @@ contains
         !! Absolute solver tolerance
         class(abstract_precond_cdp), optional, intent(in) :: preconditioner
         !! Preconditioner (optional).
-        !type(gmres_dp_opts), optional, intent(in) :: options
         class(abstract_opts), optional, intent(in) :: options
         !! GMRES options.   
         logical, optional, intent(in) :: transpose

@@ -390,7 +390,7 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
-         else if (trim(to_lower(origin)) == 'lanczos_bidiagonalization') then
+         else if (trim(to_lower(origin)) == 'bidiagonalization') then
             ! lanczos_bidiagonalization
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Lanczos Bidiagonalisation: Invariant subspace found after ', info, ' steps.'
@@ -400,7 +400,7 @@ contains
                call logger%log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
-         else if (trim(to_lower(origin)) == 'lanczos_tridiagonalization') then
+         else if (trim(to_lower(origin)) == 'lanczos') then
             ! lanczos_tridiagonalization
             if (info > 0) then
                write(msg,'(A,I0,A)') 'Lanczos Tridiagonalisation: Invariant subspace found after ', info, ' steps.'
