@@ -461,7 +461,7 @@ contains
         real(${kind}$) :: tol
         integer :: kdim
 
-        tol = rtol_${kind}$
+        tol = atol_${kind}$
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)

@@ -1732,7 +1732,7 @@ contains
 
             call swap_columns(Q, R, Rii, perm, j, idx)
 
-            ! Normalize column.
+            ! Check for breakdown.
             beta = Q(j)%norm()
             if (abs(beta) < tolerance) then
                 info = j
@@ -1997,7 +1997,7 @@ contains
 
             call swap_columns(Q, R, Rii, perm, j, idx)
 
-            ! Normalize column.
+            ! Check for breakdown.
             beta = Q(j)%norm()
             if (abs(beta) < tolerance) then
                 info = j
@@ -2262,7 +2262,7 @@ contains
 
             call swap_columns(Q, R, Rii, perm, j, idx)
 
-            ! Normalize column.
+            ! Check for breakdown.
             beta = Q(j)%norm()
             if (abs(beta) < tolerance) then
                 info = j
@@ -2527,7 +2527,7 @@ contains
 
             call swap_columns(Q, R, Rii, perm, j, idx)
 
-            ! Normalize column.
+            ! Check for breakdown.
             beta = Q(j)%norm()
             if (abs(beta) < tolerance) then
                 info = j
