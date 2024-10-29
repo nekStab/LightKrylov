@@ -1,4 +1,4 @@
-module lightkrylov_expmlib
+module LightKrylov_ExpmLib
     !!  This module implements the evaluation of the "matrix-exponential times vector" procedure
     !!  using Krylov methods.
 
@@ -179,7 +179,7 @@ module lightkrylov_expmlib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm(vec_out, A, vec_in, tau, info, trans)
+        !!      call k_exptA(vec_out, A, vec_in, tau, info, trans)
         !!  ```
         !!
         !!  ### Arguments
@@ -1496,4 +1496,4 @@ contains
     end subroutine k_exptA_cdp
 
 
-end module lightkrylov_expmlib
+end module LightKrylov_expmlib

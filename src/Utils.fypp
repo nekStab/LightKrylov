@@ -1,6 +1,6 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-module lightkrylov_utils
+module LightKrylov_utils
     !!  This module provides a set of utility functions used throughout `LightKrylov`.
     !!  It includes:
     !!
@@ -605,4 +605,4 @@ contains
 
     #:endfor
 
-end module lightkrylov_utils
+end module LightKrylov_Utils

@@ -1,4 +1,4 @@
-module lightkrylov_AbstractVectors
+module LightKrylov_AbstractVectors
     !! This module provides the base class `absract_vector` from which all Krylov vectors
     !! needs to be derived. To use `LightKrylov`, you need to extend one of the
     !! followings:
@@ -35,7 +35,7 @@ module lightkrylov_AbstractVectors
     !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
     !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
     !! - `zero_basis(X)`: Zero-out a collection of `abstract_vectors`.
-    !! - `copy_basis(out, from)`: Copy a collection of `abstract_vectors`.
+    !! - `copy(out, from)`: Copy a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`: Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
 
     use stdlib_optval, only: optval
@@ -166,7 +166,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
         !!  If you do need an out-of-place version, you can combine `axpby_basis`
-        !!  with `copy_basis`.
+        !!  with `copy`.
         !!
         !!  ### Example
         !!
@@ -220,7 +220,7 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!
-        !!      call copy_basis(Y, X)
+        !!      call copy(Y, X)
         !!
         !!      ! ... Your code ...
         !!  ```
@@ -1496,4 +1496,4 @@ contains
         return
     end subroutine rand_basis_cdp
 
-end module lightkrylov_AbstractVectors
+end module LightKrylov_AbstractVectors
