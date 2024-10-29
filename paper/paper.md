@@ -35,7 +35,7 @@ bibliography: paper.bib
 | :--------------: | :-----------------: | :------------------------------------: |
 | $Ax = b$         | $Ax = \lambda x$    | $Av = \sigma u \quad A^H u = \sigma v$ |
 
-$A^H$ denotes the conjugate transpose of $A$, coinciding with the standard transpose if $A$ is real-valued. Based on *Krylov subspaces* [krylov-1931], Krylov methods are key enablers for high-performance computing.
+$A^H$ denotes the conjugate transpose of $A$, coinciding with the standard transpose if $A$ is real-valued. Based on *Krylov subspaces* [@krylov-1931], Krylov methods are key enablers for high-performance computing.
 
 # Statement of need
 
