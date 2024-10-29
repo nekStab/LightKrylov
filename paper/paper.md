@@ -6,14 +6,16 @@ tags:
   - Krylov methods
 authors:
   - name: Jean-Christophe Loiseau
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-7244-8416
     corresponding: true
     equal-contrib: true
     affiliation: 1 # (Multiple affiliations must be quoted)
   - name: J. Simon Kern
+    orcid: 0000-0002-2460-578X
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: 1
   - name: Ricardo S. Frantz
+    orcid: 0000-0001-8219-3368
     equal-contrib: true
     affiliation: 1
 affiliations:
