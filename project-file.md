@@ -28,6 +28,8 @@ css: ./bootstrap.min.css
 
 @warning
    This API documentation for the `LightKrylov` pacakge is a work in progress.
+   It is build from the source code in the `main` branch and does not track the current development in `dev` or any other branches.
+   If you use another branch, please refer to the in-code documentation.
    Use the navigation bar at the top of the screen to browse `modules`, `procedures`, `source files`, etc.
    The listings near the bootom of the page are incomplete.
 @endwarning
