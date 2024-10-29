@@ -8,10 +8,12 @@
 
 # LightKrylov
 
-Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
+Targeting large-scale linear algebra applications where the matrix \( \mathbf{A} \) is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
-   $$\mathbf{A} \mathbf{x} = \lambda \mathbf{x}$$
+   \[
+      \mathbf{A} \mathbf{x} = \lambda \mathbf{x}
+   \]
 
 2. Singular Value Decomposition
    $$\mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T$$
