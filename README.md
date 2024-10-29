@@ -8,16 +8,13 @@
 
 # LightKrylov
 
-Targeting large-scale linear algebra applications where the matrix \( \mathbf{A} \) is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
+Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
-   \[
-      \mathbf{A} \mathbf{x} = \lambda \mathbf{x}
-   \]
+   $$\mathbf{A} \mathbf{x} = \lambda \mathbf{x}$$
 
 2. Singular Value Decomposition
    $$\mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T$$
-
 
 3. Linear system of equations
    $$\mathbf{Ax} = \mathbf{b}$$
@@ -34,21 +31,26 @@ Krylov methods are *iterative methods*, i.e. they iteratively refine the solutio
 `LightKrylov` leverages Fortran's `abstract type` feature to provide generic implementations of the various Krylov methods.
 The only requirement from the user to benefit from the capabilities of `LightKrylov` is to extend the `abstract_vector` and `abstract_linop` types to define their notion of vectors and linear operators. `LightKrylov` then provides the following functionalities:
 
-- Krylov factorizations : `arnoldi`, `lanczos_tridiagonalization`, `lanczos_bidiagonalization`.
+- Krylov factorizations : `arnoldi`, `lanczos`, `bidiagonalization`.
 - Spectral analysis : `eigs`, `eighs`, `svds`.
 - Linear systems : `gmres`, `cg`.
+- Nonlinear system: `newton`.
+
+To date, `LightKrylov` can handle `real` and `complex`-valued vectors and linear operators, using both single and double precision arithmetic.
+This was made possible thanks to [`fypp`](https://github.com/aradi/fypp), a python powered Fortran meta programming utility.
 
 ### Examples
 
 Some examples can be found in the `example` folder. These include:
 - [Ginzburg-Landau]() : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
 - [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
+- [Roessler system]() : Computation of an unstable periodic orbit embedded in the strange attractor of the system along with an OTD analysis of this orbit.
 
-Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`]().
+Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
 
-| [**Ginzburg-Landau**]() | [**Laplace operator**]() |
-| :---------------------: | :----------------------: |
-|       ADD FIGURE        |        ADD FIGURE        |
+| [**Ginzburg-Landau**]() | [**Laplace operator**]() | [**Roesler system**]() |
+| :---------------------: | :----------------------: | :--------------------: |
+|       ADD FIGURE        |        ADD FIGURE        | ADD FIGURE |
 
 ## Installation
 
@@ -71,6 +73,7 @@ gh repo clone nekStab/LightKrylov
 - a Fortran compiler,
 - [`fpm`](https://github.com/fortran-lang/fpm) for building the code.
 
+All other dependencies are directly handled by the Fortran Package Manage `fpm`.
 To date, the tested compilers include:
 
 - `gfortran 12` (Linux)
@@ -96,7 +99,7 @@ Both of these will make use of the standard compilation options set by the `fpm`
 
 ### Running the tests
 
-To see if the library has been compiled correctly, a set of unit tests are provided in [test](). Run the following command.
+To see if the library has been compiled correctly, a set of unit tests are provided in the `test` folder. Run the following command.
 
 ```
 fpm test
@@ -140,9 +143,10 @@ Anyone else interested in contributing is obviously most welcomed!
 ## Acknowledgment
 
 The development of `LightKrylov` is part of an on-going research project funded by [Agence Nationale pour la Recherche](https://anr.fr/en/) (ANR) under the grant agreement ANR-22-CE46-0008. The project started in January 2023 and will run until December 2026.
+We are also very grateful to the [fortran-lang](https://fortran-lang.org/) community and the maintainers of [`stdlib`](https://github.com/fortran-lang/stdlib), in particular to @perazz, @jalvesz and @jvdp1 for their awesome work on the `stdlib_linalg` module which greatly simplified the developlement of `LightKrylov`.
 
 ### Related projects
 
 `LightKrylov` is the base package of our ecosystem. If you like it, you may also be interested in :
 - [`LightROM`](https://github.com/nekStab/LightROM) : a lightweight Fortran package providing a set of functions for reduced-order modeling, control and estimation of large-scale linear time invariant dynamical systems.
-- [`neklab`]() : a bifurcation and stability analysis toolbox based on `LightKrylov` for the massively parallel spectral element solver [`Nek5000`]().
+- [`neklab`](https://github.com/nekStab/neklab) : a bifurcation and stability analysis toolbox based on `LightKrylov` for the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
