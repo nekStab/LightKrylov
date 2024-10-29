@@ -466,8 +466,8 @@ module lightkrylov_BaseKrylov
         !!
         !!  \[
         !!      \begin{aligned}
-        !!          AV_k & = U_k T_k + t_{k+1, k} v_{k+1} e_k^T, \\
-        !!          A^H U_k & = V_k T_k^T + t_{k+1, k} u_{k+1} e_k^T
+        !!          AV_k & = U_{k+1} B_k, \\
+        !!          A^H U_{k+1} & = V_k B_k^T + b_{k+1} v_{k+1} e_{k+1}^T
         !!      \end{aligned}
         !!  \]
         !!
