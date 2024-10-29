@@ -1,4 +1,4 @@
-module lightkrylov_BaseKrylov
+module LightKrylov_BaseKrylov
     !!  This module provides a collection of Krylov-based factorizations forming the
     !!  computational core of `LightKrylov`. It also provides a set of utility functions
     !!  to operate on arrays of `abstract_vector`. The most important ones are:
@@ -3867,4 +3867,4 @@ contains
     end subroutine krylov_schur_cdp
 
 
-end module lightkrylov_BaseKrylov
+end module LightKrylov_BaseKrylov

@@ -1,6 +1,6 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-module lightkrylov_IterativeSolvers
+module LightKrylov_IterativeSolvers
     !!  This module provides some of the most important computational routines provided by
     !!  `LightKrylov`. These include:
     !!
@@ -1165,4 +1165,4 @@ contains
 
     #:endfor
 
-end module lightkrylov_IterativeSolvers
+end module LightKrylov_IterativeSolvers

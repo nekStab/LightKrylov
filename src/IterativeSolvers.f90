@@ -1,4 +1,4 @@
-module lightkrylov_IterativeSolvers
+module LightKrylov_IterativeSolvers
     !!  This module provides some of the most important computational routines provided by
     !!  `LightKrylov`. These include:
     !!
@@ -3095,4 +3095,4 @@ contains
     end subroutine cg_cdp
 
 
-end module lightkrylov_IterativeSolvers
+end module LightKrylov_IterativeSolvers

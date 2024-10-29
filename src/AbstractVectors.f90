@@ -1,4 +1,4 @@
-module lightkrylov_AbstractVectors
+module LightKrylov_AbstractVectors
     !! This module provides the base class `absract_vector` from which all Krylov vectors
     !! needs to be derived. To use `LightKrylov`, you need to extend one of the
     !! followings:
@@ -1496,4 +1496,4 @@ contains
         return
     end subroutine rand_basis_cdp
 
-end module lightkrylov_AbstractVectors
+end module LightKrylov_AbstractVectors

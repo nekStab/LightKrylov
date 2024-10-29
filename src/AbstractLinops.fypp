@@ -1,6 +1,6 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-module lightkrylov_AbstractLinops
+module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
@@ -11,9 +11,9 @@ module lightkrylov_AbstractLinops
     !!  It also provides extended types to define the identity operator, symmetric linear
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
     !!  of two linear operators.
-    use lightkrylov_Constants
-    use lightkrylov_Utils
-    use lightkrylov_AbstractVectors
+    use LightKrylov_Constants
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
     implicit none
     private
 
@@ -45,7 +45,7 @@ module lightkrylov_AbstractLinops
     abstract interface
         subroutine abstract_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
-            use lightkrylov_AbstractVectors
+            use LightKrylov_AbstractVectors
             import abstract_linop_${type[0]}$${kind}$
             class(abstract_linop_${type[0]}$${kind}$) , intent(in)  :: self
             !! Linear operator \(\mathbf{A}\).
@@ -280,4 +280,4 @@ contains
 
     #:endfor
 
-end module lightkrylov_AbstractLinops
+end module LightKrylov_AbstractLinops
