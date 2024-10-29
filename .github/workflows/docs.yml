@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build Documentation
-        uses: ResearchSoftwareActions/ford-build@v1.0
+        uses: loiseaujc/ford-build@v1.0
         id: build
 
       - name: Deploy to GitHub Pages
