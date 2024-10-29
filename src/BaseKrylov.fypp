@@ -1,6 +1,6 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-module lightkrylov_BaseKrylov
+module LightKrylov_BaseKrylov
     !!  This module provides a collection of Krylov-based factorizations forming the
     !!  computational core of `LightKrylov`. It also provides a set of utility functions
     !!  to operate on arrays of `abstract_vector`. The most important ones are:
@@ -443,8 +443,8 @@ module lightkrylov_BaseKrylov
         !!
         !!  \[
         !!      \begin{aligned}
-        !!          AV_k & = U_k T_k + t_{k+1, k} v_{k+1} e_k^T, \\
-        !!          A^H U_k & = V_k T_k^T + t_{k+1, k} u_{k+1} e_k^T
+        !!          AV_k & = U_{k+1} B_k, \\
+        !!          A^H U_{k+1} & = V_k B_k^T + b_{k+1} v_{k+1} e_{k+1}^T
         !!      \end{aligned}
         !!  \]
         !!
@@ -1428,4 +1428,4 @@ contains
 
     #:endfor
 
-end module lightkrylov_BaseKrylov
+end module LightKrylov_BaseKrylov

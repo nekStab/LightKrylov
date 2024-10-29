@@ -6,7 +6,7 @@ program demo
    use LightKrylov
    use LightKrylov, only: wp => dp
    use LightKrylov_Logger
-   use lightkrylov_IterativeSolvers, only: gmres_rdp
+   use LightKrylov_IterativeSolvers, only: gmres_rdp
    use LightKrylov_Utils
    ! Roessler
    use Roessler

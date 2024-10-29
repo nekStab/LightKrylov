@@ -1,4 +1,4 @@
-module lightkrylov_utils
+module LightKrylov_utils
     !!  This module provides a set of utility functions used throughout `LightKrylov`.
     !!  It includes:
     !!
@@ -1277,4 +1277,4 @@ contains
     end function
 
 
-end module lightkrylov_utils
+end module LightKrylov_Utils

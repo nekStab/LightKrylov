@@ -1,4 +1,4 @@
-module lightkrylov_AbstractLinops
+module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
@@ -9,9 +9,9 @@ module lightkrylov_AbstractLinops
     !!  It also provides extended types to define the identity operator, symmetric linear
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
     !!  of two linear operators.
-    use lightkrylov_Constants
-    use lightkrylov_Utils
-    use lightkrylov_AbstractVectors
+    use LightKrylov_Constants
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
     implicit none
     private
 
@@ -42,7 +42,7 @@ module lightkrylov_AbstractLinops
     abstract interface
         subroutine abstract_matvec_rsp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
-            use lightkrylov_AbstractVectors
+            use LightKrylov_AbstractVectors
             import abstract_linop_rsp
             class(abstract_linop_rsp) , intent(in)  :: self
             !! Linear operator \(\mathbf{A}\).
@@ -84,7 +84,7 @@ module lightkrylov_AbstractLinops
     abstract interface
         subroutine abstract_matvec_rdp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
-            use lightkrylov_AbstractVectors
+            use LightKrylov_AbstractVectors
             import abstract_linop_rdp
             class(abstract_linop_rdp) , intent(in)  :: self
             !! Linear operator \(\mathbf{A}\).
@@ -126,7 +126,7 @@ module lightkrylov_AbstractLinops
     abstract interface
         subroutine abstract_matvec_csp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
-            use lightkrylov_AbstractVectors
+            use LightKrylov_AbstractVectors
             import abstract_linop_csp
             class(abstract_linop_csp) , intent(in)  :: self
             !! Linear operator \(\mathbf{A}\).
@@ -168,7 +168,7 @@ module lightkrylov_AbstractLinops
     abstract interface
         subroutine abstract_matvec_cdp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
-            use lightkrylov_AbstractVectors
+            use LightKrylov_AbstractVectors
             import abstract_linop_cdp
             class(abstract_linop_cdp) , intent(in)  :: self
             !! Linear operator \(\mathbf{A}\).
@@ -818,4 +818,4 @@ contains
     end subroutine adjoint_rmatvec_cdp
 
 
-end module lightkrylov_AbstractLinops
+end module LightKrylov_AbstractLinops
