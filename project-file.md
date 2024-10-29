@@ -13,6 +13,13 @@ source: true
 proc_internals: true
 sort: permission-alpha
 extra_mods: iso_fortran_env:https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fFORTRAN_005fENV.html
+            stdlib_io_npy:https://stdlib.fortran-lang.org/module/stdlib_io_npy.html
+            stdlib_linalg:https://stdlib.fortran-lang.org/module/stdlib_linalg.html
+            stdlib_math:https://stdlib.fortran-lang.org/module/stdlib_math.html
+            stdlib_optval:https://stdlib.fortran-lang.org/module/stdlib_optval.html
+            stdlib_sorting:https://stdlib.fortran-lang.org/module/stdlib_sorting.html
+            stdlib_stats:https://stdlib.fortran-lang.org/module/stdlib_stats.html
+            stdlib_stats_distribution_normal:https://stdlib.fortran-lang.org/module/stdlib_stats_distribution_normal.html
 print_creation_date: true
 project_github: https://github.com/nekStab/LightKrylov
 project_website: https://nekstab.github.io/LightKrylov/
