@@ -11,7 +11,8 @@ module LightKrylov_NewtonKrylov
    implicit none
    private
 
-   character(len=128), parameter :: this_module = 'LightKrylov_NewtonKrylov'
+   character(len=*), parameter :: this_module      = 'LK_NwtKryl'
+   character(len=*), parameter :: this_module_long = 'LightKrylov_NewtonKrylov'
 
    public :: newton
    public :: constant_atol_sp

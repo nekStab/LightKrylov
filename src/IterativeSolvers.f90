@@ -38,7 +38,8 @@ module lightkrylov_IterativeSolvers
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'LightKrylov_IterativeSolvers'
+    character(len=*), parameter :: this_module      = 'LK_Solvers'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_IterativeSolvers'
 
     public :: abstract_linear_solver_rsp
     public :: abstract_linear_solver_rdp

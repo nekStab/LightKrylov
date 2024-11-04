@@ -28,7 +28,8 @@ module lightkrylov_BaseKrylov
     implicit none
     private
     
-    character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
+    character(len=*), parameter :: this_module      = 'LK_BKrylov'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_BaseKrylov'
 
     public :: qr
     public :: apply_permutation_matrix

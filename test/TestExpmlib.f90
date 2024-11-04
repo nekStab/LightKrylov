@@ -18,7 +18,8 @@ module TestExpmlib
 
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestExpmLib'
+    character(len=*), parameter, private :: this_module      = 'LK_TExpmLib'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestExpmLib'
 
     public :: collect_expm_rsp_testsuite
     public :: collect_expm_rdp_testsuite

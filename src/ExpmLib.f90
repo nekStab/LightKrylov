@@ -20,7 +20,9 @@ module lightkrylov_expmlib
     implicit none
     private
     
-    character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
+    character(len=*), parameter, private :: this_module      = 'LK_ExpmLib'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_ExpmLib'
+
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp

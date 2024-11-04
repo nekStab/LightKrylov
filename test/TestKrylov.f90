@@ -18,7 +18,8 @@ module TestKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TBKrylov'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestKrylov'
 
     public :: collect_qr_rsp_testsuite
     public :: collect_arnoldi_rsp_testsuite

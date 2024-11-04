@@ -36,6 +36,11 @@ module LightKrylov
     public :: cg_${kind}$_opts
     public :: newton_${kind}$_opts
     #:endfor
+    #:for kind in REAL_KINDS
+    public :: gmres_${kind}$_metadata
+    public :: cg_${kind}$_metadata
+    public :: newton_${kind}$_metadata
+    #:endfor
 
     ! AbstractVectors exports.
     public :: abstract_vector

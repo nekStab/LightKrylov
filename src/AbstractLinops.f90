@@ -15,7 +15,8 @@ module lightkrylov_AbstractLinops
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'Lightkrylov_AbstractLinops'
+    character(len=*), parameter :: this_module      = 'LK_Linops'
+    character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractLinops'
 
     type, abstract, public :: abstract_linop
         !!  Base type to define an abstract linear operator. All other types defined in

@@ -7,7 +7,8 @@ module LightKrylov_AbstractSystems
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'LightKrylov_AbstractSystems'
+    character(len=*), parameter :: this_module      = 'LK_Systems'
+    character(len=*), parameter :: this_module_long = 'LK_AbstractSystems'
 
     ! Base type for abstract systems.
     type, abstract, public :: abstract_system

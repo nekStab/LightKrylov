@@ -14,7 +14,8 @@ module TestLinops
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestLinops'
+    character(len=*), parameter, private :: this_module      = 'LK_TLinops'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestLinops'
 
     public :: collect_linop_rsp_testsuite
     public :: collect_linop_rdp_testsuite

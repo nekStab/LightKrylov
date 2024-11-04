@@ -19,7 +19,8 @@ module TestNewtonKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestNewtonKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TNwtKryl'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestNewtonKrylov'
 
     #:for kind in REAL_KINDS
     public :: collect_newton_r${kind}$_testsuite

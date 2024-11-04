@@ -32,7 +32,8 @@ module lightkrylov_utils
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'LightKrylov_Utils'
+    character(len=*), parameter :: this_module      = 'LK_Utils'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_Utils'
 
     public :: assert_shape, norml, log2
     ! Compute AX = XD for general dense matrices.
@@ -287,6 +288,83 @@ module lightkrylov_utils
         integer :: maxstep_bisection = 5
         !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
         !! Ignored if ifbisect = .false.
+    end type
+    
+
+    type, abstract, public :: abstract_metadata
+        !! Abstract type container for solver metadata from with all others are extended.
+    end type
+
+    type, extends(abstract_metadata), public :: gmres_sp_metadata
+        !! GMRES metadata.
+        integer :: n_iter
+        !! Iteration counter
+        integer :: n_Ax
+        !! Matrix-vector product counter
+        integer :: n_inner
+        !! Number of inner iterations
+        integer :: n_outer
+        !! Number of outer iterations
+        real(sp), dimension(:), allocatable :: res
+        !! Residual history
+    end type
+
+    type, extends(abstract_metadata), public :: cg_sp_metadata
+        !! Conjugate gradient metadata.
+        integer :: n_iter
+        !! Iteration counter
+        integer :: n_Ax
+        !! Matrix-vector product counter
+        real(sp), dimension(:), allocatable :: res
+        !! Residual history
+    end type
+
+    type, extends(abstract_metadata), public :: newton_sp_metadata
+        !! Metadata for Newton-Krylov fixed-point iteration.
+        integer :: n_iter
+        !! Iteration counter
+        integer :: n_Ax
+        !! Matrix-vector product counter
+        integer :: n_eval
+        !! System evaluation counter
+        real(sp), dimension(:), allocatable :: res
+        !! Residual history
+    end type
+    
+    type, extends(abstract_metadata), public :: gmres_dp_metadata
+        !! GMRES metadata.
+        integer :: n_iter
+        !! Iteration counter
+        integer :: n_Ax
+        !! Matrix-vector product counter
+        integer :: n_inner
+        !! Number of inner iterations
+        integer :: n_outer
+        !! Number of outer iterations
+        real(dp), dimension(:), allocatable :: res
+        !! Residual history
+    end type
+
+    type, extends(abstract_metadata), public :: cg_dp_metadata
+        !! Conjugate gradient metadata.
+        integer :: n_iter
+        !! Iteration counter
+        integer :: n_Ax
+        !! Matrix-vector product counter
+        real(dp), dimension(:), allocatable :: res
+        !! Residual history
+    end type
+
+    type, extends(abstract_metadata), public :: newton_dp_metadata
+        !! Metadata for Newton-Krylov fixed-point iteration.
+        integer :: n_iter
+        !! Iteration counter
+        integer :: n_Ax
+        !! Matrix-vector product counter
+        integer :: n_eval
+        !! System evaluation counter
+        real(dp), dimension(:), allocatable :: res
+        !! Residual history
     end type
     
 

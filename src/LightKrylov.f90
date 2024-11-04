@@ -35,6 +35,12 @@ module LightKrylov
     public :: gmres_dp_opts
     public :: cg_dp_opts
     public :: newton_dp_opts
+    public :: gmres_sp_metadata
+    public :: cg_sp_metadata
+    public :: newton_sp_metadata
+    public :: gmres_dp_metadata
+    public :: cg_dp_metadata
+    public :: newton_dp_metadata
 
     ! AbstractVectors exports.
     public :: abstract_vector

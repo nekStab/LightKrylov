@@ -15,7 +15,8 @@ module TestVectors
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=*), parameter, private :: this_module      = 'LK_TVectors'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestVectors'
 
     public :: collect_vector_rsp_testsuite
     public :: collect_vector_rdp_testsuite

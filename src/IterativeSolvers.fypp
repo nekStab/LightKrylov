@@ -40,7 +40,8 @@ module lightkrylov_IterativeSolvers
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'LightKrylov_IterativeSolvers'
+    character(len=*), parameter :: this_module      = 'LK_Solvers'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_IterativeSolvers'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_linear_solver_${type[0]}$${kind}$

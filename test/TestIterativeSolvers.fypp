@@ -21,7 +21,8 @@ module TestIterativeSolvers
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
+    character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite

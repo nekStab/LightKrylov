@@ -20,7 +20,8 @@ module TestKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TBKrylov'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestKrylov'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_qr_${type[0]}$${kind}$_testsuite

@@ -17,7 +17,8 @@ module TestNewtonKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestNewtonKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TNwtKryl'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestNewtonKrylov'
 
     public :: collect_newton_rsp_testsuite
     public :: collect_newton_rdp_testsuite
