@@ -423,10 +423,9 @@ module lightkrylov_IterativeSolvers
 
     abstract interface
     #:for kind, type in RC_KINDS_TYPES
-        subroutine abstract_linear_solver_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$, abstract_opts, abstract_precond_${type[0]}$${kind}$, ${kind}$
-
+            import abstract_linop_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$, abstract_opts, abstract_metadata, abstract_precond_${type[0]}$${kind}$, ${kind}$
             class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
             !! Linear operator to invert.
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
@@ -445,6 +444,8 @@ module lightkrylov_IterativeSolvers
             !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
         end subroutine abstract_linear_solver_${type[0]}$${kind}$
 
     #:endfor
@@ -880,13 +881,15 @@ contains
     !-------------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+    subroutine gmres_${type[0]}$${kind}$(A, b, x, meta, info, rtol, atol, preconditioner, options, transpose)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
         !! Solution vector.
+        class(abstract_metadata), intent(out) :: meta
+        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(${kind}$), optional, intent(in) :: rtol
@@ -908,7 +911,8 @@ contains
         integer :: kdim, maxiter
         real(${kind}$) :: tol, rtol_, atol_
         logical :: trans
-        type(gmres_${kind}$_opts) :: opts
+        type(gmres_${kind}$_opts)     :: opts
+        type(gmres_${kind}$_metadata) :: gmres_meta
 
         ! Krylov subspace
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:)
@@ -960,19 +964,24 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_${kind}$
         allocate(e(kdim+1)) ; e = 0.0_${kind}$
 
-        info = 0 ; niter = 0
+        ! Initialize meta
+        gmres_meta = gmres_${kind}$_metadata()
+        allocate(gmres_meta%res(opts%maxiter*kdim+1)); gmres_meta%res = 0.0_${kind}$
+
+        info = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
             if (trans) then
-                call A%rmatvec(x, V(1))
+                call A%rmatvec(x, V(1)); gmres_meta%n_Ax = gmres_meta%n_Ax + 1
             else
-                call A%matvec(x, V(1))
+                call A%matvec(x, V(1)); gmres_meta%n_Ax = gmres_meta%n_Ax + 1
             endif
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_${type[0]}$${kind}$/beta)
+        gmres_meta%res(1) = beta
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -987,9 +996,9 @@ contains
 
                 ! Matrix-vector product.
                 if (trans) then
-                    call A%rmatvec(wrk, V(k+1))
+                    call A%rmatvec(wrk, V(k+1)); gmres_meta%n_Ax = gmres_meta%n_Ax + 1
                 else
-                    call A%matvec(wrk, V(k+1))
+                    call A%matvec(wrk, V(k+1)); gmres_meta%n_Ax = gmres_meta%n_Ax + 1
                 endif
 
                 ! Double Gram-Schmid orthogonalization
@@ -1008,14 +1017,17 @@ contains
                 ! Compute residual.
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
-                ! Current number of iterations performed.
-                niter = niter + 1
+                ! Save metadata.
+                gmres_meta%n_iter  = gmres_meta%n_iter + 1
+                gmres_meta%n_inner = gmres_meta%n_inner + 1
+                gmres_meta%res(gmres_meta%n_iter+1) = beta
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
                 if (abs(beta) <= tol) then
+                    gmres_meta%converged = .true.
                     exit arnoldi_fact
                 endif
             enddo arnoldi_fact
@@ -1026,26 +1038,38 @@ contains
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%rmatvec(x, v(1))
+                call A%rmatvec(x, v(1)); gmres_meta%n_Ax = gmres_meta%n_Ax + 1
             else
-                call A%matvec(x, v(1))
+                call A%matvec(x, v(1)); gmres_meta%n_Ax = gmres_meta%n_Ax + 1
             endif
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_${type[0]}$${kind}$ / beta)
 
+            ! Save metadata.
+            gmres_meta%n_iter  = gmres_meta%n_iter + 1
+            gmres_meta%n_outer = gmres_meta%n_outer + 1
+            gmres_meta%res(gmres_meta%n_iter) = beta
+
             write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) exit gmres_iter
+            if (abs(beta) <= tol) gmres_meta%converged = .true.; exit gmres_iter
 
         enddo gmres_iter
 
         ! Returns the number of iterations.
         info = niter
+        gmres_meta%info = info
+
+        ! Set metadata output
+        select type(meta)
+            type is (gmres_${kind}$_metadata)
+                meta = gmres_meta
+        end select
 
         return
     end subroutine gmres_${type[0]}$${kind}$
@@ -1060,7 +1084,7 @@ contains
     !---------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine cg_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options)
+    subroutine cg_${type[0]}$${kind}$(A, b, x, meta, info, rtol, atol, preconditioner, options)
         #:if type[0] == "r"
         class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
         #:else
@@ -1071,6 +1095,8 @@ contains
         !! Right-hand side vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
         !! Solution vector.
+        class(abstract_metadata), intent(out) :: meta
+        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(${kind}$), optional, intent(in) :: rtol
@@ -1089,7 +1115,8 @@ contains
         ! Options.
         integer :: maxiter
         real(${kind}$) :: tol, rtol_, atol_
-        type(cg_${kind}$_opts) :: opts
+        type(cg_${kind}$_opts)     :: opts
+        type(cg_${kind}$_metadata) :: cg_meta
 
         ! Working variables.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: r, p, Ap
@@ -1115,10 +1142,14 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+         ! Initialize meta
+        cg_meta = cg_${kind}$_metadata()
+        allocate(cg_meta%res(opts%maxiter+1)); cg_meta%res = 0.0_${kind}$
+
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%matvec(x, r)
+        if (x%norm() > 0) call A%matvec(x, r); cg_meta%n_Ax = cg_meta%n_Ax + 1
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -1126,11 +1157,12 @@ contains
 
         ! Initialize dot product of residual r_dot_r_old = r' * r
         r_dot_r_old = r%dot(r)
+        cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
             ! Compute A @ p
-            call A%matvec(p, Ap)
+            call A%matvec(p, Ap); cg_meta%n_Ax = cg_meta%n_Ax + 1
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
@@ -1145,10 +1177,12 @@ contains
             #:else
             residual = sqrt(r_dot_r_new)
             #:endif
-            ! Current number of iterations performed.
-            info = info + 1
 
-            if (residual < tol) exit cg_loop
+            ! Save metadata.
+            cg_meta%n_iter  = cg_meta%n_iter + 1
+            cg_meta%res(cg_meta%n_iter+1) = residual
+
+            if (residual < tol) cg_meta%converged = .true.; exit cg_loop
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -1160,6 +1194,14 @@ contains
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='cg_${type[0]}$${kind}$')
         enddo cg_loop
+
+        info = cg_meta%n_iter
+
+        ! Set metadata output
+        select type(meta)
+            type is (cg_${kind}$_metadata)
+                meta = cg_meta
+        end select
         
         return
     end subroutine cg_${type[0]}$${kind}$

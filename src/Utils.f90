@@ -297,74 +297,102 @@ module lightkrylov_utils
 
     type, extends(abstract_metadata), public :: gmres_sp_metadata
         !! GMRES metadata.
-        integer :: n_iter
+        integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax
+        integer :: n_Ax = 0
         !! Matrix-vector product counter
-        integer :: n_inner
+        integer :: n_inner = 0
         !! Number of inner iterations
-        integer :: n_outer
+        integer :: n_outer = 0
         !! Number of outer iterations
         real(sp), dimension(:), allocatable :: res
         !! Residual history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
     end type
 
     type, extends(abstract_metadata), public :: cg_sp_metadata
         !! Conjugate gradient metadata.
-        integer :: n_iter
+        integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax
+        integer :: n_Ax = 0
         !! Matrix-vector product counter
         real(sp), dimension(:), allocatable :: res
         !! Residual history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
     end type
 
     type, extends(abstract_metadata), public :: newton_sp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
-        integer :: n_iter
+        integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax
+        integer :: n_Ax = 0
         !! Matrix-vector product counter
-        integer :: n_eval
+        integer :: n_eval = 0
         !! System evaluation counter
         real(sp), dimension(:), allocatable :: res
         !! Residual history
+        real(sp), dimension(:), allocatable :: tol
+        !! Tolerance history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
     end type
     
     type, extends(abstract_metadata), public :: gmres_dp_metadata
         !! GMRES metadata.
-        integer :: n_iter
+        integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax
+        integer :: n_Ax = 0
         !! Matrix-vector product counter
-        integer :: n_inner
+        integer :: n_inner = 0
         !! Number of inner iterations
-        integer :: n_outer
+        integer :: n_outer = 0
         !! Number of outer iterations
         real(dp), dimension(:), allocatable :: res
         !! Residual history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
     end type
 
     type, extends(abstract_metadata), public :: cg_dp_metadata
         !! Conjugate gradient metadata.
-        integer :: n_iter
+        integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax
+        integer :: n_Ax = 0
         !! Matrix-vector product counter
         real(dp), dimension(:), allocatable :: res
         !! Residual history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
     end type
 
     type, extends(abstract_metadata), public :: newton_dp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
-        integer :: n_iter
+        integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax
+        integer :: n_Ax = 0
         !! Matrix-vector product counter
-        integer :: n_eval
+        integer :: n_eval = 0
         !! System evaluation counter
         real(dp), dimension(:), allocatable :: res
         !! Residual history
+        real(dp), dimension(:), allocatable :: tol
+        !! Tolerance history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
     end type
     
 

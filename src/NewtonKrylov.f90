@@ -113,7 +113,7 @@ module LightKrylov_NewtonKrylov
 
 contains
 
-   subroutine newton_rsp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rsp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rsp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rsp),                         intent(inout) :: X
@@ -133,6 +133,8 @@ contains
       class(abstract_precond_rsp),              optional, intent(in)    :: preconditioner
       !! Preconditioner for the linear solver
       procedure(abstract_scheduler_sp),         optional                :: scheduler
+      class(abstract_metadata),                       optional,   intent(out) :: meta
+      !! Metadata.
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -141,8 +143,8 @@ contains
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rsp), allocatable        :: residual, increment
       real(sp)           :: rnorm, tol
-      logical            :: converged
       integer            :: i, maxiter, maxstep_bisection
+      type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
       
       ! Newton-solver tolerance
@@ -163,17 +165,26 @@ contains
       ! Initialisation      
       maxiter           = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
-      converged         = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, target_tol)
+      newton_meta = newton_sp_metadata()
+      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_sp
+      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_sp
+
+      ! Get initial residual.
+      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
       rnorm = residual%norm()
+
+      ! Save metadata.
+      newton_meta%res(1) = rnorm
+      newton_meta%tol(1) = target_tol
+
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
-         converged = .true.
+         newton_meta%converged = .true.
          return
       end if
 
@@ -204,18 +215,27 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol)
+         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
          rnorm = residual%norm()
+
+         ! Save metadata.
+         newton_meta%n_iter = newton_meta%n_iter + 1
+         newton_meta%res(newton_meta%n_eval+1) = rnorm
+         newton_meta%tol(newton_meta%n_eval+1) = tol
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_sp*target_tol) then
                ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol)
+               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               rnorm = residual%norm()
+               ! Save metadata.
+               newton_meta%res(newton_meta%n_eval + 1) = rnorm
+               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_rsp')
-                  converged = .true.
+                  newton_meta%converged = .true.
                   exit newton
                else
                   write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
@@ -226,16 +246,25 @@ contains
 
       enddo newton
 
-      if (.not.converged) then
+      if (.not.newton_meta%converged) then
          write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          info = -1
       endif
 
+      ! Copy info flag
+      newton_meta%info = info
+
+      ! Set metadata output
+      select type(meta)
+         type is (newton_sp_metadata)
+            meta = newton_meta
+      end select
+
       return
    end subroutine newton_rsp
 
-   subroutine newton_rdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_rdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rdp),                         intent(inout) :: X
@@ -255,6 +284,8 @@ contains
       class(abstract_precond_rdp),              optional, intent(in)    :: preconditioner
       !! Preconditioner for the linear solver
       procedure(abstract_scheduler_dp),         optional                :: scheduler
+      class(abstract_metadata),                       optional,   intent(out) :: meta
+      !! Metadata.
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -263,8 +294,8 @@ contains
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rdp), allocatable        :: residual, increment
       real(dp)           :: rnorm, tol
-      logical            :: converged
       integer            :: i, maxiter, maxstep_bisection
+      type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
       
       ! Newton-solver tolerance
@@ -285,17 +316,26 @@ contains
       ! Initialisation      
       maxiter           = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
-      converged         = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, target_tol)
+      newton_meta = newton_dp_metadata()
+      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_dp
+      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_dp
+
+      ! Get initial residual.
+      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
       rnorm = residual%norm()
+
+      ! Save metadata.
+      newton_meta%res(1) = rnorm
+      newton_meta%tol(1) = target_tol
+
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
-         converged = .true.
+         newton_meta%converged = .true.
          return
       end if
 
@@ -326,18 +366,27 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol)
+         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
          rnorm = residual%norm()
+
+         ! Save metadata.
+         newton_meta%n_iter = newton_meta%n_iter + 1
+         newton_meta%res(newton_meta%n_eval+1) = rnorm
+         newton_meta%tol(newton_meta%n_eval+1) = tol
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_dp*target_tol) then
                ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol)
+               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               rnorm = residual%norm()
+               ! Save metadata.
+               newton_meta%res(newton_meta%n_eval + 1) = rnorm
+               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_rdp')
-                  converged = .true.
+                  newton_meta%converged = .true.
                   exit newton
                else
                   write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
@@ -348,16 +397,25 @@ contains
 
       enddo newton
 
-      if (.not.converged) then
+      if (.not.newton_meta%converged) then
          write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          info = -1
       endif
 
+      ! Copy info flag
+      newton_meta%info = info
+
+      ! Set metadata output
+      select type(meta)
+         type is (newton_dp_metadata)
+            meta = newton_meta
+      end select
+
       return
    end subroutine newton_rdp
 
-   subroutine newton_csp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_csp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_csp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_csp),                         intent(inout) :: X
@@ -377,6 +435,8 @@ contains
       class(abstract_precond_csp),              optional, intent(in)    :: preconditioner
       !! Preconditioner for the linear solver
       procedure(abstract_scheduler_sp),         optional                :: scheduler
+      class(abstract_metadata),                       optional,   intent(out) :: meta
+      !! Metadata.
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -385,8 +445,8 @@ contains
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_csp), allocatable        :: residual, increment
       real(sp)           :: rnorm, tol
-      logical            :: converged
       integer            :: i, maxiter, maxstep_bisection
+      type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
       
       ! Newton-solver tolerance
@@ -407,17 +467,26 @@ contains
       ! Initialisation      
       maxiter           = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
-      converged         = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, target_tol)
+      newton_meta = newton_sp_metadata()
+      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_sp
+      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_sp
+
+      ! Get initial residual.
+      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
       rnorm = residual%norm()
+
+      ! Save metadata.
+      newton_meta%res(1) = rnorm
+      newton_meta%tol(1) = target_tol
+
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
-         converged = .true.
+         newton_meta%converged = .true.
          return
       end if
 
@@ -448,18 +517,27 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol)
+         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
          rnorm = residual%norm()
+
+         ! Save metadata.
+         newton_meta%n_iter = newton_meta%n_iter + 1
+         newton_meta%res(newton_meta%n_eval+1) = rnorm
+         newton_meta%tol(newton_meta%n_eval+1) = tol
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_sp*target_tol) then
                ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol)
+               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               rnorm = residual%norm()
+               ! Save metadata.
+               newton_meta%res(newton_meta%n_eval + 1) = rnorm
+               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_csp')
-                  converged = .true.
+                  newton_meta%converged = .true.
                   exit newton
                else
                   write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
@@ -470,16 +548,25 @@ contains
 
       enddo newton
 
-      if (.not.converged) then
+      if (.not.newton_meta%converged) then
          write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          info = -1
       endif
 
+      ! Copy info flag
+      newton_meta%info = info
+
+      ! Set metadata output
+      select type(meta)
+         type is (newton_sp_metadata)
+            meta = newton_meta
+      end select
+
       return
    end subroutine newton_csp
 
-   subroutine newton_cdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_cdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_cdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_cdp),                         intent(inout) :: X
@@ -499,6 +586,8 @@ contains
       class(abstract_precond_cdp),              optional, intent(in)    :: preconditioner
       !! Preconditioner for the linear solver
       procedure(abstract_scheduler_dp),         optional                :: scheduler
+      class(abstract_metadata),                       optional,   intent(out) :: meta
+      !! Metadata.
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -507,8 +596,8 @@ contains
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_cdp), allocatable        :: residual, increment
       real(dp)           :: rnorm, tol
-      logical            :: converged
       integer            :: i, maxiter, maxstep_bisection
+      type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
       
       ! Newton-solver tolerance
@@ -529,17 +618,26 @@ contains
       ! Initialisation      
       maxiter           = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
-      converged         = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
 
-      call sys%eval(X, residual, target_tol)
+      newton_meta = newton_dp_metadata()
+      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_dp
+      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_dp
+
+      ! Get initial residual.
+      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
       rnorm = residual%norm()
+
+      ! Save metadata.
+      newton_meta%res(1) = rnorm
+      newton_meta%tol(1) = target_tol
+
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
-         converged = .true.
+         newton_meta%converged = .true.
          return
       end if
 
@@ -570,18 +668,27 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol)
+         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
          rnorm = residual%norm()
+
+         ! Save metadata.
+         newton_meta%n_iter = newton_meta%n_iter + 1
+         newton_meta%res(newton_meta%n_eval+1) = rnorm
+         newton_meta%tol(newton_meta%n_eval+1) = tol
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_dp*target_tol) then
                ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol)
+               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               rnorm = residual%norm()
+               ! Save metadata.
+               newton_meta%res(newton_meta%n_eval + 1) = rnorm
+               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_cdp')
-                  converged = .true.
+                  newton_meta%converged = .true.
                   exit newton
                else
                   write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
@@ -592,11 +699,20 @@ contains
 
       enddo newton
 
-      if (.not.converged) then
+      if (.not.newton_meta%converged) then
          write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          info = -1
       endif
+
+      ! Copy info flag
+      newton_meta%info = info
+
+      ! Set metadata output
+      select type(meta)
+         type is (newton_dp_metadata)
+            meta = newton_meta
+      end select
 
       return
    end subroutine newton_cdp

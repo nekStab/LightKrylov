@@ -940,6 +940,8 @@ contains
         type(vector_rsp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -953,7 +955,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rsp')
 
         ! Check convergence.
@@ -974,6 +976,8 @@ contains
         type(vector_rsp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -987,7 +991,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
 
         ! Check convergence.
@@ -1017,6 +1021,8 @@ contains
         type(vector_rdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1030,7 +1036,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rdp')
 
         ! Check convergence.
@@ -1051,6 +1057,8 @@ contains
         type(vector_rdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1064,7 +1072,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
 
         ! Check convergence.
@@ -1094,6 +1102,8 @@ contains
         type(vector_csp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1107,7 +1117,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_csp')
 
         ! Check convergence.
@@ -1128,6 +1138,8 @@ contains
         type(vector_csp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1141,7 +1153,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
 
         ! Check convergence.
@@ -1171,6 +1183,8 @@ contains
         type(vector_cdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1184,7 +1198,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_cdp')
 
         ! Check convergence.
@@ -1205,6 +1219,8 @@ contains
         type(vector_cdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1218,7 +1234,7 @@ contains
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
 
         ! Check convergence.
@@ -1250,7 +1266,10 @@ contains
         type(spd_linop_rsp), allocatable :: A
         type(vector_rsp), allocatable :: b
         type(vector_rsp), allocatable :: x
+        ! CG options.
         type(cg_sp_opts) :: opts
+        ! CG metadata.
+        type(cg_sp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1264,7 +1283,7 @@ contains
 
         ! CG solver.
         opts = cg_sp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
+        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
 
         ! Check convergence.
@@ -1291,7 +1310,10 @@ contains
         type(spd_linop_rdp), allocatable :: A
         type(vector_rdp), allocatable :: b
         type(vector_rdp), allocatable :: x
+        ! CG options.
         type(cg_dp_opts) :: opts
+        ! CG metadata.
+        type(cg_dp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1305,7 +1327,7 @@ contains
 
         ! CG solver.
         opts = cg_dp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
+        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
 
         ! Check convergence.
@@ -1332,7 +1354,10 @@ contains
         type(hermitian_linop_csp), allocatable :: A
         type(vector_csp), allocatable :: b
         type(vector_csp), allocatable :: x
+        ! CG options.
         type(cg_sp_opts) :: opts
+        ! CG metadata.
+        type(cg_sp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1346,7 +1371,7 @@ contains
 
         ! CG solver.
         opts = cg_sp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
+        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
 
         ! Check convergence.
@@ -1373,7 +1398,10 @@ contains
         type(hermitian_linop_cdp), allocatable :: A
         type(vector_cdp), allocatable :: b
         type(vector_cdp), allocatable :: x
+        ! CG options.
         type(cg_dp_opts) :: opts
+        ! CG metadata.
+        type(cg_dp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1387,7 +1415,7 @@ contains
 
         ! CG solver.
         opts = cg_dp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
+        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
 
         ! Check convergence.
