@@ -1,4 +1,4 @@
-module lightkrylov_AbstractLinops
+module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
@@ -9,9 +9,11 @@ module lightkrylov_AbstractLinops
     !!  It also provides extended types to define the identity operator, symmetric linear
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
     !!  of two linear operators.
-    use lightkrylov_Constants
-    use lightkrylov_Utils
-    use lightkrylov_AbstractVectors
+    use stdlib_optval, only: optval
+    use LightKrylov_Logger
+    use LightKrylov_Constants
+    use LightKrylov_Utils
+    use LightKrylov_AbstractVectors
     implicit none
     private
 
@@ -25,6 +27,18 @@ module lightkrylov_AbstractLinops
         !!  @warning
         !!  Users should not extend this abstract class to define their own types.
         !!  @endwarning
+    private
+        integer :: matvec_counter  = 0
+        integer :: rmatvec_counter = 0
+    contains
+        procedure, pass(self), public :: get_matvec_counter
+        !! Return matvec counter value
+        procedure, pass(self), public :: reset_matvec_counter
+        !! Reset matvec counter
+        procedure, pass(self), public :: get_rmatvec_counter
+        !! Return rmatvec counter value
+        procedure, pass(self), public :: reset_rmatvec_counter
+        !! Reset rmatvec counter
     end type abstract_linop
 
     !------------------------------------------------------------------------------
@@ -34,10 +48,16 @@ module lightkrylov_AbstractLinops
         !! Base type to extend in order to define a real(sp)-valued linear operator.
     contains
         private
+        ! User defined procedures
         procedure(abstract_matvec_rsp), pass(self), deferred, public :: matvec
         !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_rsp), pass(self), deferred, public :: rmatvec
         !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_matvec_rsp
+        !! Wrapper for matvec including the counter increment
+        procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_rsp
+        !! Wrapper for rmatvec including the counter increment
     end type
 
     abstract interface
@@ -45,7 +65,7 @@ module lightkrylov_AbstractLinops
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_rsp
-            class(abstract_linop_rsp) , intent(in)  :: self
+            class(abstract_linop_rsp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_rsp), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
@@ -76,10 +96,16 @@ module lightkrylov_AbstractLinops
         !! Base type to extend in order to define a real(dp)-valued linear operator.
     contains
         private
+        ! User defined procedures
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: matvec
         !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_rdp), pass(self), deferred, public :: rmatvec
         !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_matvec_rdp
+        !! Wrapper for matvec including the counter increment
+        procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_rdp
+        !! Wrapper for rmatvec including the counter increment
     end type
 
     abstract interface
@@ -87,7 +113,7 @@ module lightkrylov_AbstractLinops
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_rdp
-            class(abstract_linop_rdp) , intent(in)  :: self
+            class(abstract_linop_rdp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_rdp), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
@@ -118,10 +144,16 @@ module lightkrylov_AbstractLinops
         !! Base type to extend in order to define a complex(sp)-valued linear operator.
     contains
         private
+        ! User defined procedures
         procedure(abstract_matvec_csp), pass(self), deferred, public :: matvec
         !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_csp), pass(self), deferred, public :: rmatvec
         !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_matvec_csp
+        !! Wrapper for matvec including the counter increment
+        procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_csp
+        !! Wrapper for rmatvec including the counter increment
     end type
 
     abstract interface
@@ -129,7 +161,7 @@ module lightkrylov_AbstractLinops
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_csp
-            class(abstract_linop_csp) , intent(in)  :: self
+            class(abstract_linop_csp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_csp), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
@@ -160,10 +192,16 @@ module lightkrylov_AbstractLinops
         !! Base type to extend in order to define a complex(dp)-valued linear operator.
     contains
         private
+        ! User defined procedures
         procedure(abstract_matvec_cdp), pass(self), deferred, public :: matvec
         !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
         procedure(abstract_matvec_cdp), pass(self), deferred, public :: rmatvec
         !! Procedure to compute the reversed matrix-vector product \( \mathbf{y} = \mathbf{A}^H \mathbf{x} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_matvec_cdp
+        !! Wrapper for matvec including the counter increment
+        procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_cdp
+        !! Wrapper for rmatvec including the counter increment
     end type
 
     abstract interface
@@ -171,7 +209,7 @@ module lightkrylov_AbstractLinops
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_cdp
-            class(abstract_linop_cdp) , intent(in)  :: self
+            class(abstract_linop_cdp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_cdp), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
@@ -399,29 +437,164 @@ module lightkrylov_AbstractLinops
 
 contains
 
+    !--------------------------------------------------------------
+    !-----     Getter/Setter routines for abstract_linops     -----
+    !--------------------------------------------------------------
+ 
+    pure integer function get_matvec_counter(self) result(count)
+      !! Getter function for the number of matvec calls
+      class(abstract_linop), intent(in) :: self
+      count = self%matvec_counter
+    end function get_matvec_counter
+
+    subroutine reset_matvec_counter(self, counter, ifprint)
+      class(abstract_linop), intent(inout) :: self
+      integer, optional, intent(in) :: counter
+      !! optional flag to reset to an integer other than zero.
+      logical, optional, intent(in) :: ifprint
+      !! optional flag to print the number of matvecs to log prior to resetting
+      ! internals
+      integer :: counter_
+      logical :: ifprint_
+      character(len=128) :: msg
+      counter_ = optval(counter, 0)
+      ifprint_ = optval(ifprint, .false.)
+      if (ifprint_) then
+         write(msg,'(A,I0,A,I0,A)') 'Total number of matvecs: ', self%get_matvec_counter(), &
+                  & '. Resetting counter to ', counter_, '.'
+         call logger%log_message(msg, module=this_module, procedure='reset_matvec_counter')
+      end if
+      self%matvec_counter = counter_
+      return
+    end subroutine reset_matvec_counter
+
+    pure integer function get_rmatvec_counter(self) result(count)
+      !! Getter function for the number of rmatvec calls
+      class(abstract_linop), intent(in) :: self
+      count = self%rmatvec_counter
+    end function get_rmatvec_counter
+
+    subroutine reset_rmatvec_counter(self, counter, ifprint)
+      class(abstract_linop), intent(inout) :: self
+      integer, optional, intent(in) :: counter
+      !! optional flag to reset to an integer other than zero.
+      logical, optional, intent(in) :: ifprint
+      !! optional flag to print the number of rmatvecs to log prior to resetting
+      ! internals
+      integer :: counter_
+      logical :: ifprint_
+      character(len=128) :: msg
+      counter_ = optval(counter, 0)
+      ifprint_ = optval(ifprint, .false.)
+      if (ifprint_) then
+         write(msg,'(A,I0,A,I0,A)') 'Total number of rmatvecs: ', self%get_rmatvec_counter(), &
+                  & '. Resetting counter to ', counter_, '.'
+         call logger%log_message(msg, module=this_module, procedure='reset_rmatvec_counter')
+      end if
+      self%matvec_counter = counter_
+      return
+    end subroutine reset_rmatvec_counter
+
+    !---------------------------------------------------------------------
+    !-----     Wrappers for matvec/rmatvec to increment counters     -----
+    !---------------------------------------------------------------------
+
+    subroutine apply_matvec_rsp(self, vec_in, vec_out)
+        class(abstract_linop_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec_in
+        class(abstract_vector_rsp), intent(out) :: vec_out
+        self%matvec_counter = self%matvec_counter + 1
+        call self%matvec(vec_in, vec_out)
+        return
+    end subroutine apply_matvec_rsp
+
+    subroutine apply_rmatvec_rsp(self, vec_in, vec_out)
+        class(abstract_linop_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec_in
+        class(abstract_vector_rsp), intent(out) :: vec_out
+        self%rmatvec_counter = self%rmatvec_counter + 1
+        call self%rmatvec(vec_in, vec_out)
+        return
+    end subroutine apply_rmatvec_rsp
+    subroutine apply_matvec_rdp(self, vec_in, vec_out)
+        class(abstract_linop_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec_in
+        class(abstract_vector_rdp), intent(out) :: vec_out
+        self%matvec_counter = self%matvec_counter + 1
+        call self%matvec(vec_in, vec_out)
+        return
+    end subroutine apply_matvec_rdp
+
+    subroutine apply_rmatvec_rdp(self, vec_in, vec_out)
+        class(abstract_linop_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec_in
+        class(abstract_vector_rdp), intent(out) :: vec_out
+        self%rmatvec_counter = self%rmatvec_counter + 1
+        call self%rmatvec(vec_in, vec_out)
+        return
+    end subroutine apply_rmatvec_rdp
+    subroutine apply_matvec_csp(self, vec_in, vec_out)
+        class(abstract_linop_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        self%matvec_counter = self%matvec_counter + 1
+        call self%matvec(vec_in, vec_out)
+        return
+    end subroutine apply_matvec_csp
+
+    subroutine apply_rmatvec_csp(self, vec_in, vec_out)
+        class(abstract_linop_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        self%rmatvec_counter = self%rmatvec_counter + 1
+        call self%rmatvec(vec_in, vec_out)
+        return
+    end subroutine apply_rmatvec_csp
+    subroutine apply_matvec_cdp(self, vec_in, vec_out)
+        class(abstract_linop_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        self%matvec_counter = self%matvec_counter + 1
+        call self%matvec(vec_in, vec_out)
+        return
+    end subroutine apply_matvec_cdp
+
+    subroutine apply_rmatvec_cdp(self, vec_in, vec_out)
+        class(abstract_linop_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        self%rmatvec_counter = self%rmatvec_counter + 1
+        call self%rmatvec(vec_in, vec_out)
+        return
+    end subroutine apply_rmatvec_cdp
+
+    !------------------------------------------------------------------------------
+    !-----     Concrete matvec/rmatvec implementations for special linops     -----
+    !------------------------------------------------------------------------------
+
     subroutine id_matvec_rsp(self, vec_in, vec_out)
-        class(Id_rsp), intent(in) :: self
+        class(Id_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_rsp
     subroutine id_matvec_rdp(self, vec_in, vec_out)
-        class(Id_rdp), intent(in) :: self
+        class(Id_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_rdp
     subroutine id_matvec_csp(self, vec_in, vec_out)
-        class(Id_csp), intent(in) :: self
+        class(Id_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
         return
     end subroutine id_matvec_csp
     subroutine id_matvec_cdp(self, vec_in, vec_out)
-        class(Id_cdp), intent(in) :: self
+        class(Id_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
@@ -429,68 +602,68 @@ contains
     end subroutine id_matvec_cdp
 
     subroutine scaled_matvec_rsp(self, vec_in, vec_out)
-        class(scaled_linop_rsp), intent(in) :: self
+        class(scaled_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-        call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_rsp
 
     subroutine scaled_rmatvec_rsp(self, vec_in, vec_out)
-        class(scaled_linop_rsp), intent(in) :: self
+        class(scaled_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-        call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_rsp
     subroutine scaled_matvec_rdp(self, vec_in, vec_out)
-        class(scaled_linop_rdp), intent(in) :: self
+        class(scaled_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-        call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_rdp
 
     subroutine scaled_rmatvec_rdp(self, vec_in, vec_out)
-        class(scaled_linop_rdp), intent(in) :: self
+        class(scaled_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-        call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_rdp
     subroutine scaled_matvec_csp(self, vec_in, vec_out)
-        class(scaled_linop_csp), intent(in) :: self
+        class(scaled_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-        call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_csp
 
     subroutine scaled_rmatvec_csp(self, vec_in, vec_out)
-        class(scaled_linop_csp), intent(in) :: self
+        class(scaled_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-        call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_csp
     subroutine scaled_matvec_cdp(self, vec_in, vec_out)
-        class(scaled_linop_cdp), intent(in) :: self
+        class(scaled_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-        call self%A%matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_matvec_cdp
 
     subroutine scaled_rmatvec_cdp(self, vec_in, vec_out)
-        class(scaled_linop_cdp), intent(in) :: self
+        class(scaled_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-        call self%A%rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
+        call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
         return
     end subroutine scaled_rmatvec_cdp
 
     subroutine axpby_matvec_rsp(self, vec_in, vec_out)
-        class(axpby_linop_rsp), intent(in) :: self
+        class(axpby_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
 
@@ -502,16 +675,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         else
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         else
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -521,7 +694,7 @@ contains
     end subroutine axpby_matvec_rsp
 
     subroutine axpby_rmatvec_rsp(self, vec_in, vec_out)
-        class(axpby_linop_rsp), intent(in) :: self
+        class(axpby_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
 
@@ -533,16 +706,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         else
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         else
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -552,7 +725,7 @@ contains
     end subroutine axpby_rmatvec_rsp
 
     subroutine axpby_matvec_rdp(self, vec_in, vec_out)
-        class(axpby_linop_rdp), intent(in) :: self
+        class(axpby_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
 
@@ -564,16 +737,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         else
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         else
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -583,7 +756,7 @@ contains
     end subroutine axpby_matvec_rdp
 
     subroutine axpby_rmatvec_rdp(self, vec_in, vec_out)
-        class(axpby_linop_rdp), intent(in) :: self
+        class(axpby_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
 
@@ -595,16 +768,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         else
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         else
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -614,7 +787,7 @@ contains
     end subroutine axpby_rmatvec_rdp
 
     subroutine axpby_matvec_csp(self, vec_in, vec_out)
-        class(axpby_linop_csp), intent(in) :: self
+        class(axpby_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
 
@@ -626,16 +799,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         else
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         else
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -645,7 +818,7 @@ contains
     end subroutine axpby_matvec_csp
 
     subroutine axpby_rmatvec_csp(self, vec_in, vec_out)
-        class(axpby_linop_csp), intent(in) :: self
+        class(axpby_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
 
@@ -657,16 +830,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         else
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         else
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -676,7 +849,7 @@ contains
     end subroutine axpby_rmatvec_csp
 
     subroutine axpby_matvec_cdp(self, vec_in, vec_out)
-        class(axpby_linop_cdp), intent(in) :: self
+        class(axpby_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
 
@@ -688,16 +861,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         else
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         else
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -707,7 +880,7 @@ contains
     end subroutine axpby_matvec_cdp
 
     subroutine axpby_rmatvec_cdp(self, vec_in, vec_out)
-        class(axpby_linop_cdp), intent(in) :: self
+        class(axpby_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
 
@@ -719,16 +892,16 @@ contains
 
         ! w = A @ x
         if (self%transA) then
-            call self%A%matvec(vec_in, wrk)
+            call self%A%apply_matvec(vec_in, wrk)
         else
-            call self%A%rmatvec(vec_in, wrk)
+            call self%A%apply_rmatvec(vec_in, wrk)
         endif
 
         ! y = B @ x
         if (self%transB) then
-            call self%B%matvec(vec_in, vec_out)
+            call self%B%apply_matvec(vec_in, vec_out)
         else
-            call self%B%rmatvec(vec_in, vec_out)
+            call self%B%apply_rmatvec(vec_in, vec_out)
         endif
 
         ! y = alpha*w + beta*y
@@ -739,81 +912,81 @@ contains
 
 
     subroutine adjoint_matvec_rsp(self, vec_in, vec_out)
-        class(adjoint_linop_rsp), intent(in) :: self
+        class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
 
-        call self%A%rmatvec(vec_in, vec_out)
+        call self%A%apply_rmatvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_matvec_rsp
 
     subroutine adjoint_rmatvec_rsp(self, vec_in, vec_out)
-        class(adjoint_linop_rsp), intent(in) :: self
+        class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
 
-        call self%A%matvec(vec_in, vec_out)
+        call self%A%apply_matvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_rmatvec_rsp
 
     subroutine adjoint_matvec_rdp(self, vec_in, vec_out)
-        class(adjoint_linop_rdp), intent(in) :: self
+        class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
 
-        call self%A%rmatvec(vec_in, vec_out)
+        call self%A%apply_rmatvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_matvec_rdp
 
     subroutine adjoint_rmatvec_rdp(self, vec_in, vec_out)
-        class(adjoint_linop_rdp), intent(in) :: self
+        class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
 
-        call self%A%matvec(vec_in, vec_out)
+        call self%A%apply_matvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_rmatvec_rdp
 
     subroutine adjoint_matvec_csp(self, vec_in, vec_out)
-        class(adjoint_linop_csp), intent(in) :: self
+        class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
 
-        call self%A%rmatvec(vec_in, vec_out)
+        call self%A%apply_rmatvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_matvec_csp
 
     subroutine adjoint_rmatvec_csp(self, vec_in, vec_out)
-        class(adjoint_linop_csp), intent(in) :: self
+        class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
 
-        call self%A%matvec(vec_in, vec_out)
+        call self%A%apply_matvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_rmatvec_csp
 
     subroutine adjoint_matvec_cdp(self, vec_in, vec_out)
-        class(adjoint_linop_cdp), intent(in) :: self
+        class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
 
-        call self%A%rmatvec(vec_in, vec_out)
+        call self%A%apply_rmatvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_matvec_cdp
 
     subroutine adjoint_rmatvec_cdp(self, vec_in, vec_out)
-        class(adjoint_linop_cdp), intent(in) :: self
+        class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
 
-        call self%A%matvec(vec_in, vec_out)
+        call self%A%apply_matvec(vec_in, vec_out)
 
         return
     end subroutine adjoint_rmatvec_cdp

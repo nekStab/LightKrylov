@@ -48,7 +48,7 @@ module Roessler
    type, extends(abstract_system_rdp), public :: roessler_upo
    contains
       private
-      procedure, pass(self), public :: eval => nonlinear_map
+      procedure, pass(self), public :: response => nonlinear_map
    end type roessler_upo
 
    type, extends(abstract_jacobian_linop_rdp), public :: jacobian
@@ -243,7 +243,7 @@ contains
  
    subroutine nonlinear_map(self, vec_in, vec_out, atol)
       ! Dynamical system.
-      class(roessler_upo),        intent(in)  :: self
+      class(roessler_upo),        intent(inout)  :: self
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
@@ -284,7 +284,7 @@ contains
  
    subroutine linear_map(self, vec_in, vec_out)
       ! Linear Operator.
-      class(jacobian), intent(in) :: self
+      class(jacobian), intent(inout) :: self
       ! Input vector.
       class(abstract_vector_rdp) , intent(in)  :: vec_in
       ! Output vector.
@@ -333,7 +333,7 @@ contains
 
    subroutine monodromy_map(self, vec_in, vec_out)
       ! Linear Operator.
-      class(floquet_operator), intent(in) :: self
+      class(floquet_operator), intent(inout) :: self
       ! Input vector.
       class(abstract_vector_rdp) , intent(in)  :: vec_in
       ! Output vector.

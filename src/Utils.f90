@@ -16,6 +16,7 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
+    use stdlib_optval, only: optval
     use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd, eigh
     ! Eigenvalue problem.
     use stdlib_linalg_lapack, only: geev
@@ -246,12 +247,16 @@ module lightkrylov_utils
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
     end type
 
     type, extends(abstract_opts), public :: cg_sp_opts
         !! Conjugate gradient options.
         integer :: maxiter = 100
         !! Maximum number of `cg` iterations (default: 100).
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
     end type
 
     type, extends(abstract_opts), public :: newton_sp_opts
@@ -263,6 +268,8 @@ module lightkrylov_utils
         integer :: maxstep_bisection = 5
         !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
         !! Ignored if ifbisect = .false.
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
     end type
     
     type, extends(abstract_opts), public :: gmres_dp_opts
@@ -271,12 +278,16 @@ module lightkrylov_utils
         !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
         !! Maximum number of `gmres` restarts (default: 10).
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
     end type
 
     type, extends(abstract_opts), public :: cg_dp_opts
         !! Conjugate gradient options.
         integer :: maxiter = 100
         !! Maximum number of `cg` iterations (default: 100).
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
     end type
 
     type, extends(abstract_opts), public :: newton_dp_opts
@@ -288,19 +299,37 @@ module lightkrylov_utils
         integer :: maxstep_bisection = 5
         !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
         !! Ignored if ifbisect = .false.
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
     end type
     
 
     type, abstract, public :: abstract_metadata
         !! Abstract type container for solver metadata from with all others are extended.
+    contains
+        procedure(abstract_print_metadata), pass(self), deferred, public :: print
+        procedure(abstract_reset_metadata), pass(self), deferred, public :: reset
     end type
+
+    abstract interface
+        subroutine abstract_print_metadata(self, reset_counters, verbose)
+            import abstract_metadata
+            class(abstract_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            !! Reset all counters to zero after printing?
+            logical, optional, intent(in) :: verbose
+            !! Print the residual full residual history?
+        end subroutine abstract_print_metadata
+        subroutine abstract_reset_metadata(self)
+            import abstract_metadata
+            class(abstract_metadata), intent(inout) :: self
+        end subroutine abstract_reset_metadata
+    end interface
 
     type, extends(abstract_metadata), public :: gmres_sp_metadata
         !! GMRES metadata.
         integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax = 0
-        !! Matrix-vector product counter
         integer :: n_inner = 0
         !! Number of inner iterations
         integer :: n_outer = 0
@@ -311,30 +340,36 @@ module lightkrylov_utils
         !! Convergence flag
         integer :: info = 0
         !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_gmres_sp
+        procedure, pass(self), public :: reset => reset_gmres_sp
     end type
 
     type, extends(abstract_metadata), public :: cg_sp_metadata
         !! Conjugate gradient metadata.
         integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax = 0
-        !! Matrix-vector product counter
         real(sp), dimension(:), allocatable :: res
         !! Residual history
         logical :: converged = .false.
         !! Convergence flag
         integer :: info = 0
         !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_cg_sp
+        procedure, pass(self), public :: reset => reset_cg_sp
     end type
 
     type, extends(abstract_metadata), public :: newton_sp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
         integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax = 0
-        !! Matrix-vector product counter
-        integer :: n_eval = 0
-        !! System evaluation counter
+        integer :: eval_counter_record = 0
+        !! System response evaluation counter:
+        !! N.B.: For each of these evals the current residual and tolerance are recorded.
+        integer :: eval_counter_all = 0
+        !! System response evaluation counter, including additional evals for convergence checks and step bisection.
+        !! N.B.: For the additional system evaluations, the residual and tolerance are NOT recorded.
         real(sp), dimension(:), allocatable :: res
         !! Residual history
         real(sp), dimension(:), allocatable :: tol
@@ -343,14 +378,16 @@ module lightkrylov_utils
         !! Convergence flag
         integer :: info = 0
         !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_newton_sp
+        procedure, pass(self), public :: reset => reset_newton_sp
+        procedure, pass(self), public :: record => record_data_sp
     end type
-    
+   
     type, extends(abstract_metadata), public :: gmres_dp_metadata
         !! GMRES metadata.
         integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax = 0
-        !! Matrix-vector product counter
         integer :: n_inner = 0
         !! Number of inner iterations
         integer :: n_outer = 0
@@ -361,30 +398,36 @@ module lightkrylov_utils
         !! Convergence flag
         integer :: info = 0
         !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_gmres_dp
+        procedure, pass(self), public :: reset => reset_gmres_dp
     end type
 
     type, extends(abstract_metadata), public :: cg_dp_metadata
         !! Conjugate gradient metadata.
         integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax = 0
-        !! Matrix-vector product counter
         real(dp), dimension(:), allocatable :: res
         !! Residual history
         logical :: converged = .false.
         !! Convergence flag
         integer :: info = 0
         !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_cg_dp
+        procedure, pass(self), public :: reset => reset_cg_dp
     end type
 
     type, extends(abstract_metadata), public :: newton_dp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
         integer :: n_iter = 0
         !! Iteration counter
-        integer :: n_Ax = 0
-        !! Matrix-vector product counter
-        integer :: n_eval = 0
-        !! System evaluation counter
+        integer :: eval_counter_record = 0
+        !! System response evaluation counter:
+        !! N.B.: For each of these evals the current residual and tolerance are recorded.
+        integer :: eval_counter_all = 0
+        !! System response evaluation counter, including additional evals for convergence checks and step bisection.
+        !! N.B.: For the additional system evaluations, the residual and tolerance are NOT recorded.
         real(dp), dimension(:), allocatable :: res
         !! Residual history
         real(dp), dimension(:), allocatable :: tol
@@ -393,10 +436,379 @@ module lightkrylov_utils
         !! Convergence flag
         integer :: info = 0
         !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_newton_dp
+        procedure, pass(self), public :: reset => reset_newton_dp
+        procedure, pass(self), public :: record => record_data_dp
     end type
-    
+   
 
 contains
+
+    !------------------------------------------------------
+    !-----     TYPE BOUND PROCEDURES FOR METADATA     -----
+    !------------------------------------------------------
+
+    subroutine print_gmres_sp(self, reset_counters, verbose)
+        class(gmres_sp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+  
+        write(msg,'(A30,I6,"  (",I6,"/",I3,")")') adjustl('Iterations   (inner/outer): '), &
+                  & self%n_iter, self%n_inner, self%n_outer
+        call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15)') 'Residual'
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            do i = 1, self%n_iter
+               write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
+               call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            end do
+        else
+            write(msg,'(A30,I20)') adjustl('Number of records: '), size(self%res)
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='gmres_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='gmres_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_gmres_sp
+
+    subroutine reset_gmres_sp(self)
+        class(gmres_sp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%n_inner = 0
+        self%n_outer = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        return
+    end subroutine reset_gmres_sp
+
+    subroutine print_cg_sp(self, reset_counters, verbose)
+        class(cg_sp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') adjustl('Iterations: '), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15)') 'Residual'
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            do i = 2, self%n_iter+1
+               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
+               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            end do
+        else
+            write(msg,'(A30,I20)') adjustl('Number of records: '), size(self%res)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_cg_sp
+
+    subroutine reset_cg_sp(self)
+        class(cg_sp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        return
+    end subroutine reset_cg_sp
+
+    subroutine print_newton_sp(self, reset_counters, verbose)
+        class(newton_sp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') adjustl('Iterations: '), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        write(msg,'(A30,I20)') adjustl('System evaluations: '), self%eval_counter_all
+        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            do i = 2, self%eval_counter_record - 1
+               write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
+               call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            end do
+            i = self%eval_counter_record
+            write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        else
+            i = self%eval_counter_record
+            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(i)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='newton_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='newton_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_newton_sp
+
+    subroutine reset_newton_sp(self)
+        class(newton_sp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%eval_counter_record = 0
+        self%eval_counter_all = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        if (allocated(self%tol)) deallocate(self%tol)
+        return
+    end subroutine reset_newton_sp
+
+    subroutine record_data_sp(self, res, tol)
+        class(newton_sp_metadata), intent(inout) :: self
+        real(sp) :: res
+        !! Residual of the current evaluation
+        real(sp) :: tol
+        !! Tolerance of the current evaluation
+        if (.not.allocated(self%res)) then
+            allocate(self%res(1))
+            self%res(1) = res
+        else
+            self%res = [ self%res, res ]
+        end if
+        if (.not.allocated(self%tol)) then
+            allocate(self%tol(1))
+            self%tol(1) = tol
+        else
+            self%tol = [ self%tol, tol ]
+        end if
+        self%eval_counter_record = self%eval_counter_record + 1
+        return
+    end subroutine record_data_sp
+
+    subroutine print_gmres_dp(self, reset_counters, verbose)
+        class(gmres_dp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+  
+        write(msg,'(A30,I6,"  (",I6,"/",I3,")")') adjustl('Iterations   (inner/outer): '), &
+                  & self%n_iter, self%n_inner, self%n_outer
+        call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15)') 'Residual'
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            do i = 1, self%n_iter
+               write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
+               call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            end do
+        else
+            write(msg,'(A30,I20)') adjustl('Number of records: '), size(self%res)
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='gmres_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='gmres_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_gmres_dp
+
+    subroutine reset_gmres_dp(self)
+        class(gmres_dp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%n_inner = 0
+        self%n_outer = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        return
+    end subroutine reset_gmres_dp
+
+    subroutine print_cg_dp(self, reset_counters, verbose)
+        class(cg_dp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') adjustl('Iterations: '), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15)') 'Residual'
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            do i = 2, self%n_iter+1
+               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
+               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            end do
+        else
+            write(msg,'(A30,I20)') adjustl('Number of records: '), size(self%res)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_cg_dp
+
+    subroutine reset_cg_dp(self)
+        class(cg_dp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        return
+    end subroutine reset_cg_dp
+
+    subroutine print_newton_dp(self, reset_counters, verbose)
+        class(newton_dp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') adjustl('Iterations: '), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        write(msg,'(A30,I20)') adjustl('System evaluations: '), self%eval_counter_all
+        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            do i = 2, self%eval_counter_record - 1
+               write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
+               call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            end do
+            i = self%eval_counter_record
+            write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        else
+            i = self%eval_counter_record
+            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(i)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='newton_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='newton_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_newton_dp
+
+    subroutine reset_newton_dp(self)
+        class(newton_dp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%eval_counter_record = 0
+        self%eval_counter_all = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        if (allocated(self%tol)) deallocate(self%tol)
+        return
+    end subroutine reset_newton_dp
+
+    subroutine record_data_dp(self, res, tol)
+        class(newton_dp_metadata), intent(inout) :: self
+        real(dp) :: res
+        !! Residual of the current evaluation
+        real(dp) :: tol
+        !! Tolerance of the current evaluation
+        if (.not.allocated(self%res)) then
+            allocate(self%res(1))
+            self%res(1) = res
+        else
+            self%res = [ self%res, res ]
+        end if
+        if (.not.allocated(self%tol)) then
+            allocate(self%tol(1))
+            self%tol(1) = tol
+        else
+            self%tol = [ self%tol, tol ]
+        end if
+        self%eval_counter_record = self%eval_counter_record + 1
+        return
+    end subroutine record_data_dp
+
 
     !-------------------------------------
     !-----     VARIOUS UTILITIES     -----

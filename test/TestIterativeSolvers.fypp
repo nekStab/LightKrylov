@@ -114,7 +114,7 @@ contains
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
         !do i = 1, nev
-        !    call A%matvec(X(i), AX(i))
+        !    call A%apply_matvec(X(i), AX(i))
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
@@ -189,7 +189,7 @@ contains
 !        allocate(AX(test_size))
 !        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
 !        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
+!            call A%apply_matvec(X(i), AX(i))
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
@@ -267,7 +267,7 @@ contains
         allocate(AX(test_size))
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
         do i = 1, test_size
-            call A%matvec(X(i), AX(i))
+            call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
@@ -432,7 +432,7 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size)
+        opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_${type[0]}$${kind}$')
 
@@ -476,7 +476,7 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size)
+        opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
@@ -535,7 +535,7 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! CG solver.
-        opts = cg_${kind}$_opts(maxiter=2*test_size)
+        opts = cg_${kind}$_opts(maxiter=2*test_size, if_print_metadata=.true.)
         call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module_long, procedure='test_cg_${type[0]}$${kind}$')
 

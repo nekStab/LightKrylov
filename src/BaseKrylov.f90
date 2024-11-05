@@ -223,7 +223,7 @@ module lightkrylov_BaseKrylov
         !!
         !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
         !!        module. The operator needs to be square, i.e. the dimension of its domain and
-        !!        co-domain is the same. It is an `intent(in)` argument.
+        !!        co-domain is the same. It is an `intent(inout)` argument.
         !!
         !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
         !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
@@ -427,7 +427,7 @@ module lightkrylov_BaseKrylov
         !!  ### Arguments
         !!
         !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
-        !!        provided by the `AbstractLinops` module. It is an `intent(in)` argument.
+        !!        provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
         !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
@@ -498,7 +498,7 @@ module lightkrylov_BaseKrylov
         !!  ### Arguments
         !!
         !!  `A` : Linear operator derived from one the base types provided by the 
-        !!        `AbstractLinops` module. It is an `intent(in)` argument.
+        !!        `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
         !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
@@ -2695,7 +2695,7 @@ contains
     !-----------------------------------------
 
     subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rsp), intent(inout) :: X(:)
         !! Orthogonal basis for the generated Krylov subspace.
@@ -2743,11 +2743,11 @@ contains
             ! Matrix-vector product.
             if (trans) then
                 do i = 1, p
-                    call A%rmatvec(X(kpm+i), X(kp+i))
+                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
                 enddo
             else
                 do i = 1, p
-                    call A%matvec(X(kpm+i), X(kp+i))
+                    call A%apply_matvec(X(kpm+i), X(kp+i))
                 enddo
             endif
 
@@ -2780,7 +2780,7 @@ contains
     end subroutine arnoldi_rsp
 
     subroutine arnoldi_rdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rdp), intent(inout) :: X(:)
         !! Orthogonal basis for the generated Krylov subspace.
@@ -2828,11 +2828,11 @@ contains
             ! Matrix-vector product.
             if (trans) then
                 do i = 1, p
-                    call A%rmatvec(X(kpm+i), X(kp+i))
+                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
                 enddo
             else
                 do i = 1, p
-                    call A%matvec(X(kpm+i), X(kp+i))
+                    call A%apply_matvec(X(kpm+i), X(kp+i))
                 enddo
             endif
 
@@ -2865,7 +2865,7 @@ contains
     end subroutine arnoldi_rdp
 
     subroutine arnoldi_csp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_csp), intent(inout) :: X(:)
         !! Orthogonal basis for the generated Krylov subspace.
@@ -2913,11 +2913,11 @@ contains
             ! Matrix-vector product.
             if (trans) then
                 do i = 1, p
-                    call A%rmatvec(X(kpm+i), X(kp+i))
+                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
                 enddo
             else
                 do i = 1, p
-                    call A%matvec(X(kpm+i), X(kp+i))
+                    call A%apply_matvec(X(kpm+i), X(kp+i))
                 enddo
             endif
 
@@ -2950,7 +2950,7 @@ contains
     end subroutine arnoldi_csp
 
     subroutine arnoldi_cdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_cdp), intent(inout) :: X(:)
         !! Orthogonal basis for the generated Krylov subspace.
@@ -2998,11 +2998,11 @@ contains
             ! Matrix-vector product.
             if (trans) then
                 do i = 1, p
-                    call A%rmatvec(X(kpm+i), X(kp+i))
+                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
                 enddo
             else
                 do i = 1, p
-                    call A%matvec(X(kpm+i), X(kp+i))
+                    call A%apply_matvec(X(kpm+i), X(kp+i))
                 enddo
             endif
 
@@ -3041,7 +3041,7 @@ contains
     !---------------------------------------------
 
     subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rsp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
@@ -3078,7 +3078,7 @@ contains
         ! Lanczos bidiagonalization.
         lanczos : do k = k_start, k_end
             ! Transpose matrix-vector product.
-            call A%rmatvec(U(k), V(k))
+            call A%apply_rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
@@ -3097,7 +3097,7 @@ contains
             endif
 
             ! Matrix-vector product.
-            call A%matvec(V(k), U(k+1))
+            call A%apply_matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -3119,7 +3119,7 @@ contains
     end subroutine lanczos_bidiagonalization_rsp
 
     subroutine lanczos_bidiagonalization_rdp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rdp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
@@ -3156,7 +3156,7 @@ contains
         ! Lanczos bidiagonalization.
         lanczos : do k = k_start, k_end
             ! Transpose matrix-vector product.
-            call A%rmatvec(U(k), V(k))
+            call A%apply_rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
@@ -3175,7 +3175,7 @@ contains
             endif
 
             ! Matrix-vector product.
-            call A%matvec(V(k), U(k+1))
+            call A%apply_matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -3197,7 +3197,7 @@ contains
     end subroutine lanczos_bidiagonalization_rdp
 
     subroutine lanczos_bidiagonalization_csp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_csp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
@@ -3234,7 +3234,7 @@ contains
         ! Lanczos bidiagonalization.
         lanczos : do k = k_start, k_end
             ! Transpose matrix-vector product.
-            call A%rmatvec(U(k), V(k))
+            call A%apply_rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
@@ -3253,7 +3253,7 @@ contains
             endif
 
             ! Matrix-vector product.
-            call A%matvec(V(k), U(k+1))
+            call A%apply_matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -3275,7 +3275,7 @@ contains
     end subroutine lanczos_bidiagonalization_csp
 
     subroutine lanczos_bidiagonalization_cdp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_cdp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
@@ -3312,7 +3312,7 @@ contains
         ! Lanczos bidiagonalization.
         lanczos : do k = k_start, k_end
             ! Transpose matrix-vector product.
-            call A%rmatvec(U(k), V(k))
+            call A%apply_rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
@@ -3331,7 +3331,7 @@ contains
             endif
 
             ! Matrix-vector product.
-            call A%matvec(V(k), U(k+1))
+            call A%apply_matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -3359,7 +3359,7 @@ contains
     !----------------------------------------------
     
     subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
-        class(abstract_sym_linop_rsp), intent(in) :: A
+        class(abstract_sym_linop_rsp), intent(inout) :: A
         class(abstract_vector_rsp), intent(inout) :: X(:)
         real(sp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
@@ -3383,7 +3383,7 @@ contains
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
             ! Matrix-vector product.
-            call A%matvec(X(k), X(k+1))
+            call A%apply_matvec(X(k), X(k+1))
             ! Update tridiagonal matrix.
             call update_tridiag_matrix_rsp(T, X, k)
             beta = X(k+1)%norm() ; T(k+1, k) = beta
@@ -3426,7 +3426,7 @@ contains
     end subroutine update_tridiag_matrix_rsp
 
     subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, tol)
-        class(abstract_sym_linop_rdp), intent(in) :: A
+        class(abstract_sym_linop_rdp), intent(inout) :: A
         class(abstract_vector_rdp), intent(inout) :: X(:)
         real(dp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
@@ -3450,7 +3450,7 @@ contains
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
             ! Matrix-vector product.
-            call A%matvec(X(k), X(k+1))
+            call A%apply_matvec(X(k), X(k+1))
             ! Update tridiagonal matrix.
             call update_tridiag_matrix_rdp(T, X, k)
             beta = X(k+1)%norm() ; T(k+1, k) = beta
@@ -3493,7 +3493,7 @@ contains
     end subroutine update_tridiag_matrix_rdp
 
     subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, tol)
-        class(abstract_hermitian_linop_csp), intent(in) :: A
+        class(abstract_hermitian_linop_csp), intent(inout) :: A
         class(abstract_vector_csp), intent(inout) :: X(:)
         complex(sp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
@@ -3517,7 +3517,7 @@ contains
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
             ! Matrix-vector product.
-            call A%matvec(X(k), X(k+1))
+            call A%apply_matvec(X(k), X(k+1))
             ! Update tridiagonal matrix.
             call update_tridiag_matrix_csp(T, X, k)
             beta = X(k+1)%norm() ; T(k+1, k) = beta
@@ -3560,7 +3560,7 @@ contains
     end subroutine update_tridiag_matrix_csp
 
     subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, tol)
-        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        class(abstract_hermitian_linop_cdp), intent(inout) :: A
         class(abstract_vector_cdp), intent(inout) :: X(:)
         complex(dp), intent(inout) :: T(:, :)
         integer, intent(out) :: info
@@ -3584,7 +3584,7 @@ contains
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
             ! Matrix-vector product.
-            call A%matvec(X(k), X(k+1))
+            call A%apply_matvec(X(k), X(k+1))
             ! Update tridiagonal matrix.
             call update_tridiag_matrix_cdp(T, X, k)
             beta = X(k+1)%norm() ; T(k+1, k) = beta

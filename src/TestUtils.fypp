@@ -113,7 +113,7 @@ module LightKrylov_TestUtils
     type, extends(abstract_system_r${kind}$), public :: roessler_r${kind}$
     contains
        private
-       procedure, pass(self), public :: eval => eval_roessler_r${kind}$
+       procedure, pass(self), public :: response => eval_roessler_r${kind}$
     end type roessler_r${kind}$
 
     type, extends(abstract_jacobian_linop_r${kind}$), public :: jacobian_r${kind}$
@@ -238,7 +238,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -256,7 +256,7 @@ contains
     end subroutine matvec_${type[0]}$${kind}$
 
     subroutine rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -279,7 +279,7 @@ contains
 
     #:if type[0] == "r"
     subroutine sdp_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(spd_linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(spd_linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -297,7 +297,7 @@ contains
     end subroutine sdp_matvec_${type[0]}$${kind}$
     #:else
     subroutine hermitian_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(hermitian_linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(hermitian_linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -540,7 +540,7 @@ contains
 
     #:for kind in REAL_KINDS
     subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, atol)
-      class(roessler_r${kind}$),            intent(in)  :: self
+      class(roessler_r${kind}$),            intent(inout)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
       real(${kind}$),                    intent(in)  :: atol
@@ -575,7 +575,7 @@ contains
     end subroutine get_state_r${kind}$
 
     subroutine lin_roessler_r${kind}$(self, vec_in, vec_out)
-      class(jacobian_r${kind}$),            intent(in)  :: self
+      class(jacobian_r${kind}$),            intent(inout)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
 
@@ -599,7 +599,7 @@ contains
     end subroutine lin_roessler_r${kind}$
 
     subroutine adj_lin_roessler_r${kind}$(self, vec_in, vec_out)
-      class(jacobian_r${kind}$),            intent(in)  :: self
+      class(jacobian_r${kind}$),            intent(inout)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
 

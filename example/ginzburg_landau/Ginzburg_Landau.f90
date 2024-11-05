@@ -323,7 +323,7 @@ module Ginzburg_Landau
  
    subroutine direct_solver(self, vec_in, vec_out)
      ! Linear Operator.
-     class(exponential_prop), intent(in)  :: self
+     class(exponential_prop), intent(inout)  :: self
      ! Input vector.
      class(abstract_vector_cdp) , intent(in)  :: vec_in
      ! Output vector.
@@ -355,7 +355,7 @@ module Ginzburg_Landau
  
    subroutine adjoint_solver(self, vec_in, vec_out)
      ! Linear Operator.
-     class(exponential_prop), intent(in)  :: self
+     class(exponential_prop), intent(inout)  :: self
      ! Input vector.
      class(abstract_vector_cdp) , intent(in)  :: vec_in
      ! Output vector.

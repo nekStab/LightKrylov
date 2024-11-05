@@ -118,7 +118,7 @@ contains
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
         !do i = 1, nev
-        !    call A%matvec(X(i), AX(i))
+        !    call A%apply_matvec(X(i), AX(i))
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
@@ -191,7 +191,7 @@ contains
 !        allocate(AX(test_size))
 !        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
 !        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
+!            call A%apply_matvec(X(i), AX(i))
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
@@ -267,7 +267,7 @@ contains
         allocate(AX(test_size))
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
         do i = 1, test_size
-            call A%matvec(X(i), AX(i))
+            call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
@@ -361,7 +361,7 @@ contains
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
         !do i = 1, nev
-        !    call A%matvec(X(i), AX(i))
+        !    call A%apply_matvec(X(i), AX(i))
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
@@ -434,7 +434,7 @@ contains
 !        allocate(AX(test_size))
 !        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
 !        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
+!            call A%apply_matvec(X(i), AX(i))
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
@@ -510,7 +510,7 @@ contains
         allocate(AX(test_size))
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
         do i = 1, test_size
-            call A%matvec(X(i), AX(i))
+            call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
@@ -954,7 +954,7 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rsp')
 
@@ -990,7 +990,7 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rsp')
 
@@ -1035,7 +1035,7 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rdp')
 
@@ -1071,7 +1071,7 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rdp')
 
@@ -1116,7 +1116,7 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_csp')
 
@@ -1152,7 +1152,7 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_csp')
 
@@ -1197,7 +1197,7 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_cdp')
 
@@ -1233,7 +1233,7 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_cdp')
 
@@ -1282,7 +1282,7 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(maxiter=2*test_size)
+        opts = cg_sp_opts(maxiter=2*test_size, if_print_metadata=.true.)
         call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module_long, procedure='test_cg_rsp')
 
@@ -1326,7 +1326,7 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(maxiter=2*test_size)
+        opts = cg_dp_opts(maxiter=2*test_size, if_print_metadata=.true.)
         call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module_long, procedure='test_cg_rdp')
 
@@ -1370,7 +1370,7 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(maxiter=2*test_size)
+        opts = cg_sp_opts(maxiter=2*test_size, if_print_metadata=.true.)
         call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module_long, procedure='test_cg_csp')
 
@@ -1414,7 +1414,7 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(maxiter=2*test_size)
+        opts = cg_dp_opts(maxiter=2*test_size, if_print_metadata=.true.)
         call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
         call check_info(info, 'cg', module=this_module_long, procedure='test_cg_cdp')
 

@@ -67,7 +67,7 @@ contains
         #:endif
 
         ! Compute matrix-vector product.
-        call A%matvec(x, y)
+        call A%apply_matvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"
@@ -106,7 +106,7 @@ contains
         #:endif
 
         ! Compute matrix-vector product.
-        call A%rmatvec(x, y)
+        call A%apply_rmatvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"
@@ -152,7 +152,7 @@ contains
         y = vector_${type[0]}$${kind}$() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%matvec(x, y)
+        call B%apply_matvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"
@@ -202,7 +202,7 @@ contains
         y = vector_${type[0]}$${kind}$() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%rmatvec(x, y)
+        call B%apply_rmatvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"

@@ -91,7 +91,7 @@ module LightKrylov_NewtonKrylov
          integer,  intent(in)  :: iter
          !! Newton iteration count
          integer,  intent(out)  :: info
-         !! Information flag
+         !! Information flagcharacter(len=128) :: msg
       end subroutine abstract_scheduler_sp
 
       subroutine abstract_scheduler_dp(tol, target_tol, rnorm, iter, info)
@@ -106,8 +106,9 @@ module LightKrylov_NewtonKrylov
          integer,  intent(in)  :: iter
          !! Newton iteration count
          integer,  intent(out)  :: info
-         !! Information flag
+         !! Information flagcharacter(len=128) :: msg
       end subroutine abstract_scheduler_dp
+
 
    end interface
 
@@ -168,18 +169,16 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-
+      ! Zero eval counters & instantiate metadata
+      call sys%reset_eval_counter()
       newton_meta = newton_sp_metadata()
-      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_sp
-      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_sp
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
 
       ! Save metadata.
-      newton_meta%res(1) = rnorm
-      newton_meta%tol(1) = target_tol
+      call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
@@ -216,26 +215,25 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
          ! Save metadata.
          newton_meta%n_iter = newton_meta%n_iter + 1
-         newton_meta%res(newton_meta%n_eval+1) = rnorm
-         newton_meta%tol(newton_meta%n_eval+1) = tol
+         call newton_meta%record(rnorm, tol)
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_sp*target_tol) then
-               ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               ! the tolerances are not at the target, check the accurate residual
+               call sys%eval(X, residual, target_tol)
                rnorm = residual%norm()
-               ! Save metadata.
-               newton_meta%res(newton_meta%n_eval + 1) = rnorm
-               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
+
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_rsp')
+                  ! Save metadata
+                  call newton_meta%record(rnorm, target_tol)
                   newton_meta%converged = .true.
                   exit newton
                else
@@ -253,8 +251,11 @@ contains
          info = -1
       endif
 
-      ! Copy info flag
+      ! Finalize metadata
       newton_meta%info = info
+      newton_meta%eval_counter_all = sys%get_eval_counter()
+
+      if (opts%if_print_metadata) call newton_meta%print()
 
       ! Set metadata output
       if (present(meta)) then
@@ -322,18 +323,16 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-
+      ! Zero eval counters & instantiate metadata
+      call sys%reset_eval_counter()
       newton_meta = newton_dp_metadata()
-      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_dp
-      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_dp
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
 
       ! Save metadata.
-      newton_meta%res(1) = rnorm
-      newton_meta%tol(1) = target_tol
+      call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
@@ -370,26 +369,25 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
          ! Save metadata.
          newton_meta%n_iter = newton_meta%n_iter + 1
-         newton_meta%res(newton_meta%n_eval+1) = rnorm
-         newton_meta%tol(newton_meta%n_eval+1) = tol
+         call newton_meta%record(rnorm, tol)
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_dp*target_tol) then
-               ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               ! the tolerances are not at the target, check the accurate residual
+               call sys%eval(X, residual, target_tol)
                rnorm = residual%norm()
-               ! Save metadata.
-               newton_meta%res(newton_meta%n_eval + 1) = rnorm
-               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
+
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_rdp')
+                  ! Save metadata
+                  call newton_meta%record(rnorm, target_tol)
                   newton_meta%converged = .true.
                   exit newton
                else
@@ -407,8 +405,11 @@ contains
          info = -1
       endif
 
-      ! Copy info flag
+      ! Finalize metadata
       newton_meta%info = info
+      newton_meta%eval_counter_all = sys%get_eval_counter()
+
+      if (opts%if_print_metadata) call newton_meta%print()
 
       ! Set metadata output
       if (present(meta)) then
@@ -476,18 +477,16 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-
+      ! Zero eval counters & instantiate metadata
+      call sys%reset_eval_counter()
       newton_meta = newton_sp_metadata()
-      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_sp
-      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_sp
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
 
       ! Save metadata.
-      newton_meta%res(1) = rnorm
-      newton_meta%tol(1) = target_tol
+      call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
@@ -524,26 +523,25 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
          ! Save metadata.
          newton_meta%n_iter = newton_meta%n_iter + 1
-         newton_meta%res(newton_meta%n_eval+1) = rnorm
-         newton_meta%tol(newton_meta%n_eval+1) = tol
+         call newton_meta%record(rnorm, tol)
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_sp*target_tol) then
-               ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               ! the tolerances are not at the target, check the accurate residual
+               call sys%eval(X, residual, target_tol)
                rnorm = residual%norm()
-               ! Save metadata.
-               newton_meta%res(newton_meta%n_eval + 1) = rnorm
-               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
+
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_csp')
+                  ! Save metadata
+                  call newton_meta%record(rnorm, target_tol)
                   newton_meta%converged = .true.
                   exit newton
                else
@@ -561,8 +559,11 @@ contains
          info = -1
       endif
 
-      ! Copy info flag
+      ! Finalize metadata
       newton_meta%info = info
+      newton_meta%eval_counter_all = sys%get_eval_counter()
+
+      if (opts%if_print_metadata) call newton_meta%print()
 
       ! Set metadata output
       if (present(meta)) then
@@ -630,18 +631,16 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-
+      ! Zero eval counters & instantiate metadata
+      call sys%reset_eval_counter()
       newton_meta = newton_dp_metadata()
-      allocate(newton_meta%res(2*maxiter)); newton_meta%res = 0.0_dp
-      allocate(newton_meta%tol(2*maxiter)); newton_meta%tol = 0.0_dp
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+      call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
 
       ! Save metadata.
-      newton_meta%res(1) = rnorm
-      newton_meta%tol(1) = target_tol
+      call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
@@ -678,26 +677,25 @@ contains
          endif
 
          ! Evaluate new residual
-         call sys%eval(X, residual, tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+         call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
          ! Save metadata.
          newton_meta%n_iter = newton_meta%n_iter + 1
-         newton_meta%res(newton_meta%n_eval+1) = rnorm
-         newton_meta%tol(newton_meta%n_eval+1) = tol
+         call newton_meta%record(rnorm, tol)
 
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_dp*target_tol) then
-               ! the tolerances are not at the target, check the accurate residual                  
-               call sys%eval(X, residual, target_tol) ; newton_meta%n_eval = newton_meta%n_eval + 1
+               ! the tolerances are not at the target, check the accurate residual
+               call sys%eval(X, residual, target_tol)
                rnorm = residual%norm()
-               ! Save metadata.
-               newton_meta%res(newton_meta%n_eval + 1) = rnorm
-               newton_meta%tol(newton_meta%n_eval + 1) = target_tol
+
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_cdp')
+                  ! Save metadata
+                  call newton_meta%record(rnorm, target_tol)
                   newton_meta%converged = .true.
                   exit newton
                else
@@ -715,8 +713,11 @@ contains
          info = -1
       endif
 
-      ! Copy info flag
+      ! Finalize metadata
       newton_meta%info = info
+      newton_meta%eval_counter_all = sys%get_eval_counter()
+
+      if (opts%if_print_metadata) call newton_meta%print()
 
       ! Set metadata output
       if (present(meta)) then
@@ -735,7 +736,7 @@ contains
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_rsp), intent(inout) :: X
       !! Current system state to be updated
-      class(abstract_system_rsp), intent(in)    :: sys
+      class(abstract_system_rsp), intent(inout) :: sys
       !! Dynamical system for which the residual is minimized
       class(abstract_vector_rsp), intent(in)    :: increment
       !! Newton step computed from the standard method
@@ -828,7 +829,7 @@ contains
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_rdp), intent(inout) :: X
       !! Current system state to be updated
-      class(abstract_system_rdp), intent(in)    :: sys
+      class(abstract_system_rdp), intent(inout) :: sys
       !! Dynamical system for which the residual is minimized
       class(abstract_vector_rdp), intent(in)    :: increment
       !! Newton step computed from the standard method
@@ -921,7 +922,7 @@ contains
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_csp), intent(inout) :: X
       !! Current system state to be updated
-      class(abstract_system_csp), intent(in)    :: sys
+      class(abstract_system_csp), intent(inout) :: sys
       !! Dynamical system for which the residual is minimized
       class(abstract_vector_csp), intent(in)    :: increment
       !! Newton step computed from the standard method
@@ -1014,7 +1015,7 @@ contains
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_cdp), intent(inout) :: X
       !! Current system state to be updated
-      class(abstract_system_cdp), intent(in)    :: sys
+      class(abstract_system_cdp), intent(inout) :: sys
       !! Dynamical system for which the residual is minimized
       class(abstract_vector_cdp), intent(in)    :: increment
       !! Newton step computed from the standard method
