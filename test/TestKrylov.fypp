@@ -72,7 +72,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info, tol=atol_${kind}$)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_${type[0]}$${kind}$')
+        call check_info(info, 'qr', module=this_module_long, procedure='test_qr_factorization_${type[0]}$${kind}$')
 
         ! Get data.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -146,7 +146,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info, tol=atol_${kind}$)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$')
 
         ! Extract data
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -216,7 +216,7 @@ contains
         allocate(H(kdim+1, kdim)) ; H = zero_${type[0]}$${kind}$
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_${kind}$)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -271,7 +271,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
@@ -324,7 +324,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_${kind}$)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_${type[0]}$${kind}$')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_krylov_schur_${type[0]}$${kind}$')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -394,7 +394,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call bidiagonalization(A, U, V, B, info, tol=atol_${kind}$)
-        call check_info(info, 'bidiagonalization', module=this_module, &
+        call check_info(info, 'bidiagonalization', module=this_module_long, &
                         & procedure='test_lanczos_bidiag_factorization_${type[0]}$${kind}$')
 
         ! Check correctness.
@@ -490,7 +490,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos(A, X, T, info, tol=atol_${kind}$)
-        call check_info(info, 'lanczos', module=this_module, & 
+        call check_info(info, 'lanczos', module=this_module_long, & 
                         & procedure='test_lanczos_tridiag_factorization_${type[0]}$${kind}$')
 
         ! Check correctness.

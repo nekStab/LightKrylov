@@ -82,7 +82,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info, tol=atol_sp)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_rsp')
+        call check_info(info, 'qr', module=this_module_long, procedure='test_qr_factorization_rsp')
 
         ! Get data.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -156,7 +156,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info, tol=atol_sp)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_rsp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_rsp')
 
         ! Extract data
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -217,7 +217,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info, tol=atol_dp)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_rdp')
+        call check_info(info, 'qr', module=this_module_long, procedure='test_qr_factorization_rdp')
 
         ! Get data.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -291,7 +291,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info, tol=atol_dp)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_rdp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_rdp')
 
         ! Extract data
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -352,7 +352,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info, tol=atol_sp)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_csp')
+        call check_info(info, 'qr', module=this_module_long, procedure='test_qr_factorization_csp')
 
         ! Get data.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -426,7 +426,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info, tol=atol_sp)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_csp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_csp')
 
         ! Extract data
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -487,7 +487,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info, tol=atol_dp)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_cdp')
+        call check_info(info, 'qr', module=this_module_long, procedure='test_qr_factorization_cdp')
 
         ! Get data.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -561,7 +561,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info, tol=atol_dp)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
 
         ! Extract data
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -629,7 +629,7 @@ contains
         allocate(H(kdim+1, kdim)) ; H = zero_rsp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_sp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rsp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_rsp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -684,7 +684,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rsp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_rsp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
@@ -737,7 +737,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_sp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_rsp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_krylov_schur_rsp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -797,7 +797,7 @@ contains
         allocate(H(kdim+1, kdim)) ; H = zero_rdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_dp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_rdp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_rdp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -852,7 +852,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_rdp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_rdp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
@@ -905,7 +905,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_dp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_rdp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_krylov_schur_rdp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -965,7 +965,7 @@ contains
         allocate(H(kdim+1, kdim)) ; H = zero_csp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_sp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_csp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_csp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -1020,7 +1020,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_csp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_csp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
@@ -1073,7 +1073,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_sp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_csp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_krylov_schur_csp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -1133,7 +1133,7 @@ contains
         allocate(H(kdim+1, kdim)) ; H = zero_cdp
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_dp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_cdp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_cdp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -1188,7 +1188,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_cdp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_cdp')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
@@ -1241,7 +1241,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_dp)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_cdp')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_krylov_schur_cdp')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -1309,7 +1309,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call bidiagonalization(A, U, V, B, info, tol=atol_sp)
-        call check_info(info, 'bidiagonalization', module=this_module, &
+        call check_info(info, 'bidiagonalization', module=this_module_long, &
                         & procedure='test_lanczos_bidiag_factorization_rsp')
 
         ! Check correctness.
@@ -1386,7 +1386,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call bidiagonalization(A, U, V, B, info, tol=atol_dp)
-        call check_info(info, 'bidiagonalization', module=this_module, &
+        call check_info(info, 'bidiagonalization', module=this_module_long, &
                         & procedure='test_lanczos_bidiag_factorization_rdp')
 
         ! Check correctness.
@@ -1463,7 +1463,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call bidiagonalization(A, U, V, B, info, tol=atol_sp)
-        call check_info(info, 'bidiagonalization', module=this_module, &
+        call check_info(info, 'bidiagonalization', module=this_module_long, &
                         & procedure='test_lanczos_bidiag_factorization_csp')
 
         ! Check correctness.
@@ -1540,7 +1540,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call bidiagonalization(A, U, V, B, info, tol=atol_dp)
-        call check_info(info, 'bidiagonalization', module=this_module, &
+        call check_info(info, 'bidiagonalization', module=this_module_long, &
                         & procedure='test_lanczos_bidiag_factorization_cdp')
 
         ! Check correctness.
@@ -1626,7 +1626,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos(A, X, T, info, tol=atol_sp)
-        call check_info(info, 'lanczos', module=this_module, & 
+        call check_info(info, 'lanczos', module=this_module_long, & 
                         & procedure='test_lanczos_tridiag_factorization_rsp')
 
         ! Check correctness.
@@ -1696,7 +1696,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos(A, X, T, info, tol=atol_dp)
-        call check_info(info, 'lanczos', module=this_module, & 
+        call check_info(info, 'lanczos', module=this_module_long, & 
                         & procedure='test_lanczos_tridiag_factorization_rdp')
 
         ! Check correctness.
@@ -1766,7 +1766,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos(A, X, T, info, tol=atol_sp)
-        call check_info(info, 'lanczos', module=this_module, & 
+        call check_info(info, 'lanczos', module=this_module_long, & 
                         & procedure='test_lanczos_tridiag_factorization_csp')
 
         ! Check correctness.
@@ -1836,7 +1836,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos(A, X, T, info, tol=atol_dp)
-        call check_info(info, 'lanczos', module=this_module, & 
+        call check_info(info, 'lanczos', module=this_module_long, & 
                         & procedure='test_lanczos_tridiag_factorization_cdp')
 
         ! Check correctness.

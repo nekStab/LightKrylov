@@ -99,7 +99,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rsp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_ks_evp_rsp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_csp; k = 1
@@ -172,7 +172,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_evp_rsp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_rsp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_csp; k = 1
@@ -249,7 +249,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_sp)
-        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rsp')
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_sym_evp_rsp')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_sp
@@ -342,7 +342,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rdp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_ks_evp_rdp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_cdp; k = 1
@@ -415,7 +415,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_evp_rdp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_rdp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_cdp; k = 1
@@ -492,7 +492,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_dp)
-        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rdp')
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_sym_evp_rdp')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_dp
@@ -711,7 +711,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
-        call check_info(info, 'svds', module=this_module, procedure='test_svd_rsp')
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_rsp')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -805,7 +805,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
-        call check_info(info, 'svds', module=this_module, procedure='test_svd_rdp')
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_rdp')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -956,7 +956,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rsp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rsp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -992,7 +992,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rsp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1037,7 +1037,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rdp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1073,7 +1073,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1118,7 +1118,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_csp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_csp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1154,7 +1154,7 @@ contains
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_csp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1199,7 +1199,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_cdp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_cdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1235,7 +1235,7 @@ contains
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_cdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1284,7 +1284,7 @@ contains
         ! CG solver.
         opts = cg_sp_opts(maxiter=2*test_size)
         call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_rsp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1328,7 +1328,7 @@ contains
         ! CG solver.
         opts = cg_dp_opts(maxiter=2*test_size)
         call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_rdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1372,7 +1372,7 @@ contains
         ! CG solver.
         opts = cg_sp_opts(maxiter=2*test_size)
         call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_csp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1416,7 +1416,7 @@ contains
         ! CG solver.
         opts = cg_dp_opts(maxiter=2*test_size)
         call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_cdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))

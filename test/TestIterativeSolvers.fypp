@@ -95,7 +95,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
-        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_c${kind}$; k = 1
@@ -170,7 +170,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
-        call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_c${kind}$; k = 1
@@ -249,7 +249,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_${kind}$)
-        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_sym_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_${kind}$
@@ -348,7 +348,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
-        call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -434,7 +434,7 @@ contains
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_${type[0]}$${kind}$')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -478,7 +478,7 @@ contains
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size)
         call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -537,7 +537,7 @@ contains
         ! CG solver.
         opts = cg_${kind}$_opts(maxiter=2*test_size)
         call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_${type[0]}$${kind}$')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
