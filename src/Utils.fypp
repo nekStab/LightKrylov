@@ -19,6 +19,7 @@ module lightkrylov_utils
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
     use stdlib_optval, only: optval
+    use stdlib_strings, only: padr
     use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd, eigh
     ! Eigenvalue problem.
     use stdlib_linalg_lapack, only: geev
@@ -372,7 +373,7 @@ contains
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
   
-        write(msg,'(A30,I6,"  (",I6,"/",I3,")")') adjustl('Iterations   (inner/outer): '), &
+        write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
         call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
         if (ifverbose) then
@@ -385,9 +386,9 @@ contains
                call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
             end do
         else
-            write(msg,'(A30,I20)') adjustl('Number of records: '), size(self%res)
+            write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
             call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
-            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(size(self%res))
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
             call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
         end if
         if (self%converged) then
@@ -424,7 +425,7 @@ contains
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
 
-        write(msg,'(A30,I20)') adjustl('Iterations: '), self%n_iter
+        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
         call logger%log_message(msg, module=this_module, procedure='cg_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
@@ -437,9 +438,9 @@ contains
                call logger%log_message(msg, module=this_module, procedure='cg_metadata')
             end do
         else
-            write(msg,'(A30,I20)') adjustl('Number of records: '), size(self%res)
+            write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
             call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(size(self%res))
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
             call logger%log_message(msg, module=this_module, procedure='cg_metadata')
         end if
         if (self%converged) then
@@ -474,9 +475,9 @@ contains
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
 
-        write(msg,'(A30,I20)') adjustl('Iterations: '), self%n_iter
+        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
         call logger%log_message(msg, module=this_module, procedure='newton_metadata')
-        write(msg,'(A30,I20)') adjustl('System evaluations: '), self%eval_counter_all
+        write(msg,'(A30,I20)') padr('System evaluations: ', 30), self%eval_counter_all
         call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
@@ -492,7 +493,7 @@ contains
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         else
             i = self%eval_counter_record
-            write(msg,'(A30,E20.8)') adjustl('Residual: '), self%res(i)
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(i)
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         end if
         if (self%converged) then
