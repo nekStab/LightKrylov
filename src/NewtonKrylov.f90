@@ -162,8 +162,9 @@ contains
          tolerance_scheduler => constant_atol_sp
       endif
 
-      ! Initialisation      
-      maxiter           = opts%maxiter
+      ! Initialisation
+      info = 0 
+      maxiter = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
@@ -256,10 +257,12 @@ contains
       newton_meta%info = info
 
       ! Set metadata output
-      select type(meta)
-         type is (newton_sp_metadata)
-            meta = newton_meta
-      end select
+      if (present(meta)) then
+         select type(meta)
+            type is (newton_sp_metadata)
+               meta = newton_meta
+         end select
+      end if
 
       return
    end subroutine newton_rsp
@@ -313,8 +316,9 @@ contains
          tolerance_scheduler => constant_atol_dp
       endif
 
-      ! Initialisation      
-      maxiter           = opts%maxiter
+      ! Initialisation
+      info = 0 
+      maxiter = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
@@ -407,10 +411,12 @@ contains
       newton_meta%info = info
 
       ! Set metadata output
-      select type(meta)
-         type is (newton_dp_metadata)
-            meta = newton_meta
-      end select
+      if (present(meta)) then
+         select type(meta)
+            type is (newton_dp_metadata)
+               meta = newton_meta
+         end select
+      end if
 
       return
    end subroutine newton_rdp
@@ -464,8 +470,9 @@ contains
          tolerance_scheduler => constant_atol_sp
       endif
 
-      ! Initialisation      
-      maxiter           = opts%maxiter
+      ! Initialisation
+      info = 0 
+      maxiter = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
@@ -558,10 +565,12 @@ contains
       newton_meta%info = info
 
       ! Set metadata output
-      select type(meta)
-         type is (newton_sp_metadata)
-            meta = newton_meta
-      end select
+      if (present(meta)) then
+         select type(meta)
+            type is (newton_sp_metadata)
+               meta = newton_meta
+         end select
+      end if
 
       return
    end subroutine newton_csp
@@ -615,8 +624,9 @@ contains
          tolerance_scheduler => constant_atol_dp
       endif
 
-      ! Initialisation      
-      maxiter           = opts%maxiter
+      ! Initialisation
+      info = 0 
+      maxiter = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
@@ -709,10 +719,12 @@ contains
       newton_meta%info = info
 
       ! Set metadata output
-      select type(meta)
-         type is (newton_dp_metadata)
-            meta = newton_meta
-      end select
+      if (present(meta)) then
+         select type(meta)
+            type is (newton_dp_metadata)
+               meta = newton_meta
+         end select
+      end if
 
       return
    end subroutine newton_cdp

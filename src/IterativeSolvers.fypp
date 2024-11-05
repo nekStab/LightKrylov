@@ -881,15 +881,13 @@ contains
     !-------------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine gmres_${type[0]}$${kind}$(A, b, x, meta, info, rtol, atol, preconditioner, options, transpose)
+    subroutine gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(${kind}$), optional, intent(in) :: rtol
@@ -902,6 +900,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1057,19 +1057,23 @@ contains
             call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) gmres_meta%converged = .true.; exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
         gmres_meta%info = info
 
         ! Set metadata output
-        select type(meta)
-            type is (gmres_${kind}$_metadata)
-                meta = gmres_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_${kind}$_metadata)
+                    meta = gmres_meta
+           end select
+        end if
 
         return
     end subroutine gmres_${type[0]}$${kind}$
@@ -1084,7 +1088,7 @@ contains
     !---------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine cg_${type[0]}$${kind}$(A, b, x, meta, info, rtol, atol, preconditioner, options)
+    subroutine cg_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, meta)
         #:if type[0] == "r"
         class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
         #:else
@@ -1095,8 +1099,6 @@ contains
         !! Right-hand side vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(${kind}$), optional, intent(in) :: rtol
@@ -1107,6 +1109,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_${kind}$_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -1179,10 +1183,13 @@ contains
             #:endif
 
             ! Save metadata.
-            cg_meta%n_iter  = cg_meta%n_iter + 1
+            cg_meta%n_iter = cg_meta%n_iter + 1
             cg_meta%res(cg_meta%n_iter+1) = residual
 
-            if (residual < tol) cg_meta%converged = .true.; exit cg_loop
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -1195,13 +1202,17 @@ contains
             call logger%log_information(msg, module=this_module, procedure='cg_${type[0]}$${kind}$')
         enddo cg_loop
 
+        ! Set and copy info flag for completeness
         info = cg_meta%n_iter
+        cg_meta%info = info
 
         ! Set metadata output
-        select type(meta)
-            type is (cg_${kind}$_metadata)
-                meta = cg_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_${kind}$_metadata)
+                   meta = cg_meta
+           end select
+        end if
         
         return
     end subroutine cg_${type[0]}$${kind}$

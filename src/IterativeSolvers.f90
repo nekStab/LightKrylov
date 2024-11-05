@@ -2027,15 +2027,13 @@ contains
     !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
     !-------------------------------------------------------
 
-    subroutine gmres_rsp(A, b, x, meta, info, rtol, atol, preconditioner, options, transpose)
+    subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
         class(abstract_linop_rsp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_rsp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(sp), optional, intent(in) :: rtol
@@ -2048,6 +2046,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2203,32 +2203,36 @@ contains
             call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) gmres_meta%converged = .true.; exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
         gmres_meta%info = info
 
+        print *, 'GMRES', info
+
         ! Set metadata output
-        select type(meta)
-            type is (gmres_sp_metadata)
-                meta = gmres_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_sp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
 
         return
     end subroutine gmres_rsp
 
-    subroutine gmres_rdp(A, b, x, meta, info, rtol, atol, preconditioner, options, transpose)
+    subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
         class(abstract_linop_rdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_rdp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(dp), optional, intent(in) :: rtol
@@ -2241,6 +2245,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2396,32 +2402,36 @@ contains
             call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) gmres_meta%converged = .true.; exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
         gmres_meta%info = info
 
+        print *, 'GMRES', info
+
         ! Set metadata output
-        select type(meta)
-            type is (gmres_dp_metadata)
-                meta = gmres_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_dp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
 
         return
     end subroutine gmres_rdp
 
-    subroutine gmres_csp(A, b, x, meta, info, rtol, atol, preconditioner, options, transpose)
+    subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
         class(abstract_linop_csp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_csp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(sp), optional, intent(in) :: rtol
@@ -2434,6 +2444,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2589,32 +2601,36 @@ contains
             call logger%log_information(msg, module=this_module, procedure='gmres_csp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) gmres_meta%converged = .true.; exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
         gmres_meta%info = info
 
+        print *, 'GMRES', info
+
         ! Set metadata output
-        select type(meta)
-            type is (gmres_sp_metadata)
-                meta = gmres_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_sp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
 
         return
     end subroutine gmres_csp
 
-    subroutine gmres_cdp(A, b, x, meta, info, rtol, atol, preconditioner, options, transpose)
+    subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
         class(abstract_linop_cdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_cdp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(dp), optional, intent(in) :: rtol
@@ -2627,6 +2643,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2782,19 +2800,25 @@ contains
             call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) gmres_meta%converged = .true.; exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
         gmres_meta%info = info
 
+        print *, 'GMRES', info
+
         ! Set metadata output
-        select type(meta)
-            type is (gmres_dp_metadata)
-                meta = gmres_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_dp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
 
         return
     end subroutine gmres_cdp
@@ -2807,15 +2831,13 @@ contains
     !-----     CONJUGATE GRADIENT METHOD     -----
     !---------------------------------------------
 
-    subroutine cg_rsp(A, b, x, meta, info, rtol, atol, preconditioner, options)
+    subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
         class(abstract_sym_linop_rsp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_rsp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(sp), optional, intent(in) :: rtol
@@ -2826,6 +2848,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_sp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -2894,10 +2918,13 @@ contains
             residual = sqrt(r_dot_r_new)
 
             ! Save metadata.
-            cg_meta%n_iter  = cg_meta%n_iter + 1
+            cg_meta%n_iter = cg_meta%n_iter + 1
             cg_meta%res(cg_meta%n_iter+1) = residual
 
-            if (residual < tol) cg_meta%converged = .true.; exit cg_loop
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -2910,26 +2937,28 @@ contains
             call logger%log_information(msg, module=this_module, procedure='cg_rsp')
         enddo cg_loop
 
+        ! Set and copy info flag for completeness
         info = cg_meta%n_iter
+        cg_meta%info = info
 
         ! Set metadata output
-        select type(meta)
-            type is (cg_sp_metadata)
-                meta = cg_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_sp_metadata)
+                   meta = cg_meta
+           end select
+        end if
         
         return
     end subroutine cg_rsp
 
-    subroutine cg_rdp(A, b, x, meta, info, rtol, atol, preconditioner, options)
+    subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
         class(abstract_sym_linop_rdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_rdp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(dp), optional, intent(in) :: rtol
@@ -2940,6 +2969,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_dp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -3008,10 +3039,13 @@ contains
             residual = sqrt(r_dot_r_new)
 
             ! Save metadata.
-            cg_meta%n_iter  = cg_meta%n_iter + 1
+            cg_meta%n_iter = cg_meta%n_iter + 1
             cg_meta%res(cg_meta%n_iter+1) = residual
 
-            if (residual < tol) cg_meta%converged = .true.; exit cg_loop
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -3024,26 +3058,28 @@ contains
             call logger%log_information(msg, module=this_module, procedure='cg_rdp')
         enddo cg_loop
 
+        ! Set and copy info flag for completeness
         info = cg_meta%n_iter
+        cg_meta%info = info
 
         ! Set metadata output
-        select type(meta)
-            type is (cg_dp_metadata)
-                meta = cg_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_dp_metadata)
+                   meta = cg_meta
+           end select
+        end if
         
         return
     end subroutine cg_rdp
 
-    subroutine cg_csp(A, b, x, meta, info, rtol, atol, preconditioner, options)
+    subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta)
         class(abstract_hermitian_linop_csp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_csp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(sp), optional, intent(in) :: rtol
@@ -3054,6 +3090,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_sp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -3122,10 +3160,13 @@ contains
             residual = sqrt(abs(r_dot_r_new))
 
             ! Save metadata.
-            cg_meta%n_iter  = cg_meta%n_iter + 1
+            cg_meta%n_iter = cg_meta%n_iter + 1
             cg_meta%res(cg_meta%n_iter+1) = residual
 
-            if (residual < tol) cg_meta%converged = .true.; exit cg_loop
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -3138,26 +3179,28 @@ contains
             call logger%log_information(msg, module=this_module, procedure='cg_csp')
         enddo cg_loop
 
+        ! Set and copy info flag for completeness
         info = cg_meta%n_iter
+        cg_meta%info = info
 
         ! Set metadata output
-        select type(meta)
-            type is (cg_sp_metadata)
-                meta = cg_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_sp_metadata)
+                   meta = cg_meta
+           end select
+        end if
         
         return
     end subroutine cg_csp
 
-    subroutine cg_cdp(A, b, x, meta, info, rtol, atol, preconditioner, options)
+    subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
         class(abstract_hermitian_linop_cdp), intent(in) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
         !! Right-hand side vector.
         class(abstract_vector_cdp), intent(inout) :: x
         !! Solution vector.
-        class(abstract_metadata), intent(out) :: meta
-        !! Metadata.
         integer, intent(out) :: info
         !! Information flag.
         real(dp), optional, intent(in) :: rtol
@@ -3168,6 +3211,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_dp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -3236,10 +3281,13 @@ contains
             residual = sqrt(abs(r_dot_r_new))
 
             ! Save metadata.
-            cg_meta%n_iter  = cg_meta%n_iter + 1
+            cg_meta%n_iter = cg_meta%n_iter + 1
             cg_meta%res(cg_meta%n_iter+1) = residual
 
-            if (residual < tol) cg_meta%converged = .true.; exit cg_loop
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -3252,13 +3300,17 @@ contains
             call logger%log_information(msg, module=this_module, procedure='cg_cdp')
         enddo cg_loop
 
+        ! Set and copy info flag for completeness
         info = cg_meta%n_iter
+        cg_meta%info = info
 
         ! Set metadata output
-        select type(meta)
-            type is (cg_dp_metadata)
-                meta = cg_meta
-        end select
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_dp_metadata)
+                   meta = cg_meta
+           end select
+        end if
         
         return
     end subroutine cg_cdp
