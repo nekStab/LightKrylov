@@ -91,7 +91,7 @@ module LightKrylov_NewtonKrylov
          integer,  intent(in)  :: iter
          !! Newton iteration count
          integer,  intent(out)  :: info
-         !! Information flagcharacter(len=128) :: msg
+         !! Information flag
       end subroutine abstract_scheduler_sp
 
       subroutine abstract_scheduler_dp(tol, target_tol, rnorm, iter, info)
@@ -106,7 +106,7 @@ module LightKrylov_NewtonKrylov
          integer,  intent(in)  :: iter
          !! Newton iteration count
          integer,  intent(out)  :: info
-         !! Information flagcharacter(len=128) :: msg
+         !! Information flag
       end subroutine abstract_scheduler_dp
 
 
