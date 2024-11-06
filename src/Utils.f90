@@ -368,9 +368,6 @@ module lightkrylov_utils
         integer :: eval_counter_record = 0
         !! System response evaluation counter:
         !! N.B.: For each of these evals the current residual and tolerance are recorded.
-        integer :: eval_counter_all = 0
-        !! System response evaluation counter, including additional evals for convergence checks and step bisection.
-        !! N.B.: For the additional system evaluations, the residual and tolerance are NOT recorded.
         real(sp), dimension(:), allocatable :: res
         !! Residual history
         real(sp), dimension(:), allocatable :: tol
@@ -426,9 +423,6 @@ module lightkrylov_utils
         integer :: eval_counter_record = 0
         !! System response evaluation counter:
         !! N.B.: For each of these evals the current residual and tolerance are recorded.
-        integer :: eval_counter_all = 0
-        !! System response evaluation counter, including additional evals for convergence checks and step bisection.
-        !! N.B.: For the additional system evaluations, the residual and tolerance are NOT recorded.
         real(dp), dimension(:), allocatable :: res
         !! Residual history
         real(dp), dimension(:), allocatable :: tol
@@ -568,23 +562,20 @@ contains
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
         call logger%log_message(msg, module=this_module, procedure='newton_metadata')
-        write(msg,'(A30,I20)') padr('System evaluations: ', 30), self%eval_counter_all
-        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
             write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
-            do i = 2, self%eval_counter_record - 1
+            do i = 2, size(self%res) - 1
                write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
                call logger%log_message(msg, module=this_module, procedure='newton_metadata')
             end do
-            i = self%eval_counter_record
+            i = size(self%res)
             write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         else
-            i = self%eval_counter_record
-            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(i)
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         end if
         if (self%converged) then
@@ -600,7 +591,6 @@ contains
         class(newton_sp_metadata), intent(inout) :: self
         self%n_iter = 0
         self%eval_counter_record = 0
-        self%eval_counter_all = 0
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
@@ -748,23 +738,20 @@ contains
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
         call logger%log_message(msg, module=this_module, procedure='newton_metadata')
-        write(msg,'(A30,I20)') padr('System evaluations: ', 30), self%eval_counter_all
-        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
             write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
-            do i = 2, self%eval_counter_record - 1
+            do i = 2, size(self%res) - 1
                write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
                call logger%log_message(msg, module=this_module, procedure='newton_metadata')
             end do
-            i = self%eval_counter_record
+            i = size(self%res)
             write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         else
-            i = self%eval_counter_record
-            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(i)
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
             call logger%log_message(msg, module=this_module, procedure='newton_metadata')
         end if
         if (self%converged) then
@@ -780,7 +767,6 @@ contains
         class(newton_dp_metadata), intent(inout) :: self
         self%n_iter = 0
         self%eval_counter_record = 0
-        self%eval_counter_all = 0
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)

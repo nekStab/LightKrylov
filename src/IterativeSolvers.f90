@@ -2110,8 +2110,9 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
-        ! Initialize meta
+        ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
 
         info = 0
 
@@ -2222,6 +2223,8 @@ contains
            end select
         end if
 
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_rsp
 
@@ -2308,8 +2311,9 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
-        ! Initialize meta
+        ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
 
         info = 0
 
@@ -2420,6 +2424,8 @@ contains
            end select
         end if
 
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_rdp
 
@@ -2506,8 +2512,9 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
-        ! Initialize meta
+        ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
 
         info = 0
 
@@ -2618,6 +2625,8 @@ contains
            end select
         end if
 
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_csp
 
@@ -2704,8 +2713,9 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
-        ! Initialize meta
+        ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
 
         info = 0
 
@@ -2816,6 +2826,8 @@ contains
            end select
         end if
 
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_cdp
 
@@ -2881,8 +2893,9 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
-         ! Initialize meta
+         ! Initialize meta & reset matvec counter
         cg_meta = cg_sp_metadata()
+        call A%reset_counter(.false., 'cg%init')
 
         info = 0
 
@@ -2945,7 +2958,9 @@ contains
                    meta = cg_meta
            end select
         end if
-        
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_rsp
 
@@ -3003,8 +3018,9 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
-         ! Initialize meta
+         ! Initialize meta & reset matvec counter
         cg_meta = cg_dp_metadata()
+        call A%reset_counter(.false., 'cg%init')
 
         info = 0
 
@@ -3067,7 +3083,9 @@ contains
                    meta = cg_meta
            end select
         end if
-        
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_rdp
 
@@ -3125,8 +3143,9 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
-         ! Initialize meta
+         ! Initialize meta & reset matvec counter
         cg_meta = cg_sp_metadata()
+        call A%reset_counter(.false., 'cg%init')
 
         info = 0
 
@@ -3189,7 +3208,9 @@ contains
                    meta = cg_meta
            end select
         end if
-        
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_csp
 
@@ -3247,8 +3268,9 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
-         ! Initialize meta
+         ! Initialize meta & reset matvec counter
         cg_meta = cg_dp_metadata()
+        call A%reset_counter(.false., 'cg%init')
 
         info = 0
 
@@ -3311,7 +3333,9 @@ contains
                    meta = cg_meta
            end select
         end if
-        
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_cdp
 

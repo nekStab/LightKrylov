@@ -169,9 +169,9 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-      ! Zero eval counters & instantiate metadata
-      call sys%reset_eval_counter()
+      ! Initialize metadata & reset eval counter
       newton_meta = newton_sp_metadata()
+      call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
       call sys%eval(X, residual, target_tol)
@@ -253,7 +253,6 @@ contains
 
       ! Finalize metadata
       newton_meta%info = info
-      newton_meta%eval_counter_all = sys%get_eval_counter()
 
       if (opts%if_print_metadata) call newton_meta%print()
 
@@ -264,6 +263,8 @@ contains
                meta = newton_meta
          end select
       end if
+
+      call sys%reset_eval_counter('newton%post')
 
       return
    end subroutine newton_rsp
@@ -323,9 +324,9 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-      ! Zero eval counters & instantiate metadata
-      call sys%reset_eval_counter()
+      ! Initialize metadata & reset eval counter
       newton_meta = newton_dp_metadata()
+      call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
       call sys%eval(X, residual, target_tol)
@@ -407,7 +408,6 @@ contains
 
       ! Finalize metadata
       newton_meta%info = info
-      newton_meta%eval_counter_all = sys%get_eval_counter()
 
       if (opts%if_print_metadata) call newton_meta%print()
 
@@ -418,6 +418,8 @@ contains
                meta = newton_meta
          end select
       end if
+
+      call sys%reset_eval_counter('newton%post')
 
       return
    end subroutine newton_rdp
@@ -477,9 +479,9 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-      ! Zero eval counters & instantiate metadata
-      call sys%reset_eval_counter()
+      ! Initialize metadata & reset eval counter
       newton_meta = newton_sp_metadata()
+      call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
       call sys%eval(X, residual, target_tol)
@@ -561,7 +563,6 @@ contains
 
       ! Finalize metadata
       newton_meta%info = info
-      newton_meta%eval_counter_all = sys%get_eval_counter()
 
       if (opts%if_print_metadata) call newton_meta%print()
 
@@ -572,6 +573,8 @@ contains
                meta = newton_meta
          end select
       end if
+
+      call sys%reset_eval_counter('newton%post')
 
       return
    end subroutine newton_csp
@@ -631,9 +634,9 @@ contains
       maxstep_bisection = opts%maxstep_bisection
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
-      ! Zero eval counters & instantiate metadata
-      call sys%reset_eval_counter()
+      ! Initialize metadata & reset eval counter
       newton_meta = newton_dp_metadata()
+      call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
       call sys%eval(X, residual, target_tol)
@@ -715,7 +718,6 @@ contains
 
       ! Finalize metadata
       newton_meta%info = info
-      newton_meta%eval_counter_all = sys%get_eval_counter()
 
       if (opts%if_print_metadata) call newton_meta%print()
 
@@ -726,6 +728,8 @@ contains
                meta = newton_meta
          end select
       end if
+
+      call sys%reset_eval_counter('newton%post')
 
       return
    end subroutine newton_cdp

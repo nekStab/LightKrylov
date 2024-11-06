@@ -203,23 +203,22 @@ contains
       count = self%eval_counter
     end function get_eval_counter
 
-    subroutine reset_eval_counter(self, counter, ifprint)
+    subroutine reset_eval_counter(self, procedure, counter)
       class(abstract_system), intent(inout) :: self
+      character(len=*), intent(in) :: procedure
+      !! name of the caller routine
       integer, optional, intent(in) :: counter
       !! optional flag to reset to an integer other than zero.
-      logical, optional, intent(in) :: ifprint
-      !! optional flag to print the number of evals to log prior to resetting.
       ! internals
-      integer :: counter_
-      logical :: ifprint_
+      integer :: counter_, count_old
       character(len=128) :: msg
       counter_ = optval(counter, 0)
-      ifprint_ = optval(ifprint, .false.)
-      if (ifprint_) then
-         write(msg,'(A,I0,A,I0,A)') 'Total number of evals: ', self%get_eval_counter(), '. Resetting counter to ', counter_, '.'
-         call logger%log_message(msg, module=this_module, procedure='reset_eval_counter')
+      count_old = self%get_eval_counter()
+      if (count_old /= 0 .or. counter_ /= 0) then
+        write(msg,'(A,I0,A,I0,A)') 'Total number of evals: ', count_old, '. Resetting counter to ', counter_, '.'
+        call logger%log_message(msg, module=this_module, procedure='reset_eval_counter('//trim(procedure)//')')
+        self%eval_counter = counter_
       end if
-      self%eval_counter = counter_
       return
     end subroutine reset_eval_counter
 
