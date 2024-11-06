@@ -1115,7 +1115,7 @@ contains
       real(sp) :: err
 
       ! internals
-      character*9 :: value_str
+      character(len=9) :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
       write(value_str, '(E9.2)') err
@@ -1128,7 +1128,7 @@ contains
       real(dp) :: err
 
       ! internals
-      character*9 :: value_str
+      character(len=9) :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
       write(value_str, '(E9.2)') err
