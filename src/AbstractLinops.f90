@@ -27,9 +27,8 @@ module LightKrylov_AbstractLinops
         !!  @warning
         !!  Users should not extend this abstract class to define their own types.
         !!  @endwarning
-    private
-        integer :: matvec_counter  = 0
-        integer :: rmatvec_counter = 0
+        integer, private :: matvec_counter  = 0
+        integer, private :: rmatvec_counter = 0
     contains
         procedure, pass(self), public :: get_counter
         !! Return matvec/rmatvec counter value
