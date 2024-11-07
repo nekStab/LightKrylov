@@ -52,7 +52,7 @@ module Ginzburg_Landau
    !------------------------------------------
  
    type, extends(abstract_linop_cdp), public :: exponential_prop
-      real(kind=wp) :: tau ! Integration time.
+      real(kind=wp), public :: tau ! Integration time.
     contains
       private
       procedure, pass(self), public :: matvec => direct_solver
