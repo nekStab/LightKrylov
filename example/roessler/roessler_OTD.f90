@@ -14,7 +14,7 @@ module Roessler_OTD
    use Roessler
    implicit none
  
-   character*128, parameter, private :: this_module = 'Roessler_OTD'
+   character(len=*), parameter, private :: this_module = 'Roessler_OTD'
  
    public :: a, b, c
  
@@ -24,8 +24,8 @@ module Roessler_OTD
  
    integer,  parameter :: r = 2
    real(wp), parameter :: t_GS = 5.0_wp ! In finite-precision arithmetic we need to reorthonormalize sometimes
-   character(len=128), parameter :: file    = 'example/roessler/output_roessler_OTD.txt'
-   character(len=128), parameter :: file_LE = 'example/roessler/output_roessler_OTD_LE.txt'
+   character(len=*), parameter :: report_file_OTD    = 'example/roessler/output_roessler_OTD.txt'
+   character(len=*), parameter :: report_file_OTD_LE = 'example/roessler/output_roessler_OTD_LE.txt'
 
    ! Reference values (https://chaosbook.org/extras/simon/Roessler.html, orbit 1)
    real(wp), dimension(2), parameter :: EV_ref = (/ 0.097000856_wp, 0.097000856_wp /)
@@ -365,7 +365,7 @@ contains
       is_cc = .false.
       if (abs(aimag(l(1))) > 0.0_wp) is_cc = .true.
 
-      open(newunit=iunit, file=file, status='old', action='write', position='append')
+      open(newunit=iunit, file=report_file_OTD, status='old', action='write', position='append')
       write(iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, q
       if (is_cc) then
          write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 1, s(1), real(l(1)), aimag(l(1)), real(u(:,1)), aimag(u(:,1))
@@ -393,7 +393,7 @@ contains
       LE = FTLE/period
       call sort(LE)
       print '(A10,I3,A3,1X,*(F16.9,1X))', 'OTD:  t=', p_cnt, 'T ', LE
-      open(newunit=iunit, file=file_LE, status='old', action='write', position='append')
+      open(newunit=iunit, file=report_file_OTD_LE, status='old', action='write', position='append')
       write(iunit, '(F16.9,1X,I16,1X,*(F16.9,1X))') time, p_cnt, LE, LE_ref
       close(iunit)
       return
@@ -402,7 +402,7 @@ contains
    subroutine write_header()
       ! internals
       integer :: i, j, iunit
-      open(newunit=iunit, file=file, status='new', action='write')
+      open(newunit=iunit, file=report_file_OTD, status='new', action='write')
       ! time, baseflow
       write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'BF_x', 'BF_y', 'BF_z'
       ! basis vectors
@@ -439,7 +439,7 @@ contains
    subroutine write_header_LE()
       ! internals
       integer :: i, iunit
-      open(newunit=iunit, file=file_LE, status='new', action='write')
+      open(newunit=iunit, file=report_file_OTD_LE, status='new', action='write')
       ! time, baseflow
       write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'period'
       ! LE

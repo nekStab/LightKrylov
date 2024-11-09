@@ -9,7 +9,8 @@ module Roessler
    use LightKrylov, only: wp => dp
    implicit none
  
-   character*128, parameter, private :: this_module = 'Roessler'
+   character(len=*), parameter, private :: this_module = 'Roessler'
+   character(len=*), parameter :: report_file = 'example/roessler/roessler_output.txt'
  
    public :: a, b, c
  
@@ -254,7 +255,6 @@ contains
       ! Time-integrator.
       type(rks54_class)         :: nonlinear_integrator
       real(wp)                  :: dt = 1.0_wp
-      real(wp)                  :: period
       real(wp), dimension(npts) :: pos_in, pos_out
       
       ! Evaluate F(X).
@@ -432,7 +432,17 @@ contains
       print '(*(F15.6,1X))', t, x
 
       return
-   end subroutine
+   end subroutine roessler_report_stdout
+
+   subroutine write_report_header()
+      ! internals
+      integer :: i, j, iunit
+      open(newunit=iunit, file=report_file, status='new', action='write')
+      ! time, baseflow
+      write(iunit,'(*(A16,1X))') 't', 'BF_x', 'BF_y', 'BF_z'
+      close(iunit)
+      return
+   end subroutine write_report_header
 
    subroutine roessler_report_file(me, t, x)
       class(rk_class), intent(inout)      :: me
@@ -440,10 +450,10 @@ contains
       real(wp), dimension(:), intent(in)  :: x
       ! internals
       integer :: iunit
-      open(newunit=iunit, file='new_orbit.txt', status='old', action='write', position='append')
+      open(newunit=iunit, file=report_file, status='old', action='write', position='append')
       write(iunit, '(*(F15.6,1X))') t, x
       close(iunit)
       return
-   end subroutine
+   end subroutine roessler_report_file
  
 end module Roessler

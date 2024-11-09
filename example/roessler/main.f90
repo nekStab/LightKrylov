@@ -2,27 +2,33 @@ program demo
    use stdlib_linalg, only : eye, eigvals
    use stdlib_io_npy, only : save_npy
    use stdlib_sorting, only : sort
+   use stdlib_strings, only : padl
    use stdlib_logger, only : information_level, warning_level, debug_level, error_level, none_level
+   ! RKLIB module for time integration.
+   use rklib_module
+   ! LightKrylov for linear algebra
    use LightKrylov
    use LightKrylov, only: wp => dp
    use LightKrylov_Logger
    use lightkrylov_IterativeSolvers, only: gmres_rdp
    use LightKrylov_Utils
-   ! Roessler
+   ! Roessler system
    use Roessler
    use Roessler_OTD
    implicit none
 
-   character(len=128), parameter :: this_module = 'Example Roessler'
+   character(len=*), parameter :: this_module = 'Example Roessler'
 
    ! Roessler system.
-   type(roessler_upo), allocatable :: sys
+   type(roessler_upo) :: sys
    ! State vectors
-   type(state_vector), allocatable :: bf, dx, residual, fp
+   type(state_vector) :: bf, dx, residual, fp
    ! Position vectors
-   type(pos_vector), allocatable   :: bfp
+   type(pos_vector)   :: bfp
    ! OTD basis
-   type(pos_vector), allocatable   :: OTD_in(:), OTD_out(:)
+   type(pos_vector)   :: OTD_in(r), OTD_out(r)
+   ! Time-integrator
+   type(rks54_class)  :: nonlinear_integrator
 
    ! Misc
    type(newton_dp_opts)            :: opts
@@ -34,30 +40,45 @@ program demo
    real(wp), dimension(npts, r)    :: u, Lu
    real(wp), dimension(r, r)       :: Lr
    ! IO
-   character(len=20)    :: fmt
+   character(len=20)    :: data_fmt, header_fmt
    
-   write(fmt,*) '(A22,4(1X,F18.6))'
+   write(header_fmt,*) '(22X,*(A,2X))'
+   write(data_fmt,  *) '(A22,*(1X,F15.6))'
 
    ! Set up logging
    call logger_setup()
    call logger%configure(level=error_level, time_stamp=.false.)
 
    ! Initialize baseflow and perturbation state vectors
-   allocate(bf, dx, residual)
    call bf%zero(); call dx%zero(); call residual%zero()
 
-   ! Set tolerace
-   tol = 1e-12_wp
+   print *, '########################################################################################'
+   print *, '#                         Roessler system chaotic attractor                            #'
+   print *, '########################################################################################'
+   print *, ''
+
+   vec = (/ 0.0_wp, -5.0_wp, 0.05_wp /) ! some intial point
+   Tend = 300.0_wp ! Integration time
+   ! Integrate equations
+   call write_report_header
+   call nonlinear_integrator%initialize(n=npts, f=NL_rhs, report=roessler_report_file, report_rate=20)
+   call nonlinear_integrator%integrate(0.0_wp, vec, 1.0_wp, Tend, eval)
+   call rename(report_file, 'example/roessler/roessler_attractor.txt')
+
+   print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('time', 14)
+   print data_fmt, 'Initial position :',  vec(1),  vec(2),  vec(3), 0.0_wp
+   print data_fmt, 'Final position :',   eval(1), eval(2), eval(3), Tend
+   print *,''
 
    print *, '########################################################################################'
    print '(A,E9.2,A)',' #             Newton iteration with constant tolerance (tol=', tol, ')                 #'
    print *, '########################################################################################'
    print *, ''
 
-   call set_position((/ 0.0_wp, 6.1_wp, 1.3_wp /), bf)  ! some initial guess
+   call set_position((/ 0.0_wp, 6.1_wp, 1.3_wp /), bf)  ! initial guess
    bf%T = 6.0_wp ! period guess
-   print '(A22,4(16X,A,2X))', '         ', 'X', 'Y', 'Z', 'T'
-   print fmt, 'Initial guess PO:   ', bf%x, bf%y, bf%z, bf%T
+   print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
+   print data_fmt, 'Initial guess PO:', bf%x, bf%y, bf%z, bf%T
    print *,''
 
    ! Initialize system and Jacobian
@@ -66,14 +87,17 @@ program demo
    sys%jacobian = jacobian()
    sys%jacobian%X = bf
 
+   ! Set tolerance
+   tol = 1e-12_wp
+
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
    call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=constant_atol_dp)
 
    call sys%eval(bf, residual, tol)
    print *, ''
-   print '(A22,4(16X,A,2X))', '       ', 'X', 'Y', 'Z', 'T'
-   print fmt, 'Solution:           ', bf%x, bf%y, bf%z, bf%T
-   print fmt, 'Solution residual:  ', residual%x, residual%y, residual%z, residual%T
+   print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
+   print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
+   print data_fmt, 'Solution residual:', residual%x, residual%y, residual%z, residual%T
    print *,''
 
    print *, '########################################################################################'
@@ -83,8 +107,8 @@ program demo
 
    call set_position((/ 0.0_wp, 6.1_wp, 1.3_wp /), bf)  ! some initial guess
    bf%T = 6.0_wp ! period guess
-   print '(A22,4(16X,A,2X))', '         ', 'X', 'Y', 'Z', 'T'
-   print fmt, 'Initial guess PO:  ', bf%x, bf%y, bf%z, bf%T
+   print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
+   print data_fmt, 'Initial guess PO:  ', bf%x, bf%y, bf%z, bf%T
    print *,''
    sys%jacobian%X = bf
    
@@ -92,9 +116,9 @@ program demo
 
    call sys%eval(bf, residual, tol)
    print *, ''
-   print '(A22,4(16X,A,2X))', '       ', 'X', 'Y', 'Z', 'T'
-   print fmt, 'Solution:           ', bf%x, bf%y, bf%z, bf%T
-   print fmt, 'Solution residual:  ', residual%x, residual%y, residual%z, residual%T
+   print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
+   print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
+   print data_fmt, 'Solution residual:', residual%x, residual%y, residual%z, residual%T
    print *,''
 
    print *, '########################################################################################'
@@ -126,7 +150,8 @@ program demo
    print *, '#                  Optimally Time-Dependent (OTD) modes on fixed point                 #'
    print *, '########################################################################################'
    print *, ''
-   allocate(bfp); call bfp%zero()
+   ! Initialize fixed point
+   call bfp%zero()
    ! Set the baseflow to a fixed point
    d = sqrt(c**2 - 4*a*b)
    bfp%x = ( c - d)/ 2
@@ -134,7 +159,6 @@ program demo
    bfp%z = ( c - d)/(2*a)
 
    ! Compute OTD modes on the fixed point
-   allocate(OTD_in(r), OTD_out(r))
    call zero_basis(OTD_in); call zero_basis(OTD_out)
 
    ! Initialize basis
@@ -146,7 +170,7 @@ program demo
    t_FTLE = 5.0_wp
    call write_header()
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE)
-   call rename(file, 'example/roessler/FP_OTD.txt')
+   call rename(report_file_OTD, 'example/roessler/FP_OTD.txt')
    ! get baseflow
    call get_pos(bfp, vec)
    ! get OTD basis vectors
@@ -189,8 +213,8 @@ program demo
    print '(*(A16,1X))', ' ', 'LE_1', 'LE_2'
    print '(A16,1X,2(F16.9,1X),A16,1X,F16.9)', 'Reference   ', LE_ref, 'Period T=', bf%T
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.true.)
-   call rename(file,    'example/roessler/PO_OTD.txt')
-   call rename(file_LE, 'example/roessler/PO_LE.txt')
+   call rename(report_file_OTD,    'example/roessler/PO_OTD.txt')
+   call rename(report_file_OTD_LE, 'example/roessler/PO_LE.txt')
    print *, ''
 
    print *, ''
@@ -210,8 +234,8 @@ program demo
    print '(A16,1X,*(F16.9,1X))', 'Reference   ', LE_ref
    print *, ''
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.false.) ! we do not reset the bf!
-   call rename(file,    'example/roessler/PO-chaos_OTD.txt')
-   call rename(file_LE, 'example/roessler/PO-chaos_LE.txt')
+   call rename(report_file_OTD,    'example/roessler/PO-chaos_OTD.txt')
+   call rename(report_file_OTD_LE, 'example/roessler/PO-chaos_LE.txt')
    print *, ''
-   
+
 end program demo
