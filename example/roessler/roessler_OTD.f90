@@ -333,14 +333,14 @@ contains
       ! internal
       real(wp), dimension(npts)      :: bf
       real(wp), dimension(npts,r)    :: q, Lq
-      real(wp), dimension(r,r)       :: Lr, qTq
-      real(wp), dimension(r)         :: FTLE
-      real(wp), allocatable          :: s(:)
+      real(wp), dimension(r,r)       :: Lr, Lsym, qTq
+      real(wp), dimension(r)         :: FTLE, s
       complex(wp), dimension(r)      :: l
       complex(wp), dimension(r,r)    :: v
-      complex(wp), dimension(npts,r) :: u
+      complex(wp), dimension(npts,r) :: u, su
       integer                        :: i, j, iunit
       logical                        :: is_cc
+      integer, allocatable           :: idx(:)
 
       bf   = x(:npts)
       q    = reshape(x(npts+1:(r+1)*npts), shape(q))
@@ -359,7 +359,12 @@ contains
          end do
       end do
       ! spectral analysis
-      s = svdvals(Lr)
+      Lsym = 0.5_wp*(Lr + transpose(Lr))
+      call eig(Lsym, l, right=v)
+      s = real(l)
+      idx = maxloc(s)
+      i = idx(1)
+      su = matmul(q, v)
       call eig(Lr, l, right=v)
       u = matmul(q, v)
       is_cc = .false.
@@ -368,9 +373,9 @@ contains
       open(newunit=iunit, file=report_file_OTD, status='old', action='write', position='append')
       write(iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, q
       if (is_cc) then
-         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 1, s(1), real(l(1)), aimag(l(1)), real(u(:,1)), aimag(u(:,1))
+         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 1, s(i), real(su(:,i)), real(l(1)), aimag(l(1)), real(u(:,1)), aimag(u(:,1))
       else
-         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 0, s(1), real(l), real(u)
+         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 0, s(i), real(su(:,i)), real(l), real(u)
       endif
       write(iunit, '(*(E16.9,1X))') FTLE, ( qTq(i, i) - 1, i = 1, r), (( qTq(i, j), j = 1, i-1), i = 2, r)
       close(iunit)
@@ -410,7 +415,9 @@ contains
          write(iunit,'(*(A13,I1,A2,1X))', ADVANCE='NO') 'q', i, '_x', 'q', i, '_y', 'q', i, '_z'
       end do
       ! instantaneous numerical abscissa of the reduced operator
-      write(iunit,'(A2,1X,A16,1X)', ADVANCE='NO') , 'cc', 'sigma_1'
+      write(iunit,'(A2,1X,A16,1X)', ADVANCE='NO') 'cc', 'sigma_1'
+      ! instantaneous direction of largest possible growth
+      write(iunit,'(*(A13,I1,A2,1X))', ADVANCE='NO') 'us', i, '_x', 'us', i, '_y', 'us', i, '_z'
       ! instantaneous eigenvalues of the reduced operator
       do i = 1, r
          write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'l_', i
