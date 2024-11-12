@@ -2129,6 +2129,10 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
@@ -2330,6 +2334,10 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
@@ -2468,7 +2476,7 @@ contains
         complex(sp), allocatable :: H(:, :)
         ! Least-squares variables.
         complex(sp), allocatable :: y(:), e(:)
-        complex(sp) :: beta
+        real(sp) :: beta
 
         ! Preconditioner
         logical :: has_precond
@@ -2530,6 +2538,10 @@ contains
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_csp')
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -2669,7 +2681,7 @@ contains
         complex(dp), allocatable :: H(:, :)
         ! Least-squares variables.
         complex(dp), allocatable :: y(:), e(:)
-        complex(dp) :: beta
+        real(dp) :: beta
 
         ! Preconditioner
         logical :: has_precond
@@ -2731,6 +2743,10 @@ contains
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
