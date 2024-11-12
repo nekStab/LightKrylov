@@ -1,7 +1,7 @@
 program demo
    use stdlib_io_npy, only: save_npy
-   use LightKrylov
    use LightKrylov, only: wp => dp
+   use LightKrylov
    use LightKrylov_Logger
    use Ginzburg_Landau
    implicit none

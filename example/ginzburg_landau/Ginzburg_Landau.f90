@@ -59,7 +59,18 @@ module Ginzburg_Landau
       procedure, pass(self), public :: rmatvec => adjoint_solver
    end type exponential_prop
 
+   interface exponential_prop
+      module function construct_exptA(tau) result(A)
+         real(kind=wp), intent(in) :: tau
+         type(exponential_prop) :: A
+      end function
+   end interface
+
 contains
+
+   module procedure construct_exptA
+      A%tau = tau
+   end procedure
 
    !========================================================================
    !========================================================================

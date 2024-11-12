@@ -92,6 +92,13 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
     end type
 
+    interface linop_rsp
+        pure module function construct_linop_rsp(data) result(A)
+            real(sp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_rsp) :: A
+        end function
+    end interface
+
     type, extends(abstract_sym_linop_rsp), public :: spd_linop_rsp
         real(sp), dimension(test_size, test_size) :: data = 0.0_sp
     contains
@@ -99,6 +106,19 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec => sdp_matvec_rsp
         procedure, pass(self), public :: rmatvec => sdp_matvec_rsp
     end type
+    interface spd_linop_rsp
+        pure module function construct_spd_linop_rsp(data) result(A)
+            real(sp), dimension(test_size, test_size), intent(in) :: data
+            type(spd_linop_rsp) :: A
+        end function
+    end interface
+
+    interface hermitian_linop_rsp
+        pure module function construct_hermitian_linop_rsp(data) result(A)
+            real(sp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_rsp) :: A
+        end function
+    end interface
 
     type, extends(abstract_linop_rdp), public :: linop_rdp
         real(dp), dimension(test_size, test_size) :: data = 0.0_dp
@@ -108,6 +128,13 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
     end type
 
+    interface linop_rdp
+        pure module function construct_linop_rdp(data) result(A)
+            real(dp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_rdp) :: A
+        end function
+    end interface
+
     type, extends(abstract_sym_linop_rdp), public :: spd_linop_rdp
         real(dp), dimension(test_size, test_size) :: data = 0.0_dp
     contains
@@ -115,6 +142,19 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec => sdp_matvec_rdp
         procedure, pass(self), public :: rmatvec => sdp_matvec_rdp
     end type
+    interface spd_linop_rdp
+        pure module function construct_spd_linop_rdp(data) result(A)
+            real(dp), dimension(test_size, test_size), intent(in) :: data
+            type(spd_linop_rdp) :: A
+        end function
+    end interface
+
+    interface hermitian_linop_rdp
+        pure module function construct_hermitian_linop_rdp(data) result(A)
+            real(dp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_rdp) :: A
+        end function
+    end interface
 
     type, extends(abstract_linop_csp), public :: linop_csp
         complex(sp), dimension(test_size, test_size) :: data = cmplx(0.0_sp, 0.0_sp, kind=sp)
@@ -123,6 +163,12 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec  => matvec_csp
         procedure, pass(self), public :: rmatvec => rmatvec_csp
     end type
+    interface linop_csp
+        pure module function construct_linop_csp(data) result(A)
+            complex(sp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_csp) :: A
+        end function
+    end interface
 
     type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
         complex(sp), dimension(test_size, test_size) :: data = cmplx(0.0_sp, 0.0_sp, kind=sp)
@@ -131,6 +177,12 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec => hermitian_matvec_csp
         procedure, pass(self), public :: rmatvec => hermitian_matvec_csp
     end type
+    interface hermitian_linop_csp
+        pure module function construct_hermitian_linop_csp(data) result(A)
+            complex(sp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_csp) :: A
+        end function
+    end interface
 
     type, extends(abstract_linop_cdp), public :: linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = cmplx(0.0_dp, 0.0_dp, kind=dp)
@@ -139,6 +191,12 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec  => matvec_cdp
         procedure, pass(self), public :: rmatvec => rmatvec_cdp
     end type
+    interface linop_cdp
+        pure module function construct_linop_cdp(data) result(A)
+            complex(dp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_cdp) :: A
+        end function
+    end interface
 
     type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = cmplx(0.0_dp, 0.0_dp, kind=dp)
@@ -147,6 +205,12 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec => hermitian_matvec_cdp
         procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
     end type
+    interface hermitian_linop_cdp
+        pure module function construct_hermitian_linop_cdp(data) result(A)
+            complex(dp), dimension(test_size, test_size), intent(in) :: data
+            type(linop_cdp) :: A
+        end function
+    end interface
 
 
     ! ROESSLER SYSTEM
@@ -267,7 +331,40 @@ module LightKrylov_TestUtils
     end interface
 
 contains
-    
+
+    !--------------------------------
+    !-----     CONSTRUCTORS     -----
+    !--------------------------------
+
+    module procedure construct_linop_rsp
+    A%data = data
+    end procedure
+
+    module procedure construct_spd_linop_rsp
+    A%data = data
+    end procedure
+    module procedure construct_linop_rdp
+    A%data = data
+    end procedure
+
+    module procedure construct_spd_linop_rdp
+    A%data = data
+    end procedure
+    module procedure construct_linop_csp
+    A%data = data
+    end procedure
+
+    module procedure construct_hermitian_linop_csp
+    A%data = data
+    end procedure
+    module procedure construct_linop_cdp
+    A%data = data
+    end procedure
+
+    module procedure construct_hermitian_linop_cdp
+    A%data = data
+    end procedure
+
     !----------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST VECTORS     -----
     !----------------------------------------------------------
