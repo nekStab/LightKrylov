@@ -22,13 +22,18 @@ module lightkrylov_expmlib
     implicit none
     private
     
-    character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
+    character(len=*), parameter, private :: this_module      = 'LK_ExpmLib'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_ExpmLib'
+
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_exptA_${type[0]}$${kind}$
     #:endfor
     public :: expm
     public :: kexpm
     public :: k_exptA
+    #:for kind, type in RC_KINDS_TYPES
+    public :: k_exptA_${type[0]}$${kind}$
+    #:endfor
 
     abstract interface
         #:for kind, type in RC_KINDS_TYPES
@@ -93,7 +98,7 @@ module lightkrylov_expmlib
         !!
         !!  `c` : Output vector (or vectors). It is an `intent(out)` argument.
         !!
-        !!  `A` : Linear operator to be exponentiated. It is an `intent(in)` argument.
+        !!  `A` : Linear operator to be exponentiated. It is an `intent(inout)` argument.
         !!
         !!  `b` : Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
         !!
@@ -213,7 +218,7 @@ contains
     subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
-        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
         !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -321,7 +326,7 @@ contains
     subroutine kexpm_mat_${type[0]}$${kind}$(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
-        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: B(:)
         !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).

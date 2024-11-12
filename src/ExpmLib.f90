@@ -20,7 +20,9 @@ module lightkrylov_expmlib
     implicit none
     private
     
-    character(len=128), parameter, private :: this_module= 'LightKrylov_ExpmLib'
+    character(len=*), parameter, private :: this_module      = 'LK_ExpmLib'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_ExpmLib'
+
     public :: abstract_exptA_rsp
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp
@@ -28,6 +30,10 @@ module lightkrylov_expmlib
     public :: expm
     public :: kexpm
     public :: k_exptA
+    public :: k_exptA_rsp
+    public :: k_exptA_rdp
+    public :: k_exptA_csp
+    public :: k_exptA_cdp
 
     abstract interface
         subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
@@ -148,7 +154,7 @@ module lightkrylov_expmlib
         !!
         !!  `c` : Output vector (or vectors). It is an `intent(out)` argument.
         !!
-        !!  `A` : Linear operator to be exponentiated. It is an `intent(in)` argument.
+        !!  `A` : Linear operator to be exponentiated. It is an `intent(inout)` argument.
         !!
         !!  `b` : Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
         !!
@@ -272,7 +278,7 @@ contains
     subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rsp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: b
         !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -380,7 +386,7 @@ contains
     subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_rsp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: B(:)
         !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -594,7 +600,7 @@ contains
     subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: b
         !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -702,7 +708,7 @@ contains
     subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_rdp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: B(:)
         !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -916,7 +922,7 @@ contains
     subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_csp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: b
         !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -1024,7 +1030,7 @@ contains
     subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_csp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: B(:)
         !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -1238,7 +1244,7 @@ contains
     subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_cdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: b
         !! Input vector on which to apply \( \exp(\tau \mathbf{A}) \).
@@ -1346,7 +1352,7 @@ contains
     subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim)
         class(abstract_vector_cdp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: B(:)
         !! Input matrix on which to apply \( \exp(\tau \mathbf{A}) \).

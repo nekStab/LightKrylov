@@ -1,16 +1,26 @@
 module LightKrylov_AbstractSystems
     !!  This module provides the abstract types necessary to define an algebraic system of
     !!  nonlinear equations to be solved using the Newton method.
+    use stdlib_optval, only: optval
+    use LightKrylov_Logger
     use LightKrylov_Constants
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'LightKrylov_AbstractSystems'
+    character(len=*), parameter :: this_module      = 'LK_Systems'
+    character(len=*), parameter :: this_module_long = 'LK_AbstractSystems'
 
     ! Base type for abstract systems.
     type, abstract, public :: abstract_system
+    private
+        integer :: eval_counter = 0
+    contains
+        procedure, pass(self), public :: get_eval_counter
+        !! Return eval counter value
+        procedure, pass(self), public :: reset_eval_counter
+        !! Reset eval counter
     end type abstract_system
 
     !----------------------------------------------------------------------------
@@ -32,8 +42,11 @@ module LightKrylov_AbstractSystems
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
         private
-        procedure(abstract_eval_rsp), pass(self), deferred, public :: eval
+        procedure(abstract_eval_rsp), pass(self), deferred, public :: response
         !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        ! Wrapper including counter increment
+        procedure, pass(self), public :: eval => eval_rsp
+        !! Wrapper for response including the counter increment
     end type
 
     abstract interface
@@ -41,7 +54,7 @@ module LightKrylov_AbstractSystems
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_rsp, sp
-            class(abstract_system_rsp), intent(in)  :: self
+            class(abstract_system_rsp), intent(inout)  :: self
             !! System
             class(abstract_vector_rsp), intent(in)  :: vec_in
             !! State
@@ -71,8 +84,11 @@ module LightKrylov_AbstractSystems
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
         private
-        procedure(abstract_eval_rdp), pass(self), deferred, public :: eval
+        procedure(abstract_eval_rdp), pass(self), deferred, public :: response
         !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        ! Wrapper including counter increment
+        procedure, pass(self), public :: eval => eval_rdp
+        !! Wrapper for response including the counter increment
     end type
 
     abstract interface
@@ -80,7 +96,7 @@ module LightKrylov_AbstractSystems
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_rdp, dp
-            class(abstract_system_rdp), intent(in)  :: self
+            class(abstract_system_rdp), intent(inout)  :: self
             !! System
             class(abstract_vector_rdp), intent(in)  :: vec_in
             !! State
@@ -110,8 +126,11 @@ module LightKrylov_AbstractSystems
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
         private
-        procedure(abstract_eval_csp), pass(self), deferred, public :: eval
+        procedure(abstract_eval_csp), pass(self), deferred, public :: response
         !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        ! Wrapper including counter increment
+        procedure, pass(self), public :: eval => eval_csp
+        !! Wrapper for response including the counter increment
     end type
 
     abstract interface
@@ -119,7 +138,7 @@ module LightKrylov_AbstractSystems
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_csp, sp
-            class(abstract_system_csp), intent(in)  :: self
+            class(abstract_system_csp), intent(inout)  :: self
             !! System
             class(abstract_vector_csp), intent(in)  :: vec_in
             !! State
@@ -149,8 +168,11 @@ module LightKrylov_AbstractSystems
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
         private
-        procedure(abstract_eval_cdp), pass(self), deferred, public :: eval
+        procedure(abstract_eval_cdp), pass(self), deferred, public :: response
         !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        ! Wrapper including counter increment
+        procedure, pass(self), public :: eval => eval_cdp
+        !! Wrapper for response including the counter increment
     end type
 
     abstract interface
@@ -158,7 +180,7 @@ module LightKrylov_AbstractSystems
             !! Interface for the evaluation of the system response.
             use LightKrylov_AbstractVectors
             import abstract_system_cdp, dp
-            class(abstract_system_cdp), intent(in)  :: self
+            class(abstract_system_cdp), intent(inout)  :: self
             !! System
             class(abstract_vector_cdp), intent(in)  :: vec_in
             !! State
@@ -168,5 +190,77 @@ module LightKrylov_AbstractSystems
             !! Solver tolerance
         end subroutine abstract_eval_cdp
     end interface
+
+contains
+
+    !---------------------------------------------------------------
+    !-----     Getter/Setter routines for abstract_systems     -----
+    !---------------------------------------------------------------
+ 
+    pure integer function get_eval_counter(self) result(count)
+      !! Getter function for the number of eval calls
+      class(abstract_system), intent(in) :: self
+      count = self%eval_counter
+    end function get_eval_counter
+
+    subroutine reset_eval_counter(self, procedure, counter)
+      class(abstract_system), intent(inout) :: self
+      character(len=*), intent(in) :: procedure
+      !! name of the caller routine
+      integer, optional, intent(in) :: counter
+      !! optional flag to reset to an integer other than zero.
+      ! internals
+      integer :: counter_, count_old
+      character(len=128) :: msg
+      counter_ = optval(counter, 0)
+      count_old = self%get_eval_counter()
+      if (count_old /= 0 .or. counter_ /= 0) then
+        write(msg,'(A,I0,A,I0,A)') 'Total number of evals: ', count_old, '. Resetting counter to ', counter_, '.'
+        call logger%log_message(msg, module=this_module, procedure='reset_eval_counter('//trim(procedure)//')')
+        self%eval_counter = counter_
+      end if
+      return
+    end subroutine reset_eval_counter
+
+    !---------------------------------------------------------------------
+    !-----     Wrapper for system response to increment counters     -----
+    !---------------------------------------------------------------------
+
+    subroutine eval_rsp(self, vec_in, vec_out, atol)
+        class(abstract_system_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in)    :: vec_in
+        class(abstract_vector_rsp), intent(out)   :: vec_out
+        real(sp),                             intent(in)    :: atol
+        self%eval_counter = self%eval_counter + 1
+        call self%response(vec_in, vec_out, atol)
+        return
+    end subroutine eval_rsp
+    subroutine eval_rdp(self, vec_in, vec_out, atol)
+        class(abstract_system_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in)    :: vec_in
+        class(abstract_vector_rdp), intent(out)   :: vec_out
+        real(dp),                             intent(in)    :: atol
+        self%eval_counter = self%eval_counter + 1
+        call self%response(vec_in, vec_out, atol)
+        return
+    end subroutine eval_rdp
+    subroutine eval_csp(self, vec_in, vec_out, atol)
+        class(abstract_system_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in)    :: vec_in
+        class(abstract_vector_csp), intent(out)   :: vec_out
+        real(sp),                             intent(in)    :: atol
+        self%eval_counter = self%eval_counter + 1
+        call self%response(vec_in, vec_out, atol)
+        return
+    end subroutine eval_csp
+    subroutine eval_cdp(self, vec_in, vec_out, atol)
+        class(abstract_system_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in)    :: vec_in
+        class(abstract_vector_cdp), intent(out)   :: vec_out
+        real(dp),                             intent(in)    :: atol
+        self%eval_counter = self%eval_counter + 1
+        call self%response(vec_in, vec_out, atol)
+        return
+    end subroutine eval_cdp
 
 end module LightKrylov_AbstractSystems

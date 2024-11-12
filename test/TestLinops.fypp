@@ -16,7 +16,8 @@ module TestLinops
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestLinops'
+    character(len=*), parameter, private :: this_module      = 'LK_TLinops'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestLinops'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_linop_${type[0]}$${kind}$_testsuite
@@ -66,7 +67,7 @@ contains
         #:endif
 
         ! Compute matrix-vector product.
-        call A%matvec(x, y)
+        call A%apply_matvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"
@@ -105,7 +106,7 @@ contains
         #:endif
 
         ! Compute matrix-vector product.
-        call A%rmatvec(x, y)
+        call A%apply_rmatvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"
@@ -151,7 +152,7 @@ contains
         y = vector_${type[0]}$${kind}$() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%matvec(x, y)
+        call B%apply_matvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"
@@ -201,7 +202,7 @@ contains
         y = vector_${type[0]}$${kind}$() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%rmatvec(x, y)
+        call B%apply_rmatvec(x, y)
 
         ! Check result.
         #:if type[0] == "c"

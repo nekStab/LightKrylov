@@ -30,7 +30,8 @@ module lightkrylov_BaseKrylov
     implicit none
     private
     
-    character(len=128), parameter :: this_module = 'LightKrylov_BaseKrylov'
+    character(len=*), parameter :: this_module      = 'LK_BKrylov'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_BaseKrylov'
 
     public :: qr
     public :: apply_permutation_matrix
@@ -212,7 +213,7 @@ module lightkrylov_BaseKrylov
         !!
         !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
         !!        module. The operator needs to be square, i.e. the dimension of its domain and
-        !!        co-domain is the same. It is an `intent(in)` argument.
+        !!        co-domain is the same. It is an `intent(inout)` argument.
         !!
         !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
         !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
@@ -404,7 +405,7 @@ module lightkrylov_BaseKrylov
         !!  ### Arguments
         !!
         !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
-        !!        provided by the `AbstractLinops` module. It is an `intent(in)` argument.
+        !!        provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
         !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
@@ -474,7 +475,7 @@ module lightkrylov_BaseKrylov
         !!  ### Arguments
         !!
         !!  `A` : Linear operator derived from one the base types provided by the 
-        !!        `AbstractLinops` module. It is an `intent(in)` argument.
+        !!        `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
         !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
@@ -1111,7 +1112,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine arnoldi_${type[0]}$${kind}$(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
         !! Orthogonal basis for the generated Krylov subspace.
@@ -1159,11 +1160,11 @@ contains
             ! Matrix-vector product.
             if (trans) then
                 do i = 1, p
-                    call A%rmatvec(X(kpm+i), X(kp+i))
+                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
                 enddo
             else
                 do i = 1, p
-                    call A%matvec(X(kpm+i), X(kp+i))
+                    call A%apply_matvec(X(kpm+i), X(kp+i))
                 enddo
             endif
 
@@ -1204,7 +1205,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine lanczos_bidiagonalization_${type[0]}$${kind}$(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
@@ -1241,7 +1242,7 @@ contains
         ! Lanczos bidiagonalization.
         lanczos : do k = k_start, k_end
             ! Transpose matrix-vector product.
-            call A%rmatvec(U(k), V(k))
+            call A%apply_rmatvec(U(k), V(k))
 
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
@@ -1260,7 +1261,7 @@ contains
             endif
 
             ! Matrix-vector product.
-            call A%matvec(V(k), U(k+1))
+            call A%apply_matvec(V(k), U(k+1))
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -1291,9 +1292,9 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     subroutine lanczos_tridiagonalization_${type[0]}$${kind}$(A, X, T, info, kstart, kend, tol)
         #:if type[0] == "r"
-        class(abstract_sym_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_sym_linop_${type[0]}$${kind}$), intent(inout) :: A
         #:else
-        class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(inout) :: A
         #:endif
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
         ${type}$, intent(inout) :: T(:, :)
@@ -1318,7 +1319,7 @@ contains
         ! Lanczos tridiagonalization.
         lanczos: do k = k_start, k_end
             ! Matrix-vector product.
-            call A%matvec(X(k), X(k+1))
+            call A%apply_matvec(X(k), X(k+1))
             ! Update tridiagonal matrix.
             call update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
             beta = X(k+1)%norm() ; T(k+1, k) = beta

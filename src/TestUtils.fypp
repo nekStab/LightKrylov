@@ -13,7 +13,8 @@ module LightKrylov_TestUtils
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestUtils'
+    character(len=*), parameter, private :: this_module      = 'LK_TUtils'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestUtils'
 
     integer, parameter, public :: test_size = 128
 
@@ -61,6 +62,13 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
     end type
 
+    interface linop_${type[0]}$${kind}$
+        pure module function construct_linop_${type[0]}$${kind}$(data) result(A)
+            ${type}$, dimension(test_size, test_size), intent(in) :: data
+            type(linop_${type[0]}$${kind}$) :: A
+        end function
+    end interface
+
     type, extends(abstract_sym_linop_${type[0]}$${kind}$), public :: spd_linop_${type[0]}$${kind}$
         ${type}$, dimension(test_size, test_size) :: data = 0.0_${kind}$
     contains
@@ -68,6 +76,13 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec => sdp_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => sdp_matvec_${type[0]}$${kind}$
     end type
+    interface spd_linop_${type[0]}$${kind}$
+        pure module function construct_spd_linop_${type[0]}$${kind}$(data) result(A)
+            ${type}$, dimension(test_size, test_size), intent(in) :: data
+            type(spd_linop_${type[0]}$${kind}$) :: A
+        end function
+    end interface
+
     #:else
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: linop_${type[0]}$${kind}$
         ${type}$, dimension(test_size, test_size) :: data = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
@@ -76,6 +91,12 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
     end type
+    interface linop_${type[0]}$${kind}$
+        pure module function construct_linop_${type[0]}$${kind}$(data) result(A)
+            ${type}$, dimension(test_size, test_size), intent(in) :: data
+            type(linop_${type[0]}$${kind}$) :: A
+        end function
+    end interface
 
     type, extends(abstract_hermitian_linop_${type[0]}$${kind}$), public :: hermitian_linop_${type[0]}$${kind}$
         ${type}$, dimension(test_size, test_size) :: data = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
@@ -85,6 +106,12 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => hermitian_matvec_${type[0]}$${kind}$
     end type
     #:endif
+    interface hermitian_linop_${type[0]}$${kind}$
+        pure module function construct_hermitian_linop_${type[0]}$${kind}$(data) result(A)
+            ${type}$, dimension(test_size, test_size), intent(in) :: data
+            type(linop_${type[0]}$${kind}$) :: A
+        end function
+    end interface
 
     #:endfor
 
@@ -112,7 +139,7 @@ module LightKrylov_TestUtils
     type, extends(abstract_system_r${kind}$), public :: roessler_r${kind}$
     contains
        private
-       procedure, pass(self), public :: eval => eval_roessler_r${kind}$
+       procedure, pass(self), public :: response => eval_roessler_r${kind}$
     end type roessler_r${kind}$
 
     type, extends(abstract_jacobian_linop_r${kind}$), public :: jacobian_r${kind}$
@@ -159,7 +186,27 @@ module LightKrylov_TestUtils
     end interface
 
 contains
-    
+
+    !--------------------------------
+    !-----     CONSTRUCTORS     -----
+    !--------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure construct_linop_${type[0]}$${kind}$
+    A%data = data
+    end procedure
+
+    #:if type[0] == "r"
+    module procedure construct_spd_linop_${type[0]}$${kind}$
+    A%data = data
+    end procedure
+    #:else
+    module procedure construct_hermitian_linop_${type[0]}$${kind}$
+    A%data = data
+    end procedure
+    #:endif
+    #:endfor
+
     !----------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST VECTORS     -----
     !----------------------------------------------------------
@@ -237,7 +284,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -255,7 +302,7 @@ contains
     end subroutine matvec_${type[0]}$${kind}$
 
     subroutine rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -278,7 +325,7 @@ contains
 
     #:if type[0] == "r"
     subroutine sdp_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(spd_linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(spd_linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -296,7 +343,7 @@ contains
     end subroutine sdp_matvec_${type[0]}$${kind}$
     #:else
     subroutine hermitian_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
-        class(hermitian_linop_${type[0]}$${kind}$), intent(in)  :: self
+        class(hermitian_linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
 
@@ -454,7 +501,7 @@ contains
       real(${kind}$) :: err
 
       ! internals
-      character*9 :: value_str
+      character(len=9) :: value_str
       character(len=*), parameter :: indent = repeat(" ", 4)
 
       write(value_str, '(E9.2)') err
@@ -539,7 +586,7 @@ contains
 
     #:for kind in REAL_KINDS
     subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, atol)
-      class(roessler_r${kind}$),            intent(in)  :: self
+      class(roessler_r${kind}$),            intent(inout)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
       real(${kind}$),                    intent(in)  :: atol
@@ -574,7 +621,7 @@ contains
     end subroutine get_state_r${kind}$
 
     subroutine lin_roessler_r${kind}$(self, vec_in, vec_out)
-      class(jacobian_r${kind}$),            intent(in)  :: self
+      class(jacobian_r${kind}$),            intent(inout)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
 
@@ -598,7 +645,7 @@ contains
     end subroutine lin_roessler_r${kind}$
 
     subroutine adj_lin_roessler_r${kind}$(self, vec_in, vec_out)
-      class(jacobian_r${kind}$),            intent(in)  :: self
+      class(jacobian_r${kind}$),            intent(inout)  :: self
       class(abstract_vector_r${kind}$), intent(in)  :: vec_in
       class(abstract_vector_r${kind}$), intent(out) :: vec_out
 

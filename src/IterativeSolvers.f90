@@ -38,7 +38,8 @@ module lightkrylov_IterativeSolvers
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'LightKrylov_IterativeSolvers'
+    character(len=*), parameter :: this_module      = 'LK_Solvers'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_IterativeSolvers'
 
     public :: abstract_linear_solver_rsp
     public :: abstract_linear_solver_rdp
@@ -113,7 +114,7 @@ module lightkrylov_IterativeSolvers
         !!
         !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
         !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
         !!
         !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
@@ -176,7 +177,7 @@ module lightkrylov_IterativeSolvers
         !!
         !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
         !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
         !!
         !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
@@ -245,7 +246,7 @@ module lightkrylov_IterativeSolvers
         !!
         !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
         !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(in)` argument.
+        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
         !!
         !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
@@ -302,7 +303,7 @@ module lightkrylov_IterativeSolvers
         !!  ### Arguments
         !!
         !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
-        !!  `AbstractLinops` module. It is an `intent(in)` argument.
+        !!  `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
         !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
@@ -361,7 +362,7 @@ module lightkrylov_IterativeSolvers
         !!
         !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
         !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
-        !!  `intent(in)` argument.
+        !!  `intent(inout)` argument.
         !!
         !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
         !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
@@ -475,11 +476,10 @@ module lightkrylov_IterativeSolvers
     !--------------------------------------------------------
 
     abstract interface
-        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_precond_rsp, sp
-
-            class(abstract_linop_rsp), intent(in) :: A
+            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_metadata, abstract_precond_rsp, sp
+            class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_rsp), intent(in) :: b
             !! Right-hand side vector.
@@ -497,13 +497,14 @@ module lightkrylov_IterativeSolvers
             !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
         end subroutine abstract_linear_solver_rsp
 
-        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_precond_rdp, dp
-
-            class(abstract_linop_rdp), intent(in) :: A
+            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_metadata, abstract_precond_rdp, dp
+            class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_rdp), intent(in) :: b
             !! Right-hand side vector.
@@ -521,13 +522,14 @@ module lightkrylov_IterativeSolvers
             !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
         end subroutine abstract_linear_solver_rdp
 
-        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_precond_csp, sp
-
-            class(abstract_linop_csp), intent(in) :: A
+            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_metadata, abstract_precond_csp, sp
+            class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_csp), intent(in) :: b
             !! Right-hand side vector.
@@ -545,13 +547,14 @@ module lightkrylov_IterativeSolvers
             !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
         end subroutine abstract_linear_solver_csp
 
-        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
+        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_precond_cdp, dp
-
-            class(abstract_linop_cdp), intent(in) :: A
+            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_metadata, abstract_precond_cdp, dp
+            class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_cdp), intent(in) :: b
             !! Right-hand side vector.
@@ -569,6 +572,8 @@ module lightkrylov_IterativeSolvers
             !! Options passed to the linear solver.
             logical, optional, intent(in) :: transpose
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
         end subroutine abstract_linear_solver_cdp
 
     end interface
@@ -688,7 +693,7 @@ contains
     !---------------------------------------------------
 
     subroutine eigs_rsp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
@@ -829,7 +834,7 @@ contains
     end subroutine eigs_rsp
 
     subroutine eigs_rdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
@@ -970,7 +975,7 @@ contains
     end subroutine eigs_rdp
 
     subroutine eigs_csp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
@@ -1101,7 +1106,7 @@ contains
     end subroutine eigs_csp
 
     subroutine eigs_cdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
@@ -1237,7 +1242,7 @@ contains
     !-----------------------------------------------------------------------------
 
     subroutine eighs_rsp(A, X, eigvals, residuals, info, kdim, tolerance)
-        class(abstract_sym_linop_rsp), intent(in) :: A
+        class(abstract_sym_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
         !! Leading eigevectors of \( \mathbf{A} \).
@@ -1337,7 +1342,7 @@ contains
     end subroutine eighs_rsp
 
     subroutine eighs_rdp(A, X, eigvals, residuals, info, kdim, tolerance)
-        class(abstract_sym_linop_rdp), intent(in) :: A
+        class(abstract_sym_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
         !! Leading eigevectors of \( \mathbf{A} \).
@@ -1437,7 +1442,7 @@ contains
     end subroutine eighs_rdp
 
     subroutine eighs_csp(A, X, eigvals, residuals, info, kdim, tolerance)
-        class(abstract_hermitian_linop_csp), intent(in) :: A
+        class(abstract_hermitian_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
         !! Leading eigevectors of \( \mathbf{A} \).
@@ -1537,7 +1542,7 @@ contains
     end subroutine eighs_csp
 
     subroutine eighs_cdp(A, X, eigvals, residuals, info, kdim, tolerance)
-        class(abstract_hermitian_linop_cdp), intent(in) :: A
+        class(abstract_hermitian_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
         !! Leading eigevectors of \( \mathbf{A} \).
@@ -1642,7 +1647,7 @@ contains
     !------------------------------------------------
 
     subroutine svds_rsp(A, U, S, V, residuals, info, kdim, tolerance)
-        class(abstract_linop_rsp), intent(in) :: A
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rsp), intent(out) :: U(:)
         !! Leading left singular vectors.
@@ -1736,7 +1741,7 @@ contains
     end subroutine svds_rsp
 
     subroutine svds_rdp(A, U, S, V, residuals, info, kdim, tolerance)
-        class(abstract_linop_rdp), intent(in) :: A
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rdp), intent(out) :: U(:)
         !! Leading left singular vectors.
@@ -1830,7 +1835,7 @@ contains
     end subroutine svds_rdp
 
     subroutine svds_csp(A, U, S, V, residuals, info, kdim, tolerance)
-        class(abstract_linop_csp), intent(in) :: A
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_csp), intent(out) :: U(:)
         !! Leading left singular vectors.
@@ -1924,7 +1929,7 @@ contains
     end subroutine svds_csp
 
     subroutine svds_cdp(A, U, S, V, residuals, info, kdim, tolerance)
-        class(abstract_linop_cdp), intent(in) :: A
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_cdp), intent(out) :: U(:)
         !! Leading left singular vectors.
@@ -2022,8 +2027,8 @@ contains
     !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
     !-------------------------------------------------------
 
-    subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
-        class(abstract_linop_rsp), intent(in) :: A
+    subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
@@ -2041,6 +2046,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2050,7 +2057,8 @@ contains
         integer :: kdim, maxiter
         real(sp) :: tol, rtol_, atol_
         logical :: trans
-        type(gmres_sp_opts) :: opts
+        type(gmres_sp_opts)     :: opts
+        type(gmres_sp_metadata) :: gmres_meta
 
         ! Krylov subspace
         class(abstract_vector_rsp), allocatable :: V(:)
@@ -2102,19 +2110,24 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
-        info = 0 ; niter = 0
+        ! Initialize metadata and & reset matvec counter
+        gmres_meta = gmres_sp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
+
+        info = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
             if (trans) then
-                call A%rmatvec(x, V(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%matvec(x, V(1))
+                call A%apply_matvec(x, V(1))
             endif
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -2129,9 +2142,9 @@ contains
 
                 ! Matrix-vector product.
                 if (trans) then
-                    call A%rmatvec(wrk, V(k+1))
+                    call A%apply_rmatvec(wrk, V(k+1))
                 else
-                    call A%matvec(wrk, V(k+1))
+                    call A%apply_matvec(wrk, V(k+1))
                 endif
 
                 ! Double Gram-Schmid orthogonalization
@@ -2150,14 +2163,17 @@ contains
                 ! Compute residual.
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
-                ! Current number of iterations performed.
-                niter = niter + 1
+                ! Save metadata.
+                gmres_meta%n_iter  = gmres_meta%n_iter + 1
+                gmres_meta%n_inner = gmres_meta%n_inner + 1
+                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
                 if (abs(beta) <= tol) then
+                    gmres_meta%converged = .true.
                     exit arnoldi_fact
                 endif
             enddo arnoldi_fact
@@ -2168,32 +2184,52 @@ contains
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%rmatvec(x, v(1))
+                call A%apply_rmatvec(x, v(1))
             else
-                call A%matvec(x, v(1))
+                call A%apply_matvec(x, v(1))
             endif
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
 
+            ! Save metadata.
+            gmres_meta%n_iter  = gmres_meta%n_iter + 1
+            gmres_meta%n_outer = gmres_meta%n_outer + 1
+            gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+
             write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
+        gmres_meta%info = info
 
+        if (opts%if_print_metadata) call gmres_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_sp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
+
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_rsp
 
-    subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
-        class(abstract_linop_rdp), intent(in) :: A
+    subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.
@@ -2211,6 +2247,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2220,7 +2258,8 @@ contains
         integer :: kdim, maxiter
         real(dp) :: tol, rtol_, atol_
         logical :: trans
-        type(gmres_dp_opts) :: opts
+        type(gmres_dp_opts)     :: opts
+        type(gmres_dp_metadata) :: gmres_meta
 
         ! Krylov subspace
         class(abstract_vector_rdp), allocatable :: V(:)
@@ -2272,19 +2311,24 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
-        info = 0 ; niter = 0
+        ! Initialize metadata and & reset matvec counter
+        gmres_meta = gmres_dp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
+
+        info = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
             if (trans) then
-                call A%rmatvec(x, V(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%matvec(x, V(1))
+                call A%apply_matvec(x, V(1))
             endif
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -2299,9 +2343,9 @@ contains
 
                 ! Matrix-vector product.
                 if (trans) then
-                    call A%rmatvec(wrk, V(k+1))
+                    call A%apply_rmatvec(wrk, V(k+1))
                 else
-                    call A%matvec(wrk, V(k+1))
+                    call A%apply_matvec(wrk, V(k+1))
                 endif
 
                 ! Double Gram-Schmid orthogonalization
@@ -2320,14 +2364,17 @@ contains
                 ! Compute residual.
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
-                ! Current number of iterations performed.
-                niter = niter + 1
+                ! Save metadata.
+                gmres_meta%n_iter  = gmres_meta%n_iter + 1
+                gmres_meta%n_inner = gmres_meta%n_inner + 1
+                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
                 if (abs(beta) <= tol) then
+                    gmres_meta%converged = .true.
                     exit arnoldi_fact
                 endif
             enddo arnoldi_fact
@@ -2338,32 +2385,52 @@ contains
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%rmatvec(x, v(1))
+                call A%apply_rmatvec(x, v(1))
             else
-                call A%matvec(x, v(1))
+                call A%apply_matvec(x, v(1))
             endif
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
 
+            ! Save metadata.
+            gmres_meta%n_iter  = gmres_meta%n_iter + 1
+            gmres_meta%n_outer = gmres_meta%n_outer + 1
+            gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+
             write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
+        gmres_meta%info = info
 
+        if (opts%if_print_metadata) call gmres_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_dp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
+
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_rdp
 
-    subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
-        class(abstract_linop_csp), intent(in) :: A
+    subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
         !! Right-hand side vector.
@@ -2381,6 +2448,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2390,7 +2459,8 @@ contains
         integer :: kdim, maxiter
         real(sp) :: tol, rtol_, atol_
         logical :: trans
-        type(gmres_sp_opts) :: opts
+        type(gmres_sp_opts)     :: opts
+        type(gmres_sp_metadata) :: gmres_meta
 
         ! Krylov subspace
         class(abstract_vector_csp), allocatable :: V(:)
@@ -2442,19 +2512,24 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
-        info = 0 ; niter = 0
+        ! Initialize metadata and & reset matvec counter
+        gmres_meta = gmres_sp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
+
+        info = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
             if (trans) then
-                call A%rmatvec(x, V(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%matvec(x, V(1))
+                call A%apply_matvec(x, V(1))
             endif
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -2469,9 +2544,9 @@ contains
 
                 ! Matrix-vector product.
                 if (trans) then
-                    call A%rmatvec(wrk, V(k+1))
+                    call A%apply_rmatvec(wrk, V(k+1))
                 else
-                    call A%matvec(wrk, V(k+1))
+                    call A%apply_matvec(wrk, V(k+1))
                 endif
 
                 ! Double Gram-Schmid orthogonalization
@@ -2490,14 +2565,17 @@ contains
                 ! Compute residual.
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
-                ! Current number of iterations performed.
-                niter = niter + 1
+                ! Save metadata.
+                gmres_meta%n_iter  = gmres_meta%n_iter + 1
+                gmres_meta%n_inner = gmres_meta%n_inner + 1
+                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_csp')
                 if (abs(beta) <= tol) then
+                    gmres_meta%converged = .true.
                     exit arnoldi_fact
                 endif
             enddo arnoldi_fact
@@ -2508,32 +2586,52 @@ contains
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%rmatvec(x, v(1))
+                call A%apply_rmatvec(x, v(1))
             else
-                call A%matvec(x, v(1))
+                call A%apply_matvec(x, v(1))
             endif
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
 
+            ! Save metadata.
+            gmres_meta%n_iter  = gmres_meta%n_iter + 1
+            gmres_meta%n_outer = gmres_meta%n_outer + 1
+            gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+
             write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_csp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
+        gmres_meta%info = info
 
+        if (opts%if_print_metadata) call gmres_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_sp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
+
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_csp
 
-    subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose)
-        class(abstract_linop_cdp), intent(in) :: A
+    subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
         !! Right-hand side vector.
@@ -2551,6 +2649,8 @@ contains
         !! GMRES options.   
         logical, optional, intent(in) :: transpose
         !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -2560,7 +2660,8 @@ contains
         integer :: kdim, maxiter
         real(dp) :: tol, rtol_, atol_
         logical :: trans
-        type(gmres_dp_opts) :: opts
+        type(gmres_dp_opts)     :: opts
+        type(gmres_dp_metadata) :: gmres_meta
 
         ! Krylov subspace
         class(abstract_vector_cdp), allocatable :: V(:)
@@ -2612,19 +2713,24 @@ contains
         allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
-        info = 0 ; niter = 0
+        ! Initialize metadata and & reset matvec counter
+        gmres_meta = gmres_dp_metadata()
+        call A%reset_counter(trans, 'gmres%init')
+
+        info = 0
 
         ! Initial Krylov vector.
         if (x%norm() > 0) then
             if (trans) then
-                call A%rmatvec(x, V(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%matvec(x, V(1))
+                call A%apply_matvec(x, V(1))
             endif
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
         beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -2639,9 +2745,9 @@ contains
 
                 ! Matrix-vector product.
                 if (trans) then
-                    call A%rmatvec(wrk, V(k+1))
+                    call A%apply_rmatvec(wrk, V(k+1))
                 else
-                    call A%matvec(wrk, V(k+1))
+                    call A%apply_matvec(wrk, V(k+1))
                 endif
 
                 ! Double Gram-Schmid orthogonalization
@@ -2660,14 +2766,17 @@ contains
                 ! Compute residual.
                 beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
 
-                ! Current number of iterations performed.
-                niter = niter + 1
+                ! Save metadata.
+                gmres_meta%n_iter  = gmres_meta%n_iter + 1
+                gmres_meta%n_inner = gmres_meta%n_inner + 1
+                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
                 if (abs(beta) <= tol) then
+                    gmres_meta%converged = .true.
                     exit arnoldi_fact
                 endif
             enddo arnoldi_fact
@@ -2678,27 +2787,47 @@ contains
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%rmatvec(x, v(1))
+                call A%apply_rmatvec(x, v(1))
             else
-                call A%matvec(x, v(1))
+                call A%apply_matvec(x, v(1))
             endif
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
             beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
 
+            ! Save metadata.
+            gmres_meta%n_iter  = gmres_meta%n_iter + 1
+            gmres_meta%n_outer = gmres_meta%n_outer + 1
+            gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+
             write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
 
             ! Exit gmres if desired accuracy is reached.
-            if (abs(beta) <= tol) exit gmres_iter
-
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
         enddo gmres_iter
 
         ! Returns the number of iterations.
-        info = niter
+        info = gmres_meta%n_iter
+        gmres_meta%info = info
 
+        if (opts%if_print_metadata) call gmres_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_dp_metadata)
+                    meta = gmres_meta
+           end select
+        end if
+
+        call A%reset_counter(trans, 'gmres%post')
+        
         return
     end subroutine gmres_cdp
 
@@ -2710,8 +2839,8 @@ contains
     !-----     CONJUGATE GRADIENT METHOD     -----
     !---------------------------------------------
 
-    subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options)
-        class(abstract_sym_linop_rsp), intent(in) :: A
+    subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        class(abstract_sym_linop_rsp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rsp), intent(in) :: b
         !! Right-hand side vector.
@@ -2727,6 +2856,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_sp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -2735,7 +2866,8 @@ contains
         ! Options.
         integer :: maxiter
         real(sp) :: tol, rtol_, atol_
-        type(cg_sp_opts) :: opts
+        type(cg_sp_opts)     :: opts
+        type(cg_sp_metadata) :: cg_meta
 
         ! Working variables.
         class(abstract_vector_rsp), allocatable :: r, p, Ap
@@ -2761,10 +2893,14 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_sp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%matvec(x, r)
+        if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2772,11 +2908,12 @@ contains
 
         ! Initialize dot product of residual r_dot_r_old = r' * r
         r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
             ! Compute A @ p
-            call A%matvec(p, Ap)
+            call A%apply_matvec(p, Ap)
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
@@ -2787,10 +2924,15 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(r_dot_r_new)
-            ! Current number of iterations performed.
-            info = info + 1
 
-            if (residual < tol) exit cg_loop
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -2802,12 +2944,28 @@ contains
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='cg_rsp')
         enddo cg_loop
-        
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_sp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_rsp
 
-    subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options)
-        class(abstract_sym_linop_rdp), intent(in) :: A
+    subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        class(abstract_sym_linop_rdp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_rdp), intent(in) :: b
         !! Right-hand side vector.
@@ -2823,6 +2981,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_dp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -2831,7 +2991,8 @@ contains
         ! Options.
         integer :: maxiter
         real(dp) :: tol, rtol_, atol_
-        type(cg_dp_opts) :: opts
+        type(cg_dp_opts)     :: opts
+        type(cg_dp_metadata) :: cg_meta
 
         ! Working variables.
         class(abstract_vector_rdp), allocatable :: r, p, Ap
@@ -2857,10 +3018,14 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_dp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%matvec(x, r)
+        if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2868,11 +3033,12 @@ contains
 
         ! Initialize dot product of residual r_dot_r_old = r' * r
         r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
             ! Compute A @ p
-            call A%matvec(p, Ap)
+            call A%apply_matvec(p, Ap)
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
@@ -2883,10 +3049,15 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(r_dot_r_new)
-            ! Current number of iterations performed.
-            info = info + 1
 
-            if (residual < tol) exit cg_loop
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -2898,12 +3069,28 @@ contains
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='cg_rdp')
         enddo cg_loop
-        
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_dp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_rdp
 
-    subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options)
-        class(abstract_hermitian_linop_csp), intent(in) :: A
+    subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        class(abstract_hermitian_linop_csp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_csp), intent(in) :: b
         !! Right-hand side vector.
@@ -2919,6 +3106,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_sp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -2927,7 +3116,8 @@ contains
         ! Options.
         integer :: maxiter
         real(sp) :: tol, rtol_, atol_
-        type(cg_sp_opts) :: opts
+        type(cg_sp_opts)     :: opts
+        type(cg_sp_metadata) :: cg_meta
 
         ! Working variables.
         class(abstract_vector_csp), allocatable :: r, p, Ap
@@ -2953,10 +3143,14 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_sp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%matvec(x, r)
+        if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -2964,11 +3158,12 @@ contains
 
         ! Initialize dot product of residual r_dot_r_old = r' * r
         r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
             ! Compute A @ p
-            call A%matvec(p, Ap)
+            call A%apply_matvec(p, Ap)
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
@@ -2979,10 +3174,15 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(abs(r_dot_r_new))
-            ! Current number of iterations performed.
-            info = info + 1
 
-            if (residual < tol) exit cg_loop
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -2994,12 +3194,28 @@ contains
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='cg_csp')
         enddo cg_loop
-        
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_sp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_csp
 
-    subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options)
-        class(abstract_hermitian_linop_cdp), intent(in) :: A
+    subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        class(abstract_hermitian_linop_cdp), intent(inout) :: A
         !! Linear operator to be inverted.
         class(abstract_vector_cdp), intent(in) :: b
         !! Right-hand side vector.
@@ -3015,6 +3231,8 @@ contains
         !! Preconditioner (not yet supported).
         type(cg_dp_opts), optional, intent(in) :: options
         !! Options for the conjugate gradient solver.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
 
         !----------------------------------------
         !-----     Internal variables      ------
@@ -3023,7 +3241,8 @@ contains
         ! Options.
         integer :: maxiter
         real(dp) :: tol, rtol_, atol_
-        type(cg_dp_opts) :: opts
+        type(cg_dp_opts)     :: opts
+        type(cg_dp_metadata) :: cg_meta
 
         ! Working variables.
         class(abstract_vector_cdp), allocatable :: r, p, Ap
@@ -3049,10 +3268,14 @@ contains
         allocate(p, source=b)  ; call p%zero()
         allocate(Ap, source=b) ; call Ap%zero()
 
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_dp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
         info = 0
 
         ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%matvec(x, r)
+        if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Initialize direction vector.
@@ -3060,11 +3283,12 @@ contains
 
         ! Initialize dot product of residual r_dot_r_old = r' * r
         r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
             ! Compute A @ p
-            call A%matvec(p, Ap)
+            call A%apply_matvec(p, Ap)
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
@@ -3075,10 +3299,15 @@ contains
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
             residual = sqrt(abs(r_dot_r_new))
-            ! Current number of iterations performed.
-            info = info + 1
 
-            if (residual < tol) exit cg_loop
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
 
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
@@ -3090,7 +3319,23 @@ contains
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='cg_cdp')
         enddo cg_loop
-        
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_dp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+
         return
     end subroutine cg_cdp
 

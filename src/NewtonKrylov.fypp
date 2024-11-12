@@ -13,7 +13,8 @@ module LightKrylov_NewtonKrylov
    implicit none
    private
 
-   character(len=128), parameter :: this_module = 'LightKrylov_NewtonKrylov'
+   character(len=*), parameter :: this_module      = 'LK_NwtKryl'
+   character(len=*), parameter :: this_module_long = 'LightKrylov_NewtonKrylov'
 
    public :: newton
    #:for kind in REAL_KINDS
@@ -79,7 +80,7 @@ module LightKrylov_NewtonKrylov
    end interface
 
    abstract interface
-      #:for kind, type in REAL_KINDS_TYPES
+      #:for kind in REAL_KINDS
       subroutine abstract_scheduler_${kind}$(tol, target_tol, rnorm, iter, info)
          import ${kind}$
          !! Abstract interface to define a tolerance scheduler for the Newton iteration
@@ -96,12 +97,13 @@ module LightKrylov_NewtonKrylov
       end subroutine abstract_scheduler_${kind}$
 
       #:endfor
+
    end interface
 
 contains
 
    #:for kind, type in RC_KINDS_TYPES
-   subroutine newton_${type[0]}$${kind}$(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler)
+   subroutine newton_${type[0]}$${kind}$(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_${type[0]}$${kind}$),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_${type[0]}$${kind}$),                         intent(inout) :: X
@@ -121,6 +123,8 @@ contains
       class(abstract_precond_${type[0]}$${kind}$),              optional, intent(in)    :: preconditioner
       !! Preconditioner for the linear solver
       procedure(abstract_scheduler_${kind}$),         optional                :: scheduler
+      class(abstract_metadata),                       optional,   intent(out) :: meta
+      !! Metadata.
 
       !--------------------------------------
       !-----     Internal variables     -----
@@ -129,8 +133,8 @@ contains
       procedure(abstract_scheduler_${kind}$),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_${type[0]}$${kind}$), allocatable        :: residual, increment
       real(${kind}$)           :: rnorm, tol
-      logical            :: converged
       integer            :: i, maxiter, maxstep_bisection
+      type(newton_${kind}$_metadata) :: newton_meta
       character(len=256) :: msg
       
       ! Newton-solver tolerance
@@ -148,20 +152,28 @@ contains
          tolerance_scheduler => constant_atol_${kind}$
       endif
 
-      ! Initialisation      
-      maxiter           = opts%maxiter
+      ! Initialisation
+      info = 0 
+      maxiter = opts%maxiter
       maxstep_bisection = opts%maxstep_bisection
-      converged         = .false.
       allocate(residual, source=X); call residual%zero()
       allocate(increment,source=X); call increment%zero()
+      ! Initialize metadata & reset eval counter
+      newton_meta = newton_${kind}$_metadata()
+      call sys%reset_eval_counter('newton%init')
 
+      ! Get initial residual.
       call sys%eval(X, residual, target_tol)
       rnorm = residual%norm()
+
+      ! Save metadata.
+      call newton_meta%record(rnorm, target_tol)
+
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_${type[0]}$${kind}$')
-         converged = .true.
+         newton_meta%converged = .true.
          return
       end if
 
@@ -195,15 +207,23 @@ contains
          call sys%eval(X, residual, tol)
          rnorm = residual%norm()
 
+         ! Save metadata.
+         newton_meta%n_iter = newton_meta%n_iter + 1
+         call newton_meta%record(rnorm, tol)
+
          ! Check for convergence.
          if (rnorm < tol) then
             if (tol >= target_tol .and. tol < 100.0_${kind}$*target_tol) then
-               ! the tolerances are not at the target, check the accurate residual                  
+               ! the tolerances are not at the target, check the accurate residual
                call sys%eval(X, residual, target_tol)
+               rnorm = residual%norm()
+
                if (rnorm < target_tol) then
                   write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
                   call logger%log_message(msg, module=this_module, procedure='newton_${type[0]}$${kind}$')
-                  converged = .true.
+                  ! Save metadata
+                  call newton_meta%record(rnorm, target_tol)
+                  newton_meta%converged = .true.
                   exit newton
                else
                   write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
@@ -214,11 +234,26 @@ contains
 
       enddo newton
 
-      if (.not.converged) then
+      if (.not.newton_meta%converged) then
          write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
          call logger%log_warning(msg, module=this_module, procedure='newton_${type[0]}$${kind}$')
          info = -1
       endif
+
+      ! Finalize metadata
+      newton_meta%info = info
+
+      if (opts%if_print_metadata) call newton_meta%print()
+
+      ! Set metadata output
+      if (present(meta)) then
+         select type(meta)
+            type is (newton_${kind}$_metadata)
+               meta = newton_meta
+         end select
+      end if
+
+      call sys%reset_eval_counter('newton%post')
 
       return
    end subroutine newton_${type[0]}$${kind}$
@@ -231,7 +266,7 @@ contains
       !! order to maximally reduce the residual at each iteration.
       class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
       !! Current system state to be updated
-      class(abstract_system_${type[0]}$${kind}$), intent(in)    :: sys
+      class(abstract_system_${type[0]}$${kind}$), intent(inout) :: sys
       !! Dynamical system for which the residual is minimized
       class(abstract_vector_${type[0]}$${kind}$), intent(in)    :: increment
       !! Newton step computed from the standard method

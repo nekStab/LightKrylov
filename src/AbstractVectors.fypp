@@ -47,7 +47,8 @@ module lightkrylov_AbstractVectors
     implicit none
     private
 
-    character(len=128), parameter :: this_module = 'Lightkrylov_AbstractVectors'
+    character(len=*), parameter :: this_module      = 'LK_Vectors'
+    character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractVectors'
 
     public :: innerprod
     public :: linear_combination

@@ -2,7 +2,7 @@ module Roessler_OTD
    ! Standard Library.
    use stdlib_stats_distribution_normal, only: normal => rvs_normal
    use stdlib_optval, only: optval
-   use stdlib_sorting, only : sort
+   use stdlib_sorting, only: sort
    use stdlib_linalg, only: eig, svdvals, eye
    ! RKLIB module for time integration.
    use rklib_module
@@ -13,28 +13,28 @@ module Roessler_OTD
    ! Roessler
    use Roessler
    implicit none
- 
-   character*128, parameter, private :: this_module = 'Roessler_OTD'
- 
+
+   character(len=*), parameter, private :: this_module = 'Roessler_OTD'
+
    public :: a, b, c
- 
+
    !------------------------------
    !-----     PARAMETERS     -----
    !------------------------------
- 
-   integer,  parameter :: r = 2
+
+   integer, parameter :: r = 2
    real(wp), parameter :: t_GS = 5.0_wp ! In finite-precision arithmetic we need to reorthonormalize sometimes
-   character(len=128), parameter :: file    = 'example/roessler/output_roessler_OTD.txt'
-   character(len=128), parameter :: file_LE = 'example/roessler/output_roessler_OTD_LE.txt'
+   character(len=*), parameter :: report_file_OTD = 'example/roessler/output_roessler_OTD.txt'
+   character(len=*), parameter :: report_file_OTD_LE = 'example/roessler/output_roessler_OTD_LE.txt'
 
    ! Reference values (https://chaosbook.org/extras/simon/Roessler.html, orbit 1)
-   real(wp), dimension(2), parameter :: EV_ref = (/ 0.097000856_wp, 0.097000856_wp /)
-   real(wp), dimension(2), parameter :: LE_ref = (/ 0.0_wp        , 0.149141556_wp /)
+   real(wp), dimension(2), parameter :: EV_ref = (/0.097000856_wp, 0.097000856_wp/)
+   real(wp), dimension(2), parameter :: LE_ref = (/0.0_wp, 0.149141556_wp/)
 
    !-------------------------------------------
    !-----     LIGHTKRYLOV VECTOR TYPE     -----
    !-------------------------------------------
- 
+
    type, extends(abstract_vector_rdp), public :: pos_vector
       real(wp) :: x = 0.0_wp
       real(wp) :: y = 0.0_wp
@@ -48,7 +48,7 @@ module Roessler_OTD
       procedure, pass(self), public :: rand => rand_p
       procedure, pass(self), public :: get_size => get_size_p
    end type pos_vector
- 
+
 contains
 
    !=========================================================
@@ -58,11 +58,11 @@ contains
    !=====                                               =====
    !=========================================================
    !=========================================================
-   
+
    !----------------------------------------------------
    !-----     TYPE-BOUND PROCEDURE FOR VECTORS     -----
    !----------------------------------------------------
-      
+
    subroutine zero_p(self)
       class(pos_vector), intent(inout) :: self
       ! spatial coordinates of initial condition for orbit
@@ -71,156 +71,156 @@ contains
       self%z = 0.0_wp
       return
    end subroutine zero_p
-   
+
    real(wp) function dot_p(self, vec) result(alpha)
-      class(pos_vector)       , intent(in) :: self
+      class(pos_vector), intent(in) :: self
       class(abstract_vector_rdp), intent(in) :: vec
-      select type(vec)
-      type is(pos_vector)
+      select type (vec)
+      type is (pos_vector)
          alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
       end select
       return
    end function dot_p
-   
+
    subroutine scal_p(self, alpha)
       class(pos_vector), intent(inout) :: self
-      real(wp)           , intent(in)    :: alpha
-      self%x = self%x * alpha
-      self%y = self%y * alpha
-      self%z = self%z * alpha
+      real(wp), intent(in)    :: alpha
+      self%x = self%x*alpha
+      self%y = self%y*alpha
+      self%z = self%z*alpha
       return
    end subroutine scal_p
-   
+
    subroutine axpby_p(self, alpha, vec, beta)
-      class(pos_vector)       , intent(inout) :: self
+      class(pos_vector), intent(inout) :: self
       class(abstract_vector_rdp), intent(in)    :: vec
-      real(wp)                  , intent(in)    :: alpha, beta
-      select type(vec)
-      type is(pos_vector)
+      real(wp), intent(in)    :: alpha, beta
+      select type (vec)
+      type is (pos_vector)
          self%x = alpha*self%x + beta*vec%x
          self%y = alpha*self%y + beta*vec%y
          self%z = alpha*self%z + beta*vec%z
       end select
       return
    end subroutine axpby_p
-   
+
    integer function get_size_p(self) result(N)
       class(pos_vector), intent(in) :: self
-      N = npts+1
+      N = npts + 1
       return
    end function get_size_p
-   
+
    subroutine rand_p(self, ifnorm)
       class(pos_vector), intent(inout) :: self
-      logical, optional,   intent(in)    :: ifnorm
+      logical, optional, intent(in)    :: ifnorm
       logical :: normalized
       real(wp) :: mu, var
       real(wp) :: alpha
-   
+
       mu = 0.0_wp
       var = 1.0_wp
       self%x = normal(mu, var)
       self%y = normal(mu, var)
       self%z = normal(mu, var)
- 
+
       normalized = optval(ifnorm, .false.)
       if (normalized) then
          alpha = self%norm()
          call self%scal(1.0_wp/alpha)
-      endif
+      end if
       return
    end subroutine rand_p
-   
+
    subroutine OTD_rhs(me, t, x, f)
       ! Time-integrator.
       class(rk_class), intent(inout)             :: me
       ! Current time.
-      real(kind=wp)  , intent(in)                :: t
+      real(kind=wp), intent(in)                :: t
       ! State vector.
-      real(kind=wp)  , dimension(:), intent(in)  :: x
+      real(kind=wp), dimension(:), intent(in)  :: x
       ! Time-derivative.
-      real(kind=wp)  , dimension(:), intent(out) :: f
+      real(kind=wp), dimension(:), intent(out) :: f
       ! internal
-      real(kind=wp)  , dimension(npts)   :: bf
-      real(kind=wp)  , dimension(npts,r) :: q, Lq, fp
-      real(kind=wp)  , dimension(r,r)    :: Lr, Phi
+      real(kind=wp), dimension(npts)   :: bf
+      real(kind=wp), dimension(npts, r) :: q, Lq, fp
+      real(kind=wp), dimension(r, r)    :: Lr, Phi
       integer :: i, j
-   
+
       bf = x(:npts)
-      q = reshape(x(npts+1:(r+1)*npts), shape(q))
-   
-      call    nonlinear_roessler(        bf, f(:npts))
+      q = reshape(x(npts + 1:(r + 1)*npts), shape(q))
+
+      call nonlinear_roessler(bf, f(:npts))
       do i = 1, r
-         call linear_roessler   (q(:,i), bf, Lq(:,i))
+         call linear_roessler(q(:, i), bf, Lq(:, i))
       end do
       ! build reduced operator and rotation matrix
       Lr = 0.0_wp
       Phi = 0.0_wp
       do i = 1, r
          do j = 1, r
-            Lr(i,j) = dot_product(q(:,i), Lq(:,j))
+            Lr(i, j) = dot_product(q(:, i), Lq(:, j))
          end do
-         do j = i+1, r
-            Phi(i,j) =  Lr(i, j)
-            Phi(j,i) = -Phi(i,j)
-         enddo
+         do j = i + 1, r
+            Phi(i, j) = Lr(i, j)
+            Phi(j, i) = -Phi(i, j)
+         end do
       end do
       ! Construct forcing and add the rhs
       fp = Lq - matmul(q, Lr - Phi)
-      f(npts+1:(r+1)*npts) = reshape(fp, [size(fp)])
+      f(npts + 1:(r + 1)*npts) = reshape(fp, [size(fp)])
       ! Construct dFTLE(i)/dt = Lr(i,i)
       do i = 1, r
-         f((r+1)*npts+i) = Lr(i,i)
+         f((r + 1)*npts + i) = Lr(i, i)
       end do
       return
    end subroutine OTD_rhs
-   
+
    !------------------------------
    !-----     INTEGRATOR     -----
    !------------------------------
 
    subroutine OTD_step(integrator, bf, vec_in, FTLE_in, time, Tstep, vec_out, FTLE_out)
       ! Integrator
-      class(rk_class)           , intent(inout)  :: integrator
+      class(rk_class), intent(inout)  :: integrator
       ! Basic state
       class(abstract_vector_rdp), intent(inout)  :: bf
       ! Input vector.
       class(abstract_vector_rdp), intent(in)     :: vec_in(r)
       ! Fundamental solution matrix
-      real(wp),                   intent(in)     :: FTLE_in(r)
+      real(wp), intent(in)     :: FTLE_in(r)
       ! Current simulation time
-      real(wp),                   intent(inout)  :: time
+      real(wp), intent(inout)  :: time
       ! Integration time for this step.
-      real(wp),                   intent(in)     :: Tstep
+      real(wp), intent(in)     :: Tstep
       ! Output vector.
       class(abstract_vector_rdp), intent(out)    :: vec_out(r)
       ! Fundamental solution matrix
-      real(wp),                   intent(out)    :: FTLE_out(r)
-      
-      ! internals      
+      real(wp), intent(out)    :: FTLE_out(r)
+
+      ! internals
       real(wp)                          :: dt = 1.0_wp
-      real(wp), dimension((r+1)*npts+r) :: pos_in, pos_out
+      real(wp), dimension((r + 1)*npts + r) :: pos_in, pos_out
       integer                           :: i
-      
-      select type(integrator)
-      type is(rks54_class)
+
+      select type (integrator)
+      type is (rks54_class)
          ! Get the state.
          call get_pos(bf, pos_in(:npts)) ! bf is a state vector
          do i = 1, r
-            call get_pos(vec_in(i), pos_in(npts*i+1:npts*(i+1)))
+            call get_pos(vec_in(i), pos_in(npts*i + 1:npts*(i + 1)))
          end do
-         pos_in(npts*(r+1)+1:) = FTLE_in
+         pos_in(npts*(r + 1) + 1:) = FTLE_in
          ! Integrate.
-         call integrator%integrate(time, pos_in, dt, time+Tstep, pos_out)
+         call integrator%integrate(time, pos_in, dt, time + Tstep, pos_out)
          ! Pass-back the state.
          call set_pos(pos_out(:npts), bf)
          do i = 1, r
-            call set_pos(pos_out(npts*i+1:npts*(i+1)), vec_out(i))
+            call set_pos(pos_out(npts*i + 1:npts*(i + 1)), vec_out(i))
          end do
-         FTLE_out = pos_out(npts*(r+1)+1:)
-         time = time + Tstep     
+         FTLE_out = pos_out(npts*(r + 1) + 1:)
+         time = time + Tstep
       end select
-      
+
       return
    end subroutine OTD_step
 
@@ -230,13 +230,13 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(inout) :: vec_in(r)
       ! Integration time.
-      real(wp),                   intent(in)    :: Tend
+      real(wp), intent(in)    :: Tend
       ! Output vector.
       class(abstract_vector_rdp), intent(out)   :: vec_out(r)
       ! Integration time for FLTEs
-      real(wp),                   intent(in)    :: t_FTLE
+      real(wp), intent(in)    :: t_FTLE
       ! restart trajectory at t_FLTE?
-      logical, optional,          intent(in)    :: if_rst
+      logical, optional, intent(in)    :: if_rst
 
       ! internals
       type(rks54_class)         :: OTD_roessler
@@ -247,22 +247,22 @@ contains
       real(wp), dimension(r)    :: FTLE_in, FTLE_out
       real(wp), dimension(npts) :: bf_bkp
 
-      integer, parameter :: ndof = npts*(r+1) + r
+      integer, parameter :: ndof = npts*(r + 1) + r
 
       ! Initialize integrator.
       call OTD_roessler%initialize(n=ndof, f=OTD_rhs, report=OTD_report_file, report_rate=20)
-      
+
       ! Save IC
       call get_pos(bf, bf_bkp)
 
       ! Initialization
-      time    = 0.0_wp
+      time = 0.0_wp
       FTLE_in = 0.0_wp
-      p_cnt   = 0
-      tvec = (/ t_GS, t_FTLE /)
-      idx  = minloc(tvec)
-      t1   = minval(tvec)
-      t2   = maxval(tvec)
+      p_cnt = 0
+      tvec = (/t_GS, t_FTLE/)
+      idx = minloc(tvec)
+      t1 = minval(tvec)
+      t2 = maxval(tvec)
       ! Regular integration with much less frequent reorthonormalization
       do j = 1, floor(Tend/t2)
          do i = 1, floor(t2/t1)
@@ -275,7 +275,7 @@ contains
                call report_LE(FTLE_out, time, t_FTLE, p_cnt)
                FTLE_in = 0.0_wp                                   ! reset FTLE computation
                if (if_rst) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
-            endif
+            end if
             call copy(vec_in, vec_out)
          end do
          t_complete = modulo(t2, t1)
@@ -288,7 +288,7 @@ contains
             call report_LE(FTLE_out, time, t_FTLE, p_cnt)
             FTLE_in = 0.0_wp                                      ! reset FTLE computation
             if (if_rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
-         endif
+         end if
          call copy(vec_in, vec_out)
       end do
       t_complete = modulo(Tend, t2)
@@ -299,22 +299,22 @@ contains
    !-------------------------------------------
    !-----     MISCELLANEOUS UTILITIES     -----
    !-------------------------------------------
- 
+
    subroutine get_pos(vec_in, pos)
       class(abstract_vector_rdp), intent(in)  :: vec_in
-      real(wp), dimension(npts),  intent(out) :: pos
+      real(wp), dimension(npts), intent(out) :: pos
       pos = 0.0_wp
       select type (vec_in)
       type is (pos_vector)
-          pos(1) = vec_in%x
-          pos(2) = vec_in%y
-          pos(3) = vec_in%z
+         pos(1) = vec_in%x
+         pos(2) = vec_in%y
+         pos(3) = vec_in%z
       end select
       return
    end subroutine get_pos
 
    subroutine set_pos(pos, vec_out)
-      real(wp), dimension(npts),  intent(in)  :: pos
+      real(wp), dimension(npts), intent(in)  :: pos
       class(abstract_vector_rdp), intent(out) :: vec_out
       select type (vec_out)
       type is (pos_vector)
@@ -329,51 +329,59 @@ contains
       class(rk_class), intent(inout)      :: me
       real(wp), intent(in)                :: t
       real(wp), dimension(:), intent(in)  :: x
-      
+
       ! internal
       real(wp), dimension(npts)      :: bf
-      real(wp), dimension(npts,r)    :: q, Lq
-      real(wp), dimension(r,r)       :: Lr, qTq
-      real(wp), dimension(r)         :: FTLE
-      real(wp), allocatable          :: s(:)
+      real(wp), dimension(npts, r)    :: q, Lq
+      real(wp), dimension(r, r)       :: Lr, Lsym, qTq
+      real(wp), dimension(r)         :: FTLE, s
       complex(wp), dimension(r)      :: l
-      complex(wp), dimension(r,r)    :: v
-      complex(wp), dimension(npts,r) :: u
+      complex(wp), dimension(r, r)    :: v
+      complex(wp), dimension(npts, r) :: u, su
       integer                        :: i, j, iunit
       logical                        :: is_cc
+      integer, allocatable           :: idx(:)
 
-      bf   = x(:npts)
-      q    = reshape(x(npts+1:(r+1)*npts), shape(q))
-      FTLE = x(npts*(r+1)+1:)/t
+      bf = x(:npts)
+      q = reshape(x(npts + 1:(r + 1)*npts), shape(q))
+      FTLE = x(npts*(r + 1) + 1:)/t
 
       do i = 1, r
-         call linear_roessler   (q(:,i), bf, Lq(:,i))
+         call linear_roessler(q(:, i), bf, Lq(:, i))
       end do
       ! build reduced operator
       Lr = 0.0_wp
       qTq = 0.0_wp
       do i = 1, r
          do j = 1, r
-            Lr(i,j)  = dot_product(Lq(:,i), q(:,j))
-            qTq(i,j) = dot_product( q(:,i), q(:,j))
+            Lr(i, j) = dot_product(Lq(:, i), q(:, j))
+            qTq(i, j) = dot_product(q(:, i), q(:, j))
          end do
       end do
       ! spectral analysis
-      s = svdvals(Lr)
+      Lsym = 0.5_wp*(Lr + transpose(Lr))
+      call eig(Lsym, l, right=v)
+      s = real(l)
+      idx = maxloc(s)
+      i = idx(1)
+      su = matmul(q, v)
       call eig(Lr, l, right=v)
       u = matmul(q, v)
       is_cc = .false.
       if (abs(aimag(l(1))) > 0.0_wp) is_cc = .true.
 
-      open(newunit=iunit, file=file, status='old', action='write', position='append')
-      write(iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, q
+      open (newunit=iunit, file=report_file_OTD, status='old', action='write', position='append')
+      write (iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, q
       if (is_cc) then
-         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 1, s(1), real(l(1)), aimag(l(1)), real(u(:,1)), aimag(u(:,1))
+         write (iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 1, s(i), real(su(:, i)), &
+            real(l(1)), aimag(l(1)), real(u(:, 1)), aimag(u(:, 1))
       else
-         write(iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 0, s(1), real(l), real(u)
-      endif
-      write(iunit, '(*(E16.9,1X))') FTLE, ( qTq(i, i) - 1, i = 1, r), (( qTq(i, j), j = 1, i-1), i = 2, r)
-      close(iunit)
+         write (iunit, '(I2,1X,*(E16.9,1X))', ADVANCE='NO') 0, s(i), real(su(:, i)), &
+            real(l), real(u)
+      end if
+      write (iunit, '(*(E16.9,1X))') FTLE, (qTq(i, i) - 1, i=1, r), &
+         ((qTq(i, j), j=1, i - 1), i=2, r)
+      close (iunit)
 
       return
    end subroutine OTD_report_file
@@ -382,76 +390,78 @@ contains
       ! Integrated FTLE values
       real(wp), dimension(r), intent(in) :: FTLE
       ! simulation
-      real(wp),               intent(in) :: time
+      real(wp), intent(in) :: time
       ! period
-      real(wp),               intent(in) :: period
+      real(wp), intent(in) :: period
       ! period counter
-      integer,                intent(in) :: p_cnt
+      integer, intent(in) :: p_cnt
       ! internal
       integer :: iunit
       real(wp), dimension(r) :: LE
       LE = FTLE/period
       call sort(LE)
       print '(A10,I3,A3,1X,*(F16.9,1X))', 'OTD:  t=', p_cnt, 'T ', LE
-      open(newunit=iunit, file=file_LE, status='old', action='write', position='append')
-      write(iunit, '(F16.9,1X,I16,1X,*(F16.9,1X))') time, p_cnt, LE, LE_ref
-      close(iunit)
+      open (newunit=iunit, file=report_file_OTD_LE, status='old', action='write', position='append')
+      write (iunit, '(F16.9,1X,I16,1X,*(F16.9,1X))') time, p_cnt, LE, LE_ref
+      close (iunit)
       return
    end subroutine report_LE
 
    subroutine write_header()
       ! internals
       integer :: i, j, iunit
-      open(newunit=iunit, file=file, status='new', action='write')
+      open (newunit=iunit, file=report_file_OTD, status='new', action='write')
       ! time, baseflow
-      write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'BF_x', 'BF_y', 'BF_z'
+      write (iunit, '(*(A16,1X))', ADVANCE='NO') 't', 'BF_x', 'BF_y', 'BF_z'
       ! basis vectors
-      do i = 1, r 
-         write(iunit,'(*(A13,I1,A2,1X))', ADVANCE='NO') 'q', i, '_x', 'q', i, '_y', 'q', i, '_z'
+      do i = 1, r
+         write (iunit, '(*(A13,I1,A2,1X))', ADVANCE='NO') 'q', i, '_x', 'q', i, '_y', 'q', i, '_z'
       end do
       ! instantaneous numerical abscissa of the reduced operator
-      write(iunit,'(A2,1X,A16,1X)', ADVANCE='NO') , 'cc', 'sigma_1'
+      write (iunit, '(A2,1X,A16,1X)', ADVANCE='NO') 'cc', 'sigma_1'
+      ! instantaneous direction of largest possible growth
+      write (iunit, '(*(A13,I1,A2,1X))', ADVANCE='NO') 'us', i, '_x', 'us', i, '_y', 'us', i, '_z'
       ! instantaneous eigenvalues of the reduced operator
       do i = 1, r
-         write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'l_', i
+         write (iunit, '(A15,I1,1X)', ADVANCE='NO') 'l_', i
       end do
       ! instantaneous projected eigenvectors of the reduced operator
       do i = 1, r
-         write(iunit,'(*(A13,I1,A2,1X))', ADVANCE='NO') 'u', i, '_x', 'u', i, '_y', 'u', i, '_z'
+         write (iunit, '(*(A13,I1,A2,1X))', ADVANCE='NO') 'u', i, '_x', 'u', i, '_y', 'u', i, '_z'
       end do
       ! instantaneous FLTEs
       do i = 1, r
-         write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'FTLE_', i
+         write (iunit, '(A15,I1,1X)', ADVANCE='NO') 'FTLE_', i
       end do
       ! orthonormality of the basis vectors
       do i = 1, r
-         write(iunit,'(A7,I1,A2,I1,A5,1X)', ADVANCE='NO') '<q', i, ',q', i, '> - 1'
+         write (iunit, '(A7,I1,A2,I1,A5,1X)', ADVANCE='NO') '<q', i, ',q', i, '> - 1'
       end do
       do i = 2, r
-         do j = 1, i-1
-            write(iunit,'(A11,I1,A2,I1,A1,1X)', ADVANCE='NO') '<q', j, ',q', i, '>'
+         do j = 1, i - 1
+            write (iunit, '(A11,I1,A2,I1,A1,1X)', ADVANCE='NO') '<q', j, ',q', i, '>'
          end do
       end do
-      write(iunit,*) ''; close(iunit)
+      write (iunit, *) ''; close (iunit)
       return
    end subroutine write_header
 
    subroutine write_header_LE()
       ! internals
       integer :: i, iunit
-      open(newunit=iunit, file=file_LE, status='new', action='write')
+      open (newunit=iunit, file=report_file_OTD_LE, status='new', action='write')
       ! time, baseflow
-      write(iunit,'(*(A16,1X))', ADVANCE='NO') 't', 'period'
+      write (iunit, '(*(A16,1X))', ADVANCE='NO') 't', 'period'
       ! LE
       do i = 1, r
-         write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'LE_', i
+         write (iunit, '(A15,I1,1X)', ADVANCE='NO') 'LE_', i
       end do
       ! LE_ref
       do i = 1, r
-         write(iunit,'(A15,I1,1X)', ADVANCE='NO') 'LEref_', i
+         write (iunit, '(A15,I1,1X)', ADVANCE='NO') 'LEref_', i
       end do
-      write(iunit,*) ''; close(iunit)
+      write (iunit, *) ''; close (iunit)
       return
    end subroutine write_header_LE
- 
+
 end module Roessler_OTD
