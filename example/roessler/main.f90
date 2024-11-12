@@ -1,9 +1,9 @@
 program demo
-   use stdlib_linalg, only : eye, eigvals
-   use stdlib_io_npy, only : save_npy
-   use stdlib_sorting, only : sort
-   use stdlib_strings, only : padl
-   use stdlib_logger, only : information_level, warning_level, debug_level, error_level, none_level
+   use stdlib_linalg, only: eye, eigvals
+   use stdlib_io_npy, only: save_npy
+   use stdlib_sorting, only: sort
+   use stdlib_strings, only: padl
+   use stdlib_logger, only: information_level, warning_level, debug_level, error_level, none_level
    ! RKLIB module for time integration.
    use rklib_module
    ! LightKrylov for linear algebra
@@ -41,9 +41,9 @@ program demo
    real(wp), dimension(r, r)       :: Lr
    ! IO
    character(len=20)    :: data_fmt, header_fmt
-   
-   write(header_fmt,*) '(22X,*(A,2X))'
-   write(data_fmt,  *) '(A22,*(1X,F15.6))'
+
+   write (header_fmt, *) '(22X,*(A,2X))'
+   write (data_fmt, *) '(A22,*(1X,F15.6))'
 
    ! Set up logging
    call logger_setup()
@@ -57,7 +57,7 @@ program demo
    print *, '########################################################################################'
    print *, ''
 
-   vec = (/ 0.0_wp, -5.0_wp, 0.05_wp /) ! some intial point
+   vec = (/0.0_wp, -5.0_wp, 0.05_wp/) ! some intial point
    Tend = 300.0_wp ! Integration time
    ! Integrate equations
    call write_report_header
@@ -66,20 +66,20 @@ program demo
    call rename(report_file, 'example/roessler/roessler_attractor.txt')
 
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('time', 14)
-   print data_fmt, 'Initial position :',  vec(1),  vec(2),  vec(3), 0.0_wp
-   print data_fmt, 'Final position :',   eval(1), eval(2), eval(3), Tend
-   print *,''
+   print data_fmt, 'Initial position :', vec(1), vec(2), vec(3), 0.0_wp
+   print data_fmt, 'Final position :', eval(1), eval(2), eval(3), Tend
+   print *, ''
 
    print *, '########################################################################################'
-   print '(A,E9.2,A)',' #             Newton iteration with constant tolerance (tol=', tol, ')                 #'
+   print '(A,E9.2,A)', ' #             Newton iteration with constant tolerance (tol=', tol, ')                 #'
    print *, '########################################################################################'
    print *, ''
 
-   call set_position((/ 0.0_wp, 6.1_wp, 1.3_wp /), bf)  ! initial guess
+   call set_position((/0.0_wp, 6.1_wp, 1.3_wp/), bf)  ! initial guess
    bf%T = 6.0_wp ! period guess
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Initial guess PO:', bf%x, bf%y, bf%z, bf%T
-   print *,''
+   print *, ''
 
    ! Initialize system and Jacobian
    sys = roessler_upo()
@@ -98,20 +98,20 @@ program demo
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
    print data_fmt, 'Solution residual:', residual%x, residual%y, residual%z, residual%T
-   print *,''
+   print *, ''
 
    print *, '########################################################################################'
-   print '(A,E9.2,A)',' #             Newton iteration with dynamic tolerances (target=', tol, ')              #'
+   print '(A,E9.2,A)', ' #             Newton iteration with dynamic tolerances (target=', tol, ')              #'
    print *, '########################################################################################'
    print *, ''
 
-   call set_position((/ 0.0_wp, 6.1_wp, 1.3_wp /), bf)  ! some initial guess
+   call set_position((/0.0_wp, 6.1_wp, 1.3_wp/), bf)  ! some initial guess
    bf%T = 6.0_wp ! period guess
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Initial guess PO:  ', bf%x, bf%y, bf%z, bf%T
-   print *,''
+   print *, ''
    sys%jacobian%X = bf
-   
+
    call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=dynamic_tol_dp)
 
    call sys%eval(bf, residual, tol)
@@ -119,7 +119,7 @@ program demo
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
    print data_fmt, 'Solution residual:', residual%x, residual%y, residual%z, residual%T
-   print *,''
+   print *, ''
 
    print *, '########################################################################################'
    print *, '#                        Monodromy matrix and floquet exponents                        #'
@@ -133,9 +133,9 @@ program demo
    M = 0.0_wp
    Id = eye(npts)
    do i = 1, npts
-      call set_position(Id(:,i), dx)
+      call set_position(Id(:, i), dx)
       call sys%jacobian%matvec(dx, residual)
-      call get_position(residual, M(:,i))
+      call get_position(residual, M(:, i))
    end do
    eval = real(eigvals(M))
    call sort(eval, reverse=.true.)
@@ -154,9 +154,9 @@ program demo
    call bfp%zero()
    ! Set the baseflow to a fixed point
    d = sqrt(c**2 - 4*a*b)
-   bfp%x = ( c - d)/ 2
+   bfp%x = (c - d)/2
    bfp%y = (-c + d)/(2*a)
-   bfp%z = ( c - d)/(2*a)
+   bfp%z = (c - d)/(2*a)
 
    ! Compute OTD modes on the fixed point
    call zero_basis(OTD_in); call zero_basis(OTD_out)
@@ -174,17 +174,17 @@ program demo
    ! get baseflow
    call get_pos(bfp, vec)
    ! get OTD basis vectors
-   u  = 0.0_wp
+   u = 0.0_wp
    Lu = 0.0_wp
    do i = 1, r
-      call get_pos(OTD_out(i), u(:,i))
-      call linear_roessler(u(:,i), vec, Lu(:,i))
+      call get_pos(OTD_out(i), u(:, i))
+      call linear_roessler(u(:, i), vec, Lu(:, i))
    end do
    ! compute Lr
    Lr = 0.0_wp
    do i = 1, r
       do j = 1, r
-         Lr(i,j) = dot_product(Lu(:,i), u(:,j))
+         Lr(i, j) = dot_product(Lu(:, i), u(:, j))
       end do
    end do
    eval = 0.0_wp
@@ -213,7 +213,7 @@ program demo
    print '(*(A16,1X))', ' ', 'LE_1', 'LE_2'
    print '(A16,1X,2(F16.9,1X),A16,1X,F16.9)', 'Reference   ', LE_ref, 'Period T=', bf%T
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.true.)
-   call rename(report_file_OTD,    'example/roessler/PO_OTD.txt')
+   call rename(report_file_OTD, 'example/roessler/PO_OTD.txt')
    call rename(report_file_OTD_LE, 'example/roessler/PO_LE.txt')
    print *, ''
 
@@ -234,7 +234,7 @@ program demo
    print '(A16,1X,*(F16.9,1X))', 'Reference   ', LE_ref
    print *, ''
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.false.) ! we do not reset the bf!
-   call rename(report_file_OTD,    'example/roessler/PO-chaos_OTD.txt')
+   call rename(report_file_OTD, 'example/roessler/PO-chaos_OTD.txt')
    call rename(report_file_OTD_LE, 'example/roessler/PO-chaos_LE.txt')
    print *, ''
 
