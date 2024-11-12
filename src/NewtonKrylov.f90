@@ -202,7 +202,7 @@ contains
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
-         call residual%chsgn()
+         call residual%chsgn(); call increment%zero()
          call solver(sys%jacobian, residual, increment, info, atol=tol, &
             & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_rsp')
@@ -357,7 +357,7 @@ contains
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
-         call residual%chsgn()
+         call residual%chsgn(); call increment%zero()
          call solver(sys%jacobian, residual, increment, info, atol=tol, &
             & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_rdp')
@@ -512,7 +512,7 @@ contains
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
-         call residual%chsgn()
+         call residual%chsgn(); call increment%zero()
          call solver(sys%jacobian, residual, increment, info, atol=tol, &
             & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_csp')
@@ -667,7 +667,7 @@ contains
          sys%jacobian%X = X
         
          ! Solve the linear system using GMRES.
-         call residual%chsgn()
+         call residual%chsgn(); call increment%zero()
          call solver(sys%jacobian, residual, increment, info, atol=tol, &
             & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
          call check_info(info, 'linear_solver', module=this_module, procedure='newton_cdp')
