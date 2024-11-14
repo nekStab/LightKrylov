@@ -99,6 +99,10 @@ module LightKrylov
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${type[0]}$${kind}$
     #:endfor
+    public :: fgmres
+    #:for kind, type in RC_KINDS_TYPES
+    public :: fgmres_${type[0]}$${kind}$
+    #:endfor
     public :: cg
 
     ! Newton-Krylov exports.

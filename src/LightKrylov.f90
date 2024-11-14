@@ -119,6 +119,11 @@ module LightKrylov
     public :: gmres_rdp
     public :: gmres_csp
     public :: gmres_cdp
+    public :: fgmres
+    public :: fgmres_rsp
+    public :: fgmres_rdp
+    public :: fgmres_csp
+    public :: fgmres_cdp
     public :: cg
 
     ! Newton-Krylov exports.

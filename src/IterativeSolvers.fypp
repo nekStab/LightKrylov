@@ -54,6 +54,10 @@ module lightkrylov_IterativeSolvers
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${type[0]}$${kind}$
     #:endfor
+    public :: fgmres
+    #:for kind, type in RC_KINDS_TYPES
+    public :: fgmres_${type[0]}$${kind}$
+    #:endfor
     public :: cg
     #:for kind, type in RC_KINDS_TYPES
     public :: cg_${type[0]}$${kind}$
@@ -271,6 +275,63 @@ module lightkrylov_IterativeSolvers
         !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         #:for kind, type in RC_KINDS_TYPES
         module procedure svds_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface fgmres
+        !!  ### Description
+        !!
+        !!  Solve a square linear system of equations
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Flexible Generalized Minimum RESidual* (FGMRES) method.
+        !!
+        !!  **References**
+        !!
+        !!  - Saad Y. and Schultz M. H. "GMRES: A generalized minimal residual algorithm for
+        !!  solving nonsymmetric linear systems." SIAM Journal on Scientific and Statistical
+        !!  Computing, 7(3), 1986.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call fgmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
+        !!  `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
+        !!  \( A^H x = b \) is being solver.
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure fgmres_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -1088,6 +1149,222 @@ contains
 
     #:endfor
 
+
+
+
+
+    !----------------------------------
+    !-----     FLEXIBLE GMRES     -----
+    !----------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine fgmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+        !! Linear operator to be inverted.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
+        !! Right-hand side vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
+        !! Solution vector.
+        integer, intent(out) :: info
+        !! Information flag.
+        real(${kind}$), optional, intent(in) :: rtol
+        !! Relative solver tolerance
+        real(${kind}$), optional, intent(in) :: atol
+        !! Absolute solver tolerance
+        class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+        !! Preconditioner (optional).
+        class(abstract_opts), optional, intent(in) :: options
+        !! GMRES options.   
+        logical, optional, intent(in) :: transpose
+        !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        class(abstract_metadata), optional, intent(out) :: meta
+        !! Metadata.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
+        ! Options.
+        integer :: kdim, maxiter
+        real(${kind}$) :: tol, rtol_, atol_
+        logical :: trans
+        type(gmres_${kind}$_opts)     :: opts
+        type(gmres_${kind}$_metadata) :: gmres_meta
+
+        ! Krylov subspace
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Z(:)
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: H(:, :)
+        ! Least-squares variables.
+        ${type}$, allocatable :: y(:), e(:)
+        real(${kind}$) :: beta
+
+        ! Preconditioner
+        logical :: has_precond
+        class(abstract_precond_${type[0]}$${kind}$), allocatable :: precond
+
+        ! Miscellaneous.
+        integer :: i, k, niter
+        ${type}$, allocatable :: alpha(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
+        character(len=256) :: msg
+
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_${kind}$)
+        atol_ = optval(atol, atol_${kind}$)
+        if (present(options)) then
+            select type (options)
+            type is (gmres_${kind}$_opts)
+                opts = options
+            end select
+        else
+            opts = gmres_${kind}$_opts()
+        endif
+
+        kdim = opts%kdim ; maxiter = opts%maxiter
+        tol = atol_ + rtol_ * b%norm()
+        trans = optval(transpose, .false.)
+
+        ! Deals with the preconditioner.
+        if (present(preconditioner)) then
+            has_precond = .true.
+            allocate(precond, source=preconditioner)
+        else
+            has_precond = .false.
+        endif
+
+        ! Initialize working variables.
+        allocate(wrk, source=b) ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
+        allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
+        allocate(H(kdim+1, kdim)) ; H = 0.0_${kind}$
+        allocate(y(kdim)) ; y = 0.0_${kind}$
+        allocate(alpha(kdim)) ; alpha = 0.0_${kind}$
+        allocate(e(kdim+1)) ; e = 0.0_${kind}$
+
+        ! Initialize metadata and & reset matvec counter
+        gmres_meta = gmres_${kind}$_metadata()
+        call A%reset_counter(trans, 'gmres%init')
+
+        info = 0
+
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%apply_rmatvec(x, V(1))
+            else
+                call A%apply_matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_${type[0]}$${kind}$/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='fgmres_${type[0]}$${kind}$')
+
+        ! Iterative solver.
+        gmres_iter : do i = 1, maxiter
+            ! Zero-out variables.
+            H = 0.0_${kind}$ ; y = 0.0_${kind}$ ; e = 0.0_${kind}$ ; e(1) = beta
+            call zero_basis(V(2:))
+
+            ! Arnoldi factorization.
+            arnoldi_fact: do k = 1, kdim
+                ! Preconditioner.
+                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k))
+
+                ! Matrix-vector product.
+                if (trans) then
+                    call A%apply_rmatvec(Z(k), V(k+1))
+                else
+                    call A%apply_matvec(Z(k), V(k+1))
+                endif
+
+                ! Double Gram-Schmid orthogonalization
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='fgmres_${type[0]}$${kind}$')
+
+                ! Update Hessenberg matrix and normalize residual Krylov vector.
+                H(k+1, k) = V(k+1)%norm()
+                if (abs(H(k+1, k)) > tol) then
+                    call V(k+1)%scal(one_${type[0]}$${kind}$ / H(k+1, k))
+                endif
+
+                ! Least-squares problem.
+                y(:k) = lstsq(H(:k+1, :k), e(:k+1))
+
+                ! Compute residual.
+                beta = norm2(abs(e(:k+1) - matmul(H(:k+1, :k), y(:k))))
+
+                ! Save metadata.
+                gmres_meta%n_iter  = gmres_meta%n_iter + 1
+                gmres_meta%n_inner = gmres_meta%n_inner + 1
+                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+
+                ! Check convergence.
+                write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='fgmres_${type[0]}$${kind}$')
+                if (abs(beta) <= tol) then
+                    gmres_meta%converged = .true.
+                    exit arnoldi_fact
+                endif
+            enddo arnoldi_fact
+
+            ! Update solution.
+            k = min(k, kdim) ; call linear_combination(dx, Z(:k), y(:k)); call x%add(dx)
+
+            ! Recompute residual for sanity check.
+            if (trans) then
+                call A%apply_rmatvec(x, v(1))
+            else
+                call A%apply_matvec(x, v(1))
+            endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_${type[0]}$${kind}$ / beta)
+
+            ! Save metadata.
+            gmres_meta%n_iter  = gmres_meta%n_iter + 1
+            gmres_meta%n_outer = gmres_meta%n_outer + 1
+            gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+
+            write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='fgmres_${type[0]}$${kind}$')
+
+            ! Exit gmres if desired accuracy is reached.
+            if (abs(beta) <= tol) then
+               gmres_meta%converged = .true.
+               exit gmres_iter
+            end if
+        enddo gmres_iter
+
+        ! Returns the number of iterations.
+        info = gmres_meta%n_iter
+        gmres_meta%info = info
+
+        if (opts%if_print_metadata) call gmres_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+                 type is (gmres_${kind}$_metadata)
+                    meta = gmres_meta
+           end select
+        end if
+
+        call A%reset_counter(trans, 'gmres%post')
+        
+        return
+    end subroutine fgmres_${type[0]}$${kind}$
+
+    #:endfor
 
 
 
