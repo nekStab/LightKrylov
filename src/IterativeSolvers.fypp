@@ -1263,6 +1263,13 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
+
+            block
+            ${type}$ :: gamma
+            gamma = V(1)%dot(b); beta = V(1)%norm()
+            gamma = gamma/beta**2
+            call V(1)%scal(gamma)
+            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()

@@ -3045,6 +3045,13 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
+
+            block
+            real(sp) :: gamma
+            gamma = V(1)%dot(b); beta = V(1)%norm()
+            gamma = gamma/beta**2
+            call V(1)%scal(gamma)
+            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3251,6 +3258,13 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
+
+            block
+            real(dp) :: gamma
+            gamma = V(1)%dot(b); beta = V(1)%norm()
+            gamma = gamma/beta**2
+            call V(1)%scal(gamma)
+            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3457,6 +3471,13 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
+
+            block
+            complex(sp) :: gamma
+            gamma = V(1)%dot(b); beta = V(1)%norm()
+            gamma = gamma/beta**2
+            call V(1)%scal(gamma)
+            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3663,6 +3684,13 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
+
+            block
+            complex(dp) :: gamma
+            gamma = V(1)%dot(b); beta = V(1)%norm()
+            gamma = gamma/beta**2
+            call V(1)%scal(gamma)
+            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
