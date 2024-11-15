@@ -3050,7 +3050,7 @@ contains
             real(sp) :: gamma
             gamma = V(1)%dot(b); beta = V(1)%norm()
             gamma = gamma/beta**2
-            call V(1)%scal(gamma)
+            call V(1)%scal(gamma); call x%scal(gamma)
             end block
         endif
 
@@ -3263,7 +3263,7 @@ contains
             real(dp) :: gamma
             gamma = V(1)%dot(b); beta = V(1)%norm()
             gamma = gamma/beta**2
-            call V(1)%scal(gamma)
+            call V(1)%scal(gamma); call x%scal(gamma)
             end block
         endif
 
@@ -3476,7 +3476,7 @@ contains
             complex(sp) :: gamma
             gamma = V(1)%dot(b); beta = V(1)%norm()
             gamma = gamma/beta**2
-            call V(1)%scal(gamma)
+            call V(1)%scal(gamma); call x%scal(gamma)
             end block
         endif
 
@@ -3689,7 +3689,7 @@ contains
             complex(dp) :: gamma
             gamma = V(1)%dot(b); beta = V(1)%norm()
             gamma = gamma/beta**2
-            call V(1)%scal(gamma)
+            call V(1)%scal(gamma); call x%scal(gamma)
             end block
         endif
 
