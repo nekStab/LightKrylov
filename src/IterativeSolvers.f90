@@ -2199,25 +2199,25 @@ contains
 
         info = 0
 
-        ! Initial Krylov vector.
-        if (x%norm() > 0) then
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
-            endif
-        endif
-
-        call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
-        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-
-        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                    & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
-
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
+            ! Initial Krylov vector.
+            if (x%norm() > 0) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
+            endif
+
+            call V(1)%sub(b) ; call V(1)%chsgn()
+            beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
+            if (i == 1) then
+                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+            endif
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
             call zero_basis(V(2:))
@@ -2270,15 +2270,17 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (trans) then
-                call A%apply_rmatvec(x, v(1))
-            else
-                call A%apply_matvec(x, v(1))
-            endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            if (opts%sanity_check) then
+                if (trans) then
+                    call A%apply_rmatvec(x, v(1))
+                else
+                    call A%apply_matvec(x, v(1))
+                endif
+                call v(1)%sub(b) ; call v(1)%chsgn()
 
-            ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
+                ! Initialize new starting Krylov vector if needed.
+                beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
+            endif
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -2404,25 +2406,25 @@ contains
 
         info = 0
 
-        ! Initial Krylov vector.
-        if (x%norm() > 0) then
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
-            endif
-        endif
-
-        call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
-        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-
-        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                    & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
-
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
+            ! Initial Krylov vector.
+            if (x%norm() > 0) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
+            endif
+
+            call V(1)%sub(b) ; call V(1)%chsgn()
+            beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
+            if (i == 1) then
+                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+            endif
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
             call zero_basis(V(2:))
@@ -2475,15 +2477,17 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (trans) then
-                call A%apply_rmatvec(x, v(1))
-            else
-                call A%apply_matvec(x, v(1))
-            endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            if (opts%sanity_check) then
+                if (trans) then
+                    call A%apply_rmatvec(x, v(1))
+                else
+                    call A%apply_matvec(x, v(1))
+                endif
+                call v(1)%sub(b) ; call v(1)%chsgn()
 
-            ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
+                ! Initialize new starting Krylov vector if needed.
+                beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
+            endif
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -2609,25 +2613,25 @@ contains
 
         info = 0
 
-        ! Initial Krylov vector.
-        if (x%norm() > 0) then
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
-            endif
-        endif
-
-        call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
-        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-
-        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                    & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_csp')
-
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
+            ! Initial Krylov vector.
+            if (x%norm() > 0) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
+            endif
+
+            call V(1)%sub(b) ; call V(1)%chsgn()
+            beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
+            if (i == 1) then
+                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+            endif
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
             call zero_basis(V(2:))
@@ -2680,15 +2684,17 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (trans) then
-                call A%apply_rmatvec(x, v(1))
-            else
-                call A%apply_matvec(x, v(1))
-            endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            if (opts%sanity_check) then
+                if (trans) then
+                    call A%apply_rmatvec(x, v(1))
+                else
+                    call A%apply_matvec(x, v(1))
+                endif
+                call v(1)%sub(b) ; call v(1)%chsgn()
 
-            ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
+                ! Initialize new starting Krylov vector if needed.
+                beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
+            endif
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -2814,25 +2820,25 @@ contains
 
         info = 0
 
-        ! Initial Krylov vector.
-        if (x%norm() > 0) then
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
-            endif
-        endif
-
-        call V(1)%sub(b) ; call V(1)%chsgn()
-        beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
-        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-
-        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                    & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
-
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
+            ! Initial Krylov vector.
+            if (x%norm() > 0) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
+            endif
+
+            call V(1)%sub(b) ; call V(1)%chsgn()
+            beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
+            if (i == 1) then
+                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                            & abs(beta), ', tol= ', tol
+                call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+            endif
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
             call zero_basis(V(2:))
@@ -2885,15 +2891,17 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (trans) then
-                call A%apply_rmatvec(x, v(1))
-            else
-                call A%apply_matvec(x, v(1))
-            endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            if (opts%sanity_check) then
+                if (trans) then
+                    call A%apply_rmatvec(x, v(1))
+                else
+                    call A%apply_matvec(x, v(1))
+                endif
+                call v(1)%sub(b) ; call v(1)%chsgn()
 
-            ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
+                ! Initialize new starting Krylov vector if needed.
+                beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
+            endif
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1

@@ -250,6 +250,8 @@ module lightkrylov_utils
         !! Maximum number of `gmres` restarts (default: 10).
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
+        logical :: sanity_check = .true.
+        !! Whether to perform an extra matrix-vector product for sanity check.
     end type
 
     type, extends(abstract_opts), public :: cg_sp_opts
@@ -281,6 +283,8 @@ module lightkrylov_utils
         !! Maximum number of `gmres` restarts (default: 10).
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
+        logical :: sanity_check = .true.
+        !! Whether to perform an extra matrix-vector product for sanity check.
     end type
 
     type, extends(abstract_opts), public :: cg_dp_opts
