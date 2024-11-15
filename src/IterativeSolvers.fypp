@@ -464,13 +464,18 @@ module lightkrylov_IterativeSolvers
     end type
 
     abstract interface
-        subroutine abstract_apply_${type[0]}$${kind}$(self, vec)
+        subroutine abstract_apply_${type[0]}$${kind}$(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$
+            import ${kind}$
             class(abstract_precond_${type[0]}$${kind}$), intent(in) :: self
             !! Preconditioner.
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: vec
             !! Input/Output vector.
+            integer, optional, intent(in) :: iter
+            !! Current iteration number.
+            real(${kind}$), optional, intent(in) :: current_residual
+            real(${kind}$), optional, intent(in) :: target_residual
         end subroutine abstract_apply_${type[0]}$${kind}$
     end interface
     
@@ -1057,7 +1062,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -1275,7 +1280,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k))
+                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k), k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then

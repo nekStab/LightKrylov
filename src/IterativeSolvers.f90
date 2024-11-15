@@ -470,13 +470,18 @@ module lightkrylov_IterativeSolvers
     end type
 
     abstract interface
-        subroutine abstract_apply_rsp(self, vec)
+        subroutine abstract_apply_rsp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_rsp, abstract_vector_rsp
+            import sp
             class(abstract_precond_rsp), intent(in) :: self
             !! Preconditioner.
             class(abstract_vector_rsp), intent(inout) :: vec
             !! Input/Output vector.
+            integer, optional, intent(in) :: iter
+            !! Current iteration number.
+            real(sp), optional, intent(in) :: current_residual
+            real(sp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_rsp
     end interface
     
@@ -487,13 +492,18 @@ module lightkrylov_IterativeSolvers
     end type
 
     abstract interface
-        subroutine abstract_apply_rdp(self, vec)
+        subroutine abstract_apply_rdp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_rdp, abstract_vector_rdp
+            import dp
             class(abstract_precond_rdp), intent(in) :: self
             !! Preconditioner.
             class(abstract_vector_rdp), intent(inout) :: vec
             !! Input/Output vector.
+            integer, optional, intent(in) :: iter
+            !! Current iteration number.
+            real(dp), optional, intent(in) :: current_residual
+            real(dp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_rdp
     end interface
     
@@ -504,13 +514,18 @@ module lightkrylov_IterativeSolvers
     end type
 
     abstract interface
-        subroutine abstract_apply_csp(self, vec)
+        subroutine abstract_apply_csp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_csp, abstract_vector_csp
+            import sp
             class(abstract_precond_csp), intent(in) :: self
             !! Preconditioner.
             class(abstract_vector_csp), intent(inout) :: vec
             !! Input/Output vector.
+            integer, optional, intent(in) :: iter
+            !! Current iteration number.
+            real(sp), optional, intent(in) :: current_residual
+            real(sp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_csp
     end interface
     
@@ -521,13 +536,18 @@ module lightkrylov_IterativeSolvers
     end type
 
     abstract interface
-        subroutine abstract_apply_cdp(self, vec)
+        subroutine abstract_apply_cdp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_cdp, abstract_vector_cdp
+            import dp
             class(abstract_precond_cdp), intent(in) :: self
             !! Preconditioner.
             class(abstract_vector_cdp), intent(inout) :: vec
             !! Input/Output vector.
+            integer, optional, intent(in) :: iter
+            !! Current iteration number.
+            real(dp), optional, intent(in) :: current_residual
+            real(dp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_cdp
     end interface
     
@@ -2205,7 +2225,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -2410,7 +2430,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -2615,7 +2635,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -2820,7 +2840,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk)
+                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -3036,7 +3056,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k))
+                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k), k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -3242,7 +3262,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k))
+                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k), k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -3448,7 +3468,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k))
+                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k), k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
@@ -3654,7 +3674,7 @@ contains
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
                 ! Preconditioner.
-                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k))
+                call copy(Z(k), V(k)); if (has_precond) call precond%apply(Z(k), k, beta, tol)
 
                 ! Matrix-vector product.
                 if (trans) then
