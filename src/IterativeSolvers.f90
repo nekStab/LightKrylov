@@ -474,7 +474,7 @@ module lightkrylov_IterativeSolvers
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_rsp, abstract_vector_rsp
             import sp
-            class(abstract_precond_rsp), intent(in) :: self
+            class(abstract_precond_rsp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_rsp), intent(inout) :: vec
             !! Input/Output vector.
@@ -496,7 +496,7 @@ module lightkrylov_IterativeSolvers
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_rdp, abstract_vector_rdp
             import dp
-            class(abstract_precond_rdp), intent(in) :: self
+            class(abstract_precond_rdp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_rdp), intent(inout) :: vec
             !! Input/Output vector.
@@ -518,7 +518,7 @@ module lightkrylov_IterativeSolvers
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_csp, abstract_vector_csp
             import sp
-            class(abstract_precond_csp), intent(in) :: self
+            class(abstract_precond_csp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_csp), intent(inout) :: vec
             !! Input/Output vector.
@@ -540,7 +540,7 @@ module lightkrylov_IterativeSolvers
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_cdp, abstract_vector_cdp
             import dp
-            class(abstract_precond_cdp), intent(in) :: self
+            class(abstract_precond_cdp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_cdp), intent(inout) :: vec
             !! Input/Output vector.

@@ -468,7 +468,7 @@ module lightkrylov_IterativeSolvers
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_${type[0]}$${kind}$, abstract_vector_${type[0]}$${kind}$
             import ${kind}$
-            class(abstract_precond_${type[0]}$${kind}$), intent(in) :: self
+            class(abstract_precond_${type[0]}$${kind}$), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: vec
             !! Input/Output vector.
