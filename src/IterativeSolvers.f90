@@ -2156,8 +2156,7 @@ contains
         class(abstract_precond_rsp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        real(sp), allocatable :: alpha(:)
+        integer :: i, k
         class(abstract_vector_rsp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -2178,19 +2177,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
-        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         ! Initialize metadata and & reset matvec counter
@@ -2199,28 +2193,27 @@ contains
 
         info = 0
 
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%apply_rmatvec(x, V(1))
+            else
+                call A%apply_matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
-            ! Initial Krylov vector.
-            if (x%norm() > 0) then
-                if (trans) then
-                    call A%apply_rmatvec(x, V(1))
-                else
-                    call A%apply_matvec(x, V(1))
-                endif
-            endif
-
-            call V(1)%sub(b) ; call V(1)%chsgn()
-            beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
-            if (i == 1) then
-                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                            & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
-            endif
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2240,9 +2233,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_rsp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rsp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -2270,17 +2261,15 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (opts%sanity_check) then
-                if (trans) then
-                    call A%apply_rmatvec(x, v(1))
-                else
-                    call A%apply_matvec(x, v(1))
-                endif
-                call v(1)%sub(b) ; call v(1)%chsgn()
-
-                ! Initialize new starting Krylov vector if needed.
-                beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
+            if (trans) then
+                call A%apply_rmatvec(x, v(1))
+            else
+                call A%apply_matvec(x, v(1))
             endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_rsp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -2363,8 +2352,7 @@ contains
         class(abstract_precond_rdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        real(dp), allocatable :: alpha(:)
+        integer :: i, k
         class(abstract_vector_rdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -2385,19 +2373,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
-        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         ! Initialize metadata and & reset matvec counter
@@ -2406,28 +2389,27 @@ contains
 
         info = 0
 
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%apply_rmatvec(x, V(1))
+            else
+                call A%apply_matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
-            ! Initial Krylov vector.
-            if (x%norm() > 0) then
-                if (trans) then
-                    call A%apply_rmatvec(x, V(1))
-                else
-                    call A%apply_matvec(x, V(1))
-                endif
-            endif
-
-            call V(1)%sub(b) ; call V(1)%chsgn()
-            beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
-            if (i == 1) then
-                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                            & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
-            endif
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2447,9 +2429,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_rdp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rdp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -2477,17 +2457,15 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (opts%sanity_check) then
-                if (trans) then
-                    call A%apply_rmatvec(x, v(1))
-                else
-                    call A%apply_matvec(x, v(1))
-                endif
-                call v(1)%sub(b) ; call v(1)%chsgn()
-
-                ! Initialize new starting Krylov vector if needed.
-                beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
+            if (trans) then
+                call A%apply_rmatvec(x, v(1))
+            else
+                call A%apply_matvec(x, v(1))
             endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_rdp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -2570,8 +2548,7 @@ contains
         class(abstract_precond_csp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        complex(sp), allocatable :: alpha(:)
+        integer :: i, k
         class(abstract_vector_csp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -2592,19 +2569,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
-        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         ! Initialize metadata and & reset matvec counter
@@ -2613,28 +2585,27 @@ contains
 
         info = 0
 
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%apply_rmatvec(x, V(1))
+            else
+                call A%apply_matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
-            ! Initial Krylov vector.
-            if (x%norm() > 0) then
-                if (trans) then
-                    call A%apply_rmatvec(x, V(1))
-                else
-                    call A%apply_matvec(x, V(1))
-                endif
-            endif
-
-            call V(1)%sub(b) ; call V(1)%chsgn()
-            beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
-            if (i == 1) then
-                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                            & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_csp')
-            endif
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2654,9 +2625,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_csp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_csp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -2684,17 +2653,15 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (opts%sanity_check) then
-                if (trans) then
-                    call A%apply_rmatvec(x, v(1))
-                else
-                    call A%apply_matvec(x, v(1))
-                endif
-                call v(1)%sub(b) ; call v(1)%chsgn()
-
-                ! Initialize new starting Krylov vector if needed.
-                beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
+            if (trans) then
+                call A%apply_rmatvec(x, v(1))
+            else
+                call A%apply_matvec(x, v(1))
             endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_csp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -2777,8 +2744,7 @@ contains
         class(abstract_precond_cdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        complex(dp), allocatable :: alpha(:)
+        integer :: i, k
         class(abstract_vector_cdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -2799,19 +2765,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
         allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
-        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         ! Initialize metadata and & reset matvec counter
@@ -2820,28 +2781,27 @@ contains
 
         info = 0
 
+        ! Initial Krylov vector.
+        if (x%norm() > 0) then
+            if (trans) then
+                call A%apply_rmatvec(x, V(1))
+            else
+                call A%apply_matvec(x, V(1))
+            endif
+        endif
+
+        call V(1)%sub(b) ; call V(1)%chsgn()
+        beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
+        allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+
+        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+                    & abs(beta), ', tol= ', tol
+        call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
-            ! Initial Krylov vector.
-            if (x%norm() > 0) then
-                if (trans) then
-                    call A%apply_rmatvec(x, V(1))
-                else
-                    call A%apply_matvec(x, V(1))
-                endif
-            endif
-
-            call V(1)%sub(b) ; call V(1)%chsgn()
-            beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
-            if (i == 1) then
-                allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
-                            & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
-            endif
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -2861,9 +2821,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_cdp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_cdp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -2891,17 +2849,15 @@ contains
             if (has_precond) call precond%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
-            if (opts%sanity_check) then
-                if (trans) then
-                    call A%apply_rmatvec(x, v(1))
-                else
-                    call A%apply_matvec(x, v(1))
-                endif
-                call v(1)%sub(b) ; call v(1)%chsgn()
-
-                ! Initialize new starting Krylov vector if needed.
-                beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
+            if (trans) then
+                call A%apply_rmatvec(x, v(1))
+            else
+                call A%apply_matvec(x, v(1))
             endif
+            call v(1)%sub(b) ; call v(1)%chsgn()
+
+            ! Initialize new starting Krylov vector if needed.
+            beta = v(1)%norm() ; call v(1)%scal(one_cdp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
