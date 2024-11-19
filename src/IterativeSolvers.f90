@@ -2994,9 +2994,8 @@ contains
         class(abstract_precond_rsp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        real(sp), allocatable :: alpha(:)
-        class(abstract_vector_rsp), allocatable :: dx, wrk
+        integer :: i, k
+        class(abstract_vector_rsp), allocatable :: dx
         character(len=256) :: msg
 
         ! Deals with the optional args.
@@ -3016,20 +3015,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
-        allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
-        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         ! Initialize metadata and & reset matvec counter
@@ -3045,13 +3038,6 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
-
-            block
-            real(sp) :: gamma
-            gamma = V(1)%dot(b); beta = V(1)%norm()
-            gamma = gamma/beta**2
-            call V(1)%scal(gamma); call x%scal(gamma)
-            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3066,7 +3052,6 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -3086,9 +3071,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_rsp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rsp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -3207,9 +3190,8 @@ contains
         class(abstract_precond_rdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        real(dp), allocatable :: alpha(:)
-        class(abstract_vector_rdp), allocatable :: dx, wrk
+        integer :: i, k
+        class(abstract_vector_rdp), allocatable :: dx
         character(len=256) :: msg
 
         ! Deals with the optional args.
@@ -3229,20 +3211,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
-        allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
-        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         ! Initialize metadata and & reset matvec counter
@@ -3258,13 +3234,6 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
-
-            block
-            real(dp) :: gamma
-            gamma = V(1)%dot(b); beta = V(1)%norm()
-            gamma = gamma/beta**2
-            call V(1)%scal(gamma); call x%scal(gamma)
-            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3279,7 +3248,6 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -3299,9 +3267,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_rdp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rdp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -3420,9 +3386,8 @@ contains
         class(abstract_precond_csp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        complex(sp), allocatable :: alpha(:)
-        class(abstract_vector_csp), allocatable :: dx, wrk
+        integer :: i, k
+        class(abstract_vector_csp), allocatable :: dx
         character(len=256) :: msg
 
         ! Deals with the optional args.
@@ -3442,20 +3407,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
-        allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
         allocate(H(kdim+1, kdim)) ; H = 0.0_sp
         allocate(y(kdim)) ; y = 0.0_sp
-        allocate(alpha(kdim)) ; alpha = 0.0_sp
         allocate(e(kdim+1)) ; e = 0.0_sp
 
         ! Initialize metadata and & reset matvec counter
@@ -3471,13 +3430,6 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
-
-            block
-            complex(sp) :: gamma
-            gamma = V(1)%dot(b); beta = V(1)%norm()
-            gamma = gamma/beta**2
-            call V(1)%scal(gamma); call x%scal(gamma)
-            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3492,7 +3444,6 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_sp ; y = 0.0_sp ; e = 0.0_sp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -3512,9 +3463,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_csp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_csp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
@@ -3633,9 +3582,8 @@ contains
         class(abstract_precond_cdp), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        complex(dp), allocatable :: alpha(:)
-        class(abstract_vector_cdp), allocatable :: dx, wrk
+        integer :: i, k
+        class(abstract_vector_cdp), allocatable :: dx
         character(len=256) :: msg
 
         ! Deals with the optional args.
@@ -3655,20 +3603,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
-        allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
         allocate(H(kdim+1, kdim)) ; H = 0.0_dp
         allocate(y(kdim)) ; y = 0.0_dp
-        allocate(alpha(kdim)) ; alpha = 0.0_dp
         allocate(e(kdim+1)) ; e = 0.0_dp
 
         ! Initialize metadata and & reset matvec counter
@@ -3684,13 +3626,6 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
-
-            block
-            complex(dp) :: gamma
-            gamma = V(1)%dot(b); beta = V(1)%norm()
-            gamma = gamma/beta**2
-            call V(1)%scal(gamma); call x%scal(gamma)
-            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -3705,7 +3640,6 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_dp ; y = 0.0_dp ; e = 0.0_dp ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -3725,9 +3659,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_cdp / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_cdp / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))

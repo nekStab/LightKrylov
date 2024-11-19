@@ -1212,9 +1212,8 @@ contains
         class(abstract_precond_${type[0]}$${kind}$), allocatable :: precond
 
         ! Miscellaneous.
-        integer :: i, k, niter
-        ${type}$, allocatable :: alpha(:)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
+        integer :: i, k
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx
         character(len=256) :: msg
 
         ! Deals with the optional args.
@@ -1234,20 +1233,14 @@ contains
         trans = optval(transpose, .false.)
 
         ! Deals with the preconditioner.
-        if (present(preconditioner)) then
-            has_precond = .true.
-            allocate(precond, source=preconditioner)
-        else
-            has_precond = .false.
-        endif
+        has_precond = optval(present(preconditioner), .false.)
+        if (has_precond) allocate(precond, source=preconditioner)
 
         ! Initialize working variables.
-        allocate(wrk, source=b) ; call wrk%zero()
         allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
         allocate(H(kdim+1, kdim)) ; H = 0.0_${kind}$
         allocate(y(kdim)) ; y = 0.0_${kind}$
-        allocate(alpha(kdim)) ; alpha = 0.0_${kind}$
         allocate(e(kdim+1)) ; e = 0.0_${kind}$
 
         ! Initialize metadata and & reset matvec counter
@@ -1263,13 +1256,6 @@ contains
             else
                 call A%apply_matvec(x, V(1))
             endif
-
-            block
-            ${type}$ :: gamma
-            gamma = V(1)%dot(b); beta = V(1)%norm()
-            gamma = gamma/beta**2
-            call V(1)%scal(gamma); call x%scal(gamma)
-            end block
         endif
 
         call V(1)%sub(b) ; call V(1)%chsgn()
@@ -1284,7 +1270,6 @@ contains
         gmres_iter : do i = 1, maxiter
             ! Zero-out variables.
             H = 0.0_${kind}$ ; y = 0.0_${kind}$ ; e = 0.0_${kind}$ ; e(1) = beta
-            call zero_basis(V(2:))
 
             ! Arnoldi factorization.
             arnoldi_fact: do k = 1, kdim
@@ -1304,9 +1289,7 @@ contains
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
-                if (abs(H(k+1, k)) > tol) then
-                    call V(k+1)%scal(one_${type[0]}$${kind}$ / H(k+1, k))
-                endif
+                if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_${type[0]}$${kind}$ / H(k+1, k))
 
                 ! Least-squares problem.
                 y(:k) = lstsq(H(:k+1, :k), e(:k+1))
