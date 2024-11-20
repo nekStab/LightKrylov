@@ -775,7 +775,7 @@ contains
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    subroutine eigs_rsp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -786,6 +786,8 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_rsp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
         procedure(eigvals_select_sp), optional :: select
         !! Desired number of eigenpairs.
@@ -810,7 +812,7 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k, niter, krst
-        real(sp) :: tol
+        real(sp) :: tol, x0_norm
         real(sp) :: beta
         real(sp) :: alpha
         character(len=256) :: msg
@@ -832,7 +834,13 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_rsp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -916,7 +924,7 @@ contains
         return
     end subroutine eigs_rsp
 
-    subroutine eigs_rdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -927,6 +935,8 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_rdp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
         procedure(eigvals_select_dp), optional :: select
         !! Desired number of eigenpairs.
@@ -951,7 +961,7 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k, niter, krst
-        real(dp) :: tol
+        real(dp) :: tol, x0_norm
         real(dp) :: beta
         real(dp) :: alpha
         character(len=256) :: msg
@@ -973,7 +983,13 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_rdp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -1057,7 +1073,7 @@ contains
         return
     end subroutine eigs_rdp
 
-    subroutine eigs_csp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -1068,6 +1084,8 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_csp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
         procedure(eigvals_select_sp), optional :: select
         !! Desired number of eigenpairs.
@@ -1092,7 +1110,7 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k, niter, krst
-        real(sp) :: tol
+        real(sp) :: tol, x0_norm
         complex(sp) :: beta
         character(len=256) :: msg
         ! Eigenvalue selection.
@@ -1113,7 +1131,13 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_csp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -1188,7 +1212,7 @@ contains
         return
     end subroutine eigs_csp
 
-    subroutine eigs_cdp(A, X, eigvals, residuals, info, kdim, select, tolerance, transpose)
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1199,6 +1223,8 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_cdp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
         procedure(eigvals_select_dp), optional :: select
         !! Desired number of eigenpairs.
@@ -1223,7 +1249,7 @@ contains
         ! Miscellaneous.
         integer :: nev, conv
         integer :: i, j, k, niter, krst
-        real(dp) :: tol
+        real(dp) :: tol, x0_norm
         complex(dp) :: beta
         character(len=256) :: msg
         ! Eigenvalue selection.
@@ -1244,7 +1270,13 @@ contains
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_cdp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -1324,7 +1356,7 @@ contains
     !-----      EIGENVALUE COMPUTATIONS FOR SYMMETRIC/HERMITIAN MATRICES     -----
     !-----------------------------------------------------------------------------
 
-    subroutine eighs_rsp(A, X, eigvals, residuals, info, kdim, tolerance)
+    subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
         class(abstract_sym_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1335,6 +1367,8 @@ contains
         !! Residuals associated to each Ritz eigenpairs.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_rsp), optional, intent(in) :: x0
+        !! Optional starting vector to generate the Krylov subspace.
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
@@ -1356,6 +1390,7 @@ contains
         ! Working array for the Ritz eigenvalues.
         real(sp), allocatable :: residuals_wrk(:)
         ! Working array for the Ritz residuals.
+        real(sp) :: x0_norm
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
@@ -1369,7 +1404,13 @@ contains
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_rsp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(T(kdim_+1, kdim_)) ; T = zero_rsp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rsp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -1424,7 +1465,7 @@ contains
         return
     end subroutine eighs_rsp
 
-    subroutine eighs_rdp(A, X, eigvals, residuals, info, kdim, tolerance)
+    subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
         class(abstract_sym_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -1435,6 +1476,8 @@ contains
         !! Residuals associated to each Ritz eigenpairs.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_rdp), optional, intent(in) :: x0
+        !! Optional starting vector to generate the Krylov subspace.
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
@@ -1456,6 +1499,7 @@ contains
         ! Working array for the Ritz eigenvalues.
         real(dp), allocatable :: residuals_wrk(:)
         ! Working array for the Ritz residuals.
+        real(dp) :: x0_norm
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
@@ -1469,7 +1513,13 @@ contains
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_rdp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(T(kdim_+1, kdim_)) ; T = zero_rdp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rdp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -1524,7 +1574,7 @@ contains
         return
     end subroutine eighs_rdp
 
-    subroutine eighs_csp(A, X, eigvals, residuals, info, kdim, tolerance)
+    subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
         class(abstract_hermitian_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -1535,6 +1585,8 @@ contains
         !! Residuals associated to each Ritz eigenpairs.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_csp), optional, intent(in) :: x0
+        !! Optional starting vector to generate the Krylov subspace.
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
@@ -1556,6 +1608,7 @@ contains
         ! Working array for the Ritz eigenvalues.
         real(sp), allocatable :: residuals_wrk(:)
         ! Working array for the Ritz residuals.
+        real(sp) :: x0_norm
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
@@ -1569,7 +1622,13 @@ contains
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_csp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(T(kdim_+1, kdim_)) ; T = zero_csp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_csp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
@@ -1624,7 +1683,7 @@ contains
         return
     end subroutine eighs_csp
 
-    subroutine eighs_cdp(A, X, eigvals, residuals, info, kdim, tolerance)
+    subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
         class(abstract_hermitian_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1635,6 +1694,8 @@ contains
         !! Residuals associated to each Ritz eigenpairs.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_cdp), optional, intent(in) :: x0
+        !! Optional starting vector to generate the Krylov subspace.
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
@@ -1656,6 +1717,7 @@ contains
         ! Working array for the Ritz eigenvalues.
         real(dp), allocatable :: residuals_wrk(:)
         ! Working array for the Ritz residuals.
+        real(dp) :: x0_norm
 
         ! Miscellaneous.
         integer :: i, j, k, nev, conv
@@ -1669,7 +1731,13 @@ contains
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk) ; call Xwrk(1)%rand(.true.)
+        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_cdp/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
         allocate(T(kdim_+1, kdim_)) ; T = zero_cdp
         allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_cdp
         allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
@@ -1729,7 +1797,7 @@ contains
     !-----     SINGULAR VALUE DECOMPOSITION     -----
     !------------------------------------------------
 
-    subroutine svds_rsp(A, U, S, V, residuals, info, kdim, tolerance)
+    subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rsp), intent(out) :: U(:)
@@ -1742,6 +1810,7 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_rsp), optional, intent(in) :: u0
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
@@ -1762,7 +1831,7 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        real(sp) :: tol
+        real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
         ! Deals with the optional arguments.
@@ -1771,7 +1840,13 @@ contains
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        if (present(u0)) then
+            call copy(Uwrk(1), u0)
+            u0_norm = u0%norm(); call Uwrk(1)%scal(one_rsp/u0_norm)
+        else
+            call Uwrk(1)%rand(.true.)
+        endif
         allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
@@ -1823,7 +1898,7 @@ contains
         return
     end subroutine svds_rsp
 
-    subroutine svds_rdp(A, U, S, V, residuals, info, kdim, tolerance)
+    subroutine svds_rdp(A, U, S, V, residuals, info, u0, kdim, tolerance)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rdp), intent(out) :: U(:)
@@ -1836,6 +1911,7 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_rdp), optional, intent(in) :: u0
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
@@ -1856,7 +1932,7 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        real(dp) :: tol
+        real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
         ! Deals with the optional arguments.
@@ -1865,7 +1941,13 @@ contains
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        if (present(u0)) then
+            call copy(Uwrk(1), u0)
+            u0_norm = u0%norm(); call Uwrk(1)%scal(one_rdp/u0_norm)
+        else
+            call Uwrk(1)%rand(.true.)
+        endif
         allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
@@ -1917,7 +1999,7 @@ contains
         return
     end subroutine svds_rdp
 
-    subroutine svds_csp(A, U, S, V, residuals, info, kdim, tolerance)
+    subroutine svds_csp(A, U, S, V, residuals, info, u0, kdim, tolerance)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_csp), intent(out) :: U(:)
@@ -1930,6 +2012,7 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_csp), optional, intent(in) :: u0
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
@@ -1950,7 +2033,7 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        real(sp) :: tol
+        real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
         ! Deals with the optional arguments.
@@ -1959,7 +2042,13 @@ contains
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        if (present(u0)) then
+            call copy(Uwrk(1), u0)
+            u0_norm = u0%norm(); call Uwrk(1)%scal(one_csp/u0_norm)
+        else
+            call Uwrk(1)%rand(.true.)
+        endif
         allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
@@ -2011,7 +2100,7 @@ contains
         return
     end subroutine svds_csp
 
-    subroutine svds_cdp(A, U, S, V, residuals, info, kdim, tolerance)
+    subroutine svds_cdp(A, U, S, V, residuals, info, u0, kdim, tolerance)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_cdp), intent(out) :: U(:)
@@ -2024,6 +2113,7 @@ contains
         !! Residuals associated to each Ritz eigenpair.
         integer, intent(out) :: info
         !! Information flag.
+        class(abstract_vector_cdp), optional, intent(in) :: u0
         integer, optional, intent(in) :: kdim
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
@@ -2044,7 +2134,7 @@ contains
         ! Miscellaneous.
         integer :: nsv, conv
         integer :: i, j, k
-        real(dp) :: tol
+        real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
         ! Deals with the optional arguments.
@@ -2053,7 +2143,13 @@ contains
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk) ; call Uwrk(1)%rand(.true.)
+        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        if (present(u0)) then
+            call copy(Uwrk(1), u0)
+            u0_norm = u0%norm(); call Uwrk(1)%scal(one_cdp/u0_norm)
+        else
+            call Uwrk(1)%rand(.true.)
+        endif
         allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
         allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
