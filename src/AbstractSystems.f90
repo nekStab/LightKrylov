@@ -231,8 +231,14 @@ contains
         class(abstract_vector_rsp), intent(in)    :: vec_in
         class(abstract_vector_rsp), intent(out)   :: vec_out
         real(sp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
+        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_rsp
     subroutine eval_rdp(self, vec_in, vec_out, atol)
@@ -240,8 +246,14 @@ contains
         class(abstract_vector_rdp), intent(in)    :: vec_in
         class(abstract_vector_rdp), intent(out)   :: vec_out
         real(dp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
+        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_rdp
     subroutine eval_csp(self, vec_in, vec_out, atol)
@@ -249,8 +261,14 @@ contains
         class(abstract_vector_csp), intent(in)    :: vec_in
         class(abstract_vector_csp), intent(out)   :: vec_out
         real(sp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
+        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_csp
     subroutine eval_cdp(self, vec_in, vec_out, atol)
@@ -258,8 +276,14 @@ contains
         class(abstract_vector_cdp), intent(in)    :: vec_in
         class(abstract_vector_cdp), intent(out)   :: vec_out
         real(dp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
+        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_cdp
 
