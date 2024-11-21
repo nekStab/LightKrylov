@@ -33,7 +33,7 @@ module LightKrylov_Logger
 
 contains
 
-   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp)
+   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp, iunit)
       !! Wrapper to set up MPI if needed and initialize log files
       character(len=*), optional, intent(in) :: logfile
       !! name of the dedicated LightKrylov logfile
@@ -51,6 +51,8 @@ contains
       !! duplicate log messages to stdout?
       logical, optional, intent(in)          :: log_timestamp
       !! add timestamp to log messages
+      integer, optional, intent(out)         :: iunit
+      !! log unit identifier
 
       ! internals
       character(len=:), allocatable :: logfile_
@@ -58,8 +60,9 @@ contains
       integer                       :: log_level_
       logical                       :: log_stdout_
       logical                       :: log_timestamp_
+      integer                       :: iunit_
       ! misc
-      integer :: stat, iunit
+      integer :: stat
 
       logfile_       = optval(logfile, 'lightkrylov.log')
       nio_           = optval(nio, 0)
@@ -86,6 +89,9 @@ contains
          call logger%add_log_unit(6, stat=stat)
          if (stat /= 0) call stop_error('Unable to add stdout to logger.', module=this_module, procedure='logger_setup')
       end if
+
+      ! return unit if requested
+      if (present(iunit)) iunit = iunit_
       return
    end subroutine logger_setup
 
