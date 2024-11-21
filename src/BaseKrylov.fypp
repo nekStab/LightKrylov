@@ -620,9 +620,11 @@ contains
       ${type}$ :: R(size(X),size(X))
       integer :: info
 
+      call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
+      call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
       
       return
     end subroutine orthonormalize_basis_${type[0]}$${kind}$
@@ -644,6 +646,7 @@ contains
       ! internals
       ${type}$ :: proj_coefficients(size(X))
 
+      call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_${type[0]}$${kind}$')
       info = 0
 
       ! optional input argument
@@ -680,6 +683,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
+      call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_${type[0]}$${kind}$')
       
       return
     end subroutine orthogonalize_vector_against_basis_${type[0]}$${kind}$
@@ -702,6 +706,7 @@ contains
       ${type}$ :: proj_coefficients(size(X), size(Y))
       integer :: i
 
+      call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_${type[0]}$${kind}$')
       info = 0
 
       ! optional input argument
@@ -740,6 +745,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
+      call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_${type[0]}$${kind}$')
       
       return
     end subroutine orthogonalize_basis_against_basis_${type[0]}$${kind}$
@@ -765,6 +771,7 @@ contains
       ! optional input argument
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
+      call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$')
       info = 0
 
       proj_coefficients = zero_${type[0]}$${kind}$; wrk = zero_${type[0]}$${kind}$
@@ -786,6 +793,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
+      call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$')
 
     end subroutine DGS_vector_against_basis_${type[0]}$${kind}$
 
@@ -810,6 +818,7 @@ contains
       ! optional input argument
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
+      call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$')
       info = 0
 
       proj_coefficients = zero_${type[0]}$${kind}$; wrk = zero_${type[0]}$${kind}$
@@ -829,6 +838,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
+      call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$')
 
     end subroutine DGS_basis_against_basis_${type[0]}$${kind}$  
 
@@ -859,6 +869,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_${kind}$)
 
+        call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
         info = 0 ; flag = .false.; R = zero_r${kind}$ ; beta = zero_r${kind}$
         do j = 1, size(Q)
             if (j > 1) then
@@ -889,6 +900,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_r${kind}$ / beta)
         enddo
+        call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
 
         return
     end subroutine qr_no_pivoting_${type[0]}$${kind}$
@@ -914,6 +926,7 @@ contains
         ${type}$  :: Rii(size(Q))
         character(len=128) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
         info = 0 ; kdim = size(Q)
         R = zero_r${kind}$ ; Rii = zero_r${kind}$
         
@@ -972,6 +985,7 @@ contains
             enddo
 
         enddo qr_step
+        call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
 
         return
     end subroutine qr_with_pivoting_${type[0]}$${kind}$

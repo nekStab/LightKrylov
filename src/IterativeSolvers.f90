@@ -819,6 +819,7 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_sp), pointer :: select_
 
+        call logger%log_debug('start', module=this_module, procedure='eigs_rsp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -920,6 +921,7 @@ contains
         enddo
 
         info = niter
+        call logger%log_debug('end', module=this_module, procedure='eigs_rsp')
 
         return
     end subroutine eigs_rsp
@@ -968,6 +970,7 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_dp), pointer :: select_
 
+        call logger%log_debug('start', module=this_module, procedure='eigs_rdp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1069,6 +1072,7 @@ contains
         enddo
 
         info = niter
+        call logger%log_debug('end', module=this_module, procedure='eigs_rdp')
 
         return
     end subroutine eigs_rdp
@@ -1116,6 +1120,7 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_sp), pointer :: select_
 
+        call logger%log_debug('start', module=this_module, procedure='eigs_csp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1208,6 +1213,7 @@ contains
         enddo
 
         info = niter
+        call logger%log_debug('end', module=this_module, procedure='eigs_csp')
 
         return
     end subroutine eigs_csp
@@ -1255,6 +1261,7 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_dp), pointer :: select_
 
+        call logger%log_debug('start', module=this_module, procedure='eigs_cdp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1347,6 +1354,7 @@ contains
         enddo
 
         info = niter
+        call logger%log_debug('end', module=this_module, procedure='eigs_cdp')
 
         return
     end subroutine eigs_cdp
@@ -1398,6 +1406,7 @@ contains
         real(sp) :: beta
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='eighs_rsp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1461,6 +1470,7 @@ contains
         enddo
         
         info = k
+        call logger%log_debug('end', module=this_module, procedure='eighs_rsp')
 
         return
     end subroutine eighs_rsp
@@ -1507,6 +1517,7 @@ contains
         real(dp) :: beta
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='eighs_rdp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1570,6 +1581,7 @@ contains
         enddo
         
         info = k
+        call logger%log_debug('end', module=this_module, procedure='eighs_rdp')
 
         return
     end subroutine eighs_rdp
@@ -1616,6 +1628,7 @@ contains
         complex(sp) :: beta
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='eighs_csp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1679,6 +1692,7 @@ contains
         enddo
         
         info = k
+        call logger%log_debug('end', module=this_module, procedure='eighs_csp')
 
         return
     end subroutine eighs_csp
@@ -1725,6 +1739,7 @@ contains
         complex(dp) :: beta
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='eighs_cdp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1788,6 +1803,7 @@ contains
         enddo
         
         info = k
+        call logger%log_debug('end', module=this_module, procedure='eighs_cdp')
 
         return
     end subroutine eighs_cdp
@@ -1834,6 +1850,7 @@ contains
         real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='svds_rsp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -1894,6 +1911,7 @@ contains
                 call V(i)%axpby(one_rsp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        call logger%log_debug('end', module=this_module, procedure='svds_rsp')
 
         return
     end subroutine svds_rsp
@@ -1935,6 +1953,7 @@ contains
         real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='svds_rdp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -1995,6 +2014,7 @@ contains
                 call V(i)%axpby(one_rdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        call logger%log_debug('end', module=this_module, procedure='svds_rdp')
 
         return
     end subroutine svds_rdp
@@ -2036,6 +2056,7 @@ contains
         real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='svds_csp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -2096,6 +2117,7 @@ contains
                 call V(i)%axpby(one_csp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        call logger%log_debug('end', module=this_module, procedure='svds_csp')
 
         return
     end subroutine svds_csp
@@ -2137,6 +2159,7 @@ contains
         real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='svds_cdp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -2197,6 +2220,7 @@ contains
                 call V(i)%axpby(one_cdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        call logger%log_debug('end', module=this_module, procedure='svds_cdp')
 
         return
     end subroutine svds_cdp
@@ -2256,6 +2280,7 @@ contains
         class(abstract_vector_rsp), allocatable :: dx, wrk
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='gmres_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -2398,6 +2423,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='gmres_rsp')
         
         return
     end subroutine gmres_rsp
@@ -2452,6 +2478,7 @@ contains
         class(abstract_vector_rdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='gmres_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -2594,6 +2621,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='gmres_rdp')
         
         return
     end subroutine gmres_rdp
@@ -2648,6 +2676,7 @@ contains
         class(abstract_vector_csp), allocatable :: dx, wrk
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='gmres_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -2790,6 +2819,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='gmres_csp')
         
         return
     end subroutine gmres_csp
@@ -2844,6 +2874,7 @@ contains
         class(abstract_vector_cdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='gmres_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -2986,6 +3017,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='gmres_cdp')
         
         return
     end subroutine gmres_cdp
@@ -3050,6 +3082,7 @@ contains
         class(abstract_vector_rsp), allocatable :: dx
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='fgmres_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -3191,6 +3224,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='fgmres_rsp')
         
         return
     end subroutine fgmres_rsp
@@ -3246,6 +3280,7 @@ contains
         class(abstract_vector_rdp), allocatable :: dx
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='fgmres_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -3387,6 +3422,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='fgmres_rdp')
         
         return
     end subroutine fgmres_rdp
@@ -3442,6 +3478,7 @@ contains
         class(abstract_vector_csp), allocatable :: dx
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='fgmres_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -3583,6 +3620,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='fgmres_csp')
         
         return
     end subroutine fgmres_csp
@@ -3638,6 +3676,7 @@ contains
         class(abstract_vector_cdp), allocatable :: dx
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='fgmres_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -3779,6 +3818,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        call logger%log_debug('end', module=this_module, procedure='fgmres_cdp')
         
         return
     end subroutine fgmres_cdp
@@ -3829,6 +3869,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='cg_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -3911,6 +3952,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        call logger%log_debug('end', module=this_module, procedure='cg_rsp')
 
         return
     end subroutine cg_rsp
@@ -3954,6 +3996,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='cg_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -4036,6 +4079,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        call logger%log_debug('end', module=this_module, procedure='cg_rdp')
 
         return
     end subroutine cg_rdp
@@ -4079,6 +4123,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='cg_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -4161,6 +4206,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        call logger%log_debug('end', module=this_module, procedure='cg_csp')
 
         return
     end subroutine cg_csp
@@ -4204,6 +4250,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='cg_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -4286,6 +4333,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        call logger%log_debug('end', module=this_module, procedure='cg_cdp')
 
         return
     end subroutine cg_cdp

@@ -148,6 +148,7 @@ contains
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
       
+      call logger%log_debug('start', module=this_module, procedure='newton_rsp')
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_sp)
       ! Newton-Krylov options
@@ -265,6 +266,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      call logger%log_debug('end', module=this_module, procedure='newton_rsp')
 
       return
    end subroutine newton_rsp
@@ -303,6 +305,7 @@ contains
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
       
+      call logger%log_debug('start', module=this_module, procedure='newton_rdp')
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_dp)
       ! Newton-Krylov options
@@ -420,6 +423,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      call logger%log_debug('end', module=this_module, procedure='newton_rdp')
 
       return
    end subroutine newton_rdp
@@ -458,6 +462,7 @@ contains
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
       
+      call logger%log_debug('start', module=this_module, procedure='newton_csp')
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_sp)
       ! Newton-Krylov options
@@ -575,6 +580,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      call logger%log_debug('end', module=this_module, procedure='newton_csp')
 
       return
    end subroutine newton_csp
@@ -613,6 +619,7 @@ contains
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
       
+      call logger%log_debug('start', module=this_module, procedure='newton_cdp')
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_dp)
       ! Newton-Krylov options
@@ -730,6 +737,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      call logger%log_debug('end', module=this_module, procedure='newton_cdp')
 
       return
    end subroutine newton_cdp
