@@ -234,10 +234,10 @@ contains
         ! internal
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
-        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
-        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_rsp
@@ -249,10 +249,10 @@ contains
         ! internal
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
-        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
-        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_rdp
@@ -264,10 +264,10 @@ contains
         ! internal
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
-        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
-        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_csp
@@ -279,10 +279,10 @@ contains
         ! internal
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
-        write(msg,'(I3,1X,A)') self%eval_counter, 'start'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
         call self%response(vec_in, vec_out, atol)
-        write(msg,'(I3,1X,A)') self%eval_counter, 'end'
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_cdp
