@@ -483,8 +483,14 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec(vec_in, vec_out)
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_rsp
 
@@ -492,16 +498,28 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I3,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec(vec_in, vec_out)
+         write(msg,'(I3,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec(vec_in, vec_out)
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_rdp
 
@@ -509,16 +527,28 @@ contains
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I3,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec(vec_in, vec_out)
+         write(msg,'(I3,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec(vec_in, vec_out)
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_csp
 
@@ -526,16 +556,28 @@ contains
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I3,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec(vec_in, vec_out)
+         write(msg,'(I3,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_csp
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec(vec_in, vec_out)
+        write(msg,'(I3,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_cdp
 
@@ -543,8 +585,14 @@ contains
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I3,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec(vec_in, vec_out)
+         write(msg,'(I3,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_cdp
 
