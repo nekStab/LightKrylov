@@ -31,6 +31,7 @@ module lightkrylov_IterativeSolvers
     use LightKrylov_Constants
     Use LightKrylov_Logger
     use LightKrylov_Utils
+    !use LightKrylov_Timer
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
@@ -820,6 +821,7 @@ contains
         procedure(eigvals_select_sp), pointer :: select_
 
         call logger%log_debug('start', module=this_module, procedure='eigs_rsp')
+        !if (timeit()) call global_timer%start('eigs_rsp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -921,6 +923,7 @@ contains
         enddo
 
         info = niter
+        !if (timeit()) call global_timer%stop('eigs_rsp')
         call logger%log_debug('end', module=this_module, procedure='eigs_rsp')
 
         return
@@ -971,6 +974,7 @@ contains
         procedure(eigvals_select_dp), pointer :: select_
 
         call logger%log_debug('start', module=this_module, procedure='eigs_rdp')
+        !if (timeit()) call global_timer%start('eigs_rdp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1072,6 +1076,7 @@ contains
         enddo
 
         info = niter
+        !if (timeit()) call global_timer%stop('eigs_rdp')
         call logger%log_debug('end', module=this_module, procedure='eigs_rdp')
 
         return
@@ -1121,6 +1126,7 @@ contains
         procedure(eigvals_select_sp), pointer :: select_
 
         call logger%log_debug('start', module=this_module, procedure='eigs_csp')
+        !if (timeit()) call global_timer%start('eigs_csp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1213,6 +1219,7 @@ contains
         enddo
 
         info = niter
+        !if (timeit()) call global_timer%stop('eigs_csp')
         call logger%log_debug('end', module=this_module, procedure='eigs_csp')
 
         return
@@ -1262,6 +1269,7 @@ contains
         procedure(eigvals_select_dp), pointer :: select_
 
         call logger%log_debug('start', module=this_module, procedure='eigs_cdp')
+        !if (timeit()) call global_timer%start('eigs_cdp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1354,6 +1362,7 @@ contains
         enddo
 
         info = niter
+        !if (timeit()) call global_timer%stop('eigs_cdp')
         call logger%log_debug('end', module=this_module, procedure='eigs_cdp')
 
         return
@@ -1407,6 +1416,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='eighs_rsp')
+        !if (timeit()) call global_timer%start('eighs_rsp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1470,6 +1480,7 @@ contains
         enddo
         
         info = k
+        !if (timeit()) call global_timer%stop('eighs_rsp')
         call logger%log_debug('end', module=this_module, procedure='eighs_rsp')
 
         return
@@ -1518,6 +1529,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='eighs_rdp')
+        !if (timeit()) call global_timer%start('eighs_rdp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1581,6 +1593,7 @@ contains
         enddo
         
         info = k
+        !if (timeit()) call global_timer%stop('eighs_rdp')
         call logger%log_debug('end', module=this_module, procedure='eighs_rdp')
 
         return
@@ -1629,6 +1642,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='eighs_csp')
+        !if (timeit()) call global_timer%start('eighs_csp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1692,6 +1706,7 @@ contains
         enddo
         
         info = k
+        !if (timeit()) call global_timer%stop('eighs_csp')
         call logger%log_debug('end', module=this_module, procedure='eighs_csp')
 
         return
@@ -1740,6 +1755,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='eighs_cdp')
+        !if (timeit()) call global_timer%start('eighs_cdp')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -1803,6 +1819,7 @@ contains
         enddo
         
         info = k
+        !if (timeit()) call global_timer%stop('eighs_cdp')
         call logger%log_debug('end', module=this_module, procedure='eighs_cdp')
 
         return
@@ -1851,6 +1868,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='svds_rsp')
+        !if (timeit()) call global_timer%start('svds_rsp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -1911,6 +1929,7 @@ contains
                 call V(i)%axpby(one_rsp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        !if (timeit()) call global_timer%stop('svds_rsp')
         call logger%log_debug('end', module=this_module, procedure='svds_rsp')
 
         return
@@ -1954,6 +1973,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='svds_rdp')
+        !if (timeit()) call global_timer%start('svds_rdp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -2014,6 +2034,7 @@ contains
                 call V(i)%axpby(one_rdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        !if (timeit()) call global_timer%stop('svds_rdp')
         call logger%log_debug('end', module=this_module, procedure='svds_rdp')
 
         return
@@ -2057,6 +2078,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='svds_csp')
+        !if (timeit()) call global_timer%start('svds_csp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -2117,6 +2139,7 @@ contains
                 call V(i)%axpby(one_csp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        !if (timeit()) call global_timer%stop('svds_csp')
         call logger%log_debug('end', module=this_module, procedure='svds_csp')
 
         return
@@ -2160,6 +2183,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='svds_cdp')
+        !if (timeit()) call global_timer%start('svds_cdp')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -2220,6 +2244,7 @@ contains
                 call V(i)%axpby(one_cdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
+        !if (timeit()) call global_timer%stop('svds_cdp')
         call logger%log_debug('end', module=this_module, procedure='svds_cdp')
 
         return
@@ -2281,6 +2306,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='gmres_rsp')
+        !if (timeit()) call global_timer%start('gmres_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -2423,6 +2449,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('gmres_rsp')
         call logger%log_debug('end', module=this_module, procedure='gmres_rsp')
         
         return
@@ -2479,6 +2506,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='gmres_rdp')
+        !if (timeit()) call global_timer%start('gmres_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -2621,6 +2649,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('gmres_rdp')
         call logger%log_debug('end', module=this_module, procedure='gmres_rdp')
         
         return
@@ -2677,6 +2706,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='gmres_csp')
+        !if (timeit()) call global_timer%start('gmres_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -2819,6 +2849,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('gmres_csp')
         call logger%log_debug('end', module=this_module, procedure='gmres_csp')
         
         return
@@ -2875,6 +2906,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='gmres_cdp')
+        !if (timeit()) call global_timer%start('gmres_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -3017,6 +3049,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('gmres_cdp')
         call logger%log_debug('end', module=this_module, procedure='gmres_cdp')
         
         return
@@ -3083,6 +3116,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='fgmres_rsp')
+        !if (timeit()) call global_timer%start('fgmres_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -3224,6 +3258,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('fgmres_rsp')
         call logger%log_debug('end', module=this_module, procedure='fgmres_rsp')
         
         return
@@ -3281,6 +3316,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='fgmres_rdp')
+        !if (timeit()) call global_timer%start('fgmres_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -3422,6 +3458,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('fgmres_rdp')
         call logger%log_debug('end', module=this_module, procedure='fgmres_rdp')
         
         return
@@ -3479,6 +3516,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='fgmres_csp')
+        !if (timeit()) call global_timer%start('fgmres_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -3620,6 +3658,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('fgmres_csp')
         call logger%log_debug('end', module=this_module, procedure='fgmres_csp')
         
         return
@@ -3677,6 +3716,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='fgmres_cdp')
+        !if (timeit()) call global_timer%start('fgmres_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -3818,6 +3858,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        !if (timeit()) call global_timer%stop('fgmres_cdp')
         call logger%log_debug('end', module=this_module, procedure='fgmres_cdp')
         
         return
@@ -3870,6 +3911,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='cg_rsp')
+        !if (timeit()) call global_timer%start('cg_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -3952,6 +3994,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        !if (timeit()) call global_timer%stop('cg_rsp')
         call logger%log_debug('end', module=this_module, procedure='cg_rsp')
 
         return
@@ -3997,6 +4040,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='cg_rdp')
+        !if (timeit()) call global_timer%start('cg_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -4079,6 +4123,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        !if (timeit()) call global_timer%stop('cg_rdp')
         call logger%log_debug('end', module=this_module, procedure='cg_rdp')
 
         return
@@ -4124,6 +4169,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='cg_csp')
+        !if (timeit()) call global_timer%start('cg_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
         atol_ = optval(atol, atol_sp)
@@ -4206,6 +4252,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        !if (timeit()) call global_timer%stop('cg_csp')
         call logger%log_debug('end', module=this_module, procedure='cg_csp')
 
         return
@@ -4251,6 +4298,7 @@ contains
         character(len=256) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='cg_cdp')
+        !if (timeit()) call global_timer%start('cg_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
         atol_ = optval(atol, atol_dp)
@@ -4333,6 +4381,7 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        !if (timeit()) call global_timer%stop('cg_cdp')
         call logger%log_debug('end', module=this_module, procedure='cg_cdp')
 
         return

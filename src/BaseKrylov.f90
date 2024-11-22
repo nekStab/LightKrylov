@@ -21,6 +21,7 @@ module lightkrylov_BaseKrylov
     !-------------------------------
     use LightKrylov_Constants
     use LightKrylov_Logger
+    !use LightKrylov_Timer
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
@@ -676,9 +677,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_rsp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_rsp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
+      !if (timeit()) call global_timer%end('orthonormalize_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_rsp')
       
       return
@@ -702,6 +705,7 @@ contains
       real(sp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_rsp')
+      !if (timeit()) call global_timer%start('orthonormalize_vector_against_basis_rsp')
       info = 0
 
       ! optional input argument
@@ -738,6 +742,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rsp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_vector_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_rsp')
       
       return
@@ -762,6 +767,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_rsp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_against_basis_rsp')
       info = 0
 
       ! optional input argument
@@ -800,6 +806,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rsp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_basis_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_rsp')
       
       return
@@ -827,6 +834,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_rsp')
+      !if (timeit()) call global_timer%start('DGS_vector_against_basis_rsp')
       info = 0
 
       proj_coefficients = zero_rsp; wrk = zero_rsp
@@ -848,6 +856,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rsp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_vector_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_rsp')
 
     end subroutine DGS_vector_against_basis_rsp
@@ -874,6 +883,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_rsp')
+      !if (timeit()) call global_timer%start('DGS_basis_against_basis_rsp')
       info = 0
 
       proj_coefficients = zero_rsp; wrk = zero_rsp
@@ -895,6 +905,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rsp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_basis_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_rsp')
 
     end subroutine DGS_basis_against_basis_rsp  
@@ -931,9 +942,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_rdp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_rdp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
+      !if (timeit()) call global_timer%end('orthonormalize_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_rdp')
       
       return
@@ -957,6 +970,7 @@ contains
       real(dp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_rdp')
+      !if (timeit()) call global_timer%start('orthonormalize_vector_against_basis_rdp')
       info = 0
 
       ! optional input argument
@@ -993,6 +1007,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_vector_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_rdp')
       
       return
@@ -1017,6 +1032,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_rdp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_against_basis_rdp')
       info = 0
 
       ! optional input argument
@@ -1055,6 +1071,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_basis_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_rdp')
       
       return
@@ -1082,6 +1099,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_rdp')
+      !if (timeit()) call global_timer%start('DGS_vector_against_basis_rdp')
       info = 0
 
       proj_coefficients = zero_rdp; wrk = zero_rdp
@@ -1103,6 +1121,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_vector_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_rdp')
 
     end subroutine DGS_vector_against_basis_rdp
@@ -1129,6 +1148,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_rdp')
+      !if (timeit()) call global_timer%start('DGS_basis_against_basis_rdp')
       info = 0
 
       proj_coefficients = zero_rdp; wrk = zero_rdp
@@ -1150,6 +1170,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_basis_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_rdp')
 
     end subroutine DGS_basis_against_basis_rdp  
@@ -1186,9 +1207,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_csp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_csp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
+      !if (timeit()) call global_timer%end('orthonormalize_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_csp')
       
       return
@@ -1212,6 +1235,7 @@ contains
       complex(sp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_csp')
+      !if (timeit()) call global_timer%start('orthonormalize_vector_against_basis_csp')
       info = 0
 
       ! optional input argument
@@ -1248,6 +1272,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_csp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_vector_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_csp')
       
       return
@@ -1272,6 +1297,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_csp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_against_basis_csp')
       info = 0
 
       ! optional input argument
@@ -1310,6 +1336,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_csp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_basis_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_csp')
       
       return
@@ -1337,6 +1364,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_csp')
+      !if (timeit()) call global_timer%start('DGS_vector_against_basis_csp')
       info = 0
 
       proj_coefficients = zero_csp; wrk = zero_csp
@@ -1358,6 +1386,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_csp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_vector_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_csp')
 
     end subroutine DGS_vector_against_basis_csp
@@ -1384,6 +1413,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_csp')
+      !if (timeit()) call global_timer%start('DGS_basis_against_basis_csp')
       info = 0
 
       proj_coefficients = zero_csp; wrk = zero_csp
@@ -1405,6 +1435,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_csp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_basis_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_csp')
 
     end subroutine DGS_basis_against_basis_csp  
@@ -1441,9 +1472,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_cdp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_cdp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
+      !if (timeit()) call global_timer%end('orthonormalize_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_cdp')
       
       return
@@ -1467,6 +1500,7 @@ contains
       complex(dp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_cdp')
+      !if (timeit()) call global_timer%start('orthonormalize_vector_against_basis_cdp')
       info = 0
 
       ! optional input argument
@@ -1503,6 +1537,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_cdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_vector_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_cdp')
       
       return
@@ -1527,6 +1562,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_cdp')
+      !if (timeit()) call global_timer%start('orthonormalize_basis_against_basis_cdp')
       info = 0
 
       ! optional input argument
@@ -1565,6 +1601,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_cdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('orthonormalize_basis_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_cdp')
       
       return
@@ -1592,6 +1629,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_cdp')
+      !if (timeit()) call global_timer%start('DGS_vector_against_basis_cdp')
       info = 0
 
       proj_coefficients = zero_cdp; wrk = zero_cdp
@@ -1613,6 +1651,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_cdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_vector_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_cdp')
 
     end subroutine DGS_vector_against_basis_cdp
@@ -1639,6 +1678,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_cdp')
+      !if (timeit()) call global_timer%start('DGS_basis_against_basis_cdp')
       info = 0
 
       proj_coefficients = zero_cdp; wrk = zero_cdp
@@ -1660,6 +1700,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_cdp')
          beta = proj_coefficients
       end if
+      !if (timeit()) call global_timer%stop('DGS_basis_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_cdp')
 
     end subroutine DGS_basis_against_basis_cdp  
@@ -1689,6 +1730,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
+      	!if (timeit()) call global_timer%start('qr_no_pivoting_rsp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_rsp')
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
@@ -1720,6 +1762,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
+      	!if (timeit()) call global_timer%stop('qr_no_pivoting_rsp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_rsp')
 
         return
@@ -1747,6 +1790,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_rsp')
+      	!if (timeit()) call global_timer%start('qr_with_pivoting_rsp')
         info = 0 ; kdim = size(Q)
         R = zero_rsp ; Rii = zero_rsp
         
@@ -1805,6 +1849,7 @@ contains
             enddo
 
         enddo qr_step
+      	!if (timeit()) call global_timer%stop('qr_with_pivoting_rsp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_rsp')
 
         return
@@ -1958,6 +2003,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
+      	!if (timeit()) call global_timer%start('qr_no_pivoting_rdp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_rdp')
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
@@ -1989,6 +2035,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
+      	!if (timeit()) call global_timer%stop('qr_no_pivoting_rdp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_rdp')
 
         return
@@ -2016,6 +2063,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_rdp')
+      	!if (timeit()) call global_timer%start('qr_with_pivoting_rdp')
         info = 0 ; kdim = size(Q)
         R = zero_rdp ; Rii = zero_rdp
         
@@ -2074,6 +2122,7 @@ contains
             enddo
 
         enddo qr_step
+      	!if (timeit()) call global_timer%stop('qr_with_pivoting_rdp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_rdp')
 
         return
@@ -2227,6 +2276,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
+      	!if (timeit()) call global_timer%start('qr_no_pivoting_csp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_csp')
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
@@ -2258,6 +2308,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
+      	!if (timeit()) call global_timer%stop('qr_no_pivoting_csp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_csp')
 
         return
@@ -2285,6 +2336,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_csp')
+      	!if (timeit()) call global_timer%start('qr_with_pivoting_csp')
         info = 0 ; kdim = size(Q)
         R = zero_rsp ; Rii = zero_rsp
         
@@ -2343,6 +2395,7 @@ contains
             enddo
 
         enddo qr_step
+      	!if (timeit()) call global_timer%stop('qr_with_pivoting_csp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_csp')
 
         return
@@ -2496,6 +2549,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
+      	!if (timeit()) call global_timer%start('qr_no_pivoting_cdp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_cdp')
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
@@ -2527,6 +2581,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
+      	!if (timeit()) call global_timer%stop('qr_no_pivoting_cdp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_cdp')
 
         return
@@ -2554,6 +2609,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_cdp')
+      	!if (timeit()) call global_timer%start('qr_with_pivoting_cdp')
         info = 0 ; kdim = size(Q)
         R = zero_rdp ; Rii = zero_rdp
         
@@ -2612,6 +2668,7 @@ contains
             enddo
 
         enddo qr_step
+      	!if (timeit()) call global_timer%stop('qr_with_pivoting_cdp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_cdp')
 
         return

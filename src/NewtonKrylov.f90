@@ -2,6 +2,7 @@ module LightKrylov_NewtonKrylov
    use stdlib_optval, only: optval
    use LightKrylov_Constants
    use LightKrylov_Logger
+   !use LightKrylov_Timer
    use LightKrylov_AbstractVectors
    use LightKrylov_AbstractLinops
    use LightKrylov_AbstractSystems
@@ -109,7 +110,6 @@ module LightKrylov_NewtonKrylov
          !! Information flag
       end subroutine abstract_scheduler_dp
 
-
    end interface
 
 contains
@@ -149,6 +149,10 @@ contains
       character(len=256) :: msg
       
       call logger%log_debug('start', module=this_module, procedure='newton_rsp')
+      !if (timeit()) call global_timer%start('newton_rsp')
+      !print *, timeit()
+      !call initialize_timers()
+      
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_sp)
       ! Newton-Krylov options
@@ -266,6 +270,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      !if (timeit()) call global_timer%stop('newton_rsp')
       call logger%log_debug('end', module=this_module, procedure='newton_rsp')
 
       return
@@ -306,6 +311,10 @@ contains
       character(len=256) :: msg
       
       call logger%log_debug('start', module=this_module, procedure='newton_rdp')
+      !if (timeit()) call global_timer%start('newton_rdp')
+      !print *, timeit()
+      !call initialize_timers()
+      
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_dp)
       ! Newton-Krylov options
@@ -423,6 +432,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      !if (timeit()) call global_timer%stop('newton_rdp')
       call logger%log_debug('end', module=this_module, procedure='newton_rdp')
 
       return
@@ -463,6 +473,10 @@ contains
       character(len=256) :: msg
       
       call logger%log_debug('start', module=this_module, procedure='newton_csp')
+      !if (timeit()) call global_timer%start('newton_csp')
+      !print *, timeit()
+      !call initialize_timers()
+      
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_sp)
       ! Newton-Krylov options
@@ -580,6 +594,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      !if (timeit()) call global_timer%stop('newton_csp')
       call logger%log_debug('end', module=this_module, procedure='newton_csp')
 
       return
@@ -620,6 +635,10 @@ contains
       character(len=256) :: msg
       
       call logger%log_debug('start', module=this_module, procedure='newton_cdp')
+      !if (timeit()) call global_timer%start('newton_cdp')
+      !print *, timeit()
+      !call initialize_timers()
+      
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_dp)
       ! Newton-Krylov options
@@ -737,6 +756,7 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
+      !if (timeit()) call global_timer%stop('newton_cdp')
       call logger%log_debug('end', module=this_module, procedure='newton_cdp')
 
       return
