@@ -10,8 +10,9 @@ program demo
    use LightKrylov
    use LightKrylov, only: wp => dp
    use LightKrylov_Logger
-   use lightkrylov_IterativeSolvers, only: gmres_rdp
+   use LightKrylov_Timer
    use LightKrylov_Utils
+   use lightkrylov_IterativeSolvers, only: gmres_rdp
    ! Roessler system
    use Roessler
    use Roessler_OTD
@@ -48,6 +49,23 @@ program demo
    ! Set up logging
    call logger_setup()
    call logger%configure(level=error_level, time_stamp=.false.)
+
+   call initialize_timers()
+   call global_timer%enumerate_timers()
+   call global_timer%start('gmres_rdp')
+   print '(A,*(I0,1X))', 'print', ( i, i = 1, 1000) 
+   call global_timer%stop('gmres_rdp')
+   !call global_timer%stop('gmres_test')
+   call global_timer%remove_timer('gmres_rdp')
+   call global_timer%enumerate_timers()
+   print *, timeit()
+   if (timeit()) call global_timer%start('svds_rsp')
+   print '(A,*(I0,1X))', 'print', ( i, i = 1, 1000)
+   if (timeit()) call global_timer%stop('svds_rsp')
+   call global_timer%enumerate_timers()
+   call finalize_timers()
+
+   STOP 8
 
    ! Initialize baseflow and perturbation state vectors
    call bf%zero(); call dx%zero(); call residual%zero()
