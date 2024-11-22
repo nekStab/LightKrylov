@@ -15,7 +15,7 @@ module LightKrylov_Logger
    implicit none
    private
 
-   character(len=128), parameter, private :: this_module = 'LightKrylov_Logger'
+   character(len=128), parameter :: this_module = 'LightKrylov_Logger'
 
    logical, parameter, private :: exit_on_error = .true.
    logical, parameter, private :: exit_on_test_error = .true.
@@ -94,6 +94,11 @@ contains
       if (present(iunit)) iunit = iunit_
       return
    end subroutine logger_setup
+
+   !subroutine flush_logger()
+
+
+   !end subroutine flush_logger
 
    subroutine comm_setup()
       ! internal
