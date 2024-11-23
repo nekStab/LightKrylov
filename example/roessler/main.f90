@@ -42,6 +42,7 @@ program demo
    real(wp), dimension(r, r)       :: Lr
    ! IO
    character(len=20)    :: data_fmt, header_fmt
+   !integer, allocatable :: logunits(:)
 
    write (header_fmt, *) '(22X,*(A,2X))'
    write (data_fmt, *) '(A22,*(1X,F15.6))'
@@ -49,23 +50,42 @@ program demo
    ! Set up logging
    call logger_setup()
    call logger%configure(level=error_level, time_stamp=.false.)
-
-   call initialize_timers()
-   call global_timer%enumerate_timers()
-   call global_timer%start('gmres_rdp')
-   print '(A,*(I0,1X))', 'print', ( i, i = 1, 1000) 
-   call global_timer%stop('gmres_rdp')
-   !call global_timer%stop('gmres_test')
-   call global_timer%remove_timer('gmres_rdp')
-   call global_timer%enumerate_timers()
-   print *, timeit()
-   if (timeit()) call global_timer%start('svds_rsp')
-   print '(A,*(I0,1X))', 'print', ( i, i = 1, 1000)
-   if (timeit()) call global_timer%stop('svds_rsp')
-   call global_timer%enumerate_timers()
-   call finalize_timers()
-
-   STOP 8
+   !call logger%configuration(log_units=logunits)
+   !do i = 1, size(logunits)
+   !   print *, 'unit', logunits(i)
+   !end do
+   !call logger%remove_log_unit(logunits(1))
+   !call logger%configuration(log_units=logunits)
+   !do i = 1, size(logunits)
+   !   print *, 'unit', logunits(i)
+   !end do
+   !STOP 678
+!
+   !print *, time_lightkrylov()
+   !call global_timer%initialize()
+   !call global_timer%add_timer('my_test_timer')
+   !call global_timer%start('my_test_timer')
+   !print *, time_lightkrylov()
+   !call global_timer%enumerate()
+   !call global_timer%stop('my_test_timer')
+   !call global_timer%start('my_test_timer')
+   !if (time_lightkrylov()) call global_timer%start('svds_rsp')
+   !call global_timer%start('gmres_rdp')
+   !print '(A,*(I0,1X))', 'print ', ( i, i = 1, 1000) 
+   !call global_timer%stop('gmres_rdp')
+   !i = global_timer%get_timer_id('gmres_rdp')
+   !print *, 'ID', i
+   !!call global_timer%stop('gmres_test')
+   !call global_timer%remove_timer('gmres_rdp')
+   !call global_timer%enumerate()
+   !print *, time_lightkrylov()
+   !print '(A,*(I0,1X))', 'print ', ( i, i = 1, 1000)
+   !if (time_lightkrylov()) call global_timer%stop('svds_rsp')
+   !call global_timer%stop('my_test_timer')
+   !call global_timer%enumerate()
+   !call global_timer%finalize()
+!
+!   STOP 8
 
    ! Initialize baseflow and perturbation state vectors
    call bf%zero(); call dx%zero(); call residual%zero()
