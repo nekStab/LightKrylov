@@ -622,11 +622,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
-      !if (timeit()) call global_timer%start('orthonormalize_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_${type[0]}$${kind}$')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
-      !if (timeit()) call global_timer%end('orthonormalize_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%end('orthonormalize_basis_${type[0]}$${kind}$')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
       
       return
@@ -650,7 +650,7 @@ contains
       ${type}$ :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_${type[0]}$${kind}$')
-      !if (timeit()) call global_timer%start('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%start('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
       info = 0
 
       ! optional input argument
@@ -687,7 +687,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
-      !if (timeit()) call global_timer%stop('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_${type[0]}$${kind}$')
       
       return
@@ -712,7 +712,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_${type[0]}$${kind}$')
-      !if (timeit()) call global_timer%start('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
       info = 0
 
       ! optional input argument
@@ -751,7 +751,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
-      !if (timeit()) call global_timer%stop('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_${type[0]}$${kind}$')
       
       return
@@ -779,7 +779,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$')
-      !if (timeit()) call global_timer%start('DGS_vector_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%start('DGS_vector_against_basis_${type[0]}$${kind}$')
       info = 0
 
       proj_coefficients = zero_${type[0]}$${kind}$; wrk = zero_${type[0]}$${kind}$
@@ -801,7 +801,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
-      !if (timeit()) call global_timer%stop('DGS_vector_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%stop('DGS_vector_against_basis_${type[0]}$${kind}$')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$')
 
     end subroutine DGS_vector_against_basis_${type[0]}$${kind}$
@@ -828,7 +828,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$')
-      !if (timeit()) call global_timer%start('DGS_basis_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%start('DGS_basis_against_basis_${type[0]}$${kind}$')
       info = 0
 
       proj_coefficients = zero_${type[0]}$${kind}$; wrk = zero_${type[0]}$${kind}$
@@ -848,7 +848,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_${type[0]}$${kind}$')
          beta = proj_coefficients
       end if
-      !if (timeit()) call global_timer%stop('DGS_basis_against_basis_${type[0]}$${kind}$')
+      !if (time_lightkrylov()) call global_timer%stop('DGS_basis_against_basis_${type[0]}$${kind}$')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$')
 
     end subroutine DGS_basis_against_basis_${type[0]}$${kind}$  
@@ -880,7 +880,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_${kind}$)
 
-      	!if (timeit()) call global_timer%start('qr_no_pivoting_${type[0]}$${kind}$')
+      	!if (time_lightkrylov()) call global_timer%start('qr_no_pivoting_${type[0]}$${kind}$')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
         info = 0 ; flag = .false.; R = zero_r${kind}$ ; beta = zero_r${kind}$
         do j = 1, size(Q)
@@ -912,7 +912,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_r${kind}$ / beta)
         enddo
-      	!if (timeit()) call global_timer%stop('qr_no_pivoting_${type[0]}$${kind}$')
+      	!if (time_lightkrylov()) call global_timer%stop('qr_no_pivoting_${type[0]}$${kind}$')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
 
         return
@@ -940,7 +940,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
-      	!if (timeit()) call global_timer%start('qr_with_pivoting_${type[0]}$${kind}$')
+      	!if (time_lightkrylov()) call global_timer%start('qr_with_pivoting_${type[0]}$${kind}$')
         info = 0 ; kdim = size(Q)
         R = zero_r${kind}$ ; Rii = zero_r${kind}$
         
@@ -999,7 +999,7 @@ contains
             enddo
 
         enddo qr_step
-      	!if (timeit()) call global_timer%stop('qr_with_pivoting_${type[0]}$${kind}$')
+      	!if (time_lightkrylov()) call global_timer%stop('qr_with_pivoting_${type[0]}$${kind}$')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
 
         return
