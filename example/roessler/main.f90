@@ -92,6 +92,11 @@ program demo
    sys%jacobian = jacobian()
    sys%jacobian%X = bf
 
+   ! Reset eval timer
+   call sys%reset_timer()
+   ! Reset system timers
+   call timer%reset_all()
+
    ! Set tolerance
    tol = 1e-12_wp
 
@@ -134,6 +139,11 @@ program demo
    ! Compute the stability of the orbit
    sys%jacobian = floquet_operator()
    sys%jacobian%X = bf  ! <- periodic orbit
+   
+   ! Reset eval timer
+   call sys%reset_timer()
+   ! Reset system timers
+   call timer%reset_all()
 
    M = 0.0_wp
    Id = eye(npts)
@@ -244,7 +254,7 @@ program demo
    print *, ''
 
    ! Print timing info for system evaulations
-   call sys%print_timer_info()
+   call sys%finalize_timer()
    ! Finalize timing
    call timer%finalize()
 

@@ -85,7 +85,7 @@ program demo
    call save_npy("example/ginzburg_landau/eigenvectors.npy", eigenvectors)
 
    ! Print timing info for exponential propagator
-   call A%print_timer_info()
+   call A%finalize_timer()
    ! Finalize timing
    call timer%finalize()
 
