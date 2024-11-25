@@ -25,6 +25,8 @@ module LightKrylov_AbstractSystems
         !! Reset eval counter
         procedure, pass(self), public :: print_timer_info
         !! Print current timer information
+        procedure, pass(self), public :: reset_timer
+        !! Reset current timer information
     end type abstract_system
 
     !----------------------------------------------------------------------------
@@ -231,6 +233,12 @@ contains
       class(abstract_system), intent(inout) :: self
       call self%eval_timer%print_info()
     end subroutine print_timer_info
+
+    subroutine reset_timer(self)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_system), intent(inout) :: self
+      call self%eval_timer%reset()
+    end subroutine reset_timer
 
     !---------------------------------------------------------------------
     !-----     Wrapper for system response to increment counters     -----

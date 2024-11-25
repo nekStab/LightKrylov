@@ -41,6 +41,8 @@ module LightKrylov_AbstractLinops
         !! Reset matvec/rmatvec counter
         procedure, pass(self), public :: print_timer_info
         !! Print current timer information
+        procedure, pass(self), public :: reset_timer
+        !! Reset current timer information
     end type abstract_linop
 
     #:for kind, type in RC_KINDS_TYPES
@@ -241,6 +243,20 @@ contains
         call self%matvec_timer%print_info()
       end if
     end subroutine print_timer_info
+
+    subroutine reset_timer(self, trans)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_system), intent(inout) :: self
+      logical, optional, intent(in) :: trans
+      ! internal
+      logical :: transpose
+      transpose = optval(trans, .false.)
+      if (transpose) then
+        call self%rmatvec_timer%reset()
+      else
+        call self%matvec_timer%reset()
+      end if
+    end subroutine reset_timer
 
     !---------------------------------------------------------------------
     !-----     Wrappers for matvec/rmatvec to increment counters     -----
