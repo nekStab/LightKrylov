@@ -10,7 +10,7 @@ program demo
    use LightKrylov
    use LightKrylov, only: wp => dp
    use LightKrylov_Logger
-   use LightKrylov_Timer
+   use LightKrylov_Timing, only: timer => global_lightkrylov_timer
    use LightKrylov_Utils
    use lightkrylov_IterativeSolvers, only: gmres_rdp
    ! Roessler system
@@ -50,42 +50,9 @@ program demo
    ! Set up logging
    call logger_setup()
    call logger%configure(level=error_level, time_stamp=.false.)
-   !call logger%configuration(log_units=logunits)
-   !do i = 1, size(logunits)
-   !   print *, 'unit', logunits(i)
-   !end do
-   !call logger%remove_log_unit(logunits(1))
-   !call logger%configuration(log_units=logunits)
-   !do i = 1, size(logunits)
-   !   print *, 'unit', logunits(i)
-   !end do
-   !STOP 678
-!
-   !print *, time_lightkrylov()
-   !call global_timer%initialize()
-   !call global_timer%add_timer('my_test_timer')
-   !call global_timer%start('my_test_timer')
-   !print *, time_lightkrylov()
-   !call global_timer%enumerate()
-   !call global_timer%stop('my_test_timer')
-   !call global_timer%start('my_test_timer')
-   !if (time_lightkrylov()) call global_timer%start('svds_rsp')
-   !call global_timer%start('gmres_rdp')
-   !print '(A,*(I0,1X))', 'print ', ( i, i = 1, 1000) 
-   !call global_timer%stop('gmres_rdp')
-   !i = global_timer%get_timer_id('gmres_rdp')
-   !print *, 'ID', i
-   !!call global_timer%stop('gmres_test')
-   !call global_timer%remove_timer('gmres_rdp')
-   !call global_timer%enumerate()
-   !print *, time_lightkrylov()
-   !print '(A,*(I0,1X))', 'print ', ( i, i = 1, 1000)
-   !if (time_lightkrylov()) call global_timer%stop('svds_rsp')
-   !call global_timer%stop('my_test_timer')
-   !call global_timer%enumerate()
-   !call global_timer%finalize()
-!
-!   STOP 8
+
+   ! Set up timing
+   call timer%initialize()
 
    ! Initialize baseflow and perturbation state vectors
    call bf%zero(); call dx%zero(); call residual%zero()
@@ -275,5 +242,10 @@ program demo
    call rename(report_file_OTD, 'example/roessler/PO-chaos_OTD.txt')
    call rename(report_file_OTD_LE, 'example/roessler/PO-chaos_LE.txt')
    print *, ''
+
+   ! Print timing info for system evaulations
+   call sys%print_timer_info()
+   ! Finalize timing
+   call timer%finalize()
 
 end program demo
