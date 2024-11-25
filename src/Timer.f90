@@ -110,14 +110,26 @@ contains
          allocate(self%etime_history(1))
          allocate(self%etavg_history(1))
          allocate(self%count_history(1))
-         self%etime_history(1) = self%elapsed_time
-         self%etavg_history(1) = self%elapsed_time/self%count
-         self%count_history(1) = self%count
+         if (self%count > 0) then
+            self%etime_history(1) = self%elapsed_time
+            self%etavg_history(1) = self%elapsed_time/self%count
+            self%count_history(1) = self%count
+         else
+            self%etime_history(1) = 0.0_dp
+            self%etavg_history(1) = 0.0_dp
+            self%count_history(1) = self%count
+         end if
          self%reset_counter = 1
       else
-         self%etime_history = [ self%etime_history, self%elapsed_time ]
-         self%etavg_history = [ self%etavg_history, self%elapsed_time/self%count ]
-         self%count_history = [ self%count_history, self%count ]
+         if (self%count > 0) then
+            self%etime_history = [ self%etime_history, self%elapsed_time ]
+            self%etavg_history = [ self%etavg_history, self%elapsed_time/self%count ]
+            self%count_history = [ self%count_history, self%count ]
+         else
+            self%etime_history(1) = 0.0_dp
+            self%etavg_history(1) = 0.0_dp
+            self%count_history(1) = self%count
+         end if
          self%reset_counter = self%reset_counter + 1
       end if
    end subroutine save_timer_history
@@ -169,13 +181,12 @@ contains
    subroutine finalize_timer(self)
       class(lightkrylov_timer), intent(inout) :: self
       ! internal
-      integer :: i, j, icalled
+      integer :: i
       integer :: ic_bk, ic_is, ic_nk, ic_user, count
       real(dp) :: etime, etavg
       character(len=128) :: msg, timer_fmt, timer_fmt_reset
       timer_fmt       = '(2X,A30," : ",A6,1X,I7,2(1X,F12.6))'
       timer_fmt_reset = '(2X,33X,A6,I3,1X,I7,2(1X,F12.6))'
-      icalled = 0
       call logger%log_message('###        Timer summary               #######################################', & 
                               & module=this_module)
       write(msg, '(A32," : ",7X,A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
@@ -191,11 +202,11 @@ contains
          write(msg,timer_fmt) trim(self%name), 'total', count, etime, etavg
          call logger%log_message(msg, module=this_module)
          if (self%reset_counter > 1) then
-            do j = 1, self%reset_counter
-               etime = self%etime_history(j)
-               etavg = self%etavg_history(j)
-               count = self%count_history(j)
-               write(msg,timer_fmt_reset) 'reset', j, count, etime, etavg
+            do i = 1, self%reset_counter
+               etime = self%etime_history(i)
+               etavg = self%etavg_history(i)
+               count = self%count_history(i)
+               write(msg,timer_fmt_reset) 'reset', i, count, etime, etavg
                call logger%log_message(msg, module=this_module)
             end do
          end if
@@ -459,8 +470,6 @@ contains
       self%user_mode = .true.
       if_time = .true.
       call logger%log_message('LightKrylov system timer initialization complete.', module=this_module)
-      print *, self%private_count
-      print *, self%user_count
    end subroutine initialize
 
    subroutine finalize_watch(self)
@@ -471,7 +480,6 @@ contains
       real(dp) :: etime, etavg
       character(len=128) :: msg, timer_fmt, timer_fmt_reset
       icalled = 0
-      ic_bk = 0
       do i = 1, self%timer_count
          call self%timers(i)%stop()
          if (self%timers(i)%count > 0) icalled = icalled + 1
@@ -486,6 +494,7 @@ contains
       end do
       ic_user = icalled - ic_nk - ic_is - ic_bk
       if_time = .false.
+      call logger%log_message('LightKrylov timer finalization complete.', module=this_module)
       call logger%log_message('###        Global timer summary        #######################################', & 
                               & module=this_module)
       call logger%log_message('____________________', module=this_module)
@@ -617,7 +626,8 @@ contains
             end associate
          end do
       end if
-      call logger%log_message('###        Global timer summary        #######################################', module=this_module)
+      call logger%log_message('###        Global timer summary        #######################################',  & 
+                              & module=this_module)
    end subroutine finalize_watch
 
 end module LightKrylov_Timing
