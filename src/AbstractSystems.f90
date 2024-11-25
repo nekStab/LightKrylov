@@ -27,6 +27,8 @@ module LightKrylov_AbstractSystems
         !! Print current timer information
         procedure, pass(self), public :: reset_timer
         !! Reset current timer information
+        procedure, pass(self), public :: finalize_timer
+        !! Finalize timer and print complete history
     end type abstract_system
 
     !----------------------------------------------------------------------------
@@ -209,22 +211,27 @@ contains
       count = self%eval_counter
     end function get_eval_counter
 
-    subroutine reset_eval_counter(self, procedure, counter)
+    subroutine reset_eval_counter(self, procedure, counter, reset_timer)
       class(abstract_system), intent(inout) :: self
       character(len=*), intent(in) :: procedure
       !! name of the caller routine
       integer, optional, intent(in) :: counter
       !! optional flag to reset to an integer other than zero.
+      logical, optional, intent(in) :: reset_timer
+      !! optional flag to reset also the timers (while saving the timing data)
       ! internals
       integer :: counter_, count_old
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_eval_counter()
+      reset_timer_ = optval(reset_timer, .true.)
       if (count_old /= 0 .or. counter_ /= 0) then
         write(msg,'(A,I0,A,I0,A)') 'Total number of evals: ', count_old, '. Resetting counter to ', counter_, '.'
         call logger%log_message(msg, module=this_module, procedure='reset_eval_counter('//trim(procedure)//')')
         self%eval_counter = counter_
       end if
+      if (reset_timer_) call self%reset_timer()
       return
     end subroutine reset_eval_counter
 
@@ -234,11 +241,18 @@ contains
       call self%eval_timer%print_info()
     end subroutine print_timer_info
 
-    subroutine reset_timer(self)
+    subroutine reset_timer(self, save_history)
       !! Setter routine to reset the system evaluation timer
       class(abstract_system), intent(inout) :: self
-      call self%eval_timer%reset()
+      logical, optional, intent(in) :: save_history
+      call self%eval_timer%reset(save_history)
     end subroutine reset_timer
+
+    subroutine finalize_timer(self)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_system), intent(inout) :: self
+      call self%eval_timer%finalize()
+    end subroutine finalize_timer
 
     !---------------------------------------------------------------------
     !-----     Wrapper for system response to increment counters     -----

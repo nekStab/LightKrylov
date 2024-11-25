@@ -41,6 +41,8 @@ module LightKrylov_AbstractLinops
         !! Print current timer information
         procedure, pass(self), public :: reset_timer
         !! Reset current timer information
+        procedure, pass(self), public :: finalize_timer
+        !! Finalize timers and print complete history_info
     end type abstract_linop
 
     !------------------------------------------------------------------------------
@@ -455,7 +457,7 @@ contains
       end if
     end function get_counter
 
-    subroutine reset_counter(self, trans, procedure, counter)
+    subroutine reset_counter(self, trans, procedure, counter, reset_timer)
       class(abstract_linop), intent(inout) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -463,11 +465,15 @@ contains
       !! name of the caller routine
       integer, optional, intent(in) :: counter
       !! optional flag to reset to an integer other than zero.
+      logical, optional, intent(in) :: reset_timer
+      !! optional flag to reset also the timers (while saving the timing data)
       ! internals
       integer :: counter_, count_old
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
+      reset_timer_ = optval(reset_timer, .true.)
       if ( count_old /= 0 .or. counter_ /= 0) then
         if (trans) then
             write(msg,'(A,I0,A,I0,A)') 'Total number of rmatvecs: ', count_old, '. Resetting counter to ', counter_, '.'
@@ -479,6 +485,7 @@ contains
             self%matvec_counter = counter_
         end if
       end if
+      if (reset_timer_) call self%reset_timer(trans)
       return
     end subroutine reset_counter
 
@@ -496,19 +503,27 @@ contains
       end if
     end subroutine print_timer_info
 
-    subroutine reset_timer(self, trans)
+    subroutine reset_timer(self, trans, save_history)
       !! Setter routine to reset the system evaluation timer
-      class(abstract_system), intent(inout) :: self
+      class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
+      logical, optional, intent(in) :: save_history
       ! internal
       logical :: transpose
       transpose = optval(trans, .false.)
       if (transpose) then
-        call self%rmatvec_timer%reset()
+        call self%rmatvec_timer%reset(save_history)
       else
-        call self%matvec_timer%reset()
+        call self%matvec_timer%reset(save_history)
       end if
     end subroutine reset_timer
+
+    subroutine finalize_timer(self)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_linop), intent(inout) :: self
+      call self%matvec_timer%finalize()
+      call self%rmatvec_timer%finalize()
+    end subroutine finalize_timer
 
     !---------------------------------------------------------------------
     !-----     Wrappers for matvec/rmatvec to increment counters     -----
