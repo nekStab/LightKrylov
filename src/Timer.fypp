@@ -27,6 +27,7 @@ module LightKrylov_Timing
       integer :: count = 0
       integer :: reset_counter = 0
    contains
+      private
       procedure, pass(self), public :: start => start_timer
       procedure, pass(self), public :: stop => stop_timer
       procedure, pass(self), public :: pause => pause_timer
@@ -37,33 +38,57 @@ module LightKrylov_Timing
       procedure, pass(self), public :: save_timer_history
    end type lightkrylov_timer
 
-   ! Watch type
-   type :: lightkrylov_watch
+   ! Abstract watch type
+   type, abstract, public :: abstract_watch
+      !! Base type to define a global timer.
       private
       type(lightkrylov_timer), dimension(:), allocatable :: timers
       integer :: timer_count = 0
-      integer :: basekrylov_count = 0
-      integer :: iterativesolvers_count = 0
-      integer :: newtonkrylov_count = 0
       integer :: private_count = 0
       logical :: user_mode = .false.
       integer :: user_count = 0
    contains
+      private
       procedure, pass(self), public :: add_timer
       procedure, pass(self), public :: remove_timer
       procedure, pass(self), public :: get_timer_id
-      procedure, pass(self), public :: initialize
       procedure, pass(self), public :: enumerate
       procedure, pass(self), public :: reset_all
-      procedure, pass(self), public :: finalize => finalize_watch
       procedure, pass(self), public :: start => start_timer_by_name
       procedure, pass(self), public :: stop => stop_timer_by_name
       procedure, pass(self), public :: pause => pause_timer_by_name
       procedure, pass(self), public :: reset => reset_timer_by_name
+      procedure(abstract_watch_init), pass(self), deferred, public :: initialize
+      procedure(abstract_watch_exit), pass(self), deferred, public :: finalize
+   end type abstract_watch
+
+   abstract interface
+      subroutine abstract_watch_init(self)
+         !! Interface for the initialization of the structure.
+         import abstract_watch
+         class(abstract_watch), intent(inout) :: self
+      end subroutine abstract_watch_init
+      subroutine abstract_watch_exit(self)
+         !! Interface for the finalization of the structure including the printing of the results
+         import abstract_watch
+         class(abstract_watch), intent(inout) :: self
+      end subroutine abstract_watch_exit
+   end interface
+
+   ! LightKrylov_watch type
+   type, extends(abstract_watch), public :: lightkrylov_watch
+      !! Global timing structure to contain all timers within Lightkrylov
+      character(len=128) :: name = 'lightkrylov_timer'
+      integer :: basekrylov_count = 0
+      integer :: iterativesolvers_count = 0
+      integer :: newtonkrylov_count = 0
+   contains
+      private
+      procedure, pass(self), public :: initialize => initialize_lightkrylov_watch
+      procedure, pass(self), public :: finalize => finalize_lightkrylov_watch
    end type lightkrylov_watch
 
    type(lightkrylov_watch) :: global_lightkrylov_timer
-
 contains
 
    logical function time_lightkrylov() result(if_time_lightkrylov)
@@ -217,11 +242,11 @@ contains
    end subroutine finalize_timer
 
    !--------------------------------------------------------------
-   !  Type-bound procedures for lightkrylov_watch type
+   !  Type-bound procedures for abstract_watch type
    !--------------------------------------------------------------
 
    integer function get_timer_id(self, name) result(id)
-      class(lightkrylov_watch) :: self
+      class(abstract_watch) :: self
       character(len=*)  :: name
       ! internal
       integer :: i
@@ -234,7 +259,7 @@ contains
    end function get_timer_id
 
    subroutine add_timer(self, name)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       if (self%timer_count == 0) then
          allocate(self%timers(1))
@@ -253,7 +278,7 @@ contains
    end subroutine add_timer
 
    subroutine remove_timer(self, name)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       ! internal
       type(lightkrylov_timer), dimension(:), allocatable :: new_timers
@@ -279,7 +304,7 @@ contains
    end subroutine remove_timer
    
    subroutine start_timer_by_name(self, name)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       ! internal
       integer :: id
@@ -294,7 +319,7 @@ contains
    end subroutine start_timer_by_name
 
    subroutine stop_timer_by_name(self, name)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       ! internal
       integer :: id
@@ -309,7 +334,7 @@ contains
    end subroutine stop_timer_by_name
 
    subroutine pause_timer_by_name(self, name)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       ! internal
       integer :: id
@@ -324,7 +349,7 @@ contains
    end subroutine
 
    subroutine reset_timer_by_name(self, name, save_history)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       logical, optional, intent(in) :: save_history
       ! internal
@@ -339,7 +364,7 @@ contains
    end subroutine
 
    subroutine enumerate(self, only_user)
-      class(lightkrylov_watch), intent(in) :: self
+      class(abstract_watch), intent(in) :: self
       logical, optional, intent(in) :: only_user
       ! internal
       integer :: i
@@ -363,7 +388,7 @@ contains
    end subroutine enumerate
 
    subroutine reset_all(self, save_history)
-      class(lightkrylov_watch), intent(inout) :: self
+      class(abstract_watch), intent(inout) :: self
       logical, optional, intent(in) :: save_history
       ! internal
       integer :: i
@@ -373,7 +398,11 @@ contains
       end do
    end subroutine reset_all
 
-   subroutine initialize(self)
+   !--------------------------------------------------------------
+   !  Concrete implementations for the lightkrylov_watch type
+   !--------------------------------------------------------------
+
+   subroutine initialize_lightkrylov_watch(self)
       class(lightkrylov_watch), intent(inout) :: self
       ! timers for LightKrylov_BaseKrylov
       #:for kind, type in RC_KINDS_TYPES
@@ -411,9 +440,9 @@ contains
       self%user_mode = .true.
       if_time = .true.
       call logger%log_message('LightKrylov system timer initialization complete.', module=this_module)
-   end subroutine initialize
+   end subroutine initialize_lightkrylov_watch
 
-   subroutine finalize_watch(self)
+   subroutine finalize_lightkrylov_watch(self)
       class(lightkrylov_watch), intent(inout) :: self
       ! internal
       integer :: i, j, icalled
@@ -569,6 +598,6 @@ contains
       end if
       call logger%log_message('###        Global timer summary        #######################################',  & 
                               & module=this_module)
-   end subroutine finalize_watch
+   end subroutine finalize_lightkrylov_watch
 
 end module LightKrylov_Timing
