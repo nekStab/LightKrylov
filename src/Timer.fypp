@@ -51,7 +51,6 @@ module LightKrylov_Timing
    contains
       procedure, pass(self), public :: add_timer
       procedure, pass(self), public :: remove_timer
-
       procedure, pass(self), public :: get_timer_id
       procedure, pass(self), public :: initialize
       procedure, pass(self), public :: enumerate
