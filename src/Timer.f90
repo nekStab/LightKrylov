@@ -152,7 +152,8 @@ contains
       real(dp) :: etime, etavg
       character(len=128) :: msg, timer_fmt
       timer_fmt       = '(2X,A30," : ",I7,2(1X,F12.6))'
-      call logger%log_message('###        Timer info                  #######################################', module=this_module)
+      call logger%log_message('###        Timer info                  #######################################', & 
+                              & module=this_module)
       write(msg, '(A32," : ",A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
       call logger%log_message(msg, module=this_module)
       etime = 0.0_dp
@@ -161,7 +162,8 @@ contains
       if (self%count > 0) etavg = etime/self%count
       write(msg,timer_fmt) trim(self%name), self%count, etime, etavg
       call logger%log_message(msg, module=this_module)
-      call logger%log_message('###        Timer info                  #######################################', module=this_module)
+      call logger%log_message('###        Timer info                  #######################################', & 
+                              & module=this_module)
    end subroutine print_timer_info
 
    subroutine finalize_timer(self)
@@ -174,10 +176,12 @@ contains
       timer_fmt       = '(2X,A30," : ",A6,1X,I7,2(1X,F12.6))'
       timer_fmt_reset = '(2X,33X,A6,I3,1X,I7,2(1X,F12.6))'
       icalled = 0
-      call logger%log_message('###        Timer summary               #######################################', module=this_module)
+      call logger%log_message('###        Timer summary               #######################################', & 
+                              & module=this_module)
       write(msg, '(A32," : ",7X,A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
       call logger%log_message(msg, module=this_module)
-      call logger%log_message('______________________________________________________________________________', module=this_module)
+      call logger%log_message('______________________________________________________________________________', & 
+                              & module=this_module)
       etavg = 0.0_dp
       if (self%count > 0 .or. self%reset_counter > 0) then
          if (self%reset_counter == 0) call self%save_timer_history()
@@ -196,7 +200,8 @@ contains
             end do
          end if
       end if
-      call logger%log_message('###        Timer summary               #######################################', module=this_module)
+      call logger%log_message('###        Timer summary               #######################################', & 
+                              & module=this_module)
    end subroutine finalize_timer
 
    !--------------------------------------------------------------
@@ -225,7 +230,8 @@ contains
          self%timer_count = 1
       else
          if (self%get_timer_id(name) > 0) then
-            call stop_error('Timer "'//to_lower(trim(name))//'" already defined!', module=this_module, procedure='add_timer')
+            call stop_error('Timer "'//to_lower(trim(name))//'" already defined!', & 
+                              & module=this_module, procedure='add_timer')
          end if
          self%timers = [ self%timers, lightkrylov_timer(name) ]
          self%timer_count = self%timer_count + 1
@@ -242,10 +248,12 @@ contains
       integer :: id
       id = self%get_timer_id(name)
       if (id == 0) then
-         call stop_error('Timer "'//to_lower(trim(name))//'" not defined!', module=this_module, procedure='remove_timer')
+         call stop_error('Timer "'//to_lower(trim(name))//'" not defined!', & 
+                              & module=this_module, procedure='remove_timer')
       else
          if (id <= self%private_count) then
-            call logger%log_message('Cannot remove private timer "'//to_lower(trim(name))//'".', module=this_module, procedure='remove_timer')
+            call logger%log_message('Cannot remove private timer "'//to_lower(trim(name))//'".', & 
+                              & module=this_module, procedure='remove_timer')
          else
             self%timer_count = self%timer_count - 1
             allocate(new_timers(self%timer_count))
@@ -265,7 +273,8 @@ contains
       integer :: id
       id = self%get_timer_id(name)
       if (id == 0) then 
-         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', module=this_module, procedure='start_timer_by_name')
+         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', & 
+                              & module=this_module, procedure='start_timer_by_name')
       else
          call self%timers(id)%start()
       end if
@@ -279,7 +288,8 @@ contains
       integer :: id
       id = self%get_timer_id(name)
       if (id == 0) then 
-         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', module=this_module, procedure='start_timer_by_name')
+         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', & 
+                              & module=this_module, procedure='start_timer_by_name')
       else
          call self%timers(id)%stop()
       end if
@@ -293,7 +303,8 @@ contains
       integer :: id
       id = self%get_timer_id(name)
       if (id == 0) then 
-         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', module=this_module, procedure='start_timer_by_name')
+         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', & 
+                              & module=this_module, procedure='start_timer_by_name')
       else
          call self%timers(id)%pause()
       end if
@@ -308,7 +319,8 @@ contains
       integer :: id
       id = self%get_timer_id(name)
       if (id == 0) then 
-         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', module=this_module, procedure='start_timer_by_name')
+         call stop_error('Timer "'//to_lower(trim(name))//'" not found!', & 
+                              & module=this_module, procedure='start_timer_by_name')
       else
          call self%timers(id)%reset(save_history)
       end if
@@ -474,7 +486,8 @@ contains
       end do
       ic_user = icalled - ic_nk - ic_is - ic_bk
       if_time = .false.
-      call logger%log_message('###        Global timer summary        #######################################', module=this_module)
+      call logger%log_message('###        Global timer summary        #######################################', & 
+                              & module=this_module)
       call logger%log_message('____________________', module=this_module)
       call logger%log_message('Overview:', module=this_module)
       write(msg, '(2X,A40,I5)') 'Total active timers:', self%timer_count
@@ -490,7 +503,8 @@ contains
          call logger%log_message('BaseKrylov:', module=this_module)
          write(msg, '(A32," : ",7X,A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
          call logger%log_message(msg, module=this_module)
-         call logger%log_message('______________________________________________________________________________', module=this_module)
+         call logger%log_message('______________________________________________________________________________', & 
+                              & module=this_module)
          do i = 1, self%basekrylov_count
             associate(t => self%timers(i))
                rcount = t%reset_counter
@@ -519,7 +533,8 @@ contains
          call logger%log_message('IterativeSolvers:', module=this_module)
          write(msg, '(A32," : ",7X,A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
          call logger%log_message(msg, module=this_module)
-         call logger%log_message('______________________________________________________________________________', module=this_module)
+         call logger%log_message('______________________________________________________________________________', & 
+                              & module=this_module)
          do i = j, self%iterativesolvers_count
             associate(t => self%timers(i))
                rcount = t%reset_counter
@@ -548,7 +563,8 @@ contains
          call logger%log_message('NewtonKrylov:', module=this_module)
          write(msg, '(A32," : ",7X,A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
          call logger%log_message(msg, module=this_module)
-         call logger%log_message('_________________________________________________________________', module=this_module)
+         call logger%log_message('______________________________________________________________________________', & 
+                              & module=this_module)
          do i = j, self%newtonkrylov_count
             associate(t => self%timers(i))
                rcount = t%reset_counter
@@ -577,7 +593,8 @@ contains
          call logger%log_message('User-defined:', module=this_module)
          write(msg, '(A32," : ",7X,A7,2(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)'
          call logger%log_message(msg, module=this_module)
-         call logger%log_message('_________________________________________________________________', module=this_module)
+         call logger%log_message('______________________________________________________________________________', & 
+                              & module=this_module)
          do i = j, self%timer_count
             associate(t => self%timers(i))
                rcount = t%reset_counter
