@@ -4,6 +4,7 @@ module LightKrylov_AbstractSystems
     use stdlib_optval, only: optval
     use LightKrylov_Logger
     use LightKrylov_Constants
+    use LightKrylov_Timing
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
@@ -16,11 +17,14 @@ module LightKrylov_AbstractSystems
     type, abstract, public :: abstract_system
     private
         integer :: eval_counter = 0
+        type(lightkrylov_timer) :: eval_timer = lightkrylov_timer('system eval timer')
     contains
         procedure, pass(self), public :: get_eval_counter
         !! Return eval counter value
         procedure, pass(self), public :: reset_eval_counter
         !! Reset eval counter
+        procedure, pass(self), public :: print_timer_info
+        !! Print current timer information
     end type abstract_system
 
     !----------------------------------------------------------------------------
@@ -222,6 +226,12 @@ contains
       return
     end subroutine reset_eval_counter
 
+    subroutine print_timer_info(self)
+      !! Getter routine to print the current timing information for the system evaluation
+      class(abstract_system), intent(inout) :: self
+      call self%eval_timer%print_info()
+    end subroutine print_timer_info
+
     !---------------------------------------------------------------------
     !-----     Wrapper for system response to increment counters     -----
     !---------------------------------------------------------------------
@@ -236,7 +246,9 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
@@ -251,7 +263,9 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
@@ -266,7 +280,9 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return
@@ -281,7 +297,9 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='response')
         return

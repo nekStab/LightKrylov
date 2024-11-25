@@ -12,7 +12,7 @@ module LightKrylov_AbstractLinops
     use stdlib_optval, only: optval
     use LightKrylov_Logger
     use LightKrylov_Constants
-    use LightKrylov_Timer
+    use LightKrylov_Timing
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     implicit none
@@ -30,13 +30,15 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         integer, private :: matvec_counter  = 0
         integer, private :: rmatvec_counter = 0
-        !type(timer_type) :: matvec_timer
-        !type(timer_type) :: rmatvec_timer
+        type(lightkrylov_timer) :: matvec_timer  = lightkrylov_timer('matvec timer')
+        type(lightkrylov_timer) :: rmatvec_timer = lightkrylov_timer('rmatvec timer')
     contains
         procedure, pass(self), public :: get_counter
         !! Return matvec/rmatvec counter value
         procedure, pass(self), public :: reset_counter
         !! Reset matvec/rmatvec counter
+        procedure, pass(self), public :: print_timer_info
+        !! Print current timer information
     end type abstract_linop
 
     !------------------------------------------------------------------------------
@@ -478,6 +480,20 @@ contains
       return
     end subroutine reset_counter
 
+    subroutine print_timer_info(self, trans)
+      !! Getter routine to print the current timing information for the system evaluation
+      class(abstract_linop), intent(inout) :: self
+      logical, optional, intent(in) :: trans
+      ! internal
+      logical :: transpose
+      transpose = optval(trans, .false.)
+      if (transpose) then
+        call self%rmatvec_timer%print_info()
+      else
+        call self%matvec_timer%print_info()
+      end if
+    end subroutine print_timer_info
+
     !---------------------------------------------------------------------
     !-----     Wrappers for matvec/rmatvec to increment counters     -----
     !---------------------------------------------------------------------
@@ -491,9 +507,9 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
-        !call self%matvec_timer%start()
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
-        !call self%matvec_timer%stop()
+        call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
@@ -508,9 +524,9 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
-        !call self%rmatvec_timer%start()
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
-        !call self%rmatvec_timer%stop()
+        call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
@@ -524,9 +540,9 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
-        !call self%matvec_timer%start()
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
-        !call self%matvec_timer%stop()
+        call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
@@ -541,9 +557,9 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
-        !call self%rmatvec_timer%start()
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
-        !call self%rmatvec_timer%stop()
+        call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
@@ -557,9 +573,9 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
-        !call self%matvec_timer%start()
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
-        !call self%matvec_timer%stop()
+        call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
@@ -574,9 +590,9 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
-        !call self%rmatvec_timer%start()
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
-        !call self%rmatvec_timer%stop()
+        call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
@@ -590,9 +606,9 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
-        !call self%matvec_timer%start()
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
-        !call self%matvec_timer%stop()
+        call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
@@ -607,9 +623,9 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
-        !call self%rmatvec_timer%start()
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
-        !call self%rmatvec_timer%stop()
+        call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return

@@ -283,6 +283,9 @@ contains
       call self%add_timer('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
       call self%add_timer('dgs_vector_against_basis_${type[0]}$${kind}$')
       call self%add_timer('dgs_basis_against_basis_${type[0]}$${kind}$')
+      call self%add_timer('arnoldi_${type[0]}$${kind}$')
+      call self%add_timer('lanczos_bidiagonalization_${type[0]}$${kind}$')
+      call self%add_timer('lanczos_tridiagonalization_${type[0]}$${kind}$')
       self%basekrylov_count = self%timer_count
       #:endfor
       ! timers for LightKrylov_IterativeSolvers

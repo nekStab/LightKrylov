@@ -21,7 +21,7 @@ module lightkrylov_BaseKrylov
     !-------------------------------
     use LightKrylov_Constants
     use LightKrylov_Logger
-    !use LightKrylov_Timer
+    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
@@ -677,11 +677,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_rsp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_rsp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_rsp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
-      !if (time_lightkrylov()) call global_timer%end('orthonormalize_basis_rsp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_rsp')
       
       return
@@ -705,7 +705,7 @@ contains
       real(sp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_rsp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_vector_against_basis_rsp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_rsp')
       info = 0
 
       ! optional input argument
@@ -742,7 +742,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rsp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_vector_against_basis_rsp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_rsp')
       
       return
@@ -767,7 +767,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_rsp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_against_basis_rsp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_rsp')
       info = 0
 
       ! optional input argument
@@ -806,7 +806,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rsp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_basis_against_basis_rsp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_rsp')
       
       return
@@ -834,7 +834,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_rsp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_vector_against_basis_rsp')
+      if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_rsp')
       info = 0
 
       proj_coefficients = zero_rsp; wrk = zero_rsp
@@ -856,7 +856,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rsp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_vector_against_basis_rsp')
+      if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_rsp')
 
     end subroutine DGS_vector_against_basis_rsp
@@ -883,7 +883,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_rsp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_basis_against_basis_rsp')
+      if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_rsp')
       info = 0
 
       proj_coefficients = zero_rsp; wrk = zero_rsp
@@ -905,7 +905,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rsp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_basis_against_basis_rsp')
+      if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_rsp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_rsp')
 
     end subroutine DGS_basis_against_basis_rsp  
@@ -942,11 +942,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_rdp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_rdp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_rdp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
-      !if (time_lightkrylov()) call global_timer%end('orthonormalize_basis_rdp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_rdp')
       
       return
@@ -970,7 +970,7 @@ contains
       real(dp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_rdp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_vector_against_basis_rdp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_rdp')
       info = 0
 
       ! optional input argument
@@ -1007,7 +1007,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_vector_against_basis_rdp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_rdp')
       
       return
@@ -1032,7 +1032,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_rdp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_against_basis_rdp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_rdp')
       info = 0
 
       ! optional input argument
@@ -1071,7 +1071,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_basis_against_basis_rdp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_rdp')
       
       return
@@ -1099,7 +1099,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_rdp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_vector_against_basis_rdp')
+      if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_rdp')
       info = 0
 
       proj_coefficients = zero_rdp; wrk = zero_rdp
@@ -1121,7 +1121,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_vector_against_basis_rdp')
+      if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_rdp')
 
     end subroutine DGS_vector_against_basis_rdp
@@ -1148,7 +1148,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_rdp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_basis_against_basis_rdp')
+      if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_rdp')
       info = 0
 
       proj_coefficients = zero_rdp; wrk = zero_rdp
@@ -1170,7 +1170,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_basis_against_basis_rdp')
+      if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_rdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_rdp')
 
     end subroutine DGS_basis_against_basis_rdp  
@@ -1207,11 +1207,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_csp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_csp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_csp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
-      !if (time_lightkrylov()) call global_timer%end('orthonormalize_basis_csp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_csp')
       
       return
@@ -1235,7 +1235,7 @@ contains
       complex(sp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_csp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_vector_against_basis_csp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_csp')
       info = 0
 
       ! optional input argument
@@ -1272,7 +1272,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_csp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_vector_against_basis_csp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_csp')
       
       return
@@ -1297,7 +1297,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_csp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_against_basis_csp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_csp')
       info = 0
 
       ! optional input argument
@@ -1336,7 +1336,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_csp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_basis_against_basis_csp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_csp')
       
       return
@@ -1364,7 +1364,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_csp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_vector_against_basis_csp')
+      if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_csp')
       info = 0
 
       proj_coefficients = zero_csp; wrk = zero_csp
@@ -1386,7 +1386,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_csp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_vector_against_basis_csp')
+      if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_csp')
 
     end subroutine DGS_vector_against_basis_csp
@@ -1413,7 +1413,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_csp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_basis_against_basis_csp')
+      if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_csp')
       info = 0
 
       proj_coefficients = zero_csp; wrk = zero_csp
@@ -1435,7 +1435,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_csp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_basis_against_basis_csp')
+      if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_csp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_csp')
 
     end subroutine DGS_basis_against_basis_csp  
@@ -1472,11 +1472,11 @@ contains
       integer :: info
 
       call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_cdp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_cdp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_cdp')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
-      !if (time_lightkrylov()) call global_timer%end('orthonormalize_basis_cdp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_cdp')
       
       return
@@ -1500,7 +1500,7 @@ contains
       complex(dp) :: proj_coefficients(size(X))
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_cdp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_vector_against_basis_cdp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_cdp')
       info = 0
 
       ! optional input argument
@@ -1537,7 +1537,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_cdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_vector_against_basis_cdp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_cdp')
       
       return
@@ -1562,7 +1562,7 @@ contains
       integer :: i
 
       call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_cdp')
-      !if (time_lightkrylov()) call global_timer%start('orthonormalize_basis_against_basis_cdp')
+      if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_cdp')
       info = 0
 
       ! optional input argument
@@ -1601,7 +1601,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_cdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('orthonormalize_basis_against_basis_cdp')
+      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_cdp')
       
       return
@@ -1629,7 +1629,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_cdp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_vector_against_basis_cdp')
+      if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_cdp')
       info = 0
 
       proj_coefficients = zero_cdp; wrk = zero_cdp
@@ -1651,7 +1651,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_cdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_vector_against_basis_cdp')
+      if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_cdp')
 
     end subroutine DGS_vector_against_basis_cdp
@@ -1678,7 +1678,7 @@ contains
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
       call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_cdp')
-      !if (time_lightkrylov()) call global_timer%start('DGS_basis_against_basis_cdp')
+      if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_cdp')
       info = 0
 
       proj_coefficients = zero_cdp; wrk = zero_cdp
@@ -1700,7 +1700,7 @@ contains
          call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_cdp')
          beta = proj_coefficients
       end if
-      !if (time_lightkrylov()) call global_timer%stop('DGS_basis_against_basis_cdp')
+      if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_cdp')
       call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_cdp')
 
     end subroutine DGS_basis_against_basis_cdp  
@@ -1730,7 +1730,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
-      	!if (time_lightkrylov()) call global_timer%start('qr_no_pivoting_rsp')
+      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_rsp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_rsp')
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
@@ -1762,7 +1762,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
-      	!if (time_lightkrylov()) call global_timer%stop('qr_no_pivoting_rsp')
+      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rsp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_rsp')
 
         return
@@ -1790,7 +1790,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_rsp')
-      	!if (time_lightkrylov()) call global_timer%start('qr_with_pivoting_rsp')
+      	if (time_lightkrylov()) call timer%start('qr_with_pivoting_rsp')
         info = 0 ; kdim = size(Q)
         R = zero_rsp ; Rii = zero_rsp
         
@@ -1849,7 +1849,7 @@ contains
             enddo
 
         enddo qr_step
-      	!if (time_lightkrylov()) call global_timer%stop('qr_with_pivoting_rsp')
+      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rsp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_rsp')
 
         return
@@ -2003,7 +2003,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
-      	!if (time_lightkrylov()) call global_timer%start('qr_no_pivoting_rdp')
+      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_rdp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_rdp')
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
@@ -2035,7 +2035,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
-      	!if (time_lightkrylov()) call global_timer%stop('qr_no_pivoting_rdp')
+      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rdp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_rdp')
 
         return
@@ -2063,7 +2063,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_rdp')
-      	!if (time_lightkrylov()) call global_timer%start('qr_with_pivoting_rdp')
+      	if (time_lightkrylov()) call timer%start('qr_with_pivoting_rdp')
         info = 0 ; kdim = size(Q)
         R = zero_rdp ; Rii = zero_rdp
         
@@ -2122,7 +2122,7 @@ contains
             enddo
 
         enddo qr_step
-      	!if (time_lightkrylov()) call global_timer%stop('qr_with_pivoting_rdp')
+      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rdp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_rdp')
 
         return
@@ -2276,7 +2276,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
-      	!if (time_lightkrylov()) call global_timer%start('qr_no_pivoting_csp')
+      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_csp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_csp')
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
@@ -2308,7 +2308,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
-      	!if (time_lightkrylov()) call global_timer%stop('qr_no_pivoting_csp')
+      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_csp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_csp')
 
         return
@@ -2336,7 +2336,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_csp')
-      	!if (time_lightkrylov()) call global_timer%start('qr_with_pivoting_csp')
+      	if (time_lightkrylov()) call timer%start('qr_with_pivoting_csp')
         info = 0 ; kdim = size(Q)
         R = zero_rsp ; Rii = zero_rsp
         
@@ -2395,7 +2395,7 @@ contains
             enddo
 
         enddo qr_step
-      	!if (time_lightkrylov()) call global_timer%stop('qr_with_pivoting_csp')
+      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_csp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_csp')
 
         return
@@ -2549,7 +2549,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
-      	!if (time_lightkrylov()) call global_timer%start('qr_no_pivoting_cdp')
+      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_cdp')
         call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_cdp')
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
@@ -2581,7 +2581,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
-      	!if (time_lightkrylov()) call global_timer%stop('qr_no_pivoting_cdp')
+      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_cdp')
         call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_cdp')
 
         return
@@ -2609,7 +2609,7 @@ contains
         character(len=128) :: msg
 
         call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_cdp')
-      	!if (time_lightkrylov()) call global_timer%start('qr_with_pivoting_cdp')
+      	if (time_lightkrylov()) call timer%start('qr_with_pivoting_cdp')
         info = 0 ; kdim = size(Q)
         R = zero_rdp ; Rii = zero_rdp
         
@@ -2668,7 +2668,7 @@ contains
             enddo
 
         enddo qr_step
-      	!if (time_lightkrylov()) call global_timer%stop('qr_with_pivoting_cdp')
+      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_cdp')
         call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_cdp')
 
         return
@@ -2836,6 +2836,9 @@ contains
         integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
+        call logger%log_debug('start', module=this_module, procedure='arnoldi_rsp')
+        if (time_lightkrylov()) call timer%start('arnoldi_rsp')
+
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
         allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
@@ -2889,6 +2892,9 @@ contains
 
         enddo blk_arnoldi
 
+        if (time_lightkrylov()) call timer%stop('arnoldi_rsp')
+        call logger%log_debug('end', module=this_module, procedure='arnoldi_rsp')
+
         return
     end subroutine arnoldi_rsp
 
@@ -2920,6 +2926,9 @@ contains
         real(dp), allocatable :: res(:)
         integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
+
+        call logger%log_debug('start', module=this_module, procedure='arnoldi_rdp')
+        if (time_lightkrylov()) call timer%start('arnoldi_rdp')
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
@@ -2974,6 +2983,9 @@ contains
 
         enddo blk_arnoldi
 
+        if (time_lightkrylov()) call timer%stop('arnoldi_rdp')
+        call logger%log_debug('end', module=this_module, procedure='arnoldi_rdp')
+
         return
     end subroutine arnoldi_rdp
 
@@ -3005,6 +3017,9 @@ contains
         complex(sp), allocatable :: res(:)
         integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
+
+        call logger%log_debug('start', module=this_module, procedure='arnoldi_csp')
+        if (time_lightkrylov()) call timer%start('arnoldi_csp')
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
@@ -3059,6 +3074,9 @@ contains
 
         enddo blk_arnoldi
 
+        if (time_lightkrylov()) call timer%stop('arnoldi_csp')
+        call logger%log_debug('end', module=this_module, procedure='arnoldi_csp')
+
         return
     end subroutine arnoldi_csp
 
@@ -3090,6 +3108,9 @@ contains
         complex(dp), allocatable :: res(:)
         integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
+
+        call logger%log_debug('start', module=this_module, procedure='arnoldi_cdp')
+        if (time_lightkrylov()) call timer%start('arnoldi_cdp')
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
@@ -3144,6 +3165,9 @@ contains
 
         enddo blk_arnoldi
 
+        if (time_lightkrylov()) call timer%stop('arnoldi_cdp')
+        call logger%log_debug('end', module=this_module, procedure='arnoldi_cdp')
+
         return
     end subroutine arnoldi_cdp
 
@@ -3178,6 +3202,8 @@ contains
         real(sp) :: alpha, beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_bidiagonalization_rsp')
+        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_rsp')
         info = 0
 
         ! Krylov subspace dimension.
@@ -3228,6 +3254,9 @@ contains
 
         enddo lanczos
 
+        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_rsp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_bidiagonalization_rsp')
+
         return
     end subroutine lanczos_bidiagonalization_rsp
 
@@ -3256,6 +3285,8 @@ contains
         real(dp) :: alpha, beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_bidiagonalization_rdp')
+        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_rdp')
         info = 0
 
         ! Krylov subspace dimension.
@@ -3306,6 +3337,9 @@ contains
 
         enddo lanczos
 
+        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_rdp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_bidiagonalization_rdp')
+
         return
     end subroutine lanczos_bidiagonalization_rdp
 
@@ -3334,6 +3368,8 @@ contains
         complex(sp) :: alpha, beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_bidiagonalization_csp')
+        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_csp')
         info = 0
 
         ! Krylov subspace dimension.
@@ -3384,6 +3420,9 @@ contains
 
         enddo lanczos
 
+        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_csp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_bidiagonalization_csp')
+
         return
     end subroutine lanczos_bidiagonalization_csp
 
@@ -3412,6 +3451,8 @@ contains
         complex(dp) :: alpha, beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_bidiagonalization_cdp')
+        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_cdp')
         info = 0
 
         ! Krylov subspace dimension.
@@ -3462,6 +3503,9 @@ contains
 
         enddo lanczos
 
+        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_cdp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_bidiagonalization_cdp')
+
         return
     end subroutine lanczos_bidiagonalization_cdp
 
@@ -3485,6 +3529,9 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         integer :: k, kdim
+
+        call logger%log_debug('start', module=this_module, procedure='lanczos_tridiagonalization_rsp')
+        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_rsp')
 
         ! Deal with optional args.
         kdim = size(X) - 1
@@ -3512,6 +3559,9 @@ contains
                 call X(k+1)%scal(one_rsp / beta)
             endif
         enddo lanczos
+
+        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_rsp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_tridiagonalization_rsp')
 
         return
     end subroutine lanczos_tridiagonalization_rsp
@@ -3553,6 +3603,9 @@ contains
         real(dp) :: beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_tridiagonalization_rdp')
+        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_rdp')
+
         ! Deal with optional args.
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
@@ -3579,6 +3632,9 @@ contains
                 call X(k+1)%scal(one_rdp / beta)
             endif
         enddo lanczos
+
+        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_rdp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_tridiagonalization_rdp')
 
         return
     end subroutine lanczos_tridiagonalization_rdp
@@ -3620,6 +3676,9 @@ contains
         real(sp) :: beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_tridiagonalization_csp')
+        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_csp')
+
         ! Deal with optional args.
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
@@ -3646,6 +3705,9 @@ contains
                 call X(k+1)%scal(one_csp / beta)
             endif
         enddo lanczos
+
+        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_csp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_tridiagonalization_csp')
 
         return
     end subroutine lanczos_tridiagonalization_csp
@@ -3687,6 +3749,9 @@ contains
         real(dp) :: beta
         integer :: k, kdim
 
+        call logger%log_debug('start', module=this_module, procedure='lanczos_tridiagonalization_cdp')
+        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_cdp')
+
         ! Deal with optional args.
         kdim = size(X) - 1
         k_start = optval(kstart, 1)
@@ -3713,6 +3778,9 @@ contains
                 call X(k+1)%scal(one_cdp / beta)
             endif
         enddo lanczos
+
+        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_cdp')
+        call logger%log_debug('end', module=this_module, procedure='lanczos_tridiagonalization_cdp')
 
         return
     end subroutine lanczos_tridiagonalization_cdp

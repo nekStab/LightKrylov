@@ -57,10 +57,6 @@ module LightKrylov_Timing
 
 contains
 
-   !--------------------------------------------------------------
-   !  Getter routine to determine whether timing is turned on/off
-   !--------------------------------------------------------------
-
    logical function time_lightkrylov() result(if_time_lightkrylov)
       if_time_lightkrylov = if_time
    end function time_lightkrylov
@@ -284,6 +280,9 @@ contains
       call self%add_timer('orthonormalize_basis_against_basis_rsp')
       call self%add_timer('dgs_vector_against_basis_rsp')
       call self%add_timer('dgs_basis_against_basis_rsp')
+      call self%add_timer('arnoldi_rsp')
+      call self%add_timer('lanczos_bidiagonalization_rsp')
+      call self%add_timer('lanczos_tridiagonalization_rsp')
       self%basekrylov_count = self%timer_count
       ! rdp
       call self%add_timer('qr_with_pivoting_rdp')
@@ -293,6 +292,9 @@ contains
       call self%add_timer('orthonormalize_basis_against_basis_rdp')
       call self%add_timer('dgs_vector_against_basis_rdp')
       call self%add_timer('dgs_basis_against_basis_rdp')
+      call self%add_timer('arnoldi_rdp')
+      call self%add_timer('lanczos_bidiagonalization_rdp')
+      call self%add_timer('lanczos_tridiagonalization_rdp')
       self%basekrylov_count = self%timer_count
       ! csp
       call self%add_timer('qr_with_pivoting_csp')
@@ -302,6 +304,9 @@ contains
       call self%add_timer('orthonormalize_basis_against_basis_csp')
       call self%add_timer('dgs_vector_against_basis_csp')
       call self%add_timer('dgs_basis_against_basis_csp')
+      call self%add_timer('arnoldi_csp')
+      call self%add_timer('lanczos_bidiagonalization_csp')
+      call self%add_timer('lanczos_tridiagonalization_csp')
       self%basekrylov_count = self%timer_count
       ! cdp
       call self%add_timer('qr_with_pivoting_cdp')
@@ -311,6 +316,9 @@ contains
       call self%add_timer('orthonormalize_basis_against_basis_cdp')
       call self%add_timer('dgs_vector_against_basis_cdp')
       call self%add_timer('dgs_basis_against_basis_cdp')
+      call self%add_timer('arnoldi_cdp')
+      call self%add_timer('lanczos_bidiagonalization_cdp')
+      call self%add_timer('lanczos_tridiagonalization_cdp')
       self%basekrylov_count = self%timer_count
       ! timers for LightKrylov_IterativeSolvers
       ! rsp
