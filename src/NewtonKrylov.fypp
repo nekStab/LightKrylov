@@ -137,7 +137,6 @@ contains
       type(newton_${kind}$_metadata) :: newton_meta
       character(len=256) :: msg
       
-      call logger%log_debug('start', module=this_module, procedure='newton_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%start('newton_${type[0]}$${kind}$')
       
       ! Newton-solver tolerance
@@ -258,8 +257,7 @@ contains
 
       call sys%reset_eval_counter('newton%post')
       if (time_lightkrylov()) call timer%stop('newton_${type[0]}$${kind}$')
-      call logger%log_debug('end', module=this_module, procedure='newton_${type[0]}$${kind}$')
-
+      
       return
    end subroutine newton_${type[0]}$${kind}$
 

@@ -624,7 +624,6 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_${kind}$), pointer :: select_
 
-        call logger%log_debug('start', module=this_module, procedure='eigs_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('eigs_${type[0]}$${kind}$')
         ! Deals with optional parameters.
         nev = size(X)
@@ -732,8 +731,7 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='eigs_${type[0]}$${kind}$')
-
+        
         return
     end subroutine eigs_${type[0]}$${kind}$
 
@@ -790,7 +788,6 @@ contains
         ${type}$ :: beta
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='eighs_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('eighs_${type[0]}$${kind}$')
         ! Deaks with the optional args.
         nev = size(X)
@@ -856,8 +853,7 @@ contains
         
         info = k
         if (time_lightkrylov()) call timer%stop('eighs_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='eighs_${type[0]}$${kind}$')
-
+        
         return
     end subroutine eighs_${type[0]}$${kind}$
 
@@ -905,7 +901,6 @@ contains
         real(${kind}$) :: tol, u0_norm
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='svds_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('svds_${type[0]}$${kind}$')
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -972,8 +967,7 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop('svds_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='svds_${type[0]}$${kind}$')
-
+        
         return
     end subroutine svds_${type[0]}$${kind}$
 
@@ -1034,7 +1028,6 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='gmres_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('gmres_${type[0]}$${kind}$')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_${kind}$)
@@ -1179,7 +1172,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop('gmres_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='gmres_${type[0]}$${kind}$')
         
         return
     end subroutine gmres_${type[0]}$${kind}$

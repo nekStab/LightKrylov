@@ -621,13 +621,11 @@ contains
       ${type}$ :: R(size(X),size(X))
       integer :: info
 
-      call logger%log_debug('start', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%start('orthonormalize_basis_${type[0]}$${kind}$')
       ! internals
       call qr(X, R, info)
       call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%stop('orthonormalize_basis_${type[0]}$${kind}$')
-      call logger%log_debug('end', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
       
       return
     end subroutine orthonormalize_basis_${type[0]}$${kind}$
@@ -649,7 +647,6 @@ contains
       ! internals
       ${type}$ :: proj_coefficients(size(X))
 
-      call logger%log_debug('start', module=this_module, procedure='orthogonalize_vector_against_basis_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
       info = 0
 
@@ -688,7 +685,6 @@ contains
          beta = proj_coefficients
       end if
       if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
-      call logger%log_debug('end', module=this_module, procedure='orthogonalize_vector_against_basis_${type[0]}$${kind}$')
       
       return
     end subroutine orthogonalize_vector_against_basis_${type[0]}$${kind}$
@@ -711,7 +707,6 @@ contains
       ${type}$ :: proj_coefficients(size(X), size(Y))
       integer :: i
 
-      call logger%log_debug('start', module=this_module, procedure='orthogonalize_basis_against_basis_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
       info = 0
 
@@ -752,7 +747,6 @@ contains
          beta = proj_coefficients
       end if
       if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
-      call logger%log_debug('end', module=this_module, procedure='orthogonalize_basis_against_basis_${type[0]}$${kind}$')
       
       return
     end subroutine orthogonalize_basis_against_basis_${type[0]}$${kind}$
@@ -778,7 +772,6 @@ contains
       ! optional input argument
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-      call logger%log_debug('start', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_${type[0]}$${kind}$')
       info = 0
 
@@ -802,8 +795,7 @@ contains
          beta = proj_coefficients
       end if
       if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_${type[0]}$${kind}$')
-      call logger%log_debug('end', module=this_module, procedure='DGS_vector_against_basis_${type[0]}$${kind}$')
-
+      
     end subroutine DGS_vector_against_basis_${type[0]}$${kind}$
 
     subroutine DGS_basis_against_basis_${type[0]}$${kind}$(y, X, info, if_chk_orthonormal, beta)
@@ -827,7 +819,6 @@ contains
       ! optional input argument
       chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-      call logger%log_debug('start', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$')
       if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_${type[0]}$${kind}$')
       info = 0
 
@@ -849,8 +840,7 @@ contains
          beta = proj_coefficients
       end if
       if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_${type[0]}$${kind}$')
-      call logger%log_debug('end', module=this_module, procedure='DGS_basis_against_basis_${type[0]}$${kind}$')
-
+      
     end subroutine DGS_basis_against_basis_${type[0]}$${kind}$  
 
     #:endfor
@@ -881,7 +871,6 @@ contains
         tolerance = optval(tol, atol_${kind}$)
 
       	if (time_lightkrylov()) call timer%start('qr_no_pivoting_${type[0]}$${kind}$')
-        call logger%log_debug('start', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
         info = 0 ; flag = .false.; R = zero_r${kind}$ ; beta = zero_r${kind}$
         do j = 1, size(Q)
             if (j > 1) then
@@ -913,8 +902,7 @@ contains
             call Q(j)%scal(one_r${kind}$ / beta)
         enddo
       	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
-
+        
         return
     end subroutine qr_no_pivoting_${type[0]}$${kind}$
 
@@ -939,8 +927,7 @@ contains
         ${type}$  :: Rii(size(Q))
         character(len=128) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
-      	if (time_lightkrylov()) call timer%start('qr_with_pivoting_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start('qr_with_pivoting_${type[0]}$${kind}$')
         info = 0 ; kdim = size(Q)
         R = zero_r${kind}$ ; Rii = zero_r${kind}$
         
@@ -1000,8 +987,7 @@ contains
 
         enddo qr_step
       	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
-
+        
         return
     end subroutine qr_with_pivoting_${type[0]}$${kind}$
 
@@ -1169,7 +1155,6 @@ contains
         integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
-        call logger%log_debug('start', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('arnoldi_${type[0]}$${kind}$')
 
         ! Deals with optional non-unity blksize and allocations.
@@ -1226,8 +1211,7 @@ contains
         enddo blk_arnoldi
 
         if (time_lightkrylov()) call timer%stop('arnoldi_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='arnoldi_${type[0]}$${kind}$')
-
+        
         return
     end subroutine arnoldi_${type[0]}$${kind}$
 
@@ -1264,7 +1248,6 @@ contains
         ${type}$ :: alpha, beta
         integer :: k, kdim
 
-        call logger%log_debug('start', module=this_module, procedure='lanczos_bidiagonalization_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_${type[0]}$${kind}$')
         info = 0
 
@@ -1317,8 +1300,7 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='lanczos_bidiagonalization_${type[0]}$${kind}$')
-
+        
         return
     end subroutine lanczos_bidiagonalization_${type[0]}$${kind}$
 
@@ -1349,7 +1331,6 @@ contains
         real(${kind}$) :: beta
         integer :: k, kdim
 
-        call logger%log_debug('start', module=this_module, procedure='lanczos_tridiagonalization_${type[0]}$${kind}$')
         if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_${type[0]}$${kind}$')
 
         ! Deal with optional args.
@@ -1380,8 +1361,7 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_${type[0]}$${kind}$')
-        call logger%log_debug('end', module=this_module, procedure='lanczos_tridiagonalization_${type[0]}$${kind}$')
-
+        
         return
     end subroutine lanczos_tridiagonalization_${type[0]}$${kind}$
 

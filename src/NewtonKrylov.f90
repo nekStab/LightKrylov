@@ -148,7 +148,6 @@ contains
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
       
-      call logger%log_debug('start', module=this_module, procedure='newton_rsp')
       if (time_lightkrylov()) call timer%start('newton_rsp')
       
       ! Newton-solver tolerance
@@ -269,8 +268,7 @@ contains
 
       call sys%reset_eval_counter('newton%post')
       if (time_lightkrylov()) call timer%stop('newton_rsp')
-      call logger%log_debug('end', module=this_module, procedure='newton_rsp')
-
+      
       return
    end subroutine newton_rsp
 
@@ -308,7 +306,6 @@ contains
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
       
-      call logger%log_debug('start', module=this_module, procedure='newton_rdp')
       if (time_lightkrylov()) call timer%start('newton_rdp')
       
       ! Newton-solver tolerance
@@ -429,8 +426,7 @@ contains
 
       call sys%reset_eval_counter('newton%post')
       if (time_lightkrylov()) call timer%stop('newton_rdp')
-      call logger%log_debug('end', module=this_module, procedure='newton_rdp')
-
+      
       return
    end subroutine newton_rdp
 
@@ -468,7 +464,6 @@ contains
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
       
-      call logger%log_debug('start', module=this_module, procedure='newton_csp')
       if (time_lightkrylov()) call timer%start('newton_csp')
       
       ! Newton-solver tolerance
@@ -589,8 +584,7 @@ contains
 
       call sys%reset_eval_counter('newton%post')
       if (time_lightkrylov()) call timer%stop('newton_csp')
-      call logger%log_debug('end', module=this_module, procedure='newton_csp')
-
+      
       return
    end subroutine newton_csp
 
@@ -628,7 +622,6 @@ contains
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
       
-      call logger%log_debug('start', module=this_module, procedure='newton_cdp')
       if (time_lightkrylov()) call timer%start('newton_cdp')
       
       ! Newton-solver tolerance
@@ -749,8 +742,7 @@ contains
 
       call sys%reset_eval_counter('newton%post')
       if (time_lightkrylov()) call timer%stop('newton_cdp')
-      call logger%log_debug('end', module=this_module, procedure='newton_cdp')
-
+      
       return
    end subroutine newton_cdp
 

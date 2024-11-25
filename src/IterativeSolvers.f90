@@ -820,7 +820,6 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_sp), pointer :: select_
 
-        call logger%log_debug('start', module=this_module, procedure='eigs_rsp')
         if (time_lightkrylov()) call timer%start('eigs_rsp')
         ! Deals with optional parameters.
         nev = size(X)
@@ -924,8 +923,7 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_rsp')
-        call logger%log_debug('end', module=this_module, procedure='eigs_rsp')
-
+        
         return
     end subroutine eigs_rsp
 
@@ -973,7 +971,6 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_dp), pointer :: select_
 
-        call logger%log_debug('start', module=this_module, procedure='eigs_rdp')
         if (time_lightkrylov()) call timer%start('eigs_rdp')
         ! Deals with optional parameters.
         nev = size(X)
@@ -1077,8 +1074,7 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_rdp')
-        call logger%log_debug('end', module=this_module, procedure='eigs_rdp')
-
+        
         return
     end subroutine eigs_rdp
 
@@ -1125,7 +1121,6 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_sp), pointer :: select_
 
-        call logger%log_debug('start', module=this_module, procedure='eigs_csp')
         if (time_lightkrylov()) call timer%start('eigs_csp')
         ! Deals with optional parameters.
         nev = size(X)
@@ -1220,8 +1215,7 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_csp')
-        call logger%log_debug('end', module=this_module, procedure='eigs_csp')
-
+        
         return
     end subroutine eigs_csp
 
@@ -1268,7 +1262,6 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_dp), pointer :: select_
 
-        call logger%log_debug('start', module=this_module, procedure='eigs_cdp')
         if (time_lightkrylov()) call timer%start('eigs_cdp')
         ! Deals with optional parameters.
         nev = size(X)
@@ -1363,8 +1356,7 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_cdp')
-        call logger%log_debug('end', module=this_module, procedure='eigs_cdp')
-
+        
         return
     end subroutine eigs_cdp
 
@@ -1415,7 +1407,6 @@ contains
         real(sp) :: beta
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='eighs_rsp')
         if (time_lightkrylov()) call timer%start('eighs_rsp')
         ! Deaks with the optional args.
         nev = size(X)
@@ -1481,8 +1472,7 @@ contains
         
         info = k
         if (time_lightkrylov()) call timer%stop('eighs_rsp')
-        call logger%log_debug('end', module=this_module, procedure='eighs_rsp')
-
+        
         return
     end subroutine eighs_rsp
 
@@ -1528,7 +1518,6 @@ contains
         real(dp) :: beta
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='eighs_rdp')
         if (time_lightkrylov()) call timer%start('eighs_rdp')
         ! Deaks with the optional args.
         nev = size(X)
@@ -1594,8 +1583,7 @@ contains
         
         info = k
         if (time_lightkrylov()) call timer%stop('eighs_rdp')
-        call logger%log_debug('end', module=this_module, procedure='eighs_rdp')
-
+        
         return
     end subroutine eighs_rdp
 
@@ -1641,7 +1629,6 @@ contains
         complex(sp) :: beta
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='eighs_csp')
         if (time_lightkrylov()) call timer%start('eighs_csp')
         ! Deaks with the optional args.
         nev = size(X)
@@ -1707,8 +1694,7 @@ contains
         
         info = k
         if (time_lightkrylov()) call timer%stop('eighs_csp')
-        call logger%log_debug('end', module=this_module, procedure='eighs_csp')
-
+        
         return
     end subroutine eighs_csp
 
@@ -1754,7 +1740,6 @@ contains
         complex(dp) :: beta
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='eighs_cdp')
         if (time_lightkrylov()) call timer%start('eighs_cdp')
         ! Deaks with the optional args.
         nev = size(X)
@@ -1820,8 +1805,7 @@ contains
         
         info = k
         if (time_lightkrylov()) call timer%stop('eighs_cdp')
-        call logger%log_debug('end', module=this_module, procedure='eighs_cdp')
-
+        
         return
     end subroutine eighs_cdp
 
@@ -1867,7 +1851,6 @@ contains
         real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='svds_rsp')
         if (time_lightkrylov()) call timer%start('svds_rsp')
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -1930,8 +1913,7 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop('svds_rsp')
-        call logger%log_debug('end', module=this_module, procedure='svds_rsp')
-
+        
         return
     end subroutine svds_rsp
 
@@ -1972,7 +1954,6 @@ contains
         real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='svds_rdp')
         if (time_lightkrylov()) call timer%start('svds_rdp')
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -2035,8 +2016,7 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop('svds_rdp')
-        call logger%log_debug('end', module=this_module, procedure='svds_rdp')
-
+        
         return
     end subroutine svds_rdp
 
@@ -2077,7 +2057,6 @@ contains
         real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='svds_csp')
         if (time_lightkrylov()) call timer%start('svds_csp')
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -2140,8 +2119,7 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop('svds_csp')
-        call logger%log_debug('end', module=this_module, procedure='svds_csp')
-
+        
         return
     end subroutine svds_csp
 
@@ -2182,7 +2160,6 @@ contains
         real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='svds_cdp')
         if (time_lightkrylov()) call timer%start('svds_cdp')
         ! Deals with the optional arguments.
         nsv = size(U)
@@ -2245,8 +2222,7 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop('svds_cdp')
-        call logger%log_debug('end', module=this_module, procedure='svds_cdp')
-
+        
         return
     end subroutine svds_cdp
 
@@ -2305,7 +2281,6 @@ contains
         class(abstract_vector_rsp), allocatable :: dx, wrk
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='gmres_rsp')
         if (time_lightkrylov()) call timer%start('gmres_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -2450,7 +2425,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop('gmres_rsp')
-        call logger%log_debug('end', module=this_module, procedure='gmres_rsp')
         
         return
     end subroutine gmres_rsp
@@ -2505,7 +2479,6 @@ contains
         class(abstract_vector_rdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='gmres_rdp')
         if (time_lightkrylov()) call timer%start('gmres_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -2650,7 +2623,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop('gmres_rdp')
-        call logger%log_debug('end', module=this_module, procedure='gmres_rdp')
         
         return
     end subroutine gmres_rdp
@@ -2705,7 +2677,6 @@ contains
         class(abstract_vector_csp), allocatable :: dx, wrk
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='gmres_csp')
         if (time_lightkrylov()) call timer%start('gmres_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -2850,7 +2821,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop('gmres_csp')
-        call logger%log_debug('end', module=this_module, procedure='gmres_csp')
         
         return
     end subroutine gmres_csp
@@ -2905,7 +2875,6 @@ contains
         class(abstract_vector_cdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='gmres_cdp')
         if (time_lightkrylov()) call timer%start('gmres_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -3050,7 +3019,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop('gmres_cdp')
-        call logger%log_debug('end', module=this_module, procedure='gmres_cdp')
         
         return
     end subroutine gmres_cdp
