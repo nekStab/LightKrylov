@@ -40,10 +40,10 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: reset_counter
         !! Reset matvec/rmatvec counter
         procedure, pass(self), public :: print_timer_info
-        !! Print current timer information
-        procedure, pass(self), public :: reset_timer
-        !! Reset current timer information
-        procedure, pass(self), public :: finalize_timer
+        !! Print current timing data
+        procedure, pass(self), public :: reset_timer => reset_linop_timer
+        !! Reset current timing data
+        procedure, pass(self), public :: finalize_timer => finalize_linop_timer
         !! Finalize timers and print complete history_info
     end type abstract_linop
 
@@ -205,7 +205,8 @@ contains
       end if
     end function get_counter
 
-    subroutine reset_counter(self, trans, procedure, counter, reset_timer)
+    subroutine reset_counter(self, trans, procedure, counter, reset_timer, soft_reset, clean_timer)
+      !! Setter routine to reset the matvec counter and reset timers
       class(abstract_linop), intent(inout) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -214,10 +215,14 @@ contains
       integer, optional, intent(in) :: counter
       !! optional flag to reset to an integer other than zero.
       logical, optional, intent(in) :: reset_timer
-      !! optional flag to reset also the timers (while saving the timing data)
+      !! optional flag to reset also the timers
+      logical, optional, intent(in) :: soft_reset
+      !! optional flag to choose whether to save previous timing data (default: .true.)
+      logical, optional, intent(in) :: clean_timer
+      !! optional flag to choose whether to fully reset the timer (default: .false.)
       ! internals
       integer :: counter_, count_old
-      logical :: reset_timer_
+      logical :: reset_timer_, soft, clean
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
@@ -233,14 +238,16 @@ contains
             self%matvec_counter = counter_
         end if
       end if
-      if (reset_timer_) call self%reset_timer(trans)
+      if (reset_timer_) call self%reset_timer(trans, soft_reset, clean_timer)
       return
     end subroutine reset_counter
 
     subroutine print_timer_info(self, trans)
-      !! Getter routine to print the current timing information for the system evaluation
+      !! Getter routine to print the current timing information for matvec/rmatvec
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
+      !! matvec or rmatvec?
       ! internal
       logical :: transpose
       transpose = optval(trans, .false.)
@@ -251,27 +258,31 @@ contains
       end if
     end subroutine print_timer_info
 
-    subroutine reset_timer(self, trans, save_history)
-      !! Setter routine to reset the system evaluation timer
+    subroutine reset_linop_timer(self, trans, soft, clean)
+      !! Setter routine to reset the matvec/rmatvec timers
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
-      logical, optional, intent(in) :: save_history
+      !! matvec or rmatvec?
+      logical, optional, intent(in) :: soft
+      logical, optional, intent(in) :: clean
       ! internal
       logical :: transpose
       transpose = optval(trans, .false.)
       if (transpose) then
-        call self%rmatvec_timer%reset(save_history)
+        call self%rmatvec_timer%reset(soft, clean, verbose=.true.)
       else
-        call self%matvec_timer%reset(save_history)
+        call self%matvec_timer%reset(soft, clean, verbose=.true.)
       end if
-    end subroutine reset_timer
+    end subroutine reset_linop_timer
 
-    subroutine finalize_timer(self)
-      !! Setter routine to reset the system evaluation timer
+    subroutine finalize_linop_timer(self)
+      !! Finalize the matvec/rmatvec timers
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
       class(abstract_linop), intent(inout) :: self
       call self%matvec_timer%finalize()
       call self%rmatvec_timer%finalize()
-    end subroutine finalize_timer
+    end subroutine finalize_linop_timer
 
     !---------------------------------------------------------------------
     !-----     Wrappers for matvec/rmatvec to increment counters     -----
