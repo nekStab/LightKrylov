@@ -11,8 +11,8 @@ module LightKrylov_TestUtils
     
     private
 
-    character(len=*), parameter, private :: this_module      = 'LK_TUtils'
-    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestUtils'
+    character(len=*), parameter :: this_module      = 'LK_TUtils'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_TestUtils'
 
     integer, parameter, public :: test_size = 128
 

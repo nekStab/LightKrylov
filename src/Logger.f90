@@ -15,7 +15,7 @@ module LightKrylov_Logger
    implicit none
    private
 
-   character(len=128), parameter, private :: this_module = 'LightKrylov_Logger'
+   character(len=128), parameter :: this_module = 'LightKrylov_Logger'
 
    logical, parameter, private :: exit_on_error = .true.
    logical, parameter, private :: exit_on_test_error = .true.
@@ -33,7 +33,7 @@ module LightKrylov_Logger
 
 contains
 
-   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp)
+   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp, close_old, iunit)
       !! Wrapper to set up MPI if needed and initialize log files
       character(len=*), optional, intent(in) :: logfile
       !! name of the dedicated LightKrylov logfile
@@ -51,6 +51,10 @@ contains
       !! duplicate log messages to stdout?
       logical, optional, intent(in)          :: log_timestamp
       !! add timestamp to log messages
+      logical, optional, intent(in)          :: close_old
+      !! close previously opened logfiles (if present?) - stdout is not closed
+      integer, optional, intent(out)         :: iunit
+      !! log unit identifier
 
       ! internals
       character(len=:), allocatable :: logfile_
@@ -58,8 +62,10 @@ contains
       integer                       :: log_level_
       logical                       :: log_stdout_
       logical                       :: log_timestamp_
+      logical                       :: close_old_
+      logical                       :: iunit_
       ! misc
-      integer :: stat, iunit
+      integer :: stat
 
       logfile_       = optval(logfile, 'lightkrylov.log')
       nio_           = optval(nio, 0)
@@ -67,6 +73,10 @@ contains
       log_level_     = max(0, min(log_level_, 100))
       log_stdout_    = optval(log_stdout, .true.)
       log_timestamp_ = optval(log_timestamp, .true.)
+      close_old_     = optval(close_old, .true.)
+
+      ! Flush log units
+      if (close_old_) call flush_log_units()
 
       ! set log level
       call logger%configure(level=log_level_, time_stamp=log_timestamp_) 
@@ -83,11 +93,30 @@ contains
 
       ! log to stdout
       if (log_stdout_) then
-         call logger%add_log_unit(6, stat=stat)
+         call logger%add_log_unit(unit=6, stat=stat)
          if (stat /= 0) call stop_error('Unable to add stdout to logger.', module=this_module, procedure='logger_setup')
       end if
+
+      ! return unit if requested
+      if (present(iunit)) iunit = iunit_
       return
    end subroutine logger_setup
+
+   subroutine flush_log_units()
+      integer, allocatable :: current_log_units(:)
+      integer :: i, iunit
+      ! get current units
+      call logger%configuration(log_units=current_log_units)
+      ! close all existing units (except stdout if it is included)
+      do i = 1, size(current_log_units)
+         iunit = current_log_units(i)
+         if (iunit == 6) then
+            call logger%remove_log_unit(unit=iunit)
+         else
+            call logger%remove_log_unit(unit=iunit, close_unit=.true.)
+         end if
+      end do
+   end subroutine flush_log_units
 
    subroutine comm_setup()
       ! internal

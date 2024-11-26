@@ -4,6 +4,7 @@ module LightKrylov_NewtonKrylov
    use stdlib_optval, only: optval
    use LightKrylov_Constants
    use LightKrylov_Logger
+   use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
    use LightKrylov_AbstractVectors
    use LightKrylov_AbstractLinops
    use LightKrylov_AbstractSystems
@@ -97,7 +98,6 @@ module LightKrylov_NewtonKrylov
       end subroutine abstract_scheduler_${kind}$
 
       #:endfor
-
    end interface
 
 contains
@@ -136,6 +136,8 @@ contains
       integer            :: i, maxiter, maxstep_bisection
       type(newton_${kind}$_metadata) :: newton_meta
       character(len=256) :: msg
+      
+      if (time_lightkrylov()) call timer%start('newton_${type[0]}$${kind}$')
       
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_${kind}$)
@@ -254,7 +256,8 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
-
+      if (time_lightkrylov()) call timer%stop('newton_${type[0]}$${kind}$')
+      
       return
    end subroutine newton_${type[0]}$${kind}$
 

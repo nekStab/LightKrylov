@@ -12,6 +12,7 @@ module LightKrylov_AbstractLinops
     use stdlib_optval, only: optval
     use LightKrylov_Logger
     use LightKrylov_Constants
+    use LightKrylov_Timing
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     implicit none
@@ -29,11 +30,19 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         integer, private :: matvec_counter  = 0
         integer, private :: rmatvec_counter = 0
+        type(lightkrylov_timer) :: matvec_timer  = lightkrylov_timer('matvec timer')
+        type(lightkrylov_timer) :: rmatvec_timer = lightkrylov_timer('rmatvec timer')
     contains
         procedure, pass(self), public :: get_counter
         !! Return matvec/rmatvec counter value
         procedure, pass(self), public :: reset_counter
         !! Reset matvec/rmatvec counter
+        procedure, pass(self), public :: print_timer_info
+        !! Print current timer information
+        procedure, pass(self), public :: reset_timer
+        !! Reset current timer information
+        procedure, pass(self), public :: finalize_timer
+        !! Finalize timers and print complete history_info
     end type abstract_linop
 
     !------------------------------------------------------------------------------
@@ -448,7 +457,7 @@ contains
       end if
     end function get_counter
 
-    subroutine reset_counter(self, trans, procedure, counter)
+    subroutine reset_counter(self, trans, procedure, counter, reset_timer)
       class(abstract_linop), intent(inout) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -456,11 +465,15 @@ contains
       !! name of the caller routine
       integer, optional, intent(in) :: counter
       !! optional flag to reset to an integer other than zero.
+      logical, optional, intent(in) :: reset_timer
+      !! optional flag to reset also the timers (while saving the timing data)
       ! internals
       integer :: counter_, count_old
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
+      reset_timer_ = optval(reset_timer, .true.)
       if ( count_old /= 0 .or. counter_ /= 0) then
         if (trans) then
             write(msg,'(A,I0,A,I0,A)') 'Total number of rmatvecs: ', count_old, '. Resetting counter to ', counter_, '.'
@@ -472,8 +485,45 @@ contains
             self%matvec_counter = counter_
         end if
       end if
+      if (reset_timer_) call self%reset_timer(trans)
       return
     end subroutine reset_counter
+
+    subroutine print_timer_info(self, trans)
+      !! Getter routine to print the current timing information for the system evaluation
+      class(abstract_linop), intent(inout) :: self
+      logical, optional, intent(in) :: trans
+      ! internal
+      logical :: transpose
+      transpose = optval(trans, .false.)
+      if (transpose) then
+        call self%rmatvec_timer%print_info()
+      else
+        call self%matvec_timer%print_info()
+      end if
+    end subroutine print_timer_info
+
+    subroutine reset_timer(self, trans, save_history)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_linop), intent(inout) :: self
+      logical, optional, intent(in) :: trans
+      logical, optional, intent(in) :: save_history
+      ! internal
+      logical :: transpose
+      transpose = optval(trans, .false.)
+      if (transpose) then
+        call self%rmatvec_timer%reset(save_history)
+      else
+        call self%matvec_timer%reset(save_history)
+      end if
+    end subroutine reset_timer
+
+    subroutine finalize_timer(self)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_linop), intent(inout) :: self
+      call self%matvec_timer%finalize()
+      call self%rmatvec_timer%finalize()
+    end subroutine finalize_timer
 
     !---------------------------------------------------------------------
     !-----     Wrappers for matvec/rmatvec to increment counters     -----
@@ -483,8 +533,16 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_rsp
 
@@ -492,16 +550,32 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
+        call self%rmatvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_rdp
 
@@ -509,16 +583,32 @@ contains
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
+        call self%rmatvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_csp
 
@@ -526,16 +616,32 @@ contains
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
+        call self%rmatvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_csp
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_cdp
 
@@ -543,8 +649,16 @@ contains
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
+        ! internal 
+        character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
+        call self%rmatvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_cdp
 

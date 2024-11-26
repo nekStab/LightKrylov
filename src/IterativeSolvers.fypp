@@ -33,6 +33,7 @@ module lightkrylov_IterativeSolvers
     use LightKrylov_Constants
     Use LightKrylov_Logger
     use LightKrylov_Utils
+    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
@@ -623,6 +624,7 @@ contains
         ! Eigenvalue selection.
         procedure(eigvals_select_${kind}$), pointer :: select_
 
+        if (time_lightkrylov()) call timer%start('eigs_${type[0]}$${kind}$')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -728,7 +730,8 @@ contains
         enddo
 
         info = niter
-
+        if (time_lightkrylov()) call timer%stop('eigs_${type[0]}$${kind}$')
+        
         return
     end subroutine eigs_${type[0]}$${kind}$
 
@@ -785,6 +788,7 @@ contains
         ${type}$ :: beta
         character(len=256) :: msg
 
+        if (time_lightkrylov()) call timer%start('eighs_${type[0]}$${kind}$')
         ! Deaks with the optional args.
         nev = size(X)
         kdim_ = optval(kdim, 4*nev)
@@ -848,7 +852,8 @@ contains
         enddo
         
         info = k
-
+        if (time_lightkrylov()) call timer%stop('eighs_${type[0]}$${kind}$')
+        
         return
     end subroutine eighs_${type[0]}$${kind}$
 
@@ -896,6 +901,7 @@ contains
         real(${kind}$) :: tol, u0_norm
         character(len=256) :: msg
 
+        if (time_lightkrylov()) call timer%start('svds_${type[0]}$${kind}$')
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -960,7 +966,8 @@ contains
                 call V(i)%axpby(one_${type[0]}$${kind}$, Vwrk(j), vmat(j, i))
             enddo
         enddo
-
+        if (time_lightkrylov()) call timer%stop('svds_${type[0]}$${kind}$')
+        
         return
     end subroutine svds_${type[0]}$${kind}$
 
@@ -1021,6 +1028,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
         character(len=256) :: msg
 
+        if (time_lightkrylov()) call timer%start('gmres_${type[0]}$${kind}$')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_${kind}$)
         atol_ = optval(atol, atol_${kind}$)
@@ -1163,6 +1171,7 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        if (time_lightkrylov()) call timer%stop('gmres_${type[0]}$${kind}$')
         
         return
     end subroutine gmres_${type[0]}$${kind}$
@@ -1229,6 +1238,8 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='fgmres_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start('fgmres_${type[0]}$${kind}$')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_${kind}$)
         atol_ = optval(atol, atol_${kind}$)
@@ -1370,6 +1381,8 @@ contains
         end if
 
         call A%reset_counter(trans, 'gmres%post')
+        if (time_lightkrylov()) call timer%stop('fgmres_${type[0]}$${kind}$')
+        call logger%log_debug('end', module=this_module, procedure='fgmres_${type[0]}$${kind}$')
         
         return
     end subroutine fgmres_${type[0]}$${kind}$
@@ -1426,6 +1439,8 @@ contains
         integer :: i
         character(len=256) :: msg
 
+        call logger%log_debug('start', module=this_module, procedure='cg_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start('cg_${type[0]}$${kind}$')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_${kind}$)
         atol_ = optval(atol, atol_${kind}$)
@@ -1512,6 +1527,8 @@ contains
         end if
 
         call A%reset_counter(.false., 'cg%post')
+        if (time_lightkrylov()) call timer%stop('cg_${type[0]}$${kind}$')
+        call logger%log_debug('end', module=this_module, procedure='cg_${type[0]}$${kind}$')
 
         return
     end subroutine cg_${type[0]}$${kind}$

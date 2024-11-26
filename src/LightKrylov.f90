@@ -17,6 +17,8 @@ module LightKrylov
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
+    ! --> Timing utilities
+    use LightKrylov_Timing
     ! --> TestTypes
     implicit none
     private
@@ -139,6 +141,10 @@ module LightKrylov
     public :: expm
     public :: kexpm
     public :: k_exptA
+
+    ! Timer exports
+    public :: lightkrylov_timer
+    public :: abstract_watch
 
 contains
 

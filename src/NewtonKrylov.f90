@@ -2,6 +2,7 @@ module LightKrylov_NewtonKrylov
    use stdlib_optval, only: optval
    use LightKrylov_Constants
    use LightKrylov_Logger
+   use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
    use LightKrylov_AbstractVectors
    use LightKrylov_AbstractLinops
    use LightKrylov_AbstractSystems
@@ -109,7 +110,6 @@ module LightKrylov_NewtonKrylov
          !! Information flag
       end subroutine abstract_scheduler_dp
 
-
    end interface
 
 contains
@@ -147,6 +147,8 @@ contains
       integer            :: i, maxiter, maxstep_bisection
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
+      
+      if (time_lightkrylov()) call timer%start('newton_rsp')
       
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_sp)
@@ -265,7 +267,8 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
-
+      if (time_lightkrylov()) call timer%stop('newton_rsp')
+      
       return
    end subroutine newton_rsp
 
@@ -302,6 +305,8 @@ contains
       integer            :: i, maxiter, maxstep_bisection
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
+      
+      if (time_lightkrylov()) call timer%start('newton_rdp')
       
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_dp)
@@ -420,7 +425,8 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
-
+      if (time_lightkrylov()) call timer%stop('newton_rdp')
+      
       return
    end subroutine newton_rdp
 
@@ -457,6 +463,8 @@ contains
       integer            :: i, maxiter, maxstep_bisection
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
+      
+      if (time_lightkrylov()) call timer%start('newton_csp')
       
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_sp)
@@ -575,7 +583,8 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
-
+      if (time_lightkrylov()) call timer%stop('newton_csp')
+      
       return
    end subroutine newton_csp
 
@@ -612,6 +621,8 @@ contains
       integer            :: i, maxiter, maxstep_bisection
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
+      
+      if (time_lightkrylov()) call timer%start('newton_cdp')
       
       ! Newton-solver tolerance
       target_tol = optval(tolerance, atol_dp)
@@ -730,7 +741,8 @@ contains
       end if
 
       call sys%reset_eval_counter('newton%post')
-
+      if (time_lightkrylov()) call timer%stop('newton_cdp')
+      
       return
    end subroutine newton_cdp
 

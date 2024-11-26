@@ -4,6 +4,7 @@ module LightKrylov_AbstractSystems
     use stdlib_optval, only: optval
     use LightKrylov_Logger
     use LightKrylov_Constants
+    use LightKrylov_Timing
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none
@@ -16,11 +17,18 @@ module LightKrylov_AbstractSystems
     type, abstract, public :: abstract_system
     private
         integer :: eval_counter = 0
+        type(lightkrylov_timer) :: eval_timer = lightkrylov_timer('system eval timer')
     contains
         procedure, pass(self), public :: get_eval_counter
         !! Return eval counter value
         procedure, pass(self), public :: reset_eval_counter
         !! Reset eval counter
+        procedure, pass(self), public :: print_timer_info
+        !! Print current timer information
+        procedure, pass(self), public :: reset_timer
+        !! Reset current timer information
+        procedure, pass(self), public :: finalize_timer
+        !! Finalize timer and print complete history
     end type abstract_system
 
     !----------------------------------------------------------------------------
@@ -203,24 +211,48 @@ contains
       count = self%eval_counter
     end function get_eval_counter
 
-    subroutine reset_eval_counter(self, procedure, counter)
+    subroutine reset_eval_counter(self, procedure, counter, reset_timer)
       class(abstract_system), intent(inout) :: self
       character(len=*), intent(in) :: procedure
       !! name of the caller routine
       integer, optional, intent(in) :: counter
       !! optional flag to reset to an integer other than zero.
+      logical, optional, intent(in) :: reset_timer
+      !! optional flag to reset also the timers (while saving the timing data)
       ! internals
       integer :: counter_, count_old
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_eval_counter()
+      reset_timer_ = optval(reset_timer, .true.)
       if (count_old /= 0 .or. counter_ /= 0) then
         write(msg,'(A,I0,A,I0,A)') 'Total number of evals: ', count_old, '. Resetting counter to ', counter_, '.'
         call logger%log_message(msg, module=this_module, procedure='reset_eval_counter('//trim(procedure)//')')
         self%eval_counter = counter_
       end if
+      if (reset_timer_) call self%reset_timer()
       return
     end subroutine reset_eval_counter
+
+    subroutine print_timer_info(self)
+      !! Getter routine to print the current timing information for the system evaluation
+      class(abstract_system), intent(inout) :: self
+      call self%eval_timer%print_info()
+    end subroutine print_timer_info
+
+    subroutine reset_timer(self, save_history)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_system), intent(inout) :: self
+      logical, optional, intent(in) :: save_history
+      call self%eval_timer%reset(save_history)
+    end subroutine reset_timer
+
+    subroutine finalize_timer(self)
+      !! Setter routine to reset the system evaluation timer
+      class(abstract_system), intent(inout) :: self
+      call self%eval_timer%finalize()
+    end subroutine finalize_timer
 
     !---------------------------------------------------------------------
     !-----     Wrapper for system response to increment counters     -----
@@ -231,8 +263,16 @@ contains
         class(abstract_vector_rsp), intent(in)    :: vec_in
         class(abstract_vector_rsp), intent(out)   :: vec_out
         real(sp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_rsp
     subroutine eval_rdp(self, vec_in, vec_out, atol)
@@ -240,8 +280,16 @@ contains
         class(abstract_vector_rdp), intent(in)    :: vec_in
         class(abstract_vector_rdp), intent(out)   :: vec_out
         real(dp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_rdp
     subroutine eval_csp(self, vec_in, vec_out, atol)
@@ -249,8 +297,16 @@ contains
         class(abstract_vector_csp), intent(in)    :: vec_in
         class(abstract_vector_csp), intent(out)   :: vec_out
         real(sp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_csp
     subroutine eval_cdp(self, vec_in, vec_out, atol)
@@ -258,8 +314,16 @@ contains
         class(abstract_vector_cdp), intent(in)    :: vec_in
         class(abstract_vector_cdp), intent(out)   :: vec_out
         real(dp),                             intent(in)    :: atol
+        ! internal
+        character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
+        write(msg,'(I0,1X,A)') self%eval_counter, 'start'
+        call logger%log_debug(msg, module=this_module, procedure='response')
+        call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
+        call self%eval_timer%stop()
+        write(msg,'(I0,1X,A)') self%eval_counter, 'end'
+        call logger%log_debug(msg, module=this_module, procedure='response')
         return
     end subroutine eval_cdp
 

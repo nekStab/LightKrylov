@@ -3,6 +3,7 @@ program demo
    use LightKrylov, only: wp => dp
    use LightKrylov
    use LightKrylov_Logger
+   use LightKrylov_Timing, only: timer => global_lightkrylov_timer
    use Ginzburg_Landau
    implicit none
 
@@ -45,6 +46,9 @@ program demo
    !> Set up logging
    call logger_setup()
 
+   !> Set up timing
+   call timer%initialize()
+
    !> Initialize physical parameters.
    call initialize_parameters()
 
@@ -79,5 +83,10 @@ program demo
 
    !> Save eigenvectors to disk.
    call save_npy("example/ginzburg_landau/eigenvectors.npy", eigenvectors)
+
+   ! Print timing info for exponential propagator
+   call A%finalize_timer()
+   ! Finalize timing
+   call timer%finalize()
 
 end program demo

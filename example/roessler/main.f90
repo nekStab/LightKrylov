@@ -10,8 +10,9 @@ program demo
    use LightKrylov
    use LightKrylov, only: wp => dp
    use LightKrylov_Logger
-   use lightkrylov_IterativeSolvers, only: gmres_rdp
+   use LightKrylov_Timing, only: timer => global_lightkrylov_timer
    use LightKrylov_Utils
+   use lightkrylov_IterativeSolvers, only: gmres_rdp
    ! Roessler system
    use Roessler
    use Roessler_OTD
@@ -41,6 +42,7 @@ program demo
    real(wp), dimension(r, r)       :: Lr
    ! IO
    character(len=20)    :: data_fmt, header_fmt
+   !integer, allocatable :: logunits(:)
 
    write (header_fmt, *) '(22X,*(A,2X))'
    write (data_fmt, *) '(A22,*(1X,F15.6))'
@@ -48,6 +50,9 @@ program demo
    ! Set up logging
    call logger_setup()
    call logger%configure(level=error_level, time_stamp=.false.)
+
+   ! Set up timing
+   call timer%initialize()
 
    ! Initialize baseflow and perturbation state vectors
    call bf%zero(); call dx%zero(); call residual%zero()
@@ -86,6 +91,11 @@ program demo
    ! Set Jacobian and baseflow
    sys%jacobian = jacobian()
    sys%jacobian%X = bf
+
+   ! Reset eval timer
+   call sys%reset_timer()
+   ! Reset system timers
+   call timer%reset_all()
 
    ! Set tolerance
    tol = 1e-12_wp
@@ -129,6 +139,11 @@ program demo
    ! Compute the stability of the orbit
    sys%jacobian = floquet_operator()
    sys%jacobian%X = bf  ! <- periodic orbit
+   
+   ! Reset eval timer
+   call sys%reset_timer()
+   ! Reset system timers
+   call timer%reset_all()
 
    M = 0.0_wp
    Id = eye(npts)
@@ -237,5 +252,10 @@ program demo
    call rename(report_file_OTD, 'example/roessler/PO-chaos_OTD.txt')
    call rename(report_file_OTD_LE, 'example/roessler/PO-chaos_LE.txt')
    print *, ''
+
+   ! Print timing info for system evaulations
+   call sys%finalize_timer()
+   ! Finalize timing
+   call timer%finalize()
 
 end program demo
