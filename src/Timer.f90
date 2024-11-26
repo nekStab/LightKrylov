@@ -127,6 +127,13 @@ module LightKrylov_Timing
    end type lightkrylov_watch
 
    type(lightkrylov_watch) :: global_lightkrylov_timer
+
+   ! format strings for uniform printing
+   character(len=128), parameter :: fmt_h = '(2X,A30," : ",   9X,A7,4(A15))'      ! headers
+   character(len=128), parameter :: fmt_t = '(2X,A30," : ",A6,3X,I7,4(1X,F14.6))' ! data total
+   character(len=128), parameter :: fmt_r = '(2X,30X,3X,   A6,I3,I7,4(1X,F14.6))' ! data reset
+   character(len=128), parameter :: fmt_n = '(2X,30X,3X,   A6,I3,I7,A60)'         ! not called
+
 contains
 
    logical function time_lightkrylov() result(if_time_lightkrylov)
@@ -303,17 +310,14 @@ contains
       logical :: if_full
       real(dp) :: etavg, etmin
       integer :: count
-      character(len=128) :: msg, fmt, fmt_h, fmt_r
+      character(len=128) :: msg
       if_full = optval(full, .true.)
-      fmt_h = '(A32," : ",7X,A7,4(1X,A12))'
       call logger%log_message('#########        Timer info        #########', module=this_module)
       if (self%count == 0) then
          write(msg, '(*(A))') 'No timing data available for "', trim(self%name), '": Timer not called.'
          call logger%log_message(msg, module=this_module)
       else
          if (.not.self%is_finalized) then
-            fmt   = '(2X,A30," : ",I7,4(1X,F12.6))'
-            fmt_r = '(2X,23X,A6,I3,1X,I7,4(1X,F12.6))'
             call logger%log_message('Current data:', module=this_module)
             write(msg, fmt_h) 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
             call logger%log_message(msg, module=this_module)
@@ -323,7 +327,7 @@ contains
                etavg = self%etime/self%local_count
                etmin = self%etime_min
             end if
-            write(msg,fmt) trim(self%name), self%local_count, self%etime, etavg, etmin, self%etime_max
+            write(msg,fmt_t) trim(self%name), self%local_count, self%etime, etavg, etmin, self%etime_max
             call logger%log_message(msg, module=this_module)
             if (if_full) then
                if (self%reset_count > 0) then
@@ -357,10 +361,8 @@ contains
       integer :: i, count
       logical :: silent
       real(dp) :: etime, etavg
-      character(len=128) :: msg, fmt, fmt_r
+      character(len=128) :: msg
       silent = optval(if_silent, .false.)
-      fmt       = '(2X,A30," : ",A6,1X,I7,2(1X,F12.6))'
-      fmt_r = '(2X,33X,A6,I3,1X,I7,2(1X,F12.6))'
       call self%stop()
       call self%save_timer_data()
       self%is_finalized = .true.
@@ -764,7 +766,7 @@ contains
       ! internal
       character(len=128) :: msg
       call logger%log_message(trim(section_name)//':', module=this_module)
-      write(msg, '(A32," : ",9X,A7,4(1X,A12))') 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
+      write(msg, fmt_h) 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
       call logger%log_message(msg, module=this_module)
       call logger%log_message('____________________________________________', module=this_module)
    end subroutine print_summary_header
@@ -775,9 +777,7 @@ contains
       ! internal
       integer  :: i, count, count2
       real(dp) :: etime, etavg, etmin, etmax
-      character(len=128) :: msg, fmt, fmt_r
-      fmt   = '(2X,A30," : ",A6,3X,I7,4(1X,F12.6))'
-      fmt_r = '(2X,33X,A6,I3,I7,4(1X,F12.6))'
+      character(len=128) :: msg
       count  = sum(t%count_data)
       count2 = 0
       etmin  = huge(0.0_dp)
@@ -792,7 +792,7 @@ contains
       if (count > 0) then
          etime = sum(t%etime_data)
          etavg = sum(t%etavg_data)/count2
-         write(msg,fmt) trim(t%name), 'total', count, etime, etavg, etmin, etmax
+         write(msg,fmt_t) trim(t%name), 'total', count, etime, etavg, etmin, etmax
          call logger%log_message(msg, module=this_module)
          if (t%reset_count > 1) then
             do i = 1, t%reset_count
@@ -804,7 +804,7 @@ contains
                if (count > 0) then
                   write(msg,fmt_r) 'reset', i, count, etime, etavg, etmin, etmax
                else
-                  write(msg,'(2X,33X,A6,I3,I7,A52)') 'reset', i, count, 'not called'
+                  write(msg,fmt_n) 'reset', i, count, 'not called'
                end if
                call logger%log_message(msg, module=this_module)
             end do
