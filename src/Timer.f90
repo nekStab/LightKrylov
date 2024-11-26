@@ -45,6 +45,7 @@ module LightKrylov_Timing
       integer :: private_count = 0
       logical :: user_mode = .false.
       integer :: user_count = 0
+      logical :: is_initialized
    contains
       private
       procedure, pass(self), public :: add_timer
@@ -164,12 +165,25 @@ contains
       ! internal
       logical :: ifsave
       ifsave = optval(save_history, .true.)
-      if (self%count > 0) then
-         if (ifsave) call self%save_timer_history()
+      if (ifsave) then
+         ! soft reset, only if data was collected
+         if (self%count > 0) then
+            call self%save_timer_history()
+            self%elapsed_time = 0.0_dp
+            self%start_time = 0.0_dp
+            self%running = .false.
+            self%count = 0
+         end if
+      else
+         ! hard reset
          self%elapsed_time = 0.0_dp
          self%start_time = 0.0_dp
          self%running = .false.
          self%count = 0
+         self%reset_counter = 0
+         deallocate(self%etime_history)
+         deallocate(self%etavg_history)
+         deallocate(self%count_history)
       end if
    end subroutine reset_timer
 
@@ -402,102 +416,117 @@ contains
 
    subroutine initialize_lightkrylov_watch(self)
       class(lightkrylov_watch), intent(inout) :: self
-      ! timers for LightKrylov_BaseKrylov
-      ! rsp
-      call self%add_timer('qr_with_pivoting_rsp')
-      call self%add_timer('qr_no_pivoting_rsp')
-      call self%add_timer('orthonormalize_basis_rsp')
-      call self%add_timer('orthonormalize_vector_against_basis_rsp')
-      call self%add_timer('orthonormalize_basis_against_basis_rsp')
-      call self%add_timer('dgs_vector_against_basis_rsp')
-      call self%add_timer('dgs_basis_against_basis_rsp')
-      call self%add_timer('arnoldi_rsp')
-      call self%add_timer('lanczos_bidiagonalization_rsp')
-      call self%add_timer('lanczos_tridiagonalization_rsp')
-      self%basekrylov_count = self%timer_count
-      ! rdp
-      call self%add_timer('qr_with_pivoting_rdp')
-      call self%add_timer('qr_no_pivoting_rdp')
-      call self%add_timer('orthonormalize_basis_rdp')
-      call self%add_timer('orthonormalize_vector_against_basis_rdp')
-      call self%add_timer('orthonormalize_basis_against_basis_rdp')
-      call self%add_timer('dgs_vector_against_basis_rdp')
-      call self%add_timer('dgs_basis_against_basis_rdp')
-      call self%add_timer('arnoldi_rdp')
-      call self%add_timer('lanczos_bidiagonalization_rdp')
-      call self%add_timer('lanczos_tridiagonalization_rdp')
-      self%basekrylov_count = self%timer_count
-      ! csp
-      call self%add_timer('qr_with_pivoting_csp')
-      call self%add_timer('qr_no_pivoting_csp')
-      call self%add_timer('orthonormalize_basis_csp')
-      call self%add_timer('orthonormalize_vector_against_basis_csp')
-      call self%add_timer('orthonormalize_basis_against_basis_csp')
-      call self%add_timer('dgs_vector_against_basis_csp')
-      call self%add_timer('dgs_basis_against_basis_csp')
-      call self%add_timer('arnoldi_csp')
-      call self%add_timer('lanczos_bidiagonalization_csp')
-      call self%add_timer('lanczos_tridiagonalization_csp')
-      self%basekrylov_count = self%timer_count
-      ! cdp
-      call self%add_timer('qr_with_pivoting_cdp')
-      call self%add_timer('qr_no_pivoting_cdp')
-      call self%add_timer('orthonormalize_basis_cdp')
-      call self%add_timer('orthonormalize_vector_against_basis_cdp')
-      call self%add_timer('orthonormalize_basis_against_basis_cdp')
-      call self%add_timer('dgs_vector_against_basis_cdp')
-      call self%add_timer('dgs_basis_against_basis_cdp')
-      call self%add_timer('arnoldi_cdp')
-      call self%add_timer('lanczos_bidiagonalization_cdp')
-      call self%add_timer('lanczos_tridiagonalization_cdp')
-      self%basekrylov_count = self%timer_count
-      ! timers for LightKrylov_IterativeSolvers
-      ! rsp
-      call self%add_timer('eigs_rsp')
-      call self%add_timer('eighs_rsp')
-      call self%add_timer('svds_rsp')
-      call self%add_timer('gmres_rsp')
-      call self%add_timer('fgmres_rsp')
-      call self%add_timer('cg_rsp')
-      self%iterativesolvers_count = self%timer_count
-      ! rdp
-      call self%add_timer('eigs_rdp')
-      call self%add_timer('eighs_rdp')
-      call self%add_timer('svds_rdp')
-      call self%add_timer('gmres_rdp')
-      call self%add_timer('fgmres_rdp')
-      call self%add_timer('cg_rdp')
-      self%iterativesolvers_count = self%timer_count
-      ! csp
-      call self%add_timer('eigs_csp')
-      call self%add_timer('eighs_csp')
-      call self%add_timer('svds_csp')
-      call self%add_timer('gmres_csp')
-      call self%add_timer('fgmres_csp')
-      call self%add_timer('cg_csp')
-      self%iterativesolvers_count = self%timer_count
-      ! cdp
-      call self%add_timer('eigs_cdp')
-      call self%add_timer('eighs_cdp')
-      call self%add_timer('svds_cdp')
-      call self%add_timer('gmres_cdp')
-      call self%add_timer('fgmres_cdp')
-      call self%add_timer('cg_cdp')
-      self%iterativesolvers_count = self%timer_count
-      ! timers for LightKrylov_NewtonKrylov
-      ! rsp
-      call self%add_timer('newton_rsp')
-      ! rdp
-      call self%add_timer('newton_rdp')
-      ! csp
-      call self%add_timer('newton_csp')
-      ! cdp
-      call self%add_timer('newton_cdp')
-      self%newtonkrylov_count = self%timer_count
-      self%private_count = self%timer_count
+      ! internal
+      character(len=128) :: msg
+      if (.not. self%is_initialized) then
+         ! timers for LightKrylov_BaseKrylov
+         ! rsp
+         call self%add_timer('qr_with_pivoting_rsp')
+         call self%add_timer('qr_no_pivoting_rsp')
+         call self%add_timer('orthonormalize_basis_rsp')
+         call self%add_timer('orthonormalize_vector_against_basis_rsp')
+         call self%add_timer('orthonormalize_basis_against_basis_rsp')
+         call self%add_timer('dgs_vector_against_basis_rsp')
+         call self%add_timer('dgs_basis_against_basis_rsp')
+         call self%add_timer('arnoldi_rsp')
+         call self%add_timer('lanczos_bidiagonalization_rsp')
+         call self%add_timer('lanczos_tridiagonalization_rsp')
+         self%basekrylov_count = self%timer_count
+         ! rdp
+         call self%add_timer('qr_with_pivoting_rdp')
+         call self%add_timer('qr_no_pivoting_rdp')
+         call self%add_timer('orthonormalize_basis_rdp')
+         call self%add_timer('orthonormalize_vector_against_basis_rdp')
+         call self%add_timer('orthonormalize_basis_against_basis_rdp')
+         call self%add_timer('dgs_vector_against_basis_rdp')
+         call self%add_timer('dgs_basis_against_basis_rdp')
+         call self%add_timer('arnoldi_rdp')
+         call self%add_timer('lanczos_bidiagonalization_rdp')
+         call self%add_timer('lanczos_tridiagonalization_rdp')
+         self%basekrylov_count = self%timer_count
+         ! csp
+         call self%add_timer('qr_with_pivoting_csp')
+         call self%add_timer('qr_no_pivoting_csp')
+         call self%add_timer('orthonormalize_basis_csp')
+         call self%add_timer('orthonormalize_vector_against_basis_csp')
+         call self%add_timer('orthonormalize_basis_against_basis_csp')
+         call self%add_timer('dgs_vector_against_basis_csp')
+         call self%add_timer('dgs_basis_against_basis_csp')
+         call self%add_timer('arnoldi_csp')
+         call self%add_timer('lanczos_bidiagonalization_csp')
+         call self%add_timer('lanczos_tridiagonalization_csp')
+         self%basekrylov_count = self%timer_count
+         ! cdp
+         call self%add_timer('qr_with_pivoting_cdp')
+         call self%add_timer('qr_no_pivoting_cdp')
+         call self%add_timer('orthonormalize_basis_cdp')
+         call self%add_timer('orthonormalize_vector_against_basis_cdp')
+         call self%add_timer('orthonormalize_basis_against_basis_cdp')
+         call self%add_timer('dgs_vector_against_basis_cdp')
+         call self%add_timer('dgs_basis_against_basis_cdp')
+         call self%add_timer('arnoldi_cdp')
+         call self%add_timer('lanczos_bidiagonalization_cdp')
+         call self%add_timer('lanczos_tridiagonalization_cdp')
+         self%basekrylov_count = self%timer_count
+         ! timers for LightKrylov_IterativeSolvers
+         ! rsp
+         call self%add_timer('eigs_rsp')
+         call self%add_timer('eighs_rsp')
+         call self%add_timer('svds_rsp')
+         call self%add_timer('gmres_rsp')
+         call self%add_timer('fgmres_rsp')
+         call self%add_timer('cg_rsp')
+         self%iterativesolvers_count = self%timer_count
+         ! rdp
+         call self%add_timer('eigs_rdp')
+         call self%add_timer('eighs_rdp')
+         call self%add_timer('svds_rdp')
+         call self%add_timer('gmres_rdp')
+         call self%add_timer('fgmres_rdp')
+         call self%add_timer('cg_rdp')
+         self%iterativesolvers_count = self%timer_count
+         ! csp
+         call self%add_timer('eigs_csp')
+         call self%add_timer('eighs_csp')
+         call self%add_timer('svds_csp')
+         call self%add_timer('gmres_csp')
+         call self%add_timer('fgmres_csp')
+         call self%add_timer('cg_csp')
+         self%iterativesolvers_count = self%timer_count
+         ! cdp
+         call self%add_timer('eigs_cdp')
+         call self%add_timer('eighs_cdp')
+         call self%add_timer('svds_cdp')
+         call self%add_timer('gmres_cdp')
+         call self%add_timer('fgmres_cdp')
+         call self%add_timer('cg_cdp')
+         self%iterativesolvers_count = self%timer_count
+         ! timers for LightKrylov_NewtonKrylov
+         ! rsp
+         call self%add_timer('newton_rsp')
+         ! rdp
+         call self%add_timer('newton_rdp')
+         ! csp
+         call self%add_timer('newton_csp')
+         ! cdp
+         call self%add_timer('newton_cdp')
+         self%newtonkrylov_count = self%timer_count
+         self%private_count = self%timer_count
+         write(msg,'(3X,I4,A)') self%private_count, ' system timers registered.'
+         call logger%log_information(msg, module=this_module, procedure='timer initialization')
+      else
+         call self%reset_all(save_history = .false.)
+         write(msg,'(3X,I4,A)') self%private_count, ' system timers registered and fully reset.'
+         call logger%log_information(msg, module=this_module, procedure='timer initialization')
+         if (self%user_count > 0) then
+            write(msg,'(3X,I4,A)') self%user_count, ' user defined timers registered and fully reset.'
+            call logger%log_information(msg, module=this_module, procedure='timer initialization')
+         end if
+      end if
       self%user_mode = .true.
       if_time = .true.
       call logger%log_message('LightKrylov system timer initialization complete.', module=this_module)
+      
    end subroutine initialize_lightkrylov_watch
 
    subroutine finalize_lightkrylov_watch(self)

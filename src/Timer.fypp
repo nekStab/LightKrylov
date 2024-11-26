@@ -47,6 +47,7 @@ module LightKrylov_Timing
       integer :: private_count = 0
       logical :: user_mode = .false.
       integer :: user_count = 0
+      logical :: is_initialized
    contains
       private
       procedure, pass(self), public :: add_timer
@@ -166,12 +167,25 @@ contains
       ! internal
       logical :: ifsave
       ifsave = optval(save_history, .true.)
-      if (self%count > 0) then
-         if (ifsave) call self%save_timer_history()
+      if (ifsave) then
+         ! soft reset, only if data was collected
+         if (self%count > 0) then
+            call self%save_timer_history()
+            self%elapsed_time = 0.0_dp
+            self%start_time = 0.0_dp
+            self%running = .false.
+            self%count = 0
+         end if
+      else
+         ! hard reset
          self%elapsed_time = 0.0_dp
          self%start_time = 0.0_dp
          self%running = .false.
          self%count = 0
+         self%reset_counter = 0
+         deallocate(self%etime_history)
+         deallocate(self%etavg_history)
+         deallocate(self%count_history)
       end if
    end subroutine reset_timer
 
@@ -404,42 +418,57 @@ contains
 
    subroutine initialize_lightkrylov_watch(self)
       class(lightkrylov_watch), intent(inout) :: self
-      ! timers for LightKrylov_BaseKrylov
-      #:for kind, type in RC_KINDS_TYPES
-      ! ${type[0]}$${kind}$
-      call self%add_timer('qr_with_pivoting_${type[0]}$${kind}$')
-      call self%add_timer('qr_no_pivoting_${type[0]}$${kind}$')
-      call self%add_timer('orthonormalize_basis_${type[0]}$${kind}$')
-      call self%add_timer('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('dgs_vector_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('dgs_basis_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('arnoldi_${type[0]}$${kind}$')
-      call self%add_timer('lanczos_bidiagonalization_${type[0]}$${kind}$')
-      call self%add_timer('lanczos_tridiagonalization_${type[0]}$${kind}$')
-      self%basekrylov_count = self%timer_count
-      #:endfor
-      ! timers for LightKrylov_IterativeSolvers
-      #:for kind, type in RC_KINDS_TYPES
-      ! ${type[0]}$${kind}$
-      call self%add_timer('eigs_${type[0]}$${kind}$')
-      call self%add_timer('eighs_${type[0]}$${kind}$')
-      call self%add_timer('svds_${type[0]}$${kind}$')
-      call self%add_timer('gmres_${type[0]}$${kind}$')
-      call self%add_timer('fgmres_${type[0]}$${kind}$')
-      call self%add_timer('cg_${type[0]}$${kind}$')
-      self%iterativesolvers_count = self%timer_count
-      #:endfor
-      ! timers for LightKrylov_NewtonKrylov
-      #:for kind, type in RC_KINDS_TYPES
-      ! ${type[0]}$${kind}$
-      call self%add_timer('newton_${type[0]}$${kind}$')
-      #:endfor
-      self%newtonkrylov_count = self%timer_count
-      self%private_count = self%timer_count
+      ! internal
+      character(len=128) :: msg
+      if (.not. self%is_initialized) then
+         ! timers for LightKrylov_BaseKrylov
+         #:for kind, type in RC_KINDS_TYPES
+         ! ${type[0]}$${kind}$
+         call self%add_timer('qr_with_pivoting_${type[0]}$${kind}$')
+         call self%add_timer('qr_no_pivoting_${type[0]}$${kind}$')
+         call self%add_timer('orthonormalize_basis_${type[0]}$${kind}$')
+         call self%add_timer('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
+         call self%add_timer('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
+         call self%add_timer('dgs_vector_against_basis_${type[0]}$${kind}$')
+         call self%add_timer('dgs_basis_against_basis_${type[0]}$${kind}$')
+         call self%add_timer('arnoldi_${type[0]}$${kind}$')
+         call self%add_timer('lanczos_bidiagonalization_${type[0]}$${kind}$')
+         call self%add_timer('lanczos_tridiagonalization_${type[0]}$${kind}$')
+         self%basekrylov_count = self%timer_count
+         #:endfor
+         ! timers for LightKrylov_IterativeSolvers
+         #:for kind, type in RC_KINDS_TYPES
+         ! ${type[0]}$${kind}$
+         call self%add_timer('eigs_${type[0]}$${kind}$')
+         call self%add_timer('eighs_${type[0]}$${kind}$')
+         call self%add_timer('svds_${type[0]}$${kind}$')
+         call self%add_timer('gmres_${type[0]}$${kind}$')
+         call self%add_timer('fgmres_${type[0]}$${kind}$')
+         call self%add_timer('cg_${type[0]}$${kind}$')
+         self%iterativesolvers_count = self%timer_count
+         #:endfor
+         ! timers for LightKrylov_NewtonKrylov
+         #:for kind, type in RC_KINDS_TYPES
+         ! ${type[0]}$${kind}$
+         call self%add_timer('newton_${type[0]}$${kind}$')
+         #:endfor
+         self%newtonkrylov_count = self%timer_count
+         self%private_count = self%timer_count
+         write(msg,'(3X,I4,A)') self%private_count, ' system timers registered.'
+         call logger%log_information(msg, module=this_module, procedure='timer initialization')
+      else
+         call self%reset_all(save_history = .false.)
+         write(msg,'(3X,I4,A)') self%private_count, ' system timers registered and fully reset.'
+         call logger%log_information(msg, module=this_module, procedure='timer initialization')
+         if (self%user_count > 0) then
+            write(msg,'(3X,I4,A)') self%user_count, ' user defined timers registered and fully reset.'
+            call logger%log_information(msg, module=this_module, procedure='timer initialization')
+         end if
+      end if
       self%user_mode = .true.
       if_time = .true.
       call logger%log_message('LightKrylov system timer initialization complete.', module=this_module)
+      
    end subroutine initialize_lightkrylov_watch
 
    subroutine finalize_lightkrylov_watch(self)
