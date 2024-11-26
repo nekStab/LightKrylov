@@ -18,7 +18,8 @@ module LightKrylov
     ! --> Expmlib
     use LightKrylov_Expmlib
     ! --> Timing utilities
-    use LightKrylov_Timing
+    use LightKrylov_Timer_Utils
+    use LightKrylov_Timing, only: lk_timer => global_lightkrylov_timer
     ! --> TestTypes
     implicit none
     private
@@ -145,6 +146,7 @@ module LightKrylov
     ! Timer exports
     public :: lightkrylov_timer
     public :: abstract_watch
+    public :: lk_timer
 
 contains
 
