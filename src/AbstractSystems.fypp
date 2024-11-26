@@ -6,7 +6,7 @@ module LightKrylov_AbstractSystems
     use stdlib_optval, only: optval
     use LightKrylov_Logger
     use LightKrylov_Constants
-    use LightKrylov_Timing
+    use LightKrylov_Timer_Utils
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none

@@ -31,7 +31,8 @@ module lightkrylov_IterativeSolvers
     use LightKrylov_Constants
     Use LightKrylov_Logger
     use LightKrylov_Utils
-    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
+    use LightKrylov_Timing, only: timer => global_lightkrylov_timer
+    use LightKrylov_Timer_Utils, only: time_lightkrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
