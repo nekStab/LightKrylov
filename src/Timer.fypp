@@ -662,7 +662,6 @@ contains
       if_time = .false.
       call logger%log_message('LightKrylov timer finalization complete.', module=this_module)
       call logger%log_message('#########   Global timer summary   #########', module=this_module)
-      call logger%log_message('______________________', module=this_module)
       call logger%log_message('Overview:', module=this_module)
       write(msg, '(2X,A40,I5)') 'Total active timers:', self%timer_count
       call logger%log_message(msg, module=this_module)
@@ -670,7 +669,6 @@ contains
       call logger%log_message(msg, module=this_module)
       write(msg, '(2X,A40,I5)') 'Called timers:', icalled
       call logger%log_message(msg, module=this_module)
-      call logger%log_message('______________________', module=this_module)
       if (ic_bk > 0) then
          call  print_summary_header('BaseKrylov')
          do i = 1, self%basekrylov_count
