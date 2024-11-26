@@ -478,7 +478,7 @@ contains
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
-      reset_timer_ = optval(reset_timer, .true.)
+      reset_timer_ = optval(reset_timer, .false.)
       if ( count_old /= 0 .or. counter_ /= 0) then
         if (trans) then
             write(msg,'(A,I0,A,I0,A)') 'Total number of rmatvecs: ', count_old, '. Resetting counter to ', counter_, '.'
