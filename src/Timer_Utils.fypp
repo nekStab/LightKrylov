@@ -1,20 +1,19 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-module LightKrylov_Timing
+module LightKrylov_Timer_Utils
    use stdlib_optval, only: optval
    use stdlib_ascii, only: to_lower
    use LightKrylov_Constants, only: dp
    use LightKrylov_Logger
    implicit none
    private
-   character(len=*), parameter :: this_module      = 'LK_Timer'
-   character(len=*), parameter :: this_module_long = 'LightKrylov_Timer'
-   logical :: if_time = .false.
+   character(len=*), parameter :: this_module      = 'LK_TmrUtils'
+   character(len=*), parameter :: this_module_long = 'LightKrylov_Timer_Utils'
+   logical :: if_time = .false. 
 
    public :: time_lightkrylov
    public :: set_timer_switch
-   public :: global_lightkrylov_timer
-
+   
    ! Timer type
    type, public :: lightkrylov_timer
       private
@@ -131,17 +130,6 @@ module LightKrylov_Timing
          class(abstract_watch), intent(inout) :: self
       end subroutine abstract_set_timers
    end interface
-
-   ! LightKrylov_watch type
-   type, extends(abstract_watch), public :: lightkrylov_watch
-      !! Global timing structure to contain all timers within Lightkrylov
-      character(len=128) :: name = 'lightkrylov_timer'
-   contains
-      private
-      procedure, pass(self), public :: set_private_timers => set_lightkrylov_timers
-   end type lightkrylov_watch
-
-   type(lightkrylov_watch) :: global_lightkrylov_timer
 
    ! format strings for uniform printing
    character(len=128), parameter :: fmt_h = '(2X,A30," : ",   9X,A7,4(A15))'      ! headers
@@ -786,50 +774,4 @@ contains
       end if
    end subroutine print_summary
 
-   !--------------------------------------------------------------
-   !  Concrete implementations for the lightkrylov_watch type
-   !--------------------------------------------------------------
-
-   subroutine set_lightkrylov_timers(self)
-      !! Initialize global watch within LightKrylov and define private system timers.
-      class(lightkrylov_watch), intent(inout) :: self
-      ! internal
-      integer :: istart
-      ! timers for LightKrylov_BaseKrylov
-      istart = self%get_timer_count() + 1
-      #:for kind, type in RC_KINDS_TYPES
-      ! ${type[0]}$${kind}$
-      call self%add_timer('qr_with_pivoting_${type[0]}$${kind}$')
-      call self%add_timer('qr_no_pivoting_${type[0]}$${kind}$')
-      call self%add_timer('orthonormalize_basis_${type[0]}$${kind}$')
-      call self%add_timer('orthonormalize_vector_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('orthonormalize_basis_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('dgs_vector_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('dgs_basis_against_basis_${type[0]}$${kind}$')
-      call self%add_timer('arnoldi_${type[0]}$${kind}$')
-      call self%add_timer('lanczos_bidiagonalization_${type[0]}$${kind}$')
-      call self%add_timer('lanczos_tridiagonalization_${type[0]}$${kind}$')
-      #:endfor
-      call self%add_group('BaseKrylov', istart=istart, iend=self%get_timer_count())
-      ! timers for LightKrylov_IterativeSolvers
-      istart = self%get_timer_count() + 1
-      #:for kind, type in RC_KINDS_TYPES
-      ! ${type[0]}$${kind}$
-      call self%add_timer('eigs_${type[0]}$${kind}$')
-      call self%add_timer('eighs_${type[0]}$${kind}$')
-      call self%add_timer('svds_${type[0]}$${kind}$')
-      call self%add_timer('gmres_${type[0]}$${kind}$')
-      call self%add_timer('fgmres_${type[0]}$${kind}$')
-      call self%add_timer('cg_${type[0]}$${kind}$')
-      #:endfor
-      call self%add_group('IterativeSolvers', istart=istart, iend=self%get_timer_count())
-      ! timers for LightKrylov_NewtonKrylov
-      istart = self%get_timer_count() + 1
-      #:for kind, type in RC_KINDS_TYPES
-      ! ${type[0]}$${kind}$
-      call self%add_timer('newton_${type[0]}$${kind}$')
-      #:endfor
-      call self%add_group('NewtonKrylov', istart=istart, iend=self%get_timer_count())
-   end subroutine set_lightkrylov_timers
-
-end module LightKrylov_Timing
+end module LightKrylov_Timer_Utils
