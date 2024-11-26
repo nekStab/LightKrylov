@@ -14,6 +14,7 @@ module LightKrylov_Timer_Utils
    
    ! Timer type
    type, public :: lightkrylov_timer
+      !! Individual timer
       private
       character(len=128), public :: name = 'default_timer'
       !! Timer name
@@ -59,8 +60,9 @@ module LightKrylov_Timer_Utils
       !! Transfer timing data to arrays
    end type lightkrylov_timer
 
-   ! Timer type
+   ! Timer group type
    type, public :: lightkrylov_timer_group
+      !! Simple type to allow for some structure in the timer output
       private
       character(len=128), public :: name = 'default_group'
       !! group name
@@ -95,30 +97,27 @@ module LightKrylov_Timer_Utils
       !! Add new timer to the watch
       procedure, pass(self), public :: remove_timer
       !! Remove existing timer from the watch
-      procedure, pass(self), public :: enumerate
-      !! Print summary of registered timers and their current status
       procedure, pass(self), public :: add_group
       !! Add new timer group to the watch
+      procedure, pass(self), public :: enumerate
+      !! Print summary of registered timers and their current status
+      ! Getter/Setter and helper routines
       procedure, pass(self), public :: get_timer_id
-      !! Helper routine to return the timer id from timer name
       procedure, pass(self), public :: get_timer_count
-      !! Helper routine to return the total timer count
       procedure, pass(self), public :: get_group_id
-      !! Helper routine to return the group id from group name
       procedure, pass(self), public :: reset_all
-      !! Helper routine to reset all timers in the watch
+      ! Wrappers for the basic timing routines
       procedure, pass(self), public :: start => start_timer_by_name
       procedure, pass(self), public :: stop => stop_timer_by_name
       procedure, pass(self), public :: pause => pause_timer_by_name
       procedure, pass(self), public :: reset => reset_timer_by_name
       procedure, pass(self), public :: print_info => print_timer_info_by_name
       procedure, pass(self), public :: initialize
-      !! Sets up flags and counters
+      !! Set up private timers, flags and counters. Switch on timing.
       procedure, pass(self), public :: finalize
       !! Gather timing information and print it to screen/logfile
       procedure(abstract_set_timers), pass(self), deferred, public :: set_private_timers
-      !! Define private timers that cannot be removed by the user, switch on timing
-      
+      !! Define private timers that cannot be removed by the user
    end type abstract_watch
 
    abstract interface
@@ -642,28 +641,30 @@ contains
       integer :: i, count
       character(len=128) :: msg
       if (.not. self%is_initialized) then
-         call logger%log_message('Set private timers.', module=this_module)
+         call logger%log_information('Set private timers.', module=this_module)
          call self%set_private_timers()
          self%private_count = self%timer_count
          write(msg,'(2(I0,A))') self%private_count, ' private timers registered in ', self%group_count, ' groups:'
-         call logger%log_message(msg, module=this_module)
+         call logger%log_information(msg, module=this_module)
          do i = 1, self%group_count
             count = self%groups(i)%iend - self%groups(i)%istart + 1
             write(msg,'(3X,A20," : ",I3," timers.")') self%groups(i)%name, count
-            call logger%log_message(msg, module=this_module)
+            call logger%log_information(msg, module=this_module)
          end do
          self%is_initialized = .true.
       else
          ! If the system timers have already been defined, we want to flush the data
          call self%reset_all(soft = .false.)
-         write(msg,'(3X,I4,A)') self%private_count, ' system timers registered and fully reset.'
-         call logger%log_information(msg, module=this_module, procedure='timer initialization')
+         write(msg,'(3X,I4,A)') self%private_count, ' private timers registered and fully reset.'
+         call logger%log_information(msg, module=this_module)
          if (self%user_count > 0) then
             write(msg,'(3X,I4,A)') self%user_count, ' user defined timers registered and fully reset.'
-            call logger%log_information(msg, module=this_module, procedure='timer initialization')
+            call logger%log_information(msg, module=this_module)
          end if
       end if
+      ! All subsequent timers that are added are user defined
       self%user_mode = .true.
+      ! We want to ensable timing
       call set_timer_switch(.true.)
       call logger%log_message('LightKrylov system timer initialization complete.', module=this_module)
    end subroutine initialize
