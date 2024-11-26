@@ -665,7 +665,6 @@ contains
             call logger%log_information(msg, module=this_module, procedure='timer initialization')
          end if
       end if
-      STOP 8
       self%user_mode = .true.
       call set_timer_switch(.true.)
       call logger%log_message('LightKrylov system timer initialization complete.', module=this_module)
