@@ -42,7 +42,6 @@ program demo
    real(wp), dimension(r, r)       :: Lr
    ! IO
    character(len=20)    :: data_fmt, header_fmt
-   !integer, allocatable :: logunits(:)
 
    write (header_fmt, *) '(22X,*(A,2X))'
    write (data_fmt, *) '(A22,*(1X,F15.6))'
