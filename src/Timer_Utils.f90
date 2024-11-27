@@ -127,10 +127,10 @@ module LightKrylov_Timer_Utils
    end interface
 
    ! format strings for uniform printing
-   character(len=128), parameter :: fmt_h = '(2X,A30," : ",   9X,A7,4(A15))'      ! headers
-   character(len=128), parameter :: fmt_t = '(2X,A30," : ",A6,3X,I7,4(1X,F14.6))' ! data total
-   character(len=128), parameter :: fmt_r = '(2X,30X,3X,   A6,I3,I7,4(1X,F14.6))' ! data reset
-   character(len=128), parameter :: fmt_n = '(2X,30X,3X,   A6,I3,I7,A60)'         ! not called
+   character(len=128), parameter :: fmt_h = '(2X,A30," : ",   9X,A9,4(A15))'      ! headers
+   character(len=128), parameter :: fmt_t = '(2X,A30," : ",A6,3X,I9,4(1X,F14.6))' ! data total
+   character(len=128), parameter :: fmt_r = '(2X,30X,3X,   A6,I3,I9,4(1X,F14.6))' ! data reset
+   character(len=128), parameter :: fmt_n = '(2X,30X,3X,   A6,I3,I9,A60)'         ! not called
 
 contains
 
