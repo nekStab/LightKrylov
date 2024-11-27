@@ -239,13 +239,13 @@ contains
          call logger%log_message('Timer "'//trim(self%name)//'" is curently running. Stopping timer before reset.', &
                      & module=this_module, procedure='reset_timer')
       end if
-      if (save_data) then
-         write(msg,'(A,A)') trim(self%name), ': soft reset.'
-         if (print_info) then
-            call logger%log_message(msg, module=this_module)
-         else
-            call logger%log_debug(msg, module=this_module)
-         end if
+      write(msg,'(A,L,3X,A,L)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
+      if (print_info) then
+         call logger%log_message(msg, module=this_module, procedure=self%name)
+      else
+         call logger%log_debug(msg, module=this_module, procedure=self%name)
+      end if
+      if (save_data .and. .not. flush_timer) then
          if (self%local_count > 0) then
             call self%save_timer_data()
             self%etime       = 0.0_dp
@@ -258,12 +258,6 @@ contains
          end if
       else
          ! hard reset
-         write(msg,'(A,A)') trim(self%name), ': hard reset.'
-         if (print_info) then
-            call logger%log_message(msg, module=this_module)
-         else
-            call logger%log_debug(msg, module=this_module)
-         end if
          self%etime       = 0.0_dp
          self%etime_pause = 0.0_dp
          self%etime_min   = huge(1.0_dp)
@@ -279,12 +273,6 @@ contains
          if(allocated(self%count_data)) deallocate(self%count_data)
       end if
       if (flush_timer) then
-         write(msg,'(A,A)') trim(self%name), ': data flushed.'
-         if (print_info) then
-            call logger%log_message(msg, module=this_module)
-         else
-            call logger%log_debug(msg, module=this_module)
-         end if
          self%count = 0
          self%is_finalized = .false.
       end if
@@ -522,11 +510,9 @@ contains
          call self%timers(i)%reset(soft, clean, verbose=.false.)
       end do
       write(msg,'(A,2(A,I0))') 'All timers reset: ', 'private: ', self%private_count, ', user: ', self%user_count
-      call logger%log_message(msg, module=this_module)
-      write(msg,'(2X,A,L)') 'soft reset:   ', soft_
-      call logger%log_message(msg, module=this_module)
-      write(msg,'(2X,A,L)') 'flush timers: ', clean_
-      call logger%log_message(msg, module=this_module)      
+      call logger%log_message(msg, module=this_module, procedure=self%name)
+      write(msg,'(A,L,3X,A,L)') 'soft reset: ', soft_, 'flush timers: ', clean_
+      call logger%log_message(msg, module=this_module, procedure=self%name)
    end subroutine reset_all
    
    subroutine start_timer_by_name(self, name)
@@ -545,7 +531,7 @@ contains
       else
          call self%timers(id)%start()
       end if
-      call logger%log_debug('Timer "'//trim(tname)//'" started.', module=this_module)
+      call logger%log_debug('Timer "'//trim(tname)//'" started.', module=this_module, procedure=self%name)
    end subroutine start_timer_by_name
 
    subroutine stop_timer_by_name(self, name)
@@ -564,7 +550,7 @@ contains
       else
          call self%timers(id)%stop()
       end if
-      call logger%log_debug('Timer "'//trim(tname)//'" stopped.', module=this_module)
+      call logger%log_debug('Timer "'//trim(tname)//'" stopped.', module=this_module, procedure=self%name)
    end subroutine stop_timer_by_name
 
    subroutine pause_timer_by_name(self, name)
@@ -583,7 +569,7 @@ contains
       else
          call self%timers(id)%pause()
       end if
-      call logger%log_debug('Timer "'//trim(tname)//'" paused.', module=this_module)
+      call logger%log_debug('Timer "'//trim(tname)//'" paused.', module=this_module, procedure=self%name)
    end subroutine
 
    subroutine reset_timer_by_name(self, name, soft, clean)
@@ -637,7 +623,7 @@ contains
       fmt_e = '(2X,I3,A50," :",3(1X,I0))'
       only_user_ = optval(only_user, .false.)
       if (.not. only_user_) then
-         call logger%log_message('Registered timers: all', module=this_module)
+         call logger%log_message('Registered timers: all', module=this_module, procedure=self%name)
          do i = 1, self%group_count
             call logger%log_message(trim(self%groups(i)%name)//":", module=this_module)
             do j = self%groups(i)%istart, self%groups(i)%iend
@@ -649,7 +635,7 @@ contains
          end do
       end if
       if (self%user_count > 0) then
-         call logger%log_message('Registered timers: user', module=this_module)
+         call logger%log_message('Registered timers: user', module=this_module, procedure=self%name)
          do i = self%private_count+1, self%timer_count
             associate (t => self%timers(i))
                write(msg,fmt_e) i, trim(t%name), t%count, t%local_count, t%reset_count
