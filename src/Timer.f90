@@ -55,7 +55,7 @@ contains
       call self%set_watch_name('LightKrylov_timer')
       ! timers for LightKrylov_BaseKrylov
       ! rsp
-      call self%add_timer('qr_with_pivoting_rsp', istart)
+      call self%add_timer('qr_with_pivoting_rsp', count=istart)
       call self%add_timer('qr_no_pivoting_rsp')
       call self%add_timer('orthonormalize_basis_rsp')
       call self%add_timer('orthonormalize_vector_against_basis_rsp')
@@ -97,12 +97,12 @@ contains
       call self%add_timer('dgs_basis_against_basis_cdp')
       call self%add_timer('arnoldi_cdp')
       call self%add_timer('lanczos_bidiagonalization_cdp')
-      call self%add_timer('lanczos_tridiagonalization_cdp', iend)
+      call self%add_timer('lanczos_tridiagonalization_cdp', count=iend)
       ! define BaseKrylov group
       call self%add_group('BaseKrylov', istart=istart, iend=iend)
       ! timers for LightKrylov_IterativeSolvers
       ! rsp
-      call self%add_timer('eigs_rsp', istart)
+      call self%add_timer('eigs_rsp', count=istart)
       call self%add_timer('eighs_rsp')
       call self%add_timer('svds_rsp')
       call self%add_timer('gmres_rsp')
@@ -128,18 +128,18 @@ contains
       call self%add_timer('svds_cdp')
       call self%add_timer('gmres_cdp')
       call self%add_timer('fgmres_cdp')
-      call self%add_timer('cg_cdp', iend)
+      call self%add_timer('cg_cdp', count=iend)
       ! define IterativeSolvers group
       call self%add_group('IterativeSolvers', istart=istart, iend=iend)
       ! timers for LightKrylov_NewtonKrylov
       ! rsp
-      call self%add_timer('newton_rsp', istart)
+      call self%add_timer('newton_rsp', count=istart)
       ! rdp
       call self%add_timer('newton_rdp')
       ! csp
       call self%add_timer('newton_csp')
       ! cdp
-      call self%add_timer('newton_cdp', iend)
+      call self%add_timer('newton_cdp', count=iend)
       ! define NewtonKrylov group
       call self%add_group('NewtonKrylov', istart=istart, iend=iend)
       ! Enable timing

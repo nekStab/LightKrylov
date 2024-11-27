@@ -235,46 +235,46 @@ contains
       flush_timer  = optval(clean, .false.)
       print_info   = optval(verbose, .false.)
       if (self%running) then
-         call self%stop()
-         call logger%log_message('Timer "'//trim(self%name)//'" is curently running. Stopping timer before reset.', &
+         call logger%log_message('Timer "'//trim(self%name)//'" is curently running. Timer not reset.', &
                      & module=this_module, procedure='reset_timer')
-      end if
-      write(msg,'(A,L,3X,A,L)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
-      if (print_info) then
-         call logger%log_message(msg, module=this_module, procedure=self%name)
       else
-         call logger%log_debug(msg, module=this_module, procedure=self%name)
-      end if
-      if (save_data .and. .not. flush_timer) then
-         if (self%local_count > 0) then
-            call self%save_timer_data()
+         write(msg,'(A,L,3X,A,L)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
+         if (print_info) then
+            call logger%log_message(msg, module=this_module, procedure=self%name)
+         else
+            call logger%log_debug(msg, module=this_module, procedure=self%name)
+         end if
+         if (save_data .and. .not. flush_timer) then
+            if (self%local_count > 0) then
+               call self%save_timer_data()
+               self%etime       = 0.0_dp
+               self%etime_pause = 0.0_dp
+               self%start_time  = 0.0_dp
+               self%etime_min   = huge(1.0_dp)
+               self%etime_max   = 0.0_dp
+               self%running     = .false.
+               self%local_count = 0
+            end if
+         else
+            ! hard reset
             self%etime       = 0.0_dp
             self%etime_pause = 0.0_dp
-            self%start_time  = 0.0_dp
             self%etime_min   = huge(1.0_dp)
             self%etime_max   = 0.0_dp
+            self%start_time  = 0.0_dp
             self%running     = .false.
             self%local_count = 0
+            self%reset_count = 0
+            if(allocated(self%etime_data)) deallocate(self%etime_data)
+            if(allocated(self%etmin_data)) deallocate(self%etmin_data)
+            if(allocated(self%etmax_data)) deallocate(self%etmax_data)
+            if(allocated(self%etavg_data)) deallocate(self%etavg_data)
+            if(allocated(self%count_data)) deallocate(self%count_data)
          end if
-      else
-         ! hard reset
-         self%etime       = 0.0_dp
-         self%etime_pause = 0.0_dp
-         self%etime_min   = huge(1.0_dp)
-         self%etime_max   = 0.0_dp
-         self%start_time  = 0.0_dp
-         self%running     = .false.
-         self%local_count = 0
-         self%reset_count = 0
-         if(allocated(self%etime_data)) deallocate(self%etime_data)
-         if(allocated(self%etmin_data)) deallocate(self%etmin_data)
-         if(allocated(self%etmax_data)) deallocate(self%etmax_data)
-         if(allocated(self%etavg_data)) deallocate(self%etavg_data)
-         if(allocated(self%count_data)) deallocate(self%count_data)
-      end if
-      if (flush_timer) then
-         self%count = 0
-         self%is_finalized = .false.
+         if (flush_timer) then
+            self%count = 0
+            self%is_finalized = .false.
+         end if
       end if
    end subroutine reset_timer
 
@@ -363,14 +363,17 @@ contains
    !  Type-bound procedures for abstract_watch type
    !--------------------------------------------------------------
 
-   subroutine add_timer(self, name, count)
-      !! Type-bound to abstract_watch: Add timer to watch
+   subroutine add_timer(self, name, start, count)
+      !! Type-bound to abstract_watch: Add timer to watch and optionally start it immediately
       !! Note: The new timer name must be unique
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
+      logical, optional, intent(in) :: start
       integer, optional, intent(out) :: count
       ! internal
+      logical :: start_
       character(len=128) :: msg, tname
+      start_ = optval(start, .false.)
       tname = to_lower(name)
       if (self%timer_count == 0) then
          allocate(self%timers(1))
@@ -388,6 +391,7 @@ contains
       write(msg,'(A,I0)') 'Timer "'//trim(tname)//'" added: timer_count: ', self%timer_count
       call logger%log_debug(msg, module=this_module)
       if (present(count)) count = self%timer_count
+      if (start_) call self%start(tname)
    end subroutine add_timer
 
    subroutine remove_timer(self, name, count)
@@ -759,7 +763,10 @@ contains
             etmax = max(etmax, t%etmax_data(i))
          end if
       end do
-      if (count > 0) then
+      if (count == 1) then
+         write(msg,'(2X,A30," : ",A6,3X,I9,1X,F14.6,3(A15))') trim(t%name), 'total', count, t%etime_data(1), '-', '-', '-'
+         call logger%log_message(msg, module=this_module)
+      else if (count > 1) then
          etime = sum(t%etime_data)
          etavg = sum(t%etavg_data)/count2
          write(msg,fmt_t) trim(t%name), 'total', count, etime, etavg, etmin, etmax

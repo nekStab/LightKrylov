@@ -52,6 +52,8 @@ program demo
 
    ! Set up timing
    call timer%initialize()
+   call timer%add_timer('Roessler example (total)', start=.true.)
+   call timer%add_timer('Chaotic attractor', start=.true.)
 
    ! Initialize baseflow and perturbation state vectors
    call bf%zero(); call dx%zero(); call residual%zero()
@@ -74,6 +76,9 @@ program demo
    print data_fmt, 'Final position :', eval(1), eval(2), eval(3), Tend
    print *, ''
 
+   call timer%stop('Chaotic attractor')
+   call timer%add_timer('Newton iteration (const. tol)', start=.true.)
+
    print *, '########################################################################################'
    print '(A,E9.2,A)', ' #             Newton iteration with constant tolerance (tol=', tol, ')                 #'
    print *, '########################################################################################'
@@ -91,11 +96,6 @@ program demo
    sys%jacobian = jacobian()
    sys%jacobian%X = bf
 
-   ! Reset eval timer
-   call sys%reset_timer()
-   ! Reset system timers
-   call timer%reset_all()
-
    ! Set tolerance
    tol = 1e-12_wp
 
@@ -108,6 +108,12 @@ program demo
    print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
    print data_fmt, 'Solution residual:', residual%x, residual%y, residual%z, residual%T
    print *, ''
+
+   ! Reset timers
+   call timer%stop('Newton iteration (const. tol)')
+   call sys%reset_timer()
+   call timer%reset_all()
+   call timer%add_timer('Newton iteration (dyn. tol)', start=.true.)
 
    print *, '########################################################################################'
    print '(A,E9.2,A)', ' #             Newton iteration with dynamic tolerances (target=', tol, ')              #'
@@ -130,6 +136,12 @@ program demo
    print data_fmt, 'Solution residual:', residual%x, residual%y, residual%z, residual%T
    print *, ''
 
+   ! Reset timers
+   call timer%stop('Newton iteration (dyn. tol)')
+   call sys%reset_timer()
+   call timer%reset_all()
+   call timer%add_timer('Monodromy matrix & Floquet exp.', start=.true.)
+
    print *, '########################################################################################'
    print *, '#                        Monodromy matrix and floquet exponents                        #'
    print *, '########################################################################################'
@@ -138,11 +150,6 @@ program demo
    ! Compute the stability of the orbit
    sys%jacobian = floquet_operator()
    sys%jacobian%X = bf  ! <- periodic orbit
-   
-   ! Reset eval timer
-   call sys%reset_timer()
-   ! Reset system timers
-   call timer%reset_all()
 
    M = 0.0_wp
    Id = eye(npts)
@@ -159,6 +166,12 @@ program demo
       print '(4X,I1,": ",F15.12)', i, eval(i)
    end do
    print *, ''
+
+   ! Reset timers
+   call timer%stop('Monodromy matrix & Floquet exp.')
+   call sys%reset_timer()
+   call timer%reset_all()
+   call timer%add_timer('OTD modes - fixed-point', start=.true.)
 
    print *, '########################################################################################'
    print *, '#                  Optimally Time-Dependent (OTD) modes on fixed point                 #'
@@ -207,6 +220,13 @@ program demo
    print '(A16,1X,*(F16.9,1X))', 'Reference   ', EV_ref
    print *, ''
    print '(A10,F6.3,1X,*(F16.9,1X))', 'OTD:  t=', Tend, eval(1:r)
+
+   ! Reset timers
+   call timer%stop('OTD modes - fixed-point')
+   call sys%reset_timer()
+   call timer%reset_all()
+   call timer%add_timer('OTD modes - periodic orbit', start=.true.)
+
    print *, ''
    print *, '########################################################################################'
    print *, '#                  Optimally Time-Dependent (OTD) modes on periodic orbit              #'
@@ -230,6 +250,12 @@ program demo
    call rename(report_file_OTD, 'example/roessler/PO_OTD.txt')
    call rename(report_file_OTD_LE, 'example/roessler/PO_LE.txt')
    print *, ''
+
+   ! Reset timers
+   call timer%stop('OTD modes - periodic orbit')
+   call sys%reset_timer()
+   call timer%reset_all()
+   call timer%add_timer('OTD modes - route to chaos', start=.true.)
 
    print *, ''
    print *, '########################################################################################'
