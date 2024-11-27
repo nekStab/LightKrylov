@@ -48,6 +48,7 @@ program demo
 
    !> Set up timing
    call timer%initialize()
+   call timer%add_timer('Ginzburg-Landau example', start=.true.)
 
    !> Initialize physical parameters.
    call initialize_parameters()

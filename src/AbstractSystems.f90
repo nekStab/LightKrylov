@@ -4,7 +4,8 @@ module LightKrylov_AbstractSystems
     use stdlib_optval, only: optval
     use LightKrylov_Logger
     use LightKrylov_Constants
-    use LightKrylov_Timer_Utils
+    use LightKrylov_Timer_Utils, only: lightkrylov_timer
+    use LightKrylov_Timing, only: time_lightkrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none

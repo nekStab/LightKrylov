@@ -8,22 +8,40 @@ module LightKrylov_Timing
    private
    character(len=*), parameter :: this_module      = 'LK_Timer'
    character(len=*), parameter :: this_module_long = 'LightKrylov_Timer'
-   logical :: if_time = .false.
+   logical :: if_time = .false. 
 
+   public :: time_lightkrylov
    public :: global_lightkrylov_timer
 
    ! LightKrylov_watch type
    type, extends(abstract_watch), public :: lightkrylov_watch
       !! Global timing structure to contain all timers within Lightkrylov
-      character(len=128) :: name = 'lightkrylov_timer'
    contains
       private
-      procedure, pass(self), public :: set_private_timers => set_lightkrylov_timers
+      procedure, pass(self), public :: set_private_timers_and_name => set_lightkrylov_timers
    end type lightkrylov_watch
 
    type(lightkrylov_watch) :: global_lightkrylov_timer
 
 contains
+
+   logical function time_lightkrylov() result(if_time_lightkrylov)
+      if_time_lightkrylov = if_time
+   end function time_lightkrylov
+
+   subroutine set_lightkrylov_timer_switch(value)
+      logical, intent(in) :: value     
+      if (if_time .neqv. value) then
+         if_time = value
+         if (if_time) then
+            call logger%log_message('LightKrylov timing enabled.', module=this_module)
+         else
+            call logger%log_message('LightKrylov timing disabled.', module=this_module)
+         end if
+      else
+         call logger%log_debug('LightKrylov timing switched unchanged.', module=this_module)
+      end if      
+   end subroutine set_lightkrylov_timer_switch
 
    !--------------------------------------------------------------
    !  Concrete implementations for the lightkrylov_watch type
@@ -33,11 +51,11 @@ contains
       !! Initialize global watch within LightKrylov and define private system timers.
       class(lightkrylov_watch), intent(inout) :: self
       ! internal
-      integer :: count_old
+      integer :: istart, iend
+      call self%set_watch_name('LightKrylov_timer')
       ! timers for LightKrylov_BaseKrylov
-      count_old = self%get_timer_count()
       ! rsp
-      call self%add_timer('qr_with_pivoting_rsp')
+      call self%add_timer('qr_with_pivoting_rsp', count=istart)
       call self%add_timer('qr_no_pivoting_rsp')
       call self%add_timer('orthonormalize_basis_rsp')
       call self%add_timer('orthonormalize_vector_against_basis_rsp')
@@ -79,12 +97,12 @@ contains
       call self%add_timer('dgs_basis_against_basis_cdp')
       call self%add_timer('arnoldi_cdp')
       call self%add_timer('lanczos_bidiagonalization_cdp')
-      call self%add_timer('lanczos_tridiagonalization_cdp')
-      call self%add_group('BaseKrylov', istart=count_old+1, iend=self%get_timer_count())
+      call self%add_timer('lanczos_tridiagonalization_cdp', count=iend)
+      ! define BaseKrylov group
+      call self%add_group('BaseKrylov', istart=istart, iend=iend)
       ! timers for LightKrylov_IterativeSolvers
-      count_old = self%get_timer_count()
       ! rsp
-      call self%add_timer('eigs_rsp')
+      call self%add_timer('eigs_rsp', count=istart)
       call self%add_timer('eighs_rsp')
       call self%add_timer('svds_rsp')
       call self%add_timer('gmres_rsp')
@@ -110,19 +128,22 @@ contains
       call self%add_timer('svds_cdp')
       call self%add_timer('gmres_cdp')
       call self%add_timer('fgmres_cdp')
-      call self%add_timer('cg_cdp')
-      call self%add_group('IterativeSolvers', istart=count_old+1, iend=self%get_timer_count())
+      call self%add_timer('cg_cdp', count=iend)
+      ! define IterativeSolvers group
+      call self%add_group('IterativeSolvers', istart=istart, iend=iend)
       ! timers for LightKrylov_NewtonKrylov
-      count_old = self%get_timer_count()
       ! rsp
-      call self%add_timer('newton_rsp')
+      call self%add_timer('newton_rsp', count=istart)
       ! rdp
       call self%add_timer('newton_rdp')
       ! csp
       call self%add_timer('newton_csp')
       ! cdp
-      call self%add_timer('newton_cdp')
-      call self%add_group('NewtonKrylov', istart=count_old+1, iend=self%get_timer_count())
+      call self%add_timer('newton_cdp', count=iend)
+      ! define NewtonKrylov group
+      call self%add_group('NewtonKrylov', istart=istart, iend=iend)
+      ! Enable timing
+      call set_lightkrylov_timer_switch(.true.)
    end subroutine set_lightkrylov_timers
 
 end module LightKrylov_Timing
