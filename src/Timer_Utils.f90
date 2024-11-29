@@ -416,7 +416,7 @@ contains
          self%timers(1) = lightkrylov_timer(tname)
          self%timer_count = 1
       else
-         if (self%get_timer_id(name) > 0) call element_exists(tname, 'Timer', this_module, procedure='add_timer')
+         if (self%get_timer_id(name) > 0) call element_exists(tname, 'Timer', 'add_timer')
          self%timers = [ self%timers, lightkrylov_timer(tname) ]
          self%timer_count = self%timer_count + 1
          if (self%user_mode) self%user_count = self%user_count + 1
@@ -439,9 +439,9 @@ contains
       integer :: id
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) call timer_not_found(tname, this_module, procedure='remove_timer')
+      if (id == 0) call timer_not_found(tname, 'remove_timer')
       if (id <= self%private_count) then
-         write(msg,'(A)') 'Cannot remove private timer "'//trim(tname)//'".'
+         write(msg,'(A)') 'Cannot remove private timer "'//trim(tname)//'". Do nothing.'
          call logger%log_message(msg, module=this_module, procedure='remove_timer')
       else
          self%timer_count = self%timer_count - 1
@@ -450,9 +450,9 @@ contains
          new_timers(id:)    = self%timers(id+1:)
          deallocate(self%timers)
          self%timers = new_timers
+         write(msg,'(A,I0)') 'Timer "'//trim(tname)//'" removed: timer_count: ', self%timer_count
+         call logger%log_debug(msg, module=this_module, procedure='remove_timer')
       end if
-      write(msg,'(A,I0)') 'Timer "'//trim(tname)//'" removed: timer_count: ', self%timer_count
-      call logger%log_debug(msg, module=this_module, procedure='remove_timer')
       if (present(count)) count = self%timer_count
    end subroutine remove_timer
 
@@ -480,7 +480,7 @@ contains
          self%groups(1) = lightkrylov_timer_group(name=gname, istart=istart, iend=iend)
          self%group_count = 1
       else
-         if (self%get_group_id(name) > 0) call element_exists(gname, 'Group', this_module, 'add_group')
+         if (self%get_group_id(name) > 0) call element_exists(gname, 'Group', 'add_group')
          self%groups = [ self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend) ]
          self%group_count = self%group_count + 1
       end if
@@ -533,7 +533,7 @@ contains
       character(len=128) :: tname
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) call timer_not_found(tname, this_module, procedure='start_timer_by_name')
+      if (id == 0) call timer_not_found(tname, 'start_timer_by_name')
       call self%timers(id)%start()
       call logger%log_debug('Timer "'//trim(tname)//'" started.', module=this_module, procedure=self%name)
    end subroutine start_timer_by_name
@@ -548,7 +548,7 @@ contains
       character(len=128) :: tname
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) call timer_not_found(tname, this_module, procedure='stop_timer_by_name')
+      if (id == 0) call timer_not_found(tname, 'stop_timer_by_name')
       call self%timers(id)%stop()
       call logger%log_debug('Timer "'//trim(tname)//'" stopped.', module=this_module, procedure=self%name)
    end subroutine stop_timer_by_name
@@ -563,7 +563,7 @@ contains
       character(len=128) :: tname
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) call timer_not_found(tname, this_module, 'pause_timer_by_name')
+      if (id == 0) call timer_not_found(tname, 'pause_timer_by_name')
       call self%timers(id)%pause()
       call logger%log_debug('Timer "'//trim(tname)//'" paused.', module=this_module, procedure=self%name)
    end subroutine
@@ -580,7 +580,7 @@ contains
       character(len=128) :: tname
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) call timer_not_found(tname, this_module, 'reset_timer_by_name')
+      if (id == 0) call timer_not_found(tname, 'reset_timer_by_name')
       call self%timers(id)%reset(soft, clean)
    end subroutine
 
@@ -596,7 +596,7 @@ contains
       character(len=128) :: tname
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) call timer_not_found(tname, this_module, 'get_timer_etime_by_name')
+      if (id == 0) call timer_not_found(tname, 'get_timer_etime_by_name')
       etime = self%timers(id)%get_time(restart)
    end function get_timer_etime_by_name
 
@@ -620,7 +620,7 @@ contains
       tname = to_lower(name)
       id = self%get_timer_id(tname)
       if (id == 0) then 
-         call timer_not_found(tname, this_module, 'get_timer_data_by_name')
+         call timer_not_found(tname, 'get_timer_data_by_name')
       else
          call self%timers(id)%get_data(restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)
       end if
@@ -638,7 +638,7 @@ contains
       tname = to_lower(name)
       id = self%get_timer_id(tname)
       if (id == 0) then 
-         call timer_not_found(tname, this_module, 'print_timer_info_by_name')
+         call timer_not_found(tname, 'print_timer_info_by_name')
       else
          call self%timers(id)%print_info(full)
       end if
@@ -732,13 +732,21 @@ contains
       call logger%log_message('Private timer initialization complete.', module=this_module, procedure=self%name)
    end subroutine initialize
 
-   subroutine finalize(self)
+   subroutine finalize(self, write_to_file)
       !! Finalize global watch within LightKrylov and print used timers.
       class(abstract_watch), intent(inout) :: self
+      logical, optional, intent(in) :: write_to_file
+      !! Print timer summary to a dedicated timer logfile as well as the general log file? default: .true.
       ! internal
-      integer :: i, j, icalled, ic_user
+      integer :: i, j, icalled, ic_user, tmr_unit
       integer, dimension(:), allocatable :: ic
-      character(len=128) :: msg
+      logical :: to_file
+      character(len=128) :: msg, logfile_tmr
+      to_file = optval(write_to_file, .true.)
+      if (to_file) then
+         write(logfile_tmr, '(A,A)') trim(to_lower(self%name)), '.log'
+         call logger%add_log_file(logfile_tmr, tmr_unit, status='replace', action='write')
+      end if
       icalled = 0
       allocate(ic(self%group_count))
       do i = 1, self%timer_count
@@ -778,6 +786,7 @@ contains
          end do
       end if
       call logger%log_message('#########   Global timer summary   ##########', module=this_module)
+      if (to_file) call logger%remove_log_unit(tmr_unit, close_unit=.true.)
    end subroutine finalize
 
    !--------------------------------------------------------------
@@ -844,19 +853,17 @@ contains
    !  Helper subroutines for error handling
    !--------------------------------------------------------------
 
-   subroutine timer_not_found(name, module, procedure)
+   subroutine timer_not_found(name, procedure)
       character(len=*), intent(in) :: name
-      character(len=*), optional, intent(in) :: module
       character(len=*), optional, intent(in) :: procedure
-      call stop_error('Timer "'//trim(name)//'" not found!', module=module, procedure=procedure)
+      call stop_error('Timer "'//trim(name)//'" not found!', module=this_module, procedure=procedure)
    end subroutine timer_not_found
 
-   subroutine element_exists(name, element, module, procedure)
+   subroutine element_exists(name, element, procedure)
       character(len=*), intent(in) :: name
       character(len=*), intent(in) :: element
-      character(len=*), optional, intent(in) :: module
       character(len=*), optional, intent(in) :: procedure
-      call stop_error(trim(element)//' "'//trim(name)//'" already defined!', module=module, procedure=procedure)
+      call stop_error(trim(element)//' "'//trim(name)//'" already defined!', module=this_module, procedure=procedure)
    end subroutine element_exists
 
 end module LightKrylov_Timer_Utils
