@@ -111,7 +111,7 @@ module LightKrylov
     ! Newton-Krylov exports.
     public :: newton
     #:for kind in REAL_KINDS
-    public :: constant_atol_${kind}$, dynamic_tol_${kind}$
+    public :: constant_tol_${kind}$, dynamic_tol_${kind}$
     #:endfor
 
     ! ExpmLib exports.

@@ -19,7 +19,7 @@ module LightKrylov_NewtonKrylov
 
    public :: newton
    #:for kind in REAL_KINDS
-   public :: constant_atol_${kind}$
+   public :: constant_tol_${kind}$
    public :: dynamic_tol_${kind}$
    #:endfor
 
@@ -151,7 +151,7 @@ contains
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
       else
-         tolerance_scheduler => constant_atol_${kind}$
+         tolerance_scheduler => constant_tol_${kind}$
       endif
 
       ! Initialisation
@@ -368,8 +368,8 @@ contains
    !-----     Definition of two basic tolerance schedulers (${kind}$)    -----
    !--------------------------------------------------------------------
 
-   subroutine constant_atol_${kind}$(tol, target_tol, rnorm, iter, info)
-      !! Abstract interface to define tolerance scheduler for the Newton iteration
+   subroutine constant_tol_${kind}$(tol, target_tol, rnorm, iter, info)
+      !! Constant tolerance scheduler for the Newton iteration
       real(${kind}$), intent(out) :: tol
       !! Tolerance to be used
       real(${kind}$), intent(in) :: target_tol
@@ -382,13 +382,19 @@ contains
       !! Information flag
       character(len=256) :: msg
       tol = target_tol
-      write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
-      call logger%log_information(msg, module=this_module, procedure='constant_atol_${kind}$')
+      if (target_tol < atol_${kind}$) then
+         tol = atol_${kind}$
+         write(msg,'(A,E9.2)') 'Input tolerance below atol! Resetting solver tolerance to atol= ', tol
+         call logger%log_warning(msg, module=this_module, procedure='constant_tol_${kind}$')
+      else
+         write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
+         call logger%log_information(msg, module=this_module, procedure='constant_tol_${kind}$')
+      end if
       return
-   end subroutine constant_atol_${kind}$
+   end subroutine constant_tol_${kind}$
 
    subroutine dynamic_tol_${kind}$(tol, target_tol, rnorm, iter, info)
-      !! Abstract interface to define tolerance scheduler for the Newton iteration
+      !! Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol
       real(${kind}$), intent(out) :: tol
       !! Tolerance to be used
       real(${kind}$), intent(in) :: target_tol
@@ -400,18 +406,27 @@ contains
       integer,  intent(out)  :: info
       !! Information flag
       ! internals
-      real(${kind}$) :: tol_old
+      real(${kind}$) :: tol_old, target_tol_
       character(len=256) :: msg
+
+      target_tol_ = max(target_tol, atol_${kind}$)
+      if (target_tol < atol_${kind}$) then
+         write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
+         call logger%log_warning(msg, module=this_module, procedure='dynamic_tol_${kind}$')
+      end if
       
       tol_old = tol
-      tol = max(0.1*rnorm, target_tol)
+      tol = max(0.1*rnorm, target_tol_)
 
       if (tol /= tol_old) then
-         if (tol == target_tol) then
+         if (tol == target_tol_) then
             write(msg,'(A,E9.2)') 'Solver tolerance set to input target. tol= ', tol
          else
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
          end if
+         call logger%log_information(msg, module=this_module, procedure='dynamic_tol_${kind}$')
+      else
+         write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
          call logger%log_information(msg, module=this_module, procedure='dynamic_tol_${kind}$')
       end if
       return
