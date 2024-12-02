@@ -114,7 +114,7 @@ module LightKrylov_NewtonKrylov
 
 contains
 
-   subroutine newton_rsp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_rsp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rsp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rsp),                         intent(inout) :: X
@@ -123,8 +123,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(sp),                                 optional, intent(in)    :: tolerance
-      real(sp)                                                          :: target_tol
+      real(sp),                                 optional, intent(in)    :: rtol
+      real(sp)                                                          :: target_rtol
+      real(sp),                                 optional, intent(in)    :: atol
+      real(sp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
@@ -143,7 +145,7 @@ contains
       
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rsp), allocatable        :: residual, increment
-      real(sp)           :: rnorm, tol
+      real(sp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -151,7 +153,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_rsp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_sp)
+      target_rtol = optval(rtol, rtol_sp)
+      target_atol = optval(atol, atol_sp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -176,8 +180,9 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
@@ -272,7 +277,7 @@ contains
       return
    end subroutine newton_rsp
 
-   subroutine newton_rdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_rdp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rdp),                         intent(inout) :: X
@@ -281,8 +286,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(dp),                                 optional, intent(in)    :: tolerance
-      real(dp)                                                          :: target_tol
+      real(dp),                                 optional, intent(in)    :: rtol
+      real(dp)                                                          :: target_rtol
+      real(dp),                                 optional, intent(in)    :: atol
+      real(dp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
@@ -301,7 +308,7 @@ contains
       
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rdp), allocatable        :: residual, increment
-      real(dp)           :: rnorm, tol
+      real(dp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -309,7 +316,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_rdp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_dp)
+      target_rtol = optval(rtol, rtol_dp)
+      target_atol = optval(atol, atol_dp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -334,8 +343,9 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
@@ -430,7 +440,7 @@ contains
       return
    end subroutine newton_rdp
 
-   subroutine newton_csp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_csp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_csp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_csp),                         intent(inout) :: X
@@ -439,8 +449,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(sp),                                 optional, intent(in)    :: tolerance
-      real(sp)                                                          :: target_tol
+      real(sp),                                 optional, intent(in)    :: rtol
+      real(sp)                                                          :: target_rtol
+      real(sp),                                 optional, intent(in)    :: atol
+      real(sp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
@@ -459,7 +471,7 @@ contains
       
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_csp), allocatable        :: residual, increment
-      real(sp)           :: rnorm, tol
+      real(sp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -467,7 +479,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_csp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_sp)
+      target_rtol = optval(rtol, rtol_sp)
+      target_atol = optval(atol, atol_sp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -492,8 +506,9 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
@@ -588,7 +603,7 @@ contains
       return
    end subroutine newton_csp
 
-   subroutine newton_cdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_cdp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_cdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_cdp),                         intent(inout) :: X
@@ -597,8 +612,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(dp),                                 optional, intent(in)    :: tolerance
-      real(dp)                                                          :: target_tol
+      real(dp),                                 optional, intent(in)    :: rtol
+      real(dp)                                                          :: target_rtol
+      real(dp),                                 optional, intent(in)    :: atol
+      real(dp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
@@ -617,7 +634,7 @@ contains
       
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_cdp), allocatable        :: residual, increment
-      real(dp)           :: rnorm, tol
+      real(dp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -625,7 +642,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_cdp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_dp)
+      target_rtol = optval(rtol, rtol_dp)
+      target_atol = optval(atol, atol_dp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -650,8 +669,9 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)

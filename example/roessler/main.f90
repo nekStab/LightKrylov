@@ -100,7 +100,7 @@ program demo
    tol = 1e-12_wp
 
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
-   call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=constant_tol_dp)
+   call newton(sys, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=constant_tol_dp)
 
    call sys%eval(bf, residual, tol)
    print *, ''
@@ -127,7 +127,7 @@ program demo
    print *, ''
    sys%jacobian%X = bf
 
-   call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=dynamic_tol_dp)
+   call newton(sys, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=dynamic_tol_dp)
 
    call sys%eval(bf, residual, tol)
    print *, ''

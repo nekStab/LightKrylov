@@ -103,7 +103,7 @@ module LightKrylov_NewtonKrylov
 contains
 
    #:for kind, type in RC_KINDS_TYPES
-   subroutine newton_${type[0]}$${kind}$(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_${type[0]}$${kind}$(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_${type[0]}$${kind}$),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_${type[0]}$${kind}$),                         intent(inout) :: X
@@ -112,8 +112,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(${kind}$),                                 optional, intent(in)    :: tolerance
-      real(${kind}$)                                                          :: target_tol
+      real(${kind}$),                                 optional, intent(in)    :: rtol
+      real(${kind}$)                                                          :: target_rtol
+      real(${kind}$),                                 optional, intent(in)    :: atol
+      real(${kind}$)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_${kind}$_opts),                     optional, intent(in)    :: options
       type(newton_${kind}$_opts)                                              :: opts
@@ -132,7 +134,7 @@ contains
       
       procedure(abstract_scheduler_${kind}$),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_${type[0]}$${kind}$), allocatable        :: residual, increment
-      real(${kind}$)           :: rnorm, tol
+      real(${kind}$)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_${kind}$_metadata) :: newton_meta
       character(len=256) :: msg
@@ -140,7 +142,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_${type[0]}$${kind}$')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_${kind}$)
+      target_rtol = optval(rtol, rtol_${kind}$)
+      target_atol = optval(atol, atol_${kind}$)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -165,8 +169,9 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
