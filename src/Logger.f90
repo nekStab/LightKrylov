@@ -135,7 +135,7 @@ contains
       end if
       call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr); call set_rank(nid)
       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr); call set_comm_size(comm_size)
-      write(msg,'(A,I0,A,I0)') 'rank', nid, ', comm_size = ', comm_size
+      write(msg,'(A,I0,A,I0)') 'IO rank = ', nid, ', comm_size = ', comm_size
       call logger%log_message(trim(msg), module='LightKrylov', procedure='comm_setup')
 #else
       write(msg,'(A)') 'Setup serial run'
