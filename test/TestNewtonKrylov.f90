@@ -68,7 +68,7 @@ contains
        X%x = zero_rsp
        X%y = zero_rsp
        X%z = zero_rsp
-       call newton(sys, X, gmres_rsp, info, tolerance=10*atol_sp, options=opts)
+       call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -82,7 +82,7 @@ contains
        X%x = 10.0_sp
        X%y = -5.0_sp
        X%z = 20.0_sp
-       call newton(sys, X, gmres_rsp, info, tolerance=10*atol_sp, options=opts)
+       call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -97,7 +97,7 @@ contains
        X%y = zero_rsp
        X%z = zero_rsp
        opts%ifbisect = .true.
-       call newton(sys, X, gmres_rsp, info, tolerance=10*atol_sp, options=opts)
+       call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)
@@ -147,7 +147,7 @@ contains
        X%x = zero_rdp
        X%y = zero_rdp
        X%z = zero_rdp
-       call newton(sys, X, gmres_rdp, info, tolerance=10*atol_dp, options=opts)
+       call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -161,7 +161,7 @@ contains
        X%x = 10.0_dp
        X%y = -5.0_dp
        X%z = 20.0_dp
-       call newton(sys, X, gmres_rdp, info, tolerance=10*atol_dp, options=opts)
+       call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -176,7 +176,7 @@ contains
        X%y = zero_rdp
        X%z = zero_rdp
        opts%ifbisect = .true.
-       call newton(sys, X, gmres_rdp, info, tolerance=10*atol_dp, options=opts)
+       call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)
