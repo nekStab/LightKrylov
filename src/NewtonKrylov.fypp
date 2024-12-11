@@ -178,6 +178,8 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
+         write(msg,'(2(A,E9.2))') 'nrorm= ', rnorm, ', target= ', target_tol
+         call logger%log_warning(msg, module=this_module, procedure='newton_${type[0]}$${kind}$')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_${type[0]}$${kind}$')
          newton_meta%converged = .true.
