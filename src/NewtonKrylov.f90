@@ -189,7 +189,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'nrorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
@@ -354,7 +354,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'nrorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
@@ -519,7 +519,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'nrorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
@@ -684,7 +684,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'nrorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
