@@ -204,7 +204,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rsp')
 
          ! Define the Jacobian
@@ -369,7 +369,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rdp')
 
          ! Define the Jacobian
@@ -534,7 +534,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_csp')
 
          ! Define the Jacobian
@@ -699,7 +699,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_cdp')
 
          ! Define the Jacobian
@@ -810,6 +810,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -824,6 +826,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -856,6 +860,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_rsp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          call copy(X, Xin)
@@ -903,6 +910,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -917,6 +926,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -949,6 +960,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_rdp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          call copy(X, Xin)
@@ -996,6 +1010,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -1010,6 +1026,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -1042,6 +1060,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_csp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          call copy(X, Xin)
@@ -1089,6 +1110,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -1103,6 +1126,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -1135,6 +1160,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_cdp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          call copy(X, Xin)
