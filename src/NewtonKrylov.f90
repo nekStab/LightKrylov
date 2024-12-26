@@ -810,7 +810,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
 
       if (res(4) > rold) then
@@ -910,7 +910,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
 
       if (res(4) > rold) then
@@ -1010,7 +1010,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
 
       if (res(4) > rold) then
@@ -1110,7 +1110,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8))') 'res_old= ', res(1), ', res(full step)= ', res(4)
+      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
 
       if (res(4) > rold) then
