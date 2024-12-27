@@ -2328,7 +2328,7 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_rsp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
-        write(msg,'(A,2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+        write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
         call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
 
@@ -2526,7 +2526,7 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_rdp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
-        write(msg,'(A,2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+        write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
         call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
 
@@ -2724,7 +2724,7 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_csp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
-        write(msg,'(A,2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+        write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
         call logger%log_information(msg, module=this_module, procedure='gmres_csp')
 
@@ -2922,7 +2922,7 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_cdp/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
-        write(msg,'(A,2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+        write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
         call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
 
