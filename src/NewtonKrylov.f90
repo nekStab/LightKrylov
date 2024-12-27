@@ -189,7 +189,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
@@ -204,7 +204,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rsp')
 
          ! Define the Jacobian
@@ -354,7 +354,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
@@ -369,7 +369,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rdp')
 
          ! Define the Jacobian
@@ -519,7 +519,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
@@ -534,7 +534,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_csp')
 
          ! Define the Jacobian
@@ -684,7 +684,7 @@ contains
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
-         write(msg,'(2(A,E9.2))') 'rnorm= ', rnorm, ', target= ', target_tol
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
@@ -699,7 +699,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E15.8))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_cdp')
 
          ! Define the Jacobian
@@ -810,7 +810,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
 
       if (res(4) > rold) then
@@ -826,7 +826,7 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
-            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
             call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
             if (res(2) < res(3)) then
                ! alphas
@@ -910,7 +910,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
 
       if (res(4) > rold) then
@@ -926,7 +926,7 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
-            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
             call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
             if (res(2) < res(3)) then
                ! alphas
@@ -1010,7 +1010,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
 
       if (res(4) > rold) then
@@ -1026,7 +1026,7 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
-            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
             call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
             if (res(2) < res(3)) then
                ! alphas
@@ -1110,7 +1110,7 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
-      write(msg,'(*(A,E15.8),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
       call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
 
       if (res(4) > rold) then
@@ -1126,7 +1126,7 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
-            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E15.8))') i, ': alpha=', alpha, ': res=', res
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
             call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
             if (res(2) < res(3)) then
                ! alphas
