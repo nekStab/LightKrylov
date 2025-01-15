@@ -322,55 +322,25 @@ contains
       if (restart_timer) call self%start()
    end subroutine get_timer_data
 
-   subroutine print_timer_info(self, full)
+   subroutine print_timer_info(self)
       !! Type-bound to lightkrylov_timer: Compute spimple statistics and print timing information to screen.
       class(lightkrylov_timer), intent(inout) :: self
-      logical, optional, intent(in) :: full
-      !! Print saved timing data in addition to current timing data?
       ! internal
-      integer :: i
-      logical :: if_full
-      real(dp) :: etavg, etmin
-      integer :: count
       character(len=128) :: msg
-      if_full = optval(full, .true.)
       call logger%log_message('#########        Timer info        ##########', module=this_module)
       if (self%count == 0) then
          write(msg, '(A)') 'No timing data available for "'//trim(self%name)//'": Timer not called.'
          call logger%log_message(msg, module=this_module)
       else
+         call print_summary_header('Summary', self%name)
          if (.not.self%is_finalized) then
-            call logger%log_message('Current data:', module=this_module)
-            write(msg, fmt_h) 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
-            call logger%log_message(msg, module=this_module)
-            etavg = 0.0_dp
-            etmin = 0.0_dp
-            if (self%local_count > 0) then
-               etavg = self%etime/self%local_count
-               etmin = self%etime_min
-            end if
-            write(msg,fmt_t) trim(self%name), self%local_count, self%etime, etavg, etmin, self%etime_max
-            call logger%log_message(msg, module=this_module)
-            if (if_full) then
-               if (self%reset_count > 0) then
-                  write(msg,'(A,I0,A)') 'Saved data from ', self%reset_count, ' reset(s):'
-                  call logger%log_message(msg, module=this_module)
-                  do i = 1, self%reset_count
-                     write(msg,fmt_r) 'reset', i, self%count_data(i), self%etime_data(i), self%etavg_data(i), &
-                                       & self%etmin_data(i), self%etmax_data(i)
-                     call logger%log_message(msg, module=this_module)
-                  end do
-               else
-                  call logger%log_message('No saved timing data.', module=this_module)
-               end if
-            end if
+            call self%save_timer_data()
          else ! is_finalized
-            call print_summary_header('Summary', self%name)
             if (self%reset_count == 0) then
                call stop_error(trim(self%name)//': reset_count inconsistent!', module=this_module, procedure='finalize_timer')
             end if
-            call print_summary(self)
          end if
+         call print_summary(self)
       end if
    end subroutine print_timer_info
 
@@ -391,7 +361,7 @@ contains
       if (.not. silent) then
          write(msg,'(*(A))') trim(self%name), ' finalization complete.'
          call logger%log_message(msg, module=this_module)
-         call self%print_info(full=.true.)
+         call self%print_info()
       end if
    end subroutine finalize_timer
 
@@ -626,12 +596,11 @@ contains
       end if
    end subroutine get_timer_data_by_name
 
-   subroutine print_timer_info_by_name(self, name, full)
+   subroutine print_timer_info_by_name(self, name)
       !! Type-bound to abstract_watch: Print timing information for timer referenced by name.
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
-      logical, optional, intent(in) :: full
       ! internal
       integer :: id
       character(len=128) :: tname
@@ -640,7 +609,7 @@ contains
       if (id == 0) then 
          call timer_not_found(tname, 'print_timer_info_by_name')
       else
-         call self%timers(id)%print_info(full)
+         call self%timers(id)%print_info()
       end if
    end subroutine
 
