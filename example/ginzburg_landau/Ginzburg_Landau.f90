@@ -4,6 +4,7 @@ module Ginzburg_Landau
    ! LightKrylov for linear algebra.
    use LightKrylov
    use LightKrylov, only: wp => dp
+   use LightKrylov_Logger
    ! Standard Library.
    use stdlib_math, only: linspace
    use stdlib_optval, only: optval
@@ -94,8 +95,6 @@ contains
 
       ! Construct mu(x)
       mu(:) = (mu_0 - c_mu**2) + (mu_2/2.0_wp)*x(2:nx + 1)**2
-
-      return
    end subroutine initialize_parameters
 
    !---------------------------------------------------------
@@ -172,8 +171,6 @@ contains
 
       ! Copy results to the output array.
       f(1:nx) = du; f(nx + 1:2*nx) = dv
-
-      return
    end subroutine rhs
 
    !-----------------------------------------------------------
@@ -250,8 +247,6 @@ contains
 
       ! Copy results to the output array.
       f(1:nx) = du; f(nx + 1:2*nx) = dv
-
-      return
    end subroutine adjoint_rhs
 
    !=========================================================
@@ -269,7 +264,6 @@ contains
    subroutine zero(self)
       class(state_vector), intent(inout) :: self
       self%state = 0.0_wp
-      return
    end subroutine zero
 
    complex(kind=wp) function dot(self, vec) result(alpha)
@@ -278,15 +272,15 @@ contains
       select type (vec)
       type is (state_vector)
          alpha = dot_product(self%state, vec%state)
+      class default
+         call stop_error('vec must be a state_vector', module=this_module, procedure='dot')
       end select
-      return
    end function dot
 
    subroutine scal(self, alpha)
       class(state_vector), intent(inout) :: self
       complex(kind=wp), intent(in)    :: alpha
       self%state = self%state*alpha
-      return
    end subroutine scal
 
    subroutine axpby(self, alpha, vec, beta)
@@ -296,14 +290,14 @@ contains
       select type (vec)
       type is (state_vector)
          self%state = alpha*self%state + beta*vec%state
+      class default
+         call stop_error('vec must be a state_vector', module=this_module, procedure='axpby')
       end select
-      return
    end subroutine axpby
 
    integer function get_size(self) result(N)
       class(state_vector), intent(in) :: self
       N = nx
-      return
    end function get_size
 
    subroutine rand(self, ifnorm)
@@ -320,7 +314,6 @@ contains
          alpha = self%norm()
          call self%scal(cmplx(1.0_wp, 0.0_wp, kind=wp)/alpha)
       end if
-      return
    end subroutine rand
 
    !------------------------------------------------------------------------
@@ -354,9 +347,12 @@ contains
             ! Pass-back the state vector.
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
+         class default
+            call stop_error('vec_out must be a state_vector', module=this_module, procedure='direct_solver')
          end select
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='direct_solver')
       end select
-      return
    end subroutine direct_solver
 
    subroutine adjoint_solver(self, vec_in, vec_out)
@@ -386,9 +382,12 @@ contains
             ! Pass-back the state.
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
+         class default
+            call stop_error('vec_out must be a state_vector', module=this_module, procedure='adjoint_solver')
          end select
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='adjoint_solver')
       end select
-      return
    end subroutine adjoint_solver
 
 end module Ginzburg_Landau

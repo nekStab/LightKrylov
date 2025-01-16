@@ -7,6 +7,7 @@ module LightKrylov_TestUtils
     use stdlib_linalg, only: eye
     ! LightKrylov
     use LightKrylov
+    use LightKrylov_Logger
     use LightKrylov_Constants
     
     implicit none
@@ -61,7 +62,6 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
     end type
-
     interface linop_${type[0]}$${kind}$
         pure module function construct_linop_${type[0]}$${kind}$(data) result(A)
             ${type}$, dimension(test_size, test_size), intent(in) :: data
@@ -215,41 +215,40 @@ contains
     subroutine init_zero_${type[0]}$${kind}$(self)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         self%data = 0.0_${kind}$
-        return
     end subroutine init_zero_${type[0]}$${kind}$
 
     function dot_${type[0]}$${kind}$(self, vec) result(alpha)
         class(vector_${type[0]}$${kind}$), intent(in) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         ${type}$ :: alpha
-
         select type(vec)
         type is(vector_${type[0]}$${kind}$)
             alpha = dot_product(self%data, vec%data)
+        class default
+            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='dot_${type[0]}$${kind}$')
         end select
     end function dot_${type[0]}$${kind}$
 
     integer function get_size_${type[0]}$${kind}$(self) result(N)
         class(vector_${type[0]}$${kind}$), intent(in) :: self
         N = test_size
-        return
     end function get_size_${type[0]}$${kind}$
 
     subroutine scal_${type[0]}$${kind}$(self, alpha)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         ${type}$, intent(in) :: alpha
         self%data = alpha * self%data
-        return
     end subroutine scal_${type[0]}$${kind}$
 
     subroutine axpby_${type[0]}$${kind}$(self, alpha, vec, beta)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         ${type}$, intent(in) :: alpha, beta
-
         select type(vec)
         type is(vector_${type[0]}$${kind}$)
             self%data = alpha*self%data + beta*vec%data
+        class default
+            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='axpby_${type[0]}$${kind}$')
         end select
         return
     end subroutine
@@ -293,12 +292,14 @@ contains
             select type(vec_out)
             type is(vector_${type[0]}$${kind}$)
 
-            vec_out%data = matmul(self%data, vec_in%data)
+                vec_out%data = matmul(self%data, vec_in%data)
 
+            class default
+                call stop_error('vec_out must be a vector_${type[0]}$${kind}$', module=this_module, procedure='matvec_${type[0]}$${kind}$')
             end select
+        class default
+            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='matvec_${type[0]}$${kind}$')
         end select
-
-        return
     end subroutine matvec_${type[0]}$${kind}$
 
     subroutine rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -312,15 +313,17 @@ contains
             type is(vector_${type[0]}$${kind}$)
 
             #:if type[0] == "c"
-            vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
+                vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
             #:else
-            vec_out%data = matmul(transpose(self%data), vec_in%data)
+                vec_out%data = matmul(transpose(self%data), vec_in%data)
             #:endif
 
+            class default
+                call stop_error('vec_out must be a vector_${type[0]}$${kind}$', module=this_module, procedure='rmatvec_${type[0]}$${kind}$')
             end select
+        class default
+            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='rmatvec_${type[0]}$${kind}$')
         end select
-
-        return
     end subroutine rmatvec_${type[0]}$${kind}$
 
     #:if type[0] == "r"
@@ -334,12 +337,14 @@ contains
             select type(vec_out)
             type is(vector_${type[0]}$${kind}$)
 
-            vec_out%data = matmul(self%data, vec_in%data)
+                vec_out%data = matmul(self%data, vec_in%data)
 
+            class default
+                call stop_error('vec_out must be a vector_${type[0]}$${kind}$', module=this_module, procedure='spd_matvec_${type[0]}$${kind}$')
             end select
+        class default
+            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='spd_matvec_${type[0]}$${kind}$')
         end select
-
-        return
     end subroutine sdp_matvec_${type[0]}$${kind}$
     #:else
     subroutine hermitian_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -352,14 +357,16 @@ contains
             select type(vec_out)
             type is(vector_${type[0]}$${kind}$)
 
-            vec_out%data = matmul(self%data, vec_in%data)
+                vec_out%data = matmul(self%data, vec_in%data)
 
+            class default
+                call stop_error('vec_out must be a vector_${type[0]}$${kind}$', module=this_module, procedure='hermitian_matvec_${type[0]}$${kind}$')
             end select
+        class default
+            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='hermitian_matvec_${type[0]}$${kind}$')
         end select
-
-        return
     end subroutine hermitian_matvec_${type[0]}$${kind}$
-   #:endif
+    #:endif
 
     #:endfor
 
@@ -372,7 +379,6 @@ contains
         ${type}$, intent(out) :: vec_out(:)
         type(vector_${type[0]}$${kind}$), intent(in) :: vec_in
         vec_out = vec_in%data
-        return
     end subroutine get_data_vec_${type[0]}$${kind}$
 
     subroutine get_data_vec_basis_${type[0]}$${kind}$(basis_out, basis_in)
@@ -383,14 +389,12 @@ contains
         do k = 1, size(basis_in)
             basis_out(:, k) = basis_in(k)%data
         enddo
-        return
     end subroutine get_data_vec_basis_${type[0]}$${kind}$
 
     subroutine get_data_linop_${type[0]}$${kind}$(mat_out, linop_in)
         ${type}$, intent(out) :: mat_out(:, :)
         type(linop_${type[0]}$${kind}$), intent(in) :: linop_in
         mat_out = linop_in%data
-        return
     end subroutine get_data_linop_${type[0]}$${kind}$
 
     #:endfor
@@ -404,7 +408,6 @@ contains
         type(vector_${type[0]}$${kind}$), intent(out) :: vec_out
         ${type}$, intent(in) :: vec_in
         vec_out%data = vec_in
-        return
     end subroutine put_data_vec_${type[0]}$${kind}$
 
     subroutine put_data_vec_basis_${type[0]}$${kind}$(basis_out, basis_in)
@@ -415,7 +418,6 @@ contains
         do k = 1, size(basis_out)
             basis_out(k)%data = basis_in(:, k)
         enddo
-        return
     end subroutine put_data_vec_basis_${type[0]}$${kind}$
 
     subroutine put_data_linop_${type[0]}$${kind}$(linop_out, mat_in)
@@ -423,7 +425,6 @@ contains
         ${type}$, intent(in) :: mat_in(:, :)
         ! Internal variables.
         linop_out%data = mat_in
-        return
     end subroutine put_data_linop_${type[0]}$${kind}$
 
     #:endfor
@@ -436,7 +437,6 @@ contains
     subroutine init_rand_vec_${type[0]}$${kind}$(x)
         type(vector_${type[0]}$${kind}$), intent(inout) :: x
         call x%rand()
-        return
     end subroutine init_rand_vec_${type[0]}$${kind}$
 
     subroutine init_rand_basis_${type[0]}$${kind}$(X)
@@ -445,7 +445,6 @@ contains
         do i = 1, size(X)
             call X(i)%rand()
         enddo
-        return
     end subroutine init_rand_basis_${type[0]}$${kind}$
 
     subroutine init_rand_linop_${type[0]}$${kind}$(linop)
@@ -459,7 +458,6 @@ contains
         var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
         #:endif
         linop%data = normal(mu, var)
-        return
     end subroutine init_rand_linop_${type[0]}$${kind}$
 
     #:if type[0] == "r"
@@ -473,7 +471,6 @@ contains
         data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
 
-        return
     end subroutine init_rand_spd_linop_${type[0]}$${kind}$
     #:else
     subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
@@ -488,7 +485,6 @@ contains
         data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
         linop%data = data
 
-        return
     end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
     #:endif
 
@@ -496,16 +492,16 @@ contains
 
     #:for kind, type in REAL_KINDS_TYPES
     subroutine get_err_str_${kind}$(msg, info, err)
-      character(len=*), intent(inout) :: msg
-      character(len=*), intent(in)    :: info
-      real(${kind}$) :: err
+        character(len=*), intent(inout) :: msg
+        character(len=*), intent(in)    :: info
+        real(${kind}$) :: err
 
-      ! internals
-      character(len=9) :: value_str
-      character(len=*), parameter :: indent = repeat(" ", 4)
+        ! internals
+        character(len=9) :: value_str
+        character(len=*), parameter :: indent = repeat(" ", 4)
 
-      write(value_str, '(E9.2)') err
-      msg = indent // info // value_str // achar(10)
+        write(value_str, '(E9.2)') err
+        msg = indent // info // value_str // achar(10)
        
     end subroutine get_err_str_${kind}$
     #:endfor
@@ -516,94 +512,94 @@ contains
  
     #:for kind in REAL_KINDS
     subroutine zero_state_r${kind}$(self)
-      class(state_vector_r${kind}$), intent(inout) :: self
-      self%x = 0.0_${kind}$
-      self%y = 0.0_${kind}$
-      self%z = 0.0_${kind}$
-      return
+        class(state_vector_r${kind}$), intent(inout) :: self
+        self%x = 0.0_${kind}$
+        self%y = 0.0_${kind}$
+        self%z = 0.0_${kind}$
     end subroutine zero_state_r${kind}$
   
     real(${kind}$) function dot_state_r${kind}$(self, vec) result(alpha)
-      class(state_vector_r${kind}$)   , intent(in) :: self
-      class(abstract_vector_r${kind}$), intent(in) :: vec
-      select type(vec)
-      type is(state_vector_r${kind}$)
-         alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
-      end select
-      return
+        class(state_vector_r${kind}$)   , intent(in) :: self
+        class(abstract_vector_r${kind}$), intent(in) :: vec
+        select type(vec)
+        type is(state_vector_r${kind}$)
+            alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
+        class default
+            call stop_error('vec must be a state_vector_r${kind}$', module=this_module, procedure='dot_state_r${kind}$')
+        end select
     end function dot_state_r${kind}$
   
     subroutine scal_state_r${kind}$(self, alpha)
-      class(state_vector_r${kind}$), intent(inout) :: self
-      real(${kind}$)               , intent(in)    :: alpha
-      self%x = self%x * alpha
-      self%y = self%y * alpha
-      self%z = self%z * alpha
-      return
+        class(state_vector_r${kind}$), intent(inout) :: self
+        real(${kind}$)               , intent(in)    :: alpha
+        self%x = self%x * alpha
+        self%y = self%y * alpha
+        self%z = self%z * alpha
     end subroutine scal_state_r${kind}$
   
     subroutine axpby_state_r${kind}$(self, alpha, vec, beta)
-      class(state_vector_r${kind}$)   , intent(inout) :: self
-      class(abstract_vector_r${kind}$), intent(in)    :: vec
-      real(${kind}$)                  , intent(in)    :: alpha, beta
-      select type(vec)
-      type is(state_vector_r${kind}$)
-         self%x = alpha*self%x + beta*vec%x
-         self%y = alpha*self%y + beta*vec%y
-         self%z = alpha*self%z + beta*vec%z
-      end select
-      return
+        class(state_vector_r${kind}$)   , intent(inout) :: self
+        class(abstract_vector_r${kind}$), intent(in)    :: vec
+        real(${kind}$)                  , intent(in)    :: alpha, beta
+        select type(vec)
+        type is(state_vector_r${kind}$)
+            self%x = alpha*self%x + beta*vec%x
+            self%y = alpha*self%y + beta*vec%y
+            self%z = alpha*self%z + beta*vec%z
+        class default
+            call stop_error('vec must be a state_vector_r${kind}$', module=this_module, procedure='axpby_state_r${kind}$')
+        end select
     end subroutine axpby_state_r${kind}$
   
     integer function get_size_state_r${kind}$(self) result(N)
-      class(state_vector_r${kind}$), intent(in) :: self
-      N = 3
-      return
+        class(state_vector_r${kind}$), intent(in) :: self
+        N = 3
     end function get_size_state_r${kind}$
   
     subroutine rand_state_r${kind}$(self, ifnorm)
-      class(state_vector_r${kind}$), intent(inout) :: self
-      logical, optional,   intent(in)        :: ifnorm
-      logical :: normalized
-      real(${kind}$) :: mu, var
-      real(${kind}$) :: alpha
-  
-      mu = zero_r${kind}$
-      var = one_r${kind}$
-      self%x = normal(mu, var)
-      self%y = normal(mu, var)
-      self%z = normal(mu, var)
-  
-      normalized = optval(ifnorm, .false.)
-      if (normalized) then
-         alpha = self%norm()
-         call self%scal(one_r${kind}$/alpha)
-      endif
-      return
+        class(state_vector_r${kind}$), intent(inout) :: self
+        logical, optional,   intent(in)        :: ifnorm
+        logical :: normalized
+        real(${kind}$) :: mu, var
+        real(${kind}$) :: alpha
+    
+        mu = zero_r${kind}$
+        var = one_r${kind}$
+        self%x = normal(mu, var)
+        self%y = normal(mu, var)
+        self%z = normal(mu, var)
+    
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(one_r${kind}$/alpha)
+        endif
     end subroutine rand_state_r${kind}$
 
     #:endfor
 
     #:for kind in REAL_KINDS
     subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, atol)
-      class(roessler_r${kind}$),            intent(inout)  :: self
-      class(abstract_vector_r${kind}$), intent(in)  :: vec_in
-      class(abstract_vector_r${kind}$), intent(out) :: vec_out
-      real(${kind}$),                    intent(in)  :: atol
+        class(roessler_r${kind}$),            intent(inout)  :: self
+        class(abstract_vector_r${kind}$), intent(in)  :: vec_in
+        class(abstract_vector_r${kind}$), intent(out) :: vec_out
+        real(${kind}$),                    intent(in)  :: atol
 
-      select type(vec_in)
+        select type(vec_in)
         type is(state_vector_r${kind}$)
             select type(vec_out)
             type is(state_vector_r${kind}$)
 
-            vec_out%x = -vec_in%y - vec_in%z
-            vec_out%y = vec_in%x + a_${kind}$ * vec_in%y
-            vec_out%z = b_${kind}$ + vec_in%z * (vec_in%x - c_${kind}$)
+                vec_out%x = -vec_in%y - vec_in%z
+                vec_out%y = vec_in%x + a_${kind}$ * vec_in%y
+                vec_out%z = b_${kind}$ + vec_in%z * (vec_in%x - c_${kind}$)
 
+            class default
+                call stop_error('vec_out must be a state_vector_r${kind}$', module=this_module, procedure='eval_roessler_r${kind}$')
             end select
+        class default
+            call stop_error('vec_in must be a state_vector_r${kind}$', module=this_module, procedure='eval_roessler_r${kind}$')
         end select
-
-      return
     end subroutine eval_roessler_r${kind}$
 
     subroutine get_state_r${kind}$(state, X, Y, Z)
@@ -614,58 +610,62 @@ contains
         type is (state_vector_r${kind}$)
             X = state%x
             Y = state%y
-            Z = state%z        
+            Z = state%z
+        class default
+            call stop_error('vec must be a state_vector_r${kind}$', module=this_module, procedure='get_state_r${kind}$')
         end select
-
-        return
     end subroutine get_state_r${kind}$
 
     subroutine lin_roessler_r${kind}$(self, vec_in, vec_out)
-      class(jacobian_r${kind}$),            intent(inout)  :: self
-      class(abstract_vector_r${kind}$), intent(in)  :: vec_in
-      class(abstract_vector_r${kind}$), intent(out) :: vec_out
+        class(jacobian_r${kind}$),            intent(inout)  :: self
+        class(abstract_vector_r${kind}$), intent(in)  :: vec_in
+        class(abstract_vector_r${kind}$), intent(out) :: vec_out
 
-      real(${kind}$) :: X, Y, Z
+        real(${kind}$) :: X, Y, Z
 
-      call get_state_r${kind}$(self%X, X, Y, Z)
+        call get_state_r${kind}$(self%X, X, Y, Z)
 
-      select type(vec_in)
-      type is(state_vector_r${kind}$)
-         select type(vec_out)
-         type is(state_vector_r${kind}$)
+        select type(vec_in)
+        type is(state_vector_r${kind}$)
+            select type(vec_out)
+            type is(state_vector_r${kind}$)
 
-            vec_out%x = -vec_in%y - vec_in%z
-            vec_out%y =  vec_in%x + a_${kind}$*vec_in%y
-            vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
+                vec_out%x = -vec_in%y - vec_in%z
+                vec_out%y =  vec_in%x + a_${kind}$*vec_in%y
+                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
 
-         end select
-      end select
-
-      return
+            class default
+                call stop_error('vec_out must be a state_vector_r${kind}$', module=this_module, procedure='lin_roessler_r${kind}$')
+            end select
+        class default
+            call stop_error('vec_in must be a state_vector_r${kind}$', module=this_module, procedure='lin_roessler_r${kind}$')
+        end select
     end subroutine lin_roessler_r${kind}$
 
     subroutine adj_lin_roessler_r${kind}$(self, vec_in, vec_out)
-      class(jacobian_r${kind}$),            intent(inout)  :: self
-      class(abstract_vector_r${kind}$), intent(in)  :: vec_in
-      class(abstract_vector_r${kind}$), intent(out) :: vec_out
+        class(jacobian_r${kind}$),            intent(inout)  :: self
+        class(abstract_vector_r${kind}$), intent(in)  :: vec_in
+        class(abstract_vector_r${kind}$), intent(out) :: vec_out
 
-      real(${kind}$) :: X, Y, Z
-      
-      call get_state_r${kind}$(self%X, X, Y, Z)
+        real(${kind}$) :: X, Y, Z
+        
+        call get_state_r${kind}$(self%X, X, Y, Z)
 
-      select type(vec_in)
-      type is(state_vector_r${kind}$)
-         select type(vec_out)
-         type is(state_vector_r${kind}$) 
+        select type(vec_in)
+        type is(state_vector_r${kind}$)
+            select type(vec_out)
+            type is(state_vector_r${kind}$) 
 
-            vec_out%x =  vec_in%y + vec_in%z*Z
-            vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
-            vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
+                vec_out%x =  vec_in%y + vec_in%z*Z
+                vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
+                vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
 
-         end select
-      end select
-
-      return
+            class default
+                call stop_error('vec_out must be a state_vector_r${kind}$', module=this_module, procedure='adj_lin_roessler_r${kind}$')
+            end select
+        class default
+            call stop_error('vec_in must be a state_vector_r${kind}$', module=this_module, procedure='adj_lin_roessler_r${kind}$')
+        end select
     end subroutine adj_lin_roessler_r${kind}$
 
     subroutine roessler_analytical_fp_r${kind}$(fp1, fp2)
@@ -682,8 +682,6 @@ contains
         fp2%x = ( c_${kind}$ + d)/ 2
         fp2%y = (-c_${kind}$ - d)/(2*a_${kind}$)
         fp2%z = ( c_${kind}$ + d)/(2*a_${kind}$)
-
-        return
     end subroutine roessler_analytical_fp_r${kind}$
 
     #:endfor
