@@ -47,6 +47,7 @@ We refer interested readers to @ipsen-1998 for an introduction to Krylov methods
 ## A collection of Krylov-based algorithms
 
 To the extend possible, `LightKrylov` tries to provide Fortran users with a friendly interface inspired from `scipy` [@?] to a collection of widely used Krylov techniques, including
+
 - **Krylov processes:** Arnoldi, Rational Arnoldi and Two-sided Arnoldi factorizations, Golub-Kahan bidiagonalization as well as Hermitian and Non-Hermitian Lanczos tridiagonalization.
 - **Krylov methods:** Conjugate Gradient (CG), Conjugate Gradient for the Normal equation (CGNE), Minimal residual method (MINRES), Generalized minimal residual method (GMRES), Flexible GMRES, (Two-sided) Arnoldi with Krylov-Schur restart for general eigenproblems, Lanczos with thick restart for Hermitian eigenproblems, restarted Golub-Kahan method for singular value decomposition.
 - **Krylov-based preconditioners:** Polynomial Arnoldi preconditioner.
