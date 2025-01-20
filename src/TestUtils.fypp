@@ -225,7 +225,7 @@ contains
         type is(vector_${type[0]}$${kind}$)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='dot_${type[0]}$${kind}$')
+            call stop_error('vec must be a vector_${type[0]}$${kind}$', module=this_module, procedure='dot_${type[0]}$${kind}$')
         end select
     end function dot_${type[0]}$${kind}$
 
@@ -248,7 +248,7 @@ contains
         type is(vector_${type[0]}$${kind}$)
             self%data = alpha*self%data + beta*vec%data
         class default
-            call stop_error('vec_in must be a vector_${type[0]}$${kind}$', module=this_module, procedure='axpby_${type[0]}$${kind}$')
+            call stop_error('vec must be a vector_${type[0]}$${kind}$', module=this_module, procedure='axpby_${type[0]}$${kind}$')
         end select
         return
     end subroutine
@@ -612,7 +612,7 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call stop_error('vec must be a state_vector_r${kind}$', module=this_module, procedure='get_state_r${kind}$')
+            call stop_error('state must be a state_vector_r${kind}$', module=this_module, procedure='get_state_r${kind}$')
         end select
     end subroutine get_state_r${kind}$
 

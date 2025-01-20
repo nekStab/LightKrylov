@@ -381,7 +381,7 @@ contains
         type is(vector_rsp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error('vec_in must be a vector_rsp', module=this_module, procedure='dot_rsp')
+            call stop_error('vec must be a vector_rsp', module=this_module, procedure='dot_rsp')
         end select
     end function dot_rsp
 
@@ -404,7 +404,7 @@ contains
         type is(vector_rsp)
             self%data = alpha*self%data + beta*vec%data
         class default
-            call stop_error('vec_in must be a vector_rsp', module=this_module, procedure='axpby_rsp')
+            call stop_error('vec must be a vector_rsp', module=this_module, procedure='axpby_rsp')
         end select
         return
     end subroutine
@@ -440,7 +440,7 @@ contains
         type is(vector_rdp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error('vec_in must be a vector_rdp', module=this_module, procedure='dot_rdp')
+            call stop_error('vec must be a vector_rdp', module=this_module, procedure='dot_rdp')
         end select
     end function dot_rdp
 
@@ -463,7 +463,7 @@ contains
         type is(vector_rdp)
             self%data = alpha*self%data + beta*vec%data
         class default
-            call stop_error('vec_in must be a vector_rdp', module=this_module, procedure='axpby_rdp')
+            call stop_error('vec must be a vector_rdp', module=this_module, procedure='axpby_rdp')
         end select
         return
     end subroutine
@@ -499,7 +499,7 @@ contains
         type is(vector_csp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error('vec_in must be a vector_csp', module=this_module, procedure='dot_csp')
+            call stop_error('vec must be a vector_csp', module=this_module, procedure='dot_csp')
         end select
     end function dot_csp
 
@@ -522,7 +522,7 @@ contains
         type is(vector_csp)
             self%data = alpha*self%data + beta*vec%data
         class default
-            call stop_error('vec_in must be a vector_csp', module=this_module, procedure='axpby_csp')
+            call stop_error('vec must be a vector_csp', module=this_module, procedure='axpby_csp')
         end select
         return
     end subroutine
@@ -558,7 +558,7 @@ contains
         type is(vector_cdp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error('vec_in must be a vector_cdp', module=this_module, procedure='dot_cdp')
+            call stop_error('vec must be a vector_cdp', module=this_module, procedure='dot_cdp')
         end select
     end function dot_cdp
 
@@ -581,7 +581,7 @@ contains
         type is(vector_cdp)
             self%data = alpha*self%data + beta*vec%data
         class default
-            call stop_error('vec_in must be a vector_cdp', module=this_module, procedure='axpby_cdp')
+            call stop_error('vec must be a vector_cdp', module=this_module, procedure='axpby_cdp')
         end select
         return
     end subroutine
@@ -1380,7 +1380,7 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call stop_error('vec must be a state_vector_rsp', module=this_module, procedure='get_state_rsp')
+            call stop_error('state must be a state_vector_rsp', module=this_module, procedure='get_state_rsp')
         end select
     end subroutine get_state_rsp
 
@@ -1485,7 +1485,7 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call stop_error('vec must be a state_vector_rdp', module=this_module, procedure='get_state_rdp')
+            call stop_error('state must be a state_vector_rdp', module=this_module, procedure='get_state_rdp')
         end select
     end subroutine get_state_rdp
 
