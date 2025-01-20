@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 # Summary
 
-[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a modern Fortran package implementing a collection of Krylov subspace methods for a solving variety of linear problems:
+[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a modern Fortran package implementing a collection of Krylov subspace methods for solving a variety of linear problems:
 
 | Square systems   | Eigenvalue problems | Singular value decomposition           |
 | :--------------: | :-----------------: | :------------------------------------: |
@@ -38,9 +38,9 @@ bibliography: paper.bib
 Here, $A^H$ denotes the conjugate transpose of $A$, coinciding with the standard transpose if $A$ is real-valued.
 Direct methods often require explicit storage of $A$.
 Even if $A$ is sparse, computing its QR or Cholesky factorization to invert a linear system might lead to prohibitve storage requirements or computational costs.
-In contrast, Krylov methods only need a function computing the matrix-vector $u \leftarrow Av$ (and possibly $u \leftarrow A^H v$) to iteratively construct the *Krylov subspace* [@krylov-1931].
+In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (and possibly $u \leftarrow A^H v$) to iteratively construct the *Krylov subspace* [@krylov-1931].
 Over the past decades, Krylov methods have become a critical element of high-performance computing.
-We refer interested readers to [@??] for an introduction to Krylov methods, to [@??] for more technical details and to [@frantz-2023] for examples of their usage in the field of computational fluid dynamics.
+We refer interested readers to [@ipsen-1998] for an introduction to Krylov methods, to [@saad-2003] for technical details and to [@frantz-2023] for examples of their usage in the field of computational fluid dynamics.
 
 # Statement of need
 
