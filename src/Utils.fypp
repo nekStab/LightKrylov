@@ -39,7 +39,7 @@ module lightkrylov_utils
     character(len=*), parameter :: this_module      = 'LK_Utils'
     character(len=*), parameter :: this_module_long = 'LightKrylov_Utils'
 
-    public :: assert_shape, norml, log2
+    public :: assert_shape, log2
     ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
@@ -56,14 +56,6 @@ module lightkrylov_utils
         #:for kind, type in RC_KINDS_TYPES
         module procedure assert_shape_vector_${type[0]}$${kind}$
         module procedure assert_shape_matrix_${type[0]}$${kind}$
-        #:endfor
-    end interface
-
-    interface norml
-        !! This interface provides methods to compute the infinity norm of a matrix.
-        !! Note that it'll eventually be superseeded by the `stdlib` implementation.
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure norml_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -863,19 +855,6 @@ contains
         y = log(x) / log(2.0_${kind}$)
     end function
     #:endif
-
-    pure real(${kind}$) function norml_${type[0]}$${kind}$(A) result(norm)
-        ${type}$, intent(in) :: A(:, :)
-        integer :: i, n
-        real(${kind}$) :: row_sum
-
-        norm = zero_r${kind}$
-        n = size(A, 1)
-        do i = 1, n
-            row_sum = sum(abs(A(i, :)))
-            norm = max(norm, row_sum)
-        enddo
-    end function
 
     #:endfor
 

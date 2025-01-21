@@ -37,7 +37,7 @@ module lightkrylov_utils
     character(len=*), parameter :: this_module      = 'LK_Utils'
     character(len=*), parameter :: this_module_long = 'LightKrylov_Utils'
 
-    public :: assert_shape, norml, log2
+    public :: assert_shape, log2
     ! Compute AX = XD for general dense matrices.
     public :: eig
     ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
@@ -59,15 +59,6 @@ module lightkrylov_utils
         module procedure assert_shape_matrix_csp
         module procedure assert_shape_vector_cdp
         module procedure assert_shape_matrix_cdp
-    end interface
-
-    interface norml
-        !! This interface provides methods to compute the infinity norm of a matrix.
-        !! Note that it'll eventually be superseeded by the `stdlib` implementation.
-        module procedure norml_rsp
-        module procedure norml_rdp
-        module procedure norml_csp
-        module procedure norml_cdp
     end interface
 
     interface log2
@@ -1726,64 +1717,12 @@ contains
         y = log(x) / log(2.0_sp)
     end function
 
-    pure real(sp) function norml_rsp(A) result(norm)
-        real(sp), intent(in) :: A(:, :)
-        integer :: i, n
-        real(sp) :: row_sum
-
-        norm = zero_rsp
-        n = size(A, 1)
-        do i = 1, n
-            row_sum = sum(abs(A(i, :)))
-            norm = max(norm, row_sum)
-        enddo
-    end function
-
     pure real(dp) function log2_rdp(x) result(y)
         real(dp), intent(in) :: x
         y = log(x) / log(2.0_dp)
     end function
 
-    pure real(dp) function norml_rdp(A) result(norm)
-        real(dp), intent(in) :: A(:, :)
-        integer :: i, n
-        real(dp) :: row_sum
 
-        norm = zero_rdp
-        n = size(A, 1)
-        do i = 1, n
-            row_sum = sum(abs(A(i, :)))
-            norm = max(norm, row_sum)
-        enddo
-    end function
-
-
-    pure real(sp) function norml_csp(A) result(norm)
-        complex(sp), intent(in) :: A(:, :)
-        integer :: i, n
-        real(sp) :: row_sum
-
-        norm = zero_rsp
-        n = size(A, 1)
-        do i = 1, n
-            row_sum = sum(abs(A(i, :)))
-            norm = max(norm, row_sum)
-        enddo
-    end function
-
-
-    pure real(dp) function norml_cdp(A) result(norm)
-        complex(dp), intent(in) :: A(:, :)
-        integer :: i, n
-        real(dp) :: row_sum
-
-        norm = zero_rdp
-        n = size(A, 1)
-        do i = 1, n
-            row_sum = sum(abs(A(i, :)))
-            norm = max(norm, row_sum)
-        enddo
-    end function
 
 
 end module lightkrylov_utils

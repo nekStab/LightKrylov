@@ -7,7 +7,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, inv
+    use stdlib_linalg, only: eye, inv, mnorm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -237,7 +237,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -559,7 +559,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -881,7 +881,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -1203,7 +1203,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
