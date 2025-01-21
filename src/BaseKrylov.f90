@@ -1690,7 +1690,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
-      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_rsp')
+        if (time_lightkrylov()) call timer%start('qr_no_pivoting_rsp')
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
@@ -1701,6 +1701,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_rsp')
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -1721,7 +1722,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
-      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rsp')
+        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rsp')
         
         return
     end subroutine qr_no_pivoting_rsp
@@ -1779,6 +1780,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_rsp')
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
@@ -1806,7 +1808,7 @@ contains
             enddo
 
         enddo qr_step
-      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rsp')
+        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rsp')
         
         return
     end subroutine qr_with_pivoting_rsp
@@ -1959,7 +1961,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
-      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_rdp')
+        if (time_lightkrylov()) call timer%start('qr_no_pivoting_rdp')
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
@@ -1970,6 +1972,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_rdp')
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -1990,7 +1993,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
-      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rdp')
+        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rdp')
         
         return
     end subroutine qr_no_pivoting_rdp
@@ -2048,6 +2051,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_rdp')
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
@@ -2075,7 +2079,7 @@ contains
             enddo
 
         enddo qr_step
-      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rdp')
+        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rdp')
         
         return
     end subroutine qr_with_pivoting_rdp
@@ -2228,7 +2232,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
-      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_csp')
+        if (time_lightkrylov()) call timer%start('qr_no_pivoting_csp')
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
@@ -2239,6 +2243,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
+                & procedure='qr_no_pivoting_csp')
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -2259,7 +2265,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
-      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_csp')
+        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_csp')
         
         return
     end subroutine qr_no_pivoting_csp
@@ -2317,6 +2323,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
+                & procedure='qr_with_pivoting_csp')
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
@@ -2344,7 +2352,7 @@ contains
             enddo
 
         enddo qr_step
-      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_csp')
+        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_csp')
         
         return
     end subroutine qr_with_pivoting_csp
@@ -2497,7 +2505,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
-      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_cdp')
+        if (time_lightkrylov()) call timer%start('qr_no_pivoting_cdp')
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
@@ -2508,6 +2516,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
+                & procedure='qr_no_pivoting_cdp')
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -2528,7 +2538,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
-      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_cdp')
+        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_cdp')
         
         return
     end subroutine qr_no_pivoting_cdp
@@ -2586,6 +2596,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
+                & procedure='qr_with_pivoting_cdp')
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
@@ -2613,7 +2625,7 @@ contains
             enddo
 
         enddo qr_step
-      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_cdp')
+        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_cdp')
         
         return
     end subroutine qr_with_pivoting_cdp

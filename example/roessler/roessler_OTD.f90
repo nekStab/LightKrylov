@@ -69,7 +69,6 @@ contains
       self%x = 0.0_wp
       self%y = 0.0_wp
       self%z = 0.0_wp
-      return
    end subroutine zero_p
 
    real(wp) function dot_p(self, vec) result(alpha)
@@ -78,8 +77,9 @@ contains
       select type (vec)
       type is (pos_vector)
          alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
+      class default
+         call stop_error('vec must be a pos_vector', module=this_module, procedure='dot_p')
       end select
-      return
    end function dot_p
 
    subroutine scal_p(self, alpha)
@@ -88,7 +88,6 @@ contains
       self%x = self%x*alpha
       self%y = self%y*alpha
       self%z = self%z*alpha
-      return
    end subroutine scal_p
 
    subroutine axpby_p(self, alpha, vec, beta)
@@ -100,14 +99,14 @@ contains
          self%x = alpha*self%x + beta*vec%x
          self%y = alpha*self%y + beta*vec%y
          self%z = alpha*self%z + beta*vec%z
+      class default
+         call stop_error('vec must be a pos_vector', module=this_module, procedure='axpby_p')
       end select
-      return
    end subroutine axpby_p
 
    integer function get_size_p(self) result(N)
       class(pos_vector), intent(in) :: self
       N = npts + 1
-      return
    end function get_size_p
 
    subroutine rand_p(self, ifnorm)
@@ -128,7 +127,6 @@ contains
          alpha = self%norm()
          call self%scal(1.0_wp/alpha)
       end if
-      return
    end subroutine rand_p
 
    subroutine OTD_rhs(me, t, x, f)
@@ -172,7 +170,6 @@ contains
       do i = 1, r
          f((r + 1)*npts + i) = Lr(i, i)
       end do
-      return
    end subroutine OTD_rhs
 
    !------------------------------
@@ -219,9 +216,9 @@ contains
          end do
          FTLE_out = pos_out(npts*(r + 1) + 1:)
          time = time + Tstep
+      class default
+         call stop_error('integrator must be a rks54_class', module=this_module, procedure='OTD_step')
       end select
-
-      return
    end subroutine OTD_step
 
    subroutine OTD_map(bf, vec_in, Tend, vec_out, t_FTLE, if_rst)
@@ -293,7 +290,6 @@ contains
       end do
       t_complete = modulo(Tend, t2)
       if (t_complete > 1e-4_wp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)
-      return
    end subroutine OTD_map
 
    !-------------------------------------------
@@ -309,8 +305,9 @@ contains
          pos(1) = vec_in%x
          pos(2) = vec_in%y
          pos(3) = vec_in%z
+      class default
+         call stop_error('vec_in must be a pos_vector', module=this_module, procedure='get_pos')
       end select
-      return
    end subroutine get_pos
 
    subroutine set_pos(pos, vec_out)
@@ -321,8 +318,9 @@ contains
          vec_out%x = pos(1)
          vec_out%y = pos(2)
          vec_out%z = pos(3)
+      class default
+         call stop_error('vec_out must be a pos_vector', module=this_module, procedure='set_pos')
       end select
-      return
    end subroutine set_pos
 
    subroutine OTD_report_file(me, t, x)
@@ -382,8 +380,6 @@ contains
       write (iunit, '(*(E16.9,1X))') FTLE, (qTq(i, i) - 1, i=1, r), &
          ((qTq(i, j), j=1, i - 1), i=2, r)
       close (iunit)
-
-      return
    end subroutine OTD_report_file
 
    subroutine report_LE(FTLE, time, period, p_cnt)
@@ -404,7 +400,6 @@ contains
       open (newunit=iunit, file=report_file_OTD_LE, status='old', action='write', position='append')
       write (iunit, '(F16.9,1X,I16,1X,*(F16.9,1X))') time, p_cnt, LE, LE_ref
       close (iunit)
-      return
    end subroutine report_LE
 
    subroutine write_header()
@@ -443,7 +438,6 @@ contains
          end do
       end do
       write (iunit, *) ''; close (iunit)
-      return
    end subroutine write_header
 
    subroutine write_header_LE()
@@ -461,7 +455,6 @@ contains
          write (iunit, '(A15,I1,1X)', ADVANCE='NO') 'LEref_', i
       end do
       write (iunit, *) ''; close (iunit)
-      return
    end subroutine write_header_LE
 
 end module Roessler_OTD

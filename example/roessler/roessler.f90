@@ -6,6 +6,7 @@ module Roessler
    use rklib_module
    ! LightKrylov for linear algebra.
    use LightKrylov
+   use LightKrylov_Logger
    use LightKrylov, only: wp => dp
    implicit none
 
@@ -88,7 +89,6 @@ contains
       self%z = 0.0_wp
       ! period
       self%T = 0.0_wp
-      return
    end subroutine zero
 
    real(wp) function dot(self, vec) result(alpha)
@@ -97,8 +97,9 @@ contains
       select type (vec)
       type is (state_vector)
          alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z + self%T*vec%T
+      class default
+         call stop_error('vec must be a state_vector', module=this_module, procedure='dot')
       end select
-      return
    end function dot
 
    subroutine scal(self, alpha)
@@ -108,7 +109,6 @@ contains
       self%y = self%y*alpha
       self%z = self%z*alpha
       self%T = self%T*alpha
-      return
    end subroutine scal
 
    subroutine axpby(self, alpha, vec, beta)
@@ -121,14 +121,14 @@ contains
          self%y = alpha*self%y + beta*vec%y
          self%z = alpha*self%z + beta*vec%z
          self%T = alpha*self%T + beta*vec%T
+      class default
+         call stop_error('vec must be a state_vector', module=this_module, procedure='axpby')
       end select
-      return
    end subroutine axpby
 
    integer function get_size(self) result(N)
       class(state_vector), intent(in) :: self
       N = npts + 1
-      return
    end function get_size
 
    subroutine rand(self, ifnorm)
@@ -150,7 +150,6 @@ contains
          alpha = self%norm()
          call self%scal(1.0_wp/alpha)
       end if
-      return
    end subroutine rand
 
    !===================================
@@ -176,7 +175,6 @@ contains
       f(2) = x(1) + a*x(2)
       f(3) = b + x(3)*(x(1) - c)
 
-      return
    end subroutine nonlinear_roessler
 
    !-----------------------------
@@ -196,7 +194,6 @@ contains
       f(2) = xp(1) + a*xp(2)
       f(3) = xp(1)*bf(3) + xp(3)*(bf(1) - c)
 
-      return
    end subroutine linear_roessler
 
    !-----------------------------------------------------------------
@@ -215,7 +212,6 @@ contains
 
       call nonlinear_roessler(x, f)
 
-      return
    end subroutine NL_rhs
 
    !-------------------------------------------------------------
@@ -235,7 +231,6 @@ contains
       call nonlinear_roessler(x(:npts), f(:npts))
       call linear_roessler(x(npts + 1:), x(:npts), f(npts + 1:))
 
-      return
    end subroutine combined_rhs
 
    !-------------------------------------------------------------
@@ -276,10 +271,12 @@ contains
 
             ! Add period residual
             vec_out%T = 0.0_wp
+         class default
+            call stop_error('vec_out must be a state_vector', module=this_module, procedure='nonlinear_map')
          end select
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='nonlinear_map')
       end select
-
-      return
    end subroutine nonlinear_map
 
    subroutine linear_map(self, vec_in, vec_out)
@@ -324,11 +321,12 @@ contains
             ! Evaluate f'(X(0), 0).T @ dx and add phase condition
             call compute_fdot(pos_in(:npts), vec)
             vec_out%T = vec_in%dot(vec)
-
+         class default
+            call stop_error('vec_out must be a state_vector', module=this_module, procedure='linear_map')
          end select
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='linear_map')
       end select
-
-      return
    end subroutine linear_map
 
    subroutine monodromy_map(self, vec_in, vec_out)
@@ -362,10 +360,12 @@ contains
             call combined_roessler%integrate(0.0_wp, pos_in, dt, period, pos_out)
             ! Pass-back the state.
             call set_position(pos_out(npts + 1:), vec_out)
+         class default
+            call stop_error('vec_out must be a state_vector', module=this_module, procedure='monodromy_map')
          end select
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='monodromy_map')
       end select
-
-      return
    end subroutine monodromy_map
 
    !-------------------------------------------
@@ -375,42 +375,39 @@ contains
    subroutine get_position(vec_in, pos)
       class(abstract_vector_rdp), intent(in)  :: vec_in
       real(wp), dimension(npts), intent(out) :: pos
-
       pos = 0.0_wp
       select type (vec_in)
       type is (state_vector)
          pos(1) = vec_in%x
          pos(2) = vec_in%y
          pos(3) = vec_in%z
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='get_position')
       end select
-
-      return
    end subroutine get_position
 
    subroutine get_period(vec_in, period)
       class(abstract_vector_rdp), intent(in)  :: vec_in
       real(wp), intent(out) :: period
-
       select type (vec_in)
       type is (state_vector)
          period = vec_in%T
+      class default
+         call stop_error('vec_in must be a state_vector', module=this_module, procedure='get_period')
       end select
-
-      return
    end subroutine get_period
 
    subroutine set_position(pos, vec_out)
       real(wp), dimension(npts), intent(in)  :: pos
       class(abstract_vector_rdp), intent(out) :: vec_out
-
       select type (vec_out)
       type is (state_vector)
          vec_out%x = pos(1)
          vec_out%y = pos(2)
          vec_out%z = pos(3)
+      class default
+         call stop_error('vec_out must be a state_vector', module=this_module, procedure='set_position')
       end select
-
-      return
    end subroutine set_position
 
    subroutine compute_fdot(pos, vec_out)
@@ -421,7 +418,6 @@ contains
       call vec_out%zero() ! ensure that the period shift vec_out%T is zero
       call nonlinear_roessler(pos, wrk)
       call set_position(wrk, vec_out)
-      return
    end subroutine compute_fdot
 
    subroutine roessler_report_stdout(me, t, x)
@@ -431,7 +427,6 @@ contains
 
       print '(*(F15.6,1X))', t, x
 
-      return
    end subroutine roessler_report_stdout
 
    subroutine write_report_header()
@@ -441,7 +436,6 @@ contains
       ! time, baseflow
       write (iunit, '(*(A16,1X))') 't', 'BF_x', 'BF_y', 'BF_z'
       close (iunit)
-      return
    end subroutine write_report_header
 
    subroutine roessler_report_file(me, t, x)
@@ -453,7 +447,6 @@ contains
       open (newunit=iunit, file=report_file, status='old', action='write', position='append')
       write (iunit, '(*(F15.6,1X))') t, x
       close (iunit)
-      return
    end subroutine roessler_report_file
 
 end module Roessler

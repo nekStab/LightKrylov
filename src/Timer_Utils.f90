@@ -10,30 +10,30 @@ module LightKrylov_Timer_Utils
    
    ! Timer type
    type, public :: lightkrylov_timer
-      !! Individual timer
+      !! Individual timer.
       private
       character(len=128), public :: name = 'default_timer'
-      !! Timer name
+      !! Timer name.
       real(dp) :: etime       = 0.0_dp
-      !! Elapsed time since reset
+      !! Elapsed time since reset.
       real(dp) :: etime_pause = 0.0_dp
-      !! Elapsed time up until most recent pause
+      !! Elapsed time up until most recent pause.
       real(dp) :: start_time  = 0.0_dp
-      !! Start time for comparison
+      !! Start time for comparison.
       real(dp) :: etime_max   = 0.0_dp
-      !! Maximum elapsed time since reset
+      !! Maximum elapsed time since reset.
       real(dp) :: etime_min   = huge(1.0_dp)
-      !! Minimum elapsed time since reset
+      !! Minimum elapsed time since reset.
       integer :: local_count  = 0
-      !! Call counter since reset
+      !! Call counter since reset.
       integer :: reset_count  = 0
-      !! Reset counter
+      !! Reset counter.
       integer :: count        = 0
-      !! Global counter (only reset when data is flushed)
+      !! Global counter (only reset when data is flushed).
       logical :: running      = .false.
-      !! Protection against repeated starts
+      !! Protection against repeated starts.
       logical :: is_finalized = .false.
-      !! Switch for printing
+      !! Switch for printing.
       real(dp), dimension(:), allocatable :: etime_data
       real(dp), dimension(:), allocatable :: etavg_data
       real(dp), dimension(:), allocatable :: etmin_data
@@ -45,27 +45,29 @@ module LightKrylov_Timer_Utils
       procedure, pass(self), public :: stop => stop_timer
       procedure, pass(self), public :: pause => pause_timer
       procedure, pass(self), public :: reset => reset_timer
-      !! Reset timing data (soft/hard, clear/save data)
+      !! Reset timing data (soft/hard, clear/save data).
       procedure, pass(self), public :: finalize => finalize_timer
-      !! Aggregate data and prepare summary
-      procedure, pass(self), public :: get_time => get_timer_time
-      !! Getter routine to access self%etime
+      !! Aggregate data and prepare summary.
+      procedure, pass(self), public :: get_time => get_timer_etime
+      !! Getter routine to access self%etime only.
+      procedure, pass(self), public :: get_data => get_timer_data
+      !! Getter routine to access to all local data: etime, counts, etime_max, etime_min, etime_pause.
       procedure, pass(self), public :: print_info => print_timer_info
-      !! Print timing data
+      !! Print timing data.
       procedure, pass(self), public :: save_timer_data
-      !! Transfer timing data to arrays
+      !! Transfer timing data to arrays.
    end type lightkrylov_timer
 
    ! Timer group type
    type, public :: lightkrylov_timer_group
-      !! Simple type to allow for some structure in the timer output
+      !! Simple type to allow for some structure in the timer output.
       private
       character(len=128), public :: name = 'default_group'
-      !! group name
+      !! group name.
       integer :: istart = 0
-      !! global index of first timer in group
+      !! global index of first timer in group.
       integer :: iend = 0
-      !! global index of last timer in group
+      !! global index of last timer in group.
    end type lightkrylov_timer_group
 
    ! Abstract watch type
@@ -74,48 +76,51 @@ module LightKrylov_Timer_Utils
       private
       character(len=128) :: name = 'default_watch'
       type(lightkrylov_timer), dimension(:), allocatable :: timers
-      !! Array of timers contained in the watch
+      !! Array of timers contained in the watch.
       integer :: timer_count    = 0
-      !! Number of timers managed by watch
+      !! Number of timers managed by watch.
       type(lightkrylov_timer_group), dimension(:), allocatable :: groups
-      !! Array of timer groups contained in the watch
+      !! Array of timer groups contained in the watch.
       integer :: group_count    = 0
-      !! Number of timer groups managed by watch
+      !! Number of timer groups managed by watch.
       integer :: private_count  = 0
-      !! Number of private timers (immutable by user)
+      !! Number of private timers (immutable by user).
       integer :: user_count     = 0
-      !! Number of user defined timers
+      !! Number of user defined timers.
       logical :: user_mode      = .false.
-      !! Number of user defined timers
+      !! Number of user defined timers.
       logical :: is_initialized = .false.
    contains
       private
       procedure, pass(self), public :: add_timer
-      !! Add new timer to the watch
+      !! Add new timer to the watch.
       procedure, pass(self), public :: remove_timer
-      !! Remove existing timer from the watch
+      !! Remove existing timer from the watch.
       procedure, pass(self), public :: add_group
-      !! Add new timer group to the watch
-      ! Getter/Setter and helper routines
+      !! Add new timer group to the watch.
+      ! Getter/Setter and helper routines for watch components.
       procedure, pass(self), public :: get_timer_id
       procedure, pass(self), public :: get_group_id
       procedure, pass(self), public :: set_watch_name
-      procedure, pass(self), public :: reset_all
-      ! Wrappers for the basic timing routines
+      ! Wrappers for the basic timing routines/access to timer components.
       procedure, pass(self), public :: start => start_timer_by_name
       procedure, pass(self), public :: stop => stop_timer_by_name
       procedure, pass(self), public :: pause => pause_timer_by_name
       procedure, pass(self), public :: reset => reset_timer_by_name
+      procedure, pass(self), public :: get_time => get_timer_etime_by_name
+      procedure, pass(self), public :: get_data => get_timer_data_by_name
       procedure, pass(self), public :: print_info => print_timer_info_by_name
-      ! Global manipulation routines
+      ! Global manipulation routines.
+      procedure, pass(self), public :: reset_all
+      !! Reset all timers in watch.
       procedure, pass(self), public :: enumerate
-      !! Print summary of registered timers and their current status
+      !! Print summary of registered timers and their current status.
       procedure, pass(self), public :: initialize
       !! Set up private timers, flags and counters. Switch on timing.
       procedure, pass(self), public :: finalize
-      !! Gather timing information and print it to screen/logfile
+      !! Gather timing information and print it to screen/logfile.
       procedure(abstract_set_timers), pass(self), deferred, public :: set_private_timers_and_name
-      !! Define private timers that cannot be removed by the user
+      !! Define private timers that cannot be removed by the user.
    end type abstract_watch
 
    abstract interface
@@ -127,10 +132,10 @@ module LightKrylov_Timer_Utils
    end interface
 
    ! format strings for uniform printing
-   character(len=128), parameter :: fmt_h = '(2X,A30," : ",   9X,A9,4(A15))'      ! headers
-   character(len=128), parameter :: fmt_t = '(2X,A30," : ",A6,3X,I9,4(1X,F14.6))' ! data total
-   character(len=128), parameter :: fmt_r = '(2X,30X,3X,   A6,I3,I9,4(1X,F14.6))' ! data reset
-   character(len=128), parameter :: fmt_n = '(2X,30X,3X,   A6,I3,I9,A60)'         ! not called
+   character(len=128), parameter :: fmt_h = '(2X,A30," : ",  10X,A9,4(A15))'      ! headers
+   character(len=128), parameter :: fmt_t = '(2X,A30," : ",A6,4X,I9,4(1X,F14.6))' ! data total
+   character(len=128), parameter :: fmt_r = '(2X,30X,3X,   A6,I4,I9,4(1X,F14.6))' ! data reset
+   character(len=128), parameter :: fmt_n = '(2X,30X,3X,   A6,I4,I9,A60)'         ! not called
 
 contains
 
@@ -139,7 +144,7 @@ contains
    !--------------------------------------------------------------
 
    subroutine start_timer(self)
-      !! Type-bound to lightkrylov_timer: Start timer
+      !! Type-bound to lightkrylov_timer: Start timer.
       class(lightkrylov_timer), intent(inout) :: self
       if (.not. self%running) then
          call cpu_time(self%start_time)
@@ -150,7 +155,7 @@ contains
    end subroutine start_timer
 
    subroutine stop_timer(self)
-      !! Type-bound to lightkrylov_timer: Stop timer
+      !! Type-bound to lightkrylov_timer: Stop timer.
       class(lightkrylov_timer), intent(inout) :: self
       ! internal
       real(dp) :: t_now, etime
@@ -166,7 +171,7 @@ contains
    end subroutine stop_timer
 
    subroutine pause_timer(self)
-      !! Type-bound to lightkrylov_timer: Pause timer
+      !! Type-bound to lightkrylov_timer: Pause timer.
       class(lightkrylov_timer), intent(inout) :: self
       ! internal
       real(dp) :: t_now
@@ -220,14 +225,14 @@ contains
    end subroutine save_timer_data
 
    subroutine reset_timer(self, soft, clean, verbose)
-      !! Type-bound to lightkrylov_timer: Reset timer
+      !! Type-bound to lightkrylov_timer: Reset timer.
       class(lightkrylov_timer), intent(inout) :: self
       logical, optional, intent(in) :: soft
       !! Save timing data and reset only if data was collected (i.e. timer was called), default = .true.
       logical, optional, intent(in) :: clean
       !! Flush timing data as well as previously saved timing data, default = .false.
       logical, optional, intent(in) :: verbose
-      !! Always print information about the reset process
+      !! Always print information about the reset process.
       ! internal
       logical :: save_data, flush_timer, print_info
       character(len=128) :: msg
@@ -235,8 +240,8 @@ contains
       flush_timer  = optval(clean, .false.)
       print_info   = optval(verbose, .false.)
       if (self%running) then
-         call logger%log_message('Timer "'//trim(self%name)//'" is curently running. Timer not reset.', &
-                     & module=this_module, procedure='reset_timer')
+         write(msg,'(A)') 'Timer "'//trim(self%name)//'" is curently running. Timer not reset.'
+         call logger%log_message(msg, module=this_module, procedure='reset_timer')
       else
          write(msg,'(A,L,3X,A,L)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
          if (print_info) then
@@ -278,68 +283,69 @@ contains
       end if
    end subroutine reset_timer
 
-   real(dp) function get_timer_time(self) result(etime)
-      !! Type-bound to lightkrylov_timer: Getter routine to return the current timer etime
+   real(dp) function get_timer_etime(self, restart) result(etime)
+      !! Type-bound to lightkrylov_timer: Getter routine to return the current timer etime.
       !! Note: If it is running, the timer is stopped.
-      class(lightkrylov_timer), intent(inout) :: self
+      class(lightkrylov_timer) :: self
+      logical, optional :: restart
+      ! internal
+      logical :: restart_timer
+      restart_timer = optval(restart, .false.)
       if (self%running) call self%stop()
       etime = self%etime
+      if (restart_timer) call self%start()
    end function
 
-   subroutine print_timer_info(self, full)
-      !! Type-bound to lightkrylov_timer: Compute spimple statistics and print timing information to screen
+   subroutine get_timer_data(self, restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)
+      !! Type-bound to lightkrylov_timer: Getter routine to return the timer data.
+      !! Note: If it is running, the timer is stopped.
       class(lightkrylov_timer), intent(inout) :: self
-      logical, optional, intent(in) :: full
-      !! Print saved timing data in addition to current timing data
+      logical, optional, intent(in) :: restart
+      real(dp), optional, intent(out) :: etime
+      real(dp), optional, intent(out) :: etmin
+      real(dp), optional, intent(out) :: etmax
+      real(dp), optional, intent(out) :: etimp
+      integer, optional, intent(out) :: lcount
+      integer, optional, intent(out) :: rcount
+      integer, optional, intent(out) :: gcount
       ! internal
-      integer :: i
-      logical :: if_full
-      real(dp) :: etavg, etmin
-      integer :: count
+      logical :: restart_timer
+      restart_timer = optval(restart, .false.)
+      if (self%running) call self%stop()
+      if (present(etime)) etime = self%etime
+      if (present(etmin)) etmin = self%etime_min
+      if (present(etmax)) etmax = self%etime_max
+      if (present(etimp)) etimp = self%etime_pause
+      if (present(lcount)) lcount = self%local_count
+      if (present(rcount)) rcount = self%reset_count
+      if (present(gcount)) gcount = self%count
+      if (restart_timer) call self%start()
+   end subroutine get_timer_data
+
+   subroutine print_timer_info(self)
+      !! Type-bound to lightkrylov_timer: Compute spimple statistics and print timing information to screen.
+      class(lightkrylov_timer), intent(inout) :: self
+      ! internal
       character(len=128) :: msg
-      if_full = optval(full, .true.)
-      call logger%log_message('#########        Timer info        #########', module=this_module)
+      call logger%log_message('#########        Timer info        ##########', module=this_module)
       if (self%count == 0) then
-         write(msg, '(*(A))') 'No timing data available for "', trim(self%name), '": Timer not called.'
+         write(msg, '(A)') 'No timing data available for "'//trim(self%name)//'": Timer not called.'
          call logger%log_message(msg, module=this_module)
       else
+         call print_summary_header('Summary', self%name)
          if (.not.self%is_finalized) then
-            call logger%log_message('Current data:', module=this_module)
-            write(msg, fmt_h) 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
-            call logger%log_message(msg, module=this_module)
-            etavg = 0.0_dp
-            etmin = 0.0_dp
-            if (self%local_count > 0) then
-               etavg = self%etime/self%local_count
-               etmin = self%etime_min
-            end if
-            write(msg,fmt_t) trim(self%name), self%local_count, self%etime, etavg, etmin, self%etime_max
-            call logger%log_message(msg, module=this_module)
-            if (if_full) then
-               if (self%reset_count > 0) then
-                  write(msg,'(A,I0,A)') 'Saved data from ', self%reset_count, ' reset(s):'
-                  call logger%log_message(msg, module=this_module)
-                  do i = 1, self%reset_count
-                     write(msg,fmt_r) 'reset', i, self%count_data(i), self%etime_data(i), self%etavg_data(i), &
-                                       & self%etmin_data(i), self%etmax_data(i)
-                     call logger%log_message(msg, module=this_module)
-                  end do
-               else
-                  call logger%log_message('No saved timing data.', module=this_module)
-               end if
-            end if
+            call self%save_timer_data()
          else ! is_finalized
-            call print_summary_header('Summary', self%name)
             if (self%reset_count == 0) then
                call stop_error(trim(self%name)//': reset_count inconsistent!', module=this_module, procedure='finalize_timer')
             end if
-            call print_summary(self)
          end if
+         call print_summary(self)
       end if
    end subroutine print_timer_info
 
    subroutine finalize_timer(self, if_silent)
-      !! Type-bound to lightkrylov_timer: Prepare timer summary
+      !! Type-bound to lightkrylov_timer: Prepare timer summary.
       class(lightkrylov_timer), intent(inout) :: self
       logical, optional, intent(in) :: if_silent
       !! No output
@@ -355,7 +361,7 @@ contains
       if (.not. silent) then
          write(msg,'(*(A))') trim(self%name), ' finalization complete.'
          call logger%log_message(msg, module=this_module)
-         call self%print_info(full=.true.)
+         call self%print_info()
       end if
    end subroutine finalize_timer
 
@@ -364,8 +370,8 @@ contains
    !--------------------------------------------------------------
 
    subroutine add_timer(self, name, start, count)
-      !! Type-bound to abstract_watch: Add timer to watch and optionally start it immediately
-      !! Note: The new timer name must be unique
+      !! Type-bound to abstract_watch: Add timer to watch and optionally start it immediately.
+      !! Note: The new timer name must be unique.
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       logical, optional, intent(in) :: start
@@ -380,10 +386,7 @@ contains
          self%timers(1) = lightkrylov_timer(tname)
          self%timer_count = 1
       else
-         if (self%get_timer_id(name) > 0) then
-            call stop_error('Timer "'//trim(tname)//'" already defined!', & 
-                              & module=this_module, procedure='add_timer')
-         end if
+         if (self%get_timer_id(name) > 0) call element_exists(tname, 'Timer', 'add_timer')
          self%timers = [ self%timers, lightkrylov_timer(tname) ]
          self%timer_count = self%timer_count + 1
          if (self%user_mode) self%user_count = self%user_count + 1
@@ -395,7 +398,7 @@ contains
    end subroutine add_timer
 
    subroutine remove_timer(self, name, count)
-      !! Type-bound to abstract_watch: Remove timer from watch
+      !! Type-bound to abstract_watch: Remove timer from watch.
       !! Note: Timers considered private (defined during initialisation) cannot be removed.
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -406,29 +409,25 @@ contains
       integer :: id
       tname = to_lower(name)
       id = self%get_timer_id(tname)
-      if (id == 0) then
-         call stop_error('Timer "'//trim(tname)//'" not defined!', & 
-                              & module=this_module, procedure='remove_timer')
+      if (id == 0) call timer_not_found(tname, 'remove_timer')
+      if (id <= self%private_count) then
+         write(msg,'(A)') 'Cannot remove private timer "'//trim(tname)//'". Do nothing.'
+         call logger%log_message(msg, module=this_module, procedure='remove_timer')
       else
-         if (id <= self%private_count) then
-            call logger%log_message('Cannot remove private timer "'//trim(tname)//'".', & 
-                              & module=this_module, procedure='remove_timer')
-         else
-            self%timer_count = self%timer_count - 1
-            allocate(new_timers(self%timer_count))
-            new_timers(1:id-1) = self%timers(1:id-1)
-            new_timers(id:)    = self%timers(id+1:)
-            deallocate(self%timers)
-            self%timers = new_timers
-         end if
+         self%timer_count = self%timer_count - 1
+         allocate(new_timers(self%timer_count))
+         new_timers(1:id-1) = self%timers(1:id-1)
+         new_timers(id:)    = self%timers(id+1:)
+         deallocate(self%timers)
+         self%timers = new_timers
+         write(msg,'(A,I0)') 'Timer "'//trim(tname)//'" removed: timer_count: ', self%timer_count
+         call logger%log_debug(msg, module=this_module, procedure='remove_timer')
       end if
-      write(msg,'(A,I0)') 'Timer "'//trim(tname)//'" removed: timer_count: ', self%timer_count
-      call logger%log_debug(msg, module=this_module)
       if (present(count)) count = self%timer_count
    end subroutine remove_timer
 
    subroutine add_group(self, name, istart, iend, count)
-      !! Type-bound to abstract_watch: Add timer group to watch
+      !! Type-bound to abstract_watch: Add timer group to watch.
       !! Note: The new group name must be unique. This is a quick hack and should be done better.
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -451,10 +450,7 @@ contains
          self%groups(1) = lightkrylov_timer_group(name=gname, istart=istart, iend=iend)
          self%group_count = 1
       else
-         if (self%get_group_id(name) > 0) then
-            call stop_error('Timer group "'//trim(gname)//'" already defined!', & 
-                              & module=this_module, procedure='add_group')
-         end if
+         if (self%get_group_id(name) > 0) call element_exists(gname, 'Group', 'add_group')
          self%groups = [ self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend) ]
          self%group_count = self%group_count + 1
       end if
@@ -464,7 +460,7 @@ contains
    end subroutine add_group
 
    integer function get_timer_id(self, name) result(id)
-      !! Type-bound to abstract_watch: Getter routine to return the timer id based on name
+      !! Type-bound to abstract_watch: Getter routine to return the timer id based on name.
       class(abstract_watch) :: self
       character(len=*)  :: name
       !! Timer name
@@ -477,7 +473,7 @@ contains
    end function get_timer_id
 
    integer function get_group_id(self, name) result(id)
-      !! Type-bound to abstract_watch: Getter routine to return the group id based on name
+      !! Type-bound to abstract_watch: Getter routine to return the group id based on name.
       class(abstract_watch) :: self
       character(len=*) :: name
       !! Timer name
@@ -496,10 +492,130 @@ contains
       !! Watch name
       self%name = name
    end subroutine set_watch_name
+   
+   subroutine start_timer_by_name(self, name)
+      !! Type-bound to abstract_watch: Start timer referenced by name.
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) call timer_not_found(tname, 'start_timer_by_name')
+      call self%timers(id)%start()
+      call logger%log_debug('Timer "'//trim(tname)//'" started.', module=this_module, procedure=self%name)
+   end subroutine start_timer_by_name
+
+   subroutine stop_timer_by_name(self, name)
+      !! Type-bound to abstract_watch: Stop timer referenced by name.
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) call timer_not_found(tname, 'stop_timer_by_name')
+      call self%timers(id)%stop()
+      call logger%log_debug('Timer "'//trim(tname)//'" stopped.', module=this_module, procedure=self%name)
+   end subroutine stop_timer_by_name
+
+   subroutine pause_timer_by_name(self, name)
+      !! Type-bound to abstract_watch: Pause timer referenced by name.
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) call timer_not_found(tname, 'pause_timer_by_name')
+      call self%timers(id)%pause()
+      call logger%log_debug('Timer "'//trim(tname)//'" paused.', module=this_module, procedure=self%name)
+   end subroutine
+
+   subroutine reset_timer_by_name(self, name, soft, clean)
+      !! Type-bound to abstract_watch: Reset timer referenced by name.
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      logical, optional, intent(in) :: soft
+      logical, optional, intent(in) :: clean
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) call timer_not_found(tname, 'reset_timer_by_name')
+      call self%timers(id)%reset(soft, clean)
+   end subroutine
+
+   real(dp) function get_timer_etime_by_name(self, name, restart) result(etime)
+      !! Type-bound to abstract_watch: Getter routine to return the current etime for timer referenced by name.
+      !! Notes: Wrapper of the corresponding routine from lightkrylov_timer.
+      !!        If it is running, the timer is stopped.
+      class(abstract_watch) :: self
+      character(len=*) :: name
+      logical, optional :: restart
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) call timer_not_found(tname, 'get_timer_etime_by_name')
+      etime = self%timers(id)%get_time(restart)
+   end function get_timer_etime_by_name
+
+   subroutine get_timer_data_by_name(self, name, restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)
+      !! Type-bound to abstract_watch: Getter routine to return the data for timer referenced by name.
+      !! Notes: Wrapper of the corresponding routine from lightkrylov_timer.
+      !!        If it is running, the timer is stopped.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      logical, optional, intent(in) :: restart
+      real(dp), optional, intent(out) :: etime
+      real(dp), optional, intent(out) :: etmin
+      real(dp), optional, intent(out) :: etmax
+      real(dp), optional, intent(out) :: etimp
+      integer, optional, intent(out) :: lcount
+      integer, optional, intent(out) :: rcount
+      integer, optional, intent(out) :: gcount
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) then 
+         call timer_not_found(tname, 'get_timer_data_by_name')
+      else
+         call self%timers(id)%get_data(restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)
+      end if
+   end subroutine get_timer_data_by_name
+
+   subroutine print_timer_info_by_name(self, name)
+      !! Type-bound to abstract_watch: Print timing information for timer referenced by name.
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) then 
+         call timer_not_found(tname, 'print_timer_info_by_name')
+      else
+         call self%timers(id)%print_info()
+      end if
+   end subroutine
 
    subroutine reset_all(self, soft, clean)
-      !! Type-bound to abstract_watch: Utility function to reset all timers at once
-      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+      !! Type-bound to abstract_watch: Utility function to reset all timers at once.
+      !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
       class(abstract_watch), intent(inout) :: self
       logical, optional, intent(in) :: soft
       logical, optional, intent(in) :: clean
@@ -518,105 +634,9 @@ contains
       write(msg,'(A,L,3X,A,L)') 'soft reset: ', soft_, 'flush timers: ', clean_
       call logger%log_message(msg, module=this_module, procedure=self%name)
    end subroutine reset_all
-   
-   subroutine start_timer_by_name(self, name)
-      !! Type-bound to abstract_watch: Start timer referenced by name
-      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-      class(abstract_watch), intent(inout) :: self
-      character(len=*), intent(in) :: name
-      ! internal
-      integer :: id
-      character(len=128) :: tname
-      tname = to_lower(name)
-      id = self%get_timer_id(tname)
-      if (id == 0) then 
-         call stop_error('Timer "'//trim(tname)//'" not found!', & 
-                              & module=this_module, procedure='start_timer_by_name')
-      else
-         call self%timers(id)%start()
-      end if
-      call logger%log_debug('Timer "'//trim(tname)//'" started.', module=this_module, procedure=self%name)
-   end subroutine start_timer_by_name
-
-   subroutine stop_timer_by_name(self, name)
-      !! Type-bound to abstract_watch: Stop timer referenced by name
-      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-      class(abstract_watch), intent(inout) :: self
-      character(len=*), intent(in) :: name
-      ! internal
-      integer :: id
-      character(len=128) :: tname
-      tname = to_lower(name)
-      id = self%get_timer_id(tname)
-      if (id == 0) then 
-         call stop_error('Timer "'//trim(tname)//'" not found!', & 
-                              & module=this_module, procedure='stop_timer_by_name')
-      else
-         call self%timers(id)%stop()
-      end if
-      call logger%log_debug('Timer "'//trim(tname)//'" stopped.', module=this_module, procedure=self%name)
-   end subroutine stop_timer_by_name
-
-   subroutine pause_timer_by_name(self, name)
-      !! Type-bound to abstract_watch: Pause timer referenced by name
-      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-      class(abstract_watch), intent(inout) :: self
-      character(len=*), intent(in) :: name
-      ! internal
-      integer :: id
-      character(len=128) :: tname
-      tname = to_lower(name)
-      id = self%get_timer_id(tname)
-      if (id == 0) then 
-         call stop_error('Timer "'//trim(tname)//'" not found!', & 
-                              & module=this_module, procedure='pause_timer_by_name')
-      else
-         call self%timers(id)%pause()
-      end if
-      call logger%log_debug('Timer "'//trim(tname)//'" paused.', module=this_module, procedure=self%name)
-   end subroutine
-
-   subroutine reset_timer_by_name(self, name, soft, clean)
-      !! Type-bound to abstract_watch: Reset timer referenced by name
-      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-      class(abstract_watch), intent(inout) :: self
-      character(len=*), intent(in) :: name
-      logical, optional, intent(in) :: soft
-      logical, optional, intent(in) :: clean
-      ! internal
-      integer :: id
-      character(len=128) :: tname
-      tname = to_lower(name)
-      id = self%get_timer_id(tname)
-      if (id == 0) then 
-         call stop_error('Timer "'//trim(tname)//'" not found!', & 
-                              & module=this_module, procedure='reset_timer_by_name')
-      else
-         call self%timers(id)%reset(soft, clean)
-      end if
-   end subroutine
-
-   subroutine print_timer_info_by_name(self, name, full)
-      !! Type-bound to abstract_watch: Print timing information for timer referenced by name
-      !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-      class(abstract_watch), intent(inout) :: self
-      character(len=*), intent(in) :: name
-      logical, optional, intent(in) :: full
-      ! internal
-      integer :: id
-      character(len=128) :: tname
-      tname = to_lower(name)
-      id = self%get_timer_id(tname)
-      if (id == 0) then 
-         call stop_error('Timer "'//trim(tname)//'" not found!', & 
-                              & module=this_module, procedure='print_timer_info_by_name')
-      else
-         call self%timers(id)%print_info(full)
-      end if
-   end subroutine
 
    subroutine enumerate(self, only_user)
-      !! Type-bound to abstract_watch: Summarize registered timers and their status
+      !! Type-bound to abstract_watch: Summarize registered timers and their status.
       class(abstract_watch), intent(in) :: self
       logical, optional, intent(in) :: only_user
       !! Summarize only user defined timers? default: .false.
@@ -667,7 +687,7 @@ contains
          end do
          self%is_initialized = .true.
       else
-         ! If the system timers have already been defined, we want to flush the data
+         ! If the system timers have already been defined, we want to flush the data.
          call self%reset_all(soft = .false.)
          write(msg,'(3X,I4,A)') self%private_count, ' private timers registered and fully reset.'
          call logger%log_information(msg, module=this_module, procedure=self%name)
@@ -676,18 +696,26 @@ contains
             call logger%log_information(msg, module=this_module, procedure=self%name)
          end if
       end if
-      ! All subsequent timers that are added are user defined
+      ! All subsequent timers that are added are user defined.
       self%user_mode = .true.
       call logger%log_message('Private timer initialization complete.', module=this_module, procedure=self%name)
    end subroutine initialize
 
-   subroutine finalize(self)
+   subroutine finalize(self, write_to_file)
       !! Finalize global watch within LightKrylov and print used timers.
       class(abstract_watch), intent(inout) :: self
+      logical, optional, intent(in) :: write_to_file
+      !! Print timer summary to a dedicated timer logfile as well as the general log file? default: .true.
       ! internal
-      integer :: i, j, icalled, ic_user
+      integer :: i, j, icalled, ic_user, tmr_unit
       integer, dimension(:), allocatable :: ic
-      character(len=128) :: msg
+      logical :: to_file
+      character(len=128) :: msg, logfile_tmr
+      to_file = optval(write_to_file, .true.)
+      if (to_file) then
+         write(logfile_tmr, '(A,A)') trim(to_lower(self%name)), '.log'
+         call logger%add_log_file(logfile_tmr, tmr_unit, status='replace', action='write')
+      end if
       icalled = 0
       allocate(ic(self%group_count))
       do i = 1, self%timer_count
@@ -702,7 +730,7 @@ contains
       end do
       ic_user = icalled
       call logger%log_message('Timer finalization complete.', module=this_module, procedure=self%name)
-      call logger%log_message('#########   Global timer summary   #########', module=this_module)
+      call logger%log_message('#########   Global timer summary   ##########', module=this_module)
       call logger%log_message('Overview:', module=this_module, procedure=self%name)
       write(msg, '(2X,A60,I5)') 'Total active timers:', self%timer_count
       call logger%log_message(msg, module=this_module)
@@ -726,7 +754,8 @@ contains
             call print_summary(self%timers(i))
          end do
       end if
-      call logger%log_message('#########   Global timer summary   #########', module=this_module)
+      call logger%log_message('#########   Global timer summary   ##########', module=this_module)
+      if (to_file) call logger%remove_log_unit(tmr_unit, close_unit=.true.)
    end subroutine finalize
 
    !--------------------------------------------------------------
@@ -734,7 +763,7 @@ contains
    !--------------------------------------------------------------
 
    subroutine print_summary_header(section_name, watch_name)
-      !! Print section headers for the private and user defined timers
+      !! Print section headers for the private and user defined timers.
       character(len=*), intent(in) :: section_name
       character(len=*), intent(in) :: watch_name
       ! internal
@@ -742,7 +771,7 @@ contains
       call logger%log_message(trim(section_name)//':', module=this_module, procedure=watch_name)
       write(msg, fmt_h) 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
       call logger%log_message(msg, module=this_module)
-      call logger%log_message('____________________________________________', module=this_module)
+      call logger%log_message('_____________________________________________', module=this_module)
    end subroutine print_summary_header
 
    subroutine print_summary(t)
@@ -788,5 +817,22 @@ contains
          end if
       end if
    end subroutine print_summary
+
+   !--------------------------------------------------------------
+   !  Helper subroutines for error handling
+   !--------------------------------------------------------------
+
+   subroutine timer_not_found(name, procedure)
+      character(len=*), intent(in) :: name
+      character(len=*), optional, intent(in) :: procedure
+      call stop_error('Timer "'//trim(name)//'" not found!', module=this_module, procedure=procedure)
+   end subroutine timer_not_found
+
+   subroutine element_exists(name, element, procedure)
+      character(len=*), intent(in) :: name
+      character(len=*), intent(in) :: element
+      character(len=*), optional, intent(in) :: procedure
+      call stop_error(trim(element)//' "'//trim(name)//'" already defined!', module=this_module, procedure=procedure)
+   end subroutine element_exists
 
 end module LightKrylov_Timer_Utils

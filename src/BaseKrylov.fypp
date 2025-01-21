@@ -870,7 +870,7 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_${kind}$)
 
-      	if (time_lightkrylov()) call timer%start('qr_no_pivoting_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start('qr_no_pivoting_${type[0]}$${kind}$')
         info = 0 ; flag = .false.; R = zero_r${kind}$ ; beta = zero_r${kind}$
         do j = 1, size(Q)
             if (j > 1) then
@@ -881,6 +881,11 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            #:if type[0] == "r"
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
+            #:else
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
+            #:endif
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -901,7 +906,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_r${kind}$ / beta)
         enddo
-      	if (time_lightkrylov()) call timer%stop('qr_no_pivoting_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_${type[0]}$${kind}$')
         
         return
     end subroutine qr_no_pivoting_${type[0]}$${kind}$
@@ -959,6 +964,11 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
+            #:if type[0] == "r"
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+            #:else
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+            #:endif
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_r${kind}$
@@ -986,7 +996,7 @@ contains
             enddo
 
         enddo qr_step
-      	if (time_lightkrylov()) call timer%stop('qr_with_pivoting_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_${type[0]}$${kind}$')
         
         return
     end subroutine qr_with_pivoting_${type[0]}$${kind}$

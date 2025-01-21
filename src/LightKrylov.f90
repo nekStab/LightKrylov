@@ -131,8 +131,8 @@ module LightKrylov
 
     ! Newton-Krylov exports.
     public :: newton
-    public :: constant_atol_sp, dynamic_tol_sp
-    public :: constant_atol_dp, dynamic_tol_dp
+    public :: constant_tol_sp, dynamic_tol_sp
+    public :: constant_tol_dp, dynamic_tol_dp
 
     ! ExpmLib exports.
     public :: abstract_exptA_rsp

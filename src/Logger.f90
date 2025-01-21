@@ -63,7 +63,7 @@ contains
       logical                       :: log_stdout_
       logical                       :: log_timestamp_
       logical                       :: close_old_
-      logical                       :: iunit_
+      integer                       :: iunit_
       ! misc
       integer :: stat
 
@@ -127,21 +127,21 @@ contains
       ! check if MPI has already been initialized and if not, initialize
       call MPI_Initialized(mpi_is_initialized, ierr)
       if (.not. mpi_is_initialized) then
-         call logger%log_debug('Set up parallel run with MPI.', module='LightKrylov', procedure='comm_setup')
+         call logger%log_message('Set up parallel run with MPI.', module='LightKrylov', procedure='comm_setup')
          call MPI_Init(ierr)
          if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", module='LightKrylov',procedure='mpi_init')
       else
-         call logger%log_debug('MPI already initialized.', module='LightKrylov', procedure='comm_setup')
+         call logger%log_message('MPI already initialized.', module='LightKrylov', procedure='comm_setup')
       end if
       call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr); call set_rank(nid)
       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr); call set_comm_size(comm_size)
-      write(msg,'(A,I0,A,I0)') 'rank', nid, ', comm_size = ', comm_size
-      call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
+      write(msg,'(A,I0,A,I0)') 'IO rank = ', nid, ', comm_size = ', comm_size
+      call logger%log_message(trim(msg), module='LightKrylov', procedure='comm_setup')
 #else
       write(msg,'(A)') 'Setup serial run'
       call set_rank(0)
       call set_comm_size(1)
-      call logger%log_debug(trim(msg), module='LightKrylov', procedure='comm_setup')
+      call logger%log_message(trim(msg), module='LightKrylov', procedure='comm_setup')
 #endif
       return
    end subroutine comm_setup

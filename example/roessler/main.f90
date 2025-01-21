@@ -21,7 +21,7 @@ program demo
    character(len=*), parameter :: this_module = 'Example Roessler'
 
    ! Roessler system.
-   type(roessler_upo) :: sys
+   type(roessler_upo) :: sys_jac, sys_floquet
    ! State vectors
    type(state_vector) :: bf, dx, residual, fp
    ! Position vectors
@@ -35,11 +35,13 @@ program demo
    type(newton_dp_opts)            :: opts
    type(gmres_dp_opts)             :: gmres_opts
    integer                         :: i, j, info
-   real(wp)                        :: rnorm, tol, Tend, t_FTLE, d
+   real(wp)                        :: rnorm, tol, Tend, t_FTLE, d, tmp
    real(wp), dimension(npts, npts) :: M, Id
    real(wp), dimension(npts)       :: eval, vec
    real(wp), dimension(npts, r)    :: u, Lu
    real(wp), dimension(r, r)       :: Lr
+   real(wp) :: etime, etmin, etmax, etimp
+   integer :: lcount, rcount, gcount
    ! IO
    character(len=20)    :: data_fmt, header_fmt
 
@@ -91,18 +93,18 @@ program demo
    print *, ''
 
    ! Initialize system and Jacobian
-   sys = roessler_upo()
+   sys_jac = roessler_upo()
    ! Set Jacobian and baseflow
-   sys%jacobian = jacobian()
-   sys%jacobian%X = bf
+   sys_jac%jacobian = jacobian()
+   sys_jac%jacobian%X = bf
 
    ! Set tolerance
    tol = 1e-12_wp
 
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
-   call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=constant_atol_dp)
+   call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=constant_tol_dp)
 
-   call sys%eval(bf, residual, tol)
+   call sys_jac%eval(bf, residual, tol)
    print *, ''
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
@@ -111,7 +113,9 @@ program demo
 
    ! Reset timers
    call timer%stop('Newton iteration (const. tol)')
-   call sys%reset_timer()
+   call sys_jac%reset_timer()
+   call sys_jac%jacobian%reset_timer()
+   call sys_jac%jacobian%finalize_timer()
    call timer%reset_all()
    call timer%add_timer('Newton iteration (dyn. tol)', start=.true.)
 
@@ -125,11 +129,11 @@ program demo
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Initial guess PO:  ', bf%x, bf%y, bf%z, bf%T
    print *, ''
-   sys%jacobian%X = bf
+   sys_jac%jacobian%X = bf
 
-   call newton(sys, bf, gmres_rdp, info, tolerance=tol, options=opts, scheduler=dynamic_tol_dp)
+   call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=dynamic_tol_dp)
 
-   call sys%eval(bf, residual, tol)
+   call sys_jac%eval(bf, residual, tol)
    print *, ''
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Solution:         ', bf%x, bf%y, bf%z, bf%T
@@ -138,7 +142,8 @@ program demo
 
    ! Reset timers
    call timer%stop('Newton iteration (dyn. tol)')
-   call sys%reset_timer()
+   call sys_jac%reset_timer()
+   call sys_jac%jacobian%reset_timer()
    call timer%reset_all()
    call timer%add_timer('Monodromy matrix & Floquet exp.', start=.true.)
 
@@ -147,15 +152,17 @@ program demo
    print *, '########################################################################################'
    print *, ''
 
+   ! Initialize system and Jacobian
+   sys_floquet = roessler_upo()
    ! Compute the stability of the orbit
-   sys%jacobian = floquet_operator()
-   sys%jacobian%X = bf  ! <- periodic orbit
+   sys_floquet%jacobian = floquet_operator()
+   sys_floquet%jacobian%X = bf  ! <- periodic orbit
 
    M = 0.0_wp
    Id = eye(npts)
    do i = 1, npts
       call set_position(Id(:, i), dx)
-      call sys%jacobian%matvec(dx, residual)
+      call sys_floquet%jacobian%apply_matvec(dx, residual)
       call get_position(residual, M(:, i))
    end do
    eval = real(eigvals(M))
@@ -169,7 +176,8 @@ program demo
 
    ! Reset timers
    call timer%stop('Monodromy matrix & Floquet exp.')
-   call sys%reset_timer()
+   call sys_floquet%reset_timer()
+   call sys_floquet%jacobian%reset_timer()
    call timer%reset_all()
    call timer%add_timer('OTD modes - fixed-point', start=.true.)
 
@@ -223,7 +231,8 @@ program demo
 
    ! Reset timers
    call timer%stop('OTD modes - fixed-point')
-   call sys%reset_timer()
+   call sys_floquet%reset_timer()
+   call sys_floquet%jacobian%reset_timer()
    call timer%reset_all()
    call timer%add_timer('OTD modes - periodic orbit', start=.true.)
 
@@ -253,7 +262,8 @@ program demo
 
    ! Reset timers
    call timer%stop('OTD modes - periodic orbit')
-   call sys%reset_timer()
+   call sys_floquet%reset_timer()
+   call sys_floquet%jacobian%reset_timer()
    call timer%reset_all()
    call timer%add_timer('OTD modes - route to chaos', start=.true.)
 
@@ -279,7 +289,17 @@ program demo
    print *, ''
 
    ! Print timing info for system evaulations
-   call sys%finalize_timer()
+   print *, ''
+   print '(A)', 'Timing information for sys_jac:'
+   print *, ''
+   call sys_jac%finalize_timer()
+   call sys_jac%jacobian%finalize_timer()
+   ! Print timing info for system evaulations
+   print *, ''
+   print '(A)', 'Timing information for sys_floquet:'
+   print *, ''
+   call sys_floquet%finalize_timer()
+   call sys_floquet%jacobian%finalize_timer()
    ! Finalize timing
    call timer%finalize()
 

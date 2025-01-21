@@ -522,9 +522,14 @@ contains
       ! internal
       logical :: transpose
       transpose = optval(trans, .false.)
-      if (transpose) then
-        call self%rmatvec_timer%reset(soft, clean, verbose=.true.)
+      if (present(trans)) then
+        if (transpose) then
+            call self%rmatvec_timer%reset(soft, clean, verbose=.true.)
+        else
+            call self%matvec_timer%reset(soft, clean, verbose=.true.)
+        end if
       else
+        call self%rmatvec_timer%reset(soft, clean, verbose=.true.)
         call self%matvec_timer%reset(soft, clean, verbose=.true.)
       end if
     end subroutine reset_linop_timer
@@ -545,7 +550,7 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
@@ -578,7 +583,7 @@ contains
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
@@ -611,7 +616,7 @@ contains
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
@@ -644,7 +649,7 @@ contains
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'

@@ -1075,7 +1075,7 @@ contains
         beta = V(1)%norm() ; call V(1)%scal(one_${type[0]}$${kind}$/beta)
         allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
 
-        write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', 0, ': |res|= ', &
+        write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
         call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
 
@@ -1116,7 +1116,7 @@ contains
                 gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
                 if (abs(beta) <= tol) then
@@ -1145,7 +1145,7 @@ contains
             gmres_meta%n_outer = gmres_meta%n_outer + 1
             gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
-            write(msg,'(A,I3,2(A,E9.2))') 'GMRES(k) outer step   ', i, ': |res|= ', &
+            write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call logger%log_information(msg, module=this_module, procedure='gmres_${type[0]}$${kind}$')
 

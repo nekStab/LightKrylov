@@ -16,9 +16,9 @@ module LightKrylov_NewtonKrylov
    character(len=*), parameter :: this_module_long = 'LightKrylov_NewtonKrylov'
 
    public :: newton
-   public :: constant_atol_sp
+   public :: constant_tol_sp
    public :: dynamic_tol_sp
-   public :: constant_atol_dp
+   public :: constant_tol_dp
    public :: dynamic_tol_dp
 
    interface newton
@@ -114,7 +114,7 @@ module LightKrylov_NewtonKrylov
 
 contains
 
-   subroutine newton_rsp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_rsp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rsp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rsp),                         intent(inout) :: X
@@ -123,8 +123,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(sp),                                 optional, intent(in)    :: tolerance
-      real(sp)                                                          :: target_tol
+      real(sp),                                 optional, intent(in)    :: rtol
+      real(sp)                                                          :: target_rtol
+      real(sp),                                 optional, intent(in)    :: atol
+      real(sp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
@@ -143,7 +145,7 @@ contains
       
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rsp), allocatable        :: residual, increment
-      real(sp)           :: rnorm, tol
+      real(sp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -151,7 +153,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_rsp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_sp)
+      target_rtol = optval(rtol, rtol_sp)
+      target_atol = optval(atol, atol_sp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -162,7 +166,7 @@ contains
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
       else
-         tolerance_scheduler => constant_atol_sp
+         tolerance_scheduler => constant_tol_sp
       endif
 
       ! Initialisation
@@ -176,14 +180,17 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
+         call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          newton_meta%converged = .true.
@@ -197,7 +204,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rsp')
 
          ! Define the Jacobian
@@ -272,7 +279,7 @@ contains
       return
    end subroutine newton_rsp
 
-   subroutine newton_rdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_rdp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_rdp),                         intent(inout) :: X
@@ -281,8 +288,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(dp),                                 optional, intent(in)    :: tolerance
-      real(dp)                                                          :: target_tol
+      real(dp),                                 optional, intent(in)    :: rtol
+      real(dp)                                                          :: target_rtol
+      real(dp),                                 optional, intent(in)    :: atol
+      real(dp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
@@ -301,7 +310,7 @@ contains
       
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_rdp), allocatable        :: residual, increment
-      real(dp)           :: rnorm, tol
+      real(dp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -309,7 +318,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_rdp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_dp)
+      target_rtol = optval(rtol, rtol_dp)
+      target_atol = optval(atol, atol_dp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -320,7 +331,7 @@ contains
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
       else
-         tolerance_scheduler => constant_atol_dp
+         tolerance_scheduler => constant_tol_dp
       endif
 
       ! Initialisation
@@ -334,14 +345,17 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
+         call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          newton_meta%converged = .true.
@@ -355,7 +369,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_rdp')
 
          ! Define the Jacobian
@@ -430,7 +444,7 @@ contains
       return
    end subroutine newton_rdp
 
-   subroutine newton_csp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_csp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_csp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_csp),                         intent(inout) :: X
@@ -439,8 +453,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(sp),                                 optional, intent(in)    :: tolerance
-      real(sp)                                                          :: target_tol
+      real(sp),                                 optional, intent(in)    :: rtol
+      real(sp)                                                          :: target_rtol
+      real(sp),                                 optional, intent(in)    :: atol
+      real(sp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_sp_opts),                     optional, intent(in)    :: options
       type(newton_sp_opts)                                              :: opts
@@ -459,7 +475,7 @@ contains
       
       procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_csp), allocatable        :: residual, increment
-      real(sp)           :: rnorm, tol
+      real(sp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_sp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -467,7 +483,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_csp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_sp)
+      target_rtol = optval(rtol, rtol_sp)
+      target_atol = optval(atol, atol_sp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -478,7 +496,7 @@ contains
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
       else
-         tolerance_scheduler => constant_atol_sp
+         tolerance_scheduler => constant_tol_sp
       endif
 
       ! Initialisation
@@ -492,14 +510,17 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
+         call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          newton_meta%converged = .true.
@@ -513,7 +534,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_csp')
 
          ! Define the Jacobian
@@ -588,7 +609,7 @@ contains
       return
    end subroutine newton_csp
 
-   subroutine newton_cdp(sys, X, solver, info, tolerance, options, linear_solver_options, preconditioner, scheduler, meta)
+   subroutine newton_cdp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_cdp),                         intent(inout) :: sys
       !! Dynamical system for which we wish to compute a fixed point
       class(abstract_vector_cdp),                         intent(inout) :: X
@@ -597,8 +618,10 @@ contains
       !! Linear solver to be used to find Newton step
       integer,                                            intent(out)   :: info
       !! Information flag
-      real(dp),                                 optional, intent(in)    :: tolerance
-      real(dp)                                                          :: target_tol
+      real(dp),                                 optional, intent(in)    :: rtol
+      real(dp)                                                          :: target_rtol
+      real(dp),                                 optional, intent(in)    :: atol
+      real(dp)                                                          :: target_atol
       !! Target absolute solver tolerance
       type(newton_dp_opts),                     optional, intent(in)    :: options
       type(newton_dp_opts)                                              :: opts
@@ -617,7 +640,7 @@ contains
       
       procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
       class(abstract_vector_cdp), allocatable        :: residual, increment
-      real(dp)           :: rnorm, tol
+      real(dp)           :: rnorm, tol, target_tol
       integer            :: i, maxiter, maxstep_bisection
       type(newton_dp_metadata) :: newton_meta
       character(len=256) :: msg
@@ -625,7 +648,9 @@ contains
       if (time_lightkrylov()) call timer%start('newton_cdp')
       
       ! Newton-solver tolerance
-      target_tol = optval(tolerance, atol_dp)
+      target_rtol = optval(rtol, rtol_dp)
+      target_atol = optval(atol, atol_dp)
+
       ! Newton-Krylov options
       if (present(options)) then
          opts = options
@@ -636,7 +661,7 @@ contains
       if (present(scheduler)) then
          tolerance_scheduler => scheduler
       else
-         tolerance_scheduler => constant_atol_dp
+         tolerance_scheduler => constant_tol_dp
       endif
 
       ! Initialisation
@@ -650,14 +675,17 @@ contains
       call sys%reset_eval_counter('newton%init')
 
       ! Get initial residual.
-      call sys%eval(X, residual, target_tol)
+      call sys%eval(X, residual, target_atol)
       rnorm = residual%norm()
+      target_tol = target_rtol*rnorm + target_atol
 
       ! Save metadata.
       call newton_meta%record(rnorm, target_tol)
 
       ! Check for lucky convergence.
       if (rnorm < target_tol) then
+         write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
+         call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          newton_meta%converged = .true.
@@ -671,7 +699,7 @@ contains
 
          ! Set dynamic tolerances for Newton iteration and linear solves.
          call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-         write(msg,"(A,I0,3(A,E9.2))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+         write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
          call logger%log_message(msg, module=this_module, procedure='newton_cdp')
 
          ! Define the Jacobian
@@ -782,6 +810,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -796,6 +826,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -828,6 +860,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_rsp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rsp')
          call copy(X, Xin)
@@ -875,6 +910,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -889,6 +926,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -921,6 +960,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_rdp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_rdp')
          call copy(X, Xin)
@@ -968,6 +1010,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -982,6 +1026,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -1014,6 +1060,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_csp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_csp')
          call copy(X, Xin)
@@ -1061,6 +1110,8 @@ contains
       ! evaluate residual norm
       call sys%eval(X, residual, tol)
       res(4) = residual%norm()
+      write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+      call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
 
       if (res(4) > rold) then
          write(msg,'(A)') 'Start Newton step bisection ... '
@@ -1075,6 +1126,8 @@ contains
 
          do i = 1, maxstep
             step = step * invphi
+            write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
+            call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
             if (res(2) < res(3)) then
                ! alphas
                ! a1 is kept
@@ -1107,6 +1160,9 @@ contains
          end do
          ! set new vector to optimal step
          idx = minloc(res)
+         if (abs(alpha(idx(1))) < rtol_dp) then
+            call stop_error('Residual does not decrease!',this_module,procedure='increment_bisection_cdp')
+         end if
          write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
          call logger%log_information(msg, module=this_module, procedure='increment_bisection_cdp')
          call copy(X, Xin)
@@ -1124,8 +1180,8 @@ contains
    !-----     Definition of two basic tolerance schedulers (sp)    -----
    !--------------------------------------------------------------------
 
-   subroutine constant_atol_sp(tol, target_tol, rnorm, iter, info)
-      !! Abstract interface to define tolerance scheduler for the Newton iteration
+   subroutine constant_tol_sp(tol, target_tol, rnorm, iter, info)
+      !! Constant tolerance scheduler for the Newton iteration
       real(sp), intent(out) :: tol
       !! Tolerance to be used
       real(sp), intent(in) :: target_tol
@@ -1138,13 +1194,19 @@ contains
       !! Information flag
       character(len=256) :: msg
       tol = target_tol
-      write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
-      call logger%log_information(msg, module=this_module, procedure='constant_atol_sp')
+      if (target_tol < atol_sp) then
+         tol = atol_sp
+         write(msg,'(A,E9.2)') 'Input tolerance below atol! Resetting solver tolerance to atol= ', tol
+         call logger%log_warning(msg, module=this_module, procedure='constant_tol_sp')
+      else
+         write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
+         call logger%log_information(msg, module=this_module, procedure='constant_tol_sp')
+      end if
       return
-   end subroutine constant_atol_sp
+   end subroutine constant_tol_sp
 
    subroutine dynamic_tol_sp(tol, target_tol, rnorm, iter, info)
-      !! Abstract interface to define tolerance scheduler for the Newton iteration
+      !! Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol
       real(sp), intent(out) :: tol
       !! Tolerance to be used
       real(sp), intent(in) :: target_tol
@@ -1156,18 +1218,27 @@ contains
       integer,  intent(out)  :: info
       !! Information flag
       ! internals
-      real(sp) :: tol_old
+      real(sp) :: tol_old, target_tol_
       character(len=256) :: msg
+
+      target_tol_ = max(target_tol, atol_sp)
+      if (target_tol < atol_sp) then
+         write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
+         call logger%log_warning(msg, module=this_module, procedure='dynamic_tol_sp')
+      end if
       
       tol_old = tol
-      tol = max(0.1*rnorm, target_tol)
+      tol = max(0.1*rnorm, target_tol_)
 
       if (tol /= tol_old) then
-         if (tol == target_tol) then
+         if (tol == target_tol_) then
             write(msg,'(A,E9.2)') 'Solver tolerance set to input target. tol= ', tol
          else
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
          end if
+         call logger%log_information(msg, module=this_module, procedure='dynamic_tol_sp')
+      else
+         write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
          call logger%log_information(msg, module=this_module, procedure='dynamic_tol_sp')
       end if
       return
@@ -1177,8 +1248,8 @@ contains
    !-----     Definition of two basic tolerance schedulers (dp)    -----
    !--------------------------------------------------------------------
 
-   subroutine constant_atol_dp(tol, target_tol, rnorm, iter, info)
-      !! Abstract interface to define tolerance scheduler for the Newton iteration
+   subroutine constant_tol_dp(tol, target_tol, rnorm, iter, info)
+      !! Constant tolerance scheduler for the Newton iteration
       real(dp), intent(out) :: tol
       !! Tolerance to be used
       real(dp), intent(in) :: target_tol
@@ -1191,13 +1262,19 @@ contains
       !! Information flag
       character(len=256) :: msg
       tol = target_tol
-      write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
-      call logger%log_information(msg, module=this_module, procedure='constant_atol_dp')
+      if (target_tol < atol_dp) then
+         tol = atol_dp
+         write(msg,'(A,E9.2)') 'Input tolerance below atol! Resetting solver tolerance to atol= ', tol
+         call logger%log_warning(msg, module=this_module, procedure='constant_tol_dp')
+      else
+         write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
+         call logger%log_information(msg, module=this_module, procedure='constant_tol_dp')
+      end if
       return
-   end subroutine constant_atol_dp
+   end subroutine constant_tol_dp
 
    subroutine dynamic_tol_dp(tol, target_tol, rnorm, iter, info)
-      !! Abstract interface to define tolerance scheduler for the Newton iteration
+      !! Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol
       real(dp), intent(out) :: tol
       !! Tolerance to be used
       real(dp), intent(in) :: target_tol
@@ -1209,18 +1286,27 @@ contains
       integer,  intent(out)  :: info
       !! Information flag
       ! internals
-      real(dp) :: tol_old
+      real(dp) :: tol_old, target_tol_
       character(len=256) :: msg
+
+      target_tol_ = max(target_tol, atol_dp)
+      if (target_tol < atol_dp) then
+         write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
+         call logger%log_warning(msg, module=this_module, procedure='dynamic_tol_dp')
+      end if
       
       tol_old = tol
-      tol = max(0.1*rnorm, target_tol)
+      tol = max(0.1*rnorm, target_tol_)
 
       if (tol /= tol_old) then
-         if (tol == target_tol) then
+         if (tol == target_tol_) then
             write(msg,'(A,E9.2)') 'Solver tolerance set to input target. tol= ', tol
          else
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
          end if
+         call logger%log_information(msg, module=this_module, procedure='dynamic_tol_dp')
+      else
+         write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
          call logger%log_information(msg, module=this_module, procedure='dynamic_tol_dp')
       end if
       return
