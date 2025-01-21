@@ -99,7 +99,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_factorization_rsp', &
@@ -174,7 +174,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
@@ -234,7 +234,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_factorization_rdp', &
@@ -309,7 +309,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
@@ -369,7 +369,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_factorization_csp', &
@@ -444,7 +444,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
@@ -504,7 +504,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_factorization_cdp', &
@@ -579,7 +579,7 @@ contains
         call innerprod(G, A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
@@ -645,7 +645,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_rsp', &
@@ -699,7 +699,7 @@ contains
         call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim)))
+        err = maxval(abs(G - eye(p*kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_rsp', &
@@ -813,7 +813,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_rdp', &
@@ -867,7 +867,7 @@ contains
         call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim)))
+        err = maxval(abs(G - eye(p*kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_rdp', &
@@ -981,7 +981,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_arnoldi_factorization_csp', &
@@ -1035,7 +1035,7 @@ contains
         call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim)))
+        err = maxval(abs(G - eye(p*kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_block_arnoldi_factorization_csp', &
@@ -1149,7 +1149,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_cdp', &
@@ -1203,7 +1203,7 @@ contains
         call innerprod(G, X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim)))
+        err = maxval(abs(G - eye(p*kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_block_arnoldi_factorization_cdp', &
@@ -1327,7 +1327,7 @@ contains
         call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
@@ -1338,7 +1338,7 @@ contains
         call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
@@ -1404,7 +1404,7 @@ contains
         call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
@@ -1415,7 +1415,7 @@ contains
         call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
@@ -1481,7 +1481,7 @@ contains
         call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
@@ -1492,7 +1492,7 @@ contains
         call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
@@ -1558,7 +1558,7 @@ contains
         call innerprod(G, U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
@@ -1569,7 +1569,7 @@ contains
         call innerprod(G, V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
@@ -1644,7 +1644,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
@@ -1714,7 +1714,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
@@ -1784,7 +1784,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
@@ -1854,7 +1854,7 @@ contains
         call innerprod(G, X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
