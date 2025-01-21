@@ -7,7 +7,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, inv, mnorm
+    use stdlib_linalg, only: eye, inv, norm, mnorm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -259,11 +259,7 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
+            Q = merge(Q+c*X, Q-c*X, p)
             p = .not. p
         enddo
 
@@ -357,12 +353,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_sp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_sp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -408,7 +399,7 @@ contains
         class(abstract_vector_rsp), allocatable :: X(:)
         real(sp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        real(sp), allocatable :: R(:, :), E(:, :), em(:, :)
+        real(sp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_rsp), allocatable :: Xwrk(:), Cwrk(:)
         real(sp) :: err_est
@@ -430,7 +421,7 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
@@ -439,7 +430,7 @@ contains
         R = 0.0_sp
         call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
 
-        if (norm2(abs(R)) == 0.0_sp) then
+        if (mnorm(R, "fro") == 0.0_sp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
@@ -486,8 +477,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_sp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
@@ -581,11 +571,7 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
+            Q = merge(Q+c*X, Q-c*X, p)
             p = .not. p
         enddo
 
@@ -679,12 +665,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_dp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_dp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -730,7 +711,7 @@ contains
         class(abstract_vector_rdp), allocatable :: X(:)
         real(dp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        real(dp), allocatable :: R(:, :), E(:, :), em(:, :)
+        real(dp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_rdp), allocatable :: Xwrk(:), Cwrk(:)
         real(dp) :: err_est
@@ -752,7 +733,7 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
@@ -761,7 +742,7 @@ contains
         R = 0.0_dp
         call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
 
-        if (norm2(abs(R)) == 0.0_dp) then
+        if (mnorm(R, "fro") == 0.0_dp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
@@ -808,8 +789,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_dp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
@@ -903,11 +883,7 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
+            Q = merge(Q+c*X, Q-c*X, p)
             p = .not. p
         enddo
 
@@ -1001,12 +977,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_sp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_sp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -1052,7 +1023,7 @@ contains
         class(abstract_vector_csp), allocatable :: X(:)
         complex(sp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        complex(sp), allocatable :: R(:, :), E(:, :), em(:, :)
+        complex(sp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_csp), allocatable :: Xwrk(:), Cwrk(:)
         real(sp) :: err_est
@@ -1074,7 +1045,7 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
@@ -1083,7 +1054,7 @@ contains
         R = 0.0_sp
         call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
 
-        if (norm2(abs(R)) == 0.0_sp) then
+        if (mnorm(R, "fro") == 0.0_sp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
@@ -1130,8 +1101,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_sp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
@@ -1225,11 +1195,7 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
+            Q = merge(Q+c*X, Q-c*X, p)
             p = .not. p
         enddo
 
@@ -1323,12 +1289,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_dp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_dp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -1374,7 +1335,7 @@ contains
         class(abstract_vector_cdp), allocatable :: X(:)
         complex(dp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        complex(dp), allocatable :: R(:, :), E(:, :), em(:, :)
+        complex(dp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_cdp), allocatable :: Xwrk(:), Cwrk(:)
         real(dp) :: err_est
@@ -1396,7 +1357,7 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
@@ -1405,7 +1366,7 @@ contains
         R = 0.0_dp
         call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
 
-        if (norm2(abs(R)) == 0.0_dp) then
+        if (mnorm(R, "fro") == 0.0_dp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
@@ -1452,8 +1413,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_dp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
