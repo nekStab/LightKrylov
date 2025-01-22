@@ -259,7 +259,11 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            Q = merge(Q+c*X, Q-c*X, p)
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
             p = .not. p
         enddo
 
@@ -571,7 +575,11 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            Q = merge(Q+c*X, Q-c*X, p)
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
             p = .not. p
         enddo
 
@@ -883,7 +891,11 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            Q = merge(Q+c*X, Q-c*X, p)
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
             p = .not. p
         enddo
 
@@ -1195,7 +1207,11 @@ contains
             c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
             X = matmul(A2, X)
             E = E + c*X
-            Q = merge(Q+c*X, Q-c*X, p)
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
             p = .not. p
         enddo
 

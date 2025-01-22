@@ -66,7 +66,7 @@ contains
         enddo
 
         ! Reference with analytical exponential.
-        Eref = eye(n)
+        Eref = eye(n, mold=1.0_sp)
         do i = 1, n-1
             do j = 1, n-i
                 Eref(i, i+j) = Eref(i, i+j-1)*m/j
@@ -244,7 +244,7 @@ contains
         enddo
 
         ! Reference with analytical exponential.
-        Eref = eye(n)
+        Eref = eye(n, mold=1.0_dp)
         do i = 1, n-1
             do j = 1, n-i
                 Eref(i, i+j) = Eref(i, i+j-1)*m/j
@@ -422,7 +422,7 @@ contains
         enddo
 
         ! Reference with analytical exponential.
-        Eref = eye(n)
+        Eref = eye(n, mold=1.0_sp)
         do i = 1, n-1
             do j = 1, n-i
                 Eref(i, i+j) = Eref(i, i+j-1)*m/j
@@ -600,7 +600,7 @@ contains
         enddo
 
         ! Reference with analytical exponential.
-        Eref = eye(n)
+        Eref = eye(n, mold=1.0_dp)
         do i = 1, n-1
             do j = 1, n-i
                 Eref(i, i+j) = Eref(i, i+j-1)*m/j
