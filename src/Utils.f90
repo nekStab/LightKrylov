@@ -1712,12 +1712,12 @@ contains
     !-----     MISCELLANEOUS     -----
     !---------------------------------
 
-    pure real(sp) function log2_rsp(x) result(y)
+    elemental real(sp) function log2_rsp(x) result(y)
         real(sp), intent(in) :: x
         y = log(x) / log(2.0_sp)
     end function
 
-    pure real(dp) function log2_rdp(x) result(y)
+    elemental real(dp) function log2_rdp(x) result(y)
         real(dp), intent(in) :: x
         y = log(x) / log(2.0_dp)
     end function
