@@ -1384,7 +1384,6 @@ contains
         residual = abs(beta*x)
         return
     end function compute_residual_rsp
-
     elemental pure function compute_residual_rdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         real(dp), intent(in) :: beta
@@ -1396,7 +1395,6 @@ contains
         residual = abs(beta*x)
         return
     end function compute_residual_rdp
-
     elemental pure function compute_residual_csp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         complex(sp), intent(in) :: beta
@@ -1408,7 +1406,6 @@ contains
         residual = abs(beta*x)
         return
     end function compute_residual_csp
-
     elemental pure function compute_residual_cdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         complex(dp), intent(in) :: beta
@@ -1420,7 +1417,6 @@ contains
         residual = abs(beta*x)
         return
     end function compute_residual_cdp
-
 
     module procedure save_eigenspectrum_rsp
         ! Internal variables.
@@ -1453,24 +1449,22 @@ contains
 
     function median_eigvals_selector_sp(lambda) result(selected)
         complex(sp), intent(in) :: lambda(:)
-        logical :: selected(size(lambda))
+        logical, allocatable :: selected(:)
         selected = abs(lambda) > median(abs(lambda))
         return
     end function median_eigvals_selector_sp
-
     function median_eigvals_selector_dp(lambda) result(selected)
         complex(dp), intent(in) :: lambda(:)
-        logical :: selected(size(lambda))
+        logical, allocatable :: selected(:)
         selected = abs(lambda) > median(abs(lambda))
         return
     end function median_eigvals_selector_dp
-
 
     !---------------------------------------------------
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1484,7 +1478,7 @@ contains
         class(abstract_vector_rsp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_sp), optional :: select
+        procedure(eigvals_select_sp), optional :: select_eigs
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -1520,8 +1514,8 @@ contains
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_sp)
 
-        if (present(select)) then
-            select_ => select
+        if (present(select_eigs)) then
+            select_ => select_eigs
         else
             select_ => median_eigvals_selector_sp
         endif
@@ -1621,7 +1615,7 @@ contains
         return
     end subroutine eigs_rsp
 
-    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -1635,7 +1629,7 @@ contains
         class(abstract_vector_rdp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_dp), optional :: select
+        procedure(eigvals_select_dp), optional :: select_eigs
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -1671,8 +1665,8 @@ contains
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_dp)
 
-        if (present(select)) then
-            select_ => select
+        if (present(select_eigs)) then
+            select_ => select_eigs
         else
             select_ => median_eigvals_selector_dp
         endif
@@ -1772,7 +1766,7 @@ contains
         return
     end subroutine eigs_rdp
 
-    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
+    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -1786,7 +1780,7 @@ contains
         class(abstract_vector_csp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_sp), optional :: select
+        procedure(eigvals_select_sp), optional :: select_eigs
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -1821,8 +1815,8 @@ contains
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_sp)
 
-        if (present(select)) then
-            select_ => select
+        if (present(select_eigs)) then
+            select_ => select_eigs
         else
             select_ => median_eigvals_selector_sp
         endif
@@ -1913,7 +1907,7 @@ contains
         return
     end subroutine eigs_csp
 
-    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1927,7 +1921,7 @@ contains
         class(abstract_vector_cdp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_dp), optional :: select
+        procedure(eigvals_select_dp), optional :: select_eigs
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -1962,8 +1956,8 @@ contains
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_dp)
 
-        if (present(select)) then
-            select_ => select
+        if (present(select_eigs)) then
+            select_ => select_eigs
         else
             select_ => median_eigvals_selector_dp
         endif

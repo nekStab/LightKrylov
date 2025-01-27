@@ -843,7 +843,7 @@ contains
     #:for kind in REAL_KINDS
     function median_eigvals_selector_${kind}$(lambda) result(selected)
         complex(${kind}$), intent(in) :: lambda(:)
-        logical :: selected(size(lambda))
+        logical, allocatable :: selected(:)
         selected = abs(lambda) > median(abs(lambda))
         return
     end function median_eigvals_selector_${kind}$
@@ -854,7 +854,7 @@ contains
     !---------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, select, tolerance, transpose)
+    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
@@ -868,7 +868,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_${kind}$), optional :: select
+        procedure(eigvals_select_${kind}$), optional :: select_eigs
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
@@ -910,8 +910,8 @@ contains
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_${kind}$)
 
-        if (present(select)) then
-            select_ => select
+        if (present(select_eigs)) then
+            select_ => select_eigs
         else
             select_ => median_eigvals_selector_${kind}$
         endif

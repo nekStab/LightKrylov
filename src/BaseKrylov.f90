@@ -585,16 +585,16 @@ module lightkrylov_BaseKrylov
     !-----     ABSTRACT EIGENVALUE SELECTOR INTERFACE     -----
     !----------------------------------------------------------
 
-    abstract interface
+    interface
         function eigvals_select_sp(lambda) result(selected)
             import sp
             complex(sp), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical, allocatable          :: selected(:)
         end function eigvals_select_sp
         function eigvals_select_dp(lambda) result(selected)
             import dp
             complex(dp), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical, allocatable          :: selected(:)
         end function eigvals_select_dp
     end interface
 

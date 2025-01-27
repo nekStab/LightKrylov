@@ -341,10 +341,8 @@ contains
     contains
         function select_eigs(eigvals) result(selected)
             complex(${kind}$), intent(in) :: eigvals(:)
-            logical                       :: selected(size(eigvals))
-           
+            logical, allocatable :: selected(:)
             selected = abs(eigvals) > median(abs(eigvals))
-            return
         end function select_eigs
     end subroutine test_krylov_schur_${type[0]}$${kind}$
 

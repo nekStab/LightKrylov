@@ -560,12 +560,12 @@ module lightkrylov_BaseKrylov
     !-----     ABSTRACT EIGENVALUE SELECTOR INTERFACE     -----
     !----------------------------------------------------------
 
-    abstract interface
+    interface
         #:for kind in REAL_KINDS
         function eigvals_select_${kind}$(lambda) result(selected)
             import ${kind}$
             complex(${kind}$), intent(in) :: lambda(:)
-            logical                       :: selected(size(lambda))
+            logical, allocatable          :: selected(:)
         end function eigvals_select_${kind}$
         #:endfor
     end interface
