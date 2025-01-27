@@ -1,0 +1,124 @@
+#:include "../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module lightkrylov_utils_bis
+    !--------------------------------------------
+    !-----     Standard Fortran Library     -----
+    !--------------------------------------------
+    use iso_fortran_env, only: output_unit
+
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    use LightKrylov_Constants
+    use LightKrylov_Logger
+
+    implicit none
+    private
+
+    character(len=*), parameter :: this_module      = 'LK_Utils'
+    character(len=*), parameter :: this_module_long = 'LightKrylov_Utils'
+
+    !----------------------------------
+    !-----     Public exports     -----
+    !----------------------------------
+
+    public :: assert_shape
+    public :: log2
+    public :: eig
+    public :: ordschur
+    public :: sqrtm
+
+    !-------------------------------------------------
+    !-----     Options for iterative solvers     -----
+    !-------------------------------------------------
+
+    type, abstract, public :: abstract_opts
+    end type
+
+    type, abstract, public :: abstract_metadata
+        private
+        contains
+        procedure(abstract_print_metadata), pass(self), deferred, public :: print
+        procedure(abstract_reset_metadata), pass(self), deferred, public :: reset
+    end type
+
+    abstract interface
+        subroutine abstract_print_metadata(self, reset_counters, verbose)
+            import abstract_metadata
+            class(abstract_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            logical, optional, intent(in) :: verbose
+        end subroutine
+
+        subroutine abstract_reset_metadata(self)
+            import abstract_metadata
+            class(abstract_metadata), intent(inout) :: self
+        end subroutine
+    end interface
+
+    !-------------------------------------
+    !-----     Utility functions     -----
+    !-------------------------------------
+
+    ! NOTE : Most of these functions will gradually disappear as more stable
+    !        versions make their ways into the Fortran stdlib library.
+
+    interface assert_shape
+        #:for kind, type in RC_KINDS_TYPES
+        module subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, vecname, module, procedure)
+            ${type}$, intent(in) :: v(:)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: vecname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+
+        module subroutine assert_shape_matrix_${type[0]}$${kind}$(A, size, matname, module, procedure)
+            ${type}$, intent(in) :: A(:, :)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: matname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+        #:endfor
+    end interface
+
+    interface log2
+        #:for kind, type in REAL_KINDS_TYPES
+        elemental ${type}$ module function log2_${type[0]}$${kind}$(x) result(y)
+            ${type}$, intent(in) :: x
+        end function
+        #:endfor
+    end interface
+
+    interface eig
+        #:for kind, type in RC_KINDS_TYPES
+        module subroutine eig_${type[0]}$${kind}$(A, vecs, vals)
+            ${type}$, intent(in) :: A(:, :)
+            ${type}$, intent(out) :: vecs(:, :)
+            complex(${kind}$), intent(out) :: vals(:)
+        end subroutine
+        #:endfor
+    end interface
+
+    interface ordschur
+        #:for kind, type in RC_KINDS_TYPES
+        module subroutine ordschur_${type[0]}$${kind}$(T, Q, selected)
+            ${type}$, intent(inout) :: T(:, :)
+            ${type}$, intent(inout) :: Q(:, :)
+            logical, intent(in) :: selected(:)
+        end subroutine
+        #:endfor
+    end interface
+
+    interface sqrtm
+        #:for kind, type in RC_KINDS_TYPES
+        module subroutine sqrtm_${type[0]}$${kind}$(A, sqrtA, info)
+            ${type}$, intent(inout) :: A(:, :)
+            ${type}$, intent(out) :: sqrtA(:, :)
+            integer, intent(out) :: info
+        end subroutine
+        #:endfor
+    end interface
+contains
+end module
