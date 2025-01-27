@@ -1459,7 +1459,7 @@ contains
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1473,8 +1473,7 @@ contains
         class(abstract_vector_rsp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_sp), optional :: select_eigs
-        !! Desired number of eigenpairs.
+        !! Maximum dimension of the Krylov subspace (optional).
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
         logical, optional, intent(in) :: transpose
@@ -1500,20 +1499,12 @@ contains
         real(sp) :: beta
         real(sp) :: alpha
         character(len=256) :: msg
-        ! Eigenvalue selection.
-        procedure(eigvals_select_sp), pointer :: select_
 
         if (time_lightkrylov()) call timer%start('eigs_rsp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_sp)
-
-        if (present(select_eigs)) then
-            select_ => select_eigs
-        else
-            select_ => median_selector
-        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
@@ -1573,7 +1564,7 @@ contains
             call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
             
         end do krylovschur
 
@@ -1613,8 +1604,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rsp
-
-    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -1628,8 +1618,7 @@ contains
         class(abstract_vector_rdp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_dp), optional :: select_eigs
-        !! Desired number of eigenpairs.
+        !! Maximum dimension of the Krylov subspace (optional).
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
         logical, optional, intent(in) :: transpose
@@ -1655,20 +1644,12 @@ contains
         real(dp) :: beta
         real(dp) :: alpha
         character(len=256) :: msg
-        ! Eigenvalue selection.
-        procedure(eigvals_select_dp), pointer :: select_
 
         if (time_lightkrylov()) call timer%start('eigs_rdp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_dp)
-
-        if (present(select_eigs)) then
-            select_ => select_eigs
-        else
-            select_ => median_selector
-        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
@@ -1728,7 +1709,7 @@ contains
             call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
             
         end do krylovschur
 
@@ -1768,8 +1749,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rdp
-
-    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -1783,8 +1763,7 @@ contains
         class(abstract_vector_csp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_sp), optional :: select_eigs
-        !! Desired number of eigenpairs.
+        !! Maximum dimension of the Krylov subspace (optional).
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
         logical, optional, intent(in) :: transpose
@@ -1809,20 +1788,12 @@ contains
         real(sp) :: tol, x0_norm
         complex(sp) :: beta
         character(len=256) :: msg
-        ! Eigenvalue selection.
-        procedure(eigvals_select_sp), pointer :: select_
 
         if (time_lightkrylov()) call timer%start('eigs_csp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_sp)
-
-        if (present(select_eigs)) then
-            select_ => select_eigs
-        else
-            select_ => median_selector
-        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
@@ -1873,7 +1844,7 @@ contains
             call logger%log_information(msg, module=this_module, procedure='eigs_csp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
             
         end do krylovschur
 
@@ -1913,8 +1884,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_csp
-
-    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1928,8 +1898,7 @@ contains
         class(abstract_vector_cdp), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_dp), optional :: select_eigs
-        !! Desired number of eigenpairs.
+        !! Maximum dimension of the Krylov subspace (optional).
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
         logical, optional, intent(in) :: transpose
@@ -1954,20 +1923,12 @@ contains
         real(dp) :: tol, x0_norm
         complex(dp) :: beta
         character(len=256) :: msg
-        ! Eigenvalue selection.
-        procedure(eigvals_select_dp), pointer :: select_
 
         if (time_lightkrylov()) call timer%start('eigs_cdp')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_dp)
-
-        if (present(select_eigs)) then
-            select_ => select_eigs
-        else
-            select_ => median_selector
-        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
@@ -2018,7 +1979,7 @@ contains
             call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
             
         end do krylovschur
 

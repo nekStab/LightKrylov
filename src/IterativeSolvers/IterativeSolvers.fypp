@@ -853,7 +853,7 @@ contains
     !---------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
@@ -867,8 +867,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: x0
         !! Optional starting vector for generating the Krylov subspace.
         integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_${kind}$), optional :: select_eigs
-        !! Desired number of eigenpairs.
+        !! Maximum dimension of the Krylov subspace (optional).
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
         logical, optional, intent(in) :: transpose
@@ -896,20 +895,12 @@ contains
         ${type}$ :: alpha
         #:endif
         character(len=256) :: msg
-        ! Eigenvalue selection.
-        procedure(eigvals_select_${kind}$), pointer :: select_
 
         if (time_lightkrylov()) call timer%start('eigs_${type[0]}$${kind}$')
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_${kind}$)
-
-        if (present(select_eigs)) then
-            select_ => select_eigs
-        else
-            select_ => median_selector
-        endif
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_${kind}$
@@ -973,7 +964,7 @@ contains
             call logger%log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, select_) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
             
         end do krylovschur
 
@@ -1013,6 +1004,6 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_${type[0]}$${kind}$
-
     #:endfor
+
 end module lightkrylov_IterativeSolvers
