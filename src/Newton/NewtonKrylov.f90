@@ -1,5 +1,6 @@
 module LightKrylov_NewtonKrylov
    use stdlib_optval, only: optval
+   use stdlib_strings, only: padr
    use LightKrylov_Constants
    use LightKrylov_Logger
    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
@@ -20,6 +21,78 @@ module LightKrylov_NewtonKrylov
    public :: dynamic_tol_sp
    public :: constant_tol_dp
    public :: dynamic_tol_dp
+
+    type, extends(abstract_opts), public :: newton_sp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
+    end type
+    
+    type, extends(abstract_opts), public :: newton_dp_opts
+        !! Options for Newton-Krylov fixed-point iteration.
+        integer :: maxiter = 100
+        !! Maximum number of Newton iterations (default = 100)
+        logical :: ifbisect = .false.
+        !! Bisection toggle to enforce residual reduction (default = .false.)
+        integer :: maxstep_bisection = 5
+        !! Maximum number of bisections (evaluations of F) for step selection (default = 5)
+        !! Ignored if ifbisect = .false.
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
+    end type
+    
+
+    type, extends(abstract_metadata), public :: newton_sp_metadata
+        !! Metadata for Newton-Krylov fixed-point iteration.
+        integer :: n_iter = 0
+        !! Iteration counter
+        integer :: eval_counter_record = 0
+        !! System response evaluation counter:
+        !! N.B.: For each of these evals the current residual and tolerance are recorded.
+        real(sp), dimension(:), allocatable :: res
+        !! Residual history
+        real(sp), dimension(:), allocatable :: tol
+        !! Tolerance history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_newton_sp
+        procedure, pass(self), public :: reset => reset_newton_sp
+        procedure, pass(self), public :: record => record_data_sp
+    end type
+   
+    type, extends(abstract_metadata), public :: newton_dp_metadata
+        !! Metadata for Newton-Krylov fixed-point iteration.
+        integer :: n_iter = 0
+        !! Iteration counter
+        integer :: eval_counter_record = 0
+        !! System response evaluation counter:
+        !! N.B.: For each of these evals the current residual and tolerance are recorded.
+        real(dp), dimension(:), allocatable :: res
+        !! Residual history
+        real(dp), dimension(:), allocatable :: tol
+        !! Tolerance history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_newton_dp
+        procedure, pass(self), public :: reset => reset_newton_dp
+        procedure, pass(self), public :: record => record_data_dp
+    end type
+   
+
+
 
    interface newton
       !! Implements the simple Newton-Krylov method for finding roots (fixed points) of a nonlinear vector-valued function
@@ -113,6 +186,159 @@ module LightKrylov_NewtonKrylov
    end interface
 
 contains
+    !------------------------------------------------------
+    !-----     TYPE BOUND PROCEDURES FOR METADATA     -----
+    !------------------------------------------------------
+
+    subroutine print_newton_sp(self, reset_counters, verbose)
+        class(newton_sp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            do i = 2, size(self%res) - 1
+               write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
+               call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            end do
+            i = size(self%res)
+            write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        else
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='newton_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='newton_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_newton_sp
+
+    subroutine reset_newton_sp(self)
+        class(newton_sp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%eval_counter_record = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        if (allocated(self%tol)) deallocate(self%tol)
+        return
+    end subroutine reset_newton_sp
+
+    subroutine record_data_sp(self, res, tol)
+        class(newton_sp_metadata), intent(inout) :: self
+        real(sp) :: res
+        !! Residual of the current evaluation
+        real(sp) :: tol
+        !! Tolerance of the current evaluation
+        if (.not.allocated(self%res)) then
+            allocate(self%res(1))
+            self%res(1) = res
+        else
+            self%res = [ self%res, res ]
+        end if
+        if (.not.allocated(self%tol)) then
+            allocate(self%tol(1))
+            self%tol(1) = tol
+        else
+            self%tol = [ self%tol, tol ]
+        end if
+        self%eval_counter_record = self%eval_counter_record + 1
+        return
+    end subroutine record_data_sp
+
+    subroutine print_newton_dp(self, reset_counters, verbose)
+        class(newton_dp_metadata), intent(inout) :: self
+        logical, optional, intent(in) :: reset_counters
+        !! Reset all counters to zero after printing?
+        logical, optional, intent(in) :: verbose
+        !! Print the residual full residual history?
+        ! internals
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            do i = 2, size(self%res) - 1
+               write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
+               call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+            end do
+            i = size(self%res)
+            write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        else
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='newton_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='newton_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='newton_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end subroutine print_newton_dp
+
+    subroutine reset_newton_dp(self)
+        class(newton_dp_metadata), intent(inout) :: self
+        self%n_iter = 0
+        self%eval_counter_record = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+        if (allocated(self%tol)) deallocate(self%tol)
+        return
+    end subroutine reset_newton_dp
+
+    subroutine record_data_dp(self, res, tol)
+        class(newton_dp_metadata), intent(inout) :: self
+        real(dp) :: res
+        !! Residual of the current evaluation
+        real(dp) :: tol
+        !! Tolerance of the current evaluation
+        if (.not.allocated(self%res)) then
+            allocate(self%res(1))
+            self%res(1) = res
+        else
+            self%res = [ self%res, res ]
+        end if
+        if (.not.allocated(self%tol)) then
+            allocate(self%tol(1))
+            self%tol(1) = tol
+        else
+            self%tol = [ self%tol, tol ]
+        end if
+        self%eval_counter_record = self%eval_counter_record + 1
+        return
+    end subroutine record_data_dp
+
+
 
    subroutine newton_rsp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
       class(abstract_system_rsp),                         intent(inout) :: sys
