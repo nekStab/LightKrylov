@@ -796,7 +796,27 @@ module lightkrylov_IterativeSolvers
         !!  `transpose` (*optional*) : `logical` flag determining whether the eigenvalues of \(A\)
         !!                             or \(A^H\) need to be computed.
         #:for kind, type in RC_KINDS_TYPES
-        module procedure eigs_${type[0]}$${kind}$
+        module subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+            class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+            !! Linear operator whose leading eigenpairs need to be computed.
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
+            !! Leading eigenvectors of \(\mathbf{A}\).
+            complex(${kind}$), allocatable, intent(out) :: eigvals(:)
+            !! Leading eigenvalues of \(\mathbf{A}\).
+            real(${kind}$), allocatable, intent(out) :: residuals(:)
+            !! Residuals associated to each Ritz eigenpair.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: x0
+            !! Optional starting vector for generating the Krylov subspace.
+            integer, optional, intent(in) :: kdim
+            procedure(eigvals_select_${kind}$), optional :: select_eigs
+            !! Desired number of eigenpairs.
+            real(${kind}$), optional, intent(in) :: tolerance
+            !! Tolerance.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        end subroutine
         #:endfor
     end interface
 
@@ -854,31 +874,7 @@ contains
     !---------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
-        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
-        !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
-        !! Leading eigenvectors of \(\mathbf{A}\).
-        complex(${kind}$), allocatable, intent(out) :: eigvals(:)
-        !! Leading eigenvalues of \(\mathbf{A}\).
-        real(${kind}$), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpair.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: x0
-        !! Optional starting vector for generating the Krylov subspace.
-        integer, optional, intent(in) :: kdim
-        procedure(eigvals_select_${kind}$), optional :: select_eigs
-        !! Desired number of eigenpairs.
-        real(${kind}$), optional, intent(in) :: tolerance
-        !! Tolerance.
-        logical, optional, intent(in) :: transpose
-        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-
+    module procedure eigs_${type[0]}$${kind}$
         ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
         integer :: kdim_, kstart
@@ -1009,7 +1005,6 @@ contains
         if (time_lightkrylov()) call timer%stop('eigs_${type[0]}$${kind}$')
         
         return
-    end subroutine eigs_${type[0]}$${kind}$
-
+    end procedure
     #:endfor
 end module lightkrylov_IterativeSolvers
