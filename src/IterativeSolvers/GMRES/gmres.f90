@@ -24,37 +24,61 @@ module lightkrylov_gmres
     !----------------------------------------
 
     type, extends(abstract_opts), public :: gmres_sp_opts
+        !! GMRES options.
         integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
         logical :: if_print_metadata = .false.
+        !! Print iteration metadata on exit (default: .false.).
         logical :: sanity_check = .true.
+        !! Performs extra matrix-vector product for sanity check.
     end type
 
     type, extends(abstract_metadata), public :: gmres_sp_metadata
+        !! GMRES metadata.
         integer :: n_iter = 0
+        !! Total iteration counter.
         integer :: n_inner = 0
+        !! Number of inner iterations.
         integer :: n_outer = 0
+        !! Number of outer iterations (i.e. restarts)
         real(sp), dimension(:), allocatable :: res
+        !! Residual history.
         logical :: converged = .false.
+        !! Convergence flag.
         integer :: info = 0
+        !! Copy of the information flag for completeness.
     contains
         procedure, pass(self), public :: print => print_gmres_sp
         procedure, pass(self), public :: reset => reset_gmres_sp
     end type
     type, extends(abstract_opts), public :: gmres_dp_opts
+        !! GMRES options.
         integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
         integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
         logical :: if_print_metadata = .false.
+        !! Print iteration metadata on exit (default: .false.).
         logical :: sanity_check = .true.
+        !! Performs extra matrix-vector product for sanity check.
     end type
 
     type, extends(abstract_metadata), public :: gmres_dp_metadata
+        !! GMRES metadata.
         integer :: n_iter = 0
+        !! Total iteration counter.
         integer :: n_inner = 0
+        !! Number of inner iterations.
         integer :: n_outer = 0
+        !! Number of outer iterations (i.e. restarts)
         real(dp), dimension(:), allocatable :: res
+        !! Residual history.
         logical :: converged = .false.
+        !! Convergence flag.
         integer :: info = 0
+        !! Copy of the information flag for completeness.
     contains
         procedure, pass(self), public :: print => print_gmres_dp
         procedure, pass(self), public :: reset => reset_gmres_dp
