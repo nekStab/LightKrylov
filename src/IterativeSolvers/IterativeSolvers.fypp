@@ -885,11 +885,7 @@ contains
         ! Hessenberg matrix.
         ${type}$, allocatable :: H(:, :)
         ! Working arrays for the eigenvectors and eigenvalues.
-        #:if type[0] == "c"
         ${type}$, allocatable :: eigvecs_wrk(:, :)
-        #:else
-        real(${kind}$), allocatable :: eigvecs_wrk(:, :)
-        #:endif
         complex(${kind}$), allocatable :: eigvals_wrk(:)
         real(${kind}$), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
