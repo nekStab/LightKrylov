@@ -24,7 +24,7 @@ module lightkrylov_IterativeSolvers
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: lstsq, svd, eigh
+    use stdlib_linalg, only: eigh
     use stdlib_stats, only: median
 
     !-------------------------------
@@ -97,7 +97,7 @@ module lightkrylov_IterativeSolvers
     !-----                                             -----
     !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
     !-----                                             -----
-    !--------------------------------------------------------
+    !-------------------------------------------------------
 
     !----- Options and Metadata -----
     #:for kind in REAL_KINDS
@@ -493,6 +493,96 @@ module lightkrylov_IterativeSolvers
         #:endfor
     end interface
 
+    !------------------------------------------
+    !-----                                -----
+    !-----     SINGULAR VALUE SOLVERS     -----
+    !-----                                -----
+    !------------------------------------------
+
+    interface svds
+        !!  ### Description
+        !!
+        !!  Computes the leading singular triplets of an arbitrary linear operator \(A\)
+        !!  using the Lanczos iterative process. Given a linear operator \(A\), it finds
+        !!  the leading singular values and singular vectors such that:
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!      Av & = \sigma u \\
+        !!      A^H u & = \sigma v.
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  The subspaces \(U\) and \(V\) are constructed via Lanczos factorization, resulting in
+        !!  a bidiagonal matrix \(B\). The singular values of \(A\) are approximated by those of
+        !!  \(B\) and the singular vectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and
+        !!   Pseudo-Inverse of a Matrix."
+        !!  - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos
+        !!   bidiagonalization methods."
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization."
+        !!   Technical Report, 1998.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call svds(A, U, S, V, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
+        !!
+        !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `S` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!        singular values of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `V` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each singular triplet. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading singular triplets. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        #:for kind, type in RC_KINDS_TYPES
+        module subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, u0, kdim, tolerance)
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+        !! Linear operator whose leading singular triplets need to be computed.
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
+        !! Leading left singular vectors.
+        real(${kind}$), allocatable, intent(out) :: S(:)
+        !! Leading singular values.
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: V(:)
+        !! Leading right singular vectors.
+        real(${kind}$), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: u0
+        integer, optional, intent(in) :: kdim
+        !! Desired number of eigenpairs.
+        real(${kind}$), optional, intent(in) :: tolerance
+        !! Tolerance.
+        end subroutine
+        #:endfor
+    end interface
 
 
 
@@ -670,73 +760,6 @@ module lightkrylov_IterativeSolvers
         !!                             or \(A^H\) need to be computed.
         #:for kind, type in RC_KINDS_TYPES
         module procedure eigs_${type[0]}$${kind}$
-        #:endfor
-    end interface
-
-    interface svds
-        !!  ### Description
-        !!
-        !!  Computes the leading singular triplets of an arbitrary linear operator \(A\)
-        !!  using the Lanczos iterative process. Given a linear operator \(A\), it finds
-        !!  the leading singular values and singular vectors such that:
-        !!
-        !!  \[
-        !!      \begin{aligned}
-        !!      Av & = \sigma u \\
-        !!      A^H u & = \sigma v.
-        !!      \end{aligned}
-        !!  \]
-        !!
-        !!  The subspaces \(U\) and \(V\) are constructed via Lanczos factorization, resulting in
-        !!  a bidiagonal matrix \(B\). The singular values of \(A\) are approximated by those of
-        !!  \(B\) and the singular vectors are computed accordingly.
-        !!
-        !!  **References**
-        !!
-        !!  - Golub, G. H., & Kahan, W. (1965). "Calculating the Singular Values and
-        !!   Pseudo-Inverse of a Matrix."
-        !!  - Baglama, J., & Reichel, L. (2005). "Augmented implicitly restarted Lanczos
-        !!   bidiagonalization methods."
-        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization."
-        !!   Technical Report, 1998.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      call svds(A, U, S, V, residuals, info [, kdim] [,tolerance])
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
-        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
-        !!
-        !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
-        !!        the number of eigenpairs computed.
-        !!
-        !!  `S` : Rank-1 array of `real` numbers. On exit, it contains the leading
-        !!        singular values of `A`. It is an `intent(out)` argument.
-        !!
-        !!  `V` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
-        !!        the number of eigenpairs computed.
-        !!
-        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
-        !!                associated with each singular triplet. It is an `intent(out)` argument.
-        !!
-        !!  `info` : `integer` Information flag.
-        !!
-        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
-        !!                        approximate the leading singular triplets. It is an `intent(in)`
-        !!                        argument. By default, `kdim = 4*size(X)`.
-        !!
-        !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
-        !!                             being converged. It is an `intent(in)` agument. By default,
-        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure svds_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -1121,117 +1144,4 @@ contains
 
     #:endfor
 
-    !------------------------------------------------
-    !-----     SINGULAR VALUE DECOMPOSITION     -----
-    !------------------------------------------------
-
-    #:for kind, type in RC_KINDS_TYPES
-    subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, u0, kdim, tolerance)
-        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
-        !! Linear operator whose leading singular triplets need to be computed.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
-        !! Leading left singular vectors.
-        real(${kind}$), allocatable, intent(out) :: S(:)
-        !! Leading singular values.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: V(:)
-        !! Leading right singular vectors.
-        real(${kind}$), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpair.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: u0
-        integer, optional, intent(in) :: kdim
-        !! Desired number of eigenpairs.
-        real(${kind}$), optional, intent(in) :: tolerance
-        !! Tolerance.
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-        ! Left and right Krylov subspaces.
-        integer :: kdim_
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Uwrk(:), Vwrk(:)
-        ! Bidiagonal matrix.
-        ${type}$, allocatable :: B(:, :)
-        ! Working arrays for the singular vectors and singular values.
-        real(${kind}$), allocatable :: svdvals_wrk(:)
-        ${type}$, allocatable :: umat(:, :), vmat(:, :)
-        real(${kind}$), allocatable :: residuals_wrk(:)
-        ! Miscellaneous.
-        integer :: nsv, conv
-        integer :: i, j, k
-        real(${kind}$) :: tol, u0_norm
-        character(len=256) :: msg
-
-        if (time_lightkrylov()) call timer%start('svds_${type[0]}$${kind}$')
-        ! Deals with the optional arguments.
-        nsv = size(U)
-        kdim_ = optval(kdim, 4*nsv)
-        tol     = optval(tolerance, rtol_${kind}$)
-
-        ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
-        if (present(u0)) then
-            call copy(Uwrk(1), u0)
-            u0_norm = u0%norm(); call Uwrk(1)%scal(one_${type[0]}$${kind}$/u0_norm)
-        else
-            call Uwrk(1)%rand(.true.)
-        endif
-        allocate(Vwrk(kdim_+1), source=V(1)) ; call zero_basis(Vwrk)
-        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_${kind}$
-        allocate(umat(kdim_, kdim_)) ; umat = 0.0_${kind}$
-        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_${kind}$
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
-        allocate(B(kdim_+1, kdim_)) ; B = 0.0_${kind}$
-
-        info = 0
-
-        ! Ritz singular triplets computation.
-        lanczos_iter : do k = 1, kdim_
-            ! Lanczos bidiag. step.
-            call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
-
-            ! SVD of the k x k bidiagonal matrix and residual computation.
-            svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
-
-            call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
-            #:if type[0] == "r"
-            vmat(:k, :k) = transpose(vmat(:k, :k))
-            #:else
-            vmat(:k, :k) = conjg(transpose(vmat(:k, :k)))
-            #:endif
-
-            residuals_wrk(:k) = compute_residual_${type[0]}$${kind}$(B(k+1, k), vmat(k, :k))
-
-            ! Check for convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
-                            & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
-            if (conv >= nsv) exit lanczos_iter
-        enddo lanczos_iter
-
-        !--------------------------------
-        !-----     POST-PROCESS     -----
-        !--------------------------------
-
-        ! Singular values.
-        S = svdvals_wrk(:nsv) ; residuals = residuals_wrk(:nsv)
-
-        ! Singular vectors.
-        k = min(k, kdim_) ; info = k
-        do i = 1, nsv
-            call U(i)%zero() ; call V(i)%zero()
-            do j = 1, k
-                call U(i)%axpby(one_${type[0]}$${kind}$, Uwrk(j), umat(j, i))
-                call V(i)%axpby(one_${type[0]}$${kind}$, Vwrk(j), vmat(j, i))
-            enddo
-        enddo
-        if (time_lightkrylov()) call timer%stop('svds_${type[0]}$${kind}$')
-        
-        return
-    end subroutine svds_${type[0]}$${kind}$
-
-    #:endfor
 end module lightkrylov_IterativeSolvers
