@@ -249,9 +249,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_sp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_sp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -565,9 +565,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_dp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_dp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -881,9 +881,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_sp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_sp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -1197,9 +1197,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_dp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_dp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.

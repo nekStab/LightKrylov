@@ -189,9 +189,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_${kind}$
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_${kind}$) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_${kind}$) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
