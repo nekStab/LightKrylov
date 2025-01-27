@@ -31,9 +31,11 @@ module lightkrylov_utils_bis
     !-------------------------------------------------
 
     type, abstract, public :: abstract_opts
+        !! Abstract type for options from which all others are extended.
     end type
 
     type, abstract, public :: abstract_metadata
+        !! Abstract type for solver metadata from which all others are extended.
         private
         contains
         procedure(abstract_print_metadata), pass(self), deferred, public :: print
@@ -62,6 +64,8 @@ module lightkrylov_utils_bis
     !        versions make their ways into the Fortran stdlib library.
 
     interface assert_shape
+        !! This interface provides methods to assert tha thte shape of its input vector or
+        !! matrix is as expected. It throws an error if not.
         module subroutine assert_shape_vector_rsp(v, size, vecname, module, procedure)
             real(sp), intent(in) :: v(:)
             integer, intent(in) :: size(:)
@@ -125,6 +129,7 @@ module lightkrylov_utils_bis
     end interface
 
     interface log2
+        !! Utility function to compute the base-2 logarithm of a real number.
         elemental real(sp) module function log2_rsp(x) result(y)
             real(sp), intent(in) :: x
         end function
@@ -134,6 +139,37 @@ module lightkrylov_utils_bis
     end interface
 
     interface eig
+        !!  Computes the eigenvalue decomposition of a general square matrix.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the solution to the eigenproblem
+        !!  \( \mathbf{Ax} = \lambda \mathbf{x} \), where $\mathbf{A}$ is a square `real`
+        !!  or `complex` matrix.
+        !!
+        !!  Result array `lambda` returns the eigenvalues of \( \mathbf{A} \), while `vecs`
+        !!  returns the corresponding eigenvectors. Note that it follows the LAPACK convention
+        !!  when \( \mathbf{A} \) is `real`. The solver is based on LAPACK's `*GEEV` backends.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call eig(A, vecs, lambda)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an `intent(in)` argument.
+        !!
+        !!  `vecs`: Square array of the same size, type, and kind as `A` containing the eigenvectors
+        !!  (following LAPACK's convention for `real` matrices). It is an `intent(out)` argument.
+        !!
+        !!  `lambda`: `complex` rank-1 array of the same kind as `A` containing the eigenvalues.
+        !!  It is an `intent(out)` argument.
+        !!
+        !!  @note
+        !!  Due to the abstrct nature of the vector types defined in `LightKrylov`, it is unlikely
+        !!  that this implementation will be superseeded in favor of the `stdlib` one as the latter
+        !!  does not follow the LAPACK's convention.
+        !!  @endnote
         module subroutine eig_rsp(A, vecs, vals)
             real(sp), intent(in) :: A(:, :)
             real(sp), intent(out) :: vecs(:, :)
@@ -157,6 +193,31 @@ module lightkrylov_utils_bis
     end interface
 
     interface ordschur
+        !!  Given the Schur factorization and basis of a matrix, reorders it to have the selected
+        !!  eigenvalues in the upper left block.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to re-order the Schur factorization of a `real` or
+        !!  `complex` square matrix. Note that, if \( \mathbf{A} \) is `real`, it returns the
+        !!  real Schur form.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call ordschur(T, Q, selected)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix. 
+        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` argument.
+        !!  
+        !!  `Q`: Two-dimensional square array of the same size, type and kind as `A`. It contains
+        !!  the original Schur basis on entry and the re-ordered one on exit.
+        !!  It is an `intent(inout)` argument.
+        !!
+        !!  `selected`: `logical` rank-1 array selecting which eigenvalues need to be moved in the
+        !!  upper left block of the Schur factorization.
+        !!  It is an `intent(in)` arguement.
         module subroutine ordschur_rsp(T, Q, selected)
             real(sp), intent(inout) :: T(:, :)
             real(sp), intent(inout) :: Q(:, :)
@@ -180,6 +241,27 @@ module lightkrylov_utils_bis
     end interface
 
     interface sqrtm
+        !!  Computes the non-negative square root of a symmetric positive definite matrix
+        !!  using its singular value decomposition.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the non-negative square root of a symmetric
+        !!  (hermitian) positive definite matrix \( \mathbf{A} \).
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call sqrtm(A, sqrtmA, info)`
+        !!
+        !!  ### Arguments
+        !!  
+        !!  `A`: Symmetric (hermitian) positive definite matrix whose non-negative square root
+        !!  needs to be computed. It is an `intent(in)` argument.
+        !!
+        !!  `sqrtmA`: Non-negative square root of `A`. It has the same size, kind and type as `A`.
+        !!  It is an `intent(out)` argument.
+        !!
+        !!  `info`: Information flag. It is an `intent(out)` argument. 
         module subroutine sqrtm_rsp(A, sqrtA, info)
             real(sp), intent(inout) :: A(:, :)
             real(sp), intent(out) :: sqrtA(:, :)
