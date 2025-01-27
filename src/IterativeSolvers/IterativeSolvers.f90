@@ -1447,19 +1447,6 @@ contains
         call save_npy(fname, array)
     end procedure
 
-    function median_eigvals_selector_sp(lambda) result(selected)
-        complex(sp), intent(in) :: lambda(:)
-        logical, allocatable :: selected(:)
-        selected = abs(lambda) > median(abs(lambda))
-        return
-    end function median_eigvals_selector_sp
-    function median_eigvals_selector_dp(lambda) result(selected)
-        complex(dp), intent(in) :: lambda(:)
-        logical, allocatable :: selected(:)
-        selected = abs(lambda) > median(abs(lambda))
-        return
-    end function median_eigvals_selector_dp
-
     !---------------------------------------------------
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
@@ -1517,7 +1504,7 @@ contains
         if (present(select_eigs)) then
             select_ => select_eigs
         else
-            select_ => median_eigvals_selector_sp
+            select_ => median_selector
         endif
 
         ! Allocate eigenvalues.
@@ -1611,8 +1598,12 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_rsp')
-        
-        return
+        contains
+            function median_selector(lambda) result(selected)
+                complex(sp), intent(in) :: lambda(:)
+                logical, allocatable :: selected(:)
+                selected = abs(lambda) > median(abs(lambda))
+        end function median_selector
     end subroutine eigs_rsp
 
     subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
@@ -1668,7 +1659,7 @@ contains
         if (present(select_eigs)) then
             select_ => select_eigs
         else
-            select_ => median_eigvals_selector_dp
+            select_ => median_selector
         endif
 
         ! Allocate eigenvalues.
@@ -1762,8 +1753,12 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_rdp')
-        
-        return
+        contains
+            function median_selector(lambda) result(selected)
+                complex(dp), intent(in) :: lambda(:)
+                logical, allocatable :: selected(:)
+                selected = abs(lambda) > median(abs(lambda))
+        end function median_selector
     end subroutine eigs_rdp
 
     subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
@@ -1818,7 +1813,7 @@ contains
         if (present(select_eigs)) then
             select_ => select_eigs
         else
-            select_ => median_eigvals_selector_sp
+            select_ => median_selector
         endif
 
         ! Allocate eigenvalues.
@@ -1903,8 +1898,12 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_csp')
-        
-        return
+        contains
+            function median_selector(lambda) result(selected)
+                complex(sp), intent(in) :: lambda(:)
+                logical, allocatable :: selected(:)
+                selected = abs(lambda) > median(abs(lambda))
+        end function median_selector
     end subroutine eigs_csp
 
     subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
@@ -1959,7 +1958,7 @@ contains
         if (present(select_eigs)) then
             select_ => select_eigs
         else
-            select_ => median_eigvals_selector_dp
+            select_ => median_selector
         endif
 
         ! Allocate eigenvalues.
@@ -2044,8 +2043,12 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_cdp')
-        
-        return
+        contains
+            function median_selector(lambda) result(selected)
+                complex(dp), intent(in) :: lambda(:)
+                logical, allocatable :: selected(:)
+                selected = abs(lambda) > median(abs(lambda))
+        end function median_selector
     end subroutine eigs_cdp
 
 end module lightkrylov_IterativeSolvers

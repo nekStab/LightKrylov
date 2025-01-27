@@ -590,6 +590,10 @@ module lightkrylov_IterativeSolvers
         !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
         !!                             being converged. It is an `intent(in)` agument. By default,
         !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  @note
+        !!  This implementation does not currently include an automatic restarting procedure
+        !!  such as `krylov_schur` for `eigs`. This is work in progress.
+        !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
         module subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, u0, kdim, tolerance)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
@@ -670,6 +674,10 @@ module lightkrylov_IterativeSolvers
         !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
         !!                             being converged. It is an `intent(in)` agument. By default,
         !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  @note
+        !!  This implementation does not currently include an automatic restarting procedure
+        !!  such as `krylov_schur` for `eigs`. This is work in progress.
+        !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
         module subroutine eighs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance)
             #:if type[0] == "r"
@@ -840,15 +848,6 @@ contains
     end procedure
     #:endfor
 
-    #:for kind in REAL_KINDS
-    function median_eigvals_selector_${kind}$(lambda) result(selected)
-        complex(${kind}$), intent(in) :: lambda(:)
-        logical, allocatable :: selected(:)
-        selected = abs(lambda) > median(abs(lambda))
-        return
-    end function median_eigvals_selector_${kind}$
-    #:endfor
-
     !---------------------------------------------------
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
@@ -909,7 +908,7 @@ contains
         if (present(select_eigs)) then
             select_ => select_eigs
         else
-            select_ => median_eigvals_selector_${kind}$
+            select_ => median_selector
         endif
 
         ! Allocate eigenvalues.
@@ -1007,8 +1006,12 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_${type[0]}$${kind}$')
-        
-        return
+    contains
+        function median_selector(lambda) result(selected)
+            complex(${kind}$), intent(in) :: lambda(:)
+            logical, allocatable :: selected(:)
+            selected = abs(lambda) > median(abs(lambda))
+        end function median_selector
     end subroutine eigs_${type[0]}$${kind}$
 
     #:endfor
