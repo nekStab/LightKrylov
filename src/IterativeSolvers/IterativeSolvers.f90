@@ -1356,90 +1356,10 @@ module lightkrylov_IterativeSolvers
         !!
         !!  `transpose` (*optional*) : `logical` flag determining whether the eigenvalues of \(A\)
         !!                             or \(A^H\) need to be computed.
-        module subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
-            class(abstract_linop_rsp), intent(inout) :: A
-            !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_rsp), intent(out) :: X(:)
-            !! Leading eigenvectors of \(\mathbf{A}\).
-            complex(sp), allocatable, intent(out) :: eigvals(:)
-            !! Leading eigenvalues of \(\mathbf{A}\).
-            real(sp), allocatable, intent(out) :: residuals(:)
-            !! Residuals associated to each Ritz eigenpair.
-            integer, intent(out) :: info
-            !! Information flag.
-            class(abstract_vector_rsp), optional, intent(in) :: x0
-            !! Optional starting vector for generating the Krylov subspace.
-            integer, optional, intent(in) :: kdim
-            procedure(eigvals_select_sp), optional :: select_eigs
-            !! Desired number of eigenpairs.
-            real(sp), optional, intent(in) :: tolerance
-            !! Tolerance.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-        end subroutine
-        module subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
-            class(abstract_linop_rdp), intent(inout) :: A
-            !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_rdp), intent(out) :: X(:)
-            !! Leading eigenvectors of \(\mathbf{A}\).
-            complex(dp), allocatable, intent(out) :: eigvals(:)
-            !! Leading eigenvalues of \(\mathbf{A}\).
-            real(dp), allocatable, intent(out) :: residuals(:)
-            !! Residuals associated to each Ritz eigenpair.
-            integer, intent(out) :: info
-            !! Information flag.
-            class(abstract_vector_rdp), optional, intent(in) :: x0
-            !! Optional starting vector for generating the Krylov subspace.
-            integer, optional, intent(in) :: kdim
-            procedure(eigvals_select_dp), optional :: select_eigs
-            !! Desired number of eigenpairs.
-            real(dp), optional, intent(in) :: tolerance
-            !! Tolerance.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-        end subroutine
-        module subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
-            class(abstract_linop_csp), intent(inout) :: A
-            !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_csp), intent(out) :: X(:)
-            !! Leading eigenvectors of \(\mathbf{A}\).
-            complex(sp), allocatable, intent(out) :: eigvals(:)
-            !! Leading eigenvalues of \(\mathbf{A}\).
-            real(sp), allocatable, intent(out) :: residuals(:)
-            !! Residuals associated to each Ritz eigenpair.
-            integer, intent(out) :: info
-            !! Information flag.
-            class(abstract_vector_csp), optional, intent(in) :: x0
-            !! Optional starting vector for generating the Krylov subspace.
-            integer, optional, intent(in) :: kdim
-            procedure(eigvals_select_sp), optional :: select_eigs
-            !! Desired number of eigenpairs.
-            real(sp), optional, intent(in) :: tolerance
-            !! Tolerance.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-        end subroutine
-        module subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
-            class(abstract_linop_cdp), intent(inout) :: A
-            !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_cdp), intent(out) :: X(:)
-            !! Leading eigenvectors of \(\mathbf{A}\).
-            complex(dp), allocatable, intent(out) :: eigvals(:)
-            !! Leading eigenvalues of \(\mathbf{A}\).
-            real(dp), allocatable, intent(out) :: residuals(:)
-            !! Residuals associated to each Ritz eigenpair.
-            integer, intent(out) :: info
-            !! Information flag.
-            class(abstract_vector_cdp), optional, intent(in) :: x0
-            !! Optional starting vector for generating the Krylov subspace.
-            integer, optional, intent(in) :: kdim
-            procedure(eigvals_select_dp), optional :: select_eigs
-            !! Desired number of eigenpairs.
-            real(dp), optional, intent(in) :: tolerance
-            !! Tolerance.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-        end subroutine
+        module procedure eigs_rsp
+        module procedure eigs_rdp
+        module procedure eigs_csp
+        module procedure eigs_cdp
     end interface
 
 
@@ -1544,7 +1464,31 @@ contains
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    module procedure eigs_rsp
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+        class(abstract_linop_rsp), intent(inout) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rsp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_vector_rsp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_sp), optional :: select_eigs
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
         ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_rsp), allocatable :: Xwrk(:)
         integer :: kdim_, kstart
@@ -1669,8 +1613,33 @@ contains
         if (time_lightkrylov()) call timer%stop('eigs_rsp')
         
         return
-    end procedure
-    module procedure eigs_rdp
+    end subroutine eigs_rsp
+
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+        class(abstract_linop_rdp), intent(inout) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_rdp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_vector_rdp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_dp), optional :: select_eigs
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
         ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_rdp), allocatable :: Xwrk(:)
         integer :: kdim_, kstart
@@ -1795,8 +1764,33 @@ contains
         if (time_lightkrylov()) call timer%stop('eigs_rdp')
         
         return
-    end procedure
-    module procedure eigs_csp
+    end subroutine eigs_rdp
+
+    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+        class(abstract_linop_csp), intent(inout) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_csp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(sp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(sp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_vector_csp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_sp), optional :: select_eigs
+        !! Desired number of eigenpairs.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
         ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_csp), allocatable :: Xwrk(:)
         integer :: kdim_, kstart
@@ -1911,8 +1905,33 @@ contains
         if (time_lightkrylov()) call timer%stop('eigs_csp')
         
         return
-    end procedure
-    module procedure eigs_cdp
+    end subroutine eigs_csp
+
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, select_eigs, tolerance, transpose)
+        class(abstract_linop_cdp), intent(inout) :: A
+        !! Linear operator whose leading eigenpairs need to be computed.
+        class(abstract_vector_cdp), intent(out) :: X(:)
+        !! Leading eigenvectors of \(\mathbf{A}\).
+        complex(dp), allocatable, intent(out) :: eigvals(:)
+        !! Leading eigenvalues of \(\mathbf{A}\).
+        real(dp), allocatable, intent(out) :: residuals(:)
+        !! Residuals associated to each Ritz eigenpair.
+        integer, intent(out) :: info
+        !! Information flag.
+        class(abstract_vector_cdp), optional, intent(in) :: x0
+        !! Optional starting vector for generating the Krylov subspace.
+        integer, optional, intent(in) :: kdim
+        procedure(eigvals_select_dp), optional :: select_eigs
+        !! Desired number of eigenpairs.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance.
+        logical, optional, intent(in) :: transpose
+        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+
+        !--------------------------------------
+        !-----     Internal variables     -----
+        !--------------------------------------
+
         ! Krylov subspace and Krylov subspace dimension.
         class(abstract_vector_cdp), allocatable :: Xwrk(:)
         integer :: kdim_, kstart
@@ -2027,5 +2046,6 @@ contains
         if (time_lightkrylov()) call timer%stop('eigs_cdp')
         
         return
-    end procedure
+    end subroutine eigs_cdp
+
 end module lightkrylov_IterativeSolvers
