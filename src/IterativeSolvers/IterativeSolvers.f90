@@ -22,7 +22,6 @@ module lightkrylov_IterativeSolvers
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
-    use stdlib_linalg, only: lstsq, svd, eigh
     use stdlib_stats, only: median
 
     !-------------------------------
@@ -163,7 +162,7 @@ module lightkrylov_IterativeSolvers
     !-----                                             -----
     !-----     GENERALIZED MINIMUM RESIDUAL METHOD     -----
     !-----                                             -----
-    !--------------------------------------------------------
+    !-------------------------------------------------------
 
     !----- Options and Metadata -----
     type, extends(abstract_opts), public :: gmres_sp_opts
@@ -1007,6 +1006,137 @@ module lightkrylov_IterativeSolvers
         end subroutine
     end interface
 
+    !------------------------------------------------
+    !-----                                      -----
+    !-----     HERMITIAN EIGENVALUE SOLVERS     -----
+    !-----                                      -----
+    !------------------------------------------------
+
+    interface eighs
+        !!  ### Description
+        !!
+        !!  Computes the leading eigenpairs of a symmetric operator \(A\)
+        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
+        !!  the leading eigvalues and eigvectors such that:
+        !!
+        !!  \[
+        !!      Ax = \lambda x
+        !!  \]
+        !!
+        !!  The subspace \(X\) is constructed via Lanczos factorization, resulting in a symmetric
+        !!  tridiagonal matrix \(T\). The eigenvalues of \(A\) are approximated by those of \(T\)
+        !!  and the eigenvectors are computed accordingly.
+        !!
+        !!  **References**
+        !!
+        !!  - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
+        !!  of Linear Differential and Integral Operators". United States Governm. Press Office.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
+        !!
+        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!        the number of eigenpairs computed.
+        !!
+        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!
+        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!
+        !!  `info` : `integer` Information flag.
+        !!
+        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
+        !!                        approximate the leading eigenpairs. It is an `intent(in)`
+        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!
+        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
+        !!                             being converged. It is an `intent(in)` agument. By default,
+        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+            class(abstract_sym_linop_rsp), intent(inout) :: A
+            !! Linear operator whose leading eigenpairs need to be computed.
+            class(abstract_vector_rsp), intent(out) :: X(:)
+            !! Leading eigevectors of \( \mathbf{A} \).
+            real(sp), allocatable, intent(out) :: eigvals(:)
+            !! Leading eigenvalues of \( \mathbf{A} \).
+            real(sp), allocatable, intent(out) :: residuals(:)
+            !! Residuals associated to each Ritz eigenpairs.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_vector_rsp), optional, intent(in) :: x0
+            !! Optional starting vector to generate the Krylov subspace.
+            integer, optional, intent(in) :: kdim
+            !! Desired number of eigenpairs.
+            real(sp), optional, intent(in) :: tolerance
+            !! Tolerance
+        end subroutine
+        module subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+            class(abstract_sym_linop_rdp), intent(inout) :: A
+            !! Linear operator whose leading eigenpairs need to be computed.
+            class(abstract_vector_rdp), intent(out) :: X(:)
+            !! Leading eigevectors of \( \mathbf{A} \).
+            real(dp), allocatable, intent(out) :: eigvals(:)
+            !! Leading eigenvalues of \( \mathbf{A} \).
+            real(dp), allocatable, intent(out) :: residuals(:)
+            !! Residuals associated to each Ritz eigenpairs.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_vector_rdp), optional, intent(in) :: x0
+            !! Optional starting vector to generate the Krylov subspace.
+            integer, optional, intent(in) :: kdim
+            !! Desired number of eigenpairs.
+            real(dp), optional, intent(in) :: tolerance
+            !! Tolerance
+        end subroutine
+        module subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+            class(abstract_hermitian_linop_csp), intent(inout) :: A
+            !! Linear operator whose leading eigenpairs need to be computed.
+            class(abstract_vector_csp), intent(out) :: X(:)
+            !! Leading eigevectors of \( \mathbf{A} \).
+            real(sp), allocatable, intent(out) :: eigvals(:)
+            !! Leading eigenvalues of \( \mathbf{A} \).
+            real(sp), allocatable, intent(out) :: residuals(:)
+            !! Residuals associated to each Ritz eigenpairs.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_vector_csp), optional, intent(in) :: x0
+            !! Optional starting vector to generate the Krylov subspace.
+            integer, optional, intent(in) :: kdim
+            !! Desired number of eigenpairs.
+            real(sp), optional, intent(in) :: tolerance
+            !! Tolerance
+        end subroutine
+        module subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+            class(abstract_hermitian_linop_cdp), intent(inout) :: A
+            !! Linear operator whose leading eigenpairs need to be computed.
+            class(abstract_vector_cdp), intent(out) :: X(:)
+            !! Leading eigevectors of \( \mathbf{A} \).
+            real(dp), allocatable, intent(out) :: eigvals(:)
+            !! Leading eigenvalues of \( \mathbf{A} \).
+            real(dp), allocatable, intent(out) :: residuals(:)
+            !! Residuals associated to each Ritz eigenpairs.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_vector_cdp), optional, intent(in) :: x0
+            !! Optional starting vector to generate the Krylov subspace.
+            integer, optional, intent(in) :: kdim
+            !! Desired number of eigenpairs.
+            real(dp), optional, intent(in) :: tolerance
+            !! Tolerance
+        end subroutine
+    end interface
+
 
 
 
@@ -1060,63 +1190,6 @@ module lightkrylov_IterativeSolvers
         !!  `fname` : Name of the file to save the eigenspectrum.
         module procedure save_eigenspectrum_sp
         module procedure save_eigenspectrum_dp
-    end interface
-
-    interface eighs
-        !!  ### Description
-        !!
-        !!  Computes the leading eigenpairs of a symmetric operator \(A\)
-        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
-        !!  the leading eigvalues and eigvectors such that:
-        !!
-        !!  \[
-        !!      Ax = \lambda x
-        !!  \]
-        !!
-        !!  The subspace \(X\) is constructed via Lanczos factorization, resulting in a symmetric
-        !!  tridiagonal matrix \(T\). The eigenvalues of \(A\) are approximated by those of \(T\)
-        !!  and the eigenvectors are computed accordingly.
-        !!
-        !!  **References**
-        !!
-        !!  - Lanczos, C. (1950). "An Iteration Method for the Solution of the Eigenvalue Problem
-        !!  of Linear Differential and Integral Operators". United States Governm. Press Office.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
-        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
-        !!
-        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
-        !!        the number of eigenpairs computed.
-        !!
-        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
-        !!              eigenvalues of `A`. It is an `intent(out)` argument.
-        !!
-        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
-        !!                associated with each eigenpairs. It is an `intent(out)` argument.
-        !!
-        !!  `info` : `integer` Information flag.
-        !!
-        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
-        !!                        approximate the leading eigenpairs. It is an `intent(in)`
-        !!                        argument. By default, `kdim = 4*size(X)`.
-        !!
-        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
-        !!                             being converged. It is an `intent(in)` agument. By default,
-        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
-        module procedure eighs_rsp
-        module procedure eighs_rdp
-        module procedure eighs_csp
-        module procedure eighs_cdp
     end interface
 
     interface eigs
@@ -1997,455 +2070,5 @@ contains
         
         return
     end subroutine eigs_cdp
-
-
-    !-----------------------------------------------------------------------------
-    !-----      EIGENVALUE COMPUTATIONS FOR SYMMETRIC/HERMITIAN MATRICES     -----
-    !-----------------------------------------------------------------------------
-
-    subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
-        class(abstract_sym_linop_rsp), intent(inout) :: A
-        !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_rsp), intent(out) :: X(:)
-        !! Leading eigevectors of \( \mathbf{A} \).
-        real(sp), allocatable, intent(out) :: eigvals(:)
-        !! Leading eigenvalues of \( \mathbf{A} \).
-        real(sp), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpairs.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_rsp), optional, intent(in) :: x0
-        !! Optional starting vector to generate the Krylov subspace.
-        integer, optional, intent(in) :: kdim
-        !! Desired number of eigenpairs.
-        real(sp), optional, intent(in) :: tolerance
-        !! Tolerance
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-
-        class(abstract_vector_rsp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
-        integer :: kdim_
-        ! Krylov subspace dimension.
-        real(sp), allocatable :: T(:, :)
-        ! Tridiagonal matrix.
-        real(sp), allocatable :: eigvecs_wrk(:, :)
-        ! Working array for the Ritz eigenvectors.
-        real(sp), allocatable :: eigvals_wrk(:)
-        ! Working array for the Ritz eigenvalues.
-        real(sp), allocatable :: residuals_wrk(:)
-        ! Working array for the Ritz residuals.
-        real(sp) :: x0_norm
-
-        ! Miscellaneous.
-        integer :: i, j, k, nev, conv
-        real(sp) :: tol
-        real(sp) :: beta
-        character(len=256) :: msg
-
-        if (time_lightkrylov()) call timer%start('eighs_rsp')
-        ! Deaks with the optional args.
-        nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_sp)
-
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
-        if (present(x0)) then
-            call copy(Xwrk(1), x0)
-            x0_norm = x0%norm(); call Xwrk(1)%scal(one_rsp/x0_norm)
-        else
-            call Xwrk(1)%rand(.true.)
-        endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_rsp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rsp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
-
-        ! Ritz eigenpairs computation.
-        lanczos_iter : do k = 1, kdim_
-            ! Symmetric Lanczos step.
-            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rsp')
-
-            ! Spectral decomposition of the k x k tridiagonal matrix.
-            eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
-            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
-
-            ! Compute residuals.
-            beta = T(k+1, k)
-            residuals_wrk(:k) = compute_residual_rsp(beta, eigvecs_wrk(k, :k))
-
-            ! Check convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
-                            & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
-            if (conv >= nev) exit lanczos_iter
-        enddo lanczos_iter
-
-        !--------------------------------
-        !-----     POST-PROCESS     -----
-        !--------------------------------
-
-        block
-            integer :: indices(kdim_)
-            call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
-            eigvecs_wrk = eigvecs_wrk(:, indices)
-            ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
-        end block
-
-        ! Construct eigenvectors.
-        k = min(k, kdim_)
-        do i = 1, nev
-            call X(i)%zero()
-            do j = 1, k
-                call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
-            enddo
-        enddo
-        
-        info = k
-        if (time_lightkrylov()) call timer%stop('eighs_rsp')
-        
-        return
-    end subroutine eighs_rsp
-
-    subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
-        class(abstract_sym_linop_rdp), intent(inout) :: A
-        !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_rdp), intent(out) :: X(:)
-        !! Leading eigevectors of \( \mathbf{A} \).
-        real(dp), allocatable, intent(out) :: eigvals(:)
-        !! Leading eigenvalues of \( \mathbf{A} \).
-        real(dp), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpairs.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_rdp), optional, intent(in) :: x0
-        !! Optional starting vector to generate the Krylov subspace.
-        integer, optional, intent(in) :: kdim
-        !! Desired number of eigenpairs.
-        real(dp), optional, intent(in) :: tolerance
-        !! Tolerance
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-
-        class(abstract_vector_rdp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
-        integer :: kdim_
-        ! Krylov subspace dimension.
-        real(dp), allocatable :: T(:, :)
-        ! Tridiagonal matrix.
-        real(dp), allocatable :: eigvecs_wrk(:, :)
-        ! Working array for the Ritz eigenvectors.
-        real(dp), allocatable :: eigvals_wrk(:)
-        ! Working array for the Ritz eigenvalues.
-        real(dp), allocatable :: residuals_wrk(:)
-        ! Working array for the Ritz residuals.
-        real(dp) :: x0_norm
-
-        ! Miscellaneous.
-        integer :: i, j, k, nev, conv
-        real(dp) :: tol
-        real(dp) :: beta
-        character(len=256) :: msg
-
-        if (time_lightkrylov()) call timer%start('eighs_rdp')
-        ! Deaks with the optional args.
-        nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_dp)
-
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
-        if (present(x0)) then
-            call copy(Xwrk(1), x0)
-            x0_norm = x0%norm(); call Xwrk(1)%scal(one_rdp/x0_norm)
-        else
-            call Xwrk(1)%rand(.true.)
-        endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_rdp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rdp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
-
-        ! Ritz eigenpairs computation.
-        lanczos_iter : do k = 1, kdim_
-            ! Symmetric Lanczos step.
-            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rdp')
-
-            ! Spectral decomposition of the k x k tridiagonal matrix.
-            eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
-            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
-
-            ! Compute residuals.
-            beta = T(k+1, k)
-            residuals_wrk(:k) = compute_residual_rdp(beta, eigvecs_wrk(k, :k))
-
-            ! Check convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
-                            & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
-            if (conv >= nev) exit lanczos_iter
-        enddo lanczos_iter
-
-        !--------------------------------
-        !-----     POST-PROCESS     -----
-        !--------------------------------
-
-        block
-            integer :: indices(kdim_)
-            call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
-            eigvecs_wrk = eigvecs_wrk(:, indices)
-            ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
-        end block
-
-        ! Construct eigenvectors.
-        k = min(k, kdim_)
-        do i = 1, nev
-            call X(i)%zero()
-            do j = 1, k
-                call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
-            enddo
-        enddo
-        
-        info = k
-        if (time_lightkrylov()) call timer%stop('eighs_rdp')
-        
-        return
-    end subroutine eighs_rdp
-
-    subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
-        class(abstract_hermitian_linop_csp), intent(inout) :: A
-        !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_csp), intent(out) :: X(:)
-        !! Leading eigevectors of \( \mathbf{A} \).
-        real(sp), allocatable, intent(out) :: eigvals(:)
-        !! Leading eigenvalues of \( \mathbf{A} \).
-        real(sp), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpairs.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_csp), optional, intent(in) :: x0
-        !! Optional starting vector to generate the Krylov subspace.
-        integer, optional, intent(in) :: kdim
-        !! Desired number of eigenpairs.
-        real(sp), optional, intent(in) :: tolerance
-        !! Tolerance
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-
-        class(abstract_vector_csp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
-        integer :: kdim_
-        ! Krylov subspace dimension.
-        complex(sp), allocatable :: T(:, :)
-        ! Tridiagonal matrix.
-        complex(sp), allocatable :: eigvecs_wrk(:, :)
-        ! Working array for the Ritz eigenvectors.
-        real(sp), allocatable :: eigvals_wrk(:)
-        ! Working array for the Ritz eigenvalues.
-        real(sp), allocatable :: residuals_wrk(:)
-        ! Working array for the Ritz residuals.
-        real(sp) :: x0_norm
-
-        ! Miscellaneous.
-        integer :: i, j, k, nev, conv
-        real(sp) :: tol
-        complex(sp) :: beta
-        character(len=256) :: msg
-
-        if (time_lightkrylov()) call timer%start('eighs_csp')
-        ! Deaks with the optional args.
-        nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_sp)
-
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
-        if (present(x0)) then
-            call copy(Xwrk(1), x0)
-            x0_norm = x0%norm(); call Xwrk(1)%scal(one_csp/x0_norm)
-        else
-            call Xwrk(1)%rand(.true.)
-        endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_csp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_csp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
-
-        ! Ritz eigenpairs computation.
-        lanczos_iter : do k = 1, kdim_
-            ! Symmetric Lanczos step.
-            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_csp')
-
-            ! Spectral decomposition of the k x k tridiagonal matrix.
-            eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
-            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
-
-            ! Compute residuals.
-            beta = T(k+1, k)
-            residuals_wrk(:k) = compute_residual_csp(beta, eigvecs_wrk(k, :k))
-
-            ! Check convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
-                            & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_csp')
-            if (conv >= nev) exit lanczos_iter
-        enddo lanczos_iter
-
-        !--------------------------------
-        !-----     POST-PROCESS     -----
-        !--------------------------------
-
-        block
-            integer :: indices(kdim_)
-            call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
-            eigvecs_wrk = eigvecs_wrk(:, indices)
-            ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
-        end block
-
-        ! Construct eigenvectors.
-        k = min(k, kdim_)
-        do i = 1, nev
-            call X(i)%zero()
-            do j = 1, k
-                call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
-            enddo
-        enddo
-        
-        info = k
-        if (time_lightkrylov()) call timer%stop('eighs_csp')
-        
-        return
-    end subroutine eighs_csp
-
-    subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
-        class(abstract_hermitian_linop_cdp), intent(inout) :: A
-        !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_cdp), intent(out) :: X(:)
-        !! Leading eigevectors of \( \mathbf{A} \).
-        real(dp), allocatable, intent(out) :: eigvals(:)
-        !! Leading eigenvalues of \( \mathbf{A} \).
-        real(dp), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpairs.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_cdp), optional, intent(in) :: x0
-        !! Optional starting vector to generate the Krylov subspace.
-        integer, optional, intent(in) :: kdim
-        !! Desired number of eigenpairs.
-        real(dp), optional, intent(in) :: tolerance
-        !! Tolerance
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-
-        class(abstract_vector_cdp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
-        integer :: kdim_
-        ! Krylov subspace dimension.
-        complex(dp), allocatable :: T(:, :)
-        ! Tridiagonal matrix.
-        complex(dp), allocatable :: eigvecs_wrk(:, :)
-        ! Working array for the Ritz eigenvectors.
-        real(dp), allocatable :: eigvals_wrk(:)
-        ! Working array for the Ritz eigenvalues.
-        real(dp), allocatable :: residuals_wrk(:)
-        ! Working array for the Ritz residuals.
-        real(dp) :: x0_norm
-
-        ! Miscellaneous.
-        integer :: i, j, k, nev, conv
-        real(dp) :: tol
-        complex(dp) :: beta
-        character(len=256) :: msg
-
-        if (time_lightkrylov()) call timer%start('eighs_cdp')
-        ! Deaks with the optional args.
-        nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_dp)
-
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
-        if (present(x0)) then
-            call copy(Xwrk(1), x0)
-            x0_norm = x0%norm(); call Xwrk(1)%scal(one_cdp/x0_norm)
-        else
-            call Xwrk(1)%rand(.true.)
-        endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_cdp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_cdp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
-
-        ! Ritz eigenpairs computation.
-        lanczos_iter : do k = 1, kdim_
-            ! Symmetric Lanczos step.
-            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_cdp')
-
-            ! Spectral decomposition of the k x k tridiagonal matrix.
-            eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
-            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
-
-            ! Compute residuals.
-            beta = T(k+1, k)
-            residuals_wrk(:k) = compute_residual_cdp(beta, eigvecs_wrk(k, :k))
-
-            ! Check convergence.
-            conv = count(residuals_wrk(:k) < tol)
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
-                            & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
-            if (conv >= nev) exit lanczos_iter
-        enddo lanczos_iter
-
-        !--------------------------------
-        !-----     POST-PROCESS     -----
-        !--------------------------------
-
-        block
-            integer :: indices(kdim_)
-            call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
-            eigvecs_wrk = eigvecs_wrk(:, indices)
-            ! Store converged eigenvalues.
-            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
-        end block
-
-        ! Construct eigenvectors.
-        k = min(k, kdim_)
-        do i = 1, nev
-            call X(i)%zero()
-            do j = 1, k
-                call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
-            enddo
-        enddo
-        
-        info = k
-        if (time_lightkrylov()) call timer%stop('eighs_cdp')
-        
-        return
-    end subroutine eighs_cdp
-
 
 end module lightkrylov_IterativeSolvers

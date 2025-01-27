@@ -1,5 +1,5 @@
 submodule (lightkrylov_iterativesolvers) svds_solver
-    use stdlib_linalg, only: hermitian
+    use stdlib_linalg, only: hermitian, svd
     implicit none
 contains
 
@@ -80,7 +80,7 @@ contains
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_rsp/u0_norm)
@@ -162,7 +162,7 @@ contains
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_rdp/u0_norm)
@@ -244,7 +244,7 @@ contains
         tol     = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_csp/u0_norm)
@@ -326,7 +326,7 @@ contains
         tol     = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), source=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_cdp/u0_norm)
