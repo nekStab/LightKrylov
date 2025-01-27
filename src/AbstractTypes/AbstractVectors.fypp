@@ -1,4 +1,4 @@
-#:include "../include/common.fypp"
+#:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_AbstractVectors
     !! This module provides the base class `absract_vector` from which all Krylov vectors
