@@ -643,8 +643,223 @@ module lightkrylov_IterativeSolvers
         end subroutine
     end interface
 
+    !---------------------------------------------
+    !-----                                   -----
+    !-----     CONJUGATE GRADIENT METHOD     -----
+    !-----                                   -----
+    !---------------------------------------------
 
+    !----- Options and Metadata -----
+    type, extends(abstract_opts), public :: cg_sp_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
+    end type
 
+    type, extends(abstract_metadata), public :: cg_sp_metadata
+        !! Conjugate gradient metadata.
+        integer :: n_iter = 0
+        !! Iteration counter
+        real(sp), dimension(:), allocatable :: res
+        !! Residual history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_cg_sp
+        procedure, pass(self), public :: reset => reset_cg_sp
+    end type
+
+    interface
+        module subroutine print_cg_sp(self, reset_counters, verbose)
+            class(cg_sp_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            !! Reset all counters to zero after printing?
+            logical, optional, intent(in) :: verbose
+            !! Print the residual full residual history?
+        end subroutine
+
+        module subroutine reset_cg_sp(self)
+            class(cg_sp_metadata), intent(inout) :: self
+        end subroutine
+    end interface
+    type, extends(abstract_opts), public :: cg_dp_opts
+        !! Conjugate gradient options.
+        integer :: maxiter = 100
+        !! Maximum number of `cg` iterations (default: 100).
+        logical :: if_print_metadata = .false.
+        !! Print interation metadata on exit (default = .false.)
+    end type
+
+    type, extends(abstract_metadata), public :: cg_dp_metadata
+        !! Conjugate gradient metadata.
+        integer :: n_iter = 0
+        !! Iteration counter
+        real(dp), dimension(:), allocatable :: res
+        !! Residual history
+        logical :: converged = .false.
+        !! Convergence flag
+        integer :: info = 0
+        !! Copy of the information flag for completeness
+    contains
+        procedure, pass(self), public :: print => print_cg_dp
+        procedure, pass(self), public :: reset => reset_cg_dp
+    end type
+
+    interface
+        module subroutine print_cg_dp(self, reset_counters, verbose)
+            class(cg_dp_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            !! Reset all counters to zero after printing?
+            logical, optional, intent(in) :: verbose
+            !! Print the residual full residual history?
+        end subroutine
+
+        module subroutine reset_cg_dp(self)
+            class(cg_dp_metadata), intent(inout) :: self
+        end subroutine
+    end interface
+
+    !----- Interfaces for the Conjugate Gradient solvers -----
+    interface cg
+        !!  ### Description
+        !!
+        !!  Given a symmetric (positive definite) matrix \( A \), solves the linear system
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Conjugate Gradient* method.
+        !!
+        !!  **References**
+        !!
+        !!  - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
+        !!  Linear Systems," Journal of Research of the National Bureau of Standards,
+        !!  49(6), 409–436.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
+        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
+        !!  `intent(inout)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  @note
+        !!  Although the interface to pass a preconditioner is exposed, it is not currently
+        !!  implemented.
+        !!  @endnote
+        module subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            class(abstract_sym_linop_rsp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_rsp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rsp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            !! Preconditioner (not yet supported).
+            type(cg_sp_opts), optional, intent(in) :: options
+            !! Options for the conjugate gradient solver.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+        module subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            class(abstract_sym_linop_rdp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_rdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            !! Preconditioner (not yet supported).
+            type(cg_dp_opts), optional, intent(in) :: options
+            !! Options for the conjugate gradient solver.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+        module subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            class(abstract_hermitian_linop_csp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_csp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_csp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            !! Preconditioner (not yet supported).
+            type(cg_sp_opts), optional, intent(in) :: options
+            !! Options for the conjugate gradient solver.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+        module subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            class(abstract_hermitian_linop_cdp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_cdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            !! Preconditioner (not yet supported).
+            type(cg_dp_opts), optional, intent(in) :: options
+            !! Options for the conjugate gradient solver.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+    end interface
 
 
 
@@ -897,66 +1112,6 @@ module lightkrylov_IterativeSolvers
 
 
 
-    interface cg
-        !!  ### Description
-        !!
-        !!  Given a symmetric (positive definite) matrix \( A \), solves the linear system
-        !!
-        !!  \[
-        !!      Ax = b
-        !!  \]
-        !!
-        !!  using the *Conjugate Gradient* method.
-        !!
-        !!  **References**
-        !!
-        !!  - Hestenes, M. R., and Stiefel, E. (1952). "Methods of Conjugate Gradients for Solving
-        !!  Linear Systems," Journal of Research of the National Bureau of Standards,
-        !!  49(6), 409–436.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
-        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
-        !!  `intent(inout)` argument.
-        !!
-        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
-        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
-        !!  It is an `intent(in)` argument.
-        !!
-        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
-        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
-        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
-        !!  an `intent(inout)` argument.
-        !!
-        !!  `info` : `integer` information flag.
-        !!
-        !!  `rtol` (optional) : `real` relative tolerance for the solver.
-        !!
-        !!  `atol` (optional) : `real` absolute tolerance for the solver.
-        !!
-        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
-        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
-        !!  argument.
-        !!
-        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
-        !!  It is an `intent(in)` argument.
-        !!
-        !!  @note
-        !!  Although the interface to pass a preconditioner is exposed, it is not currently
-        !!  implemented.
-        !!  @endnote
-        module procedure cg_rsp
-        module procedure cg_rdp
-        module procedure cg_csp
-        module procedure cg_cdp
-    end interface
 
 
     !--------------------------------------------------------
@@ -2631,533 +2786,5 @@ contains
         
         return
     end subroutine svds_cdp
-
-
-    !----------------------------------
-    !-----     FLEXIBLE GMRES     -----
-    !----------------------------------
-
-
-
-    !---------------------------------------------
-    !-----     CONJUGATE GRADIENT METHOD     -----
-    !---------------------------------------------
-
-    subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
-        class(abstract_sym_linop_rsp), intent(inout) :: A
-        !! Linear operator to be inverted.
-        class(abstract_vector_rsp), intent(in) :: b
-        !! Right-hand side vector.
-        class(abstract_vector_rsp), intent(inout) :: x
-        !! Solution vector.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(sp), optional, intent(in) :: rtol
-        !! Relative solver tolerance
-        real(sp), optional, intent(in) :: atol
-        !! Absolute solver tolerance
-        class(abstract_precond_rsp), optional, intent(in) :: preconditioner
-        !! Preconditioner (not yet supported).
-        type(cg_sp_opts), optional, intent(in) :: options
-        !! Options for the conjugate gradient solver.
-        class(abstract_metadata), optional, intent(out) :: meta
-        !! Metadata.
-
-        !----------------------------------------
-        !-----     Internal variables      ------
-        !----------------------------------------
-
-        ! Options.
-        integer :: maxiter
-        real(sp) :: tol, rtol_, atol_
-        type(cg_sp_opts)     :: opts
-        type(cg_sp_metadata) :: cg_meta
-
-        ! Working variables.
-        class(abstract_vector_rsp), allocatable :: r, p, Ap
-        real(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
-        real(sp) :: residual
-
-        ! Miscellaneous.
-        integer :: i
-        character(len=256) :: msg
-
-        call logger%log_debug('start', module=this_module, procedure='cg_rsp')
-        if (time_lightkrylov()) call timer%start('cg_rsp')
-        ! Deals with the optional args.
-        rtol_ = optval(rtol, rtol_sp)
-        atol_ = optval(atol, atol_sp)
-        if (present(options)) then
-            opts = options
-        else
-            opts = cg_sp_opts()
-        endif
-        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
-
-        ! Initialize vectors.
-        allocate(r, source=b)  ; call r%zero()
-        allocate(p, source=b)  ; call p%zero()
-        allocate(Ap, source=b) ; call Ap%zero()
-
-         ! Initialize meta & reset matvec counter
-        cg_meta = cg_sp_metadata()
-        call A%reset_counter(.false., 'cg%init')
-
-        info = 0
-
-        ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%apply_matvec(x, r)
-        call r%sub(b) ; call r%chsgn()
-
-        ! Initialize direction vector.
-        p = r
-
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
-
-        ! Conjugate gradient iteration.
-        cg_loop: do i = 1, maxiter
-            ! Compute A @ p
-            call A%apply_matvec(p, Ap)
-            ! Compute step size.
-            alpha = r_dot_r_old / p%dot(Ap)
-            ! Update solution x = x + alpha*p
-            call x%axpby(one_rsp, p, alpha)
-            ! Update residual r = r - alpha*Ap
-            call r%axpby(one_rsp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
-            ! Check for convergence.
-            residual = sqrt(r_dot_r_new)
-
-            ! Save metadata.
-            cg_meta%n_iter = cg_meta%n_iter + 1
-            cg_meta%res = [ cg_meta%res, residual ]
-
-            if (residual < tol) then
-               cg_meta%converged = .true.
-               exit cg_loop
-            end if
-
-            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
-            beta = r_dot_r_new / r_dot_r_old
-            ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_rsp)
-            ! Update r_dot_r_old for next iteration.
-            r_dot_r_old = r_dot_r_new
-
-            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_rsp')
-        enddo cg_loop
-
-        ! Set and copy info flag for completeness
-        info = cg_meta%n_iter
-        cg_meta%info = info
-
-        if (opts%if_print_metadata) call cg_meta%print()
-
-        ! Set metadata output
-        if (present(meta)) then
-           select type(meta)
-               type is (cg_sp_metadata)
-                   meta = cg_meta
-           end select
-        end if
-
-        call A%reset_counter(.false., 'cg%post')
-        if (time_lightkrylov()) call timer%stop('cg_rsp')
-        call logger%log_debug('end', module=this_module, procedure='cg_rsp')
-
-        return
-    end subroutine cg_rsp
-
-    subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
-        class(abstract_sym_linop_rdp), intent(inout) :: A
-        !! Linear operator to be inverted.
-        class(abstract_vector_rdp), intent(in) :: b
-        !! Right-hand side vector.
-        class(abstract_vector_rdp), intent(inout) :: x
-        !! Solution vector.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(dp), optional, intent(in) :: rtol
-        !! Relative solver tolerance
-        real(dp), optional, intent(in) :: atol
-        !! Absolute solver tolerance
-        class(abstract_precond_rdp), optional, intent(in) :: preconditioner
-        !! Preconditioner (not yet supported).
-        type(cg_dp_opts), optional, intent(in) :: options
-        !! Options for the conjugate gradient solver.
-        class(abstract_metadata), optional, intent(out) :: meta
-        !! Metadata.
-
-        !----------------------------------------
-        !-----     Internal variables      ------
-        !----------------------------------------
-
-        ! Options.
-        integer :: maxiter
-        real(dp) :: tol, rtol_, atol_
-        type(cg_dp_opts)     :: opts
-        type(cg_dp_metadata) :: cg_meta
-
-        ! Working variables.
-        class(abstract_vector_rdp), allocatable :: r, p, Ap
-        real(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
-        real(dp) :: residual
-
-        ! Miscellaneous.
-        integer :: i
-        character(len=256) :: msg
-
-        call logger%log_debug('start', module=this_module, procedure='cg_rdp')
-        if (time_lightkrylov()) call timer%start('cg_rdp')
-        ! Deals with the optional args.
-        rtol_ = optval(rtol, rtol_dp)
-        atol_ = optval(atol, atol_dp)
-        if (present(options)) then
-            opts = options
-        else
-            opts = cg_dp_opts()
-        endif
-        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
-
-        ! Initialize vectors.
-        allocate(r, source=b)  ; call r%zero()
-        allocate(p, source=b)  ; call p%zero()
-        allocate(Ap, source=b) ; call Ap%zero()
-
-         ! Initialize meta & reset matvec counter
-        cg_meta = cg_dp_metadata()
-        call A%reset_counter(.false., 'cg%init')
-
-        info = 0
-
-        ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%apply_matvec(x, r)
-        call r%sub(b) ; call r%chsgn()
-
-        ! Initialize direction vector.
-        p = r
-
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
-
-        ! Conjugate gradient iteration.
-        cg_loop: do i = 1, maxiter
-            ! Compute A @ p
-            call A%apply_matvec(p, Ap)
-            ! Compute step size.
-            alpha = r_dot_r_old / p%dot(Ap)
-            ! Update solution x = x + alpha*p
-            call x%axpby(one_rdp, p, alpha)
-            ! Update residual r = r - alpha*Ap
-            call r%axpby(one_rdp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
-            ! Check for convergence.
-            residual = sqrt(r_dot_r_new)
-
-            ! Save metadata.
-            cg_meta%n_iter = cg_meta%n_iter + 1
-            cg_meta%res = [ cg_meta%res, residual ]
-
-            if (residual < tol) then
-               cg_meta%converged = .true.
-               exit cg_loop
-            end if
-
-            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
-            beta = r_dot_r_new / r_dot_r_old
-            ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_rdp)
-            ! Update r_dot_r_old for next iteration.
-            r_dot_r_old = r_dot_r_new
-
-            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_rdp')
-        enddo cg_loop
-
-        ! Set and copy info flag for completeness
-        info = cg_meta%n_iter
-        cg_meta%info = info
-
-        if (opts%if_print_metadata) call cg_meta%print()
-
-        ! Set metadata output
-        if (present(meta)) then
-           select type(meta)
-               type is (cg_dp_metadata)
-                   meta = cg_meta
-           end select
-        end if
-
-        call A%reset_counter(.false., 'cg%post')
-        if (time_lightkrylov()) call timer%stop('cg_rdp')
-        call logger%log_debug('end', module=this_module, procedure='cg_rdp')
-
-        return
-    end subroutine cg_rdp
-
-    subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta)
-        class(abstract_hermitian_linop_csp), intent(inout) :: A
-        !! Linear operator to be inverted.
-        class(abstract_vector_csp), intent(in) :: b
-        !! Right-hand side vector.
-        class(abstract_vector_csp), intent(inout) :: x
-        !! Solution vector.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(sp), optional, intent(in) :: rtol
-        !! Relative solver tolerance
-        real(sp), optional, intent(in) :: atol
-        !! Absolute solver tolerance
-        class(abstract_precond_csp), optional, intent(in) :: preconditioner
-        !! Preconditioner (not yet supported).
-        type(cg_sp_opts), optional, intent(in) :: options
-        !! Options for the conjugate gradient solver.
-        class(abstract_metadata), optional, intent(out) :: meta
-        !! Metadata.
-
-        !----------------------------------------
-        !-----     Internal variables      ------
-        !----------------------------------------
-
-        ! Options.
-        integer :: maxiter
-        real(sp) :: tol, rtol_, atol_
-        type(cg_sp_opts)     :: opts
-        type(cg_sp_metadata) :: cg_meta
-
-        ! Working variables.
-        class(abstract_vector_csp), allocatable :: r, p, Ap
-        complex(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
-        real(sp) :: residual
-
-        ! Miscellaneous.
-        integer :: i
-        character(len=256) :: msg
-
-        call logger%log_debug('start', module=this_module, procedure='cg_csp')
-        if (time_lightkrylov()) call timer%start('cg_csp')
-        ! Deals with the optional args.
-        rtol_ = optval(rtol, rtol_sp)
-        atol_ = optval(atol, atol_sp)
-        if (present(options)) then
-            opts = options
-        else
-            opts = cg_sp_opts()
-        endif
-        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
-
-        ! Initialize vectors.
-        allocate(r, source=b)  ; call r%zero()
-        allocate(p, source=b)  ; call p%zero()
-        allocate(Ap, source=b) ; call Ap%zero()
-
-         ! Initialize meta & reset matvec counter
-        cg_meta = cg_sp_metadata()
-        call A%reset_counter(.false., 'cg%init')
-
-        info = 0
-
-        ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%apply_matvec(x, r)
-        call r%sub(b) ; call r%chsgn()
-
-        ! Initialize direction vector.
-        p = r
-
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
-
-        ! Conjugate gradient iteration.
-        cg_loop: do i = 1, maxiter
-            ! Compute A @ p
-            call A%apply_matvec(p, Ap)
-            ! Compute step size.
-            alpha = r_dot_r_old / p%dot(Ap)
-            ! Update solution x = x + alpha*p
-            call x%axpby(one_csp, p, alpha)
-            ! Update residual r = r - alpha*Ap
-            call r%axpby(one_csp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
-            ! Check for convergence.
-            residual = sqrt(abs(r_dot_r_new))
-
-            ! Save metadata.
-            cg_meta%n_iter = cg_meta%n_iter + 1
-            cg_meta%res = [ cg_meta%res, residual ]
-
-            if (residual < tol) then
-               cg_meta%converged = .true.
-               exit cg_loop
-            end if
-
-            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
-            beta = r_dot_r_new / r_dot_r_old
-            ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_csp)
-            ! Update r_dot_r_old for next iteration.
-            r_dot_r_old = r_dot_r_new
-
-            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_csp')
-        enddo cg_loop
-
-        ! Set and copy info flag for completeness
-        info = cg_meta%n_iter
-        cg_meta%info = info
-
-        if (opts%if_print_metadata) call cg_meta%print()
-
-        ! Set metadata output
-        if (present(meta)) then
-           select type(meta)
-               type is (cg_sp_metadata)
-                   meta = cg_meta
-           end select
-        end if
-
-        call A%reset_counter(.false., 'cg%post')
-        if (time_lightkrylov()) call timer%stop('cg_csp')
-        call logger%log_debug('end', module=this_module, procedure='cg_csp')
-
-        return
-    end subroutine cg_csp
-
-    subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
-        class(abstract_hermitian_linop_cdp), intent(inout) :: A
-        !! Linear operator to be inverted.
-        class(abstract_vector_cdp), intent(in) :: b
-        !! Right-hand side vector.
-        class(abstract_vector_cdp), intent(inout) :: x
-        !! Solution vector.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(dp), optional, intent(in) :: rtol
-        !! Relative solver tolerance
-        real(dp), optional, intent(in) :: atol
-        !! Absolute solver tolerance
-        class(abstract_precond_cdp), optional, intent(in) :: preconditioner
-        !! Preconditioner (not yet supported).
-        type(cg_dp_opts), optional, intent(in) :: options
-        !! Options for the conjugate gradient solver.
-        class(abstract_metadata), optional, intent(out) :: meta
-        !! Metadata.
-
-        !----------------------------------------
-        !-----     Internal variables      ------
-        !----------------------------------------
-
-        ! Options.
-        integer :: maxiter
-        real(dp) :: tol, rtol_, atol_
-        type(cg_dp_opts)     :: opts
-        type(cg_dp_metadata) :: cg_meta
-
-        ! Working variables.
-        class(abstract_vector_cdp), allocatable :: r, p, Ap
-        complex(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
-        real(dp) :: residual
-
-        ! Miscellaneous.
-        integer :: i
-        character(len=256) :: msg
-
-        call logger%log_debug('start', module=this_module, procedure='cg_cdp')
-        if (time_lightkrylov()) call timer%start('cg_cdp')
-        ! Deals with the optional args.
-        rtol_ = optval(rtol, rtol_dp)
-        atol_ = optval(atol, atol_dp)
-        if (present(options)) then
-            opts = options
-        else
-            opts = cg_dp_opts()
-        endif
-        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
-
-        ! Initialize vectors.
-        allocate(r, source=b)  ; call r%zero()
-        allocate(p, source=b)  ; call p%zero()
-        allocate(Ap, source=b) ; call Ap%zero()
-
-         ! Initialize meta & reset matvec counter
-        cg_meta = cg_dp_metadata()
-        call A%reset_counter(.false., 'cg%init')
-
-        info = 0
-
-        ! Compute initial residual r = b - Ax.
-        if (x%norm() > 0) call A%apply_matvec(x, r)
-        call r%sub(b) ; call r%chsgn()
-
-        ! Initialize direction vector.
-        p = r
-
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
-
-        ! Conjugate gradient iteration.
-        cg_loop: do i = 1, maxiter
-            ! Compute A @ p
-            call A%apply_matvec(p, Ap)
-            ! Compute step size.
-            alpha = r_dot_r_old / p%dot(Ap)
-            ! Update solution x = x + alpha*p
-            call x%axpby(one_cdp, p, alpha)
-            ! Update residual r = r - alpha*Ap
-            call r%axpby(one_cdp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
-            ! Check for convergence.
-            residual = sqrt(abs(r_dot_r_new))
-
-            ! Save metadata.
-            cg_meta%n_iter = cg_meta%n_iter + 1
-            cg_meta%res = [ cg_meta%res, residual ]
-
-            if (residual < tol) then
-               cg_meta%converged = .true.
-               exit cg_loop
-            end if
-
-            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
-            beta = r_dot_r_new / r_dot_r_old
-            ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_cdp)
-            ! Update r_dot_r_old for next iteration.
-            r_dot_r_old = r_dot_r_new
-
-            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_cdp')
-        enddo cg_loop
-
-        ! Set and copy info flag for completeness
-        info = cg_meta%n_iter
-        cg_meta%info = info
-
-        if (opts%if_print_metadata) call cg_meta%print()
-
-        ! Set metadata output
-        if (present(meta)) then
-           select type(meta)
-               type is (cg_dp_metadata)
-                   meta = cg_meta
-           end select
-        end if
-
-        call A%reset_counter(.false., 'cg%post')
-        if (time_lightkrylov()) call timer%stop('cg_cdp')
-        call logger%log_debug('end', module=this_module, procedure='cg_cdp')
-
-        return
-    end subroutine cg_cdp
-
 
 end module lightkrylov_IterativeSolvers

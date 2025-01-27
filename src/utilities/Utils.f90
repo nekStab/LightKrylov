@@ -79,14 +79,6 @@ module lightkrylov_utils
     !-----     OPTS TYPE FOR LINEAR SOLVERS     -----
     !------------------------------------------------
 
-    type, extends(abstract_opts), public :: cg_sp_opts
-        !! Conjugate gradient options.
-        integer :: maxiter = 100
-        !! Maximum number of `cg` iterations (default: 100).
-        logical :: if_print_metadata = .false.
-        !! Print interation metadata on exit (default = .false.)
-    end type
-
     type, extends(abstract_opts), public :: newton_sp_opts
         !! Options for Newton-Krylov fixed-point iteration.
         integer :: maxiter = 100
@@ -100,14 +92,6 @@ module lightkrylov_utils
         !! Print interation metadata on exit (default = .false.)
     end type
     
-    type, extends(abstract_opts), public :: cg_dp_opts
-        !! Conjugate gradient options.
-        integer :: maxiter = 100
-        !! Maximum number of `cg` iterations (default: 100).
-        logical :: if_print_metadata = .false.
-        !! Print interation metadata on exit (default = .false.)
-    end type
-
     type, extends(abstract_opts), public :: newton_dp_opts
         !! Options for Newton-Krylov fixed-point iteration.
         integer :: maxiter = 100
@@ -121,21 +105,6 @@ module lightkrylov_utils
         !! Print interation metadata on exit (default = .false.)
     end type
     
-
-    type, extends(abstract_metadata), public :: cg_sp_metadata
-        !! Conjugate gradient metadata.
-        integer :: n_iter = 0
-        !! Iteration counter
-        real(sp), dimension(:), allocatable :: res
-        !! Residual history
-        logical :: converged = .false.
-        !! Convergence flag
-        integer :: info = 0
-        !! Copy of the information flag for completeness
-    contains
-        procedure, pass(self), public :: print => print_cg_sp
-        procedure, pass(self), public :: reset => reset_cg_sp
-    end type
 
     type, extends(abstract_metadata), public :: newton_sp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
@@ -158,21 +127,6 @@ module lightkrylov_utils
         procedure, pass(self), public :: record => record_data_sp
     end type
    
-    type, extends(abstract_metadata), public :: cg_dp_metadata
-        !! Conjugate gradient metadata.
-        integer :: n_iter = 0
-        !! Iteration counter
-        real(dp), dimension(:), allocatable :: res
-        !! Residual history
-        logical :: converged = .false.
-        !! Convergence flag
-        integer :: info = 0
-        !! Copy of the information flag for completeness
-    contains
-        procedure, pass(self), public :: print => print_cg_dp
-        procedure, pass(self), public :: reset => reset_cg_dp
-    end type
-
     type, extends(abstract_metadata), public :: newton_dp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
         integer :: n_iter = 0
@@ -200,56 +154,6 @@ contains
     !------------------------------------------------------
     !-----     TYPE BOUND PROCEDURES FOR METADATA     -----
     !------------------------------------------------------
-
-    subroutine print_cg_sp(self, reset_counters, verbose)
-        class(cg_sp_metadata), intent(inout) :: self
-        logical, optional, intent(in) :: reset_counters
-        !! Reset all counters to zero after printing?
-        logical, optional, intent(in) :: verbose
-        !! Print the residual full residual history?
-        ! internals
-        integer :: i
-        logical :: ifreset, ifverbose
-        character(len=128) :: msg
-
-        ifreset   = optval(reset_counters, .false.)
-        ifverbose = optval(verbose, .false.)
-
-        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-        if (ifverbose) then
-            write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
-            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            do i = 2, self%n_iter+1
-               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            end do
-        else
-            write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-        end if
-        if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
-        else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
-        end if
-        if (ifreset) call self%reset()
-        return
-    end subroutine print_cg_sp
-
-    subroutine reset_cg_sp(self)
-        class(cg_sp_metadata), intent(inout) :: self
-        self%n_iter = 0
-        self%converged = .false.
-        self%info = 0
-        if (allocated(self%res)) deallocate(self%res)
-        return
-    end subroutine reset_cg_sp
 
     subroutine print_newton_sp(self, reset_counters, verbose)
         class(newton_sp_metadata), intent(inout) :: self
@@ -324,56 +228,6 @@ contains
         self%eval_counter_record = self%eval_counter_record + 1
         return
     end subroutine record_data_sp
-
-    subroutine print_cg_dp(self, reset_counters, verbose)
-        class(cg_dp_metadata), intent(inout) :: self
-        logical, optional, intent(in) :: reset_counters
-        !! Reset all counters to zero after printing?
-        logical, optional, intent(in) :: verbose
-        !! Print the residual full residual history?
-        ! internals
-        integer :: i
-        logical :: ifreset, ifverbose
-        character(len=128) :: msg
-
-        ifreset   = optval(reset_counters, .false.)
-        ifverbose = optval(verbose, .false.)
-
-        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-        if (ifverbose) then
-            write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
-            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            do i = 2, self%n_iter+1
-               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            end do
-        else
-            write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-        end if
-        if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
-        else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
-        end if
-        if (ifreset) call self%reset()
-        return
-    end subroutine print_cg_dp
-
-    subroutine reset_cg_dp(self)
-        class(cg_dp_metadata), intent(inout) :: self
-        self%n_iter = 0
-        self%converged = .false.
-        self%info = 0
-        if (allocated(self%res)) deallocate(self%res)
-        return
-    end subroutine reset_cg_dp
 
     subroutine print_newton_dp(self, reset_counters, verbose)
         class(newton_dp_metadata), intent(inout) :: self
