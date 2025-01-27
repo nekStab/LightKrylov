@@ -1,4 +1,15 @@
 module lightkrylov_utils_bis
+    !!  This module provides a set of utility functions used throughout `LightKrylov`.
+    !!  It includes:
+    !!
+    !!  - `assert_shape`: Assert that the shape of the argument is the expected shape.
+    !!  - `eig`: Compute the eigenvalue decomposition of a general matrix.
+    !!  - `sqrtm`: Compute the non-negative square root of a symmetric positive definite matrix using its SVD.
+    !!  - `ordschur`: Re-order the Schur factorization to have the selected eigenvalues in the upper left block.
+    !!
+    !!  Note that as the development of `stdlib` progresses, some of these functions
+    !!  will be deprecated in favor of the `stdlib` implementations.
+
     !--------------------------------------------
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
@@ -283,5 +294,4 @@ module lightkrylov_utils_bis
             integer, intent(out) :: info
         end subroutine
     end interface
-contains
 end module
