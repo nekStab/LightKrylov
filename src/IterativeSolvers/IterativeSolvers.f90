@@ -90,7 +90,6 @@ module lightkrylov_IterativeSolvers
             real(sp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_rsp
     end interface
-
     type, abstract, public :: abstract_precond_rdp
     contains
         private
@@ -112,7 +111,6 @@ module lightkrylov_IterativeSolvers
             real(dp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_rdp
     end interface
-
     type, abstract, public :: abstract_precond_csp
     contains
         private
@@ -134,7 +132,6 @@ module lightkrylov_IterativeSolvers
             real(sp), optional, intent(in) :: target_residual
         end subroutine abstract_apply_csp
     end interface
-
     type, abstract, public :: abstract_precond_cdp
     contains
         private
@@ -157,6 +154,108 @@ module lightkrylov_IterativeSolvers
         end subroutine abstract_apply_cdp
     end interface
 
+    !--------------------------------------------------------
+    !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
+    !--------------------------------------------------------
+
+    abstract interface
+        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_metadata, abstract_precond_rsp, sp
+            class(abstract_linop_rsp), intent(inout) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_rsp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rsp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine abstract_linear_solver_rsp
+        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_metadata, abstract_precond_rdp, dp
+            class(abstract_linop_rdp), intent(inout) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_rdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine abstract_linear_solver_rdp
+        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_metadata, abstract_precond_csp, sp
+            class(abstract_linop_csp), intent(inout) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_csp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_csp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine abstract_linear_solver_csp
+        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
+            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_metadata, abstract_precond_cdp, dp
+            class(abstract_linop_cdp), intent(inout) :: A
+            !! Linear operator to invert.
+            class(abstract_vector_cdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            !! Preconditioner.
+            class(abstract_opts), optional, intent(in) :: options
+            !! Options passed to the linear solver.
+            logical, optional, intent(in) :: transpose
+            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine abstract_linear_solver_cdp
+    end interface
 
     !-------------------------------------------------------
     !-----                                             -----
@@ -209,7 +308,6 @@ module lightkrylov_IterativeSolvers
             class(gmres_sp_metadata), intent(inout) :: self
         end subroutine
     end interface
-
     type, extends(abstract_opts), public :: gmres_dp_opts
         !! GMRES options.
         integer :: kdim = 30
@@ -254,7 +352,6 @@ module lightkrylov_IterativeSolvers
             class(gmres_dp_metadata), intent(inout) :: self
         end subroutine
     end interface
-
 
     !----- Interfaces for the GMRES solvers -----
     interface gmres
@@ -452,7 +549,6 @@ module lightkrylov_IterativeSolvers
             class(fgmres_sp_metadata), intent(inout) :: self
         end subroutine
     end interface
-
     type, extends(abstract_opts), public :: fgmres_dp_opts
         !! FGMRES options.
         integer :: kdim = 30
@@ -497,7 +593,6 @@ module lightkrylov_IterativeSolvers
             class(fgmres_dp_metadata), intent(inout) :: self
         end subroutine
     end interface
-
 
     !----- Interfaces for the FGMRES solvers -----
     interface fgmres
@@ -1137,36 +1232,9 @@ module lightkrylov_IterativeSolvers
         end subroutine
     end interface
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    !-------------------------------------
+    !-----     Utility functions     -----
+    !-------------------------------------
 
     interface save_eigenspectrum
         !!  ### Description
@@ -1188,8 +1256,42 @@ module lightkrylov_IterativeSolvers
         !!                eigenvalues.
         !!
         !!  `fname` : Name of the file to save the eigenspectrum.
-        module procedure save_eigenspectrum_sp
-        module procedure save_eigenspectrum_dp
+        module subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
+            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            real(sp), intent(in) :: lambda(:)
+            !! Eigenalues.
+            real(sp), intent(in) :: residuals(:)
+            !! Residual of the corresponding Ritz eigenpairs.
+            character(len=*), intent(in) :: fname
+            !! Name of the output file.
+        end subroutine
+        module subroutine save_eigenspectrum_rdp(lambda, residuals, fname)
+            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            real(dp), intent(in) :: lambda(:)
+            !! Eigenalues.
+            real(dp), intent(in) :: residuals(:)
+            !! Residual of the corresponding Ritz eigenpairs.
+            character(len=*), intent(in) :: fname
+            !! Name of the output file.
+        end subroutine
+        module subroutine save_eigenspectrum_csp(lambda, residuals, fname)
+            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            complex(sp), intent(in) :: lambda(:)
+            !! Eigenalues.
+            real(sp), intent(in) :: residuals(:)
+            !! Residual of the corresponding Ritz eigenpairs.
+            character(len=*), intent(in) :: fname
+            !! Name of the output file.
+        end subroutine
+        module subroutine save_eigenspectrum_cdp(lambda, residuals, fname)
+            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            complex(dp), intent(in) :: lambda(:)
+            !! Eigenalues.
+            real(dp), intent(in) :: residuals(:)
+            !! Residual of the corresponding Ritz eigenpairs.
+            character(len=*), intent(in) :: fname
+            !! Name of the output file.
+        end subroutine
     end interface
 
     interface eigs
@@ -1264,114 +1366,6 @@ module lightkrylov_IterativeSolvers
 
 
 
-    !--------------------------------------------------------
-    !-----                                              -----
-    !-----     GENERIC INTERFACE FOR LINEAR SOLVERS     -----
-    !-----                                              -----
-    !--------------------------------------------------------
-
-    abstract interface
-        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_metadata, abstract_precond_rsp, sp
-            class(abstract_linop_rsp), intent(inout) :: A
-            !! Linear operator to invert.
-            class(abstract_vector_rsp), intent(in) :: b
-            !! Right-hand side vector.
-            class(abstract_vector_rsp), intent(inout) :: x
-            !! Solution vector.
-            integer, intent(out) :: info
-            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
-            real(sp), optional, intent(in) :: rtol
-            !! Relative solver tolerance
-            real(sp), optional, intent(in) :: atol
-            !! Absolute solver tolerance
-            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
-            !! Preconditioner.
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
-            class(abstract_metadata), optional, intent(out) :: meta
-            !! Metadata.
-        end subroutine abstract_linear_solver_rsp
-
-        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_metadata, abstract_precond_rdp, dp
-            class(abstract_linop_rdp), intent(inout) :: A
-            !! Linear operator to invert.
-            class(abstract_vector_rdp), intent(in) :: b
-            !! Right-hand side vector.
-            class(abstract_vector_rdp), intent(inout) :: x
-            !! Solution vector.
-            integer, intent(out) :: info
-            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
-            real(dp), optional, intent(in) :: rtol
-            !! Relative solver tolerance
-            real(dp), optional, intent(in) :: atol
-            !! Absolute solver tolerance
-            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
-            !! Preconditioner.
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
-            class(abstract_metadata), optional, intent(out) :: meta
-            !! Metadata.
-        end subroutine abstract_linear_solver_rdp
-
-        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_metadata, abstract_precond_csp, sp
-            class(abstract_linop_csp), intent(inout) :: A
-            !! Linear operator to invert.
-            class(abstract_vector_csp), intent(in) :: b
-            !! Right-hand side vector.
-            class(abstract_vector_csp), intent(inout) :: x
-            !! Solution vector.
-            integer, intent(out) :: info
-            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
-            real(sp), optional, intent(in) :: rtol
-            !! Relative solver tolerance
-            real(sp), optional, intent(in) :: atol
-            !! Absolute solver tolerance
-            class(abstract_precond_csp), optional, intent(in) :: preconditioner
-            !! Preconditioner.
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
-            class(abstract_metadata), optional, intent(out) :: meta
-            !! Metadata.
-        end subroutine abstract_linear_solver_csp
-
-        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
-            import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_metadata, abstract_precond_cdp, dp
-            class(abstract_linop_cdp), intent(inout) :: A
-            !! Linear operator to invert.
-            class(abstract_vector_cdp), intent(in) :: b
-            !! Right-hand side vector.
-            class(abstract_vector_cdp), intent(inout) :: x
-            !! Solution vector.
-            integer, intent(out) :: info
-            !! Information flag. In case of successful exit, the flag should return the number of iterations required for convergence.
-            real(dp), optional, intent(in) :: rtol
-            !! Relative solver tolerance
-            real(dp), optional, intent(in) :: atol
-            !! Absolute solver tolerance
-            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
-            !! Preconditioner.
-            class(abstract_opts), optional, intent(in) :: options
-            !! Options passed to the linear solver.
-            logical, optional, intent(in) :: transpose
-            !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
-            class(abstract_metadata), optional, intent(out) :: meta
-            !! Metadata.
-        end subroutine abstract_linear_solver_cdp
-
-    end interface
 
 contains
 
@@ -1428,25 +1422,34 @@ contains
     end function compute_residual_cdp
 
 
-    subroutine save_eigenspectrum_sp(eigvals, residuals, fname)
-        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-        complex(sp), intent(in) :: eigvals(:)
-        !! Eigenalues.
-        real(sp), intent(in) :: residuals(:)
-        !! Residual of the corresponding Ritz eigenpairs.
-        character(len=*), intent(in) :: fname
-        !! Name of the output file.
-
+    module procedure save_eigenspectrum_rsp
         ! Internal variables.
-        real(sp) :: data(size(eigvals), 3)
-
-        ! Store data.
-        data(:, 1) = eigvals%re ; data(:, 2) = eigvals%im ; data(:, 3) = residuals
+        real(sp) :: array(size(lambda), 2)
+        array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
-        call save_npy(fname, data)
-
-        return
-    end subroutine save_eigenspectrum_sp
+        call save_npy(fname, array)
+    end procedure
+    module procedure save_eigenspectrum_rdp
+        ! Internal variables.
+        real(dp) :: array(size(lambda), 2)
+        array(:, 1) = lambda ; array(:, 2) = residuals
+        ! Save the eigenspectrum to disk.
+        call save_npy(fname, array)
+    end procedure
+    module procedure save_eigenspectrum_csp
+        ! Internal variables.
+        real(sp) :: array(size(lambda), 3)
+        array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
+        ! Save the eigenspectrum to disk.
+        call save_npy(fname, array)
+    end procedure
+    module procedure save_eigenspectrum_cdp
+        ! Internal variables.
+        real(dp) :: array(size(lambda), 3)
+        array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
+        ! Save the eigenspectrum to disk.
+        call save_npy(fname, array)
+    end procedure
 
     function median_eigvals_selector_sp(lambda) result(selected)
         complex(sp), intent(in) :: lambda(:)
@@ -1454,26 +1457,6 @@ contains
         selected = abs(lambda) > median(abs(lambda))
         return
     end function median_eigvals_selector_sp
-
-    subroutine save_eigenspectrum_dp(eigvals, residuals, fname)
-        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-        complex(dp), intent(in) :: eigvals(:)
-        !! Eigenalues.
-        real(dp), intent(in) :: residuals(:)
-        !! Residual of the corresponding Ritz eigenpairs.
-        character(len=*), intent(in) :: fname
-        !! Name of the output file.
-
-        ! Internal variables.
-        real(dp) :: data(size(eigvals), 3)
-
-        ! Store data.
-        data(:, 1) = eigvals%re ; data(:, 2) = eigvals%im ; data(:, 3) = residuals
-        ! Save the eigenspectrum to disk.
-        call save_npy(fname, data)
-
-        return
-    end subroutine save_eigenspectrum_dp
 
     function median_eigvals_selector_dp(lambda) result(selected)
         complex(dp), intent(in) :: lambda(:)
