@@ -35,6 +35,7 @@ module lightkrylov_IterativeSolvers
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
+    use LightKrylov_GMRES
 
     implicit none
     private

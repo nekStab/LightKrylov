@@ -15,6 +15,7 @@ module LightKrylov
     use LightKrylov_NewtonKrylov
     ! --> Newton-Krylov fixed-point iteration.
     use LightKrylov_IterativeSolvers
+    use LightKrylov_GMRES
     ! --> Expmlib
     use LightKrylov_Expmlib
     ! --> Timing utilities

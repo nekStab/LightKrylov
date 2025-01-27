@@ -1,4 +1,4 @@
-#:include "../include/common.fypp"
+#:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_IterativeSolvers
     !!  This module provides some of the most important computational routines provided by
@@ -37,6 +37,7 @@ module lightkrylov_IterativeSolvers
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
+    use LightKrylov_GMRES
 
     implicit none
     private
