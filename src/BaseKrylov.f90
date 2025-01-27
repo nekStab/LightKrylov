@@ -14,7 +14,7 @@ module lightkrylov_BaseKrylov
     !--------------------------------------------
     use iso_fortran_env
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, schur
 
     !-------------------------------
     !-----     LightKrylov     -----
@@ -3762,7 +3762,7 @@ contains
         integer :: i, kdim
         
         ! Schur-related.
-        real(sp) :: Z(size(H, 2), size(H, 2))
+        real(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(sp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
        
@@ -3774,7 +3774,7 @@ contains
         selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
-        call schur(H(:size(H, 2), :), Z, eigvals)
+        call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
         ! Eigenvalue selection of the upper left block.
         selected = select_eigs(eigvals) ; n = count(selected)
@@ -3821,7 +3821,7 @@ contains
         integer :: i, kdim
         
         ! Schur-related.
-        real(dp) :: Z(size(H, 2), size(H, 2))
+        real(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(dp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
        
@@ -3833,7 +3833,7 @@ contains
         selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
-        call schur(H(:size(H, 2), :), Z, eigvals)
+        call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
         ! Eigenvalue selection of the upper left block.
         selected = select_eigs(eigvals) ; n = count(selected)
@@ -3880,7 +3880,7 @@ contains
         integer :: i, kdim
         
         ! Schur-related.
-        complex(sp) :: Z(size(H, 2), size(H, 2))
+        complex(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(sp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
        
@@ -3892,7 +3892,7 @@ contains
         selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
-        call schur(H(:size(H, 2), :), Z, eigvals)
+        call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
         ! Eigenvalue selection of the upper left block.
         selected = select_eigs(eigvals) ; n = count(selected)
@@ -3939,7 +3939,7 @@ contains
         integer :: i, kdim
         
         ! Schur-related.
-        complex(dp) :: Z(size(H, 2), size(H, 2))
+        complex(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(dp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
        
@@ -3951,7 +3951,7 @@ contains
         selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
-        call schur(H(:size(H, 2), :), Z, eigvals)
+        call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
         ! Eigenvalue selection of the upper left block.
         selected = select_eigs(eigvals) ; n = count(selected)

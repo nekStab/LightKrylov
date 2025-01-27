@@ -16,7 +16,7 @@ module lightkrylov_BaseKrylov
     !--------------------------------------------
     use iso_fortran_env
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, schur
 
     !-------------------------------
     !-----     LightKrylov     -----
@@ -1422,7 +1422,7 @@ contains
         integer :: i, kdim
         
         ! Schur-related.
-        ${type}$ :: Z(size(H, 2), size(H, 2))
+        ${type}$ :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(${kind}$) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
        
@@ -1434,7 +1434,7 @@ contains
         selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
-        call schur(H(:size(H, 2), :), Z, eigvals)
+        call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
         ! Eigenvalue selection of the upper left block.
         selected = select_eigs(eigvals) ; n = count(selected)
