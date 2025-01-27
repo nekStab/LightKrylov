@@ -1,6 +1,6 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
-submodule(lightkrylov_utils_bis) utility_functions
+submodule(lightkrylov_utils) utility_functions
     !-------------------------------
     !-----     LightKrylov     -----
     !-------------------------------

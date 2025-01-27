@@ -1,4 +1,4 @@
-submodule(lightkrylov_utils_bis) utility_functions
+submodule(lightkrylov_utils) utility_functions
     !-------------------------------
     !-----     LightKrylov     -----
     !-------------------------------

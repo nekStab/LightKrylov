@@ -5,8 +5,6 @@ module lightkrylov_utils
     !!  - `assert_shape`: Assert that the shape of the argument is the expected shape.
     !!  - `eig`: Compute the eigenvalue decomposition of a general matrix.
     !!  - `sqrtm`: Compute the non-negative square root of a symmetric positive definite matrix using its SVD.
-    !!  - `sqrtm_eig`: Compute the non-negative square root of a symmetric positive definite matrix using its eigenvalue decomposition.
-    !!  - `schur`: Compute the Schur factorization of a general square matrix.
     !!  - `ordschur`: Re-order the Schur factorization to have the selected eigenvalues in the upper left block.
     !!
     !!  Note that as the development of `stdlib` progresses, some of these functions
@@ -16,21 +14,12 @@ module lightkrylov_utils
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use iso_fortran_env, only: output_unit
-    use stdlib_optval, only: optval
-    use stdlib_strings, only: padr
-    use stdlib_linalg, only: is_hermitian, is_symmetric, diag, svd, eigh, hermitian
-    ! Eigenvalue problem.
-    use stdlib_linalg_lapack, only: geev
-    ! Schur factorization.
-    use stdlib_linalg_lapack, only: gees, trsen
 
     !-------------------------------
     !-----     LightKrylov     -----
     !-------------------------------
-    ! Various constants.
-    use lightkrylov_utils_bis
-    use LightKrylov_Logger
     use LightKrylov_Constants
+    use LightKrylov_Logger
 
     implicit none
     private
@@ -38,18 +27,233 @@ module lightkrylov_utils
     character(len=*), parameter :: this_module      = 'LK_Utils'
     character(len=*), parameter :: this_module_long = 'LightKrylov_Utils'
 
-    public :: assert_shape, log2, abstract_metadata, abstract_opts
-    ! Compute AX = XD for general dense matrices.
-    public :: eig
-    ! Compute matrix sqrt of input symmetric/hermitian positive definite matrix A
-    public :: sqrtm
-    public :: sqrtm_eig
-    ! Re-orders the Schur factorization of A.
-    public :: ordschur
+    !----------------------------------
+    !-----     Public exports     -----
+    !----------------------------------
 
-    interface sqrtm_eig
+    public :: assert_shape
+    public :: log2
+    public :: eig
+    public :: ordschur
+    public :: sqrtm
+
+    !-------------------------------------------------
+    !-----     Options for iterative solvers     -----
+    !-------------------------------------------------
+
+    type, abstract, public :: abstract_opts
+        !! Abstract type for options from which all others are extended.
+    end type
+
+    type, abstract, public :: abstract_metadata
+        !! Abstract type for solver metadata from which all others are extended.
+        private
+        contains
+        procedure(abstract_print_metadata), pass(self), deferred, public :: print
+        procedure(abstract_reset_metadata), pass(self), deferred, public :: reset
+    end type
+
+    abstract interface
+        subroutine abstract_print_metadata(self, reset_counters, verbose)
+            import abstract_metadata
+            class(abstract_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            logical, optional, intent(in) :: verbose
+        end subroutine
+
+        subroutine abstract_reset_metadata(self)
+            import abstract_metadata
+            class(abstract_metadata), intent(inout) :: self
+        end subroutine
+    end interface
+
+    !-------------------------------------
+    !-----     Utility functions     -----
+    !-------------------------------------
+
+    ! NOTE : Most of these functions will gradually disappear as more stable
+    !        versions make their ways into the Fortran stdlib library.
+
+    interface assert_shape
+        !! This interface provides methods to assert tha thte shape of its input vector or
+        !! matrix is as expected. It throws an error if not.
+        module subroutine assert_shape_vector_rsp(v, size, vecname, module, procedure)
+            real(sp), intent(in) :: v(:)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: vecname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+
+        module subroutine assert_shape_matrix_rsp(A, size, matname, module, procedure)
+            real(sp), intent(in) :: A(:, :)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: matname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+        module subroutine assert_shape_vector_rdp(v, size, vecname, module, procedure)
+            real(dp), intent(in) :: v(:)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: vecname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+
+        module subroutine assert_shape_matrix_rdp(A, size, matname, module, procedure)
+            real(dp), intent(in) :: A(:, :)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: matname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+        module subroutine assert_shape_vector_csp(v, size, vecname, module, procedure)
+            complex(sp), intent(in) :: v(:)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: vecname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+
+        module subroutine assert_shape_matrix_csp(A, size, matname, module, procedure)
+            complex(sp), intent(in) :: A(:, :)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: matname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+        module subroutine assert_shape_vector_cdp(v, size, vecname, module, procedure)
+            complex(dp), intent(in) :: v(:)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: vecname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+
+        module subroutine assert_shape_matrix_cdp(A, size, matname, module, procedure)
+            complex(dp), intent(in) :: A(:, :)
+            integer, intent(in) :: size(:)
+            character(len=*), intent(in) :: matname
+            character(len=*), intent(in) :: module
+            character(len=*), intent(in) :: procedure
+        end subroutine
+    end interface
+
+    interface log2
+        !! Utility function to compute the base-2 logarithm of a real number.
+        elemental real(sp) module function log2_rsp(x) result(y)
+            real(sp), intent(in) :: x
+        end function
+        elemental real(dp) module function log2_rdp(x) result(y)
+            real(dp), intent(in) :: x
+        end function
+    end interface
+
+    interface eig
+        !!  Computes the eigenvalue decomposition of a general square matrix.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to compute the solution to the eigenproblem
+        !!  \( \mathbf{Ax} = \lambda \mathbf{x} \), where $\mathbf{A}$ is a square `real`
+        !!  or `complex` matrix.
+        !!
+        !!  Result array `lambda` returns the eigenvalues of \( \mathbf{A} \), while `vecs`
+        !!  returns the corresponding eigenvectors. Note that it follows the LAPACK convention
+        !!  when \( \mathbf{A} \) is `real`. The solver is based on LAPACK's `*GEEV` backends.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call eig(A, vecs, lambda)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an `intent(in)` argument.
+        !!
+        !!  `vecs`: Square array of the same size, type, and kind as `A` containing the eigenvectors
+        !!  (following LAPACK's convention for `real` matrices). It is an `intent(out)` argument.
+        !!
+        !!  `lambda`: `complex` rank-1 array of the same kind as `A` containing the eigenvalues.
+        !!  It is an `intent(out)` argument.
+        !!
+        !!  @note
+        !!  Due to the abstrct nature of the vector types defined in `LightKrylov`, it is unlikely
+        !!  that this implementation will be superseeded in favor of the `stdlib` one as the latter
+        !!  does not follow the LAPACK's convention.
+        !!  @endnote
+        module subroutine eig_rsp(A, vecs, vals)
+            real(sp), intent(in) :: A(:, :)
+            real(sp), intent(out) :: vecs(:, :)
+            complex(sp), intent(out) :: vals(:)
+        end subroutine
+        module subroutine eig_rdp(A, vecs, vals)
+            real(dp), intent(in) :: A(:, :)
+            real(dp), intent(out) :: vecs(:, :)
+            complex(dp), intent(out) :: vals(:)
+        end subroutine
+        module subroutine eig_csp(A, vecs, vals)
+            complex(sp), intent(in) :: A(:, :)
+            complex(sp), intent(out) :: vecs(:, :)
+            complex(sp), intent(out) :: vals(:)
+        end subroutine
+        module subroutine eig_cdp(A, vecs, vals)
+            complex(dp), intent(in) :: A(:, :)
+            complex(dp), intent(out) :: vecs(:, :)
+            complex(dp), intent(out) :: vals(:)
+        end subroutine
+    end interface
+
+    interface ordschur
+        !!  Given the Schur factorization and basis of a matrix, reorders it to have the selected
+        !!  eigenvalues in the upper left block.
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods to re-order the Schur factorization of a `real` or
+        !!  `complex` square matrix. Note that, if \( \mathbf{A} \) is `real`, it returns the
+        !!  real Schur form.
+        !!
+        !!  ### Syntax
+        !!
+        !!  `call ordschur(T, Q, selected)`
+        !!
+        !!  ### Arguments
+        !!
+        !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix. 
+        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` argument.
+        !!  
+        !!  `Q`: Two-dimensional square array of the same size, type and kind as `A`. It contains
+        !!  the original Schur basis on entry and the re-ordered one on exit.
+        !!  It is an `intent(inout)` argument.
+        !!
+        !!  `selected`: `logical` rank-1 array selecting which eigenvalues need to be moved in the
+        !!  upper left block of the Schur factorization.
+        !!  It is an `intent(in)` arguement.
+        module subroutine ordschur_rsp(T, Q, selected)
+            real(sp), intent(inout) :: T(:, :)
+            real(sp), intent(inout) :: Q(:, :)
+            logical, intent(in) :: selected(:)
+        end subroutine
+        module subroutine ordschur_rdp(T, Q, selected)
+            real(dp), intent(inout) :: T(:, :)
+            real(dp), intent(inout) :: Q(:, :)
+            logical, intent(in) :: selected(:)
+        end subroutine
+        module subroutine ordschur_csp(T, Q, selected)
+            complex(sp), intent(inout) :: T(:, :)
+            complex(sp), intent(inout) :: Q(:, :)
+            logical, intent(in) :: selected(:)
+        end subroutine
+        module subroutine ordschur_cdp(T, Q, selected)
+            complex(dp), intent(inout) :: T(:, :)
+            complex(dp), intent(inout) :: Q(:, :)
+            logical, intent(in) :: selected(:)
+        end subroutine
+    end interface
+
+    interface sqrtm
         !!  Computes the non-negative square root of a symmetric positive definite matrix
-        !!  using its eigenvalue decomposition.
+        !!  using its singular value decomposition.
         !!
         !!  ### Description
         !!
@@ -58,7 +262,7 @@ module lightkrylov_utils
         !!
         !!  ### Syntax
         !!
-        !!  `call sqrtm_eig(A, sqrtmA, info)`
+        !!  `call sqrtm(A, sqrtmA, info)`
         !!
         !!  ### Arguments
         !!  
@@ -68,203 +272,26 @@ module lightkrylov_utils
         !!  `sqrtmA`: Non-negative square root of `A`. It has the same size, kind and type as `A`.
         !!  It is an `intent(out)` argument.
         !!
-        !!  `info`: Information flag. It is an `intent(out)` argument.
-        module procedure sqrtm_eig_rsp
-        module procedure sqrtm_eig_rdp
-        module procedure sqrtm_eig_csp
-        module procedure sqrtm_eig_cdp
+        !!  `info`: Information flag. It is an `intent(out)` argument. 
+        module subroutine sqrtm_rsp(A, sqrtA, info)
+            real(sp), intent(inout) :: A(:, :)
+            real(sp), intent(out) :: sqrtA(:, :)
+            integer, intent(out) :: info
+        end subroutine
+        module subroutine sqrtm_rdp(A, sqrtA, info)
+            real(dp), intent(inout) :: A(:, :)
+            real(dp), intent(out) :: sqrtA(:, :)
+            integer, intent(out) :: info
+        end subroutine
+        module subroutine sqrtm_csp(A, sqrtA, info)
+            complex(sp), intent(inout) :: A(:, :)
+            complex(sp), intent(out) :: sqrtA(:, :)
+            integer, intent(out) :: info
+        end subroutine
+        module subroutine sqrtm_cdp(A, sqrtA, info)
+            complex(dp), intent(inout) :: A(:, :)
+            complex(dp), intent(out) :: sqrtA(:, :)
+            integer, intent(out) :: info
+        end subroutine
     end interface
-
-contains
-
-    ! NOTE: This function will be deprecated soon.
-    subroutine sqrtm_eig_rsp(X, sqrtmX, info)
-      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      real(sp), intent(in)  :: X(:,:)
-      !! Matrix of which to compute the sqrt
-      real(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
-      !! Return matrix
-      integer, intent(out) :: info
-      !! Information flag
-
-      ! internals
-      real(sp) :: Xtmp(size(X, 1), size(X, 1))
-      real(sp) :: lambda(size(X,1))
-      real(sp) :: V(size(X,1), size(X,1))
-      integer :: i
-      character(len=256) :: msg
-
-      info = 0
-
-      ! Check if the matrix is symmetric
-      if (.not. is_symmetric(X)) then
-        write(msg,'(A)') "Input matrix is not symmetric."
-        call stop_error(msg, module=this_module, procedure='sqrtm_rsp')
-      end if
-
-      ! Perform eigenvalue decomposition
-      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
-
-      ! Check if the matrix is positive definite (up to tol)
-      do i = 1, size(lambda)
-         if (abs(lambda(i)) .gt. 10*atol_sp ) then
-            if (lambda(i) .gt. zero_rsp) then
-               lambda(i) = sqrt(lambda(i))
-            else
-               lambda(i) = zero_rsp
-               info = -1
-            end if
-         else
-            lambda(i) = zero_rsp
-            info = 1
-         end if
-      end do
-
-      ! Reconstruct the square root matrix
-      sqrtmX = matmul(V, matmul(diag(lambda), hermitian(V)))
-
-      return
-    end subroutine
-    subroutine sqrtm_eig_rdp(X, sqrtmX, info)
-      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      real(dp), intent(in)  :: X(:,:)
-      !! Matrix of which to compute the sqrt
-      real(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
-      !! Return matrix
-      integer, intent(out) :: info
-      !! Information flag
-
-      ! internals
-      real(dp) :: Xtmp(size(X, 1), size(X, 1))
-      real(dp) :: lambda(size(X,1))
-      real(dp) :: V(size(X,1), size(X,1))
-      integer :: i
-      character(len=256) :: msg
-
-      info = 0
-
-      ! Check if the matrix is symmetric
-      if (.not. is_symmetric(X)) then
-        write(msg,'(A)') "Input matrix is not symmetric."
-        call stop_error(msg, module=this_module, procedure='sqrtm_rdp')
-      end if
-
-      ! Perform eigenvalue decomposition
-      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
-
-      ! Check if the matrix is positive definite (up to tol)
-      do i = 1, size(lambda)
-         if (abs(lambda(i)) .gt. 10*atol_dp ) then
-            if (lambda(i) .gt. zero_rdp) then
-               lambda(i) = sqrt(lambda(i))
-            else
-               lambda(i) = zero_rdp
-               info = -1
-            end if
-         else
-            lambda(i) = zero_rdp
-            info = 1
-         end if
-      end do
-
-      ! Reconstruct the square root matrix
-      sqrtmX = matmul(V, matmul(diag(lambda), hermitian(V)))
-
-      return
-    end subroutine
-    subroutine sqrtm_eig_csp(X, sqrtmX, info)
-      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      complex(sp), intent(in)  :: X(:,:)
-      !! Matrix of which to compute the sqrt
-      complex(sp), intent(out) :: sqrtmX(size(X,1),size(X,1))
-      !! Return matrix
-      integer, intent(out) :: info
-      !! Information flag
-
-      ! internals
-      complex(sp) :: Xtmp(size(X, 1), size(X, 1))
-      real(sp) :: lambda(size(X,1))
-      complex(sp) :: V(size(X,1), size(X,1))
-      integer :: i
-      character(len=256) :: msg
-
-      info = 0
-
-      ! Check if the matrix is hermitian
-      if (.not. is_hermitian(X)) then
-        write(msg,'(A)') "Input matrix is not hermitian"
-        call stop_error(msg, module=this_module, procedure='sqrtm_csp')
-      end if
-
-      ! Perform eigenvalue decomposition
-      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
-
-      ! Check if the matrix is positive definite (up to tol)
-      do i = 1, size(lambda)
-         if (abs(lambda(i)) .gt. 10*atol_sp ) then
-            if (lambda(i) .gt. zero_rsp) then
-               lambda(i) = sqrt(lambda(i))
-            else
-               lambda(i) = zero_rsp
-               info = -1
-            end if
-         else
-            lambda(i) = zero_rsp
-            info = 1
-         end if
-      end do
-
-      ! Reconstruct the square root matrix
-      sqrtmX = matmul(V, matmul(diag(lambda), hermitian(V)))
-
-      return
-    end subroutine
-    subroutine sqrtm_eig_cdp(X, sqrtmX, info)
-      !! Matrix-valued sqrt function for dense symmetric/hermitian positive (semi-)definite matrices
-      complex(dp), intent(in)  :: X(:,:)
-      !! Matrix of which to compute the sqrt
-      complex(dp), intent(out) :: sqrtmX(size(X,1),size(X,1))
-      !! Return matrix
-      integer, intent(out) :: info
-      !! Information flag
-
-      ! internals
-      complex(dp) :: Xtmp(size(X, 1), size(X, 1))
-      real(dp) :: lambda(size(X,1))
-      complex(dp) :: V(size(X,1), size(X,1))
-      integer :: i
-      character(len=256) :: msg
-
-      info = 0
-
-      ! Check if the matrix is hermitian
-      if (.not. is_hermitian(X)) then
-        write(msg,'(A)') "Input matrix is not hermitian"
-        call stop_error(msg, module=this_module, procedure='sqrtm_cdp')
-      end if
-
-      ! Perform eigenvalue decomposition
-      Xtmp = X ; call eigh(Xtmp, lambda, vectors=V, overwrite_a=.true.)
-
-      ! Check if the matrix is positive definite (up to tol)
-      do i = 1, size(lambda)
-         if (abs(lambda(i)) .gt. 10*atol_dp ) then
-            if (lambda(i) .gt. zero_rdp) then
-               lambda(i) = sqrt(lambda(i))
-            else
-               lambda(i) = zero_rdp
-               info = -1
-            end if
-         else
-            lambda(i) = zero_rdp
-            info = 1
-         end if
-      end do
-
-      ! Reconstruct the square root matrix
-      sqrtmX = matmul(V, matmul(diag(lambda), hermitian(V)))
-
-      return
-    end subroutine
-
-end module lightkrylov_utils
+end module
