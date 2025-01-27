@@ -1023,6 +1023,10 @@ module lightkrylov_IterativeSolvers
         !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
         !!                             being converged. It is an `intent(in)` agument. By default,
         !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  @note
+        !!  This implementation does not currently include an automatic restarting procedure
+        !!  such as `krylov_schur` for `eigs`. This is work in progress.
+        !!  @endnote
         module subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
@@ -1158,6 +1162,10 @@ module lightkrylov_IterativeSolvers
         !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
         !!                             being converged. It is an `intent(in)` agument. By default,
         !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  @note
+        !!  This implementation does not currently include an automatic restarting procedure
+        !!  such as `krylov_schur` for `eigs`. This is work in progress.
+        !!  @endnote
         module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
@@ -1598,11 +1606,11 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_rsp')
-        contains
-            function median_selector(lambda) result(selected)
-                complex(sp), intent(in) :: lambda(:)
-                logical, allocatable :: selected(:)
-                selected = abs(lambda) > median(abs(lambda))
+    contains
+        function median_selector(lambda) result(selected)
+            complex(sp), intent(in) :: lambda(:)
+            logical, allocatable :: selected(:)
+            selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rsp
 
@@ -1753,11 +1761,11 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_rdp')
-        contains
-            function median_selector(lambda) result(selected)
-                complex(dp), intent(in) :: lambda(:)
-                logical, allocatable :: selected(:)
-                selected = abs(lambda) > median(abs(lambda))
+    contains
+        function median_selector(lambda) result(selected)
+            complex(dp), intent(in) :: lambda(:)
+            logical, allocatable :: selected(:)
+            selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rdp
 
@@ -1898,11 +1906,11 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_csp')
-        contains
-            function median_selector(lambda) result(selected)
-                complex(sp), intent(in) :: lambda(:)
-                logical, allocatable :: selected(:)
-                selected = abs(lambda) > median(abs(lambda))
+    contains
+        function median_selector(lambda) result(selected)
+            complex(sp), intent(in) :: lambda(:)
+            logical, allocatable :: selected(:)
+            selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_csp
 
@@ -2043,11 +2051,11 @@ contains
 
         info = niter
         if (time_lightkrylov()) call timer%stop('eigs_cdp')
-        contains
-            function median_selector(lambda) result(selected)
-                complex(dp), intent(in) :: lambda(:)
-                logical, allocatable :: selected(:)
-                selected = abs(lambda) > median(abs(lambda))
+    contains
+        function median_selector(lambda) result(selected)
+            complex(dp), intent(in) :: lambda(:)
+            logical, allocatable :: selected(:)
+            selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_cdp
 
