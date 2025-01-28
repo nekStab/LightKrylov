@@ -32,20 +32,426 @@ module lightkrylov_BaseKrylov
     character(len=*), parameter :: this_module      = 'LK_BKrylov'
     character(len=*), parameter :: this_module_long = 'LightKrylov_BaseKrylov'
 
-    public :: qr
-    public :: permcols
-    public :: invperm
+    !----- Krylov processes ------
     public :: arnoldi
-    public :: initialize_krylov_subspace
+    public :: bidiagonalization
+    public :: lanczos
+
+    !----- Utility functions ------
+    public :: qr
+    public :: double_gram_schmidt_step
     public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
-    public :: bidiagonalization
-    public :: lanczos
+    public :: permcols, invperm
+
+    public :: initialize_krylov_subspace
     public :: krylov_schur
-    public :: double_gram_schmidt_step
-    public :: eigvals_select_sp
-    public :: eigvals_select_dp
+
+    !------------------------------------
+    !-----                          -----
+    !-----     KRYLOV PROCESSES     -----
+    !-----                          -----
+    !------------------------------------
+
+    interface arnoldi
+        !!  ### Description
+        !!
+        !!  Given a square linear operator \( A \), find matrices \( X \) and \( H \) such that
+        !!
+        !!  \[
+        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^T,
+        !!  \]
+        !!
+        !!  where \( X \) is an orthogonal basis and \( H \) is upper Hessenberg.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( X \) via the Gram-Schmidt process.
+        !!  - Constructs an upper Hessenberg matrix \( H \) whose eigenvalues approximates those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !   - Block version available (experimental).
+        !!
+        !!  **References**
+        !!
+        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+        !!    see Chapter 6.3: Arnoldi's method.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call arnoldi(A, X, H, info [, kstart] [, kend] [, tol] [, transpose] [, blksize])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
+        !!        module. The operator needs to be square, i.e. the dimension of its domain and
+        !!        co-domain is the same. It is an `intent(inout)` argument.
+        !!
+        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!        the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
+        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!
+        !!  `H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         upper Hessenberg matrix computed from the Arnoldi factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
+        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!            dimension `info`.
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Arnoldi
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Arnoldi step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
+        !!
+        !!  `transpose` (*optional*): `logical` flag determining whether the Arnoldi factorization
+        !!                             is applied to \( A \) or \( A^H \). Default `transpose = .false.`
+        !!
+        !!  `blksize` (*optional*): `integer` value determining the dimension of a block for the
+        !!                          block Arnoldi factorization. Default is `blksize=1`.
+        module subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            class(abstract_linop_rsp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_rsp), intent(inout) :: X(:)
+            !! Orthogonal basis for the generated Krylov subspace.
+            real(sp), intent(inout) :: H(:, :)
+            !! Upper Hessenberg matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Arnoldi factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Arnoldi factorization (default `size(X)-1`)
+            logical, optional, intent(in) :: transpose
+            !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+            real(sp), optional, intent(in) :: tol
+            !! Tolerance to determine whether an invariant subspace has been computed or not.
+            integer, optional, intent(in) :: blksize
+            !! Block size for block Arnoldi (default 1).
+        end subroutine
+        module subroutine arnoldi_rdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            class(abstract_linop_rdp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_rdp), intent(inout) :: X(:)
+            !! Orthogonal basis for the generated Krylov subspace.
+            real(dp), intent(inout) :: H(:, :)
+            !! Upper Hessenberg matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Arnoldi factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Arnoldi factorization (default `size(X)-1`)
+            logical, optional, intent(in) :: transpose
+            !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+            real(dp), optional, intent(in) :: tol
+            !! Tolerance to determine whether an invariant subspace has been computed or not.
+            integer, optional, intent(in) :: blksize
+            !! Block size for block Arnoldi (default 1).
+        end subroutine
+        module subroutine arnoldi_csp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            class(abstract_linop_csp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_csp), intent(inout) :: X(:)
+            !! Orthogonal basis for the generated Krylov subspace.
+            complex(sp), intent(inout) :: H(:, :)
+            !! Upper Hessenberg matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Arnoldi factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Arnoldi factorization (default `size(X)-1`)
+            logical, optional, intent(in) :: transpose
+            !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+            real(sp), optional, intent(in) :: tol
+            !! Tolerance to determine whether an invariant subspace has been computed or not.
+            integer, optional, intent(in) :: blksize
+            !! Block size for block Arnoldi (default 1).
+        end subroutine
+        module subroutine arnoldi_cdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            class(abstract_linop_cdp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_cdp), intent(inout) :: X(:)
+            !! Orthogonal basis for the generated Krylov subspace.
+            complex(dp), intent(inout) :: H(:, :)
+            !! Upper Hessenberg matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Arnoldi factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Arnoldi factorization (default `size(X)-1`)
+            logical, optional, intent(in) :: transpose
+            !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
+            real(dp), optional, intent(in) :: tol
+            !! Tolerance to determine whether an invariant subspace has been computed or not.
+            integer, optional, intent(in) :: blksize
+            !! Block size for block Arnoldi (default 1).
+        end subroutine
+    end interface
+
+    interface lanczos
+        !!  ### Description
+        !!
+        !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
+        !!  \( T \) such that
+        !!
+        !!  \[
+        !!      AX_k = X_k T_k + t_{k+1, k} x_{k+1} e_k^T,
+        !!  \]
+        !!
+        !!  where \( X \) is an orthogonal basis and \( T \) is symmetric tridiagonal.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( X \) via the Lanczos process with full
+        !!    reorthogonalization.
+        !!  - Constructs a symmetric tridiagonal matrix \( T \) whose eigenvalues approximates those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
+        !!    see Chapter 6.6: The symmetric Lanczos algorithm.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call lanczos(A, X, T, info [, kstart] [, kend] [, tol])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
+        !!        provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!
+        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!        the Lanczos factorization. Additionally, the maximum number of Lanczos steps
+        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!
+        !!  `T` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         symmetric tridiagonal matrix computed from the Arnoldi factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!            dimension `info`.
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
+        module subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
+            class(abstract_sym_linop_rsp), intent(inout) :: A
+            class(abstract_vector_rsp), intent(inout) :: X(:)
+            real(sp), intent(inout) :: T(:, :)
+            integer, intent(out) :: info
+            integer, optional, intent(in) :: kstart
+            integer, optional, intent(in) :: kend
+            real(sp), optional, intent(in) :: tol
+        end subroutine  
+        module subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, tol)
+            class(abstract_sym_linop_rdp), intent(inout) :: A
+            class(abstract_vector_rdp), intent(inout) :: X(:)
+            real(dp), intent(inout) :: T(:, :)
+            integer, intent(out) :: info
+            integer, optional, intent(in) :: kstart
+            integer, optional, intent(in) :: kend
+            real(dp), optional, intent(in) :: tol
+        end subroutine  
+        module subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, tol)
+            class(abstract_hermitian_linop_csp), intent(inout) :: A
+            class(abstract_vector_csp), intent(inout) :: X(:)
+            complex(sp), intent(inout) :: T(:, :)
+            integer, intent(out) :: info
+            integer, optional, intent(in) :: kstart
+            integer, optional, intent(in) :: kend
+            real(sp), optional, intent(in) :: tol
+        end subroutine  
+        module subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, tol)
+            class(abstract_hermitian_linop_cdp), intent(inout) :: A
+            class(abstract_vector_cdp), intent(inout) :: X(:)
+            complex(dp), intent(inout) :: T(:, :)
+            integer, intent(out) :: info
+            integer, optional, intent(in) :: kstart
+            integer, optional, intent(in) :: kend
+            real(dp), optional, intent(in) :: tol
+        end subroutine  
+    end interface
+
+    interface bidiagonalization
+        !!  ### Description
+        !!
+        !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
+        !!  \( B \) such that
+        !!
+        !!  \[
+        !!      \begin{aligned}
+        !!          AV_k & = U_k T_k + t_{k+1, k} v_{k+1} e_k^T, \\
+        !!          A^H U_k & = V_k T_k^T + t_{k+1, k} u_{k+1} e_k^T
+        !!      \end{aligned}
+        !!  \]
+        !!
+        !!  where \( U \) and \( V \) are orthogonal bases for the column span and row span
+        !!  of \( A \), respectively, and \( B \) is a bidiagonal matrix.
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal Krylov basis \( U \) for the column span of \( A \).
+        !!  - Constructs an orthonormal Krylov basis \( V \) for the row span of \( A \).
+        !!  - Constructs a bidiagonal matrix \( B \) whose singular values approximates 
+        !!    those of \( A \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." 
+        !!    Technical Report, 1998. [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call bidiagonalization(A, U, V, B, info [, kstart] [, kend] [, tol])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one the base types provided by the 
+        !!        `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!
+        !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
+        !!        is the starting vector for the Lanczos factorization. Additionally, the 
+        !!        maximum number of Lanczos steps is equal to `size(X) - 1`. 
+        !!        It is an `intent(inout)` argument.
+        !!
+        !!  `V` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!        the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
+        !!        argument.
+        !!
+        !!  `B` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!         bidiagonal matrix computed from the Lanczos factorization. It is an
+        !!         `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!
+        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
+        !!                          step to be computed. By default, `kstart = 1`.
+        !!
+        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
+        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!
+        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
+        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                      `tol = atol_rp` depending on the kind of `A`.
+        module subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
+            class(abstract_linop_rsp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_rsp), intent(inout) :: U(:)
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
+            !! the starting Krylov vector.
+            class(abstract_vector_rsp), intent(inout) :: V(:)
+            !! Orthonormal basis for the row span of \(\mathbf{A}\).
+            real(sp), intent(inout) :: B(:, :)
+            !! Bidiagonal matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Lanczos factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Lanczos factorization (default 1).
+            real(sp), optional, intent(in) :: tol
+            !! Tolerance to determine whether invariant subspaces have been computed or not.
+        end subroutine
+        module subroutine lanczos_bidiagonalization_rdp(A, U, V, B, info, kstart, kend, tol)
+            class(abstract_linop_rdp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_rdp), intent(inout) :: U(:)
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
+            !! the starting Krylov vector.
+            class(abstract_vector_rdp), intent(inout) :: V(:)
+            !! Orthonormal basis for the row span of \(\mathbf{A}\).
+            real(dp), intent(inout) :: B(:, :)
+            !! Bidiagonal matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Lanczos factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Lanczos factorization (default 1).
+            real(dp), optional, intent(in) :: tol
+            !! Tolerance to determine whether invariant subspaces have been computed or not.
+        end subroutine
+        module subroutine lanczos_bidiagonalization_csp(A, U, V, B, info, kstart, kend, tol)
+            class(abstract_linop_csp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_csp), intent(inout) :: U(:)
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
+            !! the starting Krylov vector.
+            class(abstract_vector_csp), intent(inout) :: V(:)
+            !! Orthonormal basis for the row span of \(\mathbf{A}\).
+            complex(sp), intent(inout) :: B(:, :)
+            !! Bidiagonal matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Lanczos factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Lanczos factorization (default 1).
+            real(sp), optional, intent(in) :: tol
+            !! Tolerance to determine whether invariant subspaces have been computed or not.
+        end subroutine
+        module subroutine lanczos_bidiagonalization_cdp(A, U, V, B, info, kstart, kend, tol)
+            class(abstract_linop_cdp), intent(inout) :: A
+            !! Linear operator to be factorized.
+            class(abstract_vector_cdp), intent(inout) :: U(:)
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
+            !! the starting Krylov vector.
+            class(abstract_vector_cdp), intent(inout) :: V(:)
+            !! Orthonormal basis for the row span of \(\mathbf{A}\).
+            complex(dp), intent(inout) :: B(:, :)
+            !! Bidiagonal matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            integer, optional, intent(in) :: kstart
+            !! Starting index for the Lanczos factorization (default 1).
+            integer, optional, intent(in) :: kend
+            !! Final index for the Lanczos factorization (default 1).
+            real(dp), optional, intent(in) :: tol
+            !! Tolerance to determine whether invariant subspaces have been computed or not.
+        end subroutine
+    end interface
+
+    !-------------------------------------
+    !-----                           -----
+    !-----     UTILITY FUNCTIONS     -----
+    !-----                           -----
+    !-------------------------------------
 
     interface qr
         !!  ### Description
@@ -278,78 +684,6 @@ module lightkrylov_BaseKrylov
             integer, intent(in) :: perm(:)
             integer, allocatable :: inv_perm(:)
         end function
-    end interface
-
-    interface arnoldi
-        !!  ### Description
-        !!
-        !!  Given a square linear operator \( A \), find matrices \( X \) and \( H \) such that
-        !!
-        !!  \[
-        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^T,
-        !!  \]
-        !!
-        !!  where \( X \) is an orthogonal basis and \( H \) is upper Hessenberg.
-        !!
-        !!  **Algorithmic Features**
-        !!
-        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
-        !!  - Constructs an orthonormal Krylov basis \( X \) via the Gram-Schmidt process.
-        !!  - Constructs an upper Hessenberg matrix \( H \) whose eigenvalues approximates those of \( A \).
-        !!  - Checks for convergence and invariant subspaces.
-        !   - Block version available (experimental).
-        !!
-        !!  **References**
-        !!
-        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
-        !!    see Chapter 6.3: Arnoldi's method.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      call arnoldi(A, X, H, info [, kstart] [, kend] [, tol] [, transpose] [, blksize])
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
-        !!        module. The operator needs to be square, i.e. the dimension of its domain and
-        !!        co-domain is the same. It is an `intent(inout)` argument.
-        !!
-        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
-        !!        the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
-        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
-        !!
-        !!  `H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!         upper Hessenberg matrix computed from the Arnoldi factorization. It is an
-        !!         `intent(inout)` argument.
-        !!
-        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!           `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
-        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
-        !!            dimension `info`.
-        !!
-        !!  `kstart` (*optional*): `integer` value determining the index of the first Arnoldi
-        !!                          step to be computed. By default, `kstart = 1`.
-        !!
-        !!  `kend` (*optional*): `integer` value determining the index of the last Arnoldi step
-        !!                        to be computed. By default, `kend = size(X) - 1`.
-        !!
-        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
-        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
-        !!                      `tol = atol_rp` depending on the kind of `A`.
-        !!
-        !!  `transpose` (*optional*): `logical` flag determining whether the Arnoldi factorization
-        !!                             is applied to \( A \) or \( A^H \). Default `transpose = .false.`
-        !!
-        !!  `blksize` (*optional*): `integer` value determining the dimension of a block for the
-        !!                          block Arnoldi factorization. Default is `blksize=1`.
-        module procedure arnoldi_rsp
-        module procedure arnoldi_rdp
-        module procedure arnoldi_csp
-        module procedure arnoldi_cdp
     end interface
 
     interface initialize_krylov_subspace
@@ -732,147 +1066,6 @@ module lightkrylov_BaseKrylov
         end subroutine
     end interface
 
-    interface lanczos
-        !!  ### Description
-        !!
-        !!  Given a symmetric or Hermitian linear operator \( A \), find matrices \( X \) and
-        !!  \( T \) such that
-        !!
-        !!  \[
-        !!      AX_k = X_k T_k + t_{k+1, k} x_{k+1} e_k^T,
-        !!  \]
-        !!
-        !!  where \( X \) is an orthogonal basis and \( T \) is symmetric tridiagonal.
-        !!
-        !!  **Algorithmic Features**
-        !!
-        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
-        !!  - Constructs an orthonormal Krylov basis \( X \) via the Lanczos process with full
-        !!    reorthogonalization.
-        !!  - Constructs a symmetric tridiagonal matrix \( T \) whose eigenvalues approximates those of \( A \).
-        !!  - Checks for convergence and invariant subspaces.
-        !!
-        !!  **References**
-        !!
-        !!  - Y. Saad. "Iterative methods for sparse linear systems", SIAM 2nd edition, 2003.
-        !!    see Chapter 6.6: The symmetric Lanczos algorithm.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      call lanczos(A, X, T, info [, kstart] [, kend] [, tol])
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
-        !!        provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
-        !!
-        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
-        !!        the Lanczos factorization. Additionally, the maximum number of Lanczos steps
-        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
-        !!
-        !!  `T` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!         symmetric tridiagonal matrix computed from the Arnoldi factorization. It is an
-        !!         `intent(inout)` argument.
-        !!
-        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
-        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
-        !!            dimension `info`.
-        !!
-        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
-        !!                          step to be computed. By default, `kstart = 1`.
-        !!
-        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
-        !!                        to be computed. By default, `kend = size(X) - 1`.
-        !!
-        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
-        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
-        !!                      `tol = atol_rp` depending on the kind of `A`.
-        module procedure lanczos_tridiagonalization_rsp
-        module procedure lanczos_tridiagonalization_rdp
-        module procedure lanczos_tridiagonalization_csp
-        module procedure lanczos_tridiagonalization_cdp
-    end interface
-
-    interface bidiagonalization
-        !!  ### Description
-        !!
-        !!  Given a general linear operator \( A \), find matrices \( U \), \( V \) and
-        !!  \( B \) such that
-        !!
-        !!  \[
-        !!      \begin{aligned}
-        !!          AV_k & = U_k T_k + t_{k+1, k} v_{k+1} e_k^T, \\
-        !!          A^H U_k & = V_k T_k^T + t_{k+1, k} u_{k+1} e_k^T
-        !!      \end{aligned}
-        !!  \]
-        !!
-        !!  where \( U \) and \( V \) are orthogonal bases for the column span and row span
-        !!  of \( A \), respectively, and \( B \) is a bidiagonal matrix.
-        !!
-        !!  **Algorithmic Features**
-        !!
-        !!  - The operator \( A \) only needs to be accessed through matrix-vector products.
-        !!  - Constructs an orthonormal Krylov basis \( U \) for the column span of \( A \).
-        !!  - Constructs an orthonormal Krylov basis \( V \) for the row span of \( A \).
-        !!  - Constructs a bidiagonal matrix \( B \) whose singular values approximates 
-        !!    those of \( A \).
-        !!  - Checks for convergence and invariant subspaces.
-        !!
-        !!  **References**
-        !!
-        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." 
-        !!    Technical Report, 1998. [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      call bidiagonalization(A, U, V, B, info [, kstart] [, kend] [, tol])
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `A` : Linear operator derived from one the base types provided by the 
-        !!        `AbstractLinops` module. It is an `intent(inout)` argument.
-        !!
-        !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
-        !!        is the starting vector for the Lanczos factorization. Additionally, the 
-        !!        maximum number of Lanczos steps is equal to `size(X) - 1`. 
-        !!        It is an `intent(inout)` argument.
-        !!
-        !!  `V` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
-        !!        argument.
-        !!
-        !!  `B` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!         bidiagonal matrix computed from the Lanczos factorization. It is an
-        !!         `intent(inout)` argument.
-        !!
-        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
-        !!
-        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
-        !!                          step to be computed. By default, `kstart = 1`.
-        !!
-        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
-        !!                        to be computed. By default, `kend = size(X) - 1`.
-        !!
-        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
-        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
-        !!                      `tol = atol_rp` depending on the kind of `A`.
-        module procedure lanczos_bidiagonalization_rsp
-        module procedure lanczos_bidiagonalization_rdp
-        module procedure lanczos_bidiagonalization_csp
-        module procedure lanczos_bidiagonalization_cdp
-    end interface
-
     interface krylov_schur
         !!  ### Description
         !!
@@ -923,7 +1116,7 @@ module lightkrylov_BaseKrylov
     !-----     ABSTRACT EIGENVALUE SELECTOR INTERFACE     -----
     !----------------------------------------------------------
 
-    interface
+    abstract interface
         function eigvals_select_sp(lambda) result(selected)
             import sp
             complex(sp), intent(in) :: lambda(:)
@@ -937,987 +1130,6 @@ module lightkrylov_BaseKrylov
     end interface
 
 contains
-
-    !-----------------------------------------
-    !-----     ARNOLDI FACTORIZATION     -----
-    !-----------------------------------------
-
-    subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_rsp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_rsp), intent(inout) :: X(:)
-        !! Orthogonal basis for the generated Krylov subspace.
-        real(sp), intent(inout) :: H(:, :)
-        !! Upper Hessenberg matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Arnoldi factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: transpose
-        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
-        real(sp), optional, intent(in) :: tol
-        !! Tolerance to determine whether an invariant subspace has been computed or not.
-        integer, optional, intent(in) :: blksize
-        !! Block size for block Arnoldi (default 1).
-
-        ! Internal variables.
-        integer :: k_start, k_end, p
-        logical :: trans
-        real(sp) :: tolerance
-        real(sp) :: beta
-        real(sp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
-        integer :: k, i, kdim, kpm, kp, kpp
-
-        if (time_lightkrylov()) call timer%start('arnoldi_rsp')
-
-        ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
-
-        ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        tolerance = optval (tol, atol_sp)
-        trans     = optval(transpose, .false.)
-
-        ! Arnoldi factorization.
-        blk_arnoldi: do k = k_start, k_end
-            ! Counters
-            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-
-            ! Matrix-vector product.
-            if (trans) then
-                do i = 1, p
-                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
-                enddo
-            else
-                do i = 1, p
-                    call A%apply_matvec(X(kpm+i), X(kp+i))
-                enddo
-            endif
-
-            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rsp')
-
-            ! Orthogonalize current blk vectors.
-            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_rsp')
-
-            ! Extract residual norm (smallest diagonal element of H matrix).
-            res = zero_rsp
-            do i = 1, p
-                res(i) = H(kp+i, kpm+i)
-            enddo
-            beta = minval(abs(res))
-
-            ! Exit Arnoldi loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = kp
-                ! Exit the Arnoldi iteration.
-                exit blk_arnoldi
-            endif
-
-        enddo blk_arnoldi
-
-        if (time_lightkrylov()) call timer%stop('arnoldi_rsp')
-        
-        return
-    end subroutine arnoldi_rsp
-
-    subroutine arnoldi_rdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_rdp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_rdp), intent(inout) :: X(:)
-        !! Orthogonal basis for the generated Krylov subspace.
-        real(dp), intent(inout) :: H(:, :)
-        !! Upper Hessenberg matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Arnoldi factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: transpose
-        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
-        real(dp), optional, intent(in) :: tol
-        !! Tolerance to determine whether an invariant subspace has been computed or not.
-        integer, optional, intent(in) :: blksize
-        !! Block size for block Arnoldi (default 1).
-
-        ! Internal variables.
-        integer :: k_start, k_end, p
-        logical :: trans
-        real(dp) :: tolerance
-        real(dp) :: beta
-        real(dp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
-        integer :: k, i, kdim, kpm, kp, kpp
-
-        if (time_lightkrylov()) call timer%start('arnoldi_rdp')
-
-        ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
-
-        ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        tolerance = optval (tol, atol_dp)
-        trans     = optval(transpose, .false.)
-
-        ! Arnoldi factorization.
-        blk_arnoldi: do k = k_start, k_end
-            ! Counters
-            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-
-            ! Matrix-vector product.
-            if (trans) then
-                do i = 1, p
-                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
-                enddo
-            else
-                do i = 1, p
-                    call A%apply_matvec(X(kpm+i), X(kp+i))
-                enddo
-            endif
-
-            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rdp')
-
-            ! Orthogonalize current blk vectors.
-            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_rdp')
-
-            ! Extract residual norm (smallest diagonal element of H matrix).
-            res = zero_rdp
-            do i = 1, p
-                res(i) = H(kp+i, kpm+i)
-            enddo
-            beta = minval(abs(res))
-
-            ! Exit Arnoldi loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = kp
-                ! Exit the Arnoldi iteration.
-                exit blk_arnoldi
-            endif
-
-        enddo blk_arnoldi
-
-        if (time_lightkrylov()) call timer%stop('arnoldi_rdp')
-        
-        return
-    end subroutine arnoldi_rdp
-
-    subroutine arnoldi_csp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_csp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_csp), intent(inout) :: X(:)
-        !! Orthogonal basis for the generated Krylov subspace.
-        complex(sp), intent(inout) :: H(:, :)
-        !! Upper Hessenberg matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Arnoldi factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: transpose
-        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
-        real(sp), optional, intent(in) :: tol
-        !! Tolerance to determine whether an invariant subspace has been computed or not.
-        integer, optional, intent(in) :: blksize
-        !! Block size for block Arnoldi (default 1).
-
-        ! Internal variables.
-        integer :: k_start, k_end, p
-        logical :: trans
-        real(sp) :: tolerance
-        real(sp) :: beta
-        complex(sp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
-        integer :: k, i, kdim, kpm, kp, kpp
-
-        if (time_lightkrylov()) call timer%start('arnoldi_csp')
-
-        ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
-
-        ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        tolerance = optval (tol, atol_sp)
-        trans     = optval(transpose, .false.)
-
-        ! Arnoldi factorization.
-        blk_arnoldi: do k = k_start, k_end
-            ! Counters
-            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-
-            ! Matrix-vector product.
-            if (trans) then
-                do i = 1, p
-                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
-                enddo
-            else
-                do i = 1, p
-                    call A%apply_matvec(X(kpm+i), X(kp+i))
-                enddo
-            endif
-
-            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_csp')
-
-            ! Orthogonalize current blk vectors.
-            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_csp')
-
-            ! Extract residual norm (smallest diagonal element of H matrix).
-            res = zero_rsp
-            do i = 1, p
-                res(i) = H(kp+i, kpm+i)
-            enddo
-            beta = minval(abs(res))
-
-            ! Exit Arnoldi loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = kp
-                ! Exit the Arnoldi iteration.
-                exit blk_arnoldi
-            endif
-
-        enddo blk_arnoldi
-
-        if (time_lightkrylov()) call timer%stop('arnoldi_csp')
-        
-        return
-    end subroutine arnoldi_csp
-
-    subroutine arnoldi_cdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
-        class(abstract_linop_cdp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_cdp), intent(inout) :: X(:)
-        !! Orthogonal basis for the generated Krylov subspace.
-        complex(dp), intent(inout) :: H(:, :)
-        !! Upper Hessenberg matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Arnoldi factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Arnoldi factorization (default `size(X)-1`)
-        logical, optional, intent(in) :: transpose
-        !! Whether \( \mathbf{A} \) is being transposed or not (default `.false.`)
-        real(dp), optional, intent(in) :: tol
-        !! Tolerance to determine whether an invariant subspace has been computed or not.
-        integer, optional, intent(in) :: blksize
-        !! Block size for block Arnoldi (default 1).
-
-        ! Internal variables.
-        integer :: k_start, k_end, p
-        logical :: trans
-        real(dp) :: tolerance
-        real(dp) :: beta
-        complex(dp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
-        integer :: k, i, kdim, kpm, kp, kpp
-
-        if (time_lightkrylov()) call timer%start('arnoldi_cdp')
-
-        ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
-
-        ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
-        tolerance = optval (tol, atol_dp)
-        trans     = optval(transpose, .false.)
-
-        ! Arnoldi factorization.
-        blk_arnoldi: do k = k_start, k_end
-            ! Counters
-            kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
-
-            ! Matrix-vector product.
-            if (trans) then
-                do i = 1, p
-                    call A%apply_rmatvec(X(kpm+i), X(kp+i))
-                enddo
-            else
-                do i = 1, p
-                    call A%apply_matvec(X(kpm+i), X(kp+i))
-                enddo
-            endif
-
-            ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_cdp')
-
-            ! Orthogonalize current blk vectors.
-            call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_cdp')
-
-            ! Extract residual norm (smallest diagonal element of H matrix).
-            res = zero_rdp
-            do i = 1, p
-                res(i) = H(kp+i, kpm+i)
-            enddo
-            beta = minval(abs(res))
-
-            ! Exit Arnoldi loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = kp
-                ! Exit the Arnoldi iteration.
-                exit blk_arnoldi
-            endif
-
-        enddo blk_arnoldi
-
-        if (time_lightkrylov()) call timer%stop('arnoldi_cdp')
-        
-        return
-    end subroutine arnoldi_cdp
-
-
-
-    !---------------------------------------------
-    !-----     LANCZOS BIDIAGONALIZATION     -----
-    !---------------------------------------------
-
-    subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_rsp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_rsp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-        !! the starting Krylov vector.
-        class(abstract_vector_rsp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\).
-        real(sp), intent(inout) :: B(:, :)
-        !! Bidiagonal matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Lanczos factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Lanczos factorization (default 1).
-        real(sp), optional, intent(in) :: tol
-        !! Tolerance to determine whether invariant subspaces have been computed or not.
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(sp) :: tolerance
-        real(sp) :: alpha, beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_rsp')
-        info = 0
-
-        ! Krylov subspace dimension.
-        kdim = size(U) - 1
-
-        ! Deals with the optional args.
-        k_start = optval(kstart, 1)
-        k_end   = optval(kend, kdim)
-        tolerance = optval(tol, atol_sp)
-
-        ! Lanczos bidiagonalization.
-        lanczos : do k = k_start, k_end
-            ! Transpose matrix-vector product.
-            call A%apply_rmatvec(U(k), V(k))
-
-            ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1) then
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rsp, right basis')
-            end if
-
-            ! Normalization step.
-            alpha = V(k)%norm() ; B(k, k) = alpha
-            if (abs(alpha) > tolerance) then
-                call V(k)%scal(one_rsp/alpha)
-            else
-                info = k
-                exit lanczos
-            endif
-
-            ! Matrix-vector product.
-            call A%apply_matvec(V(k), U(k+1))
-
-            ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rsp, left basis')
-
-            ! Normalization step
-            beta = U(k+1)%norm() ; B(k+1, k) = beta
-            if (abs(beta) > tolerance) then
-                call U(k+1)%scal(one_rsp / beta)
-            else
-                info = k
-                exit lanczos
-            endif
-
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_rsp')
-        
-        return
-    end subroutine lanczos_bidiagonalization_rsp
-
-    subroutine lanczos_bidiagonalization_rdp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_rdp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_rdp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-        !! the starting Krylov vector.
-        class(abstract_vector_rdp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\).
-        real(dp), intent(inout) :: B(:, :)
-        !! Bidiagonal matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Lanczos factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Lanczos factorization (default 1).
-        real(dp), optional, intent(in) :: tol
-        !! Tolerance to determine whether invariant subspaces have been computed or not.
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(dp) :: tolerance
-        real(dp) :: alpha, beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_rdp')
-        info = 0
-
-        ! Krylov subspace dimension.
-        kdim = size(U) - 1
-
-        ! Deals with the optional args.
-        k_start = optval(kstart, 1)
-        k_end   = optval(kend, kdim)
-        tolerance = optval(tol, atol_dp)
-
-        ! Lanczos bidiagonalization.
-        lanczos : do k = k_start, k_end
-            ! Transpose matrix-vector product.
-            call A%apply_rmatvec(U(k), V(k))
-
-            ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1) then
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rdp, right basis')
-            end if
-
-            ! Normalization step.
-            alpha = V(k)%norm() ; B(k, k) = alpha
-            if (abs(alpha) > tolerance) then
-                call V(k)%scal(one_rdp/alpha)
-            else
-                info = k
-                exit lanczos
-            endif
-
-            ! Matrix-vector product.
-            call A%apply_matvec(V(k), U(k+1))
-
-            ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rdp, left basis')
-
-            ! Normalization step
-            beta = U(k+1)%norm() ; B(k+1, k) = beta
-            if (abs(beta) > tolerance) then
-                call U(k+1)%scal(one_rdp / beta)
-            else
-                info = k
-                exit lanczos
-            endif
-
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_rdp')
-        
-        return
-    end subroutine lanczos_bidiagonalization_rdp
-
-    subroutine lanczos_bidiagonalization_csp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_csp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_csp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-        !! the starting Krylov vector.
-        class(abstract_vector_csp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\).
-        complex(sp), intent(inout) :: B(:, :)
-        !! Bidiagonal matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Lanczos factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Lanczos factorization (default 1).
-        real(sp), optional, intent(in) :: tol
-        !! Tolerance to determine whether invariant subspaces have been computed or not.
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(sp) :: tolerance
-        complex(sp) :: alpha, beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_csp')
-        info = 0
-
-        ! Krylov subspace dimension.
-        kdim = size(U) - 1
-
-        ! Deals with the optional args.
-        k_start = optval(kstart, 1)
-        k_end   = optval(kend, kdim)
-        tolerance = optval(tol, atol_sp)
-
-        ! Lanczos bidiagonalization.
-        lanczos : do k = k_start, k_end
-            ! Transpose matrix-vector product.
-            call A%apply_rmatvec(U(k), V(k))
-
-            ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1) then
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_csp, right basis')
-            end if
-
-            ! Normalization step.
-            alpha = V(k)%norm() ; B(k, k) = alpha
-            if (abs(alpha) > tolerance) then
-                call V(k)%scal(one_csp/alpha)
-            else
-                info = k
-                exit lanczos
-            endif
-
-            ! Matrix-vector product.
-            call A%apply_matvec(V(k), U(k+1))
-
-            ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_csp, left basis')
-
-            ! Normalization step
-            beta = U(k+1)%norm() ; B(k+1, k) = beta
-            if (abs(beta) > tolerance) then
-                call U(k+1)%scal(one_csp / beta)
-            else
-                info = k
-                exit lanczos
-            endif
-
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_csp')
-        
-        return
-    end subroutine lanczos_bidiagonalization_csp
-
-    subroutine lanczos_bidiagonalization_cdp(A, U, V, B, info, kstart, kend, tol)
-        class(abstract_linop_cdp), intent(inout) :: A
-        !! Linear operator to be factorized.
-        class(abstract_vector_cdp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-        !! the starting Krylov vector.
-        class(abstract_vector_cdp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\).
-        complex(dp), intent(inout) :: B(:, :)
-        !! Bidiagonal matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        integer, optional, intent(in) :: kstart
-        !! Starting index for the Lanczos factorization (default 1).
-        integer, optional, intent(in) :: kend
-        !! Final index for the Lanczos factorization (default 1).
-        real(dp), optional, intent(in) :: tol
-        !! Tolerance to determine whether invariant subspaces have been computed or not.
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(dp) :: tolerance
-        complex(dp) :: alpha, beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_cdp')
-        info = 0
-
-        ! Krylov subspace dimension.
-        kdim = size(U) - 1
-
-        ! Deals with the optional args.
-        k_start = optval(kstart, 1)
-        k_end   = optval(kend, kdim)
-        tolerance = optval(tol, atol_dp)
-
-        ! Lanczos bidiagonalization.
-        lanczos : do k = k_start, k_end
-            ! Transpose matrix-vector product.
-            call A%apply_rmatvec(U(k), V(k))
-
-            ! Full re-orthogonalization of the right Krylov subspace.
-            if (k > 1) then
-                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_cdp, right basis')
-            end if
-
-            ! Normalization step.
-            alpha = V(k)%norm() ; B(k, k) = alpha
-            if (abs(alpha) > tolerance) then
-                call V(k)%scal(one_cdp/alpha)
-            else
-                info = k
-                exit lanczos
-            endif
-
-            ! Matrix-vector product.
-            call A%apply_matvec(V(k), U(k+1))
-
-            ! Full re-orthogonalization of the left Krylov subspace.
-            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_cdp, left basis')
-
-            ! Normalization step
-            beta = U(k+1)%norm() ; B(k+1, k) = beta
-            if (abs(beta) > tolerance) then
-                call U(k+1)%scal(one_cdp / beta)
-            else
-                info = k
-                exit lanczos
-            endif
-
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_cdp')
-        
-        return
-    end subroutine lanczos_bidiagonalization_cdp
-
-
-
-    !----------------------------------------------
-    !-----     LANCZOS TRIDIAGONALIZATION     -----
-    !----------------------------------------------
-    
-    subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
-        class(abstract_sym_linop_rsp), intent(inout) :: A
-        class(abstract_vector_rsp), intent(inout) :: X(:)
-        real(sp), intent(inout) :: T(:, :)
-        integer, intent(out) :: info
-        integer, optional, intent(in) :: kstart
-        integer, optional, intent(in) :: kend
-        real(sp), optional, intent(in) :: tol
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(sp) :: tolerance
-        real(sp) :: beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_rsp')
-
-        ! Deal with optional args.
-        kdim = size(X) - 1
-        k_start = optval(kstart, 1)
-        k_end = optval(kend, kdim)
-        tolerance = optval(tol, atol_sp)
-        info = 0
-
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_rsp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
-            else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_rsp / beta)
-            endif
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_rsp')
-        
-        return
-    end subroutine lanczos_tridiagonalization_rsp
-
-    subroutine update_tridiag_matrix_rsp(T, X, k)
-        integer, intent(in) :: k
-        real(sp), intent(inout) :: T(:, :)
-        class(abstract_vector_rsp), intent(inout) :: X(:)
-
-        ! Internal variables.
-        integer :: i, info
-
-        info = 0
-
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
-        do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -T(i, k))
-        enddo
-
-        ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_rsp')
-
-        return
-    end subroutine update_tridiag_matrix_rsp
-
-    subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, tol)
-        class(abstract_sym_linop_rdp), intent(inout) :: A
-        class(abstract_vector_rdp), intent(inout) :: X(:)
-        real(dp), intent(inout) :: T(:, :)
-        integer, intent(out) :: info
-        integer, optional, intent(in) :: kstart
-        integer, optional, intent(in) :: kend
-        real(dp), optional, intent(in) :: tol
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(dp) :: tolerance
-        real(dp) :: beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_rdp')
-
-        ! Deal with optional args.
-        kdim = size(X) - 1
-        k_start = optval(kstart, 1)
-        k_end = optval(kend, kdim)
-        tolerance = optval(tol, atol_dp)
-        info = 0
-
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_rdp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
-            else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_rdp / beta)
-            endif
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_rdp')
-        
-        return
-    end subroutine lanczos_tridiagonalization_rdp
-
-    subroutine update_tridiag_matrix_rdp(T, X, k)
-        integer, intent(in) :: k
-        real(dp), intent(inout) :: T(:, :)
-        class(abstract_vector_rdp), intent(inout) :: X(:)
-
-        ! Internal variables.
-        integer :: i, info
-
-        info = 0
-
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
-        do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -T(i, k))
-        enddo
-
-        ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_rdp')
-
-        return
-    end subroutine update_tridiag_matrix_rdp
-
-    subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, tol)
-        class(abstract_hermitian_linop_csp), intent(inout) :: A
-        class(abstract_vector_csp), intent(inout) :: X(:)
-        complex(sp), intent(inout) :: T(:, :)
-        integer, intent(out) :: info
-        integer, optional, intent(in) :: kstart
-        integer, optional, intent(in) :: kend
-        real(sp), optional, intent(in) :: tol
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(sp) :: tolerance
-        real(sp) :: beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_csp')
-
-        ! Deal with optional args.
-        kdim = size(X) - 1
-        k_start = optval(kstart, 1)
-        k_end = optval(kend, kdim)
-        tolerance = optval(tol, atol_sp)
-        info = 0
-
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_csp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
-            else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_csp / beta)
-            endif
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_csp')
-        
-        return
-    end subroutine lanczos_tridiagonalization_csp
-
-    subroutine update_tridiag_matrix_csp(T, X, k)
-        integer, intent(in) :: k
-        complex(sp), intent(inout) :: T(:, :)
-        class(abstract_vector_csp), intent(inout) :: X(:)
-
-        ! Internal variables.
-        integer :: i, info
-
-        info = 0
-
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
-        do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -T(i, k))
-        enddo
-
-        ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_csp')
-
-        return
-    end subroutine update_tridiag_matrix_csp
-
-    subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, tol)
-        class(abstract_hermitian_linop_cdp), intent(inout) :: A
-        class(abstract_vector_cdp), intent(inout) :: X(:)
-        complex(dp), intent(inout) :: T(:, :)
-        integer, intent(out) :: info
-        integer, optional, intent(in) :: kstart
-        integer, optional, intent(in) :: kend
-        real(dp), optional, intent(in) :: tol
-
-        ! Internal variables.
-        integer :: k_start, k_end
-        real(dp) :: tolerance
-        real(dp) :: beta
-        integer :: k, kdim
-
-        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_cdp')
-
-        ! Deal with optional args.
-        kdim = size(X) - 1
-        k_start = optval(kstart, 1)
-        k_end = optval(kend, kdim)
-        tolerance = optval(tol, atol_dp)
-        info = 0
-
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_cdp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
-            else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_cdp / beta)
-            endif
-        enddo lanczos
-
-        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_cdp')
-        
-        return
-    end subroutine lanczos_tridiagonalization_cdp
-
-    subroutine update_tridiag_matrix_cdp(T, X, k)
-        integer, intent(in) :: k
-        complex(dp), intent(inout) :: T(:, :)
-        class(abstract_vector_cdp), intent(inout) :: X(:)
-
-        ! Internal variables.
-        integer :: i, info
-
-        info = 0
-
-        ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
-        do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -T(i, k))
-        enddo
-
-        ! Full re-orthogonalization against existing basis
-        call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='update_tridiag_matrix_cdp')
-
-        return
-    end subroutine update_tridiag_matrix_cdp
-
 
     !----------------------------------------
     !-----     KRYLOV-SCHUR RESTART     -----
