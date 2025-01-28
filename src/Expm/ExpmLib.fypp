@@ -372,7 +372,7 @@ contains
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_${kind}$
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_${kind}$) then
             ! Input matrix is zero.

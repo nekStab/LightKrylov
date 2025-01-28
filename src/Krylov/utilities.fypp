@@ -4,6 +4,25 @@ submodule (lightkrylov_basekrylov) krylov_utilities
     implicit none
 contains
 
+    !----------------------------------------
+    !-----     Permutation matrices     -----
+    !----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure permcols_basis_${type[0]}$${kind}$
+        call copy(Q, Q(perm))
+    end procedure
+
+    module procedure permcols_array_${type[0]}$${kind}$
+        Q = Q(:, perm)
+    end procedure
+    #:endfor
+
+    module procedure invperm
+        integer :: i
+        inv_perm(perm) = [(i, i=1, size(perm))]
+    end procedure
+
     !----------------------------------------------
     !-----     Initialize Krylov subspace     -----
     !----------------------------------------------

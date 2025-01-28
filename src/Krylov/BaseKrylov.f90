@@ -33,8 +33,8 @@ module lightkrylov_BaseKrylov
     character(len=*), parameter :: this_module_long = 'LightKrylov_BaseKrylov'
 
     public :: qr
-    public :: apply_permutation_matrix
-    public :: apply_inverse_permutation_matrix
+    public :: permcols
+    public :: invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: is_orthonormal
@@ -116,7 +116,7 @@ module lightkrylov_BaseKrylov
         module procedure swap_columns_cdp
     end interface
 
-    interface apply_permutation_matrix
+    interface permcols
         !!  ### Description
         !!
         !!  Given an array \( X \) and a permutation vector \( p \), this function computes
@@ -132,62 +132,83 @@ module lightkrylov_BaseKrylov
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call apply_permutation_matrix(X, perm)
+        !!      call permcols(X, perm)
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!  `X` : Array of vectors derived from the base types defined in the `AbstractVectors`
         !!       module. On entry, it is the original array. On exit, it contains the
         !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
         !!
         !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
         !!          It is an `intent(in)` argument.
-        module procedure apply_permutation_matrix_rsp
-        module procedure apply_permutation_matrix_array_rsp
-        module procedure apply_permutation_matrix_rdp
-        module procedure apply_permutation_matrix_array_rdp
-        module procedure apply_permutation_matrix_csp
-        module procedure apply_permutation_matrix_array_csp
-        module procedure apply_permutation_matrix_cdp
-        module procedure apply_permutation_matrix_array_cdp
+        module subroutine permcols_basis_rsp(Q, perm)
+            class(abstract_vector_rsp), intent(inout) :: Q(:)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+ 
+        module subroutine permcols_array_rsp(Q, perm)
+            real(sp), intent(inout) :: Q(:, :)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+        module subroutine permcols_basis_rdp(Q, perm)
+            class(abstract_vector_rdp), intent(inout) :: Q(:)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+ 
+        module subroutine permcols_array_rdp(Q, perm)
+            real(dp), intent(inout) :: Q(:, :)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+        module subroutine permcols_basis_csp(Q, perm)
+            class(abstract_vector_csp), intent(inout) :: Q(:)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+ 
+        module subroutine permcols_array_csp(Q, perm)
+            complex(sp), intent(inout) :: Q(:, :)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+        module subroutine permcols_basis_cdp(Q, perm)
+            class(abstract_vector_cdp), intent(inout) :: Q(:)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+ 
+        module subroutine permcols_array_cdp(Q, perm)
+            complex(dp), intent(inout) :: Q(:, :)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
     end interface
 
-    interface apply_inverse_permutation_matrix
+    interface 
         !!  ### Description
         !!
-        !!  Given an array \( X \) and a permutation vector \( p \), this function computes
-        !!  *in-place* the column-permuted matrix
-        !!
-        !!  \[
-        !!      X = X P^{-1}
-        !!  \]
-        !!
-        !!  where \( P \) is the column-permutation matrix constructed from the permutation
-        !!  vector \( p \) and \( P^{-1} \) its inverse.
+        !!  Given a permutation vector \( p \), this function computes the vector
+        !!  representation of the inverse permutation matrix.
         !!
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call apply_inverse_permutation_matrix(X, perm)
+        !!      inv_perm = invperm(perm)
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
-        !!       module. On entry, it is the original array. On exit, it contains the
-        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
-        !!
         !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
         !!          It is an `intent(in)` argument.
-        module procedure apply_inverse_permutation_matrix_rsp
-        module procedure apply_inverse_permutation_matrix_array_rsp
-        module procedure apply_inverse_permutation_matrix_rdp
-        module procedure apply_inverse_permutation_matrix_array_rdp
-        module procedure apply_inverse_permutation_matrix_csp
-        module procedure apply_inverse_permutation_matrix_array_csp
-        module procedure apply_inverse_permutation_matrix_cdp
-        module procedure apply_inverse_permutation_matrix_array_cdp
+        module function invperm(perm) result(inv_perm)
+            integer, intent(in) :: perm(:)
+            integer, allocatable :: inv_perm(:)
+        end function
     end interface
 
     interface arnoldi
@@ -848,11 +869,6 @@ module lightkrylov_BaseKrylov
 
 contains
 
-    !-------------------------------------
-    !-----     UTILITY FUNCTIONS     -----
-    !-------------------------------------
-
-
     !------------------------------------
     !-----     QR FACTORIZATION     -----
     !------------------------------------
@@ -1039,95 +1055,6 @@ contains
         return
     end subroutine swap_columns_rsp
 
-    subroutine apply_permutation_matrix_rsp(Q, perm)
-        class(abstract_vector_rsp), intent(inout) :: Q(:)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        class(abstract_vector_rsp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(perm(i)))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_rsp
-
-    subroutine apply_inverse_permutation_matrix_rsp(Q, perm)
-        class(abstract_vector_rsp), intent(inout) :: Q(:)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        class(abstract_vector_rsp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(inv_perm(i)))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_rsp
-
-    subroutine apply_permutation_matrix_array_rsp(Q, perm)
-        real(sp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        real(sp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, perm(i))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_array_rsp
-
-    subroutine apply_inverse_permutation_matrix_array_rsp(Q, perm)
-        real(sp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        real(sp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, inv_perm(i))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_array_rsp
-
-
     subroutine qr_no_pivoting_rdp(Q, R, info, tol)
         class(abstract_vector_rdp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
@@ -1309,95 +1236,6 @@ contains
 
         return
     end subroutine swap_columns_rdp
-
-    subroutine apply_permutation_matrix_rdp(Q, perm)
-        class(abstract_vector_rdp), intent(inout) :: Q(:)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        class(abstract_vector_rdp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(perm(i)))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_rdp
-
-    subroutine apply_inverse_permutation_matrix_rdp(Q, perm)
-        class(abstract_vector_rdp), intent(inout) :: Q(:)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        class(abstract_vector_rdp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(inv_perm(i)))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_rdp
-
-    subroutine apply_permutation_matrix_array_rdp(Q, perm)
-        real(dp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        real(dp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, perm(i))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_array_rdp
-
-    subroutine apply_inverse_permutation_matrix_array_rdp(Q, perm)
-        real(dp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        real(dp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, inv_perm(i))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_array_rdp
-
 
     subroutine qr_no_pivoting_csp(Q, R, info, tol)
         class(abstract_vector_csp), intent(inout) :: Q(:)
@@ -1583,95 +1421,6 @@ contains
         return
     end subroutine swap_columns_csp
 
-    subroutine apply_permutation_matrix_csp(Q, perm)
-        class(abstract_vector_csp), intent(inout) :: Q(:)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        class(abstract_vector_csp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(perm(i)))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_csp
-
-    subroutine apply_inverse_permutation_matrix_csp(Q, perm)
-        class(abstract_vector_csp), intent(inout) :: Q(:)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        class(abstract_vector_csp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(inv_perm(i)))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_csp
-
-    subroutine apply_permutation_matrix_array_csp(Q, perm)
-        complex(sp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        complex(sp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, perm(i))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_array_csp
-
-    subroutine apply_inverse_permutation_matrix_array_csp(Q, perm)
-        complex(sp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        complex(sp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, inv_perm(i))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_array_csp
-
-
     subroutine qr_no_pivoting_cdp(Q, R, info, tol)
         class(abstract_vector_cdp), intent(inout) :: Q(:)
         !! Array of `abstract_vector` to be orthogonalized.
@@ -1855,95 +1604,6 @@ contains
 
         return
     end subroutine swap_columns_cdp
-
-    subroutine apply_permutation_matrix_cdp(Q, perm)
-        class(abstract_vector_cdp), intent(inout) :: Q(:)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        class(abstract_vector_cdp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(perm(i)))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_cdp
-
-    subroutine apply_inverse_permutation_matrix_cdp(Q, perm)
-        class(abstract_vector_cdp), intent(inout) :: Q(:)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        class(abstract_vector_cdp), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(inv_perm(i)))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_cdp
-
-    subroutine apply_permutation_matrix_array_cdp(Q, perm)
-        complex(dp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        complex(dp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, perm(i))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_array_cdp
-
-    subroutine apply_inverse_permutation_matrix_array_cdp(Q, perm)
-        complex(dp), intent(inout) :: Q(:, :)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        complex(dp), allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, inv_perm(i))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_array_cdp
-
 
 
     !-----------------------------------------

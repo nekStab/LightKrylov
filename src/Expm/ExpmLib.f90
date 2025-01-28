@@ -432,7 +432,7 @@ contains
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_sp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
             ! Input matrix is zero.
@@ -748,7 +748,7 @@ contains
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_dp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
             ! Input matrix is zero.
@@ -1064,7 +1064,7 @@ contains
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_sp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
             ! Input matrix is zero.
@@ -1380,7 +1380,7 @@ contains
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_dp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
             ! Input matrix is zero.

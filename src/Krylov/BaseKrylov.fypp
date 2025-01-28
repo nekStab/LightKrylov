@@ -35,8 +35,8 @@ module lightkrylov_BaseKrylov
     character(len=*), parameter :: this_module_long = 'LightKrylov_BaseKrylov'
 
     public :: qr
-    public :: apply_permutation_matrix
-    public :: apply_inverse_permutation_matrix
+    public :: permcols
+    public :: invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: is_orthonormal
@@ -114,7 +114,7 @@ module lightkrylov_BaseKrylov
         #:endfor
     end interface
 
-    interface apply_permutation_matrix
+    interface permcols
         !!  ### Description
         !!
         !!  Given an array \( X \) and a permutation vector \( p \), this function computes
@@ -130,54 +130,52 @@ module lightkrylov_BaseKrylov
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call apply_permutation_matrix(X, perm)
+        !!      call permcols(X, perm)
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!  `X` : Array of vectors derived from the base types defined in the `AbstractVectors`
         !!       module. On entry, it is the original array. On exit, it contains the
         !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
         !!
         !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
         !!          It is an `intent(in)` argument.
         #: for kind, type in RC_KINDS_TYPES
-        module procedure apply_permutation_matrix_${type[0]}$${kind}$
-        module procedure apply_permutation_matrix_array_${type[0]}$${kind}$
+        module subroutine permcols_basis_${type[0]}$${kind}$(Q, perm)
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
+ 
+        module subroutine permcols_array_${type[0]}$${kind}$(Q, perm)
+            ${type}$, intent(inout) :: Q(:, :)
+            !! Basis vectors to be permuted.
+            integer, intent(in) :: perm(:)
+        end subroutine
         #:endfor
     end interface
 
-    interface apply_inverse_permutation_matrix
+    interface 
         !!  ### Description
         !!
-        !!  Given an array \( X \) and a permutation vector \( p \), this function computes
-        !!  *in-place* the column-permuted matrix
-        !!
-        !!  \[
-        !!      X = X P^{-1}
-        !!  \]
-        !!
-        !!  where \( P \) is the column-permutation matrix constructed from the permutation
-        !!  vector \( p \) and \( P^{-1} \) its inverse.
+        !!  Given a permutation vector \( p \), this function computes the vector
+        !!  representation of the inverse permutation matrix.
         !!
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call apply_inverse_permutation_matrix(X, perm)
+        !!      inv_perm = invperm(perm)
         !!  ```
         !!
         !!  ### Arguments
         !!
-        !!  `Q` : Array of vectors derived from the base types defined in the `AbstractVectors`
-        !!       module. On entry, it is the original array. On exit, it contains the
-        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
-        !!
         !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
         !!          It is an `intent(in)` argument.
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure apply_inverse_permutation_matrix_${type[0]}$${kind}$
-        module procedure apply_inverse_permutation_matrix_array_${type[0]}$${kind}$
-        #:endfor
+        module function invperm(perm) result(inv_perm)
+            integer, intent(in) :: perm(:)
+            integer, allocatable :: inv_perm(:)
+        end function
     end interface
 
     interface arnoldi
@@ -828,95 +826,6 @@ contains
 
         return
     end subroutine swap_columns_${type[0]}$${kind}$
-
-    subroutine apply_permutation_matrix_${type[0]}$${kind}$(Q, perm)
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(perm(i)))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_${type[0]}$${kind}$
-
-    subroutine apply_inverse_permutation_matrix_${type[0]}$${kind}$(Q, perm)
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk(:)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            call copy(Q(i), Qwrk(inv_perm(i)))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_${type[0]}$${kind}$
-
-    subroutine apply_permutation_matrix_array_${type[0]}$${kind}$(Q, perm)
-        ${type}$, intent(inout) :: Q(:, :)
-        !! Basis vectors to be permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        ${type}$, allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q)
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, perm(i))
-        enddo
-
-        return
-    end subroutine apply_permutation_matrix_array_${type[0]}$${kind}$
-
-    subroutine apply_inverse_permutation_matrix_array_${type[0]}$${kind}$(Q, perm)
-        ${type}$, intent(inout) :: Q(:, :)
-        !! Basis vectors to be (un-) permuted.
-        integer, intent(in) :: perm(:)
-        !! Permutation matrix (vector representation).
-
-        ! Internal variables.
-        integer :: i
-        integer :: inv_perm(size(perm))
-        ${type}$, allocatable :: Qwrk(:, :)
-
-        allocate(Qwrk, source=Q) ; inv_perm = 0
-
-        ! Inverse permutation vector.
-        do i = 1, size(perm)
-            inv_perm(perm(i)) = i
-        enddo
-
-        ! Undo permutation.
-        do i = 1, size(perm)
-            Q(:, i) = Qwrk(:, inv_perm(i))
-        enddo
-
-        return
-    end subroutine apply_inverse_permutation_matrix_array_${type[0]}$${kind}$
-
 
     #:endfor
 

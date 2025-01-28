@@ -2,6 +2,44 @@ submodule (lightkrylov_basekrylov) krylov_utilities
     implicit none
 contains
 
+    !----------------------------------------
+    !-----     Permutation matrices     -----
+    !----------------------------------------
+
+    module procedure permcols_basis_rsp
+        call copy(Q, Q(perm))
+    end procedure
+
+    module procedure permcols_array_rsp
+        Q = Q(:, perm)
+    end procedure
+    module procedure permcols_basis_rdp
+        call copy(Q, Q(perm))
+    end procedure
+
+    module procedure permcols_array_rdp
+        Q = Q(:, perm)
+    end procedure
+    module procedure permcols_basis_csp
+        call copy(Q, Q(perm))
+    end procedure
+
+    module procedure permcols_array_csp
+        Q = Q(:, perm)
+    end procedure
+    module procedure permcols_basis_cdp
+        call copy(Q, Q(perm))
+    end procedure
+
+    module procedure permcols_array_cdp
+        Q = Q(:, perm)
+    end procedure
+
+    module procedure invperm
+        integer :: i
+        inv_perm(perm) = [(i, i=1, size(perm))]
+    end procedure
+
     !----------------------------------------------
     !-----     Initialize Krylov subspace     -----
     !----------------------------------------------
@@ -75,7 +113,6 @@ contains
         return
     end procedure
    
-
     !----------------------------------------
     !-----     Orthonormalize basis     -----
     !----------------------------------------

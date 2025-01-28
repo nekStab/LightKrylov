@@ -97,7 +97,7 @@ module LightKrylov
     
     ! BaseKrylov exports.
     public :: qr
-    public :: apply_permutation_matrix, apply_inverse_permutation_matrix
+    public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: orthogonalize_against_basis
