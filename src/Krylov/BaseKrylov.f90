@@ -282,10 +282,22 @@ module lightkrylov_BaseKrylov
         !!  `X0` (*optional*) : Collection of vectors which will form the first few
         !!                      Krylov vectors. Note that `X0` need not be an orthonormal
         !!                      basis as this subroutine includes a `call qr(X0)`.
-        module procedure initialize_krylov_subspace_rsp
-        module procedure initialize_krylov_subspace_rdp
-        module procedure initialize_krylov_subspace_csp
-        module procedure initialize_krylov_subspace_cdp
+        module subroutine initialize_krylov_subspace_rsp(X, X0)
+            class(abstract_vector_rsp), intent(inout) :: X(:)
+            class(abstract_vector_rsp), optional, intent(in) :: X0(:)
+        end subroutine
+        module subroutine initialize_krylov_subspace_rdp(X, X0)
+            class(abstract_vector_rdp), intent(inout) :: X(:)
+            class(abstract_vector_rdp), optional, intent(in) :: X0(:)
+        end subroutine
+        module subroutine initialize_krylov_subspace_csp(X, X0)
+            class(abstract_vector_csp), intent(inout) :: X(:)
+            class(abstract_vector_csp), optional, intent(in) :: X0(:)
+        end subroutine
+        module subroutine initialize_krylov_subspace_cdp(X, X0)
+            class(abstract_vector_cdp), intent(inout) :: X(:)
+            class(abstract_vector_cdp), optional, intent(in) :: X0(:)
+        end subroutine
     end interface
 
     interface is_orthonormal
@@ -304,10 +316,22 @@ module lightkrylov_BaseKrylov
         !!
         !!  `X` : Array of derived types extended from the base types provided in the
         !!        `AbstractVectors` module.
-        module procedure is_orthonormal_rsp
-        module procedure is_orthonormal_rdp
-        module procedure is_orthonormal_csp
-        module procedure is_orthonormal_cdp
+        module function is_orthonormal_rsp(X) result(ortho)
+            class(abstract_vector_rsp), intent(in) :: X(:)
+            logical :: ortho
+        end function
+        module function is_orthonormal_rdp(X) result(ortho)
+            class(abstract_vector_rdp), intent(in) :: X(:)
+            logical :: ortho
+        end function
+        module function is_orthonormal_csp(X) result(ortho)
+            class(abstract_vector_csp), intent(in) :: X(:)
+            logical :: ortho
+        end function
+        module function is_orthonormal_cdp(X) result(ortho)
+            class(abstract_vector_cdp), intent(in) :: X(:)
+            logical :: ortho
+        end function
     end interface
 
     interface orthonormalize_basis
@@ -327,10 +351,26 @@ module lightkrylov_BaseKrylov
         !!
         !!  `X` : Array of `abstract_vector` to orthonormalize. Note that this process is done
         !!        in-place. It is an `intent(inout)` argument.
-        module procedure orthonormalize_basis_rsp
-        module procedure orthonormalize_basis_rdp
-        module procedure orthonormalize_basis_csp
-        module procedure orthonormalize_basis_cdp
+        module subroutine orthonormalize_basis_rsp(X)
+            !! Orthonormalizes the `abstract_vector` basis `X`
+            class(abstract_vector_rsp), intent(inout) :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+        end subroutine
+        module subroutine orthonormalize_basis_rdp(X)
+            !! Orthonormalizes the `abstract_vector` basis `X`
+            class(abstract_vector_rdp), intent(inout) :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+        end subroutine
+        module subroutine orthonormalize_basis_csp(X)
+            !! Orthonormalizes the `abstract_vector` basis `X`
+            class(abstract_vector_csp), intent(inout) :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+        end subroutine
+        module subroutine orthonormalize_basis_cdp(X)
+            !! Orthonormalizes the `abstract_vector` basis `X`
+            class(abstract_vector_cdp), intent(inout) :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+        end subroutine
     end interface
 
     interface orthogonalize_against_basis
@@ -811,211 +851,6 @@ contains
     !-------------------------------------
     !-----     UTILITY FUNCTIONS     -----
     !-------------------------------------
-
-    logical function is_orthonormal_rsp(X) result(ortho)
-        class(abstract_vector_rsp), intent(in) :: X(:)
-        real(sp), dimension(size(X), size(X)) :: G
-        ortho = .true.
-        call innerprod(G, X, X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
-            ortho = .false.
-        end if
-    end function
-    logical function is_orthonormal_rdp(X) result(ortho)
-        class(abstract_vector_rdp), intent(in) :: X(:)
-        real(dp), dimension(size(X), size(X)) :: G
-        ortho = .true.
-        call innerprod(G, X, X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
-            ortho = .false.
-        end if
-    end function
-    logical function is_orthonormal_csp(X) result(ortho)
-        class(abstract_vector_csp), intent(in) :: X(:)
-        complex(sp), dimension(size(X), size(X)) :: G
-        ortho = .true.
-        call innerprod(G, X, X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
-            ortho = .false.
-        end if
-    end function
-    logical function is_orthonormal_cdp(X) result(ortho)
-        class(abstract_vector_cdp), intent(in) :: X(:)
-        complex(dp), dimension(size(X), size(X)) :: G
-        ortho = .true.
-        call innerprod(G, X, X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
-            ortho = .false.
-        end if
-    end function
-
-    subroutine initialize_krylov_subspace_rsp(X, X0)
-        class(abstract_vector_rsp), intent(inout) :: X(:)
-        class(abstract_vector_rsp), optional, intent(in) :: X0(:)
-
-        ! Internal variables.
-        integer :: p
-
-        ! Zero-out X.
-        call zero_basis(X)
-
-        ! Deals with optional args.
-        if(present(X0)) then
-            p = size(X0)
-            ! Initialize.
-            call copy(X(:p), X0)
-            ! Orthonormalize.
-            call orthonormalize_basis(X(:p))
-        endif
-
-        return
-    end subroutine initialize_krylov_subspace_rsp
-
-    subroutine orthonormalize_basis_rsp(X)
-      !! Orthonormalizes the `abstract_vector` basis `X`
-      class(abstract_vector_rsp), intent(inout) :: X(:)
-      !! Input `abstract_vector` basis to orthogonalize against
-      
-      ! internals
-      real(sp) :: R(size(X),size(X))
-      integer :: info
-
-      if (time_lightkrylov()) call timer%start('orthonormalize_basis_rsp')
-      ! internals
-      call qr(X, R, info)
-      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
-      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_rsp')
-      
-      return
-    end subroutine orthonormalize_basis_rsp
-
-
-    subroutine initialize_krylov_subspace_rdp(X, X0)
-        class(abstract_vector_rdp), intent(inout) :: X(:)
-        class(abstract_vector_rdp), optional, intent(in) :: X0(:)
-
-        ! Internal variables.
-        integer :: p
-
-        ! Zero-out X.
-        call zero_basis(X)
-
-        ! Deals with optional args.
-        if(present(X0)) then
-            p = size(X0)
-            ! Initialize.
-            call copy(X(:p), X0)
-            ! Orthonormalize.
-            call orthonormalize_basis(X(:p))
-        endif
-
-        return
-    end subroutine initialize_krylov_subspace_rdp
-
-    subroutine orthonormalize_basis_rdp(X)
-      !! Orthonormalizes the `abstract_vector` basis `X`
-      class(abstract_vector_rdp), intent(inout) :: X(:)
-      !! Input `abstract_vector` basis to orthogonalize against
-      
-      ! internals
-      real(dp) :: R(size(X),size(X))
-      integer :: info
-
-      if (time_lightkrylov()) call timer%start('orthonormalize_basis_rdp')
-      ! internals
-      call qr(X, R, info)
-      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
-      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_rdp')
-      
-      return
-    end subroutine orthonormalize_basis_rdp
-
-
-    subroutine initialize_krylov_subspace_csp(X, X0)
-        class(abstract_vector_csp), intent(inout) :: X(:)
-        class(abstract_vector_csp), optional, intent(in) :: X0(:)
-
-        ! Internal variables.
-        integer :: p
-
-        ! Zero-out X.
-        call zero_basis(X)
-
-        ! Deals with optional args.
-        if(present(X0)) then
-            p = size(X0)
-            ! Initialize.
-            call copy(X(:p), X0)
-            ! Orthonormalize.
-            call orthonormalize_basis(X(:p))
-        endif
-
-        return
-    end subroutine initialize_krylov_subspace_csp
-
-    subroutine orthonormalize_basis_csp(X)
-      !! Orthonormalizes the `abstract_vector` basis `X`
-      class(abstract_vector_csp), intent(inout) :: X(:)
-      !! Input `abstract_vector` basis to orthogonalize against
-      
-      ! internals
-      complex(sp) :: R(size(X),size(X))
-      integer :: info
-
-      if (time_lightkrylov()) call timer%start('orthonormalize_basis_csp')
-      ! internals
-      call qr(X, R, info)
-      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
-      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_csp')
-      
-      return
-    end subroutine orthonormalize_basis_csp
-
-
-    subroutine initialize_krylov_subspace_cdp(X, X0)
-        class(abstract_vector_cdp), intent(inout) :: X(:)
-        class(abstract_vector_cdp), optional, intent(in) :: X0(:)
-
-        ! Internal variables.
-        integer :: p
-
-        ! Zero-out X.
-        call zero_basis(X)
-
-        ! Deals with optional args.
-        if(present(X0)) then
-            p = size(X0)
-            ! Initialize.
-            call copy(X(:p), X0)
-            ! Orthonormalize.
-            call orthonormalize_basis(X(:p))
-        endif
-
-        return
-    end subroutine initialize_krylov_subspace_cdp
-
-    subroutine orthonormalize_basis_cdp(X)
-      !! Orthonormalizes the `abstract_vector` basis `X`
-      class(abstract_vector_cdp), intent(inout) :: X(:)
-      !! Input `abstract_vector` basis to orthogonalize against
-      
-      ! internals
-      complex(dp) :: R(size(X),size(X))
-      integer :: info
-
-      if (time_lightkrylov()) call timer%start('orthonormalize_basis_cdp')
-      ! internals
-      call qr(X, R, info)
-      call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
-      if (time_lightkrylov()) call timer%stop('orthonormalize_basis_cdp')
-      
-      return
-    end subroutine orthonormalize_basis_cdp
-
 
 
     !------------------------------------

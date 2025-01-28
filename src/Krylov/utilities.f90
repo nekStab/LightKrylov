@@ -1,0 +1,173 @@
+submodule (lightkrylov_basekrylov) krylov_utilities
+    implicit none
+contains
+
+    !----------------------------------------------
+    !-----     Initialize Krylov subspace     -----
+    !----------------------------------------------
+
+    module procedure initialize_krylov_subspace_rsp
+        integer :: p
+
+        ! Zero-out X.
+        call zero_basis(X)
+
+        ! Deals with optional args.
+        if(present(X0)) then
+            p = size(X0)
+            ! Initialize.
+            call copy(X(:p), X0)
+            ! Orthonormalize.
+            call orthonormalize_basis(X(:p))
+        endif
+
+        return
+    end procedure
+    module procedure initialize_krylov_subspace_rdp
+        integer :: p
+
+        ! Zero-out X.
+        call zero_basis(X)
+
+        ! Deals with optional args.
+        if(present(X0)) then
+            p = size(X0)
+            ! Initialize.
+            call copy(X(:p), X0)
+            ! Orthonormalize.
+            call orthonormalize_basis(X(:p))
+        endif
+
+        return
+    end procedure
+    module procedure initialize_krylov_subspace_csp
+        integer :: p
+
+        ! Zero-out X.
+        call zero_basis(X)
+
+        ! Deals with optional args.
+        if(present(X0)) then
+            p = size(X0)
+            ! Initialize.
+            call copy(X(:p), X0)
+            ! Orthonormalize.
+            call orthonormalize_basis(X(:p))
+        endif
+
+        return
+    end procedure
+    module procedure initialize_krylov_subspace_cdp
+        integer :: p
+
+        ! Zero-out X.
+        call zero_basis(X)
+
+        ! Deals with optional args.
+        if(present(X0)) then
+            p = size(X0)
+            ! Initialize.
+            call copy(X(:p), X0)
+            ! Orthonormalize.
+            call orthonormalize_basis(X(:p))
+        endif
+
+        return
+    end procedure
+   
+
+    !----------------------------------------
+    !-----     Orthonormalize basis     -----
+    !----------------------------------------
+
+    module procedure orthonormalize_basis_rsp
+        real(sp) :: R(size(X),size(X))
+        integer :: info
+
+        if (time_lightkrylov()) call timer%start('orthonormalize_basis_rsp')
+        ! internals
+        call qr(X, R, info)
+        call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rsp')
+        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_rsp')
+
+        return
+    end procedure
+    module procedure orthonormalize_basis_rdp
+        real(dp) :: R(size(X),size(X))
+        integer :: info
+
+        if (time_lightkrylov()) call timer%start('orthonormalize_basis_rdp')
+        ! internals
+        call qr(X, R, info)
+        call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_rdp')
+        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_rdp')
+
+        return
+    end procedure
+    module procedure orthonormalize_basis_csp
+        complex(sp) :: R(size(X),size(X))
+        integer :: info
+
+        if (time_lightkrylov()) call timer%start('orthonormalize_basis_csp')
+        ! internals
+        call qr(X, R, info)
+        call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_csp')
+        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_csp')
+
+        return
+    end procedure
+    module procedure orthonormalize_basis_cdp
+        complex(dp) :: R(size(X),size(X))
+        integer :: info
+
+        if (time_lightkrylov()) call timer%start('orthonormalize_basis_cdp')
+        ! internals
+        call qr(X, R, info)
+        call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_cdp')
+        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_cdp')
+
+        return
+    end procedure
+
+    !---------------------------------------------------
+    !-----     Check orthonormality of a basis     -----
+    !---------------------------------------------------
+
+    module procedure is_orthonormal_rsp
+        real(sp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end procedure
+    module procedure is_orthonormal_rdp
+        real(dp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end procedure
+    module procedure is_orthonormal_csp
+        complex(sp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end procedure
+    module procedure is_orthonormal_cdp
+        complex(dp), dimension(size(X), size(X)) :: G
+        ortho = .true.
+        call innerprod(G, X, X)
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end procedure
+
+end submodule
