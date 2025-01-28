@@ -14,7 +14,7 @@ module lightkrylov_BaseKrylov
     !--------------------------------------------
     use iso_fortran_env
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, schur
+    use stdlib_linalg, only: eye, schur, norm, mnorm
 
     !-------------------------------
     !-----     LightKrylov     -----
@@ -609,7 +609,7 @@ contains
         real(sp), dimension(size(X), size(X)) :: G
         ortho = .true.
         call innerprod(G, X, X)
-        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
         end if
@@ -619,7 +619,7 @@ contains
         real(dp), dimension(size(X), size(X)) :: G
         ortho = .true.
         call innerprod(G, X, X)
-        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
         end if
@@ -629,7 +629,7 @@ contains
         complex(sp), dimension(size(X), size(X)) :: G
         ortho = .true.
         call innerprod(G, X, X)
-        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
         end if
@@ -639,7 +639,7 @@ contains
         complex(dp), dimension(size(X), size(X)) :: G
         ortho = .true.
         call innerprod(G, X, X)
-        if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
         end if
@@ -718,7 +718,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_sp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -780,7 +780,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_sp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -973,7 +973,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_dp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_dp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -1035,7 +1035,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_dp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_dp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -1228,7 +1228,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_sp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -1290,7 +1290,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_sp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_sp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -1483,7 +1483,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_dp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_dp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -1545,7 +1545,7 @@ contains
             if (abs(G(size(X),size(X))) < rtol_dp) then
                ! The last vector in X is zero, it does not impact orthogonalisation
                info = -2
-            else if (norm2(abs(G - eye(size(X)))) > rtol_dp) then
+            else if (mnorm(G - eye(size(X)), "Fro") > rtol_dp) then
                ! The basis is not orthonormal. Cannot orthonormalize.
                info = -1
                return
@@ -1834,7 +1834,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
+        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
@@ -2105,7 +2105,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
+        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
@@ -2378,7 +2378,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
+        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
@@ -2651,7 +2651,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, source=Q(1)) ; call Qwrk%zero()
+        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
         allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
