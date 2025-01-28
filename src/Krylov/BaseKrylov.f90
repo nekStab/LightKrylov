@@ -99,21 +99,90 @@ module lightkrylov_BaseKrylov
         !!
         !!  `tol` (*optional*): Numerical tolerance to determine whether two vectors are colinear
         !!                      or not. Default `tol = atol_sp` or `tol = atol_dp`.
-        module procedure qr_no_pivoting_rsp
-        module procedure qr_with_pivoting_rsp
-        module procedure qr_no_pivoting_rdp
-        module procedure qr_with_pivoting_rdp
-        module procedure qr_no_pivoting_csp
-        module procedure qr_with_pivoting_csp
-        module procedure qr_no_pivoting_cdp
-        module procedure qr_with_pivoting_cdp
-    end interface
+        module subroutine qr_no_pivoting_rsp(Q, R, info, tol)
+            class(abstract_vector_rsp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            real(sp), intent(out) :: R(:, :)
+            !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: tol
+        end subroutine
 
-    interface swap_columns
-        module procedure swap_columns_rsp
-        module procedure swap_columns_rdp
-        module procedure swap_columns_csp
-        module procedure swap_columns_cdp
+        module subroutine qr_with_pivoting_rsp(Q, R, perm, info, tol)
+            class(abstract_vector_rsp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            real(sp), intent(out) :: R(:, :)
+            !! Upper triangular matrix resulting from the QR factorization.
+            integer, intent(out) :: perm(size(Q))
+            !! Permutation matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: tol
+        end subroutine 
+        module subroutine qr_no_pivoting_rdp(Q, R, info, tol)
+            class(abstract_vector_rdp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            real(dp), intent(out) :: R(:, :)
+            !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: tol
+        end subroutine
+
+        module subroutine qr_with_pivoting_rdp(Q, R, perm, info, tol)
+            class(abstract_vector_rdp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            real(dp), intent(out) :: R(:, :)
+            !! Upper triangular matrix resulting from the QR factorization.
+            integer, intent(out) :: perm(size(Q))
+            !! Permutation matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: tol
+        end subroutine 
+        module subroutine qr_no_pivoting_csp(Q, R, info, tol)
+            class(abstract_vector_csp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            complex(sp), intent(out) :: R(:, :)
+            !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: tol
+        end subroutine
+
+        module subroutine qr_with_pivoting_csp(Q, R, perm, info, tol)
+            class(abstract_vector_csp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            complex(sp), intent(out) :: R(:, :)
+            !! Upper triangular matrix resulting from the QR factorization.
+            integer, intent(out) :: perm(size(Q))
+            !! Permutation matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: tol
+        end subroutine 
+        module subroutine qr_no_pivoting_cdp(Q, R, info, tol)
+            class(abstract_vector_cdp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            complex(dp), intent(out) :: R(:, :)
+            !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: tol
+        end subroutine
+
+        module subroutine qr_with_pivoting_cdp(Q, R, perm, info, tol)
+            class(abstract_vector_cdp), intent(inout) :: Q(:)
+            !! Array of `abstract_vector` to be orthogonalized.
+            complex(dp), intent(out) :: R(:, :)
+            !! Upper triangular matrix resulting from the QR factorization.
+            integer, intent(out) :: perm(size(Q))
+            !! Permutation matrix.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: tol
+        end subroutine 
     end interface
 
     interface permcols
@@ -868,743 +937,6 @@ module lightkrylov_BaseKrylov
     end interface
 
 contains
-
-    !------------------------------------
-    !-----     QR FACTORIZATION     -----
-    !------------------------------------
-
-    subroutine qr_no_pivoting_rsp(Q, R, info, tol)
-        class(abstract_vector_rsp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        real(sp), intent(out) :: R(:, :)
-        !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(sp), optional, intent(in) :: tol
-        !! Tolerance to determine colinearity.
-        real(sp)                       :: tolerance
-
-        ! Internal variables.
-        real(sp) :: beta
-        integer :: j
-        logical :: flag
-        character(len=128) :: msg
-
-        ! Deals with the optional args.
-        tolerance = optval(tol, atol_sp)
-
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_rsp')
-        info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
-        do j = 1, size(Q)
-            if (j > 1) then
-                ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rsp')
-            end if        
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_rsp')
-            if (abs(beta) < tolerance) then
-                if (.not.flag) then
-                    flag = .true.
-                    info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_rsp')
-                end if
-                R(j, j) = zero_rsp
-                call Q(j)%rand()
-                if (j > 1) then
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
-                end if
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rsp / beta)
-        enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rsp')
-        
-        return
-    end subroutine qr_no_pivoting_rsp
-
-    subroutine qr_with_pivoting_rsp(Q, R, perm, info, tol)
-        class(abstract_vector_rsp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        real(sp), intent(out) :: R(:, :)
-        !! Upper triangular matrix resulting from the QR factorization.
-        integer, intent(out) :: perm(size(Q))
-        !! Permutation matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(sp), optional, intent(in) :: tol
-
-        !! Tolerance to detect colinearity.
-        real(sp) :: tolerance
-
-        ! Internal variables
-        real(sp) :: beta
-        integer :: idx, i, j, kdim
-        integer :: idxv(1)
-        real(sp)  :: Rii(size(Q))
-        character(len=128) :: msg
-
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_rsp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rsp ; Rii = zero_rsp
-        
-        ! Deals with the optional arguments.
-        tolerance = optval(tol, atol_sp)
-
-        ! Initialize diagonal entries.
-        do i = 1, kdim
-            perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
-        enddo
-
-        qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
-                    beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_rsp')
-                exit qr_step
-            endif
-
-            call swap_columns(Q, R, Rii, perm, j, idx)
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_rsp')
-            if (abs(beta) < tolerance) then
-                info = j
-                R(j, j) = zero_rsp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rsp / beta)
-
-            ! Orthogonalize all columns against new vector.
-            do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_rsp, Q(j), -beta)
-                R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rsp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
-            enddo
-
-        enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rsp')
-        
-        return
-    end subroutine qr_with_pivoting_rsp
-
-    subroutine swap_columns_rsp(Q, R, Rii, perm, i, j)
-        class(abstract_vector_rsp), intent(inout) :: Q(:)
-        !! Vector basis whose i-th and j-th columns need swapping.
-        real(sp), intent(inout) :: R(:, :)
-        !! Upper triangular matrix resulting from QR.
-        real(sp), intent(inout) :: Rii(:)
-        !! Diagonal entries of R.
-        integer, intent(inout) :: perm(:)
-        !! Column ordering.
-        integer, intent(in) :: i, j
-        !! Index of the columns to be swapped.
-
-        ! Internal variables.
-        class(abstract_vector_rsp), allocatable :: Qwrk
-        real(sp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
-
-        ! Sanity checks.
-        m = size(Q) ; n = min(i, j) - 1
-
-        ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
-
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
-        
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
-        iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
-
-        if (n > 0) then
-            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
-        endif
-
-        return
-    end subroutine swap_columns_rsp
-
-    subroutine qr_no_pivoting_rdp(Q, R, info, tol)
-        class(abstract_vector_rdp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        real(dp), intent(out) :: R(:, :)
-        !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(dp), optional, intent(in) :: tol
-        !! Tolerance to determine colinearity.
-        real(dp)                       :: tolerance
-
-        ! Internal variables.
-        real(dp) :: beta
-        integer :: j
-        logical :: flag
-        character(len=128) :: msg
-
-        ! Deals with the optional args.
-        tolerance = optval(tol, atol_dp)
-
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_rdp')
-        info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
-        do j = 1, size(Q)
-            if (j > 1) then
-                ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rdp')
-            end if        
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_rdp')
-            if (abs(beta) < tolerance) then
-                if (.not.flag) then
-                    flag = .true.
-                    info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_rdp')
-                end if
-                R(j, j) = zero_rdp
-                call Q(j)%rand()
-                if (j > 1) then
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
-                end if
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rdp / beta)
-        enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rdp')
-        
-        return
-    end subroutine qr_no_pivoting_rdp
-
-    subroutine qr_with_pivoting_rdp(Q, R, perm, info, tol)
-        class(abstract_vector_rdp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        real(dp), intent(out) :: R(:, :)
-        !! Upper triangular matrix resulting from the QR factorization.
-        integer, intent(out) :: perm(size(Q))
-        !! Permutation matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(dp), optional, intent(in) :: tol
-
-        !! Tolerance to detect colinearity.
-        real(dp) :: tolerance
-
-        ! Internal variables
-        real(dp) :: beta
-        integer :: idx, i, j, kdim
-        integer :: idxv(1)
-        real(dp)  :: Rii(size(Q))
-        character(len=128) :: msg
-
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_rdp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rdp ; Rii = zero_rdp
-        
-        ! Deals with the optional arguments.
-        tolerance = optval(tol, atol_dp)
-
-        ! Initialize diagonal entries.
-        do i = 1, kdim
-            perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
-        enddo
-
-        qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
-                    beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_rdp')
-                exit qr_step
-            endif
-
-            call swap_columns(Q, R, Rii, perm, j, idx)
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_rdp')
-            if (abs(beta) < tolerance) then
-                info = j
-                R(j, j) = zero_rdp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rdp / beta)
-
-            ! Orthogonalize all columns against new vector.
-            do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_rdp, Q(j), -beta)
-                R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rdp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
-            enddo
-
-        enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rdp')
-        
-        return
-    end subroutine qr_with_pivoting_rdp
-
-    subroutine swap_columns_rdp(Q, R, Rii, perm, i, j)
-        class(abstract_vector_rdp), intent(inout) :: Q(:)
-        !! Vector basis whose i-th and j-th columns need swapping.
-        real(dp), intent(inout) :: R(:, :)
-        !! Upper triangular matrix resulting from QR.
-        real(dp), intent(inout) :: Rii(:)
-        !! Diagonal entries of R.
-        integer, intent(inout) :: perm(:)
-        !! Column ordering.
-        integer, intent(in) :: i, j
-        !! Index of the columns to be swapped.
-
-        ! Internal variables.
-        class(abstract_vector_rdp), allocatable :: Qwrk
-        real(dp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
-
-        ! Sanity checks.
-        m = size(Q) ; n = min(i, j) - 1
-
-        ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
-
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
-        
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
-        iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
-
-        if (n > 0) then
-            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
-        endif
-
-        return
-    end subroutine swap_columns_rdp
-
-    subroutine qr_no_pivoting_csp(Q, R, info, tol)
-        class(abstract_vector_csp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        complex(sp), intent(out) :: R(:, :)
-        !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(sp), optional, intent(in) :: tol
-        !! Tolerance to determine colinearity.
-        real(sp)                       :: tolerance
-
-        ! Internal variables.
-        complex(sp) :: beta
-        integer :: j
-        logical :: flag
-        character(len=128) :: msg
-
-        ! Deals with the optional args.
-        tolerance = optval(tol, atol_sp)
-
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_csp')
-        info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
-        do j = 1, size(Q)
-            if (j > 1) then
-                ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_csp')
-            end if        
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_no_pivoting_csp')
-            if (abs(beta) < tolerance) then
-                if (.not.flag) then
-                    flag = .true.
-                    info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_csp')
-                end if
-                R(j, j) = zero_rsp
-                call Q(j)%rand()
-                if (j > 1) then
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
-                end if
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rsp / beta)
-        enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_csp')
-        
-        return
-    end subroutine qr_no_pivoting_csp
-
-    subroutine qr_with_pivoting_csp(Q, R, perm, info, tol)
-        class(abstract_vector_csp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        complex(sp), intent(out) :: R(:, :)
-        !! Upper triangular matrix resulting from the QR factorization.
-        integer, intent(out) :: perm(size(Q))
-        !! Permutation matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(sp), optional, intent(in) :: tol
-
-        !! Tolerance to detect colinearity.
-        real(sp) :: tolerance
-
-        ! Internal variables
-        complex(sp) :: beta
-        integer :: idx, i, j, kdim
-        integer :: idxv(1)
-        complex(sp)  :: Rii(size(Q))
-        character(len=128) :: msg
-
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_csp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rsp ; Rii = zero_rsp
-        
-        ! Deals with the optional arguments.
-        tolerance = optval(tol, atol_sp)
-
-        ! Initialize diagonal entries.
-        do i = 1, kdim
-            perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
-        enddo
-
-        qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
-                    beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_csp')
-                exit qr_step
-            endif
-
-            call swap_columns(Q, R, Rii, perm, j, idx)
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_with_pivoting_csp')
-            if (abs(beta) < tolerance) then
-                info = j
-                R(j, j) = zero_rsp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rsp / beta)
-
-            ! Orthogonalize all columns against new vector.
-            do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_csp, Q(j), -beta)
-                R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rsp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
-            enddo
-
-        enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_csp')
-        
-        return
-    end subroutine qr_with_pivoting_csp
-
-    subroutine swap_columns_csp(Q, R, Rii, perm, i, j)
-        class(abstract_vector_csp), intent(inout) :: Q(:)
-        !! Vector basis whose i-th and j-th columns need swapping.
-        complex(sp), intent(inout) :: R(:, :)
-        !! Upper triangular matrix resulting from QR.
-        complex(sp), intent(inout) :: Rii(:)
-        !! Diagonal entries of R.
-        integer, intent(inout) :: perm(:)
-        !! Column ordering.
-        integer, intent(in) :: i, j
-        !! Index of the columns to be swapped.
-
-        ! Internal variables.
-        class(abstract_vector_csp), allocatable :: Qwrk
-        complex(sp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
-
-        ! Sanity checks.
-        m = size(Q) ; n = min(i, j) - 1
-
-        ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
-
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
-        
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
-        iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
-
-        if (n > 0) then
-            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
-        endif
-
-        return
-    end subroutine swap_columns_csp
-
-    subroutine qr_no_pivoting_cdp(Q, R, info, tol)
-        class(abstract_vector_cdp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        complex(dp), intent(out) :: R(:, :)
-        !! Upper triangular matrix \(\mathbf{R}\) resulting from the QR factorization.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(dp), optional, intent(in) :: tol
-        !! Tolerance to determine colinearity.
-        real(dp)                       :: tolerance
-
-        ! Internal variables.
-        complex(dp) :: beta
-        integer :: j
-        logical :: flag
-        character(len=128) :: msg
-
-        ! Deals with the optional args.
-        tolerance = optval(tol, atol_dp)
-
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_cdp')
-        info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
-        do j = 1, size(Q)
-            if (j > 1) then
-                ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_cdp')
-            end if        
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_no_pivoting_cdp')
-            if (abs(beta) < tolerance) then
-                if (.not.flag) then
-                    flag = .true.
-                    info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_cdp')
-                end if
-                R(j, j) = zero_rdp
-                call Q(j)%rand()
-                if (j > 1) then
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
-                end if
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rdp / beta)
-        enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_cdp')
-        
-        return
-    end subroutine qr_no_pivoting_cdp
-
-    subroutine qr_with_pivoting_cdp(Q, R, perm, info, tol)
-        class(abstract_vector_cdp), intent(inout) :: Q(:)
-        !! Array of `abstract_vector` to be orthogonalized.
-        complex(dp), intent(out) :: R(:, :)
-        !! Upper triangular matrix resulting from the QR factorization.
-        integer, intent(out) :: perm(size(Q))
-        !! Permutation matrix.
-        integer, intent(out) :: info
-        !! Information flag.
-        real(dp), optional, intent(in) :: tol
-
-        !! Tolerance to detect colinearity.
-        real(dp) :: tolerance
-
-        ! Internal variables
-        complex(dp) :: beta
-        integer :: idx, i, j, kdim
-        integer :: idxv(1)
-        complex(dp)  :: Rii(size(Q))
-        character(len=128) :: msg
-
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_cdp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rdp ; Rii = zero_rdp
-        
-        ! Deals with the optional arguments.
-        tolerance = optval(tol, atol_dp)
-
-        ! Initialize diagonal entries.
-        do i = 1, kdim
-            perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
-        enddo
-
-        qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
-                    beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_cdp')
-                exit qr_step
-            endif
-
-            call swap_columns(Q, R, Rii, perm, j, idx)
-
-            ! Check for breakdown.
-            beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_with_pivoting_cdp')
-            if (abs(beta) < tolerance) then
-                info = j
-                R(j, j) = zero_rdp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rdp / beta)
-
-            ! Orthogonalize all columns against new vector.
-            do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_cdp, Q(j), -beta)
-                R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rdp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
-            enddo
-
-        enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_cdp')
-        
-        return
-    end subroutine qr_with_pivoting_cdp
-
-    subroutine swap_columns_cdp(Q, R, Rii, perm, i, j)
-        class(abstract_vector_cdp), intent(inout) :: Q(:)
-        !! Vector basis whose i-th and j-th columns need swapping.
-        complex(dp), intent(inout) :: R(:, :)
-        !! Upper triangular matrix resulting from QR.
-        complex(dp), intent(inout) :: Rii(:)
-        !! Diagonal entries of R.
-        integer, intent(inout) :: perm(:)
-        !! Column ordering.
-        integer, intent(in) :: i, j
-        !! Index of the columns to be swapped.
-
-        ! Internal variables.
-        class(abstract_vector_cdp), allocatable :: Qwrk
-        complex(dp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
-
-        ! Sanity checks.
-        m = size(Q) ; n = min(i, j) - 1
-
-        ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
-
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
-        
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
-        iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
-
-        if (n > 0) then
-            Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
-        endif
-
-        return
-    end subroutine swap_columns_cdp
-
 
     !-----------------------------------------
     !-----     ARNOLDI FACTORIZATION     -----
