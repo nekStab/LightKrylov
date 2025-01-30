@@ -95,8 +95,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rsp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
@@ -170,8 +170,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rsp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
@@ -230,8 +230,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rdp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
@@ -305,8 +305,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rdp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
@@ -365,8 +365,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_csp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
@@ -440,8 +440,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_csp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
@@ -500,8 +500,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_cdp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
@@ -575,8 +575,8 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_cdp
+        G = innerprod(A(:kdim), A(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
@@ -641,8 +641,8 @@ contains
 
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rsp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -695,8 +695,8 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim)) ; G = zero_rsp
-        call innerprod(G, X(:p*kdim), X(:p*kdim))
+        ! allocate(G(p*kdim, p*kdim)) ; G = zero_rsp
+        G = innerprod(X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim, mold=1.0_sp)))
@@ -807,8 +807,8 @@ contains
 
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rdp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -861,8 +861,8 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim)) ; G = zero_rdp
-        call innerprod(G, X(:p*kdim), X(:p*kdim))
+        ! allocate(G(p*kdim, p*kdim)) ; G = zero_rdp
+        G = innerprod(X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim, mold=1.0_dp)))
@@ -973,8 +973,8 @@ contains
 
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_csp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1027,8 +1027,8 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim)) ; G = zero_csp
-        call innerprod(G, X(:p*kdim), X(:p*kdim))
+        ! allocate(G(p*kdim, p*kdim)) ; G = zero_csp
+        G = innerprod(X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim, mold=1.0_sp)))
@@ -1139,8 +1139,8 @@ contains
 
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_cdp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -1193,8 +1193,8 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim)) ; G = zero_cdp
-        call innerprod(G, X(:p*kdim), X(:p*kdim))
+        ! allocate(G(p*kdim, p*kdim)) ; G = zero_cdp
+        G = innerprod(X(:p*kdim), X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
         err = maxval(abs(G - eye(p*kdim, mold=1.0_dp)))
@@ -1315,8 +1315,8 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, U(:kdim), U(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rsp
+        G = innerprod(U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1326,8 +1326,7 @@ contains
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        G = zero_rsp
-        call innerprod(G, V(:kdim), V(:kdim))
+        G = innerprod(V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1392,8 +1391,8 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, U(:kdim), U(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rdp
+        G = innerprod(U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -1403,8 +1402,7 @@ contains
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        G = zero_rdp
-        call innerprod(G, V(:kdim), V(:kdim))
+        G = innerprod(V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -1469,8 +1467,8 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, U(:kdim), U(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_csp
+        G = innerprod(U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1480,8 +1478,7 @@ contains
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        G = zero_csp
-        call innerprod(G, V(:kdim), V(:kdim))
+        G = innerprod(V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1546,8 +1543,8 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, U(:kdim), U(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_cdp
+        G = innerprod(U(:kdim), U(:kdim))
 
         ! Check orthonormality of the left basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -1557,8 +1554,7 @@ contains
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        G = zero_cdp
-        call innerprod(G, V(:kdim), V(:kdim))
+        G = innerprod(V(:kdim), V(:kdim))
 
         ! Check orthonormality of the right basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -1632,8 +1628,8 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rsp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rsp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1702,8 +1698,8 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_rdp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_rdp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
@@ -1772,8 +1768,8 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_csp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_csp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
@@ -1842,8 +1838,8 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_cdp
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_cdp
+        G = innerprod(X(:kdim), X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
