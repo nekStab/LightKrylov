@@ -7,7 +7,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, inv, norm, mnorm
+    use stdlib_linalg, only: mnorm, norm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -27,7 +27,6 @@ module lightkrylov_expmlib
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp
     public :: abstract_exptA_cdp
-    public :: expm
     public :: kexpm
     public :: krylov_exptA
     public :: krylov_exptA_rsp
@@ -114,30 +113,6 @@ module lightkrylov_expmlib
 
     end interface
 
-    interface expm
-        !!  ### Description
-        !!
-        !!  Evaluate the exponential of a dense matrix using Pade approximations.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      E = expm(A, order)
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
-        !!
-        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
-        !!
-        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
-        module procedure expm_rsp
-        module procedure expm_rdp
-        module procedure expm_csp
-        module procedure expm_cdp
-    end interface
-
     interface kexpm
         !!  ### Description
         !!
@@ -208,73 +183,6 @@ module lightkrylov_expmlib
     end interface
 
 contains
-
-    !--------------------------------------------
-    !-----     DENSE MATRIX EXPONENTIAL     -----
-    !--------------------------------------------
-
-    function expm_rsp(A, order) result(E)
-        real(sp), intent(in) :: A(:, :)
-        !! Matrix to be exponentiated.
-        real(sp) :: E(size(A, 1), size(A, 1))
-        !! Output matrix E = exp(tA).
-        integer, intent(in), optional :: order
-        !! Order of the Pade approximation.
-
-        !----- Internal variables -----
-        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(sp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_sp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_sp
-        E = eye(n, mold=1.0_sp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        return
-    end function expm_rsp
-
     subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rsp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
@@ -528,69 +436,6 @@ contains
 
         return
     end subroutine krylov_exptA_rsp
-
-    function expm_rdp(A, order) result(E)
-        real(dp), intent(in) :: A(:, :)
-        !! Matrix to be exponentiated.
-        real(dp) :: E(size(A, 1), size(A, 1))
-        !! Output matrix E = exp(tA).
-        integer, intent(in), optional :: order
-        !! Order of the Pade approximation.
-
-        !----- Internal variables -----
-        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(dp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_dp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_dp
-        E = eye(n, mold=1.0_dp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        return
-    end function expm_rdp
-
     subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_rdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
@@ -844,69 +689,6 @@ contains
 
         return
     end subroutine krylov_exptA_rdp
-
-    function expm_csp(A, order) result(E)
-        complex(sp), intent(in) :: A(:, :)
-        !! Matrix to be exponentiated.
-        complex(sp) :: E(size(A, 1), size(A, 1))
-        !! Output matrix E = exp(tA).
-        integer, intent(in), optional :: order
-        !! Order of the Pade approximation.
-
-        !----- Internal variables -----
-        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(sp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_sp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_sp
-        E = eye(n, mold=1.0_sp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        return
-    end function expm_csp
-
     subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_csp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
@@ -1160,69 +942,6 @@ contains
 
         return
     end subroutine krylov_exptA_csp
-
-    function expm_cdp(A, order) result(E)
-        complex(dp), intent(in) :: A(:, :)
-        !! Matrix to be exponentiated.
-        complex(dp) :: E(size(A, 1), size(A, 1))
-        !! Output matrix E = exp(tA).
-        integer, intent(in), optional :: order
-        !! Order of the Pade approximation.
-
-        !----- Internal variables -----
-        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(dp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_dp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_dp
-        E = eye(n, mold=1.0_dp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        return
-    end function expm_cdp
-
     subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
         class(abstract_vector_cdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
@@ -1476,6 +1195,5 @@ contains
 
         return
     end subroutine krylov_exptA_cdp
-
 
 end module lightkrylov_expmlib

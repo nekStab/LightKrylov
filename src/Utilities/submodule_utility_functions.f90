@@ -2,9 +2,10 @@ submodule(lightkrylov_utils) utility_functions
     !-------------------------------
     !-----     LightKrylov     -----
     !-------------------------------
+    use stdlib_optval, only: optval
     use stdlib_linalg_constants, only: ilp
     use stdlib_linalg_lapack, only: geev, trsen
-    use stdlib_linalg, only: hermitian, svd, diag
+    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv
 
     implicit none(type, external)
 contains
@@ -360,4 +361,219 @@ contains
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
     end procedure
+
+    !----- Dense Matrix Exponential -----
+    module procedure expm_rsp
+        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
+        real(sp) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
+
+        ! Compute the L-infinity norm.
+        a_norm = mnorm(A, "inf")
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_sp**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_sp
+        E = eye(n, mold=1.0_sp) ; E = E + c*A2
+
+        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        E = matmul(inv(Q), E)
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
+
+        return
+    end procedure
+    module procedure expm_rdp
+        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
+        real(dp) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
+
+        ! Compute the L-infinity norm.
+        a_norm = mnorm(A, "inf")
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_dp**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_dp
+        E = eye(n, mold=1.0_dp) ; E = E + c*A2
+
+        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        E = matmul(inv(Q), E)
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
+
+        return
+    end procedure
+    module procedure expm_csp
+        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
+        real(sp) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
+
+        ! Compute the L-infinity norm.
+        a_norm = mnorm(A, "inf")
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_sp**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_sp
+        E = eye(n, mold=1.0_sp) ; E = E + c*A2
+
+        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        E = matmul(inv(Q), E)
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
+
+        return
+    end procedure
+    module procedure expm_cdp
+        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
+        real(dp) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
+
+        ! Compute the L-infinity norm.
+        a_norm = mnorm(A, "inf")
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_dp**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_dp
+        E = eye(n, mold=1.0_dp) ; E = E + c*A2
+
+        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        E = matmul(inv(Q), E)
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
+
+        return
+    end procedure
+
 end submodule
