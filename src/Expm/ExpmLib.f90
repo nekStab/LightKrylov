@@ -29,11 +29,11 @@ module lightkrylov_expmlib
     public :: abstract_exptA_cdp
     public :: expm
     public :: kexpm
-    public :: k_exptA
-    public :: k_exptA_rsp
-    public :: k_exptA_rdp
-    public :: k_exptA_csp
-    public :: k_exptA_cdp
+    public :: krylov_exptA
+    public :: krylov_exptA_rsp
+    public :: krylov_exptA_rdp
+    public :: krylov_exptA_csp
+    public :: krylov_exptA_cdp
 
     abstract interface
         subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
@@ -177,7 +177,7 @@ module lightkrylov_expmlib
         module procedure kexpm_mat_cdp
     end interface
 
-    interface k_exptA
+    interface krylov_exptA
         !!  ### Description
         !!
         !!  Utility function to evaluate the matrix-exponential times vector.
@@ -201,10 +201,10 @@ module lightkrylov_expmlib
         !!  `info` : Information flag.
         !!
         !!  `trans` : Whether \( A \) or \( A^H \) is being used.
-        module procedure k_exptA_rsp
-        module procedure k_exptA_rdp
-        module procedure k_exptA_csp
-        module procedure k_exptA_cdp
+        module procedure krylov_exptA_rsp
+        module procedure krylov_exptA_rdp
+        module procedure krylov_exptA_csp
+        module procedure krylov_exptA_cdp
     end interface
 
 contains
@@ -502,7 +502,7 @@ contains
         return
     end subroutine kexpm_mat_rsp
 
-    subroutine k_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
+    subroutine krylov_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rsp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_rsp), intent(inout) :: A
@@ -524,10 +524,10 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rsp')
+        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_rsp')
 
         return
-    end subroutine k_exptA_rsp
+    end subroutine krylov_exptA_rsp
 
     function expm_rdp(A, order) result(E)
         real(dp), intent(in) :: A(:, :)
@@ -818,7 +818,7 @@ contains
         return
     end subroutine kexpm_mat_rdp
 
-    subroutine k_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
+    subroutine krylov_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_rdp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_rdp), intent(inout) :: A
@@ -840,10 +840,10 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_rdp')
+        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_rdp')
 
         return
-    end subroutine k_exptA_rdp
+    end subroutine krylov_exptA_rdp
 
     function expm_csp(A, order) result(E)
         complex(sp), intent(in) :: A(:, :)
@@ -1134,7 +1134,7 @@ contains
         return
     end subroutine kexpm_mat_csp
 
-    subroutine k_exptA_csp(vec_out, A, vec_in, tau, info, trans)
+    subroutine krylov_exptA_csp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_csp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_csp), intent(inout) :: A
@@ -1156,10 +1156,10 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_csp')
+        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_csp')
 
         return
-    end subroutine k_exptA_csp
+    end subroutine krylov_exptA_csp
 
     function expm_cdp(A, order) result(E)
         complex(dp), intent(in) :: A(:, :)
@@ -1450,7 +1450,7 @@ contains
         return
     end subroutine kexpm_mat_cdp
 
-    subroutine k_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
+    subroutine krylov_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_cdp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_cdp), intent(inout) :: A
@@ -1472,10 +1472,10 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_cdp')
+        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_cdp')
 
         return
-    end subroutine k_exptA_cdp
+    end subroutine krylov_exptA_cdp
 
 
 end module lightkrylov_expmlib
