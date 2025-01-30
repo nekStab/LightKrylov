@@ -30,9 +30,9 @@ module lightkrylov_expmlib
     #:endfor
     public :: expm
     public :: kexpm
-    public :: k_exptA
+    public :: krylov_exptA
     #:for kind, type in RC_KINDS_TYPES
-    public :: k_exptA_${type[0]}$${kind}$
+    public :: krylov_exptA_${type[0]}$${kind}$
     #:endfor
 
     abstract interface
@@ -117,7 +117,7 @@ module lightkrylov_expmlib
         #:endfor
     end interface
 
-    interface k_exptA
+    interface krylov_exptA
         !!  ### Description
         !!
         !!  Utility function to evaluate the matrix-exponential times vector.
@@ -142,7 +142,7 @@ module lightkrylov_expmlib
         !!
         !!  `trans` : Whether \( A \) or \( A^H \) is being used.
         #:for kind, type in RC_KINDS_TYPES
-        module procedure k_exptA_${type[0]}$${kind}$
+        module procedure krylov_exptA_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -442,7 +442,7 @@ contains
         return
     end subroutine kexpm_mat_${type[0]}$${kind}$
 
-    subroutine k_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+    subroutine krylov_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
@@ -464,10 +464,10 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='k_exptA_${type[0]}$${kind}$')
+        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_${type[0]}$${kind}$')
 
         return
-    end subroutine k_exptA_${type[0]}$${kind}$
+    end subroutine krylov_exptA_${type[0]}$${kind}$
 
     #:endfor
 
