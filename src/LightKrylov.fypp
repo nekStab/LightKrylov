@@ -120,7 +120,7 @@ module LightKrylov
     #:endfor
     public :: expm
     public :: kexpm
-    public :: k_exptA
+    public :: krylov_exptA
 
     ! Timer exports
     public :: lightkrylov_timer

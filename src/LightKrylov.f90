@@ -141,7 +141,7 @@ module LightKrylov
     public :: abstract_exptA_cdp
     public :: expm
     public :: kexpm
-    public :: k_exptA
+    public :: krylov_exptA
 
     ! Timer exports
     public :: lightkrylov_timer
