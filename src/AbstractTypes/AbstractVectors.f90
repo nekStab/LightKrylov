@@ -48,7 +48,7 @@ module lightkrylov_AbstractVectors
     character(len=*), parameter :: this_module      = 'LK_Vectors'
     character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractVectors'
 
-    public :: innerprod
+    public :: innerprod, Gram
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
@@ -107,6 +107,36 @@ module lightkrylov_AbstractVectors
         module procedure innerprod_matrix_csp
         module procedure innerprod_vector_cdp
         module procedure innerprod_matrix_cdp
+    end interface
+
+    interface Gram
+        !!  Compute the Gram matrix \( \mathbf{G} = \mathbf{X}^H \mathbf{X} \).
+        !!
+        !!  ### Description
+        !!
+        !!  This interface provides methods for computing the inner products between a basis
+        !!  of `real` or `complex` vectors \( \mathbf{X} \).
+        !!
+        !!  ### Example
+        !!
+        !!  The example below assumes that you have already extended the `abstract_vector_rdp`
+        !!  class to define your own `my_real_vector` type. It then computes the Gram matrix \( \mathbf{X} \) defined as \( G_{ij} = \mathbf{x}_i^H \mathbf{x}_j \).
+        !!
+        !!  ```
+        !!      type(my_real_vector), dimension(10) :: X
+        !!      real(dp), dimension(:, :), allocatable :: G
+        !!
+        !!      ! ... Part of your code where you initialize everything ...
+        !!
+        !!      G = Gram(X)
+        !!
+        !!      ! ... Rest of your code ...
+        !!  ```
+        !!
+        module procedure gram_matrix_rsp
+        module procedure gram_matrix_rdp
+        module procedure gram_matrix_csp
+        module procedure gram_matrix_cdp
     end interface
 
     interface linear_combination
@@ -814,6 +844,20 @@ contains
         return
     end subroutine linear_combination_matrix_rsp
 
+    function gram_matrix_rsp(X) result(G)
+        !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        class(abstract_vector_rsp), intent(in) :: X(:)
+        real(sp) :: G(size(X), size(X))
+        integer :: i, j
+        do i = 1, size(X)
+            do j = i, size(X)
+                G(i, j) = X(i)%dot(X(j))
+                G(j, i) = G(i, j)
+            enddo
+        enddo
+        return
+    end function gram_matrix_rsp
+
     function innerprod_vector_rsp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
@@ -953,6 +997,20 @@ contains
 
         return
     end subroutine linear_combination_matrix_rdp
+
+    function gram_matrix_rdp(X) result(G)
+        !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        class(abstract_vector_rdp), intent(in) :: X(:)
+        real(dp) :: G(size(X), size(X))
+        integer :: i, j
+        do i = 1, size(X)
+            do j = i, size(X)
+                G(i, j) = X(i)%dot(X(j))
+                G(j, i) = G(i, j)
+            enddo
+        enddo
+        return
+    end function gram_matrix_rdp
 
     function innerprod_vector_rdp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
@@ -1094,6 +1152,20 @@ contains
         return
     end subroutine linear_combination_matrix_csp
 
+    function gram_matrix_csp(X) result(G)
+        !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        class(abstract_vector_csp), intent(in) :: X(:)
+        complex(sp) :: G(size(X), size(X))
+        integer :: i, j
+        do i = 1, size(X)
+            do j = i, size(X)
+                G(i, j) = X(i)%dot(X(j))
+                G(j, i) = G(i, j)
+            enddo
+        enddo
+        return
+    end function gram_matrix_csp
+
     function innerprod_vector_csp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
@@ -1233,6 +1305,20 @@ contains
 
         return
     end subroutine linear_combination_matrix_cdp
+
+    function gram_matrix_cdp(X) result(G)
+        !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        class(abstract_vector_cdp), intent(in) :: X(:)
+        complex(dp) :: G(size(X), size(X))
+        integer :: i, j
+        do i = 1, size(X)
+            do j = i, size(X)
+                G(i, j) = X(i)%dot(X(j))
+                G(j, i) = G(i, j)
+            enddo
+        enddo
+        return
+    end function gram_matrix_cdp
 
     function innerprod_vector_cdp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between

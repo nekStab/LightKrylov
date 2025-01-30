@@ -291,7 +291,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(sp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -339,7 +339,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(sp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -384,7 +384,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(dp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -432,7 +432,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(dp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -477,7 +477,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(sp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -525,7 +525,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(sp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -570,7 +570,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(dp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -618,7 +618,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(dp), dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2

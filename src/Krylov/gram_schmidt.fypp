@@ -96,7 +96,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             ${type}$, dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_${kind}$) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -144,7 +144,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             ${type}$, dimension(size(X), size(X)) :: G
-            G = innerprod(X, X)
+            G = Gram(X)
             if (abs(G(size(X),size(X))) < rtol_${kind}$) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2

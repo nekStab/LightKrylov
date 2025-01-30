@@ -74,7 +74,7 @@ contains
     module procedure is_orthonormal_${type[0]}$${kind}$
         ${type}$, dimension(size(X), size(X)) :: G
         ortho = .true.
-        G = innerprod(X, X)
+        G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
