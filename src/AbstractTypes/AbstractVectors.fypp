@@ -82,7 +82,7 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Part of your code where you initialize everything ...
         !!
-        !!      call innerprod(v, X, y)
+        !!      v = innerprod(X, y)
         !!
         !!      ! ... Rest of your code ...
         !!  ```
@@ -97,7 +97,7 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Part of your code where you initialize everything ...
         !!
-        !!      call innerprod(M, X, Y)
+        !!      M = innerprod(X, Y)
         !!
         !!      ! ... Rest of your code ...
         !!  ```
@@ -452,12 +452,12 @@ contains
         return
     end subroutine linear_combination_matrix_${type[0]}$${kind}$
 
-    subroutine innerprod_vector_${type[0]}$${kind}$(v, X, y)
+    function innerprod_vector_${type[0]}$${kind}$(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), y
         !! Bases of `abstract_vector` whose inner products need to be computed.
-        ${type}$, intent(out) :: v(size(X))
+        ${type}$ :: v(size(X))
         !! Resulting inner-product vector.
 
         ! Local variables.
@@ -469,14 +469,14 @@ contains
         enddo
         
         return
-    end subroutine innerprod_vector_${type[0]}$${kind}$
+    end function innerprod_vector_${type[0]}$${kind}$
 
-    subroutine innerprod_matrix_${type[0]}$${kind}$(M, X, Y)
+    function innerprod_matrix_${type[0]}$${kind}$(X, Y) result(M)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), Y(:)
         !! Bases of `abstract_vector` whose inner products need to be computed.
-        ${type}$, intent(out) :: M(size(X), size(Y))
+        ${type}$ :: M(size(X), size(Y))
         !! Resulting inner-product matrix.
 
         ! Local variables.
@@ -490,7 +490,7 @@ contains
         enddo
 
         return
-    end subroutine innerprod_matrix_${type[0]}$${kind}$
+    end function innerprod_matrix_${type[0]}$${kind}$
 
     impure elemental subroutine axpby_basis_${type[0]}$${kind}$(x, alpha, y, beta)
         !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where

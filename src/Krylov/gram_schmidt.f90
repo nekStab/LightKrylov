@@ -291,7 +291,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(sp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -304,7 +304,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, y)
+        proj_coefficients = innerprod(X, y)
         block
             class(abstract_vector_rsp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
@@ -339,7 +339,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(sp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -352,7 +352,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, Y)
+        proj_coefficients = innerprod(X, Y)
         block
             class(abstract_vector_rsp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
@@ -384,7 +384,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(dp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -397,7 +397,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, y)
+        proj_coefficients = innerprod(X, y)
         block
             class(abstract_vector_rdp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
@@ -432,7 +432,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             real(dp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -445,7 +445,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, Y)
+        proj_coefficients = innerprod(X, Y)
         block
             class(abstract_vector_rdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
@@ -477,7 +477,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(sp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -490,7 +490,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, y)
+        proj_coefficients = innerprod(X, y)
         block
             class(abstract_vector_csp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
@@ -525,7 +525,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(sp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_sp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -538,7 +538,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, Y)
+        proj_coefficients = innerprod(X, Y)
         block
             class(abstract_vector_csp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
@@ -570,7 +570,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(dp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -583,7 +583,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, y)
+        proj_coefficients = innerprod(X, y)
         block
             class(abstract_vector_cdp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
@@ -618,7 +618,7 @@ contains
         if (chk_X_orthonormality) then
             block 
             complex(dp), dimension(size(X), size(X)) :: G
-            call innerprod(G, X, X)
+            G = innerprod(X, X)
             if (abs(G(size(X),size(X))) < rtol_dp) then
                 ! The last vector in X is zero, it does not impact orthogonalisation
                 info = -2
@@ -631,7 +631,7 @@ contains
         end if
 
         ! orthogonalize
-        call innerprod(proj_coefficients, X, Y)
+        proj_coefficients = innerprod(X, Y)
         block
             class(abstract_vector_cdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
