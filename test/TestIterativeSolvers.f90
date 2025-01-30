@@ -276,8 +276,7 @@ contains
         call check_test(error, 'test_sym_evp_rsp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(test_size, test_size)) ; G = zero_rsp
-        G = innerprod(X, X)
+        G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
         err = maxval(abs(G - eye(test_size)))
@@ -519,8 +518,7 @@ contains
         call check_test(error, 'test_sym_evp_rdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(test_size, test_size)) ; G = zero_rdp
-        G = innerprod(X, X)
+        G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
         err = maxval(abs(G - eye(test_size)))
@@ -732,7 +730,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         ! allocate(G(test_size, test_size)) ; G = zero_rsp
-        G = innerprod(U(1:test_size), U(1:test_size))
+        G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
         err = maxval(abs(G - eye(test_size)))
@@ -741,7 +739,7 @@ contains
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
-        G = innerprod(V(1:test_size), V(1:test_size))
+        G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
         err = maxval(abs(G - eye(test_size)))
@@ -825,7 +823,7 @@ contains
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
         ! allocate(G(test_size, test_size)) ; G = zero_rdp
-        G = innerprod(U(1:test_size), U(1:test_size))
+        G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
         err = maxval(abs(G - eye(test_size)))
@@ -834,7 +832,7 @@ contains
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
-        G = innerprod(V(1:test_size), V(1:test_size))
+        G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
         err = maxval(abs(G - eye(test_size)))

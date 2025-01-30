@@ -173,7 +173,7 @@ contains
     module procedure is_orthonormal_rsp
         real(sp), dimension(size(X), size(X)) :: G
         ortho = .true.
-        G = innerprod(X, X)
+        G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
@@ -182,7 +182,7 @@ contains
     module procedure is_orthonormal_rdp
         real(dp), dimension(size(X), size(X)) :: G
         ortho = .true.
-        G = innerprod(X, X)
+        G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
@@ -191,7 +191,7 @@ contains
     module procedure is_orthonormal_csp
         complex(sp), dimension(size(X), size(X)) :: G
         ortho = .true.
-        G = innerprod(X, X)
+        G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
@@ -200,7 +200,7 @@ contains
     module procedure is_orthonormal_cdp
         complex(dp), dimension(size(X), size(X)) :: G
         ortho = .true.
-        G = innerprod(X, X)
+        G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
