@@ -7,7 +7,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, inv
+    use stdlib_linalg, only: eye, inv, norm, mnorm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -237,7 +237,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -249,9 +249,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_sp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_sp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -357,12 +357,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_sp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_sp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -408,7 +403,7 @@ contains
         class(abstract_vector_rsp), allocatable :: X(:)
         real(sp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        real(sp), allocatable :: R(:, :), E(:, :), em(:, :)
+        real(sp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_rsp), allocatable :: Xwrk(:), Cwrk(:)
         real(sp) :: err_est
@@ -430,16 +425,16 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_sp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
-        if (norm2(abs(R)) == 0.0_sp) then
+        if (mnorm(R, "fro") == 0.0_sp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
@@ -486,8 +481,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_sp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
@@ -559,7 +553,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -571,9 +565,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_dp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_dp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -679,12 +673,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_dp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_dp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -730,7 +719,7 @@ contains
         class(abstract_vector_rdp), allocatable :: X(:)
         real(dp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        real(dp), allocatable :: R(:, :), E(:, :), em(:, :)
+        real(dp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_rdp), allocatable :: Xwrk(:), Cwrk(:)
         real(dp) :: err_est
@@ -752,16 +741,16 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_dp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
-        if (norm2(abs(R)) == 0.0_dp) then
+        if (mnorm(R, "fro") == 0.0_dp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
@@ -808,8 +797,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_dp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
@@ -881,7 +869,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -893,9 +881,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_sp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_sp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -1001,12 +989,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_sp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_sp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -1052,7 +1035,7 @@ contains
         class(abstract_vector_csp), allocatable :: X(:)
         complex(sp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        complex(sp), allocatable :: R(:, :), E(:, :), em(:, :)
+        complex(sp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_csp), allocatable :: Xwrk(:), Cwrk(:)
         real(sp) :: err_est
@@ -1074,16 +1057,16 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_sp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
-        if (norm2(abs(R)) == 0.0_sp) then
+        if (mnorm(R, "fro") == 0.0_sp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_sp ; k = 0 ; kpp = p
@@ -1130,8 +1113,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_sp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi
@@ -1203,7 +1185,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -1215,9 +1197,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_dp
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_dp) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -1323,12 +1305,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_dp
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_dp, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -1374,7 +1351,7 @@ contains
         class(abstract_vector_cdp), allocatable :: X(:)
         complex(dp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        complex(dp), allocatable :: R(:, :), E(:, :), em(:, :)
+        complex(dp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_cdp), allocatable :: Xwrk(:), Cwrk(:)
         real(dp) :: err_est
@@ -1396,16 +1373,16 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_dp
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
-        if (norm2(abs(R)) == 0.0_dp) then
+        if (mnorm(R, "fro") == 0.0_dp) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_dp ; k = 0 ; kpp = p
@@ -1452,8 +1429,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_dp
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi

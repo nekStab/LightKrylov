@@ -1,4 +1,4 @@
-#:include "../include/common.fypp"
+#:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_expmlib
     !!  This module implements the evaluation of the "matrix-exponential times vector" procedure
@@ -9,7 +9,7 @@ module lightkrylov_expmlib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, inv
+    use stdlib_linalg, only: eye, inv, norm, mnorm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -177,7 +177,7 @@ contains
         allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
 
         ! Compute the L-infinity norm.
-        a_norm = norml(A)
+        a_norm = mnorm(A, "inf")
 
         ! Determine scaling factor for the matrix.
         ee = int(log2(a_norm)) + 1
@@ -189,9 +189,9 @@ contains
 
         ! Initialize P & Q and add first step.
         c = 0.5_${kind}$
-        E = eye(n) ; E = E + c*A2
+        E = eye(n, mold=1.0_${kind}$) ; E = E + c*A2
 
-        Q = eye(n) ; Q = Q - c*A2
+        Q = eye(n, mold=1.0_${kind}$) ; Q = Q - c*A2
 
         ! Iteratively compute the Pade approximation.
         p = .true.
@@ -297,12 +297,7 @@ contains
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
-                if (info == k) then
-                    ! Approximation is exact.
-                    err_est = 0.0_${kind}$
-                else
-                    err_est = abs(E(kp, 1) * beta)
-                endif
+                err_est = merge(0.0_${kind}$, abs(E(kp, 1)*beta), info==k)
 
                 ! Check convergence.
                 if (err_est <= tol) exit expm_arnoldi
@@ -348,7 +343,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: X(:)
         ${type}$, allocatable :: H(:, :)
         ! Normalization & temporary arrays.
-        ${type}$, allocatable :: R(:, :), E(:, :), em(:, :)
+        ${type}$, allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:), Cwrk(:)
         real(${kind}$) :: err_est
@@ -370,16 +365,16 @@ contains
         ! Allocate arrays.
         allocate(R(p, p)) ; allocate(perm(p)) ; allocate(ptrans(p))
         allocate(X(p*(nk+1)), source=B(1)) ; allocate(H(p*(nk+1), p*(nk+1)))
-        allocate(E(p*(nk+1), p*(nk+1))) ; allocate(em(p, p))
+        allocate(E(p*(nk+1), p*(nk+1)))
 
         ! Scratch arrays.
         allocate(Xwrk(p), source=B) ; allocate(Cwrk(p), source=B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         R = 0.0_${kind}$
-        call qr(Xwrk, R, perm, info) ; call apply_inverse_permutation_matrix(R, perm)
+        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
-        if (norm2(abs(R)) == 0.0_${kind}$) then
+        if (mnorm(R, "fro") == 0.0_${kind}$) then
             ! Input matrix is zero.
             call zero_basis(C)
             err_est = 0.0_${kind}$ ; k = 0 ; kpp = p
@@ -426,8 +421,7 @@ contains
                     ! Approximation is exact.
                     err_est = 0.0_${kind}$
                 else
-                    em = matmul(E(kp+1:kpp, :p), R(:p, :p))
-                    err_est = norm2(abs(em))
+                    err_est = norm(matmul(E(kp+1:kpp, :p), R(:p, :p)), 2)
                 endif
 
                 if (err_est <= tol) exit expm_arnoldi

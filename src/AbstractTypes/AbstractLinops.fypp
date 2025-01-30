@@ -1,4 +1,4 @@
-#:include "../include/common.fypp"
+#:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,

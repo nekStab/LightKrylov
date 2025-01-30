@@ -1,4 +1,4 @@
-#:include "../include/common.fypp"
+#:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module lightkrylov_AbstractVectors
     !! This module provides the base class `absract_vector` from which all Krylov vectors
@@ -219,7 +219,7 @@ module lightkrylov_AbstractVectors
         !!  ```
         #:for kind, type in RC_KINDS_TYPES
         module procedure copy_vector_${type[0]}$${kind}$
-        module procedure copy_basis_${type[0]}$${kind}$
+        ! module procedure copy_basis_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -492,83 +492,35 @@ contains
         return
     end subroutine innerprod_matrix_${type[0]}$${kind}$
 
-    subroutine axpby_basis_${type[0]}$${kind}$(x, alpha, y, beta)
+    impure elemental subroutine axpby_basis_${type[0]}$${kind}$(x, alpha, y, beta)
         !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are ${type}$
         !! numbers.
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: Y(:)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         ${type}$, intent(in) :: alpha, beta
         !! Scalar multipliers.
-
-        ! Internal variable.
-        integer :: i
-
-        ! Check size.
-        if (size(X) /= size(Y)) then
-            call stop_error("X and Y have incompatible dimensions.", &
-                              & module=this_module, procedure='axpby_basis_${type[0]}$${kind}$')
-        endif
-
-        ! Add basis.
-        do i = 1, size(X)
-            call X(i)%axpby(alpha, Y(i), beta)
-        enddo
-
-        return
+        call x%axpby(alpha, y, beta)
     end subroutine axpby_basis_${type[0]}$${kind}$
 
-    subroutine zero_basis_${type[0]}$${kind}$(X)
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%zero()
-        end do
-
-        return
+    impure elemental subroutine zero_basis_${type[0]}$${kind}$(X)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
+        call X%zero()
     end subroutine zero_basis_${type[0]}$${kind}$
 
-    subroutine copy_vector_${type[0]}$${kind}$(out, from)
+    impure elemental subroutine copy_vector_${type[0]}$${kind}$(out, from)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out
         ! Copy array.
         call out%axpby(zero_${type[0]}$${kind}$, from, one_${type[0]}$${kind}$)
-        return
     end subroutine copy_vector_${type[0]}$${kind}$
 
-    subroutine copy_basis_${type[0]}$${kind}$(out, from)
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from(:)
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out(:)
-        integer :: i
-
-        ! Check size.
-        if (size(out) /= size(from)) then
-            call stop_error("from and out have incompatible dimensions.", &
-                              & module=this_module, procedure='copy_basis_${type[0]}$${kind}$')
-        endif
-
-        ! Copy array.
-        do i = 1, size(out)
-            call copy_vector_${type[0]}$${kind}$(out(i), from(i))
-        enddo
-
-        return
-    end subroutine copy_basis_${type[0]}$${kind}$
-
-    subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+    impure elemental subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
-        ! internal
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%rand(ifnorm=ifnorm)
-        end do
-
-        return
+        call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_${type[0]}$${kind}$
 
     #:endfor

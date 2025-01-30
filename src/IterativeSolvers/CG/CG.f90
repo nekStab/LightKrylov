@@ -1,0 +1,519 @@
+submodule (lightkrylov_iterativesolvers) cg_solver
+    use stdlib_strings, only: padr
+    implicit none
+contains
+
+    !----------------------------------------
+    !-----     Options and Metadata     -----
+    !----------------------------------------
+
+    module procedure print_cg_sp
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15)') 'Residual'
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            do i = 2, self%n_iter+1
+               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
+               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            end do
+        else
+            write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end procedure 
+
+    module procedure reset_cg_sp
+        self%n_iter = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+    end procedure
+    module procedure print_cg_dp
+        integer :: i
+        logical :: ifreset, ifverbose
+        character(len=128) :: msg
+
+        ifreset   = optval(reset_counters, .false.)
+        ifverbose = optval(verbose, .false.)
+
+        write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
+        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        if (ifverbose) then
+            write(msg,'(14X,A15)') 'Residual'
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            do i = 2, self%n_iter+1
+               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
+               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            end do
+        else
+            write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
+            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        end if
+        if (self%converged) then
+            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+        else
+            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+        end if
+        if (ifreset) call self%reset()
+        return
+    end procedure 
+
+    module procedure reset_cg_dp
+        self%n_iter = 0
+        self%converged = .false.
+        self%info = 0
+        if (allocated(self%res)) deallocate(self%res)
+    end procedure
+
+    !-------------------------------------------------
+    !-----     CG SOLVERS FOR ABSTRACT TYPES     -----
+    !-------------------------------------------------
+
+    module procedure cg_rsp
+        ! Options.
+        integer :: maxiter
+        real(sp) :: tol, rtol_, atol_
+        type(cg_sp_opts)     :: opts
+        type(cg_sp_metadata) :: cg_meta
+
+        ! Working variables.
+        class(abstract_vector_rsp), allocatable :: r, p, Ap
+        real(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(sp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
+
+        call logger%log_debug('start', module=this_module, procedure='cg_rsp')
+        if (time_lightkrylov()) call timer%start('cg_rsp')
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_sp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
+
+        ! Initialize vectors.
+        allocate(r, mold=b)  ; call r%zero()
+        allocate(p, mold=b)  ; call p%zero()
+        allocate(Ap, mold=b) ; call Ap%zero()
+
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_sp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
+        info = 0
+
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%apply_matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%apply_matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_rsp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_rsp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(r_dot_r_new)
+
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
+
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_rsp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_rsp')
+        enddo cg_loop
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_sp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+        if (time_lightkrylov()) call timer%stop('cg_rsp')
+        call logger%log_debug('end', module=this_module, procedure='cg_rsp')
+
+        return
+    end procedure
+    module procedure cg_rdp
+        ! Options.
+        integer :: maxiter
+        real(dp) :: tol, rtol_, atol_
+        type(cg_dp_opts)     :: opts
+        type(cg_dp_metadata) :: cg_meta
+
+        ! Working variables.
+        class(abstract_vector_rdp), allocatable :: r, p, Ap
+        real(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(dp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
+
+        call logger%log_debug('start', module=this_module, procedure='cg_rdp')
+        if (time_lightkrylov()) call timer%start('cg_rdp')
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_dp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
+
+        ! Initialize vectors.
+        allocate(r, mold=b)  ; call r%zero()
+        allocate(p, mold=b)  ; call p%zero()
+        allocate(Ap, mold=b) ; call Ap%zero()
+
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_dp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
+        info = 0
+
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%apply_matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%apply_matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_rdp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_rdp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(r_dot_r_new)
+
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
+
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_rdp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_rdp')
+        enddo cg_loop
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_dp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+        if (time_lightkrylov()) call timer%stop('cg_rdp')
+        call logger%log_debug('end', module=this_module, procedure='cg_rdp')
+
+        return
+    end procedure
+    module procedure cg_csp
+        ! Options.
+        integer :: maxiter
+        real(sp) :: tol, rtol_, atol_
+        type(cg_sp_opts)     :: opts
+        type(cg_sp_metadata) :: cg_meta
+
+        ! Working variables.
+        class(abstract_vector_csp), allocatable :: r, p, Ap
+        complex(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(sp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
+
+        call logger%log_debug('start', module=this_module, procedure='cg_csp')
+        if (time_lightkrylov()) call timer%start('cg_csp')
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_sp)
+        atol_ = optval(atol, atol_sp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_sp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
+
+        ! Initialize vectors.
+        allocate(r, mold=b)  ; call r%zero()
+        allocate(p, mold=b)  ; call p%zero()
+        allocate(Ap, mold=b) ; call Ap%zero()
+
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_sp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
+        info = 0
+
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%apply_matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%apply_matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_csp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_csp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(abs(r_dot_r_new))
+
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
+
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_csp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_csp')
+        enddo cg_loop
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_sp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+        if (time_lightkrylov()) call timer%stop('cg_csp')
+        call logger%log_debug('end', module=this_module, procedure='cg_csp')
+
+        return
+    end procedure
+    module procedure cg_cdp
+        ! Options.
+        integer :: maxiter
+        real(dp) :: tol, rtol_, atol_
+        type(cg_dp_opts)     :: opts
+        type(cg_dp_metadata) :: cg_meta
+
+        ! Working variables.
+        class(abstract_vector_cdp), allocatable :: r, p, Ap
+        complex(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
+        real(dp) :: residual
+
+        ! Miscellaneous.
+        integer :: i
+        character(len=256) :: msg
+
+        call logger%log_debug('start', module=this_module, procedure='cg_cdp')
+        if (time_lightkrylov()) call timer%start('cg_cdp')
+        ! Deals with the optional args.
+        rtol_ = optval(rtol, rtol_dp)
+        atol_ = optval(atol, atol_dp)
+        if (present(options)) then
+            opts = options
+        else
+            opts = cg_dp_opts()
+        endif
+        tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
+
+        ! Initialize vectors.
+        allocate(r, mold=b)  ; call r%zero()
+        allocate(p, mold=b)  ; call p%zero()
+        allocate(Ap, mold=b) ; call Ap%zero()
+
+         ! Initialize meta & reset matvec counter
+        cg_meta = cg_dp_metadata()
+        call A%reset_counter(.false., 'cg%init')
+
+        info = 0
+
+        ! Compute initial residual r = b - Ax.
+        if (x%norm() > 0) call A%apply_matvec(x, r)
+        call r%sub(b) ; call r%chsgn()
+
+        ! Initialize direction vector.
+        p = r
+
+        ! Initialize dot product of residual r_dot_r_old = r' * r
+        r_dot_r_old = r%dot(r)
+        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+
+        ! Conjugate gradient iteration.
+        cg_loop: do i = 1, maxiter
+            ! Compute A @ p
+            call A%apply_matvec(p, Ap)
+            ! Compute step size.
+            alpha = r_dot_r_old / p%dot(Ap)
+            ! Update solution x = x + alpha*p
+            call x%axpby(one_cdp, p, alpha)
+            ! Update residual r = r - alpha*Ap
+            call r%axpby(one_cdp, Ap, -alpha)
+            ! Compute new dot product of residual r_dot_r_new = r' * r.
+            r_dot_r_new = r%dot(r)
+            ! Check for convergence.
+            residual = sqrt(abs(r_dot_r_new))
+
+            ! Save metadata.
+            cg_meta%n_iter = cg_meta%n_iter + 1
+            cg_meta%res = [ cg_meta%res, residual ]
+
+            if (residual < tol) then
+               cg_meta%converged = .true.
+               exit cg_loop
+            end if
+
+            ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
+            beta = r_dot_r_new / r_dot_r_old
+            ! Update direction p = beta*p + r
+            call p%axpby(beta, r, one_cdp)
+            ! Update r_dot_r_old for next iteration.
+            r_dot_r_old = r_dot_r_new
+
+            write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
+            call logger%log_information(msg, module=this_module, procedure='cg_cdp')
+        enddo cg_loop
+
+        ! Set and copy info flag for completeness
+        info = cg_meta%n_iter
+        cg_meta%info = info
+
+        if (opts%if_print_metadata) call cg_meta%print()
+
+        ! Set metadata output
+        if (present(meta)) then
+           select type(meta)
+               type is (cg_dp_metadata)
+                   meta = cg_meta
+           end select
+        end if
+
+        call A%reset_counter(.false., 'cg%post')
+        if (time_lightkrylov()) call timer%stop('cg_cdp')
+        call logger%log_debug('end', module=this_module, procedure='cg_cdp')
+
+        return
+    end procedure
+
+end submodule
+

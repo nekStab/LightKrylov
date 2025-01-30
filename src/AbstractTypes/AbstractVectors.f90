@@ -226,13 +226,13 @@ module lightkrylov_AbstractVectors
         !!      ! ... Your code ...
         !!  ```
         module procedure copy_vector_rsp
-        module procedure copy_basis_rsp
+        ! module procedure copy_basis_rsp
         module procedure copy_vector_rdp
-        module procedure copy_basis_rdp
+        ! module procedure copy_basis_rdp
         module procedure copy_vector_csp
-        module procedure copy_basis_csp
+        ! module procedure copy_basis_csp
         module procedure copy_vector_cdp
-        module procedure copy_basis_cdp
+        ! module procedure copy_basis_cdp
     end interface
 
     interface rand_basis
@@ -854,83 +854,35 @@ contains
         return
     end subroutine innerprod_matrix_rsp
 
-    subroutine axpby_basis_rsp(x, alpha, y, beta)
+    impure elemental subroutine axpby_basis_rsp(x, alpha, y, beta)
         !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(sp)
         !! numbers.
-        class(abstract_vector_rsp), intent(inout) :: X(:)
+        class(abstract_vector_rsp), intent(inout) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_rsp), intent(in) :: Y(:)
+        class(abstract_vector_rsp), intent(in) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         real(sp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-
-        ! Internal variable.
-        integer :: i
-
-        ! Check size.
-        if (size(X) /= size(Y)) then
-            call stop_error("X and Y have incompatible dimensions.", &
-                              & module=this_module, procedure='axpby_basis_rsp')
-        endif
-
-        ! Add basis.
-        do i = 1, size(X)
-            call X(i)%axpby(alpha, Y(i), beta)
-        enddo
-
-        return
+        call x%axpby(alpha, y, beta)
     end subroutine axpby_basis_rsp
 
-    subroutine zero_basis_rsp(X)
-        class(abstract_vector_rsp), intent(inout) :: X(:)
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%zero()
-        end do
-
-        return
+    impure elemental subroutine zero_basis_rsp(X)
+        class(abstract_vector_rsp), intent(inout) :: X
+        call X%zero()
     end subroutine zero_basis_rsp
 
-    subroutine copy_vector_rsp(out, from)
+    impure elemental subroutine copy_vector_rsp(out, from)
         class(abstract_vector_rsp), intent(in) :: from
         class(abstract_vector_rsp), intent(out) :: out
         ! Copy array.
         call out%axpby(zero_rsp, from, one_rsp)
-        return
     end subroutine copy_vector_rsp
 
-    subroutine copy_basis_rsp(out, from)
-        class(abstract_vector_rsp), intent(in) :: from(:)
-        class(abstract_vector_rsp), intent(out) :: out(:)
-        integer :: i
-
-        ! Check size.
-        if (size(out) /= size(from)) then
-            call stop_error("from and out have incompatible dimensions.", &
-                              & module=this_module, procedure='copy_basis_rsp')
-        endif
-
-        ! Copy array.
-        do i = 1, size(out)
-            call copy_vector_rsp(out(i), from(i))
-        enddo
-
-        return
-    end subroutine copy_basis_rsp
-
-    subroutine rand_basis_rsp(X, ifnorm)
-        class(abstract_vector_rsp), intent(inout) :: X(:)
+    impure elemental subroutine rand_basis_rsp(X, ifnorm)
+        class(abstract_vector_rsp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
-        ! internal
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%rand(ifnorm=ifnorm)
-        end do
-
-        return
+        call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
 
     subroutine linear_combination_vector_rdp(y, X, v)
@@ -1042,83 +994,35 @@ contains
         return
     end subroutine innerprod_matrix_rdp
 
-    subroutine axpby_basis_rdp(x, alpha, y, beta)
+    impure elemental subroutine axpby_basis_rdp(x, alpha, y, beta)
         !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(dp)
         !! numbers.
-        class(abstract_vector_rdp), intent(inout) :: X(:)
+        class(abstract_vector_rdp), intent(inout) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_rdp), intent(in) :: Y(:)
+        class(abstract_vector_rdp), intent(in) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         real(dp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-
-        ! Internal variable.
-        integer :: i
-
-        ! Check size.
-        if (size(X) /= size(Y)) then
-            call stop_error("X and Y have incompatible dimensions.", &
-                              & module=this_module, procedure='axpby_basis_rdp')
-        endif
-
-        ! Add basis.
-        do i = 1, size(X)
-            call X(i)%axpby(alpha, Y(i), beta)
-        enddo
-
-        return
+        call x%axpby(alpha, y, beta)
     end subroutine axpby_basis_rdp
 
-    subroutine zero_basis_rdp(X)
-        class(abstract_vector_rdp), intent(inout) :: X(:)
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%zero()
-        end do
-
-        return
+    impure elemental subroutine zero_basis_rdp(X)
+        class(abstract_vector_rdp), intent(inout) :: X
+        call X%zero()
     end subroutine zero_basis_rdp
 
-    subroutine copy_vector_rdp(out, from)
+    impure elemental subroutine copy_vector_rdp(out, from)
         class(abstract_vector_rdp), intent(in) :: from
         class(abstract_vector_rdp), intent(out) :: out
         ! Copy array.
         call out%axpby(zero_rdp, from, one_rdp)
-        return
     end subroutine copy_vector_rdp
 
-    subroutine copy_basis_rdp(out, from)
-        class(abstract_vector_rdp), intent(in) :: from(:)
-        class(abstract_vector_rdp), intent(out) :: out(:)
-        integer :: i
-
-        ! Check size.
-        if (size(out) /= size(from)) then
-            call stop_error("from and out have incompatible dimensions.", &
-                              & module=this_module, procedure='copy_basis_rdp')
-        endif
-
-        ! Copy array.
-        do i = 1, size(out)
-            call copy_vector_rdp(out(i), from(i))
-        enddo
-
-        return
-    end subroutine copy_basis_rdp
-
-    subroutine rand_basis_rdp(X, ifnorm)
-        class(abstract_vector_rdp), intent(inout) :: X(:)
+    impure elemental subroutine rand_basis_rdp(X, ifnorm)
+        class(abstract_vector_rdp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
-        ! internal
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%rand(ifnorm=ifnorm)
-        end do
-
-        return
+        call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
@@ -1230,83 +1134,35 @@ contains
         return
     end subroutine innerprod_matrix_csp
 
-    subroutine axpby_basis_csp(x, alpha, y, beta)
+    impure elemental subroutine axpby_basis_csp(x, alpha, y, beta)
         !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(sp)
         !! numbers.
-        class(abstract_vector_csp), intent(inout) :: X(:)
+        class(abstract_vector_csp), intent(inout) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_csp), intent(in) :: Y(:)
+        class(abstract_vector_csp), intent(in) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         complex(sp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-
-        ! Internal variable.
-        integer :: i
-
-        ! Check size.
-        if (size(X) /= size(Y)) then
-            call stop_error("X and Y have incompatible dimensions.", &
-                              & module=this_module, procedure='axpby_basis_csp')
-        endif
-
-        ! Add basis.
-        do i = 1, size(X)
-            call X(i)%axpby(alpha, Y(i), beta)
-        enddo
-
-        return
+        call x%axpby(alpha, y, beta)
     end subroutine axpby_basis_csp
 
-    subroutine zero_basis_csp(X)
-        class(abstract_vector_csp), intent(inout) :: X(:)
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%zero()
-        end do
-
-        return
+    impure elemental subroutine zero_basis_csp(X)
+        class(abstract_vector_csp), intent(inout) :: X
+        call X%zero()
     end subroutine zero_basis_csp
 
-    subroutine copy_vector_csp(out, from)
+    impure elemental subroutine copy_vector_csp(out, from)
         class(abstract_vector_csp), intent(in) :: from
         class(abstract_vector_csp), intent(out) :: out
         ! Copy array.
         call out%axpby(zero_csp, from, one_csp)
-        return
     end subroutine copy_vector_csp
 
-    subroutine copy_basis_csp(out, from)
-        class(abstract_vector_csp), intent(in) :: from(:)
-        class(abstract_vector_csp), intent(out) :: out(:)
-        integer :: i
-
-        ! Check size.
-        if (size(out) /= size(from)) then
-            call stop_error("from and out have incompatible dimensions.", &
-                              & module=this_module, procedure='copy_basis_csp')
-        endif
-
-        ! Copy array.
-        do i = 1, size(out)
-            call copy_vector_csp(out(i), from(i))
-        enddo
-
-        return
-    end subroutine copy_basis_csp
-
-    subroutine rand_basis_csp(X, ifnorm)
-        class(abstract_vector_csp), intent(inout) :: X(:)
+    impure elemental subroutine rand_basis_csp(X, ifnorm)
+        class(abstract_vector_csp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
-        ! internal
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%rand(ifnorm=ifnorm)
-        end do
-
-        return
+        call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
 
     subroutine linear_combination_vector_cdp(y, X, v)
@@ -1418,83 +1274,35 @@ contains
         return
     end subroutine innerprod_matrix_cdp
 
-    subroutine axpby_basis_cdp(x, alpha, y, beta)
+    impure elemental subroutine axpby_basis_cdp(x, alpha, y, beta)
         !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(dp)
         !! numbers.
-        class(abstract_vector_cdp), intent(inout) :: X(:)
+        class(abstract_vector_cdp), intent(inout) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_cdp), intent(in) :: Y(:)
+        class(abstract_vector_cdp), intent(in) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         complex(dp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-
-        ! Internal variable.
-        integer :: i
-
-        ! Check size.
-        if (size(X) /= size(Y)) then
-            call stop_error("X and Y have incompatible dimensions.", &
-                              & module=this_module, procedure='axpby_basis_cdp')
-        endif
-
-        ! Add basis.
-        do i = 1, size(X)
-            call X(i)%axpby(alpha, Y(i), beta)
-        enddo
-
-        return
+        call x%axpby(alpha, y, beta)
     end subroutine axpby_basis_cdp
 
-    subroutine zero_basis_cdp(X)
-        class(abstract_vector_cdp), intent(inout) :: X(:)
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%zero()
-        end do
-
-        return
+    impure elemental subroutine zero_basis_cdp(X)
+        class(abstract_vector_cdp), intent(inout) :: X
+        call X%zero()
     end subroutine zero_basis_cdp
 
-    subroutine copy_vector_cdp(out, from)
+    impure elemental subroutine copy_vector_cdp(out, from)
         class(abstract_vector_cdp), intent(in) :: from
         class(abstract_vector_cdp), intent(out) :: out
         ! Copy array.
         call out%axpby(zero_cdp, from, one_cdp)
-        return
     end subroutine copy_vector_cdp
 
-    subroutine copy_basis_cdp(out, from)
-        class(abstract_vector_cdp), intent(in) :: from(:)
-        class(abstract_vector_cdp), intent(out) :: out(:)
-        integer :: i
-
-        ! Check size.
-        if (size(out) /= size(from)) then
-            call stop_error("from and out have incompatible dimensions.", &
-                              & module=this_module, procedure='copy_basis_cdp')
-        endif
-
-        ! Copy array.
-        do i = 1, size(out)
-            call copy_vector_cdp(out(i), from(i))
-        enddo
-
-        return
-    end subroutine copy_basis_cdp
-
-    subroutine rand_basis_cdp(X, ifnorm)
-        class(abstract_vector_cdp), intent(inout) :: X(:)
+    impure elemental subroutine rand_basis_cdp(X, ifnorm)
+        class(abstract_vector_cdp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
-        ! internal
-        integer :: i
-
-        do i = 1, size(X)
-            call X(i)%rand(ifnorm=ifnorm)
-        end do
-
-        return
+        call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
 
 end module lightkrylov_AbstractVectors

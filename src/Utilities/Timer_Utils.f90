@@ -243,7 +243,7 @@ contains
          write(msg,'(A)') 'Timer "'//trim(self%name)//'" is curently running. Timer not reset.'
          call logger%log_message(msg, module=this_module, procedure='reset_timer')
       else
-         write(msg,'(A,L,3X,A,L)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
+         write(msg,'(A,L1,3X,A,L1)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
          if (print_info) then
             call logger%log_message(msg, module=this_module, procedure=self%name)
          else

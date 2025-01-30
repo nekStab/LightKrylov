@@ -754,10 +754,8 @@ contains
     contains
         function select_eigs(eigvals) result(selected)
             complex(sp), intent(in) :: eigvals(:)
-            logical                       :: selected(size(eigvals))
-           
+            logical, allocatable :: selected(:)
             selected = abs(eigvals) > median(abs(eigvals))
-            return
         end function select_eigs
     end subroutine test_krylov_schur_rsp
 
@@ -922,10 +920,8 @@ contains
     contains
         function select_eigs(eigvals) result(selected)
             complex(dp), intent(in) :: eigvals(:)
-            logical                       :: selected(size(eigvals))
-           
+            logical, allocatable :: selected(:)
             selected = abs(eigvals) > median(abs(eigvals))
-            return
         end function select_eigs
     end subroutine test_krylov_schur_rdp
 
@@ -1090,10 +1086,8 @@ contains
     contains
         function select_eigs(eigvals) result(selected)
             complex(sp), intent(in) :: eigvals(:)
-            logical                       :: selected(size(eigvals))
-           
+            logical, allocatable :: selected(:)
             selected = abs(eigvals) > median(abs(eigvals))
-            return
         end function select_eigs
     end subroutine test_krylov_schur_csp
 
@@ -1258,10 +1252,8 @@ contains
     contains
         function select_eigs(eigvals) result(selected)
             complex(dp), intent(in) :: eigvals(:)
-            logical                       :: selected(size(eigvals))
-           
+            logical, allocatable :: selected(:)
             selected = abs(eigvals) > median(abs(eigvals))
-            return
         end function select_eigs
     end subroutine test_krylov_schur_cdp
 

@@ -1,13 +1,13 @@
 import os
 import fypp
 import argparse
+from glob import glob
 
 
 def apply_command(folder, with_qp, with_xqp, with_hp):
     # Get a list of all files in the folder
     # Filter files based on the provided extension
-    lfiles = os.listdir(folder)
-    files = [folder+os.sep+file for file in lfiles if file.endswith(".fypp")]
+    files = glob(folder+os.sep+"**"+os.sep+"*.fypp", recursive=True)
 
     args = []
     if with_qp:
