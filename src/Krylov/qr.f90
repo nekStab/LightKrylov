@@ -67,8 +67,7 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start('qr_with_pivoting_rsp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rsp ; Rii = zero_rsp
+        info = 0 ; kdim = size(Q) ; R = zero_rsp 
         
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_sp)
@@ -139,8 +138,7 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start('qr_with_pivoting_rdp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rdp ; Rii = zero_rdp
+        info = 0 ; kdim = size(Q) ; R = zero_rdp 
         
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_dp)
@@ -211,8 +209,7 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start('qr_with_pivoting_csp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rsp ; Rii = zero_rsp
+        info = 0 ; kdim = size(Q) ; R = zero_rsp 
         
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_sp)
@@ -284,8 +281,7 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start('qr_with_pivoting_cdp')
-        info = 0 ; kdim = size(Q)
-        R = zero_rdp ; Rii = zero_rdp
+        info = 0 ; kdim = size(Q) ; R = zero_rdp 
         
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_dp)
@@ -553,8 +549,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
+        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -579,8 +574,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
+        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -605,8 +599,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
+        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -631,8 +624,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
+        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))

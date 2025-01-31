@@ -1160,10 +1160,6 @@ contains
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
-        ! Allocate and initializes variables.
-        eigvals = zero_rsp ; Z = zero_rsp
-        selected = .false.
-
         ! Schur decomposition of the Hessenberg matrix.
         call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
@@ -1218,10 +1214,6 @@ contains
        
         ! Krylov subspace dimension.
         kdim = size(X)-1
-
-        ! Allocate and initializes variables.
-        eigvals = zero_rdp ; Z = zero_rdp
-        selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
         call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
@@ -1278,10 +1270,6 @@ contains
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
-        ! Allocate and initializes variables.
-        eigvals = zero_csp ; Z = zero_csp
-        selected = .false.
-
         ! Schur decomposition of the Hessenberg matrix.
         call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 
@@ -1336,10 +1324,6 @@ contains
        
         ! Krylov subspace dimension.
         kdim = size(X)-1
-
-        ! Allocate and initializes variables.
-        eigvals = zero_cdp ; Z = zero_cdp
-        selected = .false.
 
         ! Schur decomposition of the Hessenberg matrix.
         call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T

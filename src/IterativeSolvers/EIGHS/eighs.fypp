@@ -54,7 +54,7 @@ contains
         tol = optval(tolerance, rtol_${kind}$)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_${type[0]}$${kind}$/x0_norm)
@@ -73,7 +73,7 @@ contains
             call check_info(info, 'lanczos', module=this_module, procedure='eighs_${type[0]}$${kind}$')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
-            eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
+            ! eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
             call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.

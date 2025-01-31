@@ -8,14 +8,12 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         real(sp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
         if (time_lightkrylov()) call timer%start('arnoldi_rsp')
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -76,14 +74,12 @@ contains
         real(dp) :: tolerance
         real(dp) :: beta
         real(dp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
         if (time_lightkrylov()) call timer%start('arnoldi_rdp')
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -144,14 +140,12 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         complex(sp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
         if (time_lightkrylov()) call timer%start('arnoldi_csp')
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -212,14 +206,12 @@ contains
         real(dp) :: tolerance
         real(dp) :: beta
         complex(dp), allocatable :: res(:)
-        integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
         if (time_lightkrylov()) call timer%start('arnoldi_cdp')
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
