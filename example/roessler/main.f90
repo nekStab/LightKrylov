@@ -18,12 +18,12 @@ program demo
    use Roessler_OTD
    implicit none
 
-   character(len=*), parameter :: this_module = 'Example Roessler'
+   ! character(len=*), parameter :: this_module = 'Example Roessler'
 
    ! Roessler system.
    type(roessler_upo) :: sys_jac, sys_floquet
    ! State vectors
-   type(state_vector) :: bf, dx, residual, fp
+   type(state_vector) :: bf, dx, residual
    ! Position vectors
    type(pos_vector)   :: bfp
    ! OTD basis
@@ -33,15 +33,13 @@ program demo
 
    ! Misc
    type(newton_dp_opts)            :: opts
-   type(gmres_dp_opts)             :: gmres_opts
    integer                         :: i, j, info
-   real(wp)                        :: rnorm, tol, Tend, t_FTLE, d, tmp
+   real(wp)                        :: tol, Tend, t_FTLE, d
    real(wp), dimension(npts, npts) :: M, Id
    real(wp), dimension(npts)       :: eval, vec
    real(wp), dimension(npts, r)    :: u, Lu
    real(wp), dimension(r, r)       :: Lr
-   real(wp) :: etime, etmin, etmax, etimp
-   integer :: lcount, rcount, gcount
+
    ! IO
    character(len=20)    :: data_fmt, header_fmt
 
@@ -223,7 +221,7 @@ program demo
       end do
    end do
    eval = 0.0_wp
-   eval(1:r) = eigvals(Lr)
+   eval(1:r) = real(eigvals(Lr), kind=wp)
    print '(*(A16,1X))', ' ', 'lambda_1', 'lambda_2'
    print '(A16,1X,*(F16.9,1X))', 'Reference   ', EV_ref
    print *, ''

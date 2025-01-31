@@ -180,11 +180,11 @@ contains
       character(len=*), optional,  intent(in)  :: procedure
       !! The name of the procedure in which the call happens
       character(len=*), optional,  intent(in)  :: info_msg
-      character*128                            :: str
+      character(len=128)                       :: str
       !! Optional extra message
 
       ! internals
-      character*256 :: msg
+      character(len=256) :: msg
       integer :: ierr
 
       str = optval(info_msg, '')
@@ -564,11 +564,11 @@ contains
       character(len=*),    optional, intent(in)    :: info
       character(len=*),    optional, intent(in)    :: eq
       character(len=*),    optional, intent(in)    :: context
-      character*128                                :: name
+      character(len=128)                           :: name
       
       ! internals
-      character*128                  :: msg, info_, eq_
-      character(len=*), parameter :: indent = repeat(" ", 7)
+      character(len=128)                           :: msg, info_, eq_
+      ! character(len=*), parameter :: indent = repeat(" ", 7)
       character(len=4), dimension(4) :: substrings
       integer :: i
 

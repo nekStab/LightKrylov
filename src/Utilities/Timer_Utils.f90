@@ -350,9 +350,7 @@ contains
       logical, optional, intent(in) :: if_silent
       !! No output
       ! internal
-      integer :: i, count
       logical :: silent
-      real(dp) :: etime, etavg
       character(len=128) :: msg
       silent = optval(if_silent, .false.)
       call self%stop()

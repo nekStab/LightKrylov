@@ -342,7 +342,6 @@ contains
       real(wp)                    :: dt = 1.0_wp
       real(wp)                    :: period
       real(wp), dimension(2*npts) :: pos_in, pos_out
-      type(state_vector)          :: vec
 
       select type (vec_in)
       type is (state_vector)
@@ -431,7 +430,7 @@ contains
 
    subroutine write_report_header()
       ! internals
-      integer :: i, j, iunit
+      integer :: iunit
       open (newunit=iunit, file=report_file, status='new', action='write')
       ! time, baseflow
       write (iunit, '(*(A16,1X))') 't', 'BF_x', 'BF_y', 'BF_z'

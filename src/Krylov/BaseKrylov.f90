@@ -1150,7 +1150,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, kdim
+        integer :: kdim
         
         ! Schur-related.
         real(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1209,7 +1209,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, kdim
+        integer :: kdim
         
         ! Schur-related.
         real(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1268,7 +1268,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, kdim
+        integer :: kdim
         
         ! Schur-related.
         complex(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1327,7 +1327,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, kdim
+        integer :: kdim
         
         ! Schur-related.
         complex(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
