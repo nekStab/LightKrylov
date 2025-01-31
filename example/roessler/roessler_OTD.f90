@@ -239,7 +239,7 @@ contains
       type(rks54_class)         :: OTD_roessler
       integer                   :: idx(1)
       real(wp)                  :: time, t_complete, t1, t2, tvec(2)
-      logical                   :: if_GS
+      ! logical                   :: if_GS
       integer                   :: i, j, p_cnt
       real(wp), dimension(r)    :: FTLE_in, FTLE_out
       real(wp), dimension(npts) :: bf_bkp
