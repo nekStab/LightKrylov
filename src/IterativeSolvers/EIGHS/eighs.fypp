@@ -73,7 +73,7 @@ contains
             call check_info(info, 'lanczos', module=this_module, procedure='eighs_${type[0]}$${kind}$')
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
-            ! eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
+            eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
             call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
 
             ! Compute residuals.
@@ -95,8 +95,8 @@ contains
         block
             integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
+            residuals_wrk = residuals_wrk(indices)
             ! Store converged eigenvalues.
             eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
