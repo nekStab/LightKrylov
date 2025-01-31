@@ -10,7 +10,7 @@ module Ginzburg_Landau
    use stdlib_optval, only: optval
    implicit none
 
-   character*128, parameter, private :: this_module = 'Ginzburg_Landau'
+   character(len=*), parameter, private :: this_module = 'Ginzburg_Landau'
 
    public :: nx
    public :: initialize_parameters
@@ -112,7 +112,7 @@ contains
       real(kind=wp), dimension(:), intent(out) :: f
 
       ! Internal variables.
-      integer :: i, j, k
+      integer :: i
       real(kind=wp), dimension(nx) :: u, du
       real(kind=wp), dimension(nx) :: v, dv
       real(kind=wp)                :: d2u, d2v, cu, cv
@@ -179,7 +179,7 @@ contains
 
    subroutine adjoint_rhs(me, t, x, f)
       ! Time-integrator.
-      class(rk_class), intent(inout)             :: me
+      class(rk_class), intent(inout)           :: me
       ! Current time.
       real(kind=wp), intent(in)                :: t
       ! State vector.
@@ -188,7 +188,7 @@ contains
       real(kind=wp), dimension(:), intent(out) :: f
 
       ! Internal variables.
-      integer :: i, j, k
+      integer :: i
       real(kind=wp), dimension(nx) :: u, du
       real(kind=wp), dimension(nx) :: v, dv
       real(kind=wp)                :: d2u, d2v, cu, cv
