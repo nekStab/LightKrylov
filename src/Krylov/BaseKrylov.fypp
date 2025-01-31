@@ -726,7 +726,7 @@ contains
         !-----     Internal variables     -----
         !--------------------------------------
 
-        integer :: i, kdim
+        integer :: kdim
         
         ! Schur-related.
         ${type}$ :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))

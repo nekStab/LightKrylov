@@ -475,7 +475,7 @@ contains
       !! optional flag to choose whether to fully reset the timer (default: .false.)
       ! internals
       integer :: counter_, count_old
-      logical :: reset_timer_, soft, clean
+      logical :: reset_timer_ 
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
