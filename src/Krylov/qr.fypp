@@ -36,8 +36,7 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start('qr_with_pivoting_${type[0]}$${kind}$')
-        info = 0 ; kdim = size(Q)
-        R = zero_r${kind}$ ; Rii = zero_r${kind}$
+        info = 0 ; kdim = size(Q) ; R = zero_r${kind}$ 
         
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_${kind}$)
@@ -176,8 +175,7 @@ contains
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; call Qwrk%zero()
-        allocate(Rwrk(max(1, n))) ; Rwrk = zero_r${kind}$
+        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_r${kind}$
 
         ! Swap columns.
         call copy(Qwrk, Q(j))

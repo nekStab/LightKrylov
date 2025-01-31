@@ -782,7 +782,7 @@ contains
         class(abstract_vector_rsp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -813,7 +813,7 @@ contains
         class(abstract_vector_rsp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -844,7 +844,7 @@ contains
         class(abstract_vector_rdp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -875,7 +875,7 @@ contains
         class(abstract_vector_rdp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -906,7 +906,7 @@ contains
         class(abstract_vector_csp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -937,7 +937,7 @@ contains
         class(abstract_vector_csp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -968,7 +968,7 @@ contains
         class(abstract_vector_cdp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -999,7 +999,7 @@ contains
         class(abstract_vector_cdp), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then

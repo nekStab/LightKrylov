@@ -11,14 +11,12 @@ contains
         real(${kind}$) :: tolerance
         real(${kind}$) :: beta
         ${type}$, allocatable :: res(:)
-        integer, allocatable :: perm(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
         if (time_lightkrylov()) call timer%start('arnoldi_${type[0]}$${kind}$')
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_r${kind}$
-        allocate(perm(size(H, 2))) ; perm = 0 ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_r${kind}$ ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p

@@ -736,10 +736,6 @@ contains
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
-        ! Allocate and initializes variables.
-        eigvals = zero_${type[0]}$${kind}$ ; Z = zero_${type[0]}$${kind}$
-        selected = .false.
-
         ! Schur decomposition of the Hessenberg matrix.
         call schur(H(:size(H, 2), :), T, Z, eigvals) ; H(:size(H, 2), :) = T
 

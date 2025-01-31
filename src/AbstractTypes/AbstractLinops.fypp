@@ -372,7 +372,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -403,7 +403,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
 
         ! Allocate working array.
-        allocate(wrk, source=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in) ; call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then

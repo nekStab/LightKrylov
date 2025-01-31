@@ -82,7 +82,7 @@ contains
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_rsp/x0_norm)
@@ -123,8 +123,8 @@ contains
         block
             integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
+            residuals_wrk = residuals_wrk(indices)
             ! Store converged eigenvalues.
             eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
@@ -172,7 +172,7 @@ contains
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_rdp/x0_norm)
@@ -213,8 +213,8 @@ contains
         block
             integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
+            residuals_wrk = residuals_wrk(indices)
             ! Store converged eigenvalues.
             eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
@@ -262,7 +262,7 @@ contains
         tol = optval(tolerance, rtol_sp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_csp/x0_norm)
@@ -303,8 +303,8 @@ contains
         block
             integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
+            residuals_wrk = residuals_wrk(indices)
             ! Store converged eigenvalues.
             eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
@@ -352,7 +352,7 @@ contains
         tol = optval(tolerance, rtol_dp)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_cdp/x0_norm)
@@ -393,8 +393,8 @@ contains
         block
             integer :: indices(kdim_)
             call sort_index(eigvals_wrk, indices, reverse=.true.)
-            !eigvals_wrk = eigvals_wrk(indices) ; 
             eigvecs_wrk = eigvecs_wrk(:, indices)
+            residuals_wrk = residuals_wrk(indices)
             ! Store converged eigenvalues.
             eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
         end block
