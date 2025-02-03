@@ -83,7 +83,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 

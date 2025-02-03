@@ -1555,13 +1555,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
+                call log_information(msg, module=this_module, procedure='eigs_rsp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call logger%log_information(msg, module=this_module, procedure='eigs_rsp')
+            call log_information(msg, module=this_module, procedure='eigs_rsp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1700,13 +1700,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
+                call log_information(msg, module=this_module, procedure='eigs_rdp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call logger%log_information(msg, module=this_module, procedure='eigs_rdp')
+            call log_information(msg, module=this_module, procedure='eigs_rdp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1835,13 +1835,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call logger%log_information(msg, module=this_module, procedure='eigs_csp')
+                call log_information(msg, module=this_module, procedure='eigs_csp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call logger%log_information(msg, module=this_module, procedure='eigs_csp')
+            call log_information(msg, module=this_module, procedure='eigs_csp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1970,13 +1970,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
+                call log_information(msg, module=this_module, procedure='eigs_cdp')
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call logger%log_information(msg, module=this_module, procedure='eigs_cdp')
+            call log_information(msg, module=this_module, procedure='eigs_cdp')
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1

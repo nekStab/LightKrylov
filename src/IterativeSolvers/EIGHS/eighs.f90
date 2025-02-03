@@ -112,7 +112,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_rsp')
+            call log_information(msg, module=this_module, procedure='eighs_rsp')
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -202,7 +202,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_rdp')
+            call log_information(msg, module=this_module, procedure='eighs_rdp')
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -292,7 +292,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_csp')
+            call log_information(msg, module=this_module, procedure='eighs_csp')
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -382,7 +382,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='eighs_cdp')
+            call log_information(msg, module=this_module, procedure='eighs_cdp')
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 

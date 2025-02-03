@@ -308,10 +308,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure='kexpm_vec_${type[0]}$${kind}$')
             info = -1
         endif
 
@@ -432,10 +432,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure='kexpm_mat_${type[0]}$${kind}$')
             info = -1
         endif
 

@@ -59,7 +59,7 @@ contains
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
+                call log_information(msg, module=this_module, procedure='qr_with_pivoting_${type[0]}$${kind}$')
                 exit qr_step
             endif
 
@@ -141,7 +141,7 @@ contains
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
+                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_${type[0]}$${kind}$')
                 end if
                 R(j, j) = zero_r${kind}$
                 call Q(j)%rand()
