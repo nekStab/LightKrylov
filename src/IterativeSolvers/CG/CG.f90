@@ -16,27 +16,27 @@ contains
         ifverbose = optval(verbose, .false.)
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        call log_message(msg, module=this_module, procedure='cg_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message('Residual history:', module=this_module, procedure='cg_metadata')
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
             do i = 2, self%n_iter+1
                write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+               call log_message(msg, module=this_module, procedure='cg_metadata')
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
         end if
         if (ifreset) call self%reset()
         return
@@ -57,27 +57,27 @@ contains
         ifverbose = optval(verbose, .false.)
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+        call log_message(msg, module=this_module, procedure='cg_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
-            call logger%log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message('Residual history:', module=this_module, procedure='cg_metadata')
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
             do i = 2, self%n_iter+1
                write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+               call log_message(msg, module=this_module, procedure='cg_metadata')
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, module=this_module, procedure='cg_metadata')
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
         end if
         if (ifreset) call self%reset()
         return
@@ -110,7 +110,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='cg_rsp')
+        call log_debug('start', module=this_module, procedure='cg_rsp')
         if (time_lightkrylov()) call timer%start('cg_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -176,7 +176,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_rsp')
+            call log_information(msg, module=this_module, procedure='cg_rsp')
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -195,7 +195,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop('cg_rsp')
-        call logger%log_debug('end', module=this_module, procedure='cg_rsp')
+        call log_debug('end', module=this_module, procedure='cg_rsp')
 
         return
     end procedure
@@ -215,7 +215,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='cg_rdp')
+        call log_debug('start', module=this_module, procedure='cg_rdp')
         if (time_lightkrylov()) call timer%start('cg_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -281,7 +281,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_rdp')
+            call log_information(msg, module=this_module, procedure='cg_rdp')
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -300,7 +300,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop('cg_rdp')
-        call logger%log_debug('end', module=this_module, procedure='cg_rdp')
+        call log_debug('end', module=this_module, procedure='cg_rdp')
 
         return
     end procedure
@@ -320,7 +320,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='cg_csp')
+        call log_debug('start', module=this_module, procedure='cg_csp')
         if (time_lightkrylov()) call timer%start('cg_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -386,7 +386,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_csp')
+            call log_information(msg, module=this_module, procedure='cg_csp')
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -405,7 +405,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop('cg_csp')
-        call logger%log_debug('end', module=this_module, procedure='cg_csp')
+        call log_debug('end', module=this_module, procedure='cg_csp')
 
         return
     end procedure
@@ -425,7 +425,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='cg_cdp')
+        call log_debug('start', module=this_module, procedure='cg_cdp')
         if (time_lightkrylov()) call timer%start('cg_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -491,7 +491,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='cg_cdp')
+            call log_information(msg, module=this_module, procedure='cg_cdp')
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -510,7 +510,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop('cg_cdp')
-        call logger%log_debug('end', module=this_module, procedure='cg_cdp')
+        call log_debug('end', module=this_module, procedure='cg_cdp')
 
         return
     end procedure

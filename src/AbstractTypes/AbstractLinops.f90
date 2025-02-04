@@ -483,11 +483,11 @@ contains
       if ( count_old /= 0 .or. counter_ /= 0) then
         if (trans) then
             write(msg,'(A,I0,A,I0,A)') 'Total number of rmatvecs: ', count_old, '. Resetting counter to ', counter_, '.'
-            call logger%log_message(msg, module=this_module, procedure='reset_counter('//trim(procedure)//')')
+            call log_message(msg, module=this_module, procedure='reset_counter('//trim(procedure)//')')
             self%rmatvec_counter = counter_
         else
             write(msg,'(A,I0,A,I0,A)') 'Total number of matvecs: ', count_old, '. Resetting counter to ', counter_, '.'
-            call logger%log_message(msg, module=this_module, procedure='reset_counter('//trim(procedure)//')')
+            call log_message(msg, module=this_module, procedure='reset_counter('//trim(procedure)//')')
             self%matvec_counter = counter_
         end if
       end if
@@ -554,12 +554,12 @@ contains
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_rsp
 
@@ -571,12 +571,12 @@ contains
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
@@ -587,12 +587,12 @@ contains
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_rdp
 
@@ -604,12 +604,12 @@ contains
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
@@ -620,12 +620,12 @@ contains
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_csp
 
@@ -637,12 +637,12 @@ contains
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_csp
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
@@ -653,12 +653,12 @@ contains
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
         write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='matvec')
+        call log_debug(msg, module=this_module, procedure='matvec')
         return
     end subroutine apply_matvec_cdp
 
@@ -670,12 +670,12 @@ contains
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
-        call logger%log_debug(msg, module=this_module, procedure='rmatvec')
+        call log_debug(msg, module=this_module, procedure='rmatvec')
         return
     end subroutine apply_rmatvec_cdp
 

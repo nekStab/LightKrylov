@@ -20,7 +20,8 @@ module lightkrylov_BaseKrylov
     !-----     LightKrylov     -----
     !-------------------------------
     use LightKrylov_Constants
-    use LightKrylov_Logger
+    use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
+    &                             stop_error, check_info
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors

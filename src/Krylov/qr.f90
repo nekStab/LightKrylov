@@ -89,7 +89,7 @@ contains
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_rsp')
+                call log_information(msg, module=this_module, procedure='qr_with_pivoting_rsp')
                 exit qr_step
             endif
 
@@ -160,7 +160,7 @@ contains
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_rdp')
+                call log_information(msg, module=this_module, procedure='qr_with_pivoting_rdp')
                 exit qr_step
             endif
 
@@ -231,7 +231,7 @@ contains
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_csp')
+                call log_information(msg, module=this_module, procedure='qr_with_pivoting_csp')
                 exit qr_step
             endif
 
@@ -303,7 +303,7 @@ contains
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call logger%log_information(msg, module=this_module, procedure='qr_with_pivoting_cdp')
+                call log_information(msg, module=this_module, procedure='qr_with_pivoting_cdp')
                 exit qr_step
             endif
 
@@ -376,7 +376,7 @@ contains
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_rsp')
+                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_rsp')
                 end if
                 R(j, j) = zero_rsp
                 call Q(j)%rand()
@@ -422,7 +422,7 @@ contains
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_rdp')
+                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_rdp')
                 end if
                 R(j, j) = zero_rdp
                 call Q(j)%rand()
@@ -469,7 +469,7 @@ contains
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_csp')
+                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_csp')
                 end if
                 R(j, j) = zero_rsp
                 call Q(j)%rand()
@@ -516,7 +516,7 @@ contains
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call logger%log_information(msg, module=this_module, procedure='qr_no_pivoting_cdp')
+                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_cdp')
                 end if
                 R(j, j) = zero_rdp
                 call Q(j)%rand()

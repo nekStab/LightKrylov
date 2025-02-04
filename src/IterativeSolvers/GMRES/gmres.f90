@@ -19,26 +19,26 @@ contains
   
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
-        call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+        call log_message(msg, module=this_module, procedure='gmres_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+               call log_message(msg, module=this_module, procedure='gmres_metadata')
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='gmres_metadata')
+            call log_message('Status: CONVERGED', module=this_module, procedure='gmres_metadata')
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='gmres_metadata')
+            call log_message('Status: NOT CONVERGED', module=this_module, procedure='gmres_metadata')
         end if
         if (ifreset) call self%reset()
         return
@@ -64,26 +64,26 @@ contains
   
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
-        call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+        call log_message(msg, module=this_module, procedure='gmres_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+               call log_message(msg, module=this_module, procedure='gmres_metadata')
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='gmres_metadata')
+            call log_message(msg, module=this_module, procedure='gmres_metadata')
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='gmres_metadata')
+            call log_message('Status: CONVERGED', module=this_module, procedure='gmres_metadata')
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='gmres_metadata')
+            call log_message('Status: NOT CONVERGED', module=this_module, procedure='gmres_metadata')
         end if
         if (ifreset) call self%reset()
         return
@@ -177,7 +177,7 @@ contains
 
         write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+        call log_information(msg, module=this_module, procedure='gmres_rsp')
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -218,7 +218,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+                call log_information(msg, module=this_module, procedure='gmres_rsp')
                 if (abs(beta) <= tol) then
                     gmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -247,7 +247,7 @@ contains
 
             write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='gmres_rsp')
+            call log_information(msg, module=this_module, procedure='gmres_rsp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -349,7 +349,7 @@ contains
 
         write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+        call log_information(msg, module=this_module, procedure='gmres_rdp')
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -390,7 +390,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+                call log_information(msg, module=this_module, procedure='gmres_rdp')
                 if (abs(beta) <= tol) then
                     gmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -419,7 +419,7 @@ contains
 
             write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='gmres_rdp')
+            call log_information(msg, module=this_module, procedure='gmres_rdp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -521,7 +521,7 @@ contains
 
         write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+        call log_information(msg, module=this_module, procedure='gmres_csp')
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -562,7 +562,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+                call log_information(msg, module=this_module, procedure='gmres_csp')
                 if (abs(beta) <= tol) then
                     gmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -591,7 +591,7 @@ contains
 
             write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='gmres_csp')
+            call log_information(msg, module=this_module, procedure='gmres_csp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -693,7 +693,7 @@ contains
 
         write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+        call log_information(msg, module=this_module, procedure='gmres_cdp')
 
         ! Iterative solver.
         gmres_iter : do i = 1, maxiter
@@ -734,7 +734,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+                call log_information(msg, module=this_module, procedure='gmres_cdp')
                 if (abs(beta) <= tol) then
                     gmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -763,7 +763,7 @@ contains
 
             write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='gmres_cdp')
+            call log_information(msg, module=this_module, procedure='gmres_cdp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then

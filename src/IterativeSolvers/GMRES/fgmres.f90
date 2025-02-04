@@ -19,26 +19,26 @@ contains
   
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
-        call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+        call log_message(msg, module=this_module, procedure='fgmres_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+               call log_message(msg, module=this_module, procedure='fgmres_metadata')
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='fgmres_metadata')
+            call log_message('Status: CONVERGED', module=this_module, procedure='fgmres_metadata')
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='fgmres_metadata')
+            call log_message('Status: NOT CONVERGED', module=this_module, procedure='fgmres_metadata')
         end if
         if (ifreset) call self%reset()
         return
@@ -64,26 +64,26 @@ contains
   
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
-        call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+        call log_message(msg, module=this_module, procedure='fgmres_metadata')
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
-               call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+               call log_message(msg, module=this_module, procedure='fgmres_metadata')
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure='fgmres_metadata')
+            call log_message(msg, module=this_module, procedure='fgmres_metadata')
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure='fgmres_metadata')
+            call log_message('Status: CONVERGED', module=this_module, procedure='fgmres_metadata')
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure='fgmres_metadata')
+            call log_message('Status: NOT CONVERGED', module=this_module, procedure='fgmres_metadata')
         end if
         if (ifreset) call self%reset()
         return
@@ -129,7 +129,7 @@ contains
         class(abstract_vector_rsp), allocatable :: dx
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='fgmres_rsp')
+        call log_debug('start', module=this_module, procedure='fgmres_rsp')
         if (time_lightkrylov()) call timer%start('fgmres_rsp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -179,7 +179,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='fgmres_rsp')
+        call log_information(msg, module=this_module, procedure='fgmres_rsp')
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -220,7 +220,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='fgmres_rsp')
+                call log_information(msg, module=this_module, procedure='fgmres_rsp')
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -248,7 +248,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='fgmres_rsp')
+            call log_information(msg, module=this_module, procedure='fgmres_rsp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -273,7 +273,7 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop('fgmres_rsp')
-        call logger%log_debug('end', module=this_module, procedure='fgmres_rsp')
+        call log_debug('end', module=this_module, procedure='fgmres_rsp')
         
         return
     end procedure
@@ -303,7 +303,7 @@ contains
         class(abstract_vector_rdp), allocatable :: dx
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='fgmres_rdp')
+        call log_debug('start', module=this_module, procedure='fgmres_rdp')
         if (time_lightkrylov()) call timer%start('fgmres_rdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -353,7 +353,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='fgmres_rdp')
+        call log_information(msg, module=this_module, procedure='fgmres_rdp')
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -394,7 +394,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='fgmres_rdp')
+                call log_information(msg, module=this_module, procedure='fgmres_rdp')
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -422,7 +422,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='fgmres_rdp')
+            call log_information(msg, module=this_module, procedure='fgmres_rdp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -447,7 +447,7 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop('fgmres_rdp')
-        call logger%log_debug('end', module=this_module, procedure='fgmres_rdp')
+        call log_debug('end', module=this_module, procedure='fgmres_rdp')
         
         return
     end procedure
@@ -477,7 +477,7 @@ contains
         class(abstract_vector_csp), allocatable :: dx
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='fgmres_csp')
+        call log_debug('start', module=this_module, procedure='fgmres_csp')
         if (time_lightkrylov()) call timer%start('fgmres_csp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -527,7 +527,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='fgmres_csp')
+        call log_information(msg, module=this_module, procedure='fgmres_csp')
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -568,7 +568,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='fgmres_csp')
+                call log_information(msg, module=this_module, procedure='fgmres_csp')
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -596,7 +596,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='fgmres_csp')
+            call log_information(msg, module=this_module, procedure='fgmres_csp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -621,7 +621,7 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop('fgmres_csp')
-        call logger%log_debug('end', module=this_module, procedure='fgmres_csp')
+        call log_debug('end', module=this_module, procedure='fgmres_csp')
         
         return
     end procedure
@@ -651,7 +651,7 @@ contains
         class(abstract_vector_cdp), allocatable :: dx
         character(len=256) :: msg
 
-        call logger%log_debug('start', module=this_module, procedure='fgmres_cdp')
+        call log_debug('start', module=this_module, procedure='fgmres_cdp')
         if (time_lightkrylov()) call timer%start('fgmres_cdp')
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -701,7 +701,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call logger%log_information(msg, module=this_module, procedure='fgmres_cdp')
+        call log_information(msg, module=this_module, procedure='fgmres_cdp')
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -742,7 +742,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call logger%log_information(msg, module=this_module, procedure='fgmres_cdp')
+                call log_information(msg, module=this_module, procedure='fgmres_cdp')
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -770,7 +770,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure='fgmres_cdp')
+            call log_information(msg, module=this_module, procedure='fgmres_cdp')
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -795,7 +795,7 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop('fgmres_cdp')
-        call logger%log_debug('end', module=this_module, procedure='fgmres_cdp')
+        call log_debug('end', module=this_module, procedure='fgmres_cdp')
         
         return
     end procedure

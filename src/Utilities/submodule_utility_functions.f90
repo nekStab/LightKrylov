@@ -238,7 +238,7 @@ contains
             call stop_error(msg, module=this_module, procedure="sqrtm_rsp")
         else if (symmetry_error > 10*atol_sp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call logger%log_warning(msg, module=this_module, procedure="sqrtm_rsp")
+            call log_warning(msg, module=this_module, procedure="sqrtm_rsp")
         endif
 
         ! Perform SVD.
@@ -273,7 +273,7 @@ contains
             call stop_error(msg, module=this_module, procedure="sqrtm_rdp")
         else if (symmetry_error > 10*atol_dp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call logger%log_warning(msg, module=this_module, procedure="sqrtm_rdp")
+            call log_warning(msg, module=this_module, procedure="sqrtm_rdp")
         endif
 
         ! Perform SVD.
@@ -308,7 +308,7 @@ contains
             call stop_error(msg, module=this_module, procedure="sqrtm_csp")
         else if (symmetry_error > 10*atol_sp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call logger%log_warning(msg, module=this_module, procedure="sqrtm_csp")
+            call log_warning(msg, module=this_module, procedure="sqrtm_csp")
         endif
 
         ! Perform SVD.
@@ -343,7 +343,7 @@ contains
             call stop_error(msg, module=this_module, procedure="sqrtm_cdp")
         else if (symmetry_error > 10*atol_dp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call logger%log_warning(msg, module=this_module, procedure="sqrtm_cdp")
+            call log_warning(msg, module=this_module, procedure="sqrtm_cdp")
         endif
 
         ! Perform SVD.

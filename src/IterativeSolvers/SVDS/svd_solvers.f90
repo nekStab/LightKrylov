@@ -114,7 +114,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='svds_rsp')
+            call log_information(msg, module=this_module, procedure='svds_rsp')
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -196,7 +196,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='svds_rdp')
+            call log_information(msg, module=this_module, procedure='svds_rdp')
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -278,7 +278,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='svds_csp')
+            call log_information(msg, module=this_module, procedure='svds_csp')
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -360,7 +360,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call logger%log_information(msg, module=this_module, procedure='svds_cdp')
+            call log_information(msg, module=this_module, procedure='svds_cdp')
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 

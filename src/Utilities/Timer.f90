@@ -34,12 +34,12 @@ contains
       if (if_time .neqv. value) then
          if_time = value
          if (if_time) then
-            call logger%log_message('LightKrylov timing enabled.', module=this_module)
+            call log_message('LightKrylov timing enabled.', module=this_module)
          else
-            call logger%log_message('LightKrylov timing disabled.', module=this_module)
+            call log_message('LightKrylov timing disabled.', module=this_module)
          end if
       else
-         call logger%log_debug('LightKrylov timing switched unchanged.', module=this_module)
+         call log_debug('LightKrylov timing switched unchanged.', module=this_module)
       end if      
    end subroutine set_lightkrylov_timer_switch
 

@@ -127,7 +127,7 @@ contains
             call stop_error(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
         else if (symmetry_error > 10*atol_${kind}$) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call logger%log_warning(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
+            call log_warning(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
         endif
 
         ! Perform SVD.
