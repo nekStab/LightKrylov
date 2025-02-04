@@ -19,7 +19,9 @@ module lightkrylov_utils
     !-----     LightKrylov     -----
     !-------------------------------
     use LightKrylov_Constants
-    use LightKrylov_Logger
+    ! use LightKrylov_Logger
+    use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
+    &                             stop_error, check_info
 
     implicit none
     private
