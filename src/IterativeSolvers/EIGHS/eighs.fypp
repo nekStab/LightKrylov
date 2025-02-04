@@ -4,6 +4,7 @@ submodule (lightkrylov_iterativesolvers) hermitian_eigensolvers
     use stdlib_strings, only: padr
     use stdlib_linalg, only: eigh
     implicit none
+    character(len=*), parameter :: eighs_output = 'eighs_output.txt'
 contains
 
     !----- Utility functions -----
@@ -45,13 +46,15 @@ contains
         integer :: i, j, k, nev, conv
         real(${kind}$) :: tol
         ${type}$ :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('eighs_${type[0]}$${kind}$')
         ! Deaks with the optional args.
         nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_${kind}$)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_${kind}$)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
@@ -85,6 +88,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='eighs_${type[0]}$${kind}$')
+            if (outpost) call write_results_r${kind}$(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 

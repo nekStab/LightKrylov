@@ -2,6 +2,7 @@ submodule (lightkrylov_iterativesolvers) hermitian_eigensolvers
     use stdlib_strings, only: padr
     use stdlib_linalg, only: eigh
     implicit none
+    character(len=*), parameter :: eighs_output = 'eighs_output.txt'
 contains
 
     !----- Utility functions -----
@@ -73,13 +74,15 @@ contains
         integer :: i, j, k, nev, conv
         real(sp) :: tol
         real(sp) :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('eighs_rsp')
         ! Deaks with the optional args.
         nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_sp)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_sp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
@@ -113,6 +116,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='eighs_rsp')
+            if (outpost) call write_results_rsp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -163,13 +167,15 @@ contains
         integer :: i, j, k, nev, conv
         real(dp) :: tol
         real(dp) :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('eighs_rdp')
         ! Deaks with the optional args.
         nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_dp)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_dp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
@@ -203,6 +209,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='eighs_rdp')
+            if (outpost) call write_results_rdp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -253,13 +260,15 @@ contains
         integer :: i, j, k, nev, conv
         real(sp) :: tol
         complex(sp) :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('eighs_csp')
         ! Deaks with the optional args.
         nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_sp)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_sp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
@@ -293,6 +302,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='eighs_csp')
+            if (outpost) call write_results_rsp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -343,13 +353,15 @@ contains
         integer :: i, j, k, nev, conv
         real(dp) :: tol
         complex(dp) :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('eighs_cdp')
         ! Deaks with the optional args.
         nev = size(X)
-        kdim_ = optval(kdim, 4*nev)
-        tol = optval(tolerance, rtol_dp)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_dp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
@@ -383,6 +395,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='eighs_cdp')
+            if (outpost) call write_results_rdp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 

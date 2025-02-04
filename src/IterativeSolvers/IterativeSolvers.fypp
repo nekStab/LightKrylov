@@ -44,6 +44,7 @@ module lightkrylov_IterativeSolvers
 
     character(len=*), parameter :: this_module      = 'LK_Solvers'
     character(len=*), parameter :: this_module_long = 'LightKrylov_IterativeSolvers'
+    character(len=*), parameter :: eigs_output      = 'eigs_output.txt'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_linear_solver_${type[0]}$${kind}$
@@ -63,6 +64,9 @@ module lightkrylov_IterativeSolvers
     public :: cg
     #:for kind, type in RC_KINDS_TYPES
     public :: cg_${type[0]}$${kind}$
+    #:endfor
+    #:for kind, type in RC_KINDS_TYPES
+    public :: write_results_${type[0]}$${kind}$
     #:endfor
 
     !------------------------------------------------------
@@ -597,7 +601,7 @@ module lightkrylov_IterativeSolvers
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
-        module subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, u0, kdim, tolerance)
+        module subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
@@ -615,6 +619,8 @@ module lightkrylov_IterativeSolvers
         !! Desired number of eigenpairs.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
         end subroutine
         #:endfor
     end interface
@@ -681,7 +687,7 @@ module lightkrylov_IterativeSolvers
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
-        module subroutine eighs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+        module subroutine eighs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
             #:if type[0] == "r"
             class(abstract_sym_linop_${type[0]}$${kind}$), intent(inout) :: A
             #:else
@@ -702,6 +708,8 @@ module lightkrylov_IterativeSolvers
             !! Desired number of eigenpairs.
             real(${kind}$), optional, intent(in) :: tolerance
             !! Tolerance
+            logical, optional, intent(in) :: write_intermediate
+            !! Write intermediate eigenvalues to file during iteration?
         end subroutine
         #:endfor
     end interface
@@ -822,6 +830,41 @@ contains
     !-------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
+    subroutine write_results_${type[0]}$${kind}$(filename, vals, res, tol)
+        !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        character(len=*), intent(in) :: filename
+        !! Output filename. This file will be overwritten
+        ${type}$, intent(in) :: vals(:)
+        !! Intermediate values
+        real(${kind}$), intent(in) :: res(:)
+        !! Residuals
+        real(${kind}$), intent(in) :: tol
+        !! Convergence tolerance
+        ! internals
+        integer :: i, k
+        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        k = size(vals)
+        if (io_rank()) then ! only master rank writes
+            open (1234, file=filename, status='replace', action='write')
+            #:if type[0] == "c"
+                write (1234, '(A6,2(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+            #:else
+                write (1234, '(A6,2(A18),A3)') 'Iter', 'value', 'residual', 'C'
+            #:endif
+            do i = 1, k
+                #:if type[0] == "c"
+                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+                #:else
+                    write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
+                #:endif
+            end do 
+            close (1234)
+        end if
+    end subroutine
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
     elemental pure function compute_residual_${type[0]}$${kind}$(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         ${type}$, intent(in) :: beta
@@ -831,7 +874,6 @@ contains
         real(${kind}$) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function compute_residual_${type[0]}$${kind}$
     #:endfor
 
@@ -855,7 +897,7 @@ contains
     !---------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
+    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
@@ -874,6 +916,8 @@ contains
         !! Tolerance.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -896,6 +940,7 @@ contains
         #:if type[0] == "r"
         ${type}$ :: alpha
         #:endif
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('eigs_${type[0]}$${kind}$')
@@ -903,6 +948,7 @@ contains
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_${kind}$)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_${kind}$
@@ -958,6 +1004,7 @@ contains
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
                 call log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
+                if (outpost) call write_results_c${kind}$(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 

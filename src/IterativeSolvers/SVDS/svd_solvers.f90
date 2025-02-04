@@ -1,6 +1,7 @@
 submodule (lightkrylov_iterativesolvers) svds_solver
     use stdlib_linalg, only: hermitian, svd
     implicit none
+    character(len=*), parameter :: svds_output = 'svds_output.txt'
 contains
 
     !----- Utility functions -----
@@ -15,7 +16,6 @@ contains
         residual = abs(beta*x)
         return
     end function svd_residual_rsp
-
     elemental pure function svd_residual_rdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         real(dp), intent(in) :: beta
@@ -27,7 +27,6 @@ contains
         residual = abs(beta*x)
         return
     end function svd_residual_rdp
-
     elemental pure function svd_residual_csp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         complex(sp), intent(in) :: beta
@@ -39,7 +38,6 @@ contains
         residual = abs(beta*x)
         return
     end function svd_residual_csp
-
     elemental pure function svd_residual_cdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         complex(dp), intent(in) :: beta
@@ -51,7 +49,6 @@ contains
         residual = abs(beta*x)
         return
     end function svd_residual_cdp
-
 
     !----------------------------------------
     !-----     ITERATIVE SVD SOLVER     -----
@@ -71,13 +68,15 @@ contains
         integer :: nsv, conv
         integer :: i, j, k
         real(sp) :: tol, u0_norm
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('svds_rsp')
         ! Deals with the optional arguments.
         nsv = size(U)
-        kdim_ = optval(kdim, 4*nsv)
+        kdim_   = optval(kdim, 4*nsv)
         tol     = optval(tolerance, rtol_sp)
+        outpost = optval(write_intermediate, .true.)
 
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
@@ -115,6 +114,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='svds_rsp')
+            if (outpost) call write_results_rsp(svds_output, svdvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -153,13 +153,15 @@ contains
         integer :: nsv, conv
         integer :: i, j, k
         real(dp) :: tol, u0_norm
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('svds_rdp')
         ! Deals with the optional arguments.
         nsv = size(U)
-        kdim_ = optval(kdim, 4*nsv)
+        kdim_   = optval(kdim, 4*nsv)
         tol     = optval(tolerance, rtol_dp)
+        outpost = optval(write_intermediate, .true.)
 
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
@@ -197,6 +199,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='svds_rdp')
+            if (outpost) call write_results_rdp(svds_output, svdvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -235,13 +238,15 @@ contains
         integer :: nsv, conv
         integer :: i, j, k
         real(sp) :: tol, u0_norm
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('svds_csp')
         ! Deals with the optional arguments.
         nsv = size(U)
-        kdim_ = optval(kdim, 4*nsv)
+        kdim_   = optval(kdim, 4*nsv)
         tol     = optval(tolerance, rtol_sp)
+        outpost = optval(write_intermediate, .true.)
 
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
@@ -279,6 +284,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='svds_csp')
+            if (outpost) call write_results_rsp(svds_output, svdvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -317,13 +323,15 @@ contains
         integer :: nsv, conv
         integer :: i, j, k
         real(dp) :: tol, u0_norm
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start('svds_cdp')
         ! Deals with the optional arguments.
         nsv = size(U)
-        kdim_ = optval(kdim, 4*nsv)
+        kdim_   = optval(kdim, 4*nsv)
         tol     = optval(tolerance, rtol_dp)
+        outpost = optval(write_intermediate, .true.)
 
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
@@ -361,6 +369,7 @@ contains
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
             call log_information(msg, module=this_module, procedure='svds_cdp')
+            if (outpost) call write_results_rdp(svds_output, svdvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
