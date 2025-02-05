@@ -889,6 +889,7 @@ contains
         complex(${kind}$), allocatable :: eigvals_wrk(:)
         real(${kind}$), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eigs_${type[0]}$${kind}$'
         integer :: nev, conv
         integer :: i, j, k, niter, krst
         real(${kind}$) :: tol, x0_norm
@@ -898,7 +899,7 @@ contains
         #:endif
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eigs_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -929,7 +930,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_${type[0]}$${kind}$')
+                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = 0.0_${kind}$
@@ -957,13 +958,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
+                call log_information(msg, module=this_module, procedure=this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure=this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -998,7 +999,7 @@ contains
         enddo
 
         info = niter
-        if (time_lightkrylov()) call timer%stop('eigs_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
             complex(${kind}$), intent(in) :: lambda(:)

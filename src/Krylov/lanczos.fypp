@@ -5,12 +5,13 @@ submodule (lightkrylov_basekrylov) lanczos_methods
 contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure lanczos_tridiagonalization_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'lanczos_tridiagonalization_${type[0]}$${kind}$'
         integer :: k_start, k_end
         real(${kind}$) :: tolerance
         real(${kind}$) :: beta
         integer :: k, kdim
 
-        if (time_lightkrylov()) call timer%start('lanczos_tridiagonalization_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deal with optional args.
         kdim = size(X) - 1
@@ -39,7 +40,7 @@ contains
             endif
         enddo lanczos
 
-        if (time_lightkrylov()) call timer%stop('lanczos_tridiagonalization_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure

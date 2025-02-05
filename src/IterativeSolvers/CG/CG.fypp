@@ -71,11 +71,12 @@ contains
         real(${kind}$) :: residual
 
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'cg_${type[0]}$${kind}$'
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure='cg_${type[0]}$${kind}$')
-        if (time_lightkrylov()) call timer%start('cg_${type[0]}$${kind}$')
+        call log_debug('start', module=this_module, procedure=this_procedure)
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_${kind}$)
         atol_ = optval(atol, atol_${kind}$)
@@ -144,7 +145,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='cg_${type[0]}$${kind}$')
+            call log_information(msg, module=this_module, procedure=this_procedure)
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -159,13 +160,13 @@ contains
             type is (cg_${kind}$_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_${kind}$_metadata'", module=this_module, procedure='cg_${type[0]}$${kind}$')
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_${kind}$_metadata'", module=this_module, procedure=this_procedure)
             end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
-        if (time_lightkrylov()) call timer%stop('cg_${type[0]}$${kind}$')
-        call log_debug('end', module=this_module, procedure='cg_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+        call log_debug('end', module=this_module, procedure=this_procedure)
 
         return
     end procedure

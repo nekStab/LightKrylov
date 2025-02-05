@@ -433,14 +433,15 @@ contains
       integer, intent(in) :: iend
       integer, optional, intent(out) :: count
       ! internal
+      character(len=*), parameter :: this_procedure = 'add_group'
       character(len=128) :: msg, gname
       ! Sanity checks
       if (istart < 1 .or. iend < 1) then
-         call stop_error('Inconsistent input for istart, iend.', module=this_module, procedure='add_group')
+         call stop_error('Inconsistent input for istart, iend.', module=this_module, procedure=this_module)
       else if (istart > iend) then
-         call stop_error('istart > iend.', module=this_module, procedure='add_group')
+         call stop_error('istart > iend.', module=this_module, procedure=this_module)
       else if (iend > self%timer_count) then
-         call stop_error('iend > timer_count.', module=this_module, procedure='add_group')
+         call stop_error('iend > timer_count.', module=this_module, procedure=this_module)
       end if
       gname = to_lower(name)
       if (self%group_count == 0) then
@@ -448,7 +449,7 @@ contains
          self%groups(1) = lightkrylov_timer_group(name=gname, istart=istart, iend=iend)
          self%group_count = 1
       else
-         if (self%get_group_id(name) > 0) call element_exists(gname, 'Group', 'add_group')
+         if (self%get_group_id(name) > 0) call element_exists(gname, 'Group', this_module)
          self%groups = [ self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend) ]
          self%group_count = self%group_count + 1
       end if

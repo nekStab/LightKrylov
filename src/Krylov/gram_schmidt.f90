@@ -7,13 +7,14 @@ contains
     !--------------------------------------------
 
     module procedure DGS_vector_against_basis_rsp
+        character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_rsp'
         logical                      :: chk_X_orthonormality
         real(sp), dimension(size(X)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_rsp; wrk = zero_rsp
@@ -21,33 +22,32 @@ contains
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
-                        & procedure='DGS_vector_against_basis_rsp, pass 1')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
-                        & procedure='DGS_vector_against_basis_rsp, pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rsp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
 
     module procedure DGS_basis_against_basis_rsp
+        character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_rsp'
         logical                              :: chk_X_orthonormality
         real(sp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_rsp; wrk = zero_rsp
@@ -55,31 +55,30 @@ contains
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_rsp, first&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', first pass')
         ! second pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_rsp, second&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rsp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     module procedure DGS_vector_against_basis_rdp
+        character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_rdp'
         logical                      :: chk_X_orthonormality
         real(dp), dimension(size(X)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_rdp; wrk = zero_rdp
@@ -87,33 +86,32 @@ contains
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
-                        & procedure='DGS_vector_against_basis_rdp, pass 1')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
-                        & procedure='DGS_vector_against_basis_rdp, pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_rdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
 
     module procedure DGS_basis_against_basis_rdp
+        character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_rdp'
         logical                              :: chk_X_orthonormality
         real(dp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_rdp; wrk = zero_rdp
@@ -121,31 +119,30 @@ contains
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_rdp, first&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', first pass')
         ! second pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_rdp, second&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_rdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     module procedure DGS_vector_against_basis_csp
+        character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_csp'
         logical                      :: chk_X_orthonormality
         complex(sp), dimension(size(X)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_csp; wrk = zero_csp
@@ -153,33 +150,32 @@ contains
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
-                        & procedure='DGS_vector_against_basis_csp, pass 1')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
-                        & procedure='DGS_vector_against_basis_csp, pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_csp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
 
     module procedure DGS_basis_against_basis_csp
+        character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_csp'
         logical                              :: chk_X_orthonormality
         complex(sp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_csp; wrk = zero_csp
@@ -187,31 +183,30 @@ contains
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_csp, first&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', first pass')
         ! second pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_csp, second&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_csp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     module procedure DGS_vector_against_basis_cdp
+        character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_cdp'
         logical                      :: chk_X_orthonormality
         complex(dp), dimension(size(X)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_vector_against_basis_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_cdp; wrk = zero_cdp
@@ -219,33 +214,32 @@ contains
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, &
-                        & procedure='DGS_vector_against_basis_cdp, pass 1')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, &
-                        & procedure='DGS_vector_against_basis_cdp, pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_vector_against_basis_cdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_vector_against_basis_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
 
     module procedure DGS_basis_against_basis_cdp
+        character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_cdp'
         logical                              :: chk_X_orthonormality
         complex(dp), dimension(size(X),size(Y)) :: proj_coefficients, wrk
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
-        if (time_lightkrylov()) call timer%start('DGS_basis_against_basis_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         proj_coefficients = zero_cdp; wrk = zero_cdp
@@ -253,21 +247,19 @@ contains
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure='DGS_basis_against_basis_cdp, first&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p1', module=this_module, procedure=this_procedure//', first pass')
         ! second pass
         call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure='DGS_basis_against_basis_cdp, second&
-            & pass')
+        call check_info(info, 'orthogonalize_against_basis_p2', module=this_module, procedure=this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'DGS_basis_against_basis_cdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('DGS_basis_against_basis_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
 
@@ -276,10 +268,11 @@ contains
     !-------------------------------------------------------------------------------
 
     module procedure orthogonalize_vector_against_basis_rsp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_rsp'
         logical  :: chk_X_orthonormality
         real(sp) :: proj_coefficients(size(X))
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -313,19 +306,20 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rsp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
 
     module procedure orthogonalize_basis_against_basis_rsp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_rsp'
         logical  :: chk_X_orthonormality
         real(sp) :: proj_coefficients(size(X), size(Y))
         integer  :: i
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -361,18 +355,19 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rsp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
     module procedure orthogonalize_vector_against_basis_rdp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_rdp'
         logical  :: chk_X_orthonormality
         real(dp) :: proj_coefficients(size(X))
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -406,19 +401,20 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_rdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
 
     module procedure orthogonalize_basis_against_basis_rdp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_rdp'
         logical  :: chk_X_orthonormality
         real(dp) :: proj_coefficients(size(X), size(Y))
         integer  :: i
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -454,18 +450,19 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_rdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
     module procedure orthogonalize_vector_against_basis_csp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_csp'
         logical  :: chk_X_orthonormality
         complex(sp) :: proj_coefficients(size(X))
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -499,19 +496,20 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_csp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
 
     module procedure orthogonalize_basis_against_basis_csp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_csp'
         logical  :: chk_X_orthonormality
         complex(sp) :: proj_coefficients(size(X), size(Y))
         integer  :: i
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -547,18 +545,19 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_csp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
     module procedure orthogonalize_vector_against_basis_cdp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_cdp'
         logical  :: chk_X_orthonormality
         complex(dp) :: proj_coefficients(size(X))
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_vector_against_basis_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -592,19 +591,20 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_vector_against_basis_cdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_vector_against_basis_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
 
     module procedure orthogonalize_basis_against_basis_cdp
+        character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_cdp'
         logical  :: chk_X_orthonormality
         complex(dp) :: proj_coefficients(size(X), size(Y))
         integer  :: i
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_basis_against_basis_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! optional input argument
@@ -640,10 +640,10 @@ contains
 
         if (present(beta)) then
             ! check size
-            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, 'orthogonalize_basis_against_basis_cdp')
+            call assert_shape(beta, shape(proj_coefficients), 'beta', this_module, this_procedure)
             beta = proj_coefficients
         end if
-        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_against_basis_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure
