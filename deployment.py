@@ -1,6 +1,7 @@
 import os
 import fypp
 import argparse
+import toml
 from glob import glob
 
 
@@ -25,7 +26,23 @@ def apply_command(folder, with_qp, with_xqp, with_hp):
         source_file = file
         target_file = file.removesuffix('fypp')+'f90'
         tool.process_file(source_file, target_file)
-
+    
+def replace_version(lk_file, toml_file, prefix=None):
+    # Get current version from toml
+    config = toml.load(toml_file)
+    version = config["version"]
+    # Update version in lightkrylov.fypp
+    with open(lk_file, "r") as file:
+        lines = file.readlines()
+        with open(lk_file, "w") as file:
+            for line in lines:
+                if "Version --" in line:
+                    if prefix is not None:
+                        version = prefix + ' ' + version
+                    file.write(f"      write (*, *) \"Version -- {version}\"\n")
+                else:
+                    file.write(line)
+    print(f"Version in {lk_file} updated to {version}.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -38,6 +55,8 @@ if __name__ == "__main__":
     #                     help="Include WITH_HP in the command")
 
     args = parser.parse_args()
-    # apply_command(args.with_qp, args.with_xqp, args.with_hp)
+    # first update the version in LightKrylov.fypp
+    replace_version('src/LightKrylov.fypp', 'fpm.toml', prefix='beta')
+    # apply_command(args.with_qp, args.with_xqp, args.with_hp)\
     apply_command("./src/", False, False, False)
     apply_command("./test/", False, False, False)
