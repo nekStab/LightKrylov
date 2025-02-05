@@ -62,6 +62,8 @@ module LightKrylov_NewtonKrylov
         !! Tolerance history
         logical :: converged = .false.
         !! Convergence flag
+        logical :: input_is_fixed_point = .false.
+        !! Flag indicating lucky convergence (Newton is not run and no solution is computed)
         integer :: info = 0
         !! Copy of the information flag for completeness
     contains
@@ -83,6 +85,8 @@ module LightKrylov_NewtonKrylov
         !! Tolerance history
         logical :: converged = .false.
         !! Convergence flag
+        logical :: input_is_fixed_point = .false.
+        !! Flag indicating lucky convergence (Newton is not run and no solution is computed)
         integer :: info = 0
         !! Copy of the information flag for completeness
     contains
@@ -420,6 +424,7 @@ contains
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rsp')
          newton_meta%converged = .true.
+         newton_meta%input_is_fixed_point = .true.
          return
       end if
 
@@ -585,6 +590,7 @@ contains
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_rdp')
          newton_meta%converged = .true.
+         newton_meta%input_is_fixed_point = .true.
          return
       end if
 
@@ -750,6 +756,7 @@ contains
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_csp')
          newton_meta%converged = .true.
+         newton_meta%input_is_fixed_point = .true.
          return
       end if
 
@@ -915,6 +922,7 @@ contains
          write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
          call logger%log_warning(msg, module=this_module, procedure='newton_cdp')
          newton_meta%converged = .true.
+         newton_meta%input_is_fixed_point = .true.
          return
       end if
 
