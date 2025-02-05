@@ -494,8 +494,11 @@ contains
       ! Set metadata output
       if (present(meta)) then
          select type(meta)
-            type is (newton_sp_metadata)
-               meta = newton_meta
+         type is (newton_sp_metadata)
+            meta = newton_meta
+         class default
+            call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'", module=this_module,&
+                & procedure='newton_rsp')
          end select
       end if
 
@@ -659,8 +662,11 @@ contains
       ! Set metadata output
       if (present(meta)) then
          select type(meta)
-            type is (newton_dp_metadata)
-               meta = newton_meta
+         type is (newton_dp_metadata)
+            meta = newton_meta
+         class default
+            call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'", module=this_module,&
+                & procedure='newton_rdp')
          end select
       end if
 
@@ -824,8 +830,11 @@ contains
       ! Set metadata output
       if (present(meta)) then
          select type(meta)
-            type is (newton_sp_metadata)
-               meta = newton_meta
+         type is (newton_sp_metadata)
+            meta = newton_meta
+         class default
+            call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'", module=this_module,&
+                & procedure='newton_csp')
          end select
       end if
 
@@ -989,8 +998,11 @@ contains
       ! Set metadata output
       if (present(meta)) then
          select type(meta)
-            type is (newton_dp_metadata)
-               meta = newton_meta
+         type is (newton_dp_metadata)
+            meta = newton_meta
+         class default
+            call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'", module=this_module,&
+                & procedure='newton_cdp')
          end select
       end if
 

@@ -136,6 +136,9 @@ contains
             select type (options)
             type is (gmres_sp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_sp_opts'", module=this_module,&
+                    & procedure='gmres_rsp')
             end select
         else
             opts = gmres_sp_opts()
@@ -264,10 +267,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (gmres_sp_metadata)
-                    meta = gmres_meta
-           end select
+            select type(meta)
+            type is (gmres_sp_metadata)
+                meta = gmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_sp_metadata'",&
+                    & module=this_module, procedure='gmres_rsp')
+            end select
         end if
 
         call A%reset_counter(trans, 'gmres%post')
@@ -308,6 +314,9 @@ contains
             select type (options)
             type is (gmres_dp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_dp_opts'", module=this_module,&
+                    & procedure='gmres_rdp')
             end select
         else
             opts = gmres_dp_opts()
@@ -436,10 +445,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (gmres_dp_metadata)
-                    meta = gmres_meta
-           end select
+            select type(meta)
+            type is (gmres_dp_metadata)
+                meta = gmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_dp_metadata'",&
+                    & module=this_module, procedure='gmres_rdp')
+            end select
         end if
 
         call A%reset_counter(trans, 'gmres%post')
@@ -480,6 +492,9 @@ contains
             select type (options)
             type is (gmres_sp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_sp_opts'", module=this_module,&
+                    & procedure='gmres_csp')
             end select
         else
             opts = gmres_sp_opts()
@@ -608,10 +623,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (gmres_sp_metadata)
-                    meta = gmres_meta
-           end select
+            select type(meta)
+            type is (gmres_sp_metadata)
+                meta = gmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_sp_metadata'",&
+                    & module=this_module, procedure='gmres_csp')
+            end select
         end if
 
         call A%reset_counter(trans, 'gmres%post')
@@ -652,6 +670,9 @@ contains
             select type (options)
             type is (gmres_dp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_dp_opts'", module=this_module,&
+                    & procedure='gmres_cdp')
             end select
         else
             opts = gmres_dp_opts()
@@ -780,10 +801,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (gmres_dp_metadata)
-                    meta = gmres_meta
-           end select
+            select type(meta)
+            type is (gmres_dp_metadata)
+                meta = gmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_dp_metadata'",&
+                    & module=this_module, procedure='gmres_cdp')
+            end select
         end if
 
         call A%reset_counter(trans, 'gmres%post')

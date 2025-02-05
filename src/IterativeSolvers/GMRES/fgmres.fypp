@@ -98,6 +98,8 @@ contains
             select type (options)
             type is (fgmres_${kind}$_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_${kind}$_opts'", module=this_module, procedure='fgmres_${type[0]}$${kind}$')
             end select
         else
             opts = fgmres_${kind}$_opts()
@@ -225,10 +227,12 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (fgmres_${kind}$_metadata)
-                    meta = fgmres_meta
-           end select
+            select type(meta)
+            type is (fgmres_${kind}$_metadata)
+                meta = fgmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_${kind}$_metadata'", module=this_module, procedure='fgmres_${type[0]}$${kind}$')
+            end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')

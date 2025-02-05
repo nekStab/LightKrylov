@@ -155,10 +155,12 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-               type is (cg_${kind}$_metadata)
-                   meta = cg_meta
-           end select
+            select type(meta)
+            type is (cg_${kind}$_metadata)
+                meta = cg_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_${kind}$_metadata'", module=this_module, procedure='cg_${type[0]}$${kind}$')
+            end select
         end if
 
         call A%reset_counter(.false., 'cg%post')

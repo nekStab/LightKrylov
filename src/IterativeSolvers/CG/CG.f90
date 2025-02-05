@@ -187,10 +187,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-               type is (cg_sp_metadata)
-                   meta = cg_meta
-           end select
+            select type(meta)
+            type is (cg_sp_metadata)
+                meta = cg_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", module=this_module,&
+                    & procedure='cg_rsp')
+            end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
@@ -292,10 +295,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-               type is (cg_dp_metadata)
-                   meta = cg_meta
-           end select
+            select type(meta)
+            type is (cg_dp_metadata)
+                meta = cg_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", module=this_module,&
+                    & procedure='cg_rdp')
+            end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
@@ -397,10 +403,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-               type is (cg_sp_metadata)
-                   meta = cg_meta
-           end select
+            select type(meta)
+            type is (cg_sp_metadata)
+                meta = cg_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", module=this_module,&
+                    & procedure='cg_csp')
+            end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
@@ -502,10 +511,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-               type is (cg_dp_metadata)
-                   meta = cg_meta
-           end select
+            select type(meta)
+            type is (cg_dp_metadata)
+                meta = cg_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", module=this_module,&
+                    & procedure='cg_cdp')
+            end select
         end if
 
         call A%reset_counter(.false., 'cg%post')

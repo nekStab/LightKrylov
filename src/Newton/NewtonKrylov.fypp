@@ -381,8 +381,10 @@ contains
       ! Set metadata output
       if (present(meta)) then
          select type(meta)
-            type is (newton_${kind}$_metadata)
-               meta = newton_meta
+         type is (newton_${kind}$_metadata)
+            meta = newton_meta
+         class default
+            call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_${kind}$_metadata'", module=this_module, procedure='newton_${type[0]}$${kind}$')
          end select
       end if
 

@@ -138,6 +138,9 @@ contains
             select type (options)
             type is (fgmres_sp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'",&
+                    & module=this_module, procedure='fgmres_rsp')
             end select
         else
             opts = fgmres_sp_opts()
@@ -265,10 +268,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (fgmres_sp_metadata)
-                    meta = fgmres_meta
-           end select
+            select type(meta)
+            type is (fgmres_sp_metadata)
+                meta = fgmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'",&
+                    & module=this_module, procedure='fgmres_rsp')
+            end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
@@ -312,6 +318,9 @@ contains
             select type (options)
             type is (fgmres_dp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'",&
+                    & module=this_module, procedure='fgmres_rdp')
             end select
         else
             opts = fgmres_dp_opts()
@@ -439,10 +448,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (fgmres_dp_metadata)
-                    meta = fgmres_meta
-           end select
+            select type(meta)
+            type is (fgmres_dp_metadata)
+                meta = fgmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'",&
+                    & module=this_module, procedure='fgmres_rdp')
+            end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
@@ -486,6 +498,9 @@ contains
             select type (options)
             type is (fgmres_sp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'",&
+                    & module=this_module, procedure='fgmres_csp')
             end select
         else
             opts = fgmres_sp_opts()
@@ -613,10 +628,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (fgmres_sp_metadata)
-                    meta = fgmres_meta
-           end select
+            select type(meta)
+            type is (fgmres_sp_metadata)
+                meta = fgmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'",&
+                    & module=this_module, procedure='fgmres_csp')
+            end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
@@ -660,6 +678,9 @@ contains
             select type (options)
             type is (fgmres_dp_opts)
                 opts = options
+            class default
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'",&
+                    & module=this_module, procedure='fgmres_cdp')
             end select
         else
             opts = fgmres_dp_opts()
@@ -787,10 +808,13 @@ contains
 
         ! Set metadata output
         if (present(meta)) then
-           select type(meta)
-                 type is (fgmres_dp_metadata)
-                    meta = fgmres_meta
-           end select
+            select type(meta)
+            type is (fgmres_dp_metadata)
+                meta = fgmres_meta
+            class default
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'",&
+                    & module=this_module, procedure='fgmres_cdp')
+            end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
