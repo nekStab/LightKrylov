@@ -27,7 +27,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -44,7 +44,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -87,7 +87,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -104,7 +104,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -147,7 +147,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -164,7 +164,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -207,7 +207,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -224,7 +224,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure//', left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta

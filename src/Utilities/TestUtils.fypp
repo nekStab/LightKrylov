@@ -225,7 +225,8 @@ contains
         type is(vector_${type[0]}$${kind}$)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='dot_${type[0]}$${kind}$')
+            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'dot_${type[0]}$${kind}$')
         end select
     end function dot_${type[0]}$${kind}$
 
@@ -248,7 +249,8 @@ contains
         type is(vector_${type[0]}$${kind}$)
             self%data = alpha*self%data + beta*vec%data
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='axpby_${type[0]}$${kind}$')
+            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'axpby_${type[0]}$${kind}$')
         end select
         return
     end subroutine
@@ -295,10 +297,12 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='matvec_${type[0]}$${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'matvec_${type[0]}$${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='matvec_${type[0]}$${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'matvec_${type[0]}$${kind}$')
         end select
     end subroutine matvec_${type[0]}$${kind}$
 
@@ -319,10 +323,12 @@ contains
             #:endif
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='rmatvec_${type[0]}$${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'rmatvec_${type[0]}$${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='rmatvec_${type[0]}$${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'rmatvec_${type[0]}$${kind}$')
         end select
     end subroutine rmatvec_${type[0]}$${kind}$
 
@@ -340,10 +346,12 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='spd_matvec_${type[0]}$${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'spd_matvec_${type[0]}$${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='spd_matvec_${type[0]}$${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'spd_matvec_${type[0]}$${kind}$')
         end select
     end subroutine sdp_matvec_${type[0]}$${kind}$
     #:else
@@ -360,10 +368,12 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='hermitian_matvec_${type[0]}$${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'hermitian_matvec_${type[0]}$${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", module=this_module, procedure='hermitian_matvec_${type[0]}$${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_${type[0]}$${kind}$'", &
+                              & this_module, 'hermitian_matvec_${type[0]}$${kind}$')
         end select
     end subroutine hermitian_matvec_${type[0]}$${kind}$
     #:endif
@@ -525,7 +535,8 @@ contains
         type is(state_vector_r${kind}$)
             alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='dot_state_r${kind}$')
+            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'dot_state_r${kind}$')
         end select
     end function dot_state_r${kind}$
   
@@ -547,7 +558,8 @@ contains
             self%y = alpha*self%y + beta*vec%y
             self%z = alpha*self%z + beta*vec%z
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='axpby_state_r${kind}$')
+            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'axpby_state_r${kind}$')
         end select
     end subroutine axpby_state_r${kind}$
   
@@ -595,10 +607,12 @@ contains
                 vec_out%z = b_${kind}$ + vec_in%z * (vec_in%x - c_${kind}$)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='eval_roessler_r${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'eval_roessler_r${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='eval_roessler_r${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'eval_roessler_r${kind}$')
         end select
     end subroutine eval_roessler_r${kind}$
 
@@ -612,7 +626,8 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call stop_error("The intent [IN] argument 'state' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='get_state_r${kind}$')
+            call stop_error("The intent [IN] argument 'state' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'get_state_r${kind}$')
         end select
     end subroutine get_state_r${kind}$
 
@@ -635,10 +650,12 @@ contains
                 vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='lin_roessler_r${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'lin_roessler_r${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='lin_roessler_r${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'lin_roessler_r${kind}$')
         end select
     end subroutine lin_roessler_r${kind}$
 
@@ -661,10 +678,12 @@ contains
                 vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='adj_lin_roessler_r${kind}$')
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'adj_lin_roessler_r${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_r${kind}$'", module=this_module, procedure='adj_lin_roessler_r${kind}$')
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_r${kind}$'", &
+                              & this_module, 'adj_lin_roessler_r${kind}$')
         end select
     end subroutine adj_lin_roessler_r${kind}$
 

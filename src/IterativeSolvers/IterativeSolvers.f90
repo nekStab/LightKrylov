@@ -1534,7 +1534,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -1558,13 +1558,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1680,7 +1680,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -1704,13 +1704,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1825,7 +1825,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -1840,13 +1840,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1961,7 +1961,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -1976,13 +1976,13 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1

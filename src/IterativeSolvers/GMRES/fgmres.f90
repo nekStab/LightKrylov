@@ -20,26 +20,26 @@ contains
   
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
-        call log_message(msg, module=this_module, procedure=this_procedure)
+        call log_message(msg, this_module, this_procedure)
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
-               call log_message(msg, module=this_module, procedure=this_procedure)
+               call log_message(msg, this_module, this_procedure)
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
         end if
         if (self%converged) then
-            call log_message('Status: CONVERGED', module=this_module, procedure=this_procedure)
+            call log_message('Status: CONVERGED', this_module, this_procedure)
         else
-            call log_message('Status: NOT CONVERGED', module=this_module, procedure=this_procedure)
+            call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
         return
@@ -66,26 +66,26 @@ contains
   
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
-        call log_message(msg, module=this_module, procedure=this_procedure)
+        call log_message(msg, this_module, this_procedure)
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
-               call log_message(msg, module=this_module, procedure=this_procedure)
+               call log_message(msg, this_module, this_procedure)
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call log_message(msg, module=this_module, procedure=this_procedure)
+            call log_message(msg, this_module, this_procedure)
         end if
         if (self%converged) then
-            call log_message('Status: CONVERGED', module=this_module, procedure=this_procedure)
+            call log_message('Status: CONVERGED', this_module, this_procedure)
         else
-            call log_message('Status: NOT CONVERGED', module=this_module, procedure=this_procedure)
+            call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
         return
@@ -132,7 +132,7 @@ contains
         class(abstract_vector_rsp), allocatable :: dx
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -142,8 +142,8 @@ contains
             type is (fgmres_sp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'", &
+                              & this_module, this_procedure)
             end select
         else
             opts = fgmres_sp_opts()
@@ -185,7 +185,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call log_information(msg, module=this_module, procedure=this_procedure)
+        call log_information(msg, this_module, this_procedure)
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -206,7 +206,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -226,7 +226,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -254,7 +254,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -275,14 +275,14 @@ contains
             type is (fgmres_sp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
         
         return
     end procedure
@@ -313,7 +313,7 @@ contains
         class(abstract_vector_rdp), allocatable :: dx
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -323,8 +323,8 @@ contains
             type is (fgmres_dp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'", &
+                              & this_module, this_procedure)
             end select
         else
             opts = fgmres_dp_opts()
@@ -366,7 +366,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call log_information(msg, module=this_module, procedure=this_procedure)
+        call log_information(msg, this_module, this_procedure)
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -387,7 +387,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -407,7 +407,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -435,7 +435,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -456,14 +456,14 @@ contains
             type is (fgmres_dp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
         
         return
     end procedure
@@ -494,7 +494,7 @@ contains
         class(abstract_vector_csp), allocatable :: dx
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -504,8 +504,8 @@ contains
             type is (fgmres_sp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'", &
+                              & this_module, this_procedure)
             end select
         else
             opts = fgmres_sp_opts()
@@ -547,7 +547,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call log_information(msg, module=this_module, procedure=this_procedure)
+        call log_information(msg, this_module, this_procedure)
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -568,7 +568,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -588,7 +588,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -616,7 +616,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -637,14 +637,14 @@ contains
             type is (fgmres_sp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
         
         return
     end procedure
@@ -675,7 +675,7 @@ contains
         class(abstract_vector_cdp), allocatable :: dx
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -685,8 +685,8 @@ contains
             type is (fgmres_dp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'", &
+                              & this_module, this_procedure)
             end select
         else
             opts = fgmres_dp_opts()
@@ -728,7 +728,7 @@ contains
 
         write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', 0, ': |res|= ', &
                     & abs(beta), ', tol= ', tol
-        call log_information(msg, module=this_module, procedure=this_procedure)
+        call log_information(msg, this_module, this_procedure)
 
         ! Iterative solver.
         fgmres_iter : do i = 1, maxiter
@@ -749,7 +749,7 @@ contains
 
                 ! Double Gram-Schmid orthogonalization
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
                 ! Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -769,7 +769,7 @@ contains
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-                call log_information(msg, module=this_module, procedure=this_procedure)
+                call log_information(msg, this_module, this_procedure)
                 if (abs(beta) <= tol) then
                     fgmres_meta%converged = .true.
                     exit arnoldi_fact
@@ -797,7 +797,7 @@ contains
 
             write(msg,'(A,I3,2(A,E9.2))') 'FGMRES(k) outer step   ', i, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
 
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) <= tol) then
@@ -818,14 +818,14 @@ contains
             type is (fgmres_dp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
         
         return
     end procedure

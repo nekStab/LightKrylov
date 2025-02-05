@@ -125,7 +125,7 @@ contains
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! internals
         call qr(X, R, info)
-        call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+        call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
@@ -138,7 +138,7 @@ contains
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! internals
         call qr(X, R, info)
-        call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+        call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
@@ -151,7 +151,7 @@ contains
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! internals
         call qr(X, R, info)
-        call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+        call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
@@ -164,7 +164,7 @@ contains
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! internals
         call qr(X, R, info)
-        call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+        call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return

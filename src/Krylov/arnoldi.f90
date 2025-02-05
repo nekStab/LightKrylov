@@ -42,11 +42,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rsp
@@ -109,11 +109,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rdp
@@ -176,11 +176,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rsp
@@ -243,11 +243,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure=this_procedure)
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure=this_procedure)
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rdp

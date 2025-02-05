@@ -206,27 +206,27 @@ contains
         ifverbose = optval(verbose, .false.)
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call logger%log_message(msg, module=this_module, procedure=this_procedure)
+        call logger%log_message(msg, this_module, this_procedure)
         if (ifverbose) then
             write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
             write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
             do i = 2, size(self%res) - 1
                write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
-               call logger%log_message(msg, module=this_module, procedure=this_procedure)
+               call logger%log_message(msg, this_module, this_procedure)
             end do
             i = size(self%res)
             write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
         else
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure=this_procedure)
+            call logger%log_message('Status: CONVERGED', this_module, this_procedure)
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure=this_procedure)
+            call logger%log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
         return
@@ -281,27 +281,27 @@ contains
         ifverbose = optval(verbose, .false.)
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call logger%log_message(msg, module=this_module, procedure=this_procedure)
+        call logger%log_message(msg, this_module, this_procedure)
         if (ifverbose) then
             write(msg,'(14X,A15,2X,A15)') 'Residual', 'Tolerance'
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
             write(msg,'(A14,E15.8,2X,E15.8)') '   INIT:', self%res(1), self%tol(1)
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
             do i = 2, size(self%res) - 1
                write(msg,'(A,I4,A,E15.8,2X,E15.8)') '   Step ', i-1, ': ', self%res(i), self%tol(i)
-               call logger%log_message(msg, module=this_module, procedure=this_procedure)
+               call logger%log_message(msg, this_module, this_procedure)
             end do
             i = size(self%res)
             write(msg,'(A14,E15.8,2X,E15.8)') '   FINAL:', self%res(i), self%tol(i)
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
         else
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
         end if
         if (self%converged) then
-            call logger%log_message('Status: CONVERGED', module=this_module, procedure=this_procedure)
+            call logger%log_message('Status: CONVERGED', this_module, this_procedure)
         else
-            call logger%log_message('Status: NOT CONVERGED', module=this_module, procedure=this_procedure)
+            call logger%log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
         return
@@ -419,22 +419,22 @@ contains
         ! Check for lucky convergence.
         if (rnorm < target_tol) then
             write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             return
         end if
 
         write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
             ! Set dynamic tolerances for Newton iteration and linear solves.
             call tolerance_scheduler(tol, target_tol, rnorm, i, info)
             write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
 
             ! Define the Jacobian
             sys%jacobian%X = X
@@ -443,7 +443,7 @@ contains
             call residual%chsgn(); call increment%zero()
             call solver(sys%jacobian, residual, increment, info, atol=tol, &
                 & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
-            call check_info(info, 'linear_solver', module=this_module, procedure=this_procedure)
+            call check_info(info, 'linear_solver', this_module, this_procedure)
 
             ! Update the solution and overwrite X0
             if (opts%ifbisect) then
@@ -469,14 +469,14 @@ contains
 
                 if (rnorm < target_tol) then
                     write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
-                    call logger%log_message(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_message(msg, this_module, this_procedure)
                     ! Save metadata
                     call newton_meta%record(rnorm, target_tol)
                     newton_meta%converged = .true.
                     exit newton
                 else
                     write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
-                    call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_warning(msg, this_module, this_procedure)
                 end if
                 end if
             end if
@@ -485,7 +485,7 @@ contains
 
         if (.not.newton_meta%converged) then
             write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -500,8 +500,8 @@ contains
             type is (newton_sp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
@@ -588,22 +588,22 @@ contains
         ! Check for lucky convergence.
         if (rnorm < target_tol) then
             write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             return
         end if
 
         write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
             ! Set dynamic tolerances for Newton iteration and linear solves.
             call tolerance_scheduler(tol, target_tol, rnorm, i, info)
             write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
 
             ! Define the Jacobian
             sys%jacobian%X = X
@@ -612,7 +612,7 @@ contains
             call residual%chsgn(); call increment%zero()
             call solver(sys%jacobian, residual, increment, info, atol=tol, &
                 & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
-            call check_info(info, 'linear_solver', module=this_module, procedure=this_procedure)
+            call check_info(info, 'linear_solver', this_module, this_procedure)
 
             ! Update the solution and overwrite X0
             if (opts%ifbisect) then
@@ -638,14 +638,14 @@ contains
 
                 if (rnorm < target_tol) then
                     write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
-                    call logger%log_message(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_message(msg, this_module, this_procedure)
                     ! Save metadata
                     call newton_meta%record(rnorm, target_tol)
                     newton_meta%converged = .true.
                     exit newton
                 else
                     write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
-                    call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_warning(msg, this_module, this_procedure)
                 end if
                 end if
             end if
@@ -654,7 +654,7 @@ contains
 
         if (.not.newton_meta%converged) then
             write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -669,8 +669,8 @@ contains
             type is (newton_dp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
@@ -757,22 +757,22 @@ contains
         ! Check for lucky convergence.
         if (rnorm < target_tol) then
             write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             return
         end if
 
         write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
             ! Set dynamic tolerances for Newton iteration and linear solves.
             call tolerance_scheduler(tol, target_tol, rnorm, i, info)
             write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
 
             ! Define the Jacobian
             sys%jacobian%X = X
@@ -781,7 +781,7 @@ contains
             call residual%chsgn(); call increment%zero()
             call solver(sys%jacobian, residual, increment, info, atol=tol, &
                 & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
-            call check_info(info, 'linear_solver', module=this_module, procedure=this_procedure)
+            call check_info(info, 'linear_solver', this_module, this_procedure)
 
             ! Update the solution and overwrite X0
             if (opts%ifbisect) then
@@ -807,14 +807,14 @@ contains
 
                 if (rnorm < target_tol) then
                     write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
-                    call logger%log_message(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_message(msg, this_module, this_procedure)
                     ! Save metadata
                     call newton_meta%record(rnorm, target_tol)
                     newton_meta%converged = .true.
                     exit newton
                 else
                     write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
-                    call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_warning(msg, this_module, this_procedure)
                 end if
                 end if
             end if
@@ -823,7 +823,7 @@ contains
 
         if (.not.newton_meta%converged) then
             write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -838,8 +838,8 @@ contains
             type is (newton_sp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
@@ -926,22 +926,22 @@ contains
         ! Check for lucky convergence.
         if (rnorm < target_tol) then
             write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             return
         end if
 
         write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
             ! Set dynamic tolerances for Newton iteration and linear solves.
             call tolerance_scheduler(tol, target_tol, rnorm, i, info)
             write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
-            call logger%log_message(msg, module=this_module, procedure=this_procedure)
+            call logger%log_message(msg, this_module, this_procedure)
 
             ! Define the Jacobian
             sys%jacobian%X = X
@@ -950,7 +950,7 @@ contains
             call residual%chsgn(); call increment%zero()
             call solver(sys%jacobian, residual, increment, info, atol=tol, &
                 & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
-            call check_info(info, 'linear_solver', module=this_module, procedure=this_procedure)
+            call check_info(info, 'linear_solver', this_module, this_procedure)
 
             ! Update the solution and overwrite X0
             if (opts%ifbisect) then
@@ -976,14 +976,14 @@ contains
 
                 if (rnorm < target_tol) then
                     write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
-                    call logger%log_message(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_message(msg, this_module, this_procedure)
                     ! Save metadata
                     call newton_meta%record(rnorm, target_tol)
                     newton_meta%converged = .true.
                     exit newton
                 else
                     write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
-                    call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+                    call logger%log_warning(msg, this_module, this_procedure)
                 end if
                 end if
             end if
@@ -992,7 +992,7 @@ contains
 
         if (.not.newton_meta%converged) then
             write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -1007,8 +1007,8 @@ contains
             type is (newton_dp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'",&
-                    & module=this_module, procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
@@ -1056,11 +1056,11 @@ contains
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
         write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
             write(msg,'(A)') 'Start Newton step bisection ... '
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             ! compute new trial solutions
             do j = 2, 3
                 call copy(X, Xin)
@@ -1072,7 +1072,7 @@ contains
             do i = 1, maxstep
                 step = step * invphi
                 write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
@@ -1101,20 +1101,20 @@ contains
                 res(3) = residual%norm()
                 end if
                 write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
             end do
             ! set new vector to optimal step
             idx = minloc(res)
             if (abs(alpha(idx(1))) < rtol_dp) then
-                call stop_error('Residual does not decrease!',this_module,procedure=this_procedure)
+                call stop_error('Residual does not decrease!',this_module,this_procedure)
             end if
             write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             call copy(X, Xin)
             call X%axpby(one_rsp, increment, alpha(idx(1)))
         else
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
 
         return
@@ -1157,11 +1157,11 @@ contains
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
         write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
             write(msg,'(A)') 'Start Newton step bisection ... '
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             ! compute new trial solutions
             do j = 2, 3
                 call copy(X, Xin)
@@ -1173,7 +1173,7 @@ contains
             do i = 1, maxstep
                 step = step * invphi
                 write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
@@ -1202,20 +1202,20 @@ contains
                 res(3) = residual%norm()
                 end if
                 write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
             end do
             ! set new vector to optimal step
             idx = minloc(res)
             if (abs(alpha(idx(1))) < rtol_dp) then
-                call stop_error('Residual does not decrease!',this_module,procedure=this_procedure)
+                call stop_error('Residual does not decrease!',this_module,this_procedure)
             end if
             write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             call copy(X, Xin)
             call X%axpby(one_rdp, increment, alpha(idx(1)))
         else
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
 
         return
@@ -1258,11 +1258,11 @@ contains
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
         write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
             write(msg,'(A)') 'Start Newton step bisection ... '
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             ! compute new trial solutions
             do j = 2, 3
                 call copy(X, Xin)
@@ -1274,7 +1274,7 @@ contains
             do i = 1, maxstep
                 step = step * invphi
                 write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
@@ -1303,20 +1303,20 @@ contains
                 res(3) = residual%norm()
                 end if
                 write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
             end do
             ! set new vector to optimal step
             idx = minloc(res)
             if (abs(alpha(idx(1))) < rtol_dp) then
-                call stop_error('Residual does not decrease!',this_module,procedure=this_procedure)
+                call stop_error('Residual does not decrease!',this_module,this_procedure)
             end if
             write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             call copy(X, Xin)
             call X%axpby(one_csp, increment, alpha(idx(1)))
         else
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
 
         return
@@ -1359,11 +1359,11 @@ contains
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
         write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
-        call logger%log_information(msg, module=this_module, procedure=this_procedure)
+        call logger%log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
             write(msg,'(A)') 'Start Newton step bisection ... '
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             ! compute new trial solutions
             do j = 2, 3
                 call copy(X, Xin)
@@ -1375,7 +1375,7 @@ contains
             do i = 1, maxstep
                 step = step * invphi
                 write(msg,'(4X,I0,A,4(1X,F6.4),A,4(1X,E11.4))') i, ': alpha=', alpha, ': res=', res
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
@@ -1404,20 +1404,20 @@ contains
                 res(3) = residual%norm()
                 end if
                 write(msg,'(4X,I0,2(A,F6.4))') i, ': New interval: ', alpha(1), ' <= alpha <= ', alpha(4)
-                call logger%log_information(msg, module=this_module, procedure=this_procedure)
+                call logger%log_information(msg, this_module, this_procedure)
             end do
             ! set new vector to optimal step
             idx = minloc(res)
             if (abs(alpha(idx(1))) < rtol_dp) then
-                call stop_error('Residual does not decrease!',this_module,procedure=this_procedure)
+                call stop_error('Residual does not decrease!',this_module,this_procedure)
             end if
             write(msg,'(A,F6.4)') 'Optimal damping: alpha= ', alpha(idx(1))
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
             call copy(X, Xin)
             call X%axpby(one_cdp, increment, alpha(idx(1)))
         else
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
 
         return
@@ -1447,10 +1447,10 @@ contains
         if (target_tol < atol_sp) then
             tol = atol_sp
             write(msg,'(A,E9.2)') 'Input tolerance below atol! Resetting solver tolerance to atol= ', tol
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
         else
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
         return
     end subroutine constant_tol_sp
@@ -1475,7 +1475,7 @@ contains
         target_tol_ = max(target_tol, atol_sp)
         if (target_tol < atol_sp) then
             write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
         end if
         
         tol_old = tol
@@ -1487,10 +1487,10 @@ contains
             else
                 write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
             end if
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
         return
     end subroutine dynamic_tol_sp
@@ -1518,10 +1518,10 @@ contains
         if (target_tol < atol_dp) then
             tol = atol_dp
             write(msg,'(A,E9.2)') 'Input tolerance below atol! Resetting solver tolerance to atol= ', tol
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
         else
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
         return
     end subroutine constant_tol_dp
@@ -1546,7 +1546,7 @@ contains
         target_tol_ = max(target_tol, atol_dp)
         if (target_tol < atol_dp) then
             write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
-            call logger%log_warning(msg, module=this_module, procedure=this_procedure)
+            call logger%log_warning(msg, this_module, this_procedure)
         end if
         
         tol_old = tol
@@ -1558,10 +1558,10 @@ contains
             else
                 write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
             end if
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
-            call logger%log_information(msg, module=this_module, procedure=this_procedure)
+            call logger%log_information(msg, this_module, this_procedure)
         end if
         return
     end subroutine dynamic_tol_dp

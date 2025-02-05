@@ -248,7 +248,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -277,10 +277,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -360,7 +360,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -402,10 +402,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -435,7 +435,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure=this_procedure)
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_rsp
@@ -504,7 +504,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -533,10 +533,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -616,7 +616,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -658,10 +658,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -691,7 +691,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure=this_procedure)
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_rdp
@@ -760,7 +760,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -789,10 +789,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -872,7 +872,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -914,10 +914,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -947,7 +947,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure=this_procedure)
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_csp
@@ -1016,7 +1016,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -1045,10 +1045,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -1128,7 +1128,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure=this_procedure)
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -1170,10 +1170,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -1203,7 +1203,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure=this_procedure)
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_cdp

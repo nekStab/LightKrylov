@@ -99,7 +99,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure=this_procedure)
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
@@ -113,7 +113,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -190,7 +190,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure=this_procedure)
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
@@ -204,7 +204,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -281,7 +281,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure=this_procedure)
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
@@ -295,7 +295,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 
@@ -372,7 +372,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure=this_procedure)
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
@@ -386,7 +386,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
 

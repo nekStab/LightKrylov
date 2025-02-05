@@ -8,6 +8,7 @@ contains
     !----------------------------------------
 
     module procedure print_cg_sp
+        character(len=*), parameter :: this_procedure = 'print_cg_sp'
         integer :: i
         logical :: ifreset, ifverbose
         character(len=128) :: msg
@@ -16,27 +17,27 @@ contains
         ifverbose = optval(verbose, .false.)
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call log_message(msg, module=this_module, procedure='cg_metadata')
+        call log_message(msg, this_module, this_procedure)
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call log_message(msg, module=this_module, procedure='cg_metadata')
-            call log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
+            call log_message('Residual history:', this_module, this_procedure)
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
             do i = 2, self%n_iter+1
                write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
-               call log_message(msg, module=this_module, procedure='cg_metadata')
+               call log_message(msg, this_module, this_procedure)
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
         end if
         if (self%converged) then
-            call log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: CONVERGED', this_module, this_procedure)
         else
-            call log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
         return
@@ -49,6 +50,7 @@ contains
         if (allocated(self%res)) deallocate(self%res)
     end procedure
     module procedure print_cg_dp
+        character(len=*), parameter :: this_procedure = 'print_cg_dp'
         integer :: i
         logical :: ifreset, ifverbose
         character(len=128) :: msg
@@ -57,27 +59,27 @@ contains
         ifverbose = optval(verbose, .false.)
 
         write(msg,'(A30,I20)') padr('Iterations: ', 30), self%n_iter
-        call log_message(msg, module=this_module, procedure='cg_metadata')
+        call log_message(msg, this_module, this_procedure)
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
-            call log_message(msg, module=this_module, procedure='cg_metadata')
-            call log_message('Residual history:', module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
+            call log_message('Residual history:', this_module, this_procedure)
             write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
-            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
             do i = 2, self%n_iter+1
                write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
-               call log_message(msg, module=this_module, procedure='cg_metadata')
+               call log_message(msg, this_module, this_procedure)
             end do
         else
             write(msg,'(A30,I20)') padr('Number of records: ', 30), size(self%res)
-            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
             write(msg,'(A30,E20.8)') padr('Residual: ', 30), self%res(size(self%res))
-            call log_message(msg, module=this_module, procedure='cg_metadata')
+            call log_message(msg, this_module, this_procedure)
         end if
         if (self%converged) then
-            call log_message('Status: CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: CONVERGED', this_module, this_procedure)
         else
-            call log_message('Status: NOT CONVERGED', module=this_module, procedure='cg_metadata')
+            call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
         return
@@ -111,7 +113,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -177,7 +179,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -192,14 +194,14 @@ contains
             type is (cg_sp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", module=this_module,&
-                    & procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
 
         return
     end procedure
@@ -220,7 +222,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -286,7 +288,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -301,14 +303,14 @@ contains
             type is (cg_dp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", module=this_module,&
-                    & procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
 
         return
     end procedure
@@ -329,7 +331,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -395,7 +397,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -410,14 +412,14 @@ contains
             type is (cg_sp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", module=this_module,&
-                    & procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
 
         return
     end procedure
@@ -438,7 +440,7 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', module=this_module, procedure=this_procedure)
+        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -504,7 +506,7 @@ contains
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure=this_procedure)
+            call log_information(msg, this_module, this_procedure)
         enddo cg_loop
 
         ! Set and copy info flag for completeness
@@ -519,14 +521,14 @@ contains
             type is (cg_dp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", module=this_module,&
-                    & procedure=this_procedure)
+                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", &
+                              & this_module, this_procedure)
             end select
         end if
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', module=this_module, procedure=this_procedure)
+        call log_debug('end', this_module, this_procedure)
 
         return
     end procedure
