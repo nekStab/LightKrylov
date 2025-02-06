@@ -11,6 +11,17 @@ module LightKrylov_Timer_Utils
    ! Timer type
    type, public :: lightkrylov_timer
       !! Individual timer.
+      !! Atomic timer that is associated to a particular 'event' by name which may be a procedure or a 
+      !! user-defined string at instantiation.
+      !!
+      !! The timing information in gathered for each timer independently. The individual timers are gathered
+      !! into groups (relevant only for timing output) and managed by a central watch that is derived from 
+      !! the `abstract_watch` type. The individual timers are rarely user independently but all timing 
+      !! actions are typically performed via procedures in the central timer.
+      !!
+      !! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers associated with the types
+      !! `abstract_linop` and `abstract_system`, respectively, which are managed via their parent types and the
+      !! corresponding type-bound procedures only.
       private
       character(len=128), public :: name = 'default_timer'
       !! Timer name.
@@ -73,6 +84,22 @@ module LightKrylov_Timer_Utils
    ! Abstract watch type
    type, abstract, public :: abstract_watch
       !! Base type to define a global timer.
+      !! All watches within LightKrylov and associated tools are derived from this type.
+      !!
+      !! Within LightKrylov, the derived type `global_lightkrylov_timer` is used to manage all
+      !! atomic timers associated with both internal routines (private) as well as user-defined
+      !! (public) timers that can be added and removed as necessary. In order to protect the 
+      !! private timers, they are defined and set only during the initialisation of the derived 
+      !! type via the deferred procedure `set_private_timers_and_name` if timing is requested 
+      !! and cannot be deleted.
+      !! Once the global watch is initalized, the user can define and subsequently remove 
+      !! user-defined timers at any point that will be managed by the global watch in the same
+      !! way as private timers.
+      !! Upon finalization, the user-defined timers with the associated timing information is 
+      !! presented together with that of the private timers.
+      !!
+      !! The type-bound procedures of the abstract_watch type allow individual access to each
+      !! managed timer individually using the timer name as reference.
       private
       character(len=128) :: name = 'default_watch'
       type(lightkrylov_timer), dimension(:), allocatable :: timers
