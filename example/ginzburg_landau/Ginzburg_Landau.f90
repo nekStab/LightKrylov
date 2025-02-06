@@ -273,7 +273,7 @@ contains
       type is (state_vector)
          alpha = dot_product(self%state, vec%state)
       class default
-         call stop_error('vec must be a state_vector', module=this_module, procedure='dot')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'dot')
       end select
    end function dot
 
@@ -291,7 +291,7 @@ contains
       type is (state_vector)
          self%state = alpha*self%state + beta*vec%state
       class default
-         call stop_error('vec must be a state_vector', module=this_module, procedure='axpby')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'axpby')
       end select
    end subroutine axpby
 
@@ -348,10 +348,10 @@ contains
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call stop_error('vec_out must be a state_vector', module=this_module, procedure='direct_solver')
+            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'direct_solver')
          end select
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='direct_solver')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'direct_solver')
       end select
    end subroutine direct_solver
 
@@ -383,10 +383,10 @@ contains
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call stop_error('vec_out must be a state_vector', module=this_module, procedure='adjoint_solver')
+            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'adjoint_solver')
          end select
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='adjoint_solver')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'adjoint_solver')
       end select
    end subroutine adjoint_solver
 

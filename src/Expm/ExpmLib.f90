@@ -202,6 +202,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_vec_rsp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
         ! Arnoldi factorization.
@@ -247,7 +248,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rsp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -276,10 +277,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_rsp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_rsp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -305,6 +306,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_mat_rsp'
         integer, parameter :: kmax = 100
         integer :: i, j, k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
@@ -358,7 +360,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rsp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -400,10 +402,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_rsp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_rsp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -425,6 +427,7 @@ contains
         !! Use adjoint ?
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'krylov_exptA_rsp'
         real(sp) :: tol
         integer :: kdim
 
@@ -432,7 +435,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_rsp')
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_rsp
@@ -455,6 +458,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_vec_rdp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
         ! Arnoldi factorization.
@@ -500,7 +504,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_rdp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -529,10 +533,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_rdp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_rdp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -558,6 +562,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_mat_rdp'
         integer, parameter :: kmax = 100
         integer :: i, j, k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
@@ -611,7 +616,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_rdp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -653,10 +658,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_rdp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_rdp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -678,6 +683,7 @@ contains
         !! Use adjoint ?
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'krylov_exptA_rdp'
         real(dp) :: tol
         integer :: kdim
 
@@ -685,7 +691,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_rdp')
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_rdp
@@ -708,6 +714,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_vec_csp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
         ! Arnoldi factorization.
@@ -753,7 +760,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_csp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -782,10 +789,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_csp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_csp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -811,6 +818,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_mat_csp'
         integer, parameter :: kmax = 100
         integer :: i, j, k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
@@ -864,7 +872,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_csp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -906,10 +914,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_csp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_csp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -931,6 +939,7 @@ contains
         !! Use adjoint ?
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'krylov_exptA_csp'
         real(sp) :: tol
         integer :: kdim
 
@@ -938,7 +947,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_csp')
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_csp
@@ -961,6 +970,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_vec_cdp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
         ! Arnoldi factorization.
@@ -1006,7 +1016,7 @@ contains
 
                 ! Compute k-th step Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_vec_cdp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
                 if (info == k) then
@@ -1035,10 +1045,10 @@ contains
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_cdp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', nk+1, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_vec_cdp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -1064,6 +1074,7 @@ contains
         !! Maximum size of the Krylov subspace.
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_mat_cdp'
         integer, parameter :: kmax = 100
         integer :: i, j, k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
@@ -1117,7 +1128,7 @@ contains
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
-                call check_info(info, 'arnoldi', module=this_module, procedure='kexpm_mat_cdp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 if (info == kp) then
                     ! Arnoldi breakdown. Do not consider extended matrix.
@@ -1159,10 +1170,10 @@ contains
         if (err_est .le. tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_cdp')
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg,'(A,I0,2(A,E9.2))') 'Not converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
-            call log_information(msg, module=this_module, procedure='kexpm_mat_cdp')
+            call log_information(msg, this_module, this_procedure)
             info = -1
         endif
 
@@ -1184,6 +1195,7 @@ contains
         !! Use adjoint ?
 
         ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'krylov_exptA_cdp'
         real(dp) :: tol
         integer :: kdim
 
@@ -1191,7 +1203,7 @@ contains
         kdim = 30
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
-        call check_info(info, 'kexpm', module=this_module, procedure='krylov_exptA_cdp')
+        call check_info(info, 'kexpm', this_module, this_procedure)
 
         return
     end subroutine krylov_exptA_cdp

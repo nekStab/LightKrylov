@@ -78,7 +78,7 @@ contains
       type is (pos_vector)
          alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
       class default
-         call stop_error('vec must be a pos_vector', module=this_module, procedure='dot_p')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'dot_p')
       end select
    end function dot_p
 
@@ -100,7 +100,7 @@ contains
          self%y = alpha*self%y + beta*vec%y
          self%z = alpha*self%z + beta*vec%z
       class default
-         call stop_error('vec must be a pos_vector', module=this_module, procedure='axpby_p')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'axpby_p')
       end select
    end subroutine axpby_p
 
@@ -217,7 +217,7 @@ contains
          FTLE_out = pos_out(npts*(r + 1) + 1:)
          time = time + Tstep
       class default
-         call stop_error('integrator must be a rks54_class', module=this_module, procedure='OTD_step')
+         call stop_error("The intent [INOUT] argument 'integrator' must be of type 'rks54_class'", this_module, 'OTD_step')
       end select
    end subroutine OTD_step
 
@@ -306,7 +306,7 @@ contains
          pos(2) = vec_in%y
          pos(3) = vec_in%z
       class default
-         call stop_error('vec_in must be a pos_vector', module=this_module, procedure='get_pos')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'get_pos')
       end select
    end subroutine get_pos
 
@@ -319,7 +319,7 @@ contains
          vec_out%y = pos(2)
          vec_out%z = pos(3)
       class default
-         call stop_error('vec_out must be a pos_vector', module=this_module, procedure='set_pos')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'set_pos')
       end select
    end subroutine set_pos
 

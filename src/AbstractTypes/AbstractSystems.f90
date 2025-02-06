@@ -233,7 +233,7 @@ contains
       reset_timer_ = optval(reset_timer, .true.)
       if (count_old /= 0 .or. counter_ /= 0) then
         write(msg,'(A,I0,A,I0,A)') 'Total number of evals: ', count_old, '. Resetting counter to ', counter_, '.'
-        call log_message(msg, module=this_module, procedure='reset_eval_counter('//trim(procedure)//')')
+        call log_message(msg, this_module, 'reset_eval_counter('//trim(procedure)//')')
         self%eval_counter = counter_
       end if
       if (reset_timer_) call self%reset_timer(soft_reset, clean_timer)
@@ -276,12 +276,12 @@ contains
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         return
     end subroutine eval_rsp
     subroutine eval_rdp(self, vec_in, vec_out, atol)
@@ -293,12 +293,12 @@ contains
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         return
     end subroutine eval_rdp
     subroutine eval_csp(self, vec_in, vec_out, atol)
@@ -310,12 +310,12 @@ contains
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         return
     end subroutine eval_csp
     subroutine eval_cdp(self, vec_in, vec_out, atol)
@@ -327,12 +327,12 @@ contains
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
         write(msg,'(I0,1X,A)') self%eval_counter, 'end'
-        call log_debug(msg, module=this_module, procedure='response')
+        call log_debug(msg, this_module, 'response')
         return
     end subroutine eval_cdp
 

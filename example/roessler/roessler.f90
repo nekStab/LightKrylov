@@ -98,7 +98,7 @@ contains
       type is (state_vector)
          alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z + self%T*vec%T
       class default
-         call stop_error('vec must be a state_vector', module=this_module, procedure='dot')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'dot')
       end select
    end function dot
 
@@ -122,7 +122,7 @@ contains
          self%z = alpha*self%z + beta*vec%z
          self%T = alpha*self%T + beta*vec%T
       class default
-         call stop_error('vec must be a state_vector', module=this_module, procedure='axpby')
+         call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'axpby')
       end select
    end subroutine axpby
 
@@ -272,10 +272,10 @@ contains
             ! Add period residual
             vec_out%T = 0.0_wp
          class default
-            call stop_error('vec_out must be a state_vector', module=this_module, procedure='nonlinear_map')
+            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'nonlinear_map')
          end select
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='nonlinear_map')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'nonlinear_map')
       end select
    end subroutine nonlinear_map
 
@@ -322,10 +322,10 @@ contains
             call compute_fdot(pos_in(:npts), vec)
             vec_out%T = vec_in%dot(vec)
          class default
-            call stop_error('vec_out must be a state_vector', module=this_module, procedure='linear_map')
+            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'linear_map')
          end select
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='linear_map')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'linear_map')
       end select
    end subroutine linear_map
 
@@ -360,10 +360,10 @@ contains
             ! Pass-back the state.
             call set_position(pos_out(npts + 1:), vec_out)
          class default
-            call stop_error('vec_out must be a state_vector', module=this_module, procedure='monodromy_map')
+            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'monodromy_map')
          end select
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='monodromy_map')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'monodromy_map')
       end select
    end subroutine monodromy_map
 
@@ -381,7 +381,7 @@ contains
          pos(2) = vec_in%y
          pos(3) = vec_in%z
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='get_position')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'get_position')
       end select
    end subroutine get_position
 
@@ -392,7 +392,7 @@ contains
       type is (state_vector)
          period = vec_in%T
       class default
-         call stop_error('vec_in must be a state_vector', module=this_module, procedure='get_period')
+         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'get_period')
       end select
    end subroutine get_period
 
@@ -405,7 +405,7 @@ contains
          vec_out%y = pos(2)
          vec_out%z = pos(3)
       class default
-         call stop_error('vec_out must be a state_vector', module=this_module, procedure='set_position')
+         call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'set_position')
       end select
    end subroutine set_position
 
