@@ -26,7 +26,8 @@ def apply_command(folder, with_qp, with_xqp, with_hp):
         source_file = file
         target_file = file.removesuffix('fypp')+'f90'
         tool.process_file(source_file, target_file)
-    
+
+
 def replace_version(lk_file, toml_file, prefix=None):
     # Get current version from toml
     config = toml.load(toml_file)
@@ -39,10 +40,12 @@ def replace_version(lk_file, toml_file, prefix=None):
                 if "Version --" in line:
                     if prefix is not None:
                         version = prefix + ' ' + version
-                    file.write(f"      write (*, *) \"Version -- {version}\"\n")
+                    file.write(
+                        f"      write (*, *) \"Version -- {version}\"\n")
                 else:
                     file.write(line)
     print(f"Version in {lk_file} updated to {version}.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
