@@ -1611,6 +1611,7 @@ contains
         complex(sp), allocatable :: eigvals_wrk(:)
         real(sp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eigs_rsp'
         integer :: nev, conv
         integer :: i, j, k, niter, krst
         real(sp) :: tol, x0_norm
@@ -1619,7 +1620,7 @@ contains
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eigs_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1651,7 +1652,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rsp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -1677,12 +1678,13 @@ contains
                             & ' steps of the Arnoldi process.'
                 call log_information(msg, module=this_module, procedure='eigs_rsp')
                 if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure='eigs_rsp')
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1717,7 +1719,7 @@ contains
         enddo
 
         info = niter
-        if (time_lightkrylov()) call timer%stop('eigs_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
             complex(sp), intent(in) :: lambda(:)
@@ -1761,6 +1763,7 @@ contains
         complex(dp), allocatable :: eigvals_wrk(:)
         real(dp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eigs_rdp'
         integer :: nev, conv
         integer :: i, j, k, niter, krst
         real(dp) :: tol, x0_norm
@@ -1769,7 +1772,7 @@ contains
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eigs_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1801,7 +1804,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_rdp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -1827,12 +1830,13 @@ contains
                             & ' steps of the Arnoldi process.'
                 call log_information(msg, module=this_module, procedure='eigs_rdp')
                 if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure='eigs_rdp')
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -1867,7 +1871,7 @@ contains
         enddo
 
         info = niter
-        if (time_lightkrylov()) call timer%stop('eigs_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
             complex(dp), intent(in) :: lambda(:)
@@ -1911,6 +1915,7 @@ contains
         complex(sp), allocatable :: eigvals_wrk(:)
         real(sp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eigs_csp'
         integer :: nev, conv
         integer :: i, j, k, niter, krst
         real(sp) :: tol, x0_norm
@@ -1918,7 +1923,7 @@ contains
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eigs_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -1950,7 +1955,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_csp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
@@ -1967,12 +1972,13 @@ contains
                             & ' steps of the Arnoldi process.'
                 call log_information(msg, module=this_module, procedure='eigs_csp')
                 if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure='eigs_csp')
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -2007,7 +2013,7 @@ contains
         enddo
 
         info = niter
-        if (time_lightkrylov()) call timer%stop('eigs_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
             complex(sp), intent(in) :: lambda(:)
@@ -2051,6 +2057,7 @@ contains
         complex(dp), allocatable :: eigvals_wrk(:)
         real(dp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eigs_cdp'
         integer :: nev, conv
         integer :: i, j, k, niter, krst
         real(dp) :: tol, x0_norm
@@ -2058,7 +2065,7 @@ contains
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eigs_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with optional parameters.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -2090,7 +2097,7 @@ contains
            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', module=this_module, procedure='eigs_cdp')
+                call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
@@ -2107,12 +2114,13 @@ contains
                             & ' steps of the Arnoldi process.'
                 call log_information(msg, module=this_module, procedure='eigs_cdp')
                 if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
+                call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
                             & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, module=this_module, procedure='eigs_cdp')
+            call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
@@ -2147,7 +2155,7 @@ contains
         enddo
 
         info = niter
-        if (time_lightkrylov()) call timer%stop('eigs_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
             complex(dp), intent(in) :: lambda(:)

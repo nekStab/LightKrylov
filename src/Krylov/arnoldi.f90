@@ -3,6 +3,7 @@ submodule (lightkrylov_basekrylov) arnoldi_method
 contains
     
     module procedure arnoldi_rsp
+        character(len=*), parameter :: this_procedure = 'arnoldi_rsp'
         integer :: k_start, k_end, p
         logical :: trans
         real(sp) :: tolerance
@@ -10,7 +11,7 @@ contains
         real(sp), allocatable :: res(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
-        if (time_lightkrylov()) call timer%start('arnoldi_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp ; info = 0
@@ -41,11 +42,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rsp')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_rsp')
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rsp
@@ -64,11 +65,12 @@ contains
 
         enddo blk_arnoldi
 
-        if (time_lightkrylov()) call timer%stop('arnoldi_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure arnoldi_rdp
+        character(len=*), parameter :: this_procedure = 'arnoldi_rdp'
         integer :: k_start, k_end, p
         logical :: trans
         real(dp) :: tolerance
@@ -76,7 +78,7 @@ contains
         real(dp), allocatable :: res(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
-        if (time_lightkrylov()) call timer%start('arnoldi_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp ; info = 0
@@ -107,11 +109,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_rdp')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_rdp')
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rdp
@@ -130,11 +132,12 @@ contains
 
         enddo blk_arnoldi
 
-        if (time_lightkrylov()) call timer%stop('arnoldi_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure arnoldi_csp
+        character(len=*), parameter :: this_procedure = 'arnoldi_csp'
         integer :: k_start, k_end, p
         logical :: trans
         real(sp) :: tolerance
@@ -142,7 +145,7 @@ contains
         complex(sp), allocatable :: res(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
-        if (time_lightkrylov()) call timer%start('arnoldi_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp ; info = 0
@@ -173,11 +176,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_csp')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_csp')
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rsp
@@ -196,11 +199,12 @@ contains
 
         enddo blk_arnoldi
 
-        if (time_lightkrylov()) call timer%stop('arnoldi_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure arnoldi_cdp
+        character(len=*), parameter :: this_procedure = 'arnoldi_cdp'
         integer :: k_start, k_end, p
         logical :: trans
         real(dp) :: tolerance
@@ -208,7 +212,7 @@ contains
         complex(dp), allocatable :: res(:)
         integer :: k, i, kdim, kpm, kp, kpp
 
-        if (time_lightkrylov()) call timer%start('arnoldi_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
         p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp ; info = 0
@@ -239,11 +243,11 @@ contains
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
             call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='arnoldi_cdp')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
             call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
-            call check_info(info, 'qr', module=this_module, procedure='arnoldi_cdp')
+            call check_info(info, 'qr', this_module, this_procedure)
 
             ! Extract residual norm (smallest diagonal element of H matrix).
             res = zero_rdp
@@ -262,7 +266,7 @@ contains
 
         enddo blk_arnoldi
 
-        if (time_lightkrylov()) call timer%stop('arnoldi_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure

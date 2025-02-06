@@ -59,6 +59,7 @@ contains
     !------------------------------------
 
     module procedure qr_with_pivoting_rsp
+        character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rsp'
         real(sp) :: tolerance
         real(sp) :: beta
         integer :: idx, i, j, kdim
@@ -66,7 +67,7 @@ contains
         real(sp)  :: Rii(size(Q))
         character(len=128) :: msg
 
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; kdim = size(Q) ; R = zero_rsp 
         
         ! Deals with the optional arguments.
@@ -84,12 +85,12 @@ contains
                 do i = j, kdim
                     call Q(i)%rand()
                     call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                     beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, module=this_module, procedure='qr_with_pivoting_rsp')
+                call log_information(msg, this_module, this_procedure)
                 exit qr_step
             endif
 
@@ -97,13 +98,13 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_rsp')
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
                 call Q(j)%rand()
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 beta = Q(j)%norm()
             else
                 R(j, j) = beta
@@ -125,11 +126,12 @@ contains
             enddo
 
         enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure qr_with_pivoting_rdp
+        character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rdp'
         real(dp) :: tolerance
         real(dp) :: beta
         integer :: idx, i, j, kdim
@@ -137,7 +139,7 @@ contains
         real(dp)  :: Rii(size(Q))
         character(len=128) :: msg
 
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; kdim = size(Q) ; R = zero_rdp 
         
         ! Deals with the optional arguments.
@@ -155,12 +157,12 @@ contains
                 do i = j, kdim
                     call Q(i)%rand()
                     call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                     beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, module=this_module, procedure='qr_with_pivoting_rdp')
+                call log_information(msg, this_module, this_procedure)
                 exit qr_step
             endif
 
@@ -168,13 +170,13 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_with_pivoting_rdp')
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
                 call Q(j)%rand()
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 beta = Q(j)%norm()
             else
                 R(j, j) = beta
@@ -196,11 +198,12 @@ contains
             enddo
 
         enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure qr_with_pivoting_csp
+        character(len=*), parameter :: this_procedure = 'qr_with_pivoting_csp'
         real(sp) :: tolerance
         complex(sp) :: beta
         integer :: idx, i, j, kdim
@@ -208,7 +211,7 @@ contains
         complex(sp)  :: Rii(size(Q))
         character(len=128) :: msg
 
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; kdim = size(Q) ; R = zero_rsp 
         
         ! Deals with the optional arguments.
@@ -226,12 +229,12 @@ contains
                 do i = j, kdim
                     call Q(i)%rand()
                     call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                     beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, module=this_module, procedure='qr_with_pivoting_csp')
+                call log_information(msg, this_module, this_procedure)
                 exit qr_step
             endif
 
@@ -239,14 +242,13 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_with_pivoting_csp')
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
                 call Q(j)%rand()
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 beta = Q(j)%norm()
             else
                 R(j, j) = beta
@@ -268,11 +270,12 @@ contains
             enddo
 
         enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure qr_with_pivoting_cdp
+        character(len=*), parameter :: this_procedure = 'qr_with_pivoting_cdp'
         real(dp) :: tolerance
         complex(dp) :: beta
         integer :: idx, i, j, kdim
@@ -280,7 +283,7 @@ contains
         complex(dp)  :: Rii(size(Q))
         character(len=128) :: msg
 
-        if (time_lightkrylov()) call timer%start('qr_with_pivoting_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; kdim = size(Q) ; R = zero_rdp 
         
         ! Deals with the optional arguments.
@@ -298,12 +301,12 @@ contains
                 do i = j, kdim
                     call Q(i)%rand()
                     call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                     beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
                 enddo
                 info = j
                 write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, module=this_module, procedure='qr_with_pivoting_cdp')
+                call log_information(msg, this_module, this_procedure)
                 exit qr_step
             endif
 
@@ -311,14 +314,13 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_with_pivoting_cdp')
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
                 call Q(j)%rand()
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 beta = Q(j)%norm()
             else
                 R(j, j) = beta
@@ -340,7 +342,7 @@ contains
             enddo
 
         enddo qr_step
-        if (time_lightkrylov()) call timer%stop('qr_with_pivoting_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
@@ -350,6 +352,7 @@ contains
     !---------------------------------------------
 
     module procedure qr_no_pivoting_rsp
+        character(len=*), parameter :: this_procedure = 'qr_no_pivoting_rsp'
         real(sp) :: tolerance
         real(sp) :: beta
         integer :: j
@@ -359,30 +362,30 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rsp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
             end if        
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_rsp')
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_rsp')
+                    call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rsp
                 call Q(j)%rand()
                 if (j > 1) then
                     call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rsp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
                 beta = Q(j)%norm()
             else
@@ -391,11 +394,12 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure qr_no_pivoting_rdp
+        character(len=*), parameter :: this_procedure = 'qr_no_pivoting_rdp'
         real(dp) :: tolerance
         real(dp) :: beta
         integer :: j
@@ -405,30 +409,30 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_rdp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
             end if        
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', module=this_module, procedure='qr_no_pivoting_rdp')
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_rdp')
+                    call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rdp
                 call Q(j)%rand()
                 if (j > 1) then
                     call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_rdp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
                 beta = Q(j)%norm()
             else
@@ -437,11 +441,12 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure qr_no_pivoting_csp
+        character(len=*), parameter :: this_procedure = 'qr_no_pivoting_csp'
         real(sp) :: tolerance
         complex(sp) :: beta
         integer :: j
@@ -451,31 +456,30 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_sp)
 
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; flag = .false.; R = zero_rsp ; beta = zero_rsp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_csp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
             end if        
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_no_pivoting_csp')
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_csp')
+                    call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rsp
                 call Q(j)%rand()
                 if (j > 1) then
                     call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_csp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
                 beta = Q(j)%norm()
             else
@@ -484,11 +488,12 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rsp / beta)
         enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure qr_no_pivoting_cdp
+        character(len=*), parameter :: this_procedure = 'qr_no_pivoting_cdp'
         real(dp) :: tolerance
         complex(dp) :: beta
         integer :: j
@@ -498,31 +503,30 @@ contains
         ! Deals with the optional args.
         tolerance = optval(tol, atol_dp)
 
-        if (time_lightkrylov()) call timer%start('qr_no_pivoting_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0 ; flag = .false.; R = zero_rdp ; beta = zero_rdp
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
                 call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_no_pivoting_cdp')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
             end if        
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', module=this_module,&
-                & procedure='qr_no_pivoting_cdp')
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
                     write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
-                    call log_information(msg, module=this_module, procedure='qr_no_pivoting_cdp')
+                    call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rdp
                 call Q(j)%rand()
                 if (j > 1) then
                     call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', module=this_module, procedure='qr_with_pivoting_cdp')
+                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
                 beta = Q(j)%norm()
             else
@@ -531,7 +535,7 @@ contains
             ! Normalize column.
             call Q(j)%scal(one_rdp / beta)
         enddo
-        if (time_lightkrylov()) call timer%stop('qr_no_pivoting_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure

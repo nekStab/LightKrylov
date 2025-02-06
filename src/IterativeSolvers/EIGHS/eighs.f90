@@ -71,13 +71,14 @@ contains
         real(sp) :: x0_norm
 
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eighs_rsp'
         integer :: i, j, k, nev, conv
         real(sp) :: tol
         real(sp) :: beta
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eighs_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deaks with the optional args.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -101,7 +102,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rsp')
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
@@ -115,7 +116,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='eighs_rsp')
+            call log_information(msg, this_module, this_procedure)
             if (outpost) call write_results_rsp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
@@ -143,7 +144,7 @@ contains
         enddo
         
         info = k
-        if (time_lightkrylov()) call timer%stop('eighs_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure 
@@ -164,13 +165,14 @@ contains
         real(dp) :: x0_norm
 
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eighs_rdp'
         integer :: i, j, k, nev, conv
         real(dp) :: tol
         real(dp) :: beta
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eighs_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deaks with the optional args.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -194,7 +196,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_rdp')
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
@@ -208,7 +210,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='eighs_rdp')
+            call log_information(msg, this_module, this_procedure)
             if (outpost) call write_results_rdp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
@@ -236,7 +238,7 @@ contains
         enddo
         
         info = k
-        if (time_lightkrylov()) call timer%stop('eighs_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure 
@@ -257,13 +259,14 @@ contains
         real(sp) :: x0_norm
 
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eighs_csp'
         integer :: i, j, k, nev, conv
         real(sp) :: tol
         complex(sp) :: beta
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eighs_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deaks with the optional args.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -287,7 +290,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_csp')
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
@@ -301,7 +304,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='eighs_csp')
+            call log_information(msg, this_module, this_procedure)
             if (outpost) call write_results_rsp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
@@ -329,7 +332,7 @@ contains
         enddo
         
         info = k
-        if (time_lightkrylov()) call timer%stop('eighs_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure 
@@ -350,13 +353,14 @@ contains
         real(dp) :: x0_norm
 
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eighs_cdp'
         integer :: i, j, k, nev, conv
         real(dp) :: tol
         complex(dp) :: beta
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('eighs_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deaks with the optional args.
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
@@ -380,7 +384,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Symmetric Lanczos step.
             call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
-            call check_info(info, 'lanczos', module=this_module, procedure='eighs_cdp')
+            call check_info(info, 'lanczos', this_module, this_procedure)
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
@@ -394,7 +398,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='eighs_cdp')
+            call log_information(msg, this_module, this_procedure)
             if (outpost) call write_results_rdp(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nev) exit lanczos_iter
         enddo lanczos_iter
@@ -422,7 +426,7 @@ contains
         enddo
         
         info = k
-        if (time_lightkrylov()) call timer%stop('eighs_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure 

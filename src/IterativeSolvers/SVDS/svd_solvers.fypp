@@ -37,13 +37,14 @@ contains
         ${type}$, allocatable :: umat(:, :), vmat(:, :)
         real(${kind}$), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'svds_${type[0]}$${kind}$'
         integer :: nsv, conv
         integer :: i, j, k
         real(${kind}$) :: tol, u0_norm
         logical :: outpost
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('svds_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_   = optval(kdim, 4*nsv)
@@ -71,7 +72,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_${type[0]}$${kind}$')
+            call check_info(info, 'bidiagonalization', this_module, this_procedure)
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
@@ -85,7 +86,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='svds_${type[0]}$${kind}$')
+            call log_information(msg, this_module, this_procedure)
             if (outpost) call write_results_r${kind}$(svds_output, svdvals_wrk(:k), residuals_wrk(:k), tol)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
@@ -106,7 +107,7 @@ contains
                 call V(i)%axpby(one_${type[0]}$${kind}$, Vwrk(j), vmat(j, i))
             enddo
         enddo
-        if (time_lightkrylov()) call timer%stop('svds_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
