@@ -42,6 +42,7 @@ module lightkrylov_IterativeSolvers
 
     character(len=*), parameter :: this_module      = 'LK_Solvers'
     character(len=*), parameter :: this_module_long = 'LightKrylov_IterativeSolvers'
+    character(len=*), parameter :: eigs_output      = 'eigs_output.txt'
 
     public :: abstract_linear_solver_rsp
     public :: abstract_linear_solver_rdp
@@ -66,6 +67,10 @@ module lightkrylov_IterativeSolvers
     public :: cg_rdp
     public :: cg_csp
     public :: cg_cdp
+    public :: write_results_rsp
+    public :: write_results_rdp
+    public :: write_results_csp
+    public :: write_results_cdp
 
     !------------------------------------------------------
     !-----     ABSTRACT PRECONDITIONER DEFINITION     -----
@@ -1029,7 +1034,7 @@ module lightkrylov_IterativeSolvers
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
-        module subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance)
+        module subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rsp), intent(out) :: U(:)
@@ -1047,8 +1052,10 @@ module lightkrylov_IterativeSolvers
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
         end subroutine
-        module subroutine svds_rdp(A, U, S, V, residuals, info, u0, kdim, tolerance)
+        module subroutine svds_rdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_rdp), intent(out) :: U(:)
@@ -1066,8 +1073,10 @@ module lightkrylov_IterativeSolvers
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
         end subroutine
-        module subroutine svds_csp(A, U, S, V, residuals, info, u0, kdim, tolerance)
+        module subroutine svds_csp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_csp), intent(out) :: U(:)
@@ -1085,8 +1094,10 @@ module lightkrylov_IterativeSolvers
         !! Desired number of eigenpairs.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
         end subroutine
-        module subroutine svds_cdp(A, U, S, V, residuals, info, u0, kdim, tolerance)
+        module subroutine svds_cdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading singular triplets need to be computed.
         class(abstract_vector_cdp), intent(out) :: U(:)
@@ -1104,6 +1115,8 @@ module lightkrylov_IterativeSolvers
         !! Desired number of eigenpairs.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
         end subroutine
     end interface
 
@@ -1168,7 +1181,7 @@ module lightkrylov_IterativeSolvers
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
-        module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+        module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1185,8 +1198,10 @@ module lightkrylov_IterativeSolvers
             !! Desired number of eigenpairs.
             real(sp), optional, intent(in) :: tolerance
             !! Tolerance
+            logical, optional, intent(in) :: write_intermediate
+            !! Write intermediate eigenvalues to file during iteration?
         end subroutine
-        module subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+        module subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_rdp), intent(out) :: X(:)
@@ -1203,8 +1218,10 @@ module lightkrylov_IterativeSolvers
             !! Desired number of eigenpairs.
             real(dp), optional, intent(in) :: tolerance
             !! Tolerance
+            logical, optional, intent(in) :: write_intermediate
+            !! Write intermediate eigenvalues to file during iteration?
         end subroutine
-        module subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+        module subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_csp), intent(out) :: X(:)
@@ -1221,8 +1238,10 @@ module lightkrylov_IterativeSolvers
             !! Desired number of eigenpairs.
             real(sp), optional, intent(in) :: tolerance
             !! Tolerance
+            logical, optional, intent(in) :: write_intermediate
+            !! Write intermediate eigenvalues to file during iteration?
         end subroutine
-        module subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance)
+        module subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1239,6 +1258,8 @@ module lightkrylov_IterativeSolvers
             !! Desired number of eigenpairs.
             real(dp), optional, intent(in) :: tolerance
             !! Tolerance
+            logical, optional, intent(in) :: write_intermediate
+            !! Write intermediate eigenvalues to file during iteration?
         end subroutine
     end interface
 
@@ -1383,6 +1404,103 @@ contains
     !-----     UTILITY FUNCTIONS     -----
     !-------------------------------------
 
+    subroutine write_results_rsp(filename, vals, res, tol)
+        !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        character(len=*), intent(in) :: filename
+        !! Output filename. This file will be overwritten
+        real(sp), intent(in) :: vals(:)
+        !! Intermediate values
+        real(sp), intent(in) :: res(:)
+        !! Residuals
+        real(sp), intent(in) :: tol
+        !! Convergence tolerance
+        ! internals
+        integer :: i, k
+        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        k = size(vals)
+        if (io_rank()) then ! only master rank writes
+            open (1234, file=filename, status='replace', action='write')
+                write (1234, '(A6,2(A18),A3)') 'Iter', 'value', 'residual', 'C'
+            do i = 1, k
+                    write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
+            end do 
+            close (1234)
+        end if
+    end subroutine
+    subroutine write_results_rdp(filename, vals, res, tol)
+        !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        character(len=*), intent(in) :: filename
+        !! Output filename. This file will be overwritten
+        real(dp), intent(in) :: vals(:)
+        !! Intermediate values
+        real(dp), intent(in) :: res(:)
+        !! Residuals
+        real(dp), intent(in) :: tol
+        !! Convergence tolerance
+        ! internals
+        integer :: i, k
+        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        k = size(vals)
+        if (io_rank()) then ! only master rank writes
+            open (1234, file=filename, status='replace', action='write')
+                write (1234, '(A6,2(A18),A3)') 'Iter', 'value', 'residual', 'C'
+            do i = 1, k
+                    write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
+            end do 
+            close (1234)
+        end if
+    end subroutine
+    subroutine write_results_csp(filename, vals, res, tol)
+        !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        character(len=*), intent(in) :: filename
+        !! Output filename. This file will be overwritten
+        complex(sp), intent(in) :: vals(:)
+        !! Intermediate values
+        real(sp), intent(in) :: res(:)
+        !! Residuals
+        real(sp), intent(in) :: tol
+        !! Convergence tolerance
+        ! internals
+        integer :: i, k
+        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        k = size(vals)
+        if (io_rank()) then ! only master rank writes
+            open (1234, file=filename, status='replace', action='write')
+                write (1234, '(A6,2(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+            do i = 1, k
+                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+            end do 
+            close (1234)
+        end if
+    end subroutine
+    subroutine write_results_cdp(filename, vals, res, tol)
+        !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        character(len=*), intent(in) :: filename
+        !! Output filename. This file will be overwritten
+        complex(dp), intent(in) :: vals(:)
+        !! Intermediate values
+        real(dp), intent(in) :: res(:)
+        !! Residuals
+        real(dp), intent(in) :: tol
+        !! Convergence tolerance
+        ! internals
+        integer :: i, k
+        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        k = size(vals)
+        if (io_rank()) then ! only master rank writes
+            open (1234, file=filename, status='replace', action='write')
+                write (1234, '(A6,2(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+            do i = 1, k
+                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+            end do 
+            close (1234)
+        end if
+    end subroutine
+
     elemental pure function compute_residual_rsp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         real(sp), intent(in) :: beta
@@ -1392,7 +1510,6 @@ contains
         real(sp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function compute_residual_rsp
     elemental pure function compute_residual_rdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -1403,7 +1520,6 @@ contains
         real(dp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function compute_residual_rdp
     elemental pure function compute_residual_csp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -1414,7 +1530,6 @@ contains
         real(sp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function compute_residual_csp
     elemental pure function compute_residual_cdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -1425,7 +1540,6 @@ contains
         real(dp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function compute_residual_cdp
 
     module procedure save_eigenspectrum_rsp
@@ -1461,7 +1575,7 @@ contains
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1480,6 +1594,8 @@ contains
         !! Tolerance.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1501,6 +1617,7 @@ contains
         real(sp) :: tol, x0_norm
         real(sp) :: beta
         real(sp) :: alpha
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -1508,6 +1625,7 @@ contains
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_sp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
@@ -1558,6 +1676,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
+                call log_information(msg, module=this_module, procedure='eigs_rsp')
+                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
@@ -1607,7 +1727,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rsp
-    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -1626,6 +1746,8 @@ contains
         !! Tolerance.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1647,6 +1769,7 @@ contains
         real(dp) :: tol, x0_norm
         real(dp) :: beta
         real(dp) :: alpha
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -1654,6 +1777,7 @@ contains
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_dp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
@@ -1704,6 +1828,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
+                call log_information(msg, module=this_module, procedure='eigs_rdp')
+                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
@@ -1753,7 +1879,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rdp
-    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
+    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -1772,6 +1898,8 @@ contains
         !! Tolerance.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1792,6 +1920,7 @@ contains
         integer :: i, j, k, niter, krst
         real(sp) :: tol, x0_norm
         complex(sp) :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -1799,6 +1928,7 @@ contains
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_sp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_sp
@@ -1840,6 +1970,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
+                call log_information(msg, module=this_module, procedure='eigs_csp')
+                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
@@ -1889,7 +2021,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_csp
-    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose)
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1908,6 +2040,8 @@ contains
         !! Tolerance.
         logical, optional, intent(in) :: transpose
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+        logical, optional, intent(in) :: write_intermediate
+        !! Write intermediate eigenvalues to file during iteration?
 
         !--------------------------------------
         !-----     Internal variables     -----
@@ -1928,6 +2062,7 @@ contains
         integer :: i, j, k, niter, krst
         real(dp) :: tol, x0_norm
         complex(dp) :: beta
+        logical :: outpost
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -1935,6 +2070,7 @@ contains
         nev = size(X)
         kdim_   = optval(kdim, 4*nev)
         tol     = optval(tolerance, rtol_dp)
+        outpost = optval(write_intermediate, .false.)
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev)) ; eigvals = 0.0_dp
@@ -1976,6 +2112,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
+                call log_information(msg, module=this_module, procedure='eigs_cdp')
+                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
