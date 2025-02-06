@@ -792,7 +792,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
-                              & module=this_module, procedure='linear_combination_vector_rsp')
+                              & this_module, 'linear_combination_vector_rsp')
         endif
 
         ! Initialize output vector.
@@ -821,7 +821,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_rsp')
+                              & this_module, 'linear_combination_matrix_rsp')
         endif
 
         ! Initialize output basis.
@@ -830,7 +830,7 @@ contains
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_rsp')
+                              & this_module, 'linear_combination_matrix_rsp')
             endif
         endif
 
@@ -946,7 +946,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
-                              & module=this_module, procedure='linear_combination_vector_rdp')
+                              & this_module, 'linear_combination_vector_rdp')
         endif
 
         ! Initialize output vector.
@@ -975,7 +975,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_rdp')
+                              & this_module, 'linear_combination_matrix_rdp')
         endif
 
         ! Initialize output basis.
@@ -984,7 +984,7 @@ contains
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_rdp')
+                              & this_module, 'linear_combination_matrix_rdp')
             endif
         endif
 
@@ -1100,7 +1100,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
-                              & module=this_module, procedure='linear_combination_vector_csp')
+                              & this_module, 'linear_combination_vector_csp')
         endif
 
         ! Initialize output vector.
@@ -1129,7 +1129,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_csp')
+                              & this_module, 'linear_combination_matrix_csp')
         endif
 
         ! Initialize output basis.
@@ -1138,7 +1138,7 @@ contains
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_csp')
+                              & this_module, 'linear_combination_matrix_csp')
             endif
         endif
 
@@ -1254,7 +1254,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
-                              & module=this_module, procedure='linear_combination_vector_cdp')
+                              & this_module, 'linear_combination_vector_cdp')
         endif
 
         ! Initialize output vector.
@@ -1283,7 +1283,7 @@ contains
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_cdp')
+                              & this_module, 'linear_combination_matrix_cdp')
         endif
 
         ! Initialize output basis.
@@ -1292,7 +1292,7 @@ contains
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                              & module=this_module, procedure='linear_combination_matrix_cdp')
+                              & this_module, 'linear_combination_matrix_cdp')
             endif
         endif
 

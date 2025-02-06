@@ -25,7 +25,7 @@ contains
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -33,14 +33,14 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     module procedure assert_shape_vector_rdp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -48,14 +48,14 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     module procedure assert_shape_vector_csp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -63,14 +63,14 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     module procedure assert_shape_vector_cdp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -78,7 +78,7 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
 
@@ -101,7 +101,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_rsp")
+        call check_info(info, "GEEV", this_module, "eig_rsp")
 
         ! Complex eigenvalues.
         vals = one_csp*wr + one_im_csp*wi
@@ -119,7 +119,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_rdp")
+        call check_info(info, "GEEV", this_module, "eig_rdp")
 
         ! Complex eigenvalues.
         vals = one_cdp*wr + one_im_cdp*wi
@@ -138,7 +138,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_csp")
+        call check_info(info, "GEEV", this_module, "eig_csp")
 
     end procedure
     module procedure eig_cdp
@@ -155,7 +155,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_cdp")
+        call check_info(info, "GEEV", this_module, "eig_cdp")
 
     end procedure
 
@@ -175,7 +175,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_rsp")
+        call check_info(info, "TRSEN", this_module, "ordschur_rsp")
     end procedure
     module procedure ordschur_rdp
         ! Lapack variables.
@@ -190,7 +190,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_rdp")
+        call check_info(info, "TRSEN", this_module, "ordschur_rdp")
     end procedure
     module procedure ordschur_csp
         ! Lapack variables.
@@ -203,7 +203,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_csp")
+        call check_info(info, "TRSEN", this_module, "ordschur_csp")
     end procedure
     module procedure ordschur_cdp
         ! Lapack variables.
@@ -216,7 +216,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_cdp")
+        call check_info(info, "TRSEN", this_module, "ordschur_cdp")
     end procedure
 
     !----- Matrix Square-Root -----
@@ -235,10 +235,10 @@ contains
         if (symmetry_error > rtol_sp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_sp
-            call stop_error(msg, module=this_module, procedure="sqrtm_rsp")
+            call stop_error(msg, this_module, "sqrtm_rsp")
         else if (symmetry_error > 10*atol_sp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_rsp")
+            call log_warning(msg, this_module, "sqrtm_rsp")
         endif
 
         ! Perform SVD.
@@ -270,10 +270,10 @@ contains
         if (symmetry_error > rtol_dp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_dp
-            call stop_error(msg, module=this_module, procedure="sqrtm_rdp")
+            call stop_error(msg, this_module, "sqrtm_rdp")
         else if (symmetry_error > 10*atol_dp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_rdp")
+            call log_warning(msg, this_module, "sqrtm_rdp")
         endif
 
         ! Perform SVD.
@@ -305,10 +305,10 @@ contains
         if (symmetry_error > rtol_sp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_sp
-            call stop_error(msg, module=this_module, procedure="sqrtm_csp")
+            call stop_error(msg, this_module, "sqrtm_csp")
         else if (symmetry_error > 10*atol_sp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_csp")
+            call log_warning(msg, this_module, "sqrtm_csp")
         endif
 
         ! Perform SVD.
@@ -340,10 +340,10 @@ contains
         if (symmetry_error > rtol_dp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_dp
-            call stop_error(msg, module=this_module, procedure="sqrtm_cdp")
+            call stop_error(msg, this_module, "sqrtm_cdp")
         else if (symmetry_error > 10*atol_dp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_cdp")
+            call log_warning(msg, this_module, "sqrtm_cdp")
         endif
 
         ! Perform SVD.

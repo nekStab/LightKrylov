@@ -27,7 +27,7 @@ contains
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -35,7 +35,7 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     #:endfor
@@ -69,7 +69,7 @@ contains
         #:else
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
         #:endif
-        call check_info(info, "GEEV", module=this_module, procedure="eig_${type[0]}$${kind}$")
+        call check_info(info, "GEEV", this_module, "eig_${type[0]}$${kind}$")
 
         #:if type[0] == "r"
         ! Complex eigenvalues.
@@ -103,7 +103,7 @@ contains
         #:else
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_${type[0]}$${kind}$")
+        call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
     end procedure
     #:endfor
 
@@ -124,10 +124,10 @@ contains
         if (symmetry_error > rtol_${kind}$) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_${kind}$
-            call stop_error(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
+            call stop_error(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         else if (symmetry_error > 10*atol_${kind}$) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
+            call log_warning(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         endif
 
         ! Perform SVD.

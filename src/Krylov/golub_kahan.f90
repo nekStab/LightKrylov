@@ -2,12 +2,13 @@ submodule (lightkrylov_basekrylov) golub_kahan_methods
     implicit none
 contains
     module procedure lanczos_bidiagonalization_rsp
+        character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_rsp'
         integer :: k_start, k_end
         real(sp) :: tolerance
         real(sp) :: alpha, beta
         integer :: k, kdim
 
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! Krylov subspace dimension.
@@ -26,8 +27,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rsp, right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -44,8 +44,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rsp, left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -58,17 +57,18 @@ contains
 
         enddo lanczos
 
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure lanczos_bidiagonalization_rdp
+        character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_rdp'
         integer :: k_start, k_end
         real(dp) :: tolerance
         real(dp) :: alpha, beta
         integer :: k, kdim
 
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! Krylov subspace dimension.
@@ -87,8 +87,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rdp, right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -105,8 +104,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_rdp, left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -119,17 +117,18 @@ contains
 
         enddo lanczos
 
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure lanczos_bidiagonalization_csp
+        character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_csp'
         integer :: k_start, k_end
         real(sp) :: tolerance
         complex(sp) :: alpha, beta
         integer :: k, kdim
 
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! Krylov subspace dimension.
@@ -148,8 +147,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_csp, right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -166,8 +164,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_csp, left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -180,17 +177,18 @@ contains
 
         enddo lanczos
 
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
     module procedure lanczos_bidiagonalization_cdp
+        character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_cdp'
         integer :: k_start, k_end
         real(dp) :: tolerance
         complex(dp) :: alpha, beta
         integer :: k, kdim
 
-        if (time_lightkrylov()) call timer%start('lanczos_bidiagonalization_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
 
         ! Krylov subspace dimension.
@@ -209,8 +207,7 @@ contains
             ! Full re-orthogonalization of the right Krylov subspace.
             if (k > 1) then
                 call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_cdp, right basis')
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
             end if
 
             ! Normalization step.
@@ -227,8 +224,7 @@ contains
 
             ! Full re-orthogonalization of the left Krylov subspace.
             call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
-            call check_info(info, 'double_gram_schmidt_step', module=this_module, &
-                                    & procedure='lanczos_bidiagonalization_cdp, left basis')
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
 
             ! Normalization step
             beta = U(k+1)%norm() ; B(k+1, k) = beta
@@ -241,7 +237,7 @@ contains
 
         enddo lanczos
 
-        if (time_lightkrylov()) call timer%stop('lanczos_bidiagonalization_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure

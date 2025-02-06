@@ -68,12 +68,13 @@ contains
         real(sp), allocatable :: umat(:, :), vmat(:, :)
         real(sp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'svds_rsp'
         integer :: nsv, conv
         integer :: i, j, k
         real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('svds_rsp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -100,7 +101,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rsp')
+            call check_info(info, 'bidiagonalization', this_module, this_procedure)
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -114,7 +115,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='svds_rsp')
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -134,7 +135,7 @@ contains
                 call V(i)%axpby(one_rsp, Vwrk(j), vmat(j, i))
             enddo
         enddo
-        if (time_lightkrylov()) call timer%stop('svds_rsp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
@@ -150,12 +151,13 @@ contains
         real(dp), allocatable :: umat(:, :), vmat(:, :)
         real(dp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'svds_rdp'
         integer :: nsv, conv
         integer :: i, j, k
         real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('svds_rdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -182,7 +184,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_rdp')
+            call check_info(info, 'bidiagonalization', this_module, this_procedure)
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -196,7 +198,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='svds_rdp')
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -216,7 +218,7 @@ contains
                 call V(i)%axpby(one_rdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
-        if (time_lightkrylov()) call timer%stop('svds_rdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
@@ -232,12 +234,13 @@ contains
         complex(sp), allocatable :: umat(:, :), vmat(:, :)
         real(sp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'svds_csp'
         integer :: nsv, conv
         integer :: i, j, k
         real(sp) :: tol, u0_norm
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('svds_csp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -264,7 +267,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_csp')
+            call check_info(info, 'bidiagonalization', this_module, this_procedure)
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
@@ -278,7 +281,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='svds_csp')
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -298,7 +301,7 @@ contains
                 call V(i)%axpby(one_csp, Vwrk(j), vmat(j, i))
             enddo
         enddo
-        if (time_lightkrylov()) call timer%stop('svds_csp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
@@ -314,12 +317,13 @@ contains
         complex(dp), allocatable :: umat(:, :), vmat(:, :)
         real(dp), allocatable :: residuals_wrk(:)
         ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'svds_cdp'
         integer :: nsv, conv
         integer :: i, j, k
         real(dp) :: tol, u0_norm
         character(len=256) :: msg
 
-        if (time_lightkrylov()) call timer%start('svds_cdp')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional arguments.
         nsv = size(U)
         kdim_ = optval(kdim, 4*nsv)
@@ -346,7 +350,7 @@ contains
         lanczos_iter : do k = 1, kdim_
             ! Lanczos bidiag. step.
             call bidiagonalization(A, Uwrk, Vwrk, B, info, kstart=k, kend=k, tol=tol)
-            call check_info(info, 'bidiagonalization', module=this_module, procedure='svds_cdp')
+            call check_info(info, 'bidiagonalization', this_module, this_procedure)
 
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
@@ -360,7 +364,7 @@ contains
             conv = count(residuals_wrk(:k) < tol)
             write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nsv, ' singular values converged after ', k, &
                             & ' iterations of the Lanczos process.'
-            call log_information(msg, module=this_module, procedure='svds_cdp')
+            call log_information(msg, this_module, this_procedure)
             if (conv >= nsv) exit lanczos_iter
         enddo lanczos_iter
 
@@ -380,7 +384,7 @@ contains
                 call V(i)%axpby(one_cdp, Vwrk(j), vmat(j, i))
             enddo
         enddo
-        if (time_lightkrylov()) call timer%stop('svds_cdp')
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
     end procedure
