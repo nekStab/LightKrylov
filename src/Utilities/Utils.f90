@@ -39,6 +39,8 @@ module lightkrylov_utils
     public :: ordschur
     public :: sqrtm
     public :: expm
+    public :: givens_rotation
+    public :: apply_givens_rotation
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -348,5 +350,67 @@ module lightkrylov_utils
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
         end function
+    end interface
+
+    interface givens_rotation
+        pure module function givens_rotation_rsp(x) result(g)
+            real(sp), intent(in) :: x(2)
+            !! Vector whose second needs to be eliminated.
+            real(sp)             :: g(2)
+            !! Entries of the Givens rotation matrix.
+        end function
+        pure module function givens_rotation_rdp(x) result(g)
+            real(dp), intent(in) :: x(2)
+            !! Vector whose second needs to be eliminated.
+            real(dp)             :: g(2)
+            !! Entries of the Givens rotation matrix.
+        end function
+        pure module function givens_rotation_csp(x) result(g)
+            complex(sp), intent(in) :: x(2)
+            !! Vector whose second needs to be eliminated.
+            complex(sp)             :: g(2)
+            !! Entries of the Givens rotation matrix.
+        end function
+        pure module function givens_rotation_cdp(x) result(g)
+            complex(dp), intent(in) :: x(2)
+            !! Vector whose second needs to be eliminated.
+            complex(dp)             :: g(2)
+            !! Entries of the Givens rotation matrix.
+        end function
+    end interface
+
+    interface apply_givens_rotation
+        pure module subroutine apply_givens_rotation_rsp(h, c, s)
+            real(sp), intent(inout) :: h(:)
+            !! k-th column of the Hessenberg matrix.
+            real(sp), intent(inout) :: c(:)
+            !! Cosine components of the Givens rotations.
+            real(sp), intent(inout) :: s(:)
+            !! Sine components of the Givens rotations.
+        end subroutine
+        pure module subroutine apply_givens_rotation_rdp(h, c, s)
+            real(dp), intent(inout) :: h(:)
+            !! k-th column of the Hessenberg matrix.
+            real(dp), intent(inout) :: c(:)
+            !! Cosine components of the Givens rotations.
+            real(dp), intent(inout) :: s(:)
+            !! Sine components of the Givens rotations.
+        end subroutine
+        pure module subroutine apply_givens_rotation_csp(h, c, s)
+            complex(sp), intent(inout) :: h(:)
+            !! k-th column of the Hessenberg matrix.
+            complex(sp), intent(inout) :: c(:)
+            !! Cosine components of the Givens rotations.
+            complex(sp), intent(inout) :: s(:)
+            !! Sine components of the Givens rotations.
+        end subroutine
+        pure module subroutine apply_givens_rotation_cdp(h, c, s)
+            complex(dp), intent(inout) :: h(:)
+            !! k-th column of the Hessenberg matrix.
+            complex(dp), intent(inout) :: c(:)
+            !! Cosine components of the Givens rotations.
+            complex(dp), intent(inout) :: s(:)
+            !! Sine components of the Givens rotations.
+        end subroutine
     end interface
 end module
