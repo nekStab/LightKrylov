@@ -685,7 +685,7 @@ contains
         !> Back-substitution algorithm.
         x(n) = b(n) / A(n, n)
         do i = n-1, 1, -1
-            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure
     module procedure solve_triangular_rdp
@@ -695,7 +695,7 @@ contains
         !> Back-substitution algorithm.
         x(n) = b(n) / A(n, n)
         do i = n-1, 1, -1
-            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure
     module procedure solve_triangular_csp
@@ -705,7 +705,7 @@ contains
         !> Back-substitution algorithm.
         x(n) = b(n) / A(n, n)
         do i = n-1, 1, -1
-            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure
     module procedure solve_triangular_cdp
@@ -715,7 +715,7 @@ contains
         !> Back-substitution algorithm.
         x(n) = b(n) / A(n, n)
         do i = n-1, 1, -1
-            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure
 end submodule
