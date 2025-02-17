@@ -675,4 +675,47 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
     end procedure
+
+    !----- Solving triangular systems -----
+
+    module procedure solve_triangular_rsp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    module procedure solve_triangular_rdp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    module procedure solve_triangular_csp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    module procedure solve_triangular_cdp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - dot_product(A(i, i+1:), x(i+1:))) / A(i, i)
+        enddo
+    end procedure
 end submodule

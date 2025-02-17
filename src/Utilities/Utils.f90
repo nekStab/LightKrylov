@@ -41,6 +41,7 @@ module lightkrylov_utils
     public :: expm
     public :: givens_rotation
     public :: apply_givens_rotation
+    public :: solve_triangular
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -412,5 +413,40 @@ module lightkrylov_utils
             complex(dp), intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine
+    end interface
+
+    interface solve_triangular
+        pure module function solve_triangular_rsp(A, b) result(x)
+            real(sp), intent(in) :: A(:, :)
+            !! Matrix to invert.
+            real(sp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            real(sp), allocatable :: x(:)
+            !! Solution vector.
+        end function
+        pure module function solve_triangular_rdp(A, b) result(x)
+            real(dp), intent(in) :: A(:, :)
+            !! Matrix to invert.
+            real(dp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            real(dp), allocatable :: x(:)
+            !! Solution vector.
+        end function
+        pure module function solve_triangular_csp(A, b) result(x)
+            complex(sp), intent(in) :: A(:, :)
+            !! Matrix to invert.
+            complex(sp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            complex(sp), allocatable :: x(:)
+            !! Solution vector.
+        end function
+        pure module function solve_triangular_cdp(A, b) result(x)
+            complex(dp), intent(in) :: A(:, :)
+            !! Matrix to invert.
+            complex(dp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            complex(dp), allocatable :: x(:)
+            !! Solution vector.
+        end function
     end interface
 end module
