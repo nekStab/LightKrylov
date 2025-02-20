@@ -848,7 +848,7 @@ contains
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
             #:if type[0] == "c"
-                write (1234, '(A6,2(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+                write (1234, '(A6,3(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
             #:else
                 write (1234, '(A6,2(A18),A3)') 'Iter', 'value', 'residual', 'C'
             #:endif

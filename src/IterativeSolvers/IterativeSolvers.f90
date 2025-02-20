@@ -1469,7 +1469,7 @@ contains
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
-                write (1234, '(A6,2(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+                write (1234, '(A6,3(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
             do i = 1, k
                     write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
             end do 
@@ -1493,7 +1493,7 @@ contains
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
-                write (1234, '(A6,2(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+                write (1234, '(A6,3(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
             do i = 1, k
                     write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
             end do 
