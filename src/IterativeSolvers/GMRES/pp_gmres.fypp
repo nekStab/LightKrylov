@@ -2,7 +2,8 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_iterativesolvers) pp_gmres_solver
     use stdlib_strings, only: padr
-    use stdlib_linalg, only: lstsq, norm
+    use stdlib_linalg, only: norm, outer_product, hermitian, eigvals, solve
+    use lightkrylov_BaseKrylov, only: arnoldi
     implicit none
 contains
     !----------------------------------------
@@ -58,6 +59,53 @@ contains
     end procedure
     #:endfor
 
+    !-------------------------------------------------
+    !-----     ROOTS OF THE GMRES POLYNOMIAL     -----
+    !-------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    function gmres_roots_${type[0]}$${kind}$(A, b, degree) result(x)
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+        !! Matrix to be factorized.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
+        !! Vector seed for the Krylov subspace.
+        integer, intent(in) :: degree
+        !! Degree of the polynomial to be constructed.
+        complex(${kind}$), allocatable :: x(:)
+        !! Roots of the GMRES polynomial.
+
+        !> Krylov process.
+        ${type}$, allocatable :: H(:, :)    ! Hessenberg matrix.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:) ! Krylov basis.
+        !> Estimates of the Harmonic Ritz eigenvalues.
+        ${type}$ :: e(degree), f(degree)
+        ${type}$ :: P(degree, degree)
+        !> Miscellaneous.
+        real(${kind}$) :: beta
+        integer :: info
+
+        !> Allocate variables.
+        allocate(H(degree+1, degree)) ; H = 0.0_${kind}$
+        allocate(V(degree+1), source=b) ; call zero_basis(V)
+
+        !----- Arnoldi factorization -----
+        !> Initialize Krylov subspace.
+        call copy(V(1), b) ; beta = b%norm() ; call V(1)%scal(one_${type[0]}$${kind}$ / beta)
+        !> Compute the Hessenberg matrix and Krylov basis.
+        call arnoldi(A, V, H, info)
+
+        !----- Estimate Harmonic Ritz eigenvalues -----
+        !> Initialize variables.
+        e = 0.0_${kind}$ ; e(degree) = 1.0_${kind}$ ;
+        f(degree) = 0.0_${kind}$ ; P = H(:degree, :degree)
+        !> Update P.
+        f = solve(hermitian(P), e)
+        P = P + H(degree+1, degree)*outer_product(f, e)
+        !> Ritz eigenvalues.
+        x = eigvals(P)
+    end function
+    #:endfor
+    
     !------------------------------------------------------------------------------
     !-----     POLYNOMIAL PRECONDITIONED GMRES SOLVERS FOR ABSTRACT TYPES     -----
     !------------------------------------------------------------------------------

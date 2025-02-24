@@ -1,6 +1,7 @@
 submodule (lightkrylov_iterativesolvers) pp_gmres_solver
     use stdlib_strings, only: padr
-    use stdlib_linalg, only: lstsq, norm
+    use stdlib_linalg, only: norm, outer_product, hermitian, eigvals, solve
+    use lightkrylov_BaseKrylov, only: arnoldi
     implicit none
 contains
     !----------------------------------------
@@ -100,6 +101,171 @@ contains
         return
     end procedure
 
+    !-------------------------------------------------
+    !-----     ROOTS OF THE GMRES POLYNOMIAL     -----
+    !-------------------------------------------------
+
+    function gmres_roots_rsp(A, b, degree) result(x)
+        class(abstract_linop_rsp), intent(inout) :: A
+        !! Matrix to be factorized.
+        class(abstract_vector_rsp), intent(in) :: b
+        !! Vector seed for the Krylov subspace.
+        integer, intent(in) :: degree
+        !! Degree of the polynomial to be constructed.
+        complex(sp), allocatable :: x(:)
+        !! Roots of the GMRES polynomial.
+
+        !> Krylov process.
+        real(sp), allocatable :: H(:, :)    ! Hessenberg matrix.
+        class(abstract_vector_rsp), allocatable :: V(:) ! Krylov basis.
+        !> Estimates of the Harmonic Ritz eigenvalues.
+        real(sp) :: e(degree), f(degree)
+        real(sp) :: P(degree, degree)
+        !> Miscellaneous.
+        real(sp) :: beta
+        integer :: info
+
+        !> Allocate variables.
+        allocate(H(degree+1, degree)) ; H = 0.0_sp
+        allocate(V(degree+1), source=b) ; call zero_basis(V)
+
+        !----- Arnoldi factorization -----
+        !> Initialize Krylov subspace.
+        call copy(V(1), b) ; beta = b%norm() ; call V(1)%scal(one_rsp / beta)
+        !> Compute the Hessenberg matrix and Krylov basis.
+        call arnoldi(A, V, H, info)
+
+        !----- Estimate Harmonic Ritz eigenvalues -----
+        !> Initialize variables.
+        e = 0.0_sp ; e(degree) = 1.0_sp ;
+        f(degree) = 0.0_sp ; P = H(:degree, :degree)
+        !> Update P.
+        f = solve(hermitian(P), e)
+        P = P + H(degree+1, degree)*outer_product(f, e)
+        !> Ritz eigenvalues.
+        x = eigvals(P)
+    end function
+    function gmres_roots_rdp(A, b, degree) result(x)
+        class(abstract_linop_rdp), intent(inout) :: A
+        !! Matrix to be factorized.
+        class(abstract_vector_rdp), intent(in) :: b
+        !! Vector seed for the Krylov subspace.
+        integer, intent(in) :: degree
+        !! Degree of the polynomial to be constructed.
+        complex(dp), allocatable :: x(:)
+        !! Roots of the GMRES polynomial.
+
+        !> Krylov process.
+        real(dp), allocatable :: H(:, :)    ! Hessenberg matrix.
+        class(abstract_vector_rdp), allocatable :: V(:) ! Krylov basis.
+        !> Estimates of the Harmonic Ritz eigenvalues.
+        real(dp) :: e(degree), f(degree)
+        real(dp) :: P(degree, degree)
+        !> Miscellaneous.
+        real(dp) :: beta
+        integer :: info
+
+        !> Allocate variables.
+        allocate(H(degree+1, degree)) ; H = 0.0_dp
+        allocate(V(degree+1), source=b) ; call zero_basis(V)
+
+        !----- Arnoldi factorization -----
+        !> Initialize Krylov subspace.
+        call copy(V(1), b) ; beta = b%norm() ; call V(1)%scal(one_rdp / beta)
+        !> Compute the Hessenberg matrix and Krylov basis.
+        call arnoldi(A, V, H, info)
+
+        !----- Estimate Harmonic Ritz eigenvalues -----
+        !> Initialize variables.
+        e = 0.0_dp ; e(degree) = 1.0_dp ;
+        f(degree) = 0.0_dp ; P = H(:degree, :degree)
+        !> Update P.
+        f = solve(hermitian(P), e)
+        P = P + H(degree+1, degree)*outer_product(f, e)
+        !> Ritz eigenvalues.
+        x = eigvals(P)
+    end function
+    function gmres_roots_csp(A, b, degree) result(x)
+        class(abstract_linop_csp), intent(inout) :: A
+        !! Matrix to be factorized.
+        class(abstract_vector_csp), intent(in) :: b
+        !! Vector seed for the Krylov subspace.
+        integer, intent(in) :: degree
+        !! Degree of the polynomial to be constructed.
+        complex(sp), allocatable :: x(:)
+        !! Roots of the GMRES polynomial.
+
+        !> Krylov process.
+        complex(sp), allocatable :: H(:, :)    ! Hessenberg matrix.
+        class(abstract_vector_csp), allocatable :: V(:) ! Krylov basis.
+        !> Estimates of the Harmonic Ritz eigenvalues.
+        complex(sp) :: e(degree), f(degree)
+        complex(sp) :: P(degree, degree)
+        !> Miscellaneous.
+        real(sp) :: beta
+        integer :: info
+
+        !> Allocate variables.
+        allocate(H(degree+1, degree)) ; H = 0.0_sp
+        allocate(V(degree+1), source=b) ; call zero_basis(V)
+
+        !----- Arnoldi factorization -----
+        !> Initialize Krylov subspace.
+        call copy(V(1), b) ; beta = b%norm() ; call V(1)%scal(one_csp / beta)
+        !> Compute the Hessenberg matrix and Krylov basis.
+        call arnoldi(A, V, H, info)
+
+        !----- Estimate Harmonic Ritz eigenvalues -----
+        !> Initialize variables.
+        e = 0.0_sp ; e(degree) = 1.0_sp ;
+        f(degree) = 0.0_sp ; P = H(:degree, :degree)
+        !> Update P.
+        f = solve(hermitian(P), e)
+        P = P + H(degree+1, degree)*outer_product(f, e)
+        !> Ritz eigenvalues.
+        x = eigvals(P)
+    end function
+    function gmres_roots_cdp(A, b, degree) result(x)
+        class(abstract_linop_cdp), intent(inout) :: A
+        !! Matrix to be factorized.
+        class(abstract_vector_cdp), intent(in) :: b
+        !! Vector seed for the Krylov subspace.
+        integer, intent(in) :: degree
+        !! Degree of the polynomial to be constructed.
+        complex(dp), allocatable :: x(:)
+        !! Roots of the GMRES polynomial.
+
+        !> Krylov process.
+        complex(dp), allocatable :: H(:, :)    ! Hessenberg matrix.
+        class(abstract_vector_cdp), allocatable :: V(:) ! Krylov basis.
+        !> Estimates of the Harmonic Ritz eigenvalues.
+        complex(dp) :: e(degree), f(degree)
+        complex(dp) :: P(degree, degree)
+        !> Miscellaneous.
+        real(dp) :: beta
+        integer :: info
+
+        !> Allocate variables.
+        allocate(H(degree+1, degree)) ; H = 0.0_dp
+        allocate(V(degree+1), source=b) ; call zero_basis(V)
+
+        !----- Arnoldi factorization -----
+        !> Initialize Krylov subspace.
+        call copy(V(1), b) ; beta = b%norm() ; call V(1)%scal(one_cdp / beta)
+        !> Compute the Hessenberg matrix and Krylov basis.
+        call arnoldi(A, V, H, info)
+
+        !----- Estimate Harmonic Ritz eigenvalues -----
+        !> Initialize variables.
+        e = 0.0_dp ; e(degree) = 1.0_dp ;
+        f(degree) = 0.0_dp ; P = H(:degree, :degree)
+        !> Update P.
+        f = solve(hermitian(P), e)
+        P = P + H(degree+1, degree)*outer_product(f, e)
+        !> Ritz eigenvalues.
+        x = eigvals(P)
+    end function
+    
     !------------------------------------------------------------------------------
     !-----     POLYNOMIAL PRECONDITIONED GMRES SOLVERS FOR ABSTRACT TYPES     -----
     !------------------------------------------------------------------------------
