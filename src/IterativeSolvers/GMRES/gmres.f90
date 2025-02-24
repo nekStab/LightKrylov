@@ -124,7 +124,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rsp'
-        integer :: i, k, iter
+        integer :: k, iter
         class(abstract_vector_rsp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -299,7 +299,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rdp'
-        integer :: i, k, iter
+        integer :: k, iter
         class(abstract_vector_rdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -474,7 +474,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_csp'
-        integer :: i, k, iter
+        integer :: k, iter
         class(abstract_vector_csp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -649,7 +649,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_cdp'
-        integer :: i, k, iter
+        integer :: k, iter
         class(abstract_vector_cdp), allocatable :: dx, wrk
         character(len=256) :: msg
 

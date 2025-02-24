@@ -83,7 +83,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_${type[0]}$${kind}$'
-        integer :: i, k, iter
+        integer :: k, iter
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
         character(len=256) :: msg
 

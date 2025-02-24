@@ -842,8 +842,11 @@ contains
         !! Convergence tolerance
         ! internals
         integer :: i, k
-        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
-        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        #:if type[0] == "c"
+        character(len=*), parameter :: fmt = '(I6,3(2X,E16.9),2X,L1)'
+        #:else
+        character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L1)'
+        #:endif
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
@@ -854,9 +857,9 @@ contains
             #:endif
             do i = 1, k
                 #:if type[0] == "c"
-                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+                    write (1234, fmt) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
                 #:else
-                    write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
+                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
                 #:endif
             end do 
             close (1234)
