@@ -57,6 +57,11 @@ module lightkrylov_IterativeSolvers
     public :: gmres_rdp
     public :: gmres_csp
     public :: gmres_cdp
+    public :: pp_gmres
+    public :: pp_gmres_rsp
+    public :: pp_gmres_rdp
+    public :: pp_gmres_csp
+    public :: pp_gmres_cdp
     public :: fgmres
     public :: fgmres_rsp
     public :: fgmres_rdp
@@ -482,6 +487,250 @@ module lightkrylov_IterativeSolvers
             !! Metadata.
         end subroutine
         module subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            class(abstract_linop_cdp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_cdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+    end interface
+    !---------------------------------------------------------------------------------
+    !-----                                                                       -----
+    !-----     POLYNOMIAL PRECONDITIONED GENERALIZED MINIMUM RESIDUAL METHOD     -----
+    !-----                                                                       -----
+    !---------------------------------------------------------------------------------
+
+    !----- Options and Metadata -----
+    type, extends(abstract_opts), public :: pp_gmres_sp_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: degree = 32
+        !! Degree of the polynomial preconditioner (default: 32).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+        logical :: if_print_metadata = .false.
+        !! Print iteration metadata on exit (default: .false.).
+        logical :: sanity_check = .true.
+        !! Performs extra matrix-vector product for sanity check.
+    end type
+
+    type, extends(abstract_metadata), public :: pp_gmres_sp_metadata
+        !! GMRES metadata.
+        integer :: n_iter = 0
+        !! Total iteration counter.
+        integer :: n_inner = 0
+        !! Number of inner iterations.
+        integer :: n_outer = 0
+        !! Number of outer iterations (i.e. restarts)
+        real(sp), dimension(:), allocatable :: res
+        !! Residual history.
+        logical :: converged = .false.
+        !! Convergence flag.
+        integer :: info = 0
+        !! Copy of the information flag for completeness.
+    contains
+        procedure, pass(self), public :: print => print_pp_gmres_sp
+        procedure, pass(self), public :: reset => reset_pp_gmres_sp
+    end type
+
+    interface
+        module subroutine print_pp_gmres_sp(self, reset_counters, verbose)
+            class(pp_gmres_sp_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            !! Reset all counters to zero after printing?
+            logical, optional, intent(in) :: verbose
+            !! Print the full residual history?
+        end subroutine
+
+        module subroutine reset_pp_gmres_sp(self)
+            class(pp_gmres_sp_metadata), intent(inout) :: self
+        end subroutine
+    end interface
+    type, extends(abstract_opts), public :: pp_gmres_dp_opts
+        !! GMRES options.
+        integer :: kdim = 30
+        !! Dimension of the Krylov subspace (default: 30).
+        integer :: degree = 32
+        !! Degree of the polynomial preconditioner (default: 32).
+        integer :: maxiter = 10
+        !! Maximum number of `gmres` restarts (default: 10).
+        logical :: if_print_metadata = .false.
+        !! Print iteration metadata on exit (default: .false.).
+        logical :: sanity_check = .true.
+        !! Performs extra matrix-vector product for sanity check.
+    end type
+
+    type, extends(abstract_metadata), public :: pp_gmres_dp_metadata
+        !! GMRES metadata.
+        integer :: n_iter = 0
+        !! Total iteration counter.
+        integer :: n_inner = 0
+        !! Number of inner iterations.
+        integer :: n_outer = 0
+        !! Number of outer iterations (i.e. restarts)
+        real(dp), dimension(:), allocatable :: res
+        !! Residual history.
+        logical :: converged = .false.
+        !! Convergence flag.
+        integer :: info = 0
+        !! Copy of the information flag for completeness.
+    contains
+        procedure, pass(self), public :: print => print_pp_gmres_dp
+        procedure, pass(self), public :: reset => reset_pp_gmres_dp
+    end type
+
+    interface
+        module subroutine print_pp_gmres_dp(self, reset_counters, verbose)
+            class(pp_gmres_dp_metadata), intent(inout) :: self
+            logical, optional, intent(in) :: reset_counters
+            !! Reset all counters to zero after printing?
+            logical, optional, intent(in) :: verbose
+            !! Print the full residual history?
+        end subroutine
+
+        module subroutine reset_pp_gmres_dp(self)
+            class(pp_gmres_dp_metadata), intent(inout) :: self
+        end subroutine
+    end interface
+
+    !----- Interfaces for the GMRES solvers -----
+    interface pp_gmres
+        !!  ### Description
+        !!
+        !!  Solve a square linear system of equations
+        !!
+        !!  \[
+        !!      Ax = b
+        !!  \]
+        !!
+        !!  using the *Generalized Minimum RESidual* (GMRES) method.
+        !!
+        !!  **References**
+        !!
+        !!  - Saad Y. and Schultz M. H. "GMRES: A generalized minimal residual algorithm for
+        !!  solving nonsymmetric linear systems." SIAM Journal on Scientific and Statistical
+        !!  Computing, 7(3), 1986.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
+        !!  `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!
+        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
+        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
+        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!  an `intent(inout)` argument.
+        !!
+        !!  `info` : `integer` information flag.
+        !!
+        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!
+        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!
+        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
+        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
+        !!  argument.
+        !!
+        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
+        !!  It is an `intent(in)` argument.
+        !!
+        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
+        !!  \( A^H x = b \) is being solver.
+
+        ! --- Interface for GMRES with Abstract Linops and Abstract Vectors ---
+        module subroutine pp_gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            class(abstract_linop_rsp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_rsp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rsp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+        module subroutine pp_gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            class(abstract_linop_rdp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_rdp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+        module subroutine pp_gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            class(abstract_linop_csp), intent(inout) :: A
+            !! Linear operator to be inverted.
+            class(abstract_vector_csp), intent(in) :: b
+            !! Right-hand side vector.
+            class(abstract_vector_csp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+        module subroutine pp_gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_cdp), intent(in) :: b
