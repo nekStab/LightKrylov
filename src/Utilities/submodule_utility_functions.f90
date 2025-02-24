@@ -912,7 +912,7 @@ contains
             !> Compute distances to the set of already selected points.
             distances = -huge(1.0_sp)
             do concurrent(k=1:size(x))
-                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:k)))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
             enddo
             !> Greedily select the next point.
             idx = maxloc(distances, 1) ; j = j+1
@@ -963,7 +963,7 @@ contains
             !> Compute distances to the set of already selected points.
             distances = -huge(1.0_dp)
             do concurrent(k=1:size(x))
-                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:k)))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
             enddo
             !> Greedily select the next point.
             idx = maxloc(distances, 1) ; j = j+1

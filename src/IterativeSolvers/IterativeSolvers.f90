@@ -509,6 +509,7 @@ module lightkrylov_IterativeSolvers
             !! Metadata.
         end subroutine
     end interface
+
     !---------------------------------------------------------------------------------
     !-----                                                                       -----
     !-----     POLYNOMIAL PRECONDITIONED GENERALIZED MINIMUM RESIDUAL METHOD     -----
