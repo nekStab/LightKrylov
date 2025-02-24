@@ -83,7 +83,7 @@ contains
       call logger%configure(level=log_level_, time_stamp=log_timestamp_) 
 
       ! set up LightKrylov log file
-      call logger%add_log_file(logfile_, unit=iunit, stat=stat)
+      call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
       if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', module=this_module, procedure='logger_setup')
 
       ! Set up comms
