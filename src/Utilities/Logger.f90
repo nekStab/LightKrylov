@@ -201,10 +201,10 @@ contains
    subroutine comm_setup()
       ! internal
       character(len=*), parameter :: this_procedure = 'comm_setup'
-      integer :: ierr, nid, comm_size
-      logical :: mpi_is_initialized
       character(len=128) :: msg
 #ifdef MPI
+      integer :: ierr, nid, comm_size
+      logical :: mpi_is_initialized
       ! check if MPI has already been initialized and if not, initialize
       call MPI_Initialized(mpi_is_initialized, ierr)
       if (.not. mpi_is_initialized) then

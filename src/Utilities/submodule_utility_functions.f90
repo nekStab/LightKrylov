@@ -679,7 +679,7 @@ contains
     !----- Solving triangular systems -----
 
     module procedure solve_triangular_rsp
-        integer(ilp) :: i, j, n
+        integer(ilp) :: i, n
         !> Problem's dimensions.
         n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
         !> Back-substitution algorithm.
@@ -689,7 +689,7 @@ contains
         enddo
     end procedure
     module procedure solve_triangular_rdp
-        integer(ilp) :: i, j, n
+        integer(ilp) :: i, n
         !> Problem's dimensions.
         n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
         !> Back-substitution algorithm.
@@ -699,7 +699,7 @@ contains
         enddo
     end procedure
     module procedure solve_triangular_csp
-        integer(ilp) :: i, j, n
+        integer(ilp) :: i, n
         !> Problem's dimensions.
         n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
         !> Back-substitution algorithm.
@@ -709,7 +709,7 @@ contains
         enddo
     end procedure
     module procedure solve_triangular_cdp
-        integer(ilp) :: i, j, n
+        integer(ilp) :: i, n
         !> Problem's dimensions.
         n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
         !> Back-substitution algorithm.
