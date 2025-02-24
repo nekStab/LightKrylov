@@ -42,6 +42,7 @@ module lightkrylov_utils
     public :: givens_rotation
     public :: apply_givens_rotation
     public :: solve_triangular
+    public :: leja_ordering
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -447,6 +448,72 @@ module lightkrylov_utils
             !! Right-hand side vector.
             complex(dp), allocatable :: x(:)
             !! Solution vector.
+        end function
+    end interface
+
+    interface leja_ordering
+        pure module function leja_ordering_rsp(x, modified) result(y)
+            real(sp), intent(in) :: x(:)
+            !! Points to be sorted following the (modified) Leja ordering.
+            logical, optional, intent(in) :: modified
+            real(sp), allocatable :: y(:)
+            !! Sorted list of points.
+        end function
+        pure module function leja_ordering_rdp(x, modified) result(y)
+            real(dp), intent(in) :: x(:)
+            !! Points to be sorted following the (modified) Leja ordering.
+            logical, optional, intent(in) :: modified
+            real(dp), allocatable :: y(:)
+            !! Sorted list of points.
+        end function
+        pure module function leja_ordering_csp(x, modified) result(y)
+            complex(sp), intent(in) :: x(:)
+            !! Points to be sorted following the (modified) Leja ordering.
+            logical, optional, intent(in) :: modified
+            complex(sp), allocatable :: y(:)
+            !! Sorted list of points.
+        end function
+        pure module function leja_ordering_cdp(x, modified) result(y)
+            complex(dp), intent(in) :: x(:)
+            !! Points to be sorted following the (modified) Leja ordering.
+            logical, optional, intent(in) :: modified
+            complex(dp), allocatable :: y(:)
+            !! Sorted list of points.
+        end function
+    end interface
+
+    interface stabilized_leja_ordering
+        pure module function stabilized_leja_ordering_rsp(x, modified) result(y)
+            real(sp), intent(in) :: x(:)
+            !! Roots to be sorted.
+            logical, optional, intent(in) :: modified
+            !! Whether a modified Leja ordering is used or not.
+            real(sp), allocatable :: y(:)
+            !! Sorted + stabilized roots of the polynomial.
+        end function
+        pure module function stabilized_leja_ordering_rdp(x, modified) result(y)
+            real(dp), intent(in) :: x(:)
+            !! Roots to be sorted.
+            logical, optional, intent(in) :: modified
+            !! Whether a modified Leja ordering is used or not.
+            real(dp), allocatable :: y(:)
+            !! Sorted + stabilized roots of the polynomial.
+        end function
+        pure module function stabilized_leja_ordering_csp(x, modified) result(y)
+            complex(sp), intent(in) :: x(:)
+            !! Roots to be sorted.
+            logical, optional, intent(in) :: modified
+            !! Whether a modified Leja ordering is used or not.
+            complex(sp), allocatable :: y(:)
+            !! Sorted + stabilized roots of the polynomial.
+        end function
+        pure module function stabilized_leja_ordering_cdp(x, modified) result(y)
+            complex(dp), intent(in) :: x(:)
+            !! Roots to be sorted.
+            logical, optional, intent(in) :: modified
+            !! Whether a modified Leja ordering is used or not.
+            complex(dp), allocatable :: y(:)
+            !! Sorted + stabilized roots of the polynomial.
         end function
     end interface
 end module

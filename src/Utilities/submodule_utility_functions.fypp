@@ -5,7 +5,7 @@ submodule(lightkrylov_utils) utility_functions
     !-----     LightKrylov     -----
     !-------------------------------
     use stdlib_optval, only: optval
-    use stdlib_linalg_constants, only: ilp
+    use stdlib_linalg_constants, only: ilp, lk
     use stdlib_linalg_lapack, only: geev, trsen
     use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
 
@@ -77,8 +77,6 @@ contains
         #:endif
     end procedure
     #:endfor
-
-    !----- Schur Factorization ------
 
     !----- OrdSchur Factorization -----
     #:for kind, type in RC_KINDS_TYPES
@@ -247,5 +245,217 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure
+    #:endfor
+
+    !--------------------------------------------
+    !-----     (Modified) Leja Ordering     -----
+    !--------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure leja_ordering_${type[0]}$${kind}$
+        logical(lk) :: modified_
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Dispatch to the appropriate driver.
+        #:if type[0] == "r"
+        y = standard_leja_ordering_${type[0]}$${kind}$(x)
+        #:else
+        if (modified_) then
+            y = modified_leja_ordering_${type[0]}$${kind}$(x)
+        else
+            y = standard_leja_ordering_${type[0]}$${kind}$(x)
+        endif
+        #:endif
+    end procedure
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    pure function standard_leja_ordering_${type[0]}$${kind}$(x) result(y)
+        ${type}$, intent(in) :: x(:)
+        !! List of points to be sorted.
+        ${type}$ :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(${kind}$) :: distances(size(x))
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1
+        y(j) = x(idx) ; selected(idx) = .true.
+
+        !> Loop through all the other roots.
+        do while (j < size(x))
+            ! Distance to the set of points already selected.
+            distances = -huge(1.0_${kind}$)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
+            enddo
+            ! Greedily choose the one with the maximum distance.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+        enddo
+    end function
+    #:endfor
+
+    #:for kind, type in CMPLX_KINDS_TYPES
+    pure function modified_leja_ordering_${type[0]}$${kind}$(x) result(y)
+        ${type}$, intent(in) :: x(:)
+        !! List of points to be sorted.
+        ${type}$ :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(${kind}$) :: distances(size(x)), re, im
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1 ; re = real(x(idx)) ; im = imag(x(idx))
+        y(j) = x(idx) ; selected(idx) = .true.
+        !> Add the complex conjugate if needed.
+        if (im /= 0.0_${kind}$) then
+            j = j+1
+            if (im > 0.0_${kind}$) then
+                y(j) = x(idx+1) ; selected(idx+1) = .true.
+            else
+                y(j) = x(idx-1) ; selected(idx-1) = .true.
+                y(j-1:j) = conjg(y(j-1:j))
+            endif
+        endif
+
+        !> Loop through the remaining roots.
+        do while (j < size(x))
+            !> Compute distances to the set of already selected points.
+            distances = -huge(1.0_${kind}$)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
+            enddo
+            !> Greedily select the next point.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+            re = real(x(idx)) ; im = imag(x(idx))
+            !> Add the complex conjugate if needed.
+            if (im /= 0.0_${kind}$) then
+                j = j+1
+                if (im > 0.0_${kind}$) then
+                    y(j) = x(idx+1) ; selected(idx+1) = .true.
+                else
+                    y(j) = x(idx-1) ; selected(idx-1) = .true.
+                    y(j-1:j) = conjg(y(j-1:j))
+                endif
+            endif
+        enddo
+    end function
+    #:endfor
+
+    !-------------------------------------------------------------------
+    !-----     (Modified) Leja ordering with stability control     -----
+    !-------------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure stabilized_leja_ordering_${type[0]}$${kind}$
+        logical(lk) :: modified_
+        ${type}$, allocatable :: z(:)
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Perform the (modified) Leja ordering.
+        z = leja_ordering(x, modified_)
+        ! Dispatch to the appropriate stability control driver.
+        #:if type[0] == "r"
+        y = standard_stability_control_${type[0]}$${kind}$(z)
+        #:else
+        if (modified_) then
+            y = modified_stability_control_${type[0]}$${kind}$(z)
+        else
+            y = standard_stability_control_${type[0]}$${kind}$(z)
+        endif
+        #:endif
+    end procedure
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    pure function standard_stability_control_${type[0]}$${kind}$(x) result(y)
+        ${type}$, intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        ${type}$, allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(${kind}$) :: pof(size(x))
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_${kind}$ - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_${kind}$) / 14.0_${kind}$ )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x
+        do k = 1, size(x)
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    y = [y, x(k)]
+                enddo
+            endif
+        enddo
+    end function
+    #:endfor
+
+    #:for kind, type in CMPLX_KINDS_TYPES
+    pure function modified_stability_control_${type[0]}$${kind}$(x) result(y)
+        ${type}$, intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        ${type}$, allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(${kind}$) :: pof(size(x)), re, im
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_${kind}$ - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_${kind}$) / 14.0_${kind}$ )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x ; k = 1
+        do while (k < size(x))
+            re = real(x(k)) ; im = imag(x(k))
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    if (im == 0.0_${kind}$) then
+                        y = [y, x(k)]
+                    else
+                        y = [y, x(k), x(k+1)]
+                    endif
+                enddo
+            endif
+            k = merge(k+1, k+2, im == 0.0_${kind}$)
+        enddo
+    end function
     #:endfor
 end submodule

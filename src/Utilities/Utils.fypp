@@ -44,6 +44,7 @@ module lightkrylov_utils
     public :: givens_rotation
     public :: apply_givens_rotation
     public :: solve_triangular
+    public :: leja_ordering
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -283,6 +284,31 @@ module lightkrylov_utils
             !! Right-hand side vector.
             ${type}$, allocatable :: x(:)
             !! Solution vector.
+        end function
+        #:endfor
+    end interface
+
+    interface leja_ordering
+        #:for kind, type in RC_KINDS_TYPES
+        pure module function leja_ordering_${type[0]}$${kind}$(x, modified) result(y)
+            ${type}$, intent(in) :: x(:)
+            !! Points to be sorted following the (modified) Leja ordering.
+            logical, optional, intent(in) :: modified
+            ${type}$, allocatable :: y(:)
+            !! Sorted list of points.
+        end function
+        #:endfor
+    end interface
+
+    interface stabilized_leja_ordering
+        #:for kind, type in RC_KINDS_TYPES
+        pure module function stabilized_leja_ordering_${type[0]}$${kind}$(x, modified) result(y)
+            ${type}$, intent(in) :: x(:)
+            !! Roots to be sorted.
+            logical, optional, intent(in) :: modified
+            !! Whether a modified Leja ordering is used or not.
+            ${type}$, allocatable :: y(:)
+            !! Sorted + stabilized roots of the polynomial.
         end function
         #:endfor
     end interface

@@ -3,7 +3,7 @@ submodule(lightkrylov_utils) utility_functions
     !-----     LightKrylov     -----
     !-------------------------------
     use stdlib_optval, only: optval
-    use stdlib_linalg_constants, only: ilp
+    use stdlib_linalg_constants, only: ilp, lk
     use stdlib_linalg_lapack, only: geev, trsen
     use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
 
@@ -158,8 +158,6 @@ contains
         call check_info(info, "GEEV", this_module, "eig_cdp")
 
     end procedure
-
-    !----- Schur Factorization ------
 
     !----- OrdSchur Factorization -----
     module procedure ordschur_rsp
@@ -718,4 +716,534 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure
+
+    !--------------------------------------------
+    !-----     (Modified) Leja Ordering     -----
+    !--------------------------------------------
+
+    module procedure leja_ordering_rsp
+        logical(lk) :: modified_
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Dispatch to the appropriate driver.
+        y = standard_leja_ordering_rsp(x)
+    end procedure
+    module procedure leja_ordering_rdp
+        logical(lk) :: modified_
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Dispatch to the appropriate driver.
+        y = standard_leja_ordering_rdp(x)
+    end procedure
+    module procedure leja_ordering_csp
+        logical(lk) :: modified_
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Dispatch to the appropriate driver.
+        if (modified_) then
+            y = modified_leja_ordering_csp(x)
+        else
+            y = standard_leja_ordering_csp(x)
+        endif
+    end procedure
+    module procedure leja_ordering_cdp
+        logical(lk) :: modified_
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Dispatch to the appropriate driver.
+        if (modified_) then
+            y = modified_leja_ordering_cdp(x)
+        else
+            y = standard_leja_ordering_cdp(x)
+        endif
+    end procedure
+
+    pure function standard_leja_ordering_rsp(x) result(y)
+        real(sp), intent(in) :: x(:)
+        !! List of points to be sorted.
+        real(sp) :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(sp) :: distances(size(x))
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1
+        y(j) = x(idx) ; selected(idx) = .true.
+
+        !> Loop through all the other roots.
+        do while (j < size(x))
+            ! Distance to the set of points already selected.
+            distances = -huge(1.0_sp)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
+            enddo
+            ! Greedily choose the one with the maximum distance.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+        enddo
+    end function
+    pure function standard_leja_ordering_rdp(x) result(y)
+        real(dp), intent(in) :: x(:)
+        !! List of points to be sorted.
+        real(dp) :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(dp) :: distances(size(x))
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1
+        y(j) = x(idx) ; selected(idx) = .true.
+
+        !> Loop through all the other roots.
+        do while (j < size(x))
+            ! Distance to the set of points already selected.
+            distances = -huge(1.0_dp)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
+            enddo
+            ! Greedily choose the one with the maximum distance.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+        enddo
+    end function
+    pure function standard_leja_ordering_csp(x) result(y)
+        complex(sp), intent(in) :: x(:)
+        !! List of points to be sorted.
+        complex(sp) :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(sp) :: distances(size(x))
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1
+        y(j) = x(idx) ; selected(idx) = .true.
+
+        !> Loop through all the other roots.
+        do while (j < size(x))
+            ! Distance to the set of points already selected.
+            distances = -huge(1.0_sp)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
+            enddo
+            ! Greedily choose the one with the maximum distance.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+        enddo
+    end function
+    pure function standard_leja_ordering_cdp(x) result(y)
+        complex(dp), intent(in) :: x(:)
+        !! List of points to be sorted.
+        complex(dp) :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(dp) :: distances(size(x))
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1
+        y(j) = x(idx) ; selected(idx) = .true.
+
+        !> Loop through all the other roots.
+        do while (j < size(x))
+            ! Distance to the set of points already selected.
+            distances = -huge(1.0_dp)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:j)))
+            enddo
+            ! Greedily choose the one with the maximum distance.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+        enddo
+    end function
+
+    pure function modified_leja_ordering_csp(x) result(y)
+        complex(sp), intent(in) :: x(:)
+        !! List of points to be sorted.
+        complex(sp) :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(sp) :: distances(size(x)), re, im
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1 ; re = real(x(idx)) ; im = imag(x(idx))
+        y(j) = x(idx) ; selected(idx) = .true.
+        !> Add the complex conjugate if needed.
+        if (im /= 0.0_sp) then
+            j = j+1
+            if (im > 0.0_sp) then
+                y(j) = x(idx+1) ; selected(idx+1) = .true.
+            else
+                y(j) = x(idx-1) ; selected(idx-1) = .true.
+                y(j-1:j) = conjg(y(j-1:j))
+            endif
+        endif
+
+        !> Loop through the remaining roots.
+        do while (j < size(x))
+            !> Compute distances to the set of already selected points.
+            distances = -huge(1.0_sp)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:k)))
+            enddo
+            !> Greedily select the next point.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+            re = real(x(idx)) ; im = imag(x(idx))
+            !> Add the complex conjugate if needed.
+            if (im /= 0.0_sp) then
+                j = j+1
+                if (im > 0.0_sp) then
+                    y(j) = x(idx+1) ; selected(idx+1) = .true.
+                else
+                    y(j) = x(idx-1) ; selected(idx-1) = .true.
+                    y(j-1:j) = conjg(y(j-1:j))
+                endif
+            endif
+        enddo
+    end function
+    pure function modified_leja_ordering_cdp(x) result(y)
+        complex(dp), intent(in) :: x(:)
+        !! List of points to be sorted.
+        complex(dp) :: y(size(x))
+        !! Sorted list of points.
+
+        !----- Internal variables -----
+        logical(lk) :: selected(size(x))
+        integer(ilp) :: i, j, k, idx
+        real(dp) :: distances(size(x)), re, im
+
+        !> Initialize.
+        j = 0 ; selected = .false.
+
+        !> Find the first x with maximum absolute value.
+        idx = maxloc(abs(x), 1) ; j = j+1 ; re = real(x(idx)) ; im = imag(x(idx))
+        y(j) = x(idx) ; selected(idx) = .true.
+        !> Add the complex conjugate if needed.
+        if (im /= 0.0_dp) then
+            j = j+1
+            if (im > 0.0_dp) then
+                y(j) = x(idx+1) ; selected(idx+1) = .true.
+            else
+                y(j) = x(idx-1) ; selected(idx-1) = .true.
+                y(j-1:j) = conjg(y(j-1:j))
+            endif
+        endif
+
+        !> Loop through the remaining roots.
+        do while (j < size(x))
+            !> Compute distances to the set of already selected points.
+            distances = -huge(1.0_dp)
+            do concurrent(k=1:size(x))
+                if (.not. selected(k)) distances(k) = product(abs(x(k) - y(:k)))
+            enddo
+            !> Greedily select the next point.
+            idx = maxloc(distances, 1) ; j = j+1
+            y(j) = x(idx) ; selected(idx) = .true.
+            re = real(x(idx)) ; im = imag(x(idx))
+            !> Add the complex conjugate if needed.
+            if (im /= 0.0_dp) then
+                j = j+1
+                if (im > 0.0_dp) then
+                    y(j) = x(idx+1) ; selected(idx+1) = .true.
+                else
+                    y(j) = x(idx-1) ; selected(idx-1) = .true.
+                    y(j-1:j) = conjg(y(j-1:j))
+                endif
+            endif
+        enddo
+    end function
+
+    !-------------------------------------------------------------------
+    !-----     (Modified) Leja ordering with stability control     -----
+    !-------------------------------------------------------------------
+
+    module procedure stabilized_leja_ordering_rsp
+        logical(lk) :: modified_
+        real(sp), allocatable :: z(:)
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Perform the (modified) Leja ordering.
+        z = leja_ordering(x, modified_)
+        ! Dispatch to the appropriate stability control driver.
+        y = standard_stability_control_rsp(z)
+    end procedure
+    module procedure stabilized_leja_ordering_rdp
+        logical(lk) :: modified_
+        real(dp), allocatable :: z(:)
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Perform the (modified) Leja ordering.
+        z = leja_ordering(x, modified_)
+        ! Dispatch to the appropriate stability control driver.
+        y = standard_stability_control_rdp(z)
+    end procedure
+    module procedure stabilized_leja_ordering_csp
+        logical(lk) :: modified_
+        complex(sp), allocatable :: z(:)
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Perform the (modified) Leja ordering.
+        z = leja_ordering(x, modified_)
+        ! Dispatch to the appropriate stability control driver.
+        if (modified_) then
+            y = modified_stability_control_csp(z)
+        else
+            y = standard_stability_control_csp(z)
+        endif
+    end procedure
+    module procedure stabilized_leja_ordering_cdp
+        logical(lk) :: modified_
+        complex(dp), allocatable :: z(:)
+        ! Standard or modified Leja ordering.
+        modified_ = optval(modified, .false.)
+        ! Perform the (modified) Leja ordering.
+        z = leja_ordering(x, modified_)
+        ! Dispatch to the appropriate stability control driver.
+        if (modified_) then
+            y = modified_stability_control_cdp(z)
+        else
+            y = standard_stability_control_cdp(z)
+        endif
+    end procedure
+
+    pure function standard_stability_control_rsp(x) result(y)
+        real(sp), intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        real(sp), allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(sp) :: pof(size(x))
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_sp - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_sp) / 14.0_sp )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x
+        do k = 1, size(x)
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    y = [y, x(k)]
+                enddo
+            endif
+        enddo
+    end function
+    pure function standard_stability_control_rdp(x) result(y)
+        real(dp), intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        real(dp), allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(dp) :: pof(size(x))
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_dp - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_dp) / 14.0_dp )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x
+        do k = 1, size(x)
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    y = [y, x(k)]
+                enddo
+            endif
+        enddo
+    end function
+    pure function standard_stability_control_csp(x) result(y)
+        complex(sp), intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        complex(sp), allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(sp) :: pof(size(x))
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_sp - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_sp) / 14.0_sp )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x
+        do k = 1, size(x)
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    y = [y, x(k)]
+                enddo
+            endif
+        enddo
+    end function
+    pure function standard_stability_control_cdp(x) result(y)
+        complex(dp), intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        complex(dp), allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(dp) :: pof(size(x))
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_dp - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_dp) / 14.0_dp )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x
+        do k = 1, size(x)
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    y = [y, x(k)]
+                enddo
+            endif
+        enddo
+    end function
+
+    pure function modified_stability_control_csp(x) result(y)
+        complex(sp), intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        complex(sp), allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(sp) :: pof(size(x)), re, im
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_sp - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_sp) / 14.0_sp )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x ; k = 1
+        do while (k < size(x))
+            re = real(x(k)) ; im = imag(x(k))
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    if (im == 0.0_sp) then
+                        y = [y, x(k)]
+                    else
+                        y = [y, x(k), x(k+1)]
+                    endif
+                enddo
+            endif
+            k = merge(k+1, k+2, im == 0.0_sp)
+        enddo
+    end function
+    pure function modified_stability_control_cdp(x) result(y)
+        complex(dp), intent(in)  :: x(:)
+        !! Roots of the GMRES polynomial.
+        complex(dp), allocatable :: y(:)
+        !! Roots of the stabilized polynomial.
+
+        !----- Internal variables -----
+        real(dp) :: pof(size(x)), re, im
+        integer(ilp) :: i, k
+        integer(ilp) :: num_added_roots(size(x))
+        logical(lk)  :: mask(size(x))
+
+        !> Product of other factors.
+        do k = 1, size(x)
+            mask = .true. ; mask(k) = .false.
+            pof(k) = product(abs(1.0_dp - x(k)/x), mask)
+        enddo
+
+        !> Determine how many additional copies of each root needs to be added.
+        do concurrent(k=1:size(x))
+            num_added_roots(k) = ceiling( (log10(pof(k)) - 4.0_dp) / 14.0_dp )
+        enddo
+
+        !> Append the extra copies at the end.
+        y = x ; k = 1
+        do while (k < size(x))
+            re = real(x(k)) ; im = imag(x(k))
+            if (num_added_roots(k) > 0) then
+                do i = 1, num_added_roots(k)
+                    if (im == 0.0_dp) then
+                        y = [y, x(k)]
+                    else
+                        y = [y, x(k), x(k+1)]
+                    endif
+                enddo
+            endif
+            k = merge(k+1, k+2, im == 0.0_dp)
+        enddo
+    end function
 end submodule
