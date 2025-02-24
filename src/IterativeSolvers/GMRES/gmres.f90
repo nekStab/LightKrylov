@@ -1,6 +1,5 @@
 submodule (lightkrylov_iterativesolvers) gmres_solver
     use stdlib_strings, only: padr
-    use stdlib_linalg, only: lstsq, norm
     implicit none
 contains
 
@@ -123,10 +122,6 @@ contains
         ! Givens rotations.
         real(sp), allocatable :: c(:), s(:)
 
-        ! Preconditioner
-        logical :: has_precond
-        class(abstract_precond_rsp), allocatable :: precond
-
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rsp'
         integer :: i, k, iter
@@ -149,21 +144,17 @@ contains
             opts = gmres_sp_opts()
         endif
 
-        kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = atol_ + rtol_ * b%norm()
+        kdim  = opts%kdim ; maxiter = opts%maxiter
+        tol   = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
-        ! Deals with the preconditioner.
-        has_precond = optval(present(preconditioner), .false.)
-        if (has_precond) allocate(precond, source=preconditioner)
-
         ! Initialize working variables.
-        allocate(wrk, mold=b) ; call wrk%zero()
+        allocate(wrk, mold=b)       ; call wrk%zero()
         allocate(V(kdim+1), mold=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim)) ; H = 0.0_sp
-        allocate(e(kdim+1)) ; e = 0.0_sp
-        allocate(c(kdim)) ; c = 0.0_sp
-        allocate(s(kdim)) ; s = 0.0_sp
+        allocate(H(kdim+1, kdim))   ; H = 0.0_sp
+        allocate(e(kdim+1))         ; e = 0.0_sp
+        allocate(c(kdim))           ; c = 0.0_sp
+        allocate(s(kdim))           ; s = 0.0_sp
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
@@ -171,6 +162,7 @@ contains
 
         info = 0 ; iter = 0
 
+        associate(ifprecond => present(preconditioner))
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
@@ -183,7 +175,7 @@ contains
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_rsp/beta)
             c = 0.0_sp ; s = 0.0_sp
-            allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
             write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -192,7 +184,8 @@ contains
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
+                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
                 !-----------------------------------------
@@ -208,6 +201,7 @@ contains
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rsp / H(k+1, k))
+
                 !-----------------------------------------
                 !-----     Least-Squares Problem     -----
                 !-----------------------------------------
@@ -221,7 +215,7 @@ contains
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
-                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+                gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
@@ -235,7 +229,7 @@ contains
             ! Update solution.
             k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
             call linear_combination(dx, V(:k), y)
-            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -263,6 +257,7 @@ contains
                exit 
             end if
         enddo
+        end associate
 
         ! Returns the number of iterations.
         info = gmres_meta%n_iter
@@ -283,8 +278,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
     module procedure gmres_rdp
        ! Options.
@@ -303,10 +296,6 @@ contains
         real(dp) :: beta
         ! Givens rotations.
         real(dp), allocatable :: c(:), s(:)
-
-        ! Preconditioner
-        logical :: has_precond
-        class(abstract_precond_rdp), allocatable :: precond
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rdp'
@@ -330,21 +319,17 @@ contains
             opts = gmres_dp_opts()
         endif
 
-        kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = atol_ + rtol_ * b%norm()
+        kdim  = opts%kdim ; maxiter = opts%maxiter
+        tol   = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
-        ! Deals with the preconditioner.
-        has_precond = optval(present(preconditioner), .false.)
-        if (has_precond) allocate(precond, source=preconditioner)
-
         ! Initialize working variables.
-        allocate(wrk, mold=b) ; call wrk%zero()
+        allocate(wrk, mold=b)       ; call wrk%zero()
         allocate(V(kdim+1), mold=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim)) ; H = 0.0_dp
-        allocate(e(kdim+1)) ; e = 0.0_dp
-        allocate(c(kdim)) ; c = 0.0_dp
-        allocate(s(kdim)) ; s = 0.0_dp
+        allocate(H(kdim+1, kdim))   ; H = 0.0_dp
+        allocate(e(kdim+1))         ; e = 0.0_dp
+        allocate(c(kdim))           ; c = 0.0_dp
+        allocate(s(kdim))           ; s = 0.0_dp
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
@@ -352,6 +337,7 @@ contains
 
         info = 0 ; iter = 0
 
+        associate(ifprecond => present(preconditioner))
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
@@ -364,7 +350,7 @@ contains
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_rdp/beta)
             c = 0.0_dp ; s = 0.0_dp
-            allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
             write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -373,7 +359,8 @@ contains
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
+                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
                 !-----------------------------------------
@@ -389,6 +376,7 @@ contains
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rdp / H(k+1, k))
+
                 !-----------------------------------------
                 !-----     Least-Squares Problem     -----
                 !-----------------------------------------
@@ -402,7 +390,7 @@ contains
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
-                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+                gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
@@ -416,7 +404,7 @@ contains
             ! Update solution.
             k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
             call linear_combination(dx, V(:k), y)
-            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -444,6 +432,7 @@ contains
                exit 
             end if
         enddo
+        end associate
 
         ! Returns the number of iterations.
         info = gmres_meta%n_iter
@@ -464,8 +453,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
     module procedure gmres_csp
        ! Options.
@@ -484,10 +471,6 @@ contains
         real(sp) :: beta
         ! Givens rotations.
         complex(sp), allocatable :: c(:), s(:)
-
-        ! Preconditioner
-        logical :: has_precond
-        class(abstract_precond_csp), allocatable :: precond
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_csp'
@@ -511,21 +494,17 @@ contains
             opts = gmres_sp_opts()
         endif
 
-        kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = atol_ + rtol_ * b%norm()
+        kdim  = opts%kdim ; maxiter = opts%maxiter
+        tol   = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
-        ! Deals with the preconditioner.
-        has_precond = optval(present(preconditioner), .false.)
-        if (has_precond) allocate(precond, source=preconditioner)
-
         ! Initialize working variables.
-        allocate(wrk, mold=b) ; call wrk%zero()
+        allocate(wrk, mold=b)       ; call wrk%zero()
         allocate(V(kdim+1), mold=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim)) ; H = 0.0_sp
-        allocate(e(kdim+1)) ; e = 0.0_sp
-        allocate(c(kdim)) ; c = 0.0_sp
-        allocate(s(kdim)) ; s = 0.0_sp
+        allocate(H(kdim+1, kdim))   ; H = 0.0_sp
+        allocate(e(kdim+1))         ; e = 0.0_sp
+        allocate(c(kdim))           ; c = 0.0_sp
+        allocate(s(kdim))           ; s = 0.0_sp
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
@@ -533,6 +512,7 @@ contains
 
         info = 0 ; iter = 0
 
+        associate(ifprecond => present(preconditioner))
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
@@ -545,7 +525,7 @@ contains
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_csp/beta)
             c = 0.0_sp ; s = 0.0_sp
-            allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
             write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -554,7 +534,8 @@ contains
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
+                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
                 !-----------------------------------------
@@ -570,6 +551,7 @@ contains
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_csp / H(k+1, k))
+
                 !-----------------------------------------
                 !-----     Least-Squares Problem     -----
                 !-----------------------------------------
@@ -583,7 +565,7 @@ contains
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
-                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+                gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
@@ -597,7 +579,7 @@ contains
             ! Update solution.
             k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
             call linear_combination(dx, V(:k), y)
-            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -625,6 +607,7 @@ contains
                exit 
             end if
         enddo
+        end associate
 
         ! Returns the number of iterations.
         info = gmres_meta%n_iter
@@ -645,8 +628,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
     module procedure gmres_cdp
        ! Options.
@@ -665,10 +646,6 @@ contains
         real(dp) :: beta
         ! Givens rotations.
         complex(dp), allocatable :: c(:), s(:)
-
-        ! Preconditioner
-        logical :: has_precond
-        class(abstract_precond_cdp), allocatable :: precond
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_cdp'
@@ -692,21 +669,17 @@ contains
             opts = gmres_dp_opts()
         endif
 
-        kdim = opts%kdim ; maxiter = opts%maxiter
-        tol = atol_ + rtol_ * b%norm()
+        kdim  = opts%kdim ; maxiter = opts%maxiter
+        tol   = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
-        ! Deals with the preconditioner.
-        has_precond = optval(present(preconditioner), .false.)
-        if (has_precond) allocate(precond, source=preconditioner)
-
         ! Initialize working variables.
-        allocate(wrk, mold=b) ; call wrk%zero()
+        allocate(wrk, mold=b)       ; call wrk%zero()
         allocate(V(kdim+1), mold=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim)) ; H = 0.0_dp
-        allocate(e(kdim+1)) ; e = 0.0_dp
-        allocate(c(kdim)) ; c = 0.0_dp
-        allocate(s(kdim)) ; s = 0.0_dp
+        allocate(H(kdim+1, kdim))   ; H = 0.0_dp
+        allocate(e(kdim+1))         ; e = 0.0_dp
+        allocate(c(kdim))           ; c = 0.0_dp
+        allocate(s(kdim))           ; s = 0.0_dp
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
@@ -714,6 +687,7 @@ contains
 
         info = 0 ; iter = 0
 
+        associate(ifprecond => present(preconditioner))
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
@@ -726,7 +700,7 @@ contains
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_cdp/beta)
             c = 0.0_dp ; s = 0.0_dp
-            allocate(gmres_meta%res(1)); gmres_meta%res(1) = abs(beta)
+            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
             write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -735,7 +709,8 @@ contains
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
-                wrk = V(k) ; if (has_precond) call precond%apply(wrk, k, beta, tol)
+                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
                 !-----------------------------------------
@@ -751,6 +726,7 @@ contains
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_cdp / H(k+1, k))
+
                 !-----------------------------------------
                 !-----     Least-Squares Problem     -----
                 !-----------------------------------------
@@ -764,7 +740,7 @@ contains
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
-                gmres_meta%res = [ gmres_meta%res, abs(beta) ]
+                gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
                 write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
@@ -778,7 +754,7 @@ contains
             ! Update solution.
             k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
             call linear_combination(dx, V(:k), y)
-            if (has_precond) call precond%apply(dx) ; call x%add(dx)
+            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -806,6 +782,7 @@ contains
                exit 
             end if
         enddo
+        end associate
 
         ! Returns the number of iterations.
         info = gmres_meta%n_iter
@@ -826,8 +803,6 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
 
 end submodule

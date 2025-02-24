@@ -181,7 +181,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
@@ -205,7 +205,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
@@ -229,7 +229,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
@@ -253,7 +253,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
@@ -428,7 +428,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -450,7 +450,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -472,7 +472,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -494,7 +494,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -667,7 +667,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -689,7 +689,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -711,7 +711,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -733,7 +733,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -893,7 +893,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rsp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (not yet supported).
             type(cg_sp_opts), optional, intent(in) :: options
             !! Options for the conjugate gradient solver.
@@ -913,7 +913,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_rdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (not yet supported).
             type(cg_dp_opts), optional, intent(in) :: options
             !! Options for the conjugate gradient solver.
@@ -933,7 +933,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(sp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_csp), optional, intent(in) :: preconditioner
+            class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (not yet supported).
             type(cg_sp_opts), optional, intent(in) :: options
             !! Options for the conjugate gradient solver.
@@ -953,7 +953,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(dp), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_cdp), optional, intent(in) :: preconditioner
+            class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (not yet supported).
             type(cg_dp_opts), optional, intent(in) :: options
             !! Options for the conjugate gradient solver.

@@ -118,7 +118,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
@@ -253,7 +253,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -386,7 +386,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -518,7 +518,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (not yet supported).
             type(cg_${kind}$_opts), optional, intent(in) :: options
             !! Options for the conjugate gradient solver.
