@@ -7,7 +7,7 @@ submodule(lightkrylov_utils) utility_functions
     use stdlib_optval, only: optval
     use stdlib_linalg_constants, only: ilp
     use stdlib_linalg_lapack, only: geev, trsen
-    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv
+    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
 
     implicit none(type, external)
 contains
@@ -27,7 +27,7 @@ contains
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -35,7 +35,7 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     #:endfor
@@ -69,7 +69,7 @@ contains
         #:else
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
         #:endif
-        call check_info(info, "GEEV", module=this_module, procedure="eig_${type[0]}$${kind}$")
+        call check_info(info, "GEEV", this_module, "eig_${type[0]}$${kind}$")
 
         #:if type[0] == "r"
         ! Complex eigenvalues.
@@ -103,7 +103,7 @@ contains
         #:else
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_${type[0]}$${kind}$")
+        call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
     end procedure
     #:endfor
 
@@ -124,10 +124,10 @@ contains
         if (symmetry_error > rtol_${kind}$) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_${kind}$
-            call stop_error(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
+            call stop_error(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         else if (symmetry_error > 10*atol_${kind}$) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_${type[0]}$${kind}$")
+            call log_warning(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         endif
 
         ! Perform SVD.
@@ -148,6 +148,7 @@ contains
     #:endfor
 
     !----- Dense Matrix Exponential -----
+
     #:for kind, type in RC_KINDS_TYPES
     module procedure expm_${type[0]}$${kind}$
         ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :)
@@ -204,4 +205,47 @@ contains
     end procedure
     #:endfor
 
+    !----- Givens rotations -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure givens_rotation_${type[0]}$${kind}$
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_${type[0]}$${kind}$
+        integer(ilp) :: i, k
+        ${type}$ :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_${kind}$
+    end procedure
+    #:endfor
+
+    !----- Solving triangular systems -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure solve_triangular_${type[0]}$${kind}$
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_${kind}$
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    #:endfor
 end submodule

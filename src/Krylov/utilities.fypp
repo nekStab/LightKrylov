@@ -53,14 +53,15 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure orthonormalize_basis_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'orthonormalize_basis_${type[0]}$${kind}$'
         ${type}$ :: R(size(X),size(X))
         integer :: info
 
-        if (time_lightkrylov()) call timer%start('orthonormalize_basis_${type[0]}$${kind}$')
+        if (time_lightkrylov()) call timer%start(this_procedure)
         ! internals
         call qr(X, R, info)
-        call check_info(info, 'qr', module=this_module, procedure='orthonormalize_basis_${type[0]}$${kind}$')
-        if (time_lightkrylov()) call timer%stop('orthonormalize_basis_${type[0]}$${kind}$')
+        call check_info(info, 'qr', this_module, this_procedure)
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end procedure

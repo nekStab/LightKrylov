@@ -5,7 +5,7 @@ submodule(lightkrylov_utils) utility_functions
     use stdlib_optval, only: optval
     use stdlib_linalg_constants, only: ilp
     use stdlib_linalg_lapack, only: geev, trsen
-    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv
+    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
 
     implicit none(type, external)
 contains
@@ -25,7 +25,7 @@ contains
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -33,14 +33,14 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     module procedure assert_shape_vector_rdp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -48,14 +48,14 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     module procedure assert_shape_vector_csp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -63,14 +63,14 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
     module procedure assert_shape_vector_cdp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
-            call stop_error("Vector length assertion error", module=module, procedure=procedure)
+            call stop_error("Vector length assertion error", module, procedure)
         endif
     end procedure
 
@@ -78,7 +78,7 @@ contains
         if (any(shape(A) /= size)) then
             write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
-            call stop_error("Matrix shape assertion error", module=module, procedure=procedure)
+            call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure
 
@@ -101,7 +101,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_rsp")
+        call check_info(info, "GEEV", this_module, "eig_rsp")
 
         ! Complex eigenvalues.
         vals = one_csp*wr + one_im_csp*wi
@@ -119,7 +119,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_rdp")
+        call check_info(info, "GEEV", this_module, "eig_rdp")
 
         ! Complex eigenvalues.
         vals = one_cdp*wr + one_im_cdp*wi
@@ -138,7 +138,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_csp")
+        call check_info(info, "GEEV", this_module, "eig_csp")
 
     end procedure
     module procedure eig_cdp
@@ -155,7 +155,7 @@ contains
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
-        call check_info(info, "GEEV", module=this_module, procedure="eig_cdp")
+        call check_info(info, "GEEV", this_module, "eig_cdp")
 
     end procedure
 
@@ -175,7 +175,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_rsp")
+        call check_info(info, "TRSEN", this_module, "ordschur_rsp")
     end procedure
     module procedure ordschur_rdp
         ! Lapack variables.
@@ -190,7 +190,7 @@ contains
 
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_rdp")
+        call check_info(info, "TRSEN", this_module, "ordschur_rdp")
     end procedure
     module procedure ordschur_csp
         ! Lapack variables.
@@ -203,7 +203,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_csp")
+        call check_info(info, "TRSEN", this_module, "ordschur_csp")
     end procedure
     module procedure ordschur_cdp
         ! Lapack variables.
@@ -216,7 +216,7 @@ contains
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
-        call check_info(info, "TRSEN", module=this_module, procedure="ordschur_cdp")
+        call check_info(info, "TRSEN", this_module, "ordschur_cdp")
     end procedure
 
     !----- Matrix Square-Root -----
@@ -235,10 +235,10 @@ contains
         if (symmetry_error > rtol_sp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_sp
-            call stop_error(msg, module=this_module, procedure="sqrtm_rsp")
+            call stop_error(msg, this_module, "sqrtm_rsp")
         else if (symmetry_error > 10*atol_sp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_rsp")
+            call log_warning(msg, this_module, "sqrtm_rsp")
         endif
 
         ! Perform SVD.
@@ -270,10 +270,10 @@ contains
         if (symmetry_error > rtol_dp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_dp
-            call stop_error(msg, module=this_module, procedure="sqrtm_rdp")
+            call stop_error(msg, this_module, "sqrtm_rdp")
         else if (symmetry_error > 10*atol_dp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_rdp")
+            call log_warning(msg, this_module, "sqrtm_rdp")
         endif
 
         ! Perform SVD.
@@ -305,10 +305,10 @@ contains
         if (symmetry_error > rtol_sp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_sp
-            call stop_error(msg, module=this_module, procedure="sqrtm_csp")
+            call stop_error(msg, this_module, "sqrtm_csp")
         else if (symmetry_error > 10*atol_sp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_csp")
+            call log_warning(msg, this_module, "sqrtm_csp")
         endif
 
         ! Perform SVD.
@@ -340,10 +340,10 @@ contains
         if (symmetry_error > rtol_dp) then
             write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
                 & symmetry_error, ", tol = ", rtol_dp
-            call stop_error(msg, module=this_module, procedure="sqrtm_cdp")
+            call stop_error(msg, this_module, "sqrtm_cdp")
         else if (symmetry_error > 10*atol_dp) then
             write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
-            call log_warning(msg, module=this_module, procedure="sqrtm_cdp")
+            call log_warning(msg, this_module, "sqrtm_cdp")
         endif
 
         ! Perform SVD.
@@ -363,6 +363,7 @@ contains
     end procedure
 
     !----- Dense Matrix Exponential -----
+
     module procedure expm_rsp
         real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
@@ -576,4 +577,145 @@ contains
         return
     end procedure
 
+    !----- Givens rotations -----
+
+    module procedure givens_rotation_rsp
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_rsp
+        integer(ilp) :: i, k
+        real(sp) :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
+    end procedure
+    module procedure givens_rotation_rdp
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_rdp
+        integer(ilp) :: i, k
+        real(dp) :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
+    end procedure
+    module procedure givens_rotation_csp
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_csp
+        integer(ilp) :: i, k
+        complex(sp) :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
+    end procedure
+    module procedure givens_rotation_cdp
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_cdp
+        integer(ilp) :: i, k
+        complex(dp) :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
+    end procedure
+
+    !----- Solving triangular systems -----
+
+    module procedure solve_triangular_rsp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    module procedure solve_triangular_rdp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    module procedure solve_triangular_csp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    module procedure solve_triangular_cdp
+        integer(ilp) :: i, j, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
 end submodule
