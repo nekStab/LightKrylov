@@ -4,7 +4,7 @@ module LightKrylov_TestUtils
     ! Fortran Standard Library
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, hermitian
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Logger
@@ -85,7 +85,7 @@ module LightKrylov_TestUtils
 
     #:else
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: linop_${type[0]}$${kind}$
-        ${type}$, dimension(test_size, test_size) :: data = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
@@ -99,7 +99,7 @@ module LightKrylov_TestUtils
     end interface
 
     type, extends(abstract_hermitian_linop_${type[0]}$${kind}$), public :: hermitian_linop_${type[0]}$${kind}$
-        ${type}$, dimension(test_size, test_size) :: data = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+        ${type}$, dimension(test_size, test_size) :: data = zero_${type[0]}$${kind}$
     contains
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_${type[0]}$${kind}$
@@ -118,9 +118,9 @@ module LightKrylov_TestUtils
     ! ROESSLER SYSTEM
 
     #:for kind in REAL_KINDS
-    real(${kind}$), parameter :: a_${kind}$ = 0.2
-    real(${kind}$), parameter :: b_${kind}$ = 0.2
-    real(${kind}$), parameter :: c_${kind}$ = 5.7
+    real(${kind}$), parameter :: a_${kind}$ = 0.2_${kind}$
+    real(${kind}$), parameter :: b_${kind}$ = 0.2_${kind}$
+    real(${kind}$), parameter :: c_${kind}$ = 5.7_${kind}$
 
     type, extends(abstract_vector_r${kind}$), public :: state_vector_r${kind}$
        real(${kind}$) :: x = 0.0_${kind}$
@@ -315,13 +315,7 @@ contains
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
             type is(vector_${type[0]}$${kind}$)
-
-            #:if type[0] == "c"
-                vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
-            #:else
-                vec_out%data = matmul(transpose(self%data), vec_in%data)
-            #:endif
-
+                vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
                 call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_${type[0]}$${kind}$'", &
                               & this_module, 'rmatvec_${type[0]}$${kind}$')
@@ -479,7 +473,7 @@ contains
         allocate(var(test_size, test_size)) ; var = one_${type[0]}$${kind}$
 
         data = normal(mu, var)
-        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01_${kind}$*eye(test_size, mold=1.0_${kind}$)
 
     end subroutine init_rand_spd_linop_${type[0]}$${kind}$
     #:else
@@ -492,7 +486,7 @@ contains
         allocate(var(test_size, test_size)) ; var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
 
         data = normal(mu, var)
-        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        data = matmul(data, hermitian(data))/test_size + 0.01_${kind}$*eye(test_size, mold=1.0_${kind}$)
         linop%data = data
 
     end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
