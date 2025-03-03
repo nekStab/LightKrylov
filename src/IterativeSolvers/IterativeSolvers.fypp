@@ -118,7 +118,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner.
             class(abstract_opts), optional, intent(in) :: options
             !! Options passed to the linear solver.
@@ -253,7 +253,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -386,7 +386,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
             !! GMRES options.   
@@ -518,7 +518,7 @@ module lightkrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(in) :: preconditioner
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (not yet supported).
             type(cg_${kind}$_opts), optional, intent(in) :: options
             !! Options for the conjugate gradient solver.
@@ -602,25 +602,25 @@ module lightkrylov_IterativeSolvers
         !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
         module subroutine svds_${type[0]}$${kind}$(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
-        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
-        !! Linear operator whose leading singular triplets need to be computed.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
-        !! Leading left singular vectors.
-        real(${kind}$), allocatable, intent(out) :: S(:)
-        !! Leading singular values.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: V(:)
-        !! Leading right singular vectors.
-        real(${kind}$), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpair.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: u0
-        integer, optional, intent(in) :: kdim
-        !! Desired number of eigenpairs.
-        real(${kind}$), optional, intent(in) :: tolerance
-        !! Tolerance.
-        logical, optional, intent(in) :: write_intermediate
-        !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+            !! Linear operator whose leading singular triplets need to be computed.
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
+            !! Leading left singular vectors.
+            real(${kind}$), allocatable, intent(out) :: S(:)
+            !! Leading singular values.
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: V(:)
+            !! Leading right singular vectors.
+            real(${kind}$), allocatable, intent(out) :: residuals(:)
+            !! Residuals associated to each Ritz eigenpair.
+            integer, intent(out) :: info
+            !! Information flag.
+            class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: u0
+            integer, optional, intent(in) :: kdim
+            !! Desired number of eigenpairs.
+            real(${kind}$), optional, intent(in) :: tolerance
+            !! Tolerance.
+            logical, optional, intent(in) :: write_intermediate
+            !! Write intermediate eigenvalues to file during iteration?
         end subroutine
         #:endfor
     end interface
@@ -842,8 +842,11 @@ contains
         !! Convergence tolerance
         ! internals
         integer :: i, k
-        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
-        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        #:if type[0] == "c"
+        character(len=*), parameter :: fmt = '(I6,3(2X,E16.9),2X,L1)'
+        #:else
+        character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L1)'
+        #:endif
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
@@ -854,9 +857,9 @@ contains
             #:endif
             do i = 1, k
                 #:if type[0] == "c"
-                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+                    write (1234, fmt) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
                 #:else
-                    write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
+                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
                 #:endif
             end do 
             close (1234)

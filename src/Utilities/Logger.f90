@@ -83,7 +83,7 @@ contains
       call logger%configure(level=log_level_, time_stamp=log_timestamp_) 
 
       ! set up LightKrylov log file
-      call logger%add_log_file(logfile_, unit=iunit, stat=stat)
+      call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
       if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', module=this_module, procedure='logger_setup')
 
       ! Set up comms
@@ -201,10 +201,10 @@ contains
    subroutine comm_setup()
       ! internal
       character(len=*), parameter :: this_procedure = 'comm_setup'
-      integer :: ierr, nid, comm_size
-      logical :: mpi_is_initialized
       character(len=128) :: msg
 #ifdef MPI
+      integer :: ierr, nid, comm_size
+      logical :: mpi_is_initialized
       ! check if MPI has already been initialized and if not, initialize
       call MPI_Initialized(mpi_is_initialized, ierr)
       if (.not. mpi_is_initialized) then

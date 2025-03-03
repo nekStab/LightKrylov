@@ -2,7 +2,7 @@ module LightKrylov_TestUtils
     ! Fortran Standard Library
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, hermitian
     ! LightKrylov
     use LightKrylov
     use LightKrylov_Logger
@@ -156,7 +156,7 @@ module LightKrylov_TestUtils
     end interface
 
     type, extends(abstract_linop_csp), public :: linop_csp
-        complex(sp), dimension(test_size, test_size) :: data = cmplx(0.0_sp, 0.0_sp, kind=sp)
+        complex(sp), dimension(test_size, test_size) :: data = zero_csp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_csp
@@ -170,7 +170,7 @@ module LightKrylov_TestUtils
     end interface
 
     type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
-        complex(sp), dimension(test_size, test_size) :: data = cmplx(0.0_sp, 0.0_sp, kind=sp)
+        complex(sp), dimension(test_size, test_size) :: data = zero_csp
     contains
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_csp
@@ -184,7 +184,7 @@ module LightKrylov_TestUtils
     end interface
 
     type, extends(abstract_linop_cdp), public :: linop_cdp
-        complex(dp), dimension(test_size, test_size) :: data = cmplx(0.0_dp, 0.0_dp, kind=dp)
+        complex(dp), dimension(test_size, test_size) :: data = zero_cdp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_cdp
@@ -198,7 +198,7 @@ module LightKrylov_TestUtils
     end interface
 
     type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
-        complex(dp), dimension(test_size, test_size) :: data = cmplx(0.0_dp, 0.0_dp, kind=dp)
+        complex(dp), dimension(test_size, test_size) :: data = zero_cdp
     contains
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_cdp
@@ -214,9 +214,9 @@ module LightKrylov_TestUtils
 
     ! ROESSLER SYSTEM
 
-    real(sp), parameter :: a_sp = 0.2
-    real(sp), parameter :: b_sp = 0.2
-    real(sp), parameter :: c_sp = 5.7
+    real(sp), parameter :: a_sp = 0.2_sp
+    real(sp), parameter :: b_sp = 0.2_sp
+    real(sp), parameter :: c_sp = 5.7_sp
 
     type, extends(abstract_vector_rsp), public :: state_vector_rsp
        real(sp) :: x = 0.0_sp
@@ -244,9 +244,9 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: matvec => lin_roessler_rsp
        procedure, pass(self), public :: rmatvec => adj_lin_roessler_rsp
     end type jacobian_rsp
-    real(dp), parameter :: a_dp = 0.2
-    real(dp), parameter :: b_dp = 0.2
-    real(dp), parameter :: c_dp = 5.7
+    real(dp), parameter :: a_dp = 0.2_dp
+    real(dp), parameter :: b_dp = 0.2_dp
+    real(dp), parameter :: c_dp = 5.7_dp
 
     type, extends(abstract_vector_rdp), public :: state_vector_rdp
        real(dp) :: x = 0.0_dp
@@ -648,9 +648,7 @@ contains
         type is(vector_rsp)
             select type(vec_out)
             type is(vector_rsp)
-
-                vec_out%data = matmul(transpose(self%data), vec_in%data)
-
+                vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
                 call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rsp'", &
                               & this_module, 'rmatvec_rsp')
@@ -714,9 +712,7 @@ contains
         type is(vector_rdp)
             select type(vec_out)
             type is(vector_rdp)
-
-                vec_out%data = matmul(transpose(self%data), vec_in%data)
-
+                vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
                 call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rdp'", &
                               & this_module, 'rmatvec_rdp')
@@ -780,9 +776,7 @@ contains
         type is(vector_csp)
             select type(vec_out)
             type is(vector_csp)
-
-                vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
-
+                vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
                 call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_csp'", &
                               & this_module, 'rmatvec_csp')
@@ -846,9 +840,7 @@ contains
         type is(vector_cdp)
             select type(vec_out)
             type is(vector_cdp)
-
-                vec_out%data = matmul(transpose(conjg(self%data)), vec_in%data)
-
+                vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
                 call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_cdp'", &
                               & this_module, 'rmatvec_cdp')
@@ -1106,7 +1098,7 @@ contains
         allocate(var(test_size, test_size)) ; var = one_rsp
 
         data = normal(mu, var)
-        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01_sp*eye(test_size, mold=1.0_sp)
 
     end subroutine init_rand_spd_linop_rsp
 
@@ -1140,7 +1132,7 @@ contains
         allocate(var(test_size, test_size)) ; var = one_rdp
 
         data = normal(mu, var)
-        linop%data = matmul(data, transpose(data))/test_size + 0.01*eye(test_size)
+        linop%data = matmul(data, transpose(data))/test_size + 0.01_dp*eye(test_size, mold=1.0_dp)
 
     end subroutine init_rand_spd_linop_rdp
 
@@ -1175,7 +1167,7 @@ contains
         allocate(var(test_size, test_size)) ; var = cmplx(1.0_sp, 1.0_sp, kind=sp)
 
         data = normal(mu, var)
-        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        data = matmul(data, hermitian(data))/test_size + 0.01_sp*eye(test_size, mold=1.0_sp)
         linop%data = data
 
     end subroutine init_rand_hermitian_linop_csp
@@ -1211,7 +1203,7 @@ contains
         allocate(var(test_size, test_size)) ; var = cmplx(1.0_dp, 1.0_dp, kind=dp)
 
         data = normal(mu, var)
-        data = matmul(data, transpose(conjg(data)))/test_size + 0.01*eye(test_size)
+        data = matmul(data, hermitian(data))/test_size + 0.01_dp*eye(test_size, mold=1.0_dp)
         linop%data = data
 
     end subroutine init_rand_hermitian_linop_cdp

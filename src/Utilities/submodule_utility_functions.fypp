@@ -238,7 +238,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure solve_triangular_${type[0]}$${kind}$
-        integer(ilp) :: i, j, n
+        integer(ilp) :: i, n
         !> Problem's dimensions.
         n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_${kind}$
         !> Back-substitution algorithm.

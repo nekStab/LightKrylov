@@ -279,7 +279,7 @@ contains
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_sym_evp_rsp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
@@ -521,7 +521,7 @@ contains
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_sym_evp_rdp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
@@ -733,7 +733,7 @@ contains
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
@@ -742,7 +742,7 @@ contains
         G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
@@ -826,7 +826,7 @@ contains
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
@@ -835,7 +835,7 @@ contains
         G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)

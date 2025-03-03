@@ -365,7 +365,7 @@ contains
         !! Options for the Newton-Krylov iteration
         class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
         !! Options for the linear solver
-        class(abstract_precond_rsp),              optional, intent(in)    :: preconditioner
+        class(abstract_precond_rsp),              optional, intent(inout)    :: preconditioner
         !! Preconditioner for the linear solver
         procedure(abstract_scheduler_sp),         optional                :: scheduler
         class(abstract_metadata),                       optional,   intent(out) :: meta
@@ -535,7 +535,7 @@ contains
         !! Options for the Newton-Krylov iteration
         class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
         !! Options for the linear solver
-        class(abstract_precond_rdp),              optional, intent(in)    :: preconditioner
+        class(abstract_precond_rdp),              optional, intent(inout)    :: preconditioner
         !! Preconditioner for the linear solver
         procedure(abstract_scheduler_dp),         optional                :: scheduler
         class(abstract_metadata),                       optional,   intent(out) :: meta
@@ -705,7 +705,7 @@ contains
         !! Options for the Newton-Krylov iteration
         class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
         !! Options for the linear solver
-        class(abstract_precond_csp),              optional, intent(in)    :: preconditioner
+        class(abstract_precond_csp),              optional, intent(inout)    :: preconditioner
         !! Preconditioner for the linear solver
         procedure(abstract_scheduler_sp),         optional                :: scheduler
         class(abstract_metadata),                       optional,   intent(out) :: meta
@@ -875,7 +875,7 @@ contains
         !! Options for the Newton-Krylov iteration
         class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
         !! Options for the linear solver
-        class(abstract_precond_cdp),              optional, intent(in)    :: preconditioner
+        class(abstract_precond_cdp),              optional, intent(inout)    :: preconditioner
         !! Preconditioner for the linear solver
         procedure(abstract_scheduler_dp),         optional                :: scheduler
         class(abstract_metadata),                       optional,   intent(out) :: meta
