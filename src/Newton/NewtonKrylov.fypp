@@ -249,7 +249,7 @@ contains
         !! Options for the Newton-Krylov iteration
         class(abstract_opts),                     optional, intent(in)    :: linear_solver_options
         !! Options for the linear solver
-        class(abstract_precond_${type[0]}$${kind}$),              optional, intent(in)    :: preconditioner
+        class(abstract_precond_${type[0]}$${kind}$),              optional, intent(inout)    :: preconditioner
         !! Preconditioner for the linear solver
         procedure(abstract_scheduler_${kind}$),         optional                :: scheduler
         class(abstract_metadata),                       optional,   intent(out) :: meta

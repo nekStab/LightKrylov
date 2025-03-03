@@ -41,6 +41,9 @@ module lightkrylov_utils
     public :: ordschur
     public :: sqrtm
     public :: expm
+    public :: givens_rotation
+    public :: apply_givens_rotation
+    public :: solve_triangular
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -243,6 +246,43 @@ module lightkrylov_utils
             !! Output matrix E = exp(tA).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
+        end function
+        #:endfor
+    end interface
+
+    interface givens_rotation
+        #:for kind, type in RC_KINDS_TYPES
+        pure module function givens_rotation_${type[0]}$${kind}$(x) result(g)
+            ${type}$, intent(in) :: x(2)
+            !! Vector whose second needs to be eliminated.
+            ${type}$             :: g(2)
+            !! Entries of the Givens rotation matrix.
+        end function
+        #:endfor
+    end interface
+
+    interface apply_givens_rotation
+        #:for kind, type in RC_KINDS_TYPES
+        pure module subroutine apply_givens_rotation_${type[0]}$${kind}$(h, c, s)
+            ${type}$, intent(inout) :: h(:)
+            !! k-th column of the Hessenberg matrix.
+            ${type}$, intent(inout) :: c(:)
+            !! Cosine components of the Givens rotations.
+            ${type}$, intent(inout) :: s(:)
+            !! Sine components of the Givens rotations.
+        end subroutine
+        #:endfor
+    end interface
+
+    interface solve_triangular
+        #:for kind, type in RC_KINDS_TYPES
+        pure module function solve_triangular_${type[0]}$${kind}$(A, b) result(x)
+            ${type}$, intent(in) :: A(:, :)
+            !! Matrix to invert.
+            ${type}$, intent(in) :: b(:)
+            !! Right-hand side vector.
+            ${type}$, allocatable :: x(:)
+            !! Solution vector.
         end function
         #:endfor
     end interface

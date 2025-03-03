@@ -464,11 +464,11 @@ contains
       character(len=128) :: msg, gname
       ! Sanity checks
       if (istart < 1 .or. iend < 1) then
-         call stop_error('Inconsistent input for istart, iend.', this_module, this_module)
+         call stop_error('Inconsistent input for istart, iend.', this_module, this_procedure)
       else if (istart > iend) then
-         call stop_error('istart > iend.', this_module, this_module)
+         call stop_error('istart > iend.', this_module, this_procedure)
       else if (iend > self%timer_count) then
-         call stop_error('iend > timer_count.', this_module, this_module)
+         call stop_error('iend > timer_count.', this_module, this_procedure)
       end if
       gname = to_lower(name)
       if (self%group_count == 0) then

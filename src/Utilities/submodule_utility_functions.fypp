@@ -7,7 +7,7 @@ submodule(lightkrylov_utils) utility_functions
     use stdlib_optval, only: optval
     use stdlib_linalg_constants, only: ilp
     use stdlib_linalg_lapack, only: geev, trsen
-    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv
+    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
 
     implicit none(type, external)
 contains
@@ -148,6 +148,7 @@ contains
     #:endfor
 
     !----- Dense Matrix Exponential -----
+
     #:for kind, type in RC_KINDS_TYPES
     module procedure expm_${type[0]}$${kind}$
         ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :)
@@ -204,4 +205,47 @@ contains
     end procedure
     #:endfor
 
+    !----- Givens rotations -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure givens_rotation_${type[0]}$${kind}$
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_${type[0]}$${kind}$
+        integer(ilp) :: i, k
+        ${type}$ :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_${kind}$
+    end procedure
+    #:endfor
+
+    !----- Solving triangular systems -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure solve_triangular_${type[0]}$${kind}$
+        integer(ilp) :: i, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_${kind}$
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    #:endfor
 end submodule
