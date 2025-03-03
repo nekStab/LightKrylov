@@ -1416,12 +1416,13 @@ contains
         !! Convergence tolerance
         ! internals
         integer :: i, k
-        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
-        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        real(sp) :: modulus
+        character(len=*), parameter :: fmtc = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
-                write (1234, '(A6,2(A18),A3)') 'Iter', 'value', 'residual', 'C'
+                write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             do i = 1, k
                     write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
             end do 
@@ -1440,12 +1441,13 @@ contains
         !! Convergence tolerance
         ! internals
         integer :: i, k
-        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
-        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        real(dp) :: modulus
+        character(len=*), parameter :: fmtc = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
-                write (1234, '(A6,2(A18),A3)') 'Iter', 'value', 'residual', 'C'
+                write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             do i = 1, k
                     write (1234, fmtr) k, vals(i),                res(i), res(i) < tol
             end do 
@@ -1464,14 +1466,16 @@ contains
         !! Convergence tolerance
         ! internals
         integer :: i, k
-        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
-        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        real(sp) :: modulus
+        character(len=*), parameter :: fmtc = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
-                write (1234, '(A6,3(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+                write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
             do i = 1, k
-                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
+                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1488,14 +1492,16 @@ contains
         !! Convergence tolerance
         ! internals
         integer :: i, k
-        character(len=*), parameter :: fmtc = '(I6,3(2X,E16.9),2X,L1)'
-        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L1)'
+        real(dp) :: modulus
+        character(len=*), parameter :: fmtc = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmtr = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
             open (1234, file=filename, status='replace', action='write')
-                write (1234, '(A6,3(A18),A3)') 'Iter', 'Re', 'Im', 'residual', 'C'
+                write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
             do i = 1, k
-                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, res(i), res(i) < tol
+                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
+                    write (1234, fmtc) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
             end do 
             close (1234)
         end if
