@@ -139,7 +139,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(one_rsp, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rsp)
             enddo
         enddo
         
@@ -233,7 +233,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(one_rdp, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rdp)
             enddo
         enddo
         
@@ -327,7 +327,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(one_csp, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_csp)
             enddo
         enddo
         
@@ -421,7 +421,7 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(one_cdp, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_cdp)
             enddo
         enddo
         

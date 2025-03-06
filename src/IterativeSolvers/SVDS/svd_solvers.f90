@@ -131,8 +131,8 @@ contains
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
-                call U(i)%axpby(one_rsp, Uwrk(j), umat(j, i))
-                call V(i)%axpby(one_rsp, Vwrk(j), vmat(j, i))
+                call U(i)%axpby(umat(j, i), Uwrk(j), one_rsp)
+                call V(i)%axpby(vmat(j, i), Vwrk(j), one_rsp)
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -217,8 +217,8 @@ contains
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
-                call U(i)%axpby(one_rdp, Uwrk(j), umat(j, i))
-                call V(i)%axpby(one_rdp, Vwrk(j), vmat(j, i))
+                call U(i)%axpby(umat(j, i), Uwrk(j), one_rdp)
+                call V(i)%axpby(vmat(j, i), Vwrk(j), one_rdp)
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -303,8 +303,8 @@ contains
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
-                call U(i)%axpby(one_csp, Uwrk(j), umat(j, i))
-                call V(i)%axpby(one_csp, Vwrk(j), vmat(j, i))
+                call U(i)%axpby(umat(j, i), Uwrk(j), one_csp)
+                call V(i)%axpby(vmat(j, i), Vwrk(j), one_csp)
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -389,8 +389,8 @@ contains
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
-                call U(i)%axpby(one_cdp, Uwrk(j), umat(j, i))
-                call V(i)%axpby(one_cdp, Vwrk(j), vmat(j, i))
+                call U(i)%axpby(umat(j, i), Uwrk(j), one_cdp)
+                call V(i)%axpby(vmat(j, i), Vwrk(j), one_cdp)
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)

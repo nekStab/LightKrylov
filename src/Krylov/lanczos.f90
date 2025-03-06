@@ -54,7 +54,7 @@ contains
 
         ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rsp, X(i), -T(i, k))
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(-T(i, k), X(i), one_rsp)
         enddo
 
         ! Full re-orthogonalization against existing basis
@@ -116,7 +116,7 @@ contains
 
         ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_rdp, X(i), -T(i, k))
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(-T(i, k), X(i), one_rdp)
         enddo
 
         ! Full re-orthogonalization against existing basis
@@ -178,7 +178,7 @@ contains
 
         ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_csp, X(i), -T(i, k))
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(-T(i, k), X(i), one_csp)
         enddo
 
         ! Full re-orthogonalization against existing basis
@@ -240,7 +240,7 @@ contains
 
         ! Orthogonalize residual w.r.t. previously computed Krylov vectors to obtain coefficients in tridiag. matrix
         do i = max(1, k-1), k
-            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(one_cdp, X(i), -T(i, k))
+            T(i, k) = X(i)%dot(X(k+1)) ; call X(k+1)%axpby(-T(i, k), X(i), one_cdp)
         enddo
 
         ! Full re-orthogonalization against existing basis

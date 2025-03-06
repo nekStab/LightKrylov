@@ -154,9 +154,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_rsp, p, alpha)
+            call x%axpby(alpha, p, one_rsp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_rsp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_rsp)
             ! Compute new dot product of residual r_dot_r_new = r' * r.
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
@@ -174,7 +174,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_rsp)
+            call p%axpby(one_rsp, r, beta)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
@@ -263,9 +263,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_rdp, p, alpha)
+            call x%axpby(alpha, p, one_rdp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_rdp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_rdp)
             ! Compute new dot product of residual r_dot_r_new = r' * r.
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
@@ -283,7 +283,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_rdp)
+            call p%axpby(one_rdp, r, beta)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
@@ -372,9 +372,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_csp, p, alpha)
+            call x%axpby(alpha, p, one_csp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_csp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_csp)
             ! Compute new dot product of residual r_dot_r_new = r' * r.
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
@@ -392,7 +392,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_csp)
+            call p%axpby(one_csp, r, beta)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
@@ -481,9 +481,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_cdp, p, alpha)
+            call x%axpby(alpha, p, one_cdp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_cdp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_cdp)
             ! Compute new dot product of residual r_dot_r_new = r' * r.
             r_dot_r_new = r%dot(r)
             ! Check for convergence.
@@ -501,7 +501,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_cdp)
+            call p%axpby(one_cdp, r, beta)
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 

@@ -185,7 +185,7 @@ module lightkrylov_AbstractVectors
         !!  extended `abstract_vector`, i.e.
         !!
         !!  \[
-        !!      \mathbf{x}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
+        !!      \mathbf{y}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
         !!  \]
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
@@ -201,7 +201,7 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Whatever your code is doing ...
         !!
-        !!      call axpby_basis(X, alpha, Y, beta)
+        !!      call axpby_basis(alpha, X, beta, Y)
         !!
         !!      ! ... Rest of your code ...
         !!  ```
@@ -436,7 +436,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_${type[0]}$${kind}$, X(i), v(i))
+            call y%axpby(v(i), X(i), one_${type[0]}$${kind}$) ! y = y + X*v
         enddo
 
         return
@@ -474,7 +474,7 @@ contains
         do j = 1, size(Y)
             call Y(j)%zero()
             do i = 1, size(X)
-                call Y(j)%axpby(one_${type[0]}$${kind}$, X(i), B(i, j))
+                call Y(j)%axpby(B(i, j), X(i), one_${type[0]}$${kind}$) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
 
@@ -535,17 +535,17 @@ contains
         return
     end function innerprod_matrix_${type[0]}$${kind}$
 
-    impure elemental subroutine axpby_basis_${type[0]}$${kind}$(x, alpha, y, beta)
-        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+    impure elemental subroutine axpby_basis_${type[0]}$${kind}$(alpha, x, beta, y)
+        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are ${type}$
         !! numbers.
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: y
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         ${type}$, intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call x%axpby(alpha, y, beta)
+        call y%axpby(alpha, x, beta)
     end subroutine axpby_basis_${type[0]}$${kind}$
 
     impure elemental subroutine zero_basis_${type[0]}$${kind}$(X)
@@ -557,7 +557,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out
         ! Copy array.
-        call out%axpby(zero_${type[0]}$${kind}$, from, one_${type[0]}$${kind}$)
+        call out%axpby(one_${type[0]}$${kind}$, from, zero_${type[0]}$${kind}$)
     end subroutine copy_vector_${type[0]}$${kind}$
 
     impure elemental subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)

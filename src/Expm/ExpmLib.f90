@@ -262,7 +262,7 @@ contains
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(zero_rsp, Xwrk, one_rsp*beta)
+                call c%axpby(beta*one_rsp, Xwrk, zero_rsp)
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
@@ -375,14 +375,14 @@ contains
                 do i = 1, size(Xwrk)
                     call Xwrk(i)%zero()
                     do j = 1, kpp
-                        call Xwrk(i)%axpby(one_rsp, X(j), E(j, i))
+                        call Xwrk(i)%axpby(E(j, i), X(j), one_rsp)
                     enddo
                 enddo
 
                 do i = 1, p
                     call C(i)%zero()
                     do j = 1, p
-                        call C(i)%axpby(one_rsp, Xwrk(j), R(j, i))
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_rsp)
                     enddo
                 enddo
 
@@ -518,7 +518,7 @@ contains
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(zero_rdp, Xwrk, one_rdp*beta)
+                call c%axpby(beta*one_rdp, Xwrk, zero_rdp)
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
@@ -631,14 +631,14 @@ contains
                 do i = 1, size(Xwrk)
                     call Xwrk(i)%zero()
                     do j = 1, kpp
-                        call Xwrk(i)%axpby(one_rdp, X(j), E(j, i))
+                        call Xwrk(i)%axpby(E(j, i), X(j), one_rdp)
                     enddo
                 enddo
 
                 do i = 1, p
                     call C(i)%zero()
                     do j = 1, p
-                        call C(i)%axpby(one_rdp, Xwrk(j), R(j, i))
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_rdp)
                     enddo
                 enddo
 
@@ -774,7 +774,7 @@ contains
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(zero_csp, Xwrk, one_csp*beta)
+                call c%axpby(beta*one_csp, Xwrk, zero_csp)
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
@@ -887,14 +887,14 @@ contains
                 do i = 1, size(Xwrk)
                     call Xwrk(i)%zero()
                     do j = 1, kpp
-                        call Xwrk(i)%axpby(one_csp, X(j), E(j, i))
+                        call Xwrk(i)%axpby(E(j, i), X(j), one_csp)
                     enddo
                 enddo
 
                 do i = 1, p
                     call C(i)%zero()
                     do j = 1, p
-                        call C(i)%axpby(one_csp, Xwrk(j), R(j, i))
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_csp)
                     enddo
                 enddo
 
@@ -1030,7 +1030,7 @@ contains
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(zero_cdp, Xwrk, one_cdp*beta)
+                call c%axpby(beta*one_cdp, Xwrk, zero_cdp)
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
@@ -1143,14 +1143,14 @@ contains
                 do i = 1, size(Xwrk)
                     call Xwrk(i)%zero()
                     do j = 1, kpp
-                        call Xwrk(i)%axpby(one_cdp, X(j), E(j, i))
+                        call Xwrk(i)%axpby(E(j, i), X(j), one_cdp)
                     enddo
                 enddo
 
                 do i = 1, p
                     call C(i)%zero()
                     do j = 1, p
-                        call C(i)%axpby(one_cdp, Xwrk(j), R(j, i))
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_cdp)
                     enddo
                 enddo
 
