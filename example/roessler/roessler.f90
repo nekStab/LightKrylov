@@ -111,16 +111,16 @@ contains
       self%T = self%T*alpha
    end subroutine scal
 
-   subroutine axpby(self, alpha, vec, beta)
+   subroutine axpby(alpha, vec, beta, self)
       class(state_vector), intent(inout) :: self
       class(abstract_vector_rdp), intent(in)    :: vec
       real(wp), intent(in)    :: alpha, beta
       select type (vec)
       type is (state_vector)
-         self%x = alpha*self%x + beta*vec%x
-         self%y = alpha*self%y + beta*vec%y
-         self%z = alpha*self%z + beta*vec%z
-         self%T = alpha*self%T + beta*vec%T
+         self%x = beta*self%x + alpha*vec%x
+         self%y = beta*self%y + alpha*vec%y
+         self%z = beta*self%z + alpha*vec%z
+         self%T = beta*self%T + alpha*vec%T
       class default
          call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'axpby')
       end select

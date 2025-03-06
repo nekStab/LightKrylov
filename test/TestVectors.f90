@@ -101,7 +101,7 @@ contains
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data + y%data) < rtol_sp)
+        call check(error, norm2(z%data - (x%data - y%data)) < rtol_sp)
         call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
 
         return
@@ -224,7 +224,7 @@ contains
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data + y%data) < rtol_dp)
+        call check(error, norm2(z%data - (x%data - y%data)) < rtol_dp)
         call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
 
         return

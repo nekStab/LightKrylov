@@ -397,13 +397,13 @@ contains
         self%data = alpha * self%data
     end subroutine scal_rsp
 
-    subroutine axpby_rsp(self, alpha, vec, beta)
+    subroutine axpby_rsp(alpha, vec, beta, self)
         class(vector_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec
         real(sp), intent(in) :: alpha, beta
         select type(vec)
         type is(vector_rsp)
-            self%data = alpha*self%data + beta*vec%data
+            self%data = alpha*vec%data + beta*self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'vector_rsp'", &
                               & this_module, 'axpby_rsp')
@@ -458,13 +458,13 @@ contains
         self%data = alpha * self%data
     end subroutine scal_rdp
 
-    subroutine axpby_rdp(self, alpha, vec, beta)
+    subroutine axpby_rdp(alpha, vec, beta, self)
         class(vector_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec
         real(dp), intent(in) :: alpha, beta
         select type(vec)
         type is(vector_rdp)
-            self%data = alpha*self%data + beta*vec%data
+            self%data = alpha*vec%data + beta*self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'vector_rdp'", &
                               & this_module, 'axpby_rdp')
@@ -519,13 +519,13 @@ contains
         self%data = alpha * self%data
     end subroutine scal_csp
 
-    subroutine axpby_csp(self, alpha, vec, beta)
+    subroutine axpby_csp(alpha, vec, beta, self)
         class(vector_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec
         complex(sp), intent(in) :: alpha, beta
         select type(vec)
         type is(vector_csp)
-            self%data = alpha*self%data + beta*vec%data
+            self%data = alpha*vec%data + beta*self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'vector_csp'", &
                               & this_module, 'axpby_csp')
@@ -580,13 +580,13 @@ contains
         self%data = alpha * self%data
     end subroutine scal_cdp
 
-    subroutine axpby_cdp(self, alpha, vec, beta)
+    subroutine axpby_cdp(alpha, vec, beta, self)
         class(vector_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec
         complex(dp), intent(in) :: alpha, beta
         select type(vec)
         type is(vector_cdp)
-            self%data = alpha*self%data + beta*vec%data
+            self%data = alpha*vec%data + beta*self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'vector_cdp'", &
                               & this_module, 'axpby_cdp')
@@ -1267,15 +1267,15 @@ contains
         self%z = self%z * alpha
     end subroutine scal_state_rsp
   
-    subroutine axpby_state_rsp(self, alpha, vec, beta)
+    subroutine axpby_state_rsp(alpha, vec, beta, self)
         class(state_vector_rsp)   , intent(inout) :: self
         class(abstract_vector_rsp), intent(in)    :: vec
         real(sp)                  , intent(in)    :: alpha, beta
         select type(vec)
         type is(state_vector_rsp)
-            self%x = alpha*self%x + beta*vec%x
-            self%y = alpha*self%y + beta*vec%y
-            self%z = alpha*self%z + beta*vec%z
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_rsp'", &
                               & this_module, 'axpby_state_rsp')
@@ -1334,15 +1334,15 @@ contains
         self%z = self%z * alpha
     end subroutine scal_state_rdp
   
-    subroutine axpby_state_rdp(self, alpha, vec, beta)
+    subroutine axpby_state_rdp(alpha, vec, beta, self)
         class(state_vector_rdp)   , intent(inout) :: self
         class(abstract_vector_rdp), intent(in)    :: vec
         real(dp)                  , intent(in)    :: alpha, beta
         select type(vec)
         type is(state_vector_rdp)
-            self%x = alpha*self%x + beta*vec%x
-            self%y = alpha*self%y + beta*vec%y
-            self%z = alpha*self%z + beta*vec%z
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_rdp'", &
                               & this_module, 'axpby_state_rdp')

@@ -90,15 +90,15 @@ contains
       self%z = self%z*alpha
    end subroutine scal_p
 
-   subroutine axpby_p(self, alpha, vec, beta)
+   subroutine axpby_p(alpha, vec, beta, self)
       class(pos_vector), intent(inout) :: self
       class(abstract_vector_rdp), intent(in)    :: vec
       real(wp), intent(in)    :: alpha, beta
       select type (vec)
       type is (pos_vector)
-         self%x = alpha*self%x + beta*vec%x
-         self%y = alpha*self%y + beta*vec%y
-         self%z = alpha*self%z + beta*vec%z
+         self%x = beta*self%x + alpha*vec%x
+         self%y = beta*self%y + alpha*vec%y
+         self%z = beta*self%z + alpha*vec%z
       class default
          call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'axpby_p')
       end select

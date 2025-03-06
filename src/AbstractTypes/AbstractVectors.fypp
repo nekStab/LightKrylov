@@ -337,7 +337,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_${type[0]}$${kind}$
 
-        subroutine abstract_axpby_${type[0]}$${kind}$(self, alpha, vec, beta)
+        subroutine abstract_axpby_${type[0]}$${kind}$(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_${type[0]}$${kind}$, ${kind}$
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
@@ -386,7 +386,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_${type[0]}$${kind}$, vec, -one_${type[0]}$${kind}$)
+        call self%axpby(-one_${type[0]}$${kind}$, vec, one_${type[0]}$${kind}$)
     end subroutine sub_${type[0]}$${kind}$
 
     subroutine add_${type[0]}$${kind}$(self, vec)

@@ -350,7 +350,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_rsp
 
-        subroutine abstract_axpby_rsp(self, alpha, vec, beta)
+        subroutine abstract_axpby_rsp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rsp, sp
             class(abstract_vector_rsp), intent(inout) :: self
@@ -434,7 +434,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_rdp
 
-        subroutine abstract_axpby_rdp(self, alpha, vec, beta)
+        subroutine abstract_axpby_rdp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rdp, dp
             class(abstract_vector_rdp), intent(inout) :: self
@@ -518,7 +518,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_csp
 
-        subroutine abstract_axpby_csp(self, alpha, vec, beta)
+        subroutine abstract_axpby_csp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_csp, sp
             class(abstract_vector_csp), intent(inout) :: self
@@ -602,7 +602,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_cdp
 
-        subroutine abstract_axpby_cdp(self, alpha, vec, beta)
+        subroutine abstract_axpby_cdp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_cdp, dp
             class(abstract_vector_cdp), intent(inout) :: self
@@ -649,7 +649,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_rsp, vec, -one_rsp)
+        call self%axpby(-one_rsp, vec, one_rsp)
     end subroutine sub_rsp
 
     subroutine add_rsp(self, vec)
@@ -683,7 +683,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_rdp, vec, -one_rdp)
+        call self%axpby(-one_rdp, vec, one_rdp)
     end subroutine sub_rdp
 
     subroutine add_rdp(self, vec)
@@ -717,7 +717,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_csp, vec, -one_csp)
+        call self%axpby(-one_csp, vec, one_csp)
     end subroutine sub_csp
 
     subroutine add_csp(self, vec)
@@ -751,7 +751,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_cdp, vec, -one_cdp)
+        call self%axpby(-one_cdp, vec, one_cdp)
     end subroutine sub_cdp
 
     subroutine add_cdp(self, vec)
