@@ -104,7 +104,7 @@ contains
         type(cg_sp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_rsp), allocatable :: r, p, Ap
+        class(abstract_vector_rsp), allocatable :: r, p, Ap, z
         real(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(sp) :: residual
 
@@ -136,15 +136,19 @@ contains
 
         info = 0
 
+        associate(ifprecond => present(preconditioner))
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
-        ! Initialize direction vector.
-        p = r
+        ! Deal with the preconditioner (if available).
+        if (ifprecond) then
+            z = r ; call preconditioner%apply(z) ; p = z
+            r_dot_r_old = r%dot(z)
+        else
+            p = r ; r_dot_r_old = r%dot(r)
+        endif
 
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
         allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
@@ -157,8 +161,14 @@ contains
             call x%axpby(one_rsp, p, alpha)
             ! Update residual r = r - alpha*Ap
             call r%axpby(one_rsp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
+
+            if(ifprecond) then
+                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+            else
+                ! Compute new dot product of residual r_dot_r_new = r' * r.
+                r_dot_r_new = r%dot(r)
+            endif
+
             ! Check for convergence.
             residual = sqrt(r_dot_r_new)
 
@@ -174,13 +184,18 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_rsp)
+            if (ifprecond) then
+                call p%axpby(beta, z, one_rsp)
+            else
+                call p%axpby(beta, r, one_rsp)
+            endif
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
         enddo cg_loop
+        end associate
 
         ! Set and copy info flag for completeness
         info = cg_meta%n_iter
@@ -213,7 +228,7 @@ contains
         type(cg_dp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_rdp), allocatable :: r, p, Ap
+        class(abstract_vector_rdp), allocatable :: r, p, Ap, z
         real(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(dp) :: residual
 
@@ -245,15 +260,19 @@ contains
 
         info = 0
 
+        associate(ifprecond => present(preconditioner))
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
-        ! Initialize direction vector.
-        p = r
+        ! Deal with the preconditioner (if available).
+        if (ifprecond) then
+            z = r ; call preconditioner%apply(z) ; p = z
+            r_dot_r_old = r%dot(z)
+        else
+            p = r ; r_dot_r_old = r%dot(r)
+        endif
 
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
         allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
@@ -266,8 +285,14 @@ contains
             call x%axpby(one_rdp, p, alpha)
             ! Update residual r = r - alpha*Ap
             call r%axpby(one_rdp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
+
+            if(ifprecond) then
+                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+            else
+                ! Compute new dot product of residual r_dot_r_new = r' * r.
+                r_dot_r_new = r%dot(r)
+            endif
+
             ! Check for convergence.
             residual = sqrt(r_dot_r_new)
 
@@ -283,13 +308,18 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_rdp)
+            if (ifprecond) then
+                call p%axpby(beta, z, one_rdp)
+            else
+                call p%axpby(beta, r, one_rdp)
+            endif
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
         enddo cg_loop
+        end associate
 
         ! Set and copy info flag for completeness
         info = cg_meta%n_iter
@@ -322,7 +352,7 @@ contains
         type(cg_sp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_csp), allocatable :: r, p, Ap
+        class(abstract_vector_csp), allocatable :: r, p, Ap, z
         complex(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(sp) :: residual
 
@@ -354,15 +384,19 @@ contains
 
         info = 0
 
+        associate(ifprecond => present(preconditioner))
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
-        ! Initialize direction vector.
-        p = r
+        ! Deal with the preconditioner (if available).
+        if (ifprecond) then
+            z = r ; call preconditioner%apply(z) ; p = z
+            r_dot_r_old = r%dot(z)
+        else
+            p = r ; r_dot_r_old = r%dot(r)
+        endif
 
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
         allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
@@ -375,8 +409,14 @@ contains
             call x%axpby(one_csp, p, alpha)
             ! Update residual r = r - alpha*Ap
             call r%axpby(one_csp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
+
+            if(ifprecond) then
+                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+            else
+                ! Compute new dot product of residual r_dot_r_new = r' * r.
+                r_dot_r_new = r%dot(r)
+            endif
+
             ! Check for convergence.
             residual = sqrt(abs(r_dot_r_new))
 
@@ -392,13 +432,18 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_csp)
+            if (ifprecond) then
+                call p%axpby(beta, z, one_csp)
+            else
+                call p%axpby(beta, r, one_csp)
+            endif
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
         enddo cg_loop
+        end associate
 
         ! Set and copy info flag for completeness
         info = cg_meta%n_iter
@@ -431,7 +476,7 @@ contains
         type(cg_dp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_cdp), allocatable :: r, p, Ap
+        class(abstract_vector_cdp), allocatable :: r, p, Ap, z
         complex(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(dp) :: residual
 
@@ -463,15 +508,19 @@ contains
 
         info = 0
 
+        associate(ifprecond => present(preconditioner))
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
-        ! Initialize direction vector.
-        p = r
+        ! Deal with the preconditioner (if available).
+        if (ifprecond) then
+            z = r ; call preconditioner%apply(z) ; p = z
+            r_dot_r_old = r%dot(z)
+        else
+            p = r ; r_dot_r_old = r%dot(r)
+        endif
 
-        ! Initialize dot product of residual r_dot_r_old = r' * r
-        r_dot_r_old = r%dot(r)
         allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
 
         ! Conjugate gradient iteration.
@@ -484,8 +533,14 @@ contains
             call x%axpby(one_cdp, p, alpha)
             ! Update residual r = r - alpha*Ap
             call r%axpby(one_cdp, Ap, -alpha)
-            ! Compute new dot product of residual r_dot_r_new = r' * r.
-            r_dot_r_new = r%dot(r)
+
+            if(ifprecond) then
+                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+            else
+                ! Compute new dot product of residual r_dot_r_new = r' * r.
+                r_dot_r_new = r%dot(r)
+            endif
+
             ! Check for convergence.
             residual = sqrt(abs(r_dot_r_new))
 
@@ -501,13 +556,18 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
-            call p%axpby(beta, r, one_cdp)
+            if (ifprecond) then
+                call p%axpby(beta, z, one_cdp)
+            else
+                call p%axpby(beta, r, one_cdp)
+            endif
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
             write(msg,'(A,I3,2(A,E9.2))') 'CG step ', i, ': res= ', residual, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
         enddo cg_loop
+        end associate
 
         ! Set and copy info flag for completeness
         info = cg_meta%n_iter
