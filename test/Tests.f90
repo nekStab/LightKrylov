@@ -14,6 +14,7 @@ program Tester
    use TestIterativeSolvers
    use TestExpmlib
    use TestNewtonKrylov
+   use TestSpecialMatrices
 
    implicit none
 
@@ -93,7 +94,8 @@ program Tester
                 new_testsuite("Real CG (dp) Test Suite", collect_cg_rdp_testsuite), &
                 new_testsuite("Real Expm (dp) Test Suite", collect_expm_rdp_testsuite), &
                 new_testsuite("Real Sqrtm (dp) Test Suite", collect_sqrtm_rdp_testsuite), &
-                new_testsuite("Real Newton-Krylov fixed-point iteration (dp) Test Suite", collect_newton_rdp_testsuite) &
+                new_testsuite("Real Newton-Krylov fixed-point iteration (dp) Test Suite", collect_newton_rdp_testsuite), &
+                new_testsuite("Special Matrices (dp) Test Suite", collect_specialmatrices_rdp_testsuite) &
                 ]
 
    write(output_unit, *) "----------------------------------------------------------------"
