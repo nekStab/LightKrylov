@@ -450,4 +450,4 @@ contains
 
     #:endfor
 
-end module lightkrylov_AbstractLinops
+end module LightKrylov_AbstractLinops

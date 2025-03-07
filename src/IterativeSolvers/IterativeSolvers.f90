@@ -1,15 +1,13 @@
-module lightkrylov_IterativeSolvers
+module LightKrylov_IterativeSolvers
     !!  This module provides some of the most important computational routines provided by
     !!  `LightKrylov`. These include:
     !!
-    !!  - `eigs` : Compute the leading eigenpairs of a square linear operator \( A \).
-    !!  - `eighs` : Compute the leading eigenpairs of a symmetric positive definite 
-    !!              operator \( A \).
-    !!  - `svds` : Compute the leading singular triplets of a linear operator \( A \).
-    !!  - `gmres` : Solve the linear system \( Ax = b \) using the *generalized minimum
-    !!              residual method*.
-    !!  - `cg` : Solve the linear system \( Ax = b \) where \( A \) is symmetric
-    !!           positive definite using the *Conjugate Gradient* method.
+    !!  - `eigs`    :   Compute the leading eigenpairs of a square linear operator \( A \).
+    !!  - `eighs`   :   Compute the leading eigenpairs of a symmetric positive definite 
+    !!                  operator \( A \).
+    !!  - `svds`    :   Compute the leading singular triplets of a linear operator \( A \).
+    !!  - `gmres`   :   Solve the linear system \( Ax = b \) using the *generalized minimum residual method*.
+    !!  - `cg`      :   Solve the linear system \( Ax = b \) where \( A \) is symmetric positive definite using the *Conjugate Gradient* method.
     !!
     !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
     !!  to `LightKrylov`. Note that these features are still experimental however.
@@ -386,33 +384,34 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
-        !!  `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from one of the `abstract_linop` provided by the
+        !!              `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
-        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
-        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
-        !!  It is an `intent(in)` argument.
+        !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
+        !!              by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!              It is an `intent(in)` argument.
         !!
-        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
-        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
-        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
-        !!  an `intent(inout)` argument.
+        !!  - `x`   :   On entry, initial guess for the solution. On exit, the solution computed by
+        !!              gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!              `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!              an `intent(inout)` argument.
         !!
-        !!  `info` : `integer` information flag.
+        !!  - `info`    :   `integer` information flag.
         !!
-        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!  - `rtol` (optional) :   `real` relative tolerance for the solver.
         !!
-        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
-        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
-        !!  argument.
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs
+        !!                                      to be consistent with the `abstract_preconditioner` interface.
+        !!                                      It is an `intent(in)` argument.
         !!
-        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
-        !!  It is an `intent(in)` argument.
+        !!  - `options` (optional)  :   Container for the gmres options given by the `gmres_opts` type.
+        !!                              It is an `intent(in)` argument.
         !!
-        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
-        !!  \( A^H x = b \) is being solver.
+        !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or \( A^H x = b \) is being solver.
+        !!
+        !!  - `meta` (optional) :   Container for the gmres metada. It needs to be of type `gmres_medata`.
 
         ! --- Interface for GMRES with Abstract Linops and Abstract Vectors ---
         module subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -627,33 +626,32 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from one of the `abstract_linop` provided by the
-        !!  `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from one of the `abstract_linop` provided by the
+        !!              `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
-        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
-        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
-        !!  It is an `intent(in)` argument.
+        !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
+        !!              by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!              It is an `intent(in)` argument.
         !!
-        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
-        !!  gmres. It is a vector derived from one the `abstract_vector` types provided by the
-        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
-        !!  an `intent(inout)` argument.
+        !!  - `x`   :   On entry, initial guess for the solution. On exit, the solution computed by
+        !!              gmres. It is a vector derived from one the `abstract_vector` types provided by the
+        !!              `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!              an `intent(inout)` argument.
         !!
-        !!  `info` : `integer` information flag.
+        !!  - `info`    :   `integer` information flag.
         !!
-        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!  - `rtol` (optional) :   `real` relative tolerance for the solver.
         !!
-        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
-        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
-        !!  argument.
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be consistent with the
+        !!                                      `abstract_preconditioner` interface. It is an `intent(in)` argument.
         !!
-        !!  `options` (optional) : Container for the gmres options given by the `gmres_opts` type.
-        !!  It is an `intent(in)` argument.
+        !!  - `options` (optional)  :   Container for the gmres options given by the `gmres_opts` type.
+        !!                              It is an `intent(in)` argument.
         !!
-        !!  `transpose` (optional) : `logical` flag controlling whether \( Ax = b\) or
-        !!  \( A^H x = b \) is being solved.
+        !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or
+        !!                              \( A^H x = b \) is being solved.
         module subroutine fgmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -850,36 +848,29 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from one of the `abstract_sym_linop` or
-        !!  `abstract_hermitian_linop` types provided by the `AbstractLinops` module. It is an
-        !!  `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from one of the `abstract_sym_linop` or `abstract_hermitian_linop` types provided
+        !               by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
-        !!  `b` : Right-hand side vector derived from one the `abstract_vector` types provided
-        !!  by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
-        !!  It is an `intent(in)` argument.
+        !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
+        !!              by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
+        !!              It is an `intent(in)` argument.
         !!
-        !!  `x` : On entry, initial guess for the solution. On exit, the solution computed by
-        !!  cg. It is a vector derived from one the `abstract_vector` types provided by the
-        !!  `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
-        !!  an `intent(inout)` argument.
+        !!  - `x`   :   On entry, initial guess for the solution. On exit, the solution computed by
+        !!              cg. It is a vector derived from one the `abstract_vector` types provided by the
+        !!              `AbstractVectors` module. It needs to have the same type and kind as `A`. It is
+        !!              an `intent(inout)` argument.
         !!
-        !!  `info` : `integer` information flag.
+        !!  - `info`    :   `integer` information flag.
         !!
-        !!  `rtol` (optional) : `real` relative tolerance for the solver.
+        !!  - `rtol` (optional) :   `real` relative tolerance for the solver.
         !!
-        !!  `atol` (optional) : `real` absolute tolerance for the solver.
+        !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  `preconditioner` (optional) : Right preconditioner used to solve the system. It needs
-        !!  to be consistent with the `abstract_preconditioner` interface. It is an `intent(in)`
-        !!  argument.
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be consistent with the
+        !!                                      `abstract_preconditioner` interface. It is an `intent(in)` argument.
         !!
-        !!  `options` (optional) : Container for the gmres options given by the `cg_opts` type.
-        !!  It is an `intent(in)` argument.
-        !!
-        !!  @note
-        !!  Although the interface to pass a preconditioner is exposed, it is not currently
-        !!  implemented.
-        !!  @endnote
+        !!  - `options` (optional)  :   Container for the gmres options given by the `cg_opts` type.
+        !!                              It is an `intent(in)` argument.
         module subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -1003,33 +994,32 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
-        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!              `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!              eigenpairs need to be computed. It is an `intent(inout)` argument.
         !!
-        !!  `U` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
-        !!        the number of eigenpairs computed.
+        !!  - `U`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!              contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!              the number of eigenpairs computed.
         !!
-        !!  `S` : Rank-1 array of `real` numbers. On exit, it contains the leading
-        !!        singular values of `A`. It is an `intent(out)` argument.
+        !!  - `S`   :   Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!              singular values of `A`. It is an `intent(out)` argument.
         !!
-        !!  `V` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the left singular vectors of `A`. Note that the dimension of `U` fixes
-        !!        the number of eigenpairs computed.
+        !!  - `V`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!              contains the left singular vectors of `A`. Note that the dimension of `U` fixes
+        !!              the number of eigenpairs computed.
         !!
-        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
-        !!                associated with each singular triplet. It is an `intent(out)` argument.
+        !!  - `residuals`   :   Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                      associated with each singular triplet. It is an `intent(out)` argument.
         !!
-        !!  `info` : `integer` Information flag.
+        !!  - `info`    :   `integer` Information flag.
         !!
-        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
-        !!                        approximate the leading singular triplets. It is an `intent(in)`
-        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!  - `kdim` (*optional*)   :   `integer`, maximum dimension of the Krylov subspace used to
+        !!                              approximate the leading singular triplets. It is an `intent(in)`
+        !!                              argument. By default, `kdim = 4*size(X)`.
         !!
-        !!  `tolerance` (*optional*) : `real` tolerance below which a triplet is considered as
-        !!                             being converged. It is an `intent(in)` agument. By default,
-        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  - `tolerance` (*optional*)  :   `real` tolerance below which a triplet is considered as being converged. It is an
+        !!                                  `intent(in)` agument. By default, tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!  @note
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
@@ -1154,29 +1144,29 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
-        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!              `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!              eigenpairs need to be computed. It is an `intent(inout)` argument.
         !!
-        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
-        !!        the number of eigenpairs computed.
+        !!  - `X`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!              contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!              the number of eigenpairs computed.
         !!
-        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
-        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!  - `eigvals` :   Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!                  eigenvalues of `A`. It is an `intent(out)` argument.
         !!
-        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
-        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!  - `residuals`   :   Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                      associated with each eigenpairs. It is an `intent(out)` argument.
         !!
-        !!  `info` : `integer` Information flag.
+        !!  - `info`    :   `integer` Information flag.
         !!
-        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
-        !!                        approximate the leading eigenpairs. It is an `intent(in)`
-        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!  - `kdim` (*optional*)   :   `integer`, maximum dimension of the Krylov subspace used to
+        !!                              approximate the leading eigenpairs. It is an `intent(in)`
+        !!                              argument. By default, `kdim = 4*size(X)`.
         !!
-        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
-        !!                             being converged. It is an `intent(in)` agument. By default,
-        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  - `tolerance` (*optional*)  :   `real` tolerance below which an eigenpair is considered as
+        !!                                  being converged. It is an `intent(in)` agument. By default,
+        !!                                  `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!  @note
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
@@ -1281,10 +1271,10 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `eigvals` : `complex` rank-1 array containing the eigenvalues.
+        !!  - `eigvals`     :   `complex` rank-1 array containing the eigenvalues.
         !!
-        !!  `residuals` : `real` rank-1 array containing the residuals associated to each
-        !!                eigenvalues.
+        !!  - `residuals`   :   `real` rank-1 array containing the residuals associated to each
+        !!                      eigenvalues.
         !!
         !!  `fname` : Name of the file to save the eigenspectrum.
         module subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
@@ -1359,33 +1349,33 @@ module lightkrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
-        !!        `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
-        !!        eigenpairs need to be computed. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from `abstract_sym_linop_rsp`, `abstract_sym_linop_rdp`,
+        !!              `abstract_hermitian_linop_csp` or `abstract_hermitian_linop_cdp` whose leading
+        !!              eigenpairs need to be computed. It is an `intent(inout)` argument.
         !!
-        !!  `X` : Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
-        !!        contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
-        !!        the number of eigenpairs computed.
+        !!  - `X`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
+        !!              contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
+        !!              the number of eigenpairs computed.
         !!
-        !!  `eigvals` : Rank-1 array of `real` numbers. On exit, it contains the leading
-        !!              eigenvalues of `A`. It is an `intent(out)` argument.
+        !!  - `eigvals` :   Rank-1 array of `real` numbers. On exit, it contains the leading
+        !!                  eigenvalues of `A`. It is an `intent(out)` argument.
         !!
-        !!  `residuals` : Rank-1 array of `real` numbers. On exit, it contains the residuals
-        !!                associated with each eigenpairs. It is an `intent(out)` argument.
+        !!  - `residuals`   :   Rank-1 array of `real` numbers. On exit, it contains the residuals
+        !!                      associated with each eigenpairs. It is an `intent(out)` argument.
         !!
-        !!  `info` : `integer` Information flag.
+        !!  - `info`    :   `integer` Information flag.
         !!
-        !!  `kdim` (*optional*) : `integer`, maximum dimension of the Krylov subspace used to
-        !!                        approximate the leading eigenpairs. It is an `intent(in)`
-        !!                        argument. By default, `kdim = 4*size(X)`.
+        !!  - `kdim` (*optional*)   :   `integer`, maximum dimension of the Krylov subspace used to
+        !!                              approximate the leading eigenpairs. It is an `intent(in)`
+        !!                              argument. By default, `kdim = 4*size(X)`.
         !!
-        !!  `select` (*optional*) : Function to select which eigenvalues to compute.
+        !!  - `select` (*optional*) : Function to select which eigenvalues to compute.
         !!
-        !!  `tolerance` (*optional*) : `real` tolerance below which an eigenpair is considered as
-        !!                             being converged. It is an `intent(in)` agument. By default,
-        !!                             `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!  - `tolerance` (*optional*)  :   `real` tolerance below which an eigenpair is considered as
+        !!                                  being converged. It is an `intent(in)` agument. By default,
+        !!                                  `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!
-        !!  `transpose` (*optional*) : `logical` flag determining whether the eigenvalues of \(A\)
+        !!  - `transpose` (*optional*)  :   `logical` flag determining whether the eigenvalues of \(A\)
         !!                             or \(A^H\) need to be computed.
         module procedure eigs_rsp
         module procedure eigs_rdp
@@ -2168,4 +2158,4 @@ contains
         end function median_selector
     end subroutine eigs_cdp
 
-end module lightkrylov_IterativeSolvers
+end module LightKrylov_IterativeSolvers

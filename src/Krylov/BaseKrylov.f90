@@ -1,4 +1,4 @@
-module lightkrylov_BaseKrylov
+module LightKylov_BaseKrylov
     !!  This module provides a collection of Krylov-based factorizations forming the
     !!  computational core of `LightKrylov`. It also provides a set of utility functions
     !!  to operate on arrays of `abstract_vector`. The most important ones are:
@@ -87,40 +87,40 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
-        !!        module. The operator needs to be square, i.e. the dimension of its domain and
-        !!        co-domain is the same. It is an `intent(inout)` argument.
+        !!  - `A` : Linear operator derived from one the base types provided by the `AbstractLinops`
+        !!          module. The operator needs to be square, i.e. the dimension of its domain and
+        !!          co-domain is the same. It is an `intent(inout)` argument.
         !!
-        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
-        !!        the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
-        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!  - `X` : Array of types derived from one the base types provided by the `AbstractVectors`
+        !!          module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!          the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!          the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
+        !!          is equal to `size(X) - 1`. It is an `intent(inout)` argument.
         !!
-        !!  `H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!         upper Hessenberg matrix computed from the Arnoldi factorization. It is an
-        !!         `intent(inout)` argument.
+        !!  -`H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!          upper Hessenberg matrix computed from the Arnoldi factorization. It is an
+        !!          `intent(inout)` argument.
         !!
-        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!           `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
-        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
-        !!            dimension `info`.
+        !!  -`info` :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!              `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
+        !!              The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!              dimension `info`.
         !!
-        !!  `kstart` (*optional*): `integer` value determining the index of the first Arnoldi
-        !!                          step to be computed. By default, `kstart = 1`.
+        !!  - `kstart` (*optional*) :   `integer` value determining the index of the first Arnoldi
+        !!                              step to be computed. By default, `kstart = 1`.
         !!
-        !!  `kend` (*optional*): `integer` value determining the index of the last Arnoldi step
-        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!  - `kend` (*optional*)   :   `integer` value determining the index of the last Arnoldi step
+        !!                              to be computed. By default, `kend = size(X) - 1`.
         !!
-        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
-        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
-        !!                      `tol = atol_rp` depending on the kind of `A`.
+        !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered
+        !!                              to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                              `tol = atol_rp` depending on the kind of `A`.
         !!
-        !!  `transpose` (*optional*): `logical` flag determining whether the Arnoldi factorization
-        !!                             is applied to \( A \) or \( A^H \). Default `transpose = .false.`
+        !!  - `transpose` (*optional*)  :   `logical` flag determining whether the Arnoldi factorization
+        !!                                  is applied to \( A \) or \( A^H \). Default `transpose = .false.`
         !!
-        !!  `blksize` (*optional*): `integer` value determining the dimension of a block for the
-        !!                          block Arnoldi factorization. Default is `blksize=1`.
+        !!  - `blksize` (*optional*)    :   `integer` value determining the dimension of a block for the
+        !!                                  block Arnoldi factorization. Default is `blksize=1`.
         module subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be factorized.
@@ -236,33 +236,33 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Symmetric or Hermitian linear operator derived from one the base types 
-        !!        provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!  - `A`   :   Symmetric or Hermitian linear operator derived from one the base types 
+        !!              provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
-        !!  `X` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors. The first entry `X(1)` is the starting vector for
-        !!        the Lanczos factorization. Additionally, the maximum number of Lanczos steps
-        !!        is equal to `size(X) - 1`. It is an `intent(inout)` argument.
+        !!  - `X`   :   Array of types derived from one the base types provided by the `AbstractVectors`
+        !!              module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!              the computed Krylov vectors. The first entry `X(1)` is the starting vector for
+        !!              the Lanczos factorization. Additionally, the maximum number of Lanczos steps
+        !!              is equal to `size(X) - 1`. It is an `intent(inout)` argument.
         !!
-        !!  `T` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!         symmetric tridiagonal matrix computed from the Arnoldi factorization. It is an
-        !!         `intent(inout)` argument.
+        !!  - `T`   :   `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!              symmetric tridiagonal matrix computed from the Arnoldi factorization. It is an
+        !!              `intent(inout)` argument.
         !!
-        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
-        !!            The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
-        !!            dimension `info`.
+        !!  - `info`    :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!                  `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!                  The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
+        !!                  dimension `info`.
         !!
-        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
-        !!                          step to be computed. By default, `kstart = 1`.
+        !!  - `kstart` (*optional*) :   `integer` value determining the index of the first Lanczos
+        !!                              step to be computed. By default, `kstart = 1`.
         !!
-        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
-        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!  - `kend` (*optional*)   :   `integer` value determining the index of the last Lanczos step
+        !!                              to be computed. By default, `kend = size(X) - 1`.
         !!
-        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
-        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
-        !!                      `tol = atol_rp` depending on the kind of `A`.
+        !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered
+        !!                              to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                              `tol = atol_rp` depending on the kind of `A`.
         module subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -339,37 +339,37 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `A` : Linear operator derived from one the base types provided by the 
-        !!        `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from one the base types provided by the 
+        !!              `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
-        !!  `U` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
-        !!        is the starting vector for the Lanczos factorization. Additionally, the 
-        !!        maximum number of Lanczos steps is equal to `size(X) - 1`. 
-        !!        It is an `intent(inout)` argument.
+        !!  - `U`   :   Array of types derived from one the base types provided by the `AbstractVectors`
+        !!              module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!              the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
+        !!              is the starting vector for the Lanczos factorization. Additionally, the 
+        !!              maximum number of Lanczos steps is equal to `size(X) - 1`. 
+        !!              It is an `intent(inout)` argument.
         !!
-        !!  `V` : Array of types derived from one the base types provided by the `AbstractVectors`
-        !!        module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!        the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
-        !!        argument.
+        !!  - `V`   :   Array of types derived from one the base types provided by the `AbstractVectors`
+        !!              module. It needs to be consistent with the type of `A`. On exit, it contains the
+        !!              the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
+        !!              argument.
         !!
-        !!  `B` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!         bidiagonal matrix computed from the Lanczos factorization. It is an
-        !!         `intent(inout)` argument.
+        !!  - `B`   :   `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
+        !!              bidiagonal matrix computed from the Lanczos factorization. It is an
+        !!              `intent(inout)` argument.
         !!
-        !!  `info` : `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!           `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!  - `info`    :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
+        !!                  `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
         !!
-        !!  `kstart` (*optional*): `integer` value determining the index of the first Lanczos
-        !!                          step to be computed. By default, `kstart = 1`.
+        !!  - `kstart` (*optional*) :   `integer` value determining the index of the first Lanczos
+        !!                              step to be computed. By default, `kstart = 1`.
         !!
-        !!  `kend` (*optional*): `integer` value determining the index of the last Lanczos step
-        !!                        to be computed. By default, `kend = size(X) - 1`.
+        !!  - `kend` (*optional*)   :   `integer` value determining the index of the last Lanczos step
+        !!                              to be computed. By default, `kend = size(X) - 1`.
         !!
-        !!  `tol` (*optional*): Numerical tolerance below which a subspace is considered
-        !!                      to be \( A \)-invariant. By default `tol = atol_sp` or
-        !!                      `tol = atol_rp` depending on the kind of `A`.
+        !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered
+        !!                              to be \( A \)-invariant. By default `tol = atol_sp` or
+        !!                              `tol = atol_rp` depending on the kind of `A`.
         module subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be factorized.
@@ -490,22 +490,22 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `Q`: Array of types derived from one of the base types provided in the
-        !!       `AbstractVectors` module. On entry, it contains the original array.
-        !!       On exit, it is overwritten by the orthogonal basis for its span.
-        !!       It is an `intent(inout)` argument.
+        !!  - `Q`   :   Array of types derived from one of the base types provided in the
+        !!              `AbstractVectors` module. On entry, it contains the original array.
+        !!              On exit, it is overwritten by the orthogonal basis for its span.
+        !!              It is an `intent(inout)` argument.
         !!
-        !!  `R`: `real` or `complex` rank-2 array. On exit, its contains the upper triangular
-        !!        matrix resulting from the QR factorization. It is an `intent(out)` argument.
+        !!  - `R`   :   `real` or `complex` rank-2 array. On exit, its contains the upper triangular
+        !!              matrix resulting from the QR factorization. It is an `intent(out)` argument.
         !!
-        !!  `perm` (*optional*): Rank-1 array of `integer` corresponding to the indices of
-        !!                       permuted columns. If `perm` is absent, the naive QR factorization
-        !!                       is being computed.
+        !!  - `perm` (*optional*)   :   Rank-1 array of `integer` corresponding to the indices of
+        !!                              permuted columns. If `perm` is absent, the naive QR factorization
+        !!                              is being computed.
         !!
-        !!  `info`: `integer` information flag.
+        !!  - `info`    :   `integer` information flag.
         !!
-        !!  `tol` (*optional*): Numerical tolerance to determine whether two vectors are colinear
-        !!                      or not. Default `tol = atol_sp` or `tol = atol_dp`.
+        !!  - `tol` (*optional*)    :   Numerical tolerance to determine whether two vectors are colinear
+        !!                              or not. Default `tol = atol_sp` or `tol = atol_dp`.
         module subroutine qr_no_pivoting_rsp(Q, R, info, tol)
             class(abstract_vector_rsp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
@@ -613,12 +613,12 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `X` : Array of vectors derived from the base types defined in the `AbstractVectors`
-        !!       module. On entry, it is the original array. On exit, it contains the
-        !!       column-permuted version computed in-place. It is an `intent(inout)` argument.
+        !!  - `X`   :   Array of vectors derived from the base types defined in the `AbstractVectors`
+        !!              module. On entry, it is the original array. On exit, it contains the
+        !!              column-permuted version computed in-place. It is an `intent(inout)` argument.
         !!
-        !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
-        !!          It is an `intent(in)` argument.
+        !!  - `perm`    :   Rank-1 array of `integer` corresponding to the desired permutation vector.
+        !!                  It is an `intent(in)` argument.
         module subroutine permcols_basis_rsp(Q, perm)
             class(abstract_vector_rsp), intent(inout) :: Q(:)
             !! Basis vectors to be permuted.
@@ -679,8 +679,8 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `perm` : Rank-1 array of `integer` corresponding to the desired permutation vector.
-        !!          It is an `intent(in)` argument.
+        !!  - `perm`    :   Rank-1 array of `integer` corresponding to the desired permutation vector.
+        !!                  It is an `intent(in)` argument.
         module function invperm(perm) result(inv_perm)
             integer, intent(in) :: perm(:)
             integer, allocatable :: inv_perm(:)
@@ -700,13 +700,13 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `X` : Array of vectors that needs to be initialized. It is an `intent(inout)`
-        !!        argument. Note that the first action in the subroutine is
-        !!        `call zero_basis(X)`, effectively zeroing-out any data stored.
+        !!  - `X`   :   Array of vectors that needs to be initialized. It is an `intent(inout)`
+        !!              argument. Note that the first action in the subroutine is
+        !!              `call zero_basis(X)`, effectively zeroing-out any data stored.
         !!
-        !!  `X0` (*optional*) : Collection of vectors which will form the first few
-        !!                      Krylov vectors. Note that `X0` need not be an orthonormal
-        !!                      basis as this subroutine includes a `call qr(X0)`.
+        !!  - `X0` (*optional*) :   Collection of vectors which will form the first few
+        !!                          Krylov vectors. Note that `X0` need not be an orthonormal
+        !!                          basis as this subroutine includes a `call qr(X0)`.
         module subroutine initialize_krylov_subspace_rsp(X, X0)
             class(abstract_vector_rsp), intent(inout) :: X(:)
             class(abstract_vector_rsp), optional, intent(in) :: X0(:)
@@ -739,8 +739,8 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `X` : Array of derived types extended from the base types provided in the
-        !!        `AbstractVectors` module.
+        !!  - `X`   :   Array of derived types extended from the base types provided in the
+        !!              `AbstractVectors` module.
         module function is_orthonormal_rsp(X) result(ortho)
             class(abstract_vector_rsp), intent(in) :: X(:)
             logical :: ortho
@@ -774,8 +774,8 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `X` : Array of `abstract_vector` to orthonormalize. Note that this process is done
-        !!        in-place. It is an `intent(inout)` argument.
+        !!  - `X`   :   Array of `abstract_vector` to orthonormalize. Note that this process is done
+        !!              in-place. It is an `intent(inout)` argument.
         module subroutine orthonormalize_basis_rsp(X)
             !! Orthonormalizes the `abstract_vector` basis `X`
             class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -933,22 +933,21 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `y` : `abstract_vector` (or array of `abstract_vector`) that needs to be
-        !!        orthogonalize **in-place** against \( X \).
+        !!  - `y`   :   `abstract_vector` (or array of `abstract_vector`) that needs to be
+        !!              orthogonalize **in-place** against \( X \).
         !!
-        !!  `X` : Array of `abstract_vector` against which \( y \) needs to be orthogonalized.
-        !!        Note the function assumes that \( X \) is an orthonormal set of vectors, i.e.
-        !!        \( X^H X = I \). If it this is not the case, the result are meaningless.
+        !!  - `X`   :   Array of `abstract_vector` against which \( y \) needs to be orthogonalized.
+        !!              Note the function assumes that \( X \) is an orthonormal set of vectors, i.e.
+        !!              \( X^H X = I \). If it this is not the case, the result are meaningless.
         !!
-        !!  `info` : `integer` Information flag.
+        !!  - `info`    :   `integer` Information flag.
         !!
-        !!  `if_chk_orthonormal` (*optional*) : `logical` flag (default `.true.`) to check
-        !!      whether \( X \) is an orthonormal set of vectors or not. If the orthonormality
-        !!      returns `.false.`, the function throws an error. Note that this check is however
-        !!      computationally expensive and can be disable for the sake of performances.
+        !!  - `if_chk_orthonormal` (*optional*) :   `logical` flag (default `.true.`) to check
+        !!                                          whether \( X \) is an orthonormal set of vectors or not. If the orthonormality
+        !!                                          returns `.false.`, the function throws an error. Note that this check is however
+        !!                                          computationally expensive and can be disable for the sake of performances.
         !!
-        !!  `beta` (*optional*) : `real` or `complex` array containing the coefficients
-        !!      \( \beta = X^H y \).
+        !!  - `beta` (*optional*)   :   `real` or `complex` array containing the coefficients \( \beta = X^H y \).
         module subroutine DGS_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
           !! Computes one step of the double Gram-Schmidt orthogonalization process of the
           !! `abstract_vector` `y` against the `abstract_vector` basis `X`
@@ -1092,20 +1091,20 @@ module lightkrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  `n` : Number of selected eigenvalues moved to the upper left-block of the 
-        !!        Schur matrix. It is an `intent(out)` argument.
+        !!  - `n`   :   Number of selected eigenvalues moved to the upper left-block of the 
+        !!              Schur matrix. It is an `intent(out)` argument.
         !!
-        !!  `X` : On entry, array of `abstract_vector` computed using the Arnoldi process.
-        !!        On exit, the first `n` columns form an orthonormal basis for the eigenspace
-        !!        associated with eigenvalues moved to the upper left-block of the Schur matrix.
-        !!        It is an `intent(inout)` argument.
+        !!  - `X`   :   On entry, array of `abstract_vector` computed using the Arnoldi process.
+        !!              On exit, the first `n` columns form an orthonormal basis for the eigenspace
+        !!              associated with eigenvalues moved to the upper left-block of the Schur matrix.
+        !!              It is an `intent(inout)` argument.
         !!
-        !!  `H` : On entry, `real` of `complex` upper Hessenberg matrix computed using the
-        !!        Arnoldi process. On exit, the leading \( n \times n\) block contains the
-        !!        \( S_{11} \) block of the re-ordered Schur matrix containing the selected
-        !!        eigenvalues. It is an `intent(inout)` argument.
+        !!  - `H`   :   On entry, `real` of `complex` upper Hessenberg matrix computed using the
+        !!              Arnoldi process. On exit, the leading \( n \times n\) block contains the
+        !!              \( S_{11} \) block of the re-ordered Schur matrix containing the selected
+        !!              eigenvalues. It is an `intent(inout)` argument.
         !!
-        !!  `select_eigs` : Procedure to select which eigenvalues to move in the upper-left
+        !!  - `select_eigs` :   Procedure to select which eigenvalues to move in the upper-left
         !!                  block. It is an `intent(inout)` argument.
         module procedure krylov_schur_rsp
         module procedure krylov_schur_rdp
@@ -1357,4 +1356,4 @@ contains
     end subroutine krylov_schur_cdp
 
 
-end module lightkrylov_BaseKrylov
+end module LightKrylov_BaseKrylov

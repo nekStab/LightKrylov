@@ -1101,4 +1101,4 @@ contains
     end subroutine adjoint_rmatvec_cdp
 
 
-end module lightkrylov_AbstractLinops
+end module LightKrylov_AbstractLinops

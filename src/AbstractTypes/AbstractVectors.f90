@@ -1387,4 +1387,4 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
 
-end module lightkrylov_AbstractVectors
+end module LightKrylov_AbstractVectors

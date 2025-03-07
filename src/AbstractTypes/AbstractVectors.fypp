@@ -560,4 +560,4 @@ contains
     end subroutine rand_basis_${type[0]}$${kind}$
 
     #:endfor
-end module lightkrylov_AbstractVectors
+end module LightKrylov_AbstractVectors

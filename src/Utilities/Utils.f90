@@ -1,4 +1,4 @@
-module lightkrylov_utils
+module LightKrylov_Utils
     !!  This module provides a set of utility functions used throughout `LightKrylov`.
     !!  It includes:
     !!

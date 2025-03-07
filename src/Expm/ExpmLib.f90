@@ -1,4 +1,4 @@
-module lightkrylov_expmlib
+module LightKrylov_ExpmLib
     !!  This module implements the evaluation of the "matrix-exponential times vector" procedure
     !!  using Krylov methods.
 
@@ -127,21 +127,21 @@ module lightkrylov_expmlib
         !!
         !!  ### Arguments
         !!
-        !!  `c` : Output vector (or vectors). It is an `intent(out)` argument.
+        !!  - `c`   :   Output vector (or vectors). It is an `intent(out)` argument.
         !!
-        !!  `A` : Linear operator to be exponentiated. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator to be exponentiated. It is an `intent(inout)` argument.
         !!
-        !!  `b` : Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
+        !!  - `b`   :   Vector to be multiplied by \( \exp(\tau A) \). It is an `intent(in)` argument.
         !!
-        !!  `tau` : `real` (singe or double) time over which the matrix exponential needs to
-        !!          be computed. It is an `intent(in)` argument.
+        !!  - `tau` :   `real` (singe or double) time over which the matrix exponential needs to
+        !!              be computed. It is an `intent(in)` argument.
         !!
-        !!  `info` : `integer` Information flag.
+        !!  - `info`    :   `integer` Information flag.
         !!
-        !!  `trans` (optional) : Whether \( A \) or \( A^H \) is being used.
-        !!                      (default `trans=.false.`)
+        !!  - `trans` (optional)    :   Whether \( A \) or \( A^H \) is being used.
+        !!                              (default `trans=.false.`)
         !!
-        !!  `kdim` (optional) : Dimension of the Krylov subspace used in the Arnoldi method.
+        !!  - `kdim` (optional)     :   Dimension of the Krylov subspace used in the Arnoldi method.
         module procedure kexpm_vec_rsp
         module procedure kexpm_mat_rsp
         module procedure kexpm_vec_rdp
@@ -165,17 +165,17 @@ module lightkrylov_expmlib
         !!
         !!  ### Arguments
         !!
-        !!  `vec_out` : Output vector.
+        !!  - `vec_out` :   Output vector.
         !!
-        !!  `A` : Matrix to be exponentiated.
+        !!  - `A`       :   Matrix to be exponentiated.
         !!
-        !!  `vec_in` : Input vector.
+        !!  - `vec_in`  :   Input vector.
         !!
-        !!  `tau` : Integration time.
+        !!  - `tau`     :   Integration time.
         !!
-        !!  `info` : Information flag.
+        !!  - `info`    :   Information flag.
         !!
-        !!  `trans` : Whether \( A \) or \( A^H \) is being used.
+        !!  - `trans`   :   Whether \( A \) or \( A^H \) is being used.
         module procedure krylov_exptA_rsp
         module procedure krylov_exptA_rdp
         module procedure krylov_exptA_csp
@@ -1208,4 +1208,4 @@ contains
         return
     end subroutine krylov_exptA_cdp
 
-end module lightkrylov_expmlib
+end module LightKrylov_ExpmLib
