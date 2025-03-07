@@ -5,8 +5,8 @@ module LightKrylov_AbstractLinops
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
     !!  
-    !!  - `matvec(self, vec_in, vec_out)` : Computes the matrix-vector product.
-    !!  - `rmatvec(self, vec_in, vec_out)`: Computes the transpose matrix-vector product.
+    !!  - `matvec(self, vec_in, vec_out)`   :   Computes the matrix-vector product.
+    !!  - `rmatvec(self, vec_in, vec_out)   :   Computes the transpose matrix-vector product.
     !!
     !!  It also provides extended types to define the identity operator, symmetric linear
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
@@ -122,15 +122,16 @@ module LightKrylov_AbstractLinops
     #:for kind, type in RC_KINDS_TYPES
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: scaled_linop_${type[0]}$${kind}$
         #:if type[0] == "r"
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \). The definitions of `matvec`
-        !! and `rmatvec` are directly inherited from those used to define `A` and do not have to
-        !! be defined by the user.
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and
+        !! \( \sigma \in \mathbb{R} \). The definitions of `matvec` and `rmatvec` are directly inherited from those used to define
+        !! `A` and do not have to be defined by the user.
         class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
         !! Base linear operator to be scaled.
         ${type}$ :: sigma
         !! Scaling factor.
         #:else
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex-valued operator and \( \sigma \in \mathbb{C} \).
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a ${type}$-valued operator
+        !! and \( \sigma \in \mathbb{R}\ ) or \( \mathbb{C} \).
         class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
         !! Base linear operator to be scaled.
         ${type}$ :: sigma
@@ -150,8 +151,7 @@ module LightKrylov_AbstractLinops
     #:for kind, type in RC_KINDS_TYPES
     type, extends(abstract_linop_${type[0]}$${kind}$), public :: axpby_linop_${type[0]}$${kind}$
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
-        !! define `A` and `B`.
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
         class(abstract_linop_${type[0]}$${kind}$), allocatable :: A, B
         !! Underlying linear operators.
         ${type}$ :: alpha, beta
@@ -389,7 +389,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_matvec_${type[0]}$${kind}$
@@ -420,7 +420,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_rmatvec_${type[0]}$${kind}$

@@ -3,8 +3,8 @@ module LightKrylov_AbstractLinops
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
     !!  
-    !!  - `matvec(self, vec_in, vec_out)` : Computes the matrix-vector product.
-    !!  - `rmatvec(self, vec_in, vec_out)`: Computes the transpose matrix-vector product.
+    !!  - `matvec(self, vec_in, vec_out)`   :   Computes the matrix-vector product.
+    !!  - `rmatvec(self, vec_in, vec_out)   :   Computes the transpose matrix-vector product.
     !!
     !!  It also provides extended types to define the identity operator, symmetric linear
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
@@ -285,9 +285,9 @@ module LightKrylov_AbstractLinops
     !----------------------------------------------
 
     type, extends(abstract_linop_rsp), public :: scaled_linop_rsp
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \). The definitions of `matvec`
-        !! and `rmatvec` are directly inherited from those used to define `A` and do not have to
-        !! be defined by the user.
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and
+        !! \( \sigma \in \mathbb{R} \). The definitions of `matvec` and `rmatvec` are directly inherited from those used to define
+        !! `A` and do not have to be defined by the user.
         class(abstract_linop_rsp), allocatable :: A
         !! Base linear operator to be scaled.
         real(sp) :: sigma
@@ -298,9 +298,9 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_rsp
     end type
     type, extends(abstract_linop_rdp), public :: scaled_linop_rdp
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and \( \sigma \in \mathbb{R} \). The definitions of `matvec`
-        !! and `rmatvec` are directly inherited from those used to define `A` and do not have to
-        !! be defined by the user.
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and
+        !! \( \sigma \in \mathbb{R} \). The definitions of `matvec` and `rmatvec` are directly inherited from those used to define
+        !! `A` and do not have to be defined by the user.
         class(abstract_linop_rdp), allocatable :: A
         !! Base linear operator to be scaled.
         real(dp) :: sigma
@@ -311,7 +311,8 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_rdp
     end type
     type, extends(abstract_linop_csp), public :: scaled_linop_csp
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex-valued operator and \( \sigma \in \mathbb{C} \).
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex(sp)-valued operator
+        !! and \( \sigma \in \mathbb{R}\ ) or \( \mathbb{C} \).
         class(abstract_linop_csp), allocatable :: A
         !! Base linear operator to be scaled.
         complex(sp) :: sigma
@@ -322,7 +323,8 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_csp
     end type
     type, extends(abstract_linop_cdp), public :: scaled_linop_cdp
-        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex-valued operator and \( \sigma \in \mathbb{C} \).
+        !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex(dp)-valued operator
+        !! and \( \sigma \in \mathbb{R}\ ) or \( \mathbb{C} \).
         class(abstract_linop_cdp), allocatable :: A
         !! Base linear operator to be scaled.
         complex(dp) :: sigma
@@ -339,8 +341,7 @@ module LightKrylov_AbstractLinops
 
     type, extends(abstract_linop_rsp), public :: axpby_linop_rsp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
-        !! define `A` and `B`.
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
         class(abstract_linop_rsp), allocatable :: A, B
         !! Underlying linear operators.
         real(sp) :: alpha, beta
@@ -354,8 +355,7 @@ module LightKrylov_AbstractLinops
     end type
     type, extends(abstract_linop_rdp), public :: axpby_linop_rdp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
-        !! define `A` and `B`.
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
         class(abstract_linop_rdp), allocatable :: A, B
         !! Underlying linear operators.
         real(dp) :: alpha, beta
@@ -369,8 +369,7 @@ module LightKrylov_AbstractLinops
     end type
     type, extends(abstract_linop_csp), public :: axpby_linop_csp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
-        !! define `A` and `B`.
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
         class(abstract_linop_csp), allocatable :: A, B
         !! Underlying linear operators.
         complex(sp) :: alpha, beta
@@ -384,8 +383,7 @@ module LightKrylov_AbstractLinops
     end type
     type, extends(abstract_linop_cdp), public :: axpby_linop_cdp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
-        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to
-        !! define `A` and `B`.
+        !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
         class(abstract_linop_cdp), allocatable :: A, B
         !! Underlying linear operators.
         complex(dp) :: alpha, beta
@@ -799,7 +797,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_matvec_rsp
@@ -830,7 +828,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_rmatvec_rsp
@@ -861,7 +859,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_matvec_rdp
@@ -892,7 +890,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_rmatvec_rdp
@@ -923,7 +921,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_matvec_csp
@@ -954,7 +952,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_rmatvec_csp
@@ -985,7 +983,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_matvec_cdp
@@ -1016,7 +1014,7 @@ contains
         endif
 
         ! y = alpha*w + beta*y
-        call vec_out%axpby(self%beta, wrk, self%alpha)
+        call vec_out%axpby(self%alpha, wrk, self%beta)
 
         return
     end subroutine axpby_rmatvec_cdp
