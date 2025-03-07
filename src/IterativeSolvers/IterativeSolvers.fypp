@@ -1047,7 +1047,8 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                call X(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), eigvecs_wrk(j, i))
+                ! call X(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), eigvecs_wrk(j, i))
+                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_${type[0]}$${kind}$)
             enddo
         enddo
 

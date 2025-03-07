@@ -192,7 +192,7 @@ module lightkrylov_AbstractVectors
         !!  extended `abstract_vector`, i.e.
         !!
         !!  \[
-        !!      \mathbf{x}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
+        !!      \mathbf{y}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
         !!  \]
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
@@ -208,7 +208,7 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Whatever your code is doing ...
         !!
-        !!      call axpby_basis(X, alpha, Y, beta)
+        !!      call axpby_basis(alpha, X, beta, Y)
         !!
         !!      ! ... Rest of your code ...
         !!  ```
@@ -350,7 +350,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_rsp
 
-        subroutine abstract_axpby_rsp(self, alpha, vec, beta)
+        subroutine abstract_axpby_rsp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rsp, sp
             class(abstract_vector_rsp), intent(inout) :: self
@@ -434,7 +434,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_rdp
 
-        subroutine abstract_axpby_rdp(self, alpha, vec, beta)
+        subroutine abstract_axpby_rdp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rdp, dp
             class(abstract_vector_rdp), intent(inout) :: self
@@ -518,7 +518,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_csp
 
-        subroutine abstract_axpby_csp(self, alpha, vec, beta)
+        subroutine abstract_axpby_csp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_csp, sp
             class(abstract_vector_csp), intent(inout) :: self
@@ -602,7 +602,7 @@ module lightkrylov_AbstractVectors
             !! Scaling factor.
         end subroutine abstract_scal_cdp
 
-        subroutine abstract_axpby_cdp(self, alpha, vec, beta)
+        subroutine abstract_axpby_cdp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_cdp, dp
             class(abstract_vector_cdp), intent(inout) :: self
@@ -649,7 +649,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_rsp, vec, -one_rsp)
+        call self%axpby(-one_rsp, vec, one_rsp)
     end subroutine sub_rsp
 
     subroutine add_rsp(self, vec)
@@ -683,7 +683,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_rdp, vec, -one_rdp)
+        call self%axpby(-one_rdp, vec, one_rdp)
     end subroutine sub_rdp
 
     subroutine add_rdp(self, vec)
@@ -717,7 +717,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_csp, vec, -one_csp)
+        call self%axpby(-one_csp, vec, one_csp)
     end subroutine sub_csp
 
     subroutine add_csp(self, vec)
@@ -751,7 +751,7 @@ contains
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
         !! Vector to be added.
-        call self%axpby(one_cdp, vec, -one_cdp)
+        call self%axpby(-one_cdp, vec, one_cdp)
     end subroutine sub_cdp
 
     subroutine add_cdp(self, vec)
@@ -799,7 +799,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_rsp, X(i), v(i))
+            call y%axpby(v(i), X(i), one_rsp) ! y = y + X*v
         enddo
 
         return
@@ -837,7 +837,7 @@ contains
         do j = 1, size(Y)
             call Y(j)%zero()
             do i = 1, size(X)
-                call Y(j)%axpby(one_rsp, X(i), B(i, j))
+                call Y(j)%axpby(B(i, j), X(i), one_rsp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
 
@@ -898,17 +898,17 @@ contains
         return
     end function innerprod_matrix_rsp
 
-    impure elemental subroutine axpby_basis_rsp(x, alpha, y, beta)
-        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+    impure elemental subroutine axpby_basis_rsp(alpha, x, beta, y)
+        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(sp)
         !! numbers.
-        class(abstract_vector_rsp), intent(inout) :: x
+        class(abstract_vector_rsp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_rsp), intent(in) :: y
+        class(abstract_vector_rsp), intent(inout) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         real(sp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call x%axpby(alpha, y, beta)
+        call y%axpby(alpha, x, beta)
     end subroutine axpby_basis_rsp
 
     impure elemental subroutine zero_basis_rsp(X)
@@ -920,7 +920,7 @@ contains
         class(abstract_vector_rsp), intent(in) :: from
         class(abstract_vector_rsp), intent(out) :: out
         ! Copy array.
-        call out%axpby(zero_rsp, from, one_rsp)
+        call out%axpby(one_rsp, from, zero_rsp)
     end subroutine copy_vector_rsp
 
     impure elemental subroutine rand_basis_rsp(X, ifnorm)
@@ -953,7 +953,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_rdp, X(i), v(i))
+            call y%axpby(v(i), X(i), one_rdp) ! y = y + X*v
         enddo
 
         return
@@ -991,7 +991,7 @@ contains
         do j = 1, size(Y)
             call Y(j)%zero()
             do i = 1, size(X)
-                call Y(j)%axpby(one_rdp, X(i), B(i, j))
+                call Y(j)%axpby(B(i, j), X(i), one_rdp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
 
@@ -1052,17 +1052,17 @@ contains
         return
     end function innerprod_matrix_rdp
 
-    impure elemental subroutine axpby_basis_rdp(x, alpha, y, beta)
-        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+    impure elemental subroutine axpby_basis_rdp(alpha, x, beta, y)
+        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(dp)
         !! numbers.
-        class(abstract_vector_rdp), intent(inout) :: x
+        class(abstract_vector_rdp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_rdp), intent(in) :: y
+        class(abstract_vector_rdp), intent(inout) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         real(dp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call x%axpby(alpha, y, beta)
+        call y%axpby(alpha, x, beta)
     end subroutine axpby_basis_rdp
 
     impure elemental subroutine zero_basis_rdp(X)
@@ -1074,7 +1074,7 @@ contains
         class(abstract_vector_rdp), intent(in) :: from
         class(abstract_vector_rdp), intent(out) :: out
         ! Copy array.
-        call out%axpby(zero_rdp, from, one_rdp)
+        call out%axpby(one_rdp, from, zero_rdp)
     end subroutine copy_vector_rdp
 
     impure elemental subroutine rand_basis_rdp(X, ifnorm)
@@ -1107,7 +1107,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_csp, X(i), v(i))
+            call y%axpby(v(i), X(i), one_csp) ! y = y + X*v
         enddo
 
         return
@@ -1145,7 +1145,7 @@ contains
         do j = 1, size(Y)
             call Y(j)%zero()
             do i = 1, size(X)
-                call Y(j)%axpby(one_csp, X(i), B(i, j))
+                call Y(j)%axpby(B(i, j), X(i), one_csp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
 
@@ -1206,17 +1206,17 @@ contains
         return
     end function innerprod_matrix_csp
 
-    impure elemental subroutine axpby_basis_csp(x, alpha, y, beta)
-        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+    impure elemental subroutine axpby_basis_csp(alpha, x, beta, y)
+        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(sp)
         !! numbers.
-        class(abstract_vector_csp), intent(inout) :: x
+        class(abstract_vector_csp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_csp), intent(in) :: y
+        class(abstract_vector_csp), intent(inout) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         complex(sp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call x%axpby(alpha, y, beta)
+        call y%axpby(alpha, x, beta)
     end subroutine axpby_basis_csp
 
     impure elemental subroutine zero_basis_csp(X)
@@ -1228,7 +1228,7 @@ contains
         class(abstract_vector_csp), intent(in) :: from
         class(abstract_vector_csp), intent(out) :: out
         ! Copy array.
-        call out%axpby(zero_csp, from, one_csp)
+        call out%axpby(one_csp, from, zero_csp)
     end subroutine copy_vector_csp
 
     impure elemental subroutine rand_basis_csp(X, ifnorm)
@@ -1261,7 +1261,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(one_cdp, X(i), v(i))
+            call y%axpby(v(i), X(i), one_cdp) ! y = y + X*v
         enddo
 
         return
@@ -1299,7 +1299,7 @@ contains
         do j = 1, size(Y)
             call Y(j)%zero()
             do i = 1, size(X)
-                call Y(j)%axpby(one_cdp, X(i), B(i, j))
+                call Y(j)%axpby(B(i, j), X(i), one_cdp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
 
@@ -1360,17 +1360,17 @@ contains
         return
     end function innerprod_matrix_cdp
 
-    impure elemental subroutine axpby_basis_cdp(x, alpha, y, beta)
-        !! Compute in-place \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+    impure elemental subroutine axpby_basis_cdp(alpha, x, beta, y)
+        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(dp)
         !! numbers.
-        class(abstract_vector_cdp), intent(inout) :: x
+        class(abstract_vector_cdp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_cdp), intent(in) :: y
+        class(abstract_vector_cdp), intent(inout) :: y
         !! Array of `abstract_vector` to be added/subtracted to `X`.
         complex(dp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call x%axpby(alpha, y, beta)
+        call y%axpby(alpha, x, beta)
     end subroutine axpby_basis_cdp
 
     impure elemental subroutine zero_basis_cdp(X)
@@ -1382,7 +1382,7 @@ contains
         class(abstract_vector_cdp), intent(in) :: from
         class(abstract_vector_cdp), intent(out) :: out
         ! Copy array.
-        call out%axpby(zero_cdp, from, one_cdp)
+        call out%axpby(one_cdp, from, zero_cdp)
     end subroutine copy_vector_cdp
 
     impure elemental subroutine rand_basis_cdp(X, ifnorm)

@@ -121,9 +121,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_${type[0]}$${kind}$, p, alpha)
+            call x%axpby(alpha, p, one_${type[0]}$${kind}$)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_${type[0]}$${kind}$, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_${type[0]}$${kind}$)
 
             if(ifprecond) then
                 z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
@@ -151,11 +151,13 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
+
             if (ifprecond) then
-                call p%axpby(beta, z, one_${type[0]}$${kind}$)
+                call p%axpby(one_${type[0]}$${kind}$, z, beta)
             else
-                call p%axpby(beta, r, one_${type[0]}$${kind}$)
+                call p%axpby(one_${type[0]}$${kind}$, r, beta)
             endif
+
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 

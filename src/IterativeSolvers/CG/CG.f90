@@ -158,9 +158,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_rsp, p, alpha)
+            call x%axpby(alpha, p, one_rsp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_rsp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_rsp)
 
             if(ifprecond) then
                 z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
@@ -185,10 +185,11 @@ contains
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             if (ifprecond) then
-                call p%axpby(beta, z, one_rsp)
+                call p%axpby(one_rsp, z, beta)
             else
-                call p%axpby(beta, r, one_rsp)
+                call p%axpby(one_rsp, r, beta)
             endif
+
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
@@ -282,9 +283,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_rdp, p, alpha)
+            call x%axpby(alpha, p, one_rdp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_rdp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_rdp)
 
             if(ifprecond) then
                 z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
@@ -309,10 +310,11 @@ contains
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             if (ifprecond) then
-                call p%axpby(beta, z, one_rdp)
+                call p%axpby(one_rdp, z, beta)
             else
-                call p%axpby(beta, r, one_rdp)
+                call p%axpby(one_rdp, r, beta)
             endif
+
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
@@ -406,9 +408,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_csp, p, alpha)
+            call x%axpby(alpha, p, one_csp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_csp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_csp)
 
             if(ifprecond) then
                 z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
@@ -433,10 +435,11 @@ contains
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             if (ifprecond) then
-                call p%axpby(beta, z, one_csp)
+                call p%axpby(one_csp, z, beta)
             else
-                call p%axpby(beta, r, one_csp)
+                call p%axpby(one_csp, r, beta)
             endif
+
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 
@@ -530,9 +533,9 @@ contains
             ! Compute step size.
             alpha = r_dot_r_old / p%dot(Ap)
             ! Update solution x = x + alpha*p
-            call x%axpby(one_cdp, p, alpha)
+            call x%axpby(alpha, p, one_cdp)
             ! Update residual r = r - alpha*Ap
-            call r%axpby(one_cdp, Ap, -alpha)
+            call r%axpby(-alpha, Ap, one_cdp)
 
             if(ifprecond) then
                 z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
@@ -557,10 +560,11 @@ contains
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
             if (ifprecond) then
-                call p%axpby(beta, z, one_cdp)
+                call p%axpby(one_cdp, z, beta)
             else
-                call p%axpby(beta, r, one_cdp)
+                call p%axpby(one_cdp, r, beta)
             endif
+
             ! Update r_dot_r_old for next iteration.
             r_dot_r_old = r_dot_r_new
 

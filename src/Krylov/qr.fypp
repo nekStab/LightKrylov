@@ -88,7 +88,7 @@ contains
             ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_${type[0]}$${kind}$, Q(j), -beta)
+                call Q(i)%axpby(-beta, Q(j), one_${type[0]}$${kind}$)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
             enddo
 

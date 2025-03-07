@@ -203,7 +203,7 @@ contains
 
                 ! Project back into original space.
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(zero_${type[0]}$${kind}$, Xwrk, one_${type[0]}$${kind}$*beta)
+                call c%axpby(beta*one_${type[0]}$${kind}$, Xwrk, zero_${type[0]}$${kind}$)
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
@@ -316,14 +316,14 @@ contains
                 do i = 1, size(Xwrk)
                     call Xwrk(i)%zero()
                     do j = 1, kpp
-                        call Xwrk(i)%axpby(one_${type[0]}$${kind}$, X(j), E(j, i))
+                        call Xwrk(i)%axpby(E(j, i), X(j), one_${type[0]}$${kind}$)
                     enddo
                 enddo
 
                 do i = 1, p
                     call C(i)%zero()
                     do j = 1, p
-                        call C(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), R(j, i))
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_${type[0]}$${kind}$)
                     enddo
                 enddo
 

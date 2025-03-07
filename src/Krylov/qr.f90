@@ -115,7 +115,7 @@ contains
             ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_rsp, Q(j), -beta)
+                call Q(i)%axpby(-beta, Q(j), one_rsp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
             enddo
 
@@ -187,7 +187,7 @@ contains
             ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_rdp, Q(j), -beta)
+                call Q(i)%axpby(-beta, Q(j), one_rdp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
             enddo
 
@@ -259,7 +259,7 @@ contains
             ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_csp, Q(j), -beta)
+                call Q(i)%axpby(-beta, Q(j), one_csp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
             enddo
 
@@ -331,7 +331,7 @@ contains
             ! Orthogonalize all columns against new vector.
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(one_cdp, Q(j), -beta)
+                call Q(i)%axpby(-beta, Q(j), one_cdp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
             enddo
 

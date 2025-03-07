@@ -241,13 +241,13 @@ contains
         self%data = alpha * self%data
     end subroutine scal_${type[0]}$${kind}$
 
-    subroutine axpby_${type[0]}$${kind}$(self, alpha, vec, beta)
+    subroutine axpby_${type[0]}$${kind}$(alpha, vec, beta, self)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         ${type}$, intent(in) :: alpha, beta
         select type(vec)
         type is(vector_${type[0]}$${kind}$)
-            self%data = alpha*self%data + beta*vec%data
+            self%data = alpha*vec%data + beta*self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'vector_${type[0]}$${kind}$'", &
                               & this_module, 'axpby_${type[0]}$${kind}$')
@@ -542,15 +542,15 @@ contains
         self%z = self%z * alpha
     end subroutine scal_state_r${kind}$
   
-    subroutine axpby_state_r${kind}$(self, alpha, vec, beta)
+    subroutine axpby_state_r${kind}$(alpha, vec, beta, self)
         class(state_vector_r${kind}$)   , intent(inout) :: self
         class(abstract_vector_r${kind}$), intent(in)    :: vec
         real(${kind}$)                  , intent(in)    :: alpha, beta
         select type(vec)
         type is(state_vector_r${kind}$)
-            self%x = alpha*self%x + beta*vec%x
-            self%y = alpha*self%y + beta*vec%y
-            self%z = alpha*self%z + beta*vec%z
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_r${kind}$'", &
                               & this_module, 'axpby_state_r${kind}$')

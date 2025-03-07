@@ -163,7 +163,7 @@ contains
         block
             class(abstract_vector_${type[0]}$${kind}$), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(Y, one_${type[0]}$${kind}$, proj, -one_${type[0]}$${kind}$)
+            call axpby_basis(-one_${type[0]}$${kind}$, proj, one_${type[0]}$${kind}$, Y)
         end block
 
         if (present(beta)) then

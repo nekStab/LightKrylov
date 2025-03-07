@@ -350,7 +350,7 @@ contains
         block
             class(abstract_vector_rsp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(Y, one_rsp, proj, -one_rsp)
+            call axpby_basis(-one_rsp, proj, one_rsp, Y)
         end block
 
         if (present(beta)) then
@@ -445,7 +445,7 @@ contains
         block
             class(abstract_vector_rdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(Y, one_rdp, proj, -one_rdp)
+            call axpby_basis(-one_rdp, proj, one_rdp, Y)
         end block
 
         if (present(beta)) then
@@ -540,7 +540,7 @@ contains
         block
             class(abstract_vector_csp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(Y, one_csp, proj, -one_csp)
+            call axpby_basis(-one_csp, proj, one_csp, Y)
         end block
 
         if (present(beta)) then
@@ -635,7 +635,7 @@ contains
         block
             class(abstract_vector_cdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(Y, one_cdp, proj, -one_cdp)
+            call axpby_basis(-one_cdp, proj, one_cdp, Y)
         end block
 
         if (present(beta)) then
