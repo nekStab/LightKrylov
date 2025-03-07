@@ -1,42 +1,38 @@
-module lightkrylov_AbstractVectors
+module LightKrylov_AbstractVectors
     !! This module provides the base class `absract_vector` from which all Krylov vectors
     !! needs to be derived. To use `LightKrylov`, you need to extend one of the
     !! followings:
     !!
-    !! - `abstract_vector_rsp`: Real-valued vector with single precision arithmetic.
-    !! - `abstract_vector_rdp`: Real-valued vector with double precision arithmetic.
-    !! - `abstract_vector_csp`: Complex-valued vector with single precision arithmetic.
-    !! - `abstract_vector_cdp`: Complex-valued vector with double precision arithmetic.
+    !! - `abstract_vector_rsp`  :   Real-valued vector with single precision arithmetic.
+    !! - `abstract_vector_rdp`  :   Real-valued vector with double precision arithmetic.
+    !! - `abstract_vector_csp`  :   Complex-valued vector with single precision arithmetic.
+    !! - `abstract_vector_cdp`  :   Complex-valued vector with double precision arithmetic.
     !!
     !! To extend either of these abstract types, you need to provide an associated implementation
     !! for the following type-bound procedures:
     !!
-    !! - `zero(self)`: A subroutine zeroing-out the vector.
-    !! - `rand(self, ifnorm)`: A subroutine creating a random vector, possibily normalized to have unit-norm (`ifnorm = .true.`).
-    !! - `scal(self, alpha)`: A subroutine computing *in-place* the scalar multiplication \( \mathbf{x} = \alpha \mathbf{x} \).
-    !! - `axpby(self, alpha, vec, beta)`: A subroutine computing *in-place* the product \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
-    !! - `dot(self, vec)`: A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
-    !! - `get_size(self)`: A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
+    !! - `zero(self)`                   :   A subroutine zeroing-out the vector.
+    !! - `rand(self, ifnorm)`           :   A subroutine creating a random vector, possibily normalized to have unit-norm (`ifnorm = .true.`).
+    !! - `scal(self, alpha)`            :   A subroutine computing *in-place* the scalar multiplication \( \mathbf{x} \leftarrow \alpha \mathbf{x} \).
+    !! - `axpby(alpha, vec, beta, self) :   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+    !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
+    !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
     !!
     !! Once these type-bound procedures have been implemented by the user, they will automatically 
     !! be used to define:
     !!
-    !! - vector addition `add(self, vec) = axpby(self, 1, vec, 1)`
-    !! - vector subtraction `sub(self, vec) = axpby(self, 1, vec, -1)`
-    !! - vector norm `norm(self) = sqrt(dot_product(self, self))`.
+    !! - vector addition    :   `add(self, vec) = axpby(1, vec, 1, self)`
+    !! - vector subtraction :   `sub(self, vec) = axpby(-1, vec, 1, self)`
+    !! - vector norm        :   `norm(self)     = sqrt(self%dot(self))`
     !!
     !! This module also provides the following utility subroutines:
     !!
-    !! - `innerprod(v, X, y)` and `innerprod(M, X, Y)`: Subroutine to compute the 
-    !! inner-product matrix/vector between a Krylov basis `X` and a Krylov vector 
-    !! (resp. basis) `y` (resp. `Y`).
-    !! - `linear_combination(y, X, v)` and `linear_combination(Y, X, B)`: Subroutine to 
-    !! compute the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
-    !! - `axpby_basis(X, alpha, Y, beta)`: In-place computation of \( \mathbf{X} = \alpha \mathbf{X} + \beta \mathbf{Y} \)
-    !! where \( \mathbf{X} \) and \( \mathbf{Y} \) are two arrays of `abstract_vector`s.
-    !! - `zero_basis(X)`: Zero-out a collection of `abstract_vectors`.
-    !! - `copy_basis(out, from)`: Copy a collection of `abstract_vectors`.
-    !! - `rand_basis(X, ifnorm)`: Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
+    !! - `innerprod(X, Y)`                  : Function computing the product \(\mathbf{X}^H \mathbf{y} \) between a Krylov basis `X` and a Krylov vector  (resp. basis) `Y`.
+    !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
+    !! - `axpby_basis(alpha, X, beta, Y)`   : In-place computation of \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where `X` and `Y` are arrays of `abstract_vector`.
+    !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
+    !! - `copy_basis(out, from)`            : Copy a collection of `abstract_vectors`.
+    !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
 
     use stdlib_optval, only: optval
     use LightKrylov_Constants
@@ -70,10 +66,9 @@ module lightkrylov_AbstractVectors
         !!  ### Example
         !!
         !!  The example below assumes that you have already extended the `abstract_vector_rdp`
-        !!  class to define your own `my_real_vector` type. It then computes the inner product
-        !!  vector \( \mathbf{v} \) defined as \( v_i = \mathbf{x}_i^H \mathbf{y} \).
+        !!  class to define your own `my_real_vector` type.
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      type(my_real_vector)                :: y
         !!      real(dp), dimension(:), allocatable :: v
@@ -85,10 +80,9 @@ module lightkrylov_AbstractVectors
         !!      ! ... Rest of your code ...
         !!  ```
         !!
-        !!  Similarly, computing the matrix of inner products between two bases can be done
-        !!  as shown below.
+        !!  Similarly, for computing the matrix of inner products between two bases
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      type(my_real_vector), dimension(10) :: Y
         !!      real(dp), dimension(:, :), allocatable :: M
@@ -114,15 +108,14 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Description
         !!
-        !!  This interface provides methods for computing the inner products between a basis
-        !!  of `real` or `complex` vectors \( \mathbf{X} \).
+        !!  This interface provides methods for computing the Gram matrix associated to a basis of `abstract_vector` \( \mathbf{X} \).
         !!
         !!  ### Example
         !!
         !!  The example below assumes that you have already extended the `abstract_vector_rdp`
-        !!  class to define your own `my_real_vector` type. It then computes the Gram matrix \( \mathbf{X} \) defined as \( G_{ij} = \mathbf{x}_i^H \mathbf{x}_j \).
+        !!  class to define your own `my_real_vector` type.
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      real(dp), dimension(:, :), allocatable :: G
         !!
@@ -132,7 +125,6 @@ module lightkrylov_AbstractVectors
         !!
         !!      ! ... Rest of your code ...
         !!  ```
-        !!
         module procedure gram_matrix_rsp
         module procedure gram_matrix_rdp
         module procedure gram_matrix_csp
@@ -145,7 +137,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Description
         !!
-        !!  This interface provides methods for computing linear combinations of a set of extended
+        !!  This interface provides methods for computing linear combinations of a set of
         !!  `abstract_vectors`. Depending on its input, it either computes
         !!
         !!  \[
@@ -162,7 +154,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Example
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      real(dp), dimension(m, n)           :: B
         !!      type(my_real_vector)                :: Y
@@ -192,7 +184,7 @@ module lightkrylov_AbstractVectors
         !!  extended `abstract_vector`, i.e.
         !!
         !!  \[
-        !!      \mathbf{y}_i \leftarrow \alpha_i \mathbf{x}_i + \beta_i \mathbf{y}_i.
+        !!      \mathbf{Y}_i \leftarrow \alpha \mathbf{X}_i + \beta \mathbf{Y}_i.
         !!  \]
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
@@ -201,7 +193,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Example
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      type(my_real_vector), dimension(10) :: Y
         !!      real(dp), dimension(10)             :: alpha, beta
@@ -224,7 +216,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Example
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!
         !!      ! ... Your code ...
@@ -245,7 +237,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Example
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      type(my_real_vector), dimension(10) :: Y
         !!
@@ -271,7 +263,7 @@ module lightkrylov_AbstractVectors
         !!
         !!  ### Example
         !!
-        !!  ```
+        !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
         !!      logical                             :: ifnorm = .true.
         !!
@@ -312,7 +304,7 @@ module lightkrylov_AbstractVectors
         procedure(abstract_scal_rsp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_rsp), pass(self), deferred, public :: axpby
-        !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_rsp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_rsp`.
         procedure(abstract_get_size_rsp), pass(self), deferred, public :: get_size
@@ -320,10 +312,11 @@ module lightkrylov_AbstractVectors
         procedure, pass(self), public :: norm => norm_rsp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rsp
-        !! Adds two `abstract_vector`.
+        !! Adds two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{x} + \mathbf{y}\).
         procedure, pass(self), public :: sub => sub_rsp
-        !! Subtracts two `abstract_vector`.
+        !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_rsp
+        !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
     end type
 
     abstract interface
@@ -396,7 +389,7 @@ module lightkrylov_AbstractVectors
         procedure(abstract_scal_rdp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_rdp), pass(self), deferred, public :: axpby
-        !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_rdp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_rdp`.
         procedure(abstract_get_size_rdp), pass(self), deferred, public :: get_size
@@ -404,10 +397,11 @@ module lightkrylov_AbstractVectors
         procedure, pass(self), public :: norm => norm_rdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rdp
-        !! Adds two `abstract_vector`.
+        !! Adds two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{x} + \mathbf{y}\).
         procedure, pass(self), public :: sub => sub_rdp
-        !! Subtracts two `abstract_vector`.
+        !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_rdp
+        !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
     end type
 
     abstract interface
@@ -480,7 +474,7 @@ module lightkrylov_AbstractVectors
         procedure(abstract_scal_csp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_csp), pass(self), deferred, public :: axpby
-        !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_csp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_csp`.
         procedure(abstract_get_size_csp), pass(self), deferred, public :: get_size
@@ -488,10 +482,11 @@ module lightkrylov_AbstractVectors
         procedure, pass(self), public :: norm => norm_csp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_csp
-        !! Adds two `abstract_vector`.
+        !! Adds two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{x} + \mathbf{y}\).
         procedure, pass(self), public :: sub => sub_csp
-        !! Subtracts two `abstract_vector`.
+        !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_csp
+        !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
     end type
 
     abstract interface
@@ -564,7 +559,7 @@ module lightkrylov_AbstractVectors
         procedure(abstract_scal_cdp), pass(self), deferred, public :: scal
         !! Compute the scalar-vector product.
         procedure(abstract_axpby_cdp), pass(self), deferred, public :: axpby
-        !! In-place computation of \( \mathbf{x} = \alpha \mathbf{x} + \beta \mathbf{y} \).
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
         procedure(abstract_dot_cdp), pass(self), deferred, public :: dot
         !! Computes the dot product between two `abstract_vector_cdp`.
         procedure(abstract_get_size_cdp), pass(self), deferred, public :: get_size
@@ -572,10 +567,11 @@ module lightkrylov_AbstractVectors
         procedure, pass(self), public :: norm => norm_cdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_cdp
-        !! Adds two `abstract_vector`.
+        !! Adds two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{x} + \mathbf{y}\).
         procedure, pass(self), public :: sub => sub_cdp
-        !! Subtracts two `abstract_vector`.
+        !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_cdp
+        !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
     end type
 
     abstract interface
@@ -799,7 +795,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(v(i), X(i), one_rsp) ! y = y + X*v
+            call y%axpby(v(i), X(i), one_rsp) ! y = y + X[i]*v[i]
         enddo
 
         return
@@ -899,7 +895,7 @@ contains
     end function innerprod_matrix_rsp
 
     impure elemental subroutine axpby_basis_rsp(alpha, x, beta, y)
-        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(sp)
         !! numbers.
         class(abstract_vector_rsp), intent(in) :: x
@@ -953,7 +949,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(v(i), X(i), one_rdp) ! y = y + X*v
+            call y%axpby(v(i), X(i), one_rdp) ! y = y + X[i]*v[i]
         enddo
 
         return
@@ -1053,7 +1049,7 @@ contains
     end function innerprod_matrix_rdp
 
     impure elemental subroutine axpby_basis_rdp(alpha, x, beta, y)
-        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(dp)
         !! numbers.
         class(abstract_vector_rdp), intent(in) :: x
@@ -1107,7 +1103,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(v(i), X(i), one_csp) ! y = y + X*v
+            call y%axpby(v(i), X(i), one_csp) ! y = y + X[i]*v[i]
         enddo
 
         return
@@ -1207,7 +1203,7 @@ contains
     end function innerprod_matrix_csp
 
     impure elemental subroutine axpby_basis_csp(alpha, x, beta, y)
-        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(sp)
         !! numbers.
         class(abstract_vector_csp), intent(in) :: x
@@ -1261,7 +1257,7 @@ contains
         if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
-            call y%axpby(v(i), X(i), one_cdp) ! y = y + X*v
+            call y%axpby(v(i), X(i), one_cdp) ! y = y + X[i]*v[i]
         enddo
 
         return
@@ -1361,7 +1357,7 @@ contains
     end function innerprod_matrix_cdp
 
     impure elemental subroutine axpby_basis_cdp(alpha, x, beta, y)
-        !! Compute in-place \( \mathbf{Y} = \alpha \mathbf{X} + \beta \mathbf{Y} \) where
+        !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(dp)
         !! numbers.
         class(abstract_vector_cdp), intent(in) :: x

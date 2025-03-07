@@ -184,6 +184,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
+
             if (ifprecond) then
                 call p%axpby(one_rsp, z, beta)
             else
@@ -309,6 +310,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
+
             if (ifprecond) then
                 call p%axpby(one_rdp, z, beta)
             else
@@ -434,6 +436,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
+
             if (ifprecond) then
                 call p%axpby(one_csp, z, beta)
             else
@@ -559,6 +562,7 @@ contains
             ! Compute new direction beta = r_dot_r_new / r_dot_r_old.
             beta = r_dot_r_new / r_dot_r_old
             ! Update direction p = beta*p + r
+
             if (ifprecond) then
                 call p%axpby(one_cdp, z, beta)
             else
