@@ -90,9 +90,9 @@ contains
       ! cdp
       call self%add_timer('qr_with_pivoting_cdp')
       call self%add_timer('qr_no_pivoting_cdp')
-      call self%add_timer('orthonormalize_basis_cdp')
-      call self%add_timer('orthonormalize_vector_against_basis_cdp')
-      call self%add_timer('orthonormalize_basis_against_basis_cdp')
+      call self%add_timer('orthogormalize_basis_cdp')
+      call self%add_timer('orthogonalize_vector_against_basis_cdp')
+      call self%add_timer('orthogonalize_basis_against_basis_cdp')
       call self%add_timer('dgs_vector_against_basis_cdp')
       call self%add_timer('dgs_basis_against_basis_cdp')
       call self%add_timer('arnoldi_cdp')
