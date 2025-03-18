@@ -19,7 +19,8 @@ module TestNewtonKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestNewtonKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TNwtKryl'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestNewtonKrylov'
 
     #:for kind in REAL_KINDS
     public :: collect_newton_r${kind}$_testsuite
@@ -60,7 +61,7 @@ contains
        allocate(X, fp1, fp2);
 
        ! Newton opts
-       opts = newton_${kind}$_opts(maxiter=10, ifbisect=.false.) 
+       opts = newton_${kind}$_opts(maxiter=10, ifbisect=.false., if_print_metadata=.true.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler_r${kind}$()
@@ -71,7 +72,7 @@ contains
        X%x = zero_r${kind}$
        X%y = zero_r${kind}$
        X%z = zero_r${kind}$
-       call newton(sys, X, gmres_r${kind}$, info, tolerance=atol_${kind}$, options=opts)
+       call newton(sys, X, gmres_r${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -85,7 +86,7 @@ contains
        X%x = 10.0_${kind}$
        X%y = -5.0_${kind}$
        X%z = 20.0_${kind}$
-       call newton(sys, X, gmres_r${kind}$, info, tolerance=atol_${kind}$, options=opts)
+       call newton(sys, X, gmres_r${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -100,7 +101,7 @@ contains
        X%y = zero_r${kind}$
        X%z = zero_r${kind}$
        opts%ifbisect = .true.
-       call newton(sys, X, gmres_r${kind}$, info, tolerance=atol_${kind}$, options=opts)
+       call newton(sys, X, gmres_r${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)

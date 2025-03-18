@@ -19,7 +19,8 @@ module TestIterativeSolvers
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
+    character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
 
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
@@ -98,7 +99,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rsp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_ks_evp_rsp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_csp; k = 1
@@ -117,7 +118,7 @@ contains
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
         !do i = 1, nev
-        !    call A%matvec(X(i), AX(i))
+        !    call A%apply_matvec(X(i), AX(i))
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
@@ -171,7 +172,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_evp_rsp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_rsp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_csp; k = 1
@@ -190,7 +191,7 @@ contains
 !        allocate(AX(test_size))
 !        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
 !        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
+!            call A%apply_matvec(X(i), AX(i))
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
@@ -248,7 +249,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_sp)
-        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rsp')
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_sym_evp_rsp')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_sp
@@ -266,7 +267,7 @@ contains
         allocate(AX(test_size))
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
         do i = 1, test_size
-            call A%matvec(X(i), AX(i))
+            call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
@@ -275,11 +276,10 @@ contains
         call check_test(error, 'test_sym_evp_rsp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(test_size, test_size)) ; G = zero_rsp
-        call innerprod(G, X, X)
+        G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_sym_evp_rsp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
@@ -341,7 +341,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_rdp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_ks_evp_rdp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_cdp; k = 1
@@ -360,7 +360,7 @@ contains
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
         !do i = 1, nev
-        !    call A%matvec(X(i), AX(i))
+        !    call A%apply_matvec(X(i), AX(i))
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
@@ -414,7 +414,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
-        call check_info(info, 'eigs', module=this_module, procedure='test_evp_rdp')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_rdp')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_cdp; k = 1
@@ -433,7 +433,7 @@ contains
 !        allocate(AX(test_size))
 !        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
 !        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
+!            call A%apply_matvec(X(i), AX(i))
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
@@ -491,7 +491,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_dp)
-        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_rdp')
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_sym_evp_rdp')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_dp
@@ -509,7 +509,7 @@ contains
         allocate(AX(test_size))
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
         do i = 1, test_size
-            call A%matvec(X(i), AX(i))
+            call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
@@ -518,11 +518,10 @@ contains
         call check_test(error, 'test_sym_evp_rdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(test_size, test_size)) ; G = zero_rdp
-        call innerprod(G, X, X)
+        G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_sym_evp_rdp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
@@ -710,7 +709,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
-        call check_info(info, 'svds', module=this_module, procedure='test_svd_rsp')
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_rsp')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -730,21 +729,20 @@ contains
         call check_test(error, 'test_svd_rsp', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        allocate(G(test_size, test_size)) ; G = zero_rsp
-        call innerprod(G, U(1:test_size), U(1:test_size))
+        ! allocate(G(test_size, test_size)) ; G = zero_rsp
+        G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
-        G = zero_rsp
-        call innerprod(G, V(1:test_size), V(1:test_size))
+        G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
@@ -804,7 +802,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
-        call check_info(info, 'svds', module=this_module, procedure='test_svd_rdp')
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_rdp')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -824,21 +822,20 @@ contains
         call check_test(error, 'test_svd_rdp', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        allocate(G(test_size, test_size)) ; G = zero_rdp
-        call innerprod(G, U(1:test_size), U(1:test_size))
+        ! allocate(G(test_size, test_size)) ; G = zero_rdp
+        G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
-        G = zero_rdp
-        call innerprod(G, V(1:test_size), V(1:test_size))
+        G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
@@ -939,6 +936,8 @@ contains
         type(vector_rsp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -951,9 +950,9 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rsp')
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rsp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -973,6 +972,8 @@ contains
         type(vector_rsp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -985,9 +986,9 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rsp')
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rsp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1016,6 +1017,8 @@ contains
         type(vector_rdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1028,9 +1031,9 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_rdp')
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1050,6 +1053,8 @@ contains
         type(vector_rdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1062,9 +1067,9 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_rdp')
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1093,6 +1098,8 @@ contains
         type(vector_csp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1105,9 +1112,9 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_csp')
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_csp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1127,6 +1134,8 @@ contains
         type(vector_csp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_sp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1139,9 +1148,9 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_csp')
+        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_csp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1170,6 +1179,8 @@ contains
         type(vector_cdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1182,9 +1193,9 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_cdp')
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_cdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1204,6 +1215,8 @@ contains
         type(vector_cdp), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_dp_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -1216,9 +1229,9 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_cdp')
+        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_cdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1249,7 +1262,10 @@ contains
         type(spd_linop_rsp), allocatable :: A
         type(vector_rsp), allocatable :: b
         type(vector_rsp), allocatable :: x
+        ! CG options.
         type(cg_sp_opts) :: opts
+        ! CG metadata.
+        type(cg_sp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1262,9 +1278,9 @@ contains
         x = vector_rsp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_rsp')
+        opts = cg_sp_opts(maxiter=2*test_size, if_print_metadata=.true.)
+        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_rsp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1290,7 +1306,10 @@ contains
         type(spd_linop_rdp), allocatable :: A
         type(vector_rdp), allocatable :: b
         type(vector_rdp), allocatable :: x
+        ! CG options.
         type(cg_dp_opts) :: opts
+        ! CG metadata.
+        type(cg_dp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1303,9 +1322,9 @@ contains
         x = vector_rdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_rdp')
+        opts = cg_dp_opts(maxiter=2*test_size, if_print_metadata=.true.)
+        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_rdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1331,7 +1350,10 @@ contains
         type(hermitian_linop_csp), allocatable :: A
         type(vector_csp), allocatable :: b
         type(vector_csp), allocatable :: x
+        ! CG options.
         type(cg_sp_opts) :: opts
+        ! CG metadata.
+        type(cg_sp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1344,9 +1366,9 @@ contains
         x = vector_csp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_sp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_csp')
+        opts = cg_sp_opts(maxiter=2*test_size, if_print_metadata=.true.)
+        call cg(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_csp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -1372,7 +1394,10 @@ contains
         type(hermitian_linop_cdp), allocatable :: A
         type(vector_cdp), allocatable :: b
         type(vector_cdp), allocatable :: x
+        ! CG options.
         type(cg_dp_opts) :: opts
+        ! CG metadata.
+        type(cg_dp_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -1385,9 +1410,9 @@ contains
         x = vector_cdp() ; call x%zero()
 
         ! CG solver.
-        opts = cg_dp_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_cdp')
+        opts = cg_dp_opts(maxiter=2*test_size, if_print_metadata=.true.)
+        call cg(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_cdp')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))

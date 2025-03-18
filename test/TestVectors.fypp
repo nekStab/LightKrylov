@@ -17,7 +17,8 @@ module TestVectors
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=*), parameter, private :: this_module      = 'LK_TVectors'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestVectors'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_vector_${type[0]}$${kind}$_testsuite
@@ -116,7 +117,7 @@ contains
         call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_${kind}$)
         call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
         #:else
-        call check(error, norm2(z%data - x%data + y%data) < rtol_${kind}$)
+        call check(error, norm2(z%data - (x%data - y%data)) < rtol_${kind}$)
         call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
         #:endif
 

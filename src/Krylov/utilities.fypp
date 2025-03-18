@@ -1,0 +1,86 @@
+#:include "../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+submodule (lightkrylov_basekrylov) krylov_utilities
+    implicit none
+contains
+
+    !----------------------------------------
+    !-----     Permutation matrices     -----
+    !----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure permcols_basis_${type[0]}$${kind}$
+        call copy(Q, Q(perm))
+    end procedure
+
+    module procedure permcols_array_${type[0]}$${kind}$
+        Q = Q(:, perm)
+    end procedure
+    #:endfor
+
+    module procedure invperm
+        integer :: i
+        inv_perm(perm) = [(i, i=1, size(perm))]
+    end procedure
+
+    !----------------------------------------------
+    !-----     Initialize Krylov subspace     -----
+    !----------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure initialize_krylov_subspace_${type[0]}$${kind}$
+        integer :: p
+
+        ! Zero-out X.
+        call zero_basis(X)
+
+        ! Deals with optional args.
+        if(present(X0)) then
+            p = size(X0)
+            ! Initialize.
+            call copy(X(:p), X0)
+            ! Orthonormalize.
+            call orthonormalize_basis(X(:p))
+        endif
+
+        return
+    end procedure
+    #:endfor
+   
+    !----------------------------------------
+    !-----     Orthonormalize basis     -----
+    !----------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure orthonormalize_basis_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'orthonormalize_basis_${type[0]}$${kind}$'
+        ${type}$ :: R(size(X),size(X))
+        integer :: info
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        ! internals
+        call qr(X, R, info)
+        call check_info(info, 'qr', this_module, this_procedure)
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+        return
+    end procedure
+    #:endfor
+
+    !---------------------------------------------------
+    !-----     Check orthonormality of a basis     -----
+    !---------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure is_orthonormal_${type[0]}$${kind}$
+        ${type}$, dimension(size(X), size(X)) :: G
+        ortho = .true.
+        G = Gram(X)
+        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
+            ! The basis is not orthonormal. Cannot orthonormalize.
+            ortho = .false.
+        end if
+    end procedure
+    #:endfor
+
+end submodule

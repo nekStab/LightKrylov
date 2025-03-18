@@ -14,7 +14,8 @@ module TestLinops
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestLinops'
+    character(len=*), parameter, private :: this_module      = 'LK_TLinops'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestLinops'
 
     public :: collect_linop_rsp_testsuite
     public :: collect_linop_rdp_testsuite
@@ -56,7 +57,7 @@ contains
         call random_number(A%data)
 
         ! Compute matrix-vector product.
-        call A%matvec(x, y)
+        call A%apply_matvec(x, y)
 
         ! Check result.
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_sp)
@@ -82,7 +83,7 @@ contains
         call random_number(A%data)
 
         ! Compute matrix-vector product.
-        call A%rmatvec(x, y)
+        call A%apply_rmatvec(x, y)
 
         ! Check result.
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_sp)
@@ -115,7 +116,7 @@ contains
         y = vector_rsp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%matvec(x, y)
+        call B%apply_matvec(x, y)
 
         ! Check result.
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
@@ -151,7 +152,7 @@ contains
         y = vector_rsp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%rmatvec(x, y)
+        call B%apply_rmatvec(x, y)
 
         ! Check result.
         alpha = norm2(y%data - matmul(A%data, x%data))
@@ -190,7 +191,7 @@ contains
         call random_number(A%data)
 
         ! Compute matrix-vector product.
-        call A%matvec(x, y)
+        call A%apply_matvec(x, y)
 
         ! Check result.
         call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_dp)
@@ -216,7 +217,7 @@ contains
         call random_number(A%data)
 
         ! Compute matrix-vector product.
-        call A%rmatvec(x, y)
+        call A%apply_rmatvec(x, y)
 
         ! Check result.
         call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_dp)
@@ -249,7 +250,7 @@ contains
         y = vector_rdp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%matvec(x, y)
+        call B%apply_matvec(x, y)
 
         ! Check result.
         alpha = norm2(y%data - matmul(transpose(A%data), x%data))
@@ -285,7 +286,7 @@ contains
         y = vector_rdp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%rmatvec(x, y)
+        call B%apply_rmatvec(x, y)
 
         ! Check result.
         alpha = norm2(y%data - matmul(A%data, x%data))
@@ -326,7 +327,7 @@ contains
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
-        call A%matvec(x, y)
+        call A%apply_matvec(x, y)
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_sp)
@@ -354,7 +355,7 @@ contains
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
-        call A%rmatvec(x, y)
+        call A%apply_rmatvec(x, y)
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_sp)
@@ -389,7 +390,7 @@ contains
         y = vector_csp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%matvec(x, y)
+        call B%apply_matvec(x, y)
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
@@ -427,7 +428,7 @@ contains
         y = vector_csp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%rmatvec(x, y)
+        call B%apply_rmatvec(x, y)
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))
@@ -468,7 +469,7 @@ contains
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
-        call A%matvec(x, y)
+        call A%apply_matvec(x, y)
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_dp)
@@ -496,7 +497,7 @@ contains
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
-        call A%rmatvec(x, y)
+        call A%apply_rmatvec(x, y)
 
         ! Check result.
         call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_dp)
@@ -531,7 +532,7 @@ contains
         y = vector_cdp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%matvec(x, y)
+        call B%apply_matvec(x, y)
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
@@ -569,7 +570,7 @@ contains
         y = vector_cdp() ; call y%zero()
 
         ! Compute adjoint matrix-vector product
-        call B%rmatvec(x, y)
+        call B%apply_rmatvec(x, y)
 
         ! Check result.
         alpha = norm2(abs(y%data - matmul(A%data, x%data)))

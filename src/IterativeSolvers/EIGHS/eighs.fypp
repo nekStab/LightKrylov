@@ -1,0 +1,128 @@
+#:include "../../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+submodule (lightkrylov_iterativesolvers) hermitian_eigensolvers
+    use stdlib_strings, only: padr
+    use stdlib_linalg, only: eigh
+    implicit none
+    character(len=*), parameter :: eighs_output = 'eighs_output.txt'
+contains
+
+    !----- Utility functions -----
+    #:for kind, type in RC_KINDS_TYPES
+    elemental pure function eigenvalue_residual_${type[0]}$${kind}$(beta, x) result(residual)
+        !! Computes the residual associated with a Ritz eigenpair.
+        ${type}$, intent(in) :: beta
+        !! Norm of the residual Krylov vector.
+        ${type}$, intent(in) :: x
+        !! Last entry of the low-dimensional Ritz eigenvector.
+        real(${kind}$) :: residual
+        !! Residual associated to the corresponding Ritz eigenpair.
+        residual = abs(beta*x)
+        return
+    end function eigenvalue_residual_${type[0]}$${kind}$
+    #:endfor
+   
+    !--------------------------------------------------
+    !-----     ABSTRACT HERMITIAN EIGENSOLVER     -----
+    !--------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure eighs_${type[0]}$${kind}$
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+        ! Krylov subspace.
+        integer :: kdim_
+        ! Krylov subspace dimension.
+        ${type}$, allocatable :: T(:, :)
+        ! Tridiagonal matrix.
+        ${type}$, allocatable :: eigvecs_wrk(:, :)
+        ! Working array for the Ritz eigenvectors.
+        real(${kind}$), allocatable :: eigvals_wrk(:)
+        ! Working array for the Ritz eigenvalues.
+        real(${kind}$), allocatable :: residuals_wrk(:)
+        ! Working array for the Ritz residuals.
+        real(${kind}$) :: x0_norm
+
+        ! Miscellaneous.
+        character(len=*), parameter :: this_procedure = 'eighs_${type[0]}$${kind}$'
+        integer :: i, j, k, nev, conv
+        real(${kind}$) :: tol
+        ${type}$ :: beta
+        logical :: outpost
+        character(len=256) :: msg
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        ! Deaks with the optional args.
+        nev = size(X)
+        kdim_   = optval(kdim, 4*nev)
+        tol     = optval(tolerance, rtol_${kind}$)
+        outpost = optval(write_intermediate, .false.)
+
+        ! Allocate working variables.
+        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
+        if (present(x0)) then
+            call copy(Xwrk(1), x0)
+            x0_norm = x0%norm(); call Xwrk(1)%scal(one_${type[0]}$${kind}$/x0_norm)
+        else
+            call Xwrk(1)%rand(.true.)
+        endif
+        allocate(T(kdim_+1, kdim_)) ; T = zero_${type[0]}$${kind}$
+        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_${type[0]}$${kind}$
+        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_${kind}$
+        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
+
+        ! Ritz eigenpairs computation.
+        lanczos_iter : do k = 1, kdim_
+            ! Symmetric Lanczos step.
+            call lanczos(A, Xwrk, T, info, kstart=k, kend=k)
+            call check_info(info, 'lanczos', this_module, this_procedure)
+
+            ! Spectral decomposition of the k x k tridiagonal matrix.
+            eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = zero_${type[0]}$${kind}$
+            call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+
+            ! Compute residuals.
+            beta = T(k+1, k)
+            residuals_wrk(:k) = eigenvalue_residual_${type[0]}$${kind}$(beta, eigvecs_wrk(k, :k))
+
+            ! Check convergence.
+            conv = count(residuals_wrk(:k) < tol)
+            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', k, &
+                            & ' iterations of the Lanczos process.'
+            call log_information(msg, this_module, this_procedure)
+            if (outpost) call write_results_r${kind}$(eighs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
+            if (conv >= nev) exit lanczos_iter
+        enddo lanczos_iter
+
+        !--------------------------------
+        !-----     POST-PROCESS     -----
+        !--------------------------------
+
+        block
+            integer :: indices(kdim_)
+            call sort_index(eigvals_wrk, indices, reverse=.true.)
+            eigvecs_wrk = eigvecs_wrk(:, indices)
+            residuals_wrk = residuals_wrk(indices)
+            ! Store converged eigenvalues.
+            eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
+        end block
+
+        ! Construct eigenvectors.
+        k = min(k, kdim_)
+        do i = 1, nev
+            call X(i)%zero()
+            do j = 1, k
+                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_${type[0]}$${kind}$)
+            enddo
+        enddo
+        
+        info = k
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+        
+        return
+    end procedure 
+
+    #:endfor
+   
+
+end submodule
+

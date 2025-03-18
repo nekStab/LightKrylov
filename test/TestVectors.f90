@@ -15,7 +15,8 @@ module TestVectors
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=*), parameter, private :: this_module      = 'LK_TVectors'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestVectors'
 
     public :: collect_vector_rsp_testsuite
     public :: collect_vector_rdp_testsuite
@@ -100,7 +101,7 @@ contains
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data + y%data) < rtol_sp)
+        call check(error, norm2(z%data - (x%data - y%data)) < rtol_sp)
         call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
 
         return
@@ -223,7 +224,7 @@ contains
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data + y%data) < rtol_dp)
+        call check(error, norm2(z%data - (x%data - y%data)) < rtol_dp)
         call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
 
         return

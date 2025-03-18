@@ -17,6 +17,9 @@ module LightKrylov
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
+    ! --> Timing utilities
+    use LightKrylov_Timer_Utils
+    use LightKrylov_Timing, only: lk_timer => global_lightkrylov_timer
     ! --> TestTypes
     implicit none
     private
@@ -35,6 +38,12 @@ module LightKrylov
     public :: gmres_dp_opts
     public :: cg_dp_opts
     public :: newton_dp_opts
+    public :: gmres_sp_metadata
+    public :: cg_sp_metadata
+    public :: newton_sp_metadata
+    public :: gmres_dp_metadata
+    public :: cg_dp_metadata
+    public :: newton_dp_metadata
 
     ! AbstractVectors exports.
     public :: abstract_vector
@@ -42,7 +51,7 @@ module LightKrylov
     public :: abstract_vector_rdp
     public :: abstract_vector_csp
     public :: abstract_vector_cdp
-    public :: innerprod
+    public :: innerprod, Gram
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
@@ -88,7 +97,7 @@ module LightKrylov
     
     ! BaseKrylov exports.
     public :: qr
-    public :: apply_permutation_matrix, apply_inverse_permutation_matrix
+    public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: orthogonalize_against_basis
@@ -113,12 +122,17 @@ module LightKrylov
     public :: gmres_rdp
     public :: gmres_csp
     public :: gmres_cdp
+    public :: fgmres
+    public :: fgmres_rsp
+    public :: fgmres_rdp
+    public :: fgmres_csp
+    public :: fgmres_cdp
     public :: cg
 
     ! Newton-Krylov exports.
     public :: newton
-    public :: constant_atol_sp, dynamic_tol_sp
-    public :: constant_atol_dp, dynamic_tol_dp
+    public :: constant_tol_sp, dynamic_tol_sp
+    public :: constant_tol_dp, dynamic_tol_dp
 
     ! ExpmLib exports.
     public :: abstract_exptA_rsp
@@ -127,7 +141,12 @@ module LightKrylov
     public :: abstract_exptA_cdp
     public :: expm
     public :: kexpm
-    public :: k_exptA
+    public :: krylov_exptA
+
+    ! Timer exports
+    public :: lightkrylov_timer
+    public :: abstract_watch
+    public :: lk_timer
 
 contains
 

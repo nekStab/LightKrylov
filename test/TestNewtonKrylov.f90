@@ -17,7 +17,8 @@ module TestNewtonKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestNewtonKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TNwtKryl'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestNewtonKrylov'
 
     public :: collect_newton_rsp_testsuite
     public :: collect_newton_rdp_testsuite
@@ -56,7 +57,7 @@ contains
        allocate(X, fp1, fp2);
 
        ! Newton opts
-       opts = newton_sp_opts(maxiter=10, ifbisect=.false.) 
+       opts = newton_sp_opts(maxiter=10, ifbisect=.false., if_print_metadata=.true.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler_rsp()
@@ -67,7 +68,7 @@ contains
        X%x = zero_rsp
        X%y = zero_rsp
        X%z = zero_rsp
-       call newton(sys, X, gmres_rsp, info, tolerance=atol_sp, options=opts)
+       call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -81,7 +82,7 @@ contains
        X%x = 10.0_sp
        X%y = -5.0_sp
        X%z = 20.0_sp
-       call newton(sys, X, gmres_rsp, info, tolerance=atol_sp, options=opts)
+       call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -96,7 +97,7 @@ contains
        X%y = zero_rsp
        X%z = zero_rsp
        opts%ifbisect = .true.
-       call newton(sys, X, gmres_rsp, info, tolerance=atol_sp, options=opts)
+       call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)
@@ -135,7 +136,7 @@ contains
        allocate(X, fp1, fp2);
 
        ! Newton opts
-       opts = newton_dp_opts(maxiter=10, ifbisect=.false.) 
+       opts = newton_dp_opts(maxiter=10, ifbisect=.false., if_print_metadata=.true.) 
 
        ! Allocate and set Roessler system and Jacobian
        sys = roessler_rdp()
@@ -146,7 +147,7 @@ contains
        X%x = zero_rdp
        X%y = zero_rdp
        X%z = zero_rdp
-       call newton(sys, X, gmres_rdp, info, tolerance=atol_dp, options=opts)
+       call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
@@ -160,7 +161,7 @@ contains
        X%x = 10.0_dp
        X%y = -5.0_dp
        X%z = 20.0_dp
-       call newton(sys, X, gmres_rdp, info, tolerance=atol_dp, options=opts)
+       call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp2)
 
        ! check fixed point 2
@@ -175,7 +176,7 @@ contains
        X%y = zero_rdp
        X%z = zero_rdp
        opts%ifbisect = .true.
-       call newton(sys, X, gmres_rdp, info, tolerance=atol_dp, options=opts)
+       call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)
