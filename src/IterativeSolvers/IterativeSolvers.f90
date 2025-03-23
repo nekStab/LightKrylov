@@ -1400,19 +1400,23 @@ contains
         !! Output filename. This file will be overwritten
         real(sp), intent(in) :: vals(:)
         !! Intermediate values
-        real(sp), intent(in) :: res(:)
+        real(sp), intent(inout) :: res(:)
         !! Residuals
         real(sp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             do i = 1, k
-                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
+                idx = indices(i)
+                    write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1423,19 +1427,23 @@ contains
         !! Output filename. This file will be overwritten
         real(dp), intent(in) :: vals(:)
         !! Intermediate values
-        real(dp), intent(in) :: res(:)
+        real(dp), intent(inout) :: res(:)
         !! Residuals
         real(dp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             do i = 1, k
-                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
+                idx = indices(i)
+                    write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1446,21 +1454,25 @@ contains
         !! Output filename. This file will be overwritten
         complex(sp), intent(in) :: vals(:)
         !! Intermediate values
-        real(sp), intent(in) :: res(:)
+        real(sp), intent(inout) :: res(:)
         !! Residuals
         real(sp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         real(sp) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
             do i = 1, k
-                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
-                    write (1234, fmt) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
+                idx = indices(i)
+                    modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
+                    write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1471,21 +1483,25 @@ contains
         !! Output filename. This file will be overwritten
         complex(dp), intent(in) :: vals(:)
         !! Intermediate values
-        real(dp), intent(in) :: res(:)
+        real(dp), intent(inout) :: res(:)
         !! Residuals
         real(dp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         real(dp) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
             do i = 1, k
-                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
-                    write (1234, fmt) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
+                idx = indices(i)
+                    modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
+                    write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
             end do 
             close (1234)
         end if

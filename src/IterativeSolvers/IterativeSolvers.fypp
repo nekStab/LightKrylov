@@ -826,12 +826,13 @@ contains
         !! Output filename. This file will be overwritten
         ${type}$, intent(in) :: vals(:)
         !! Intermediate values
-        real(${kind}$), intent(in) :: res(:)
+        real(${kind}$), intent(inout) :: res(:)
         !! Residuals
         real(${kind}$), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         #:if type[0] == "c"
         real(${kind}$) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
@@ -840,6 +841,8 @@ contains
         #:endif
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
             #:if type[0] == "c"
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
@@ -847,11 +850,12 @@ contains
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             #:endif
             do i = 1, k
+                idx = indices(i)
                 #:if type[0] == "c"
-                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
-                    write (1234, fmt) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
+                    modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
+                    write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
                 #:else
-                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
+                    write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
                 #:endif
             end do 
             close (1234)
