@@ -316,7 +316,7 @@ contains
 
             ! Evaluate f'(X(T), T) * dT and add it to the position residual
             call compute_fdot(pos_out(:npts), vec)
-            call vec_out%axpby(1.0_wp, vec, vec_in%T)
+            call vec_out%axpby(vec_in%T, vec, 1.0_wp)
 
             ! Evaluate f'(X(0), 0).T @ dx and add phase condition
             call compute_fdot(pos_in(:npts), vec)
