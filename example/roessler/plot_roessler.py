@@ -101,32 +101,16 @@ if __name__ == '__main__':
 
    #####################################
    #
-   #    Plot the roessler attractor
-   #       with fixed points
-   #
-   #####################################
-
-   fig1 = plt.figure()
-   ax = fig1.add_subplot(111, projection='3d')
-   ax.plot(rax, ray, raz, label='chaotic attractor')
-   ax.scatter(fpx, fpy, fpz, s=30, c='red', label='fixed points')
-   ax.set_xlabel('x')
-   ax.set_ylabel('y')
-   ax.set_zlabel('z')
-   ax.set_aspect('equal')
-   plt.legend()
-
-   #####################################
-   #
    #    Plot the roessler attractor 
    #        with periodic orbit
    #
    #####################################
+
    pox, poy, poz = po_otd['bf'].T
-   fig2 = plt.figure()
-   ax = fig2.add_subplot(111, projection='3d')
-   ax.plot(rax, ray, raz, label='chaotic attractor')
-   ax.plot(pox, poy, poz,  c='green', lw=5, label='periodic orbit')
+   fig = plt.figure()
+   ax = fig.add_subplot(111, projection='3d')
+   ax.plot(rax, ray, raz, c='black', alpha=0.5, label='chaotic attractor')
+   ax.plot(pox, poy, poz,  c='green', lw=2, label='periodic orbit')
    ax.set_xlabel('x')
    ax.set_ylabel('y')
    ax.set_zlabel('z')
@@ -134,30 +118,20 @@ if __name__ == '__main__':
 
    #####################################
    #
-   #    Plot the evolution of the OTD
-   #        eigenspace on the PO
+   #    Plot the convergence history
+   #      of the Lyapunov exponents
+   #      computed using OTD modes
    #
    #####################################
-   fig3 = plt.figure(figsize=(20,5))
-   gs = fig3.add_gridspec(2, 2)
-   ax1 = fig3.add_subplot(gs[0, :])
-   ax2 = fig3.add_subplot(gs[1, 0])
-   ax3 = fig3.add_subplot(gs[1, 1])
-   for ax in (ax1, ax2, ax3):
-      # Plot the instantaneous eigenvalues
-      for i in range(2):
-         ax.plot(po_otd['t'], np.real(po_otd['EV'][:,i]), label=r'$\lambda_'+f'{i+1:d}'+'$')
-      # Plot sigma max
-      ax.plot(po_otd['t'], po_otd['s'], label=r'$\sigma_'+f'{{max}}'+'$', color='red', linewidth=2)
-   tplot = 15
-   tend = po_otd['t'][-1]
-   ax1.set_xlim(0, tend)
-   ax2.set_xlim(0, tplot)
-   ax3.set_xlim(tend-tplot,tend)
-   for ax in (ax1, ax2, ax3):
-      ax.set_xlabel('time')
-      ax.set_ylabel('growth rate')
-   plt.legend()
+
+   fig, ax = plt.subplots(1, 1, figsize=(10,5))
+   for i in range(2):
+      ax.plot(po_le['period'], abs(po_le['LE'][:,i]-po_le['LE_ref'][:,i]), 'o-', label=f'Lyapunov exponent {i+1:d}')
+   ax.set_yscale('log')
+   ax.set_xlabel('periods')
+   ax.set_ylabel('Error')
+   ax.set_xlim(0, 30)
+   ax.legend()
    
    #####################################
    #
@@ -167,11 +141,12 @@ if __name__ == '__main__':
    #          OTD eigenspace
    #
    #####################################
-   fig4 = plt.figure(figsize=(20,20))
-   ax = fig4.add_subplot(111, projection='3d')
+
+   fig = plt.figure(figsize=(12,6))
+   ax = fig.add_subplot(121, projection='3d')
    # Plot the roessler attractor with the periodic orbit
-   ax.plot(rax, ray, raz)
-   ax.plot(pox, poy, poz, c='green', lw=5)
+   ax.plot(rax, ray, raz, c='black', alpha=0.5, label='chaotic attractor')
+   ax.plot(pox, poy, poz, c='green', lw=2, label='periodic orbit')
    
    # Plot most unstable subspace at 8 points
    npts = 8
@@ -180,6 +155,7 @@ if __name__ == '__main__':
    
    # mark points along the orbit
    ax.scatter(pox[idx], poy[idx], poz[idx], c='black', s=50)
+   ax.scatter(pox[0], poy[0], poz[0], s=150, marker='o', edgecolors='k', facecolors='none', label='orbit origin')
 
    grid_length, vector_l = 3, 3
    # reference x, y meshgrid and 'unit' vectors
@@ -209,19 +185,19 @@ if __name__ == '__main__':
       s += np.outer(np.ones((s.shape[0],)), [ox, oy])
       
       # plot the surface
-      ax.plot_surface(s[:,0].reshape(X.shape), s[:,1].reshape(Y.shape), Z, color='black', alpha=0.75)
+      ax.plot_surface(s[:,0].reshape(X.shape), s[:,1].reshape(Y.shape), Z, color='black', alpha=0.75, label='OTD subspace')
 
       # Draw leading singular vector and eigenvectors
 
       # plot direction of largest instantaneous linear growth
       svx, svy, svz = po_otd['sp'][id,:]
       s1 = np.log(po_otd['s'][id])
-      ax.quiver(ox, oy, oz, svx, svy, svz, color='red', length=vector_l*s1, lw=5,  normalize=True)
+      ax.quiver(ox, oy, oz, svx, svy, svz, color='red', length=vector_l, lw=3,  normalize=True, label='OTD largest linear growth')
 
       for i, mode in enumerate(modes):
          mx, my, mz = mode[id,:]
          ev = np.log(np.abs(np.real(po_otd['EV'][id,i])))
-         mplt = ax.quiver(ox, oy, oz, mx, my, mz, color='blue', length=vector_l*0.5*ev, lw=2,  normalize=True,)
+         mplt = ax.quiver(ox, oy, oz, mx, my, mz, color='blue', length=vector_l, lw=2,  normalize=True, label='OTD modes')
    l = 12
    ax.set_xlim(-l, l)
    ax.set_ylim(-l, l)
@@ -229,49 +205,23 @@ if __name__ == '__main__':
    ax.set_xlabel('x')
    ax.set_ylabel('y')
    ax.set_zlabel('z')
+   handles, labels = plt.gca().get_legend_handles_labels()
+   by_label = dict(zip(labels, handles))
+   ax.legend(by_label.values(), by_label.keys())
 
-   #####################################
-   #
-   #    Plot the convergence history
-   #      of the Lyapunov exponents
-   #      computed using OTD modes
-   #
-   #####################################
-   fig5, ax = plt.subplots(1, 1, figsize=(10,10))
+   ax = fig.add_subplot(122)
+   # Plot the instantaneous eigenvalues
+   plt.axhline(0, color='k')
+   plt.axvline(29, color='k', linestyle='--', label='orbit origin')
    for i in range(2):
-      ax.plot(po_le['period'], abs(po_le['LE'][:,i]-po_le['LE_ref'][:,i]), 'o-', label=f'Lyapunov exponent {i+1:d}')
-   ax.set_yscale('log')
-   ax.set_xlabel('periods')
-   ax.set_ylabel('Error')
-   ax.legend()
+      ax.plot(po_otd['t']/T, np.real(po_otd['EV'][:,i]), label=r'$\lambda_'+f'{i+1:d}'+'$')
+   # Plot sigma max
+   ax.plot(po_otd['t']/T, po_otd['s'], label=r'$\sigma_'+f'{{max}}'+'$', color='red', linewidth=2)
+   tend = po_otd['t'][-1]
+   ax.set_xlabel('period')
+   ax.set_ylabel('growth rate')
+   ax.set_xlim((tend-2*T)/T,tend/T)
+   ax.set_ylim(-4, 4)
+   plt.legend()
 
-   #####################################
-   #
-   #    Plot the route to chaos starting
-   #      from the periodic orbit
-   #
-   #####################################
-   t = poc_otd['t']
-   pocx, pocy, pocz = poc_otd['bf'].T
-   fig6, axs = plt.subplots(2, 1, figsize=(20,20))
-   ax = axs[0]
-
-   # y component
-   tu, idx = np.unique(pot, return_index=True)
-   to = np.concatenate([ tu, tu[2:]+tu[-1] ])
-   pu = poz[idx]
-   po = np.concatenate([ pu, pu[2:] ])
-   po_int = interpolate.pchip_interpolate(to, po, t)
-   ax.plot(t, po_int, c='green', lw=3, label=r'$X^*(t)$'+': periodic orbit')
-   ax.plot(t, pocz, c='blue', label=r'$X(t)$'+': nonlinear trajectory')
-   ax.set_xlabel('time')
-   ax.set_ylabel('y')
-   ax.legend()
-
-   ax = axs[1]
-   l_ref = po_le['LE_ref'][0,1]
-   ax.plot(t, abs(pocz - po_int))
-   ax.set_yscale('log')
-   ax.set_xlabel('time')
-   ax.set_ylabel(r'$\| X - X^* \|$')
    plt.show()
