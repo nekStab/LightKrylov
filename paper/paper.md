@@ -55,15 +55,77 @@ These include:
     - **SVD -** restarted Golub-Kahan bidiagonalization.
 
 A block version of the Arnoldi iterative process is also provided.
-Libraries exposing more methods exist in other languages, e.g. `Krylov.jl` [@montoisson-2023] in `Julia` or `PETSc` [@petsc-web-page] for instance.
+Libraries exposing more methods exist in other languages, e.g. `Krylov.jl` [@montoison-2023] in `Julia` or `PETSc` [@petsc-web-page] for instance.
 Integrating these into an existing Fortran code base might however prove challenging, either because of the two languages problem or the need of special privileges for installation on a cluster and managing the dependencies.
 In contrast, `LightKrylov` is written in pure Fortran, fully compliant with the Fortran 2018 standard, and only requires `stdlib` as external dependency.
-It is being developed with `fypp`, a Python-based Fortran preprocesor enabling the automatic generation of `single`, `double`, `extended` and `quadruple precision` versions of the methods.
+It is being developed with `fypp` [@fypp-webpage], a Python-based Fortran preprocesor enabling the automatic generation of `single`, `double`, `extended` and `quadruple precision` versions of the methods, both for `real` and `complex` numbers.
 Finally, its build process relies on the Fortran package manager `fpm`, greatly facilitating its installation and its incorporation into the modern Fortran ecosystem.
 
 ## A focus on abstract linear operators and abstract vectors
 
-## Beyond linear solvers
+From a mathematical point of view, Krylov methods can be implemented without making explicit reference to the particular data structure used to represent a vector or a linear operator nor to how the actual matrix-vector product is being implemented.
+To do so, `LightKrylov` uses modern Fortran `abstract` type constructs.
+A stripped-down version of the abstract vector type is shown below.
+
+```fortran
+type, abstract :: abstract_vector_rdp
+  ! Abstract type defining a (double precision) vector which can be extended
+  ! by users to accomodate their particular data structure and associated
+  ! computational routines.
+contains
+  !> Abstract procedure to compute the scalar-vector product.
+  procedure(abstract_scal_rdp) , pass(self), deferred :: scal
+  !> Abstract procedure to compute y = alpha*x + beta*y
+  procedure(abstract_axpby_rdp), pass(self), deferred:: axpby
+  !> Abstract procedure to compute the vector dot product.
+  procedure(abstract_dot_rdp)  , pass(self), deferred :: dot
+end type
+```
+
+The three abstract type-bound procedures correspond to the basic set of operations on vectors, namely scalar-vector product, linear combination of two vectors, and the dot product.
+The signatures of these type-bound procedures follow, to the extent possible, the standard signatures of the corresponding `blas` functions.
+For instance, the `abstract_axpby_rdp` interface is defined as
+
+```fortran
+abstract interface
+  subroutine abstract_axpby_rdp(alpha, vec, beta, self)
+    double precision          , intent(in)    :: alpha, beta
+    class(abstract_vector_rdp), intent(in)    :: vec
+    class(abstract_vector_rdp), intent(inout) :: self
+  end subroutine
+end interface
+```
+mimicking the signature of the (extended) BLAS-2 subroutine `axpby`.
+Note that, in practice, `LightKrylov` requires the definition of two additional procedures, one to set a vector to zero and the second to fill it with random data.
+
+Similarly, a stripped-down version of an abstract linear operator type is shown below.
+
+```fortran
+type, abstract: abstract_linop_rdp
+  ! Abstract type defining a (real, double precision) linear operator which
+  ! can be extended by users to accomodate their particular data structure
+  ! and associated kernels for the matrix-vector product.
+contains
+  !> Abstract procedure to compute the matrix-vector product y = A * x
+  procedure(abstract_matvec_rdp), pass(self), deferred :: matvec
+  !> Abstract procedure to compute the matrix-vector product y = A^H * x
+  procedure(abstract_matvec_rdp), pass(self), deferred :: rmatvec
+end type
+```
+
+The two type-bound procedures need to implement the matrix-vector product and the transposed matrix-vector product, respectively.
+The corresponding abstract interface reads
+
+```fortran
+abstract interface
+  subroutine abstract_matvec_rdp(self, vec_in, vec_out)
+    class(abstract_linop_rdp) , intent(inout) :: self
+    class(abstract_vector_rdp), intent(in)    :: vec_in
+    class(abstract_vector_rdp), intent(out)   :: vec_out
+  end subroutine
+end interface
+```
+Using such `abstract` types enables us to focus on the high-level implementation of the different Krylov-based algorithms while leaving the performance-critical details of the different vector and matrix-vector operations to the users.
 
 # Examples
 
