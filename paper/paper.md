@@ -29,36 +29,51 @@ bibliography: paper.bib
 
 # Summary
 
-[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a modern Fortran package implementing a collection of Krylov subspace methods for solving a variety of linear problems:
+[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package providing a collection of Krylov-based methods for solving linear systems, computing the leading eigenpairs of a linear operator as well as its leading singular triplets.
 
 | Square systems   | Eigenvalue problems | Singular value decomposition           |
 | :--------------: | :-----------------: | :------------------------------------: |
 | $Ax = b$         | $Ax = \lambda x$    | $Av = \sigma u \quad A^H u = \sigma v$ |
 
-Here, $A^H$ denotes the conjugate transpose of $A$, coinciding with the standard transpose if $A$ is real-valued.
-Direct methods often require explicit storage of $A$.
-Even if $A$ is sparse, computing its QR or Cholesky factorization to invert a linear system might lead to prohibitve storage requirements or computational costs.
-In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (and possibly $u \leftarrow A^H v$) to iteratively construct the *Krylov subspace* [@krylov-1931].
-Over the past decades, Krylov methods have become a critical element of high-performance computing.
+When solving problems such as the ones shown above, direct methods tend to have a computational cost scaling as $\mathcal{O}(n^3)$ (where $n$ is the leading dimension of $A$) making them impractical for very large-scale problems.
+Even when $A$ is sparse, care needs to be taken when computing matrix factorizations such as LU or Cholesky since they can incur an $\mathcal{O}(n^2)$ storage cost in the worst case scenarios.
+In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (and possibly $u \leftarrow A^H v$) to iteratively construct a *Krylov subspace* [@krylov-1931] from which an approximate solution can be extracted.
 We refer interested readers to @ipsen-1998 for an introduction to Krylov methods, to @saad-2003 for technical details and to @frantz-2023 for examples of their usage in the field of computational fluid dynamics.
+
 
 # Statement of need
 
 ## A collection of Krylov-based algorithms
 
-To the extend possible, `LightKrylov` tries to provide Fortran users with a friendly interface inspired from `scipy` [@?] to a collection of widely used Krylov techniques, including
+`LightKrylov` aims to provide Fortran users with familiar `scipy`-inspired interfaces to a collection of widely used Krylov techniques.
+These include:
 
-- **Krylov processes:** Arnoldi, Rational Arnoldi and Two-sided Arnoldi factorizations, Golub-Kahan bidiagonalization as well as Hermitian and Non-Hermitian Lanczos tridiagonalization.
-- **Krylov methods:** Conjugate Gradient (CG), Conjugate Gradient for the Normal equation (CGNE), Minimal residual method (MINRES), Generalized minimal residual method (GMRES), Flexible GMRES, (Two-sided) Arnoldi with Krylov-Schur restart for general eigenproblems, Lanczos with thick restart for Hermitian eigenproblems, restarted Golub-Kahan method for singular value decomposition.
-- **Krylov-based preconditioners:** Polynomial Arnoldi preconditioner.
+- **Krylov processes:** Arnoldi factorization, Golub-Kahan bidiagonalization, as well as Lanczos tridiagonalization for Hermitian operators.
+- **Krylov methods:**
+    - **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRES.
+    - **Spectral decomposition -** Arnoldi iteration with Krylov-Schur restart for non-Hermitian operators, Lanczos tridiagonalization with thick restart for Hermitian ones.
+    - **SVD -** restarted Golub-Kahan bidiagonalization.
 
-Although there exist libraries exposing more methods in other languages, see for instance `Krylov.jl` [@montoison-2023] in `Julia`, it needs to be emphasized that `LightKrylov` is written in pure Fortran and relies on a minimalistic set of dependencies which can all be taken care of using the Fortran package manager `fpm` [@?].
-Hence, it makes it a suitable choice for integration into existing code bases widely used in numerous areas of high-performance scientific computing.
-As an example, `LightKrylov` has recently been integrated into `neklab`, an open-source toolbox for stability and bifurcation analysis built around the massively parallel spectral element solver `Nek5000`.
+A block version of the Arnoldi iterative process is also provided.
+Libraries exposing more methods exist in other languages, e.g. `Krylov.jl` [@montoisson-2023] in `Julia` or `PETSc` [@petsc-web-page] for instance.
+Integrating these into an existing Fortran code base might however prove challenging, either because of the two languages problem or the need of special privileges for installation on a cluster and managing the dependencies.
+In contrast, `LightKrylov` is written in pure Fortran, fully compliant with the Fortran 2018 standard, and only requires `stdlib` as external dependency.
+It is being developed with `fypp`, a Python-based Fortran preprocesor enabling the automatic generation of `single`, `double`, `extended` and `quadruple precision` versions of the methods.
+Finally, its build process relies on the Fortran package manager `fpm`, greatly facilitating its installation and its incorporation into the modern Fortran ecosystem.
 
-## Support for `abstract` vectors and linear operators
+## A focus on abstract linear operators and abstract vectors
 
-# Example
+## Beyond linear solvers
+
+# Examples
+
+<!-- Although there exist libraries exposing more methods in other languages, e.g. `Krylov.jl` [@montoison-2023] in `Julia`, it needs to be emphasized that `LightKrylov` is written in pure Fortran and relies on a minimalistic set of dependencies which can all be taken care of using the Fortran package manager `fpm` [@?]. -->
+<!-- Hence, it makes it a suitable choice for integration into existing code bases used in numerous areas of high-performance scientific computing. -->
+<!-- As an example, `LightKrylov` has recently been integrated into `neklab`, an open-source toolbox for stability and bifurcation analysis built around the massively parallel spectral element solver `Nek5000`. -->
+<!---->
+<!-- ## Support for `abstract` vectors and linear operators -->
+<!---->
+<!-- # Example -->
 
 <!-- # Citations -->
 <!---->
@@ -85,6 +100,6 @@ As an example, `LightKrylov` has recently been integrated into `neklab`, an open
 
 # Acknowledgements
 
-We acknowledge the financial support of the French National Agency for Research (ANR) through the ANR-????-CONMAN grant agreement. We also would like to thank the [fortran-lang](https://fortran-lang.org/) community for the development of [`stdlib`](https://stdlib.fortran-lang.org/), and in particular Frederico Perini, Jeremie Vandenplas, and Jose ??? for their work on the `stdlib_linalg` module on top which `LightKrylov` heavily relies.
+We acknowledge the financial support of the French National Agency for Research (ANR) through the ANR-33-CE46-0008-CONMAN grant agreement. We also would like to thank the [fortran-lang](https://fortran-lang.org/) community for the development of [`stdlib`](https://stdlib.fortran-lang.org/), and in particular Frederico Perini, Jeremie Vandenplas, and Jose ??? for their work on the `stdlib_linalg` module on top which `LightKrylov` heavily relies.
 
 # References
