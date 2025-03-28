@@ -72,13 +72,13 @@ type, abstract :: abstract_vector_rdp
   ! Abstract type defining a (double precision) vector which can be extended
   ! by users to accomodate their particular data structure and associated
   ! computational routines.
-contains
-  !> Abstract procedure to compute the scalar-vector product.
-  procedure(abstract_scal_rdp) , pass(self), deferred :: scal
-  !> Abstract procedure to compute y = alpha*x + beta*y
-  procedure(abstract_axpby_rdp), pass(self), deferred:: axpby
-  !> Abstract procedure to compute the vector dot product.
-  procedure(abstract_dot_rdp)  , pass(self), deferred :: dot
+  contains
+    ! Abstract procedure to compute the scalar-vector product.
+    procedure(abstract_scal_rdp) , pass(self), deferred :: scal
+    ! Abstract procedure to compute y = alpha*x + beta*y
+    procedure(abstract_axpby_rdp), pass(self), deferred:: axpby
+    ! Abstract procedure to compute the vector dot product.
+    procedure(abstract_dot_rdp)  , pass(self), deferred :: dot
 end type
 ```
 
@@ -105,11 +105,11 @@ type, abstract: abstract_linop_rdp
   ! Abstract type defining a (real, double precision) linear operator which
   ! can be extended by users to accomodate their particular data structure
   ! and associated kernels for the matrix-vector product.
-contains
-  !> Abstract procedure to compute the matrix-vector product y = A * x
-  procedure(abstract_matvec_rdp), pass(self), deferred :: matvec
-  !> Abstract procedure to compute the matrix-vector product y = A^H * x
-  procedure(abstract_matvec_rdp), pass(self), deferred :: rmatvec
+  contains
+    ! Abstract procedure to compute the matrix-vector product y = A * x
+    procedure(abstract_matvec_rdp), pass(self), deferred :: matvec
+    ! Abstract procedure to compute the matrix-vector product y = A^H * x
+    procedure(abstract_matvec_rdp), pass(self), deferred :: rmatvec
 end type
 ```
 
