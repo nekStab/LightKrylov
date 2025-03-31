@@ -142,9 +142,11 @@ contains
         x = dense_vector_rsp(n) ; call x%rand()
         y = x
         call random_number(alpha)
+        print *, alpha
         
         ! Scale the vector.
         call x%scal(alpha)
+        print *, norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_sp)
@@ -264,9 +266,11 @@ contains
         x = dense_vector_rdp(n) ; call x%rand()
         y = x
         call random_number(alpha)
+        print *, alpha
         
         ! Scale the vector.
         call x%scal(alpha)
+        print *, norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_dp)
@@ -386,9 +390,11 @@ contains
         x = dense_vector_csp(n) ; call x%rand()
         y = x
         alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
+        print *, alpha
         
         ! Scale the vector.
         call x%scal(alpha)
+        print *, norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_sp)
@@ -508,9 +514,11 @@ contains
         x = dense_vector_cdp(n) ; call x%rand()
         y = x
         alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
+        print *, alpha
         
         ! Scale the vector.
         call x%scal(alpha)
+        print *, norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_dp)
