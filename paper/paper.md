@@ -45,16 +45,16 @@ and singular value decomposition, where $A \in \mathbb{C}^{m \times n}$ has sing
 When solving problems such as the ones shown above, direct methods tend to have a computational cost scaling as $\mathcal{O}(n^3)$ (where $n$ is the leading dimension of $A$) making them impractical for very large-scale problems.
 Even when $A$ is sparse, care needs to be taken when computing matrix factorizations such as LU or Cholesky since they can incur an $\mathcal{O}(n^2)$ storage cost in the worst case scenarios and introduce fill-in, where the factorization becomes significantly less sparse than the original matrix. % https://relate.cs.illinois.edu/course/cs450-f19/f/demos/upload/pdes/Sparse%20Matrix%20Factorizations%20and%20Fill-In.html maybe not necessary 
 
-In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ to iteratively construct a *Krylov subspace* [@krylov-1931], defined as $\mathcal{K}_k(A, v) = \text{span}\{v, Av, A^2v, \ldots, A^{k-1}v\}$ for an initial vector $v$. 
-
-!<-- > not sure here  # https://eigen.tuxfamily.org/dox/group__TutorialSparse.html
+In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (or $u \leftarrow A^H v$ in adjoint case), or even a function that yields the action of $A$ without explicitly forming the matrix at all, to iteratively construct a *Krylov subspace* [@krylov-1931], defined as $\mathcal{K}_k(A, v) = \text{span}\{v, Av, A^2v, \ldots, A^{k-1}v\}$ for an initial vector $v$. 
 
 For sparse matrices, these methods typically require $\mathcal{O}(k \cdot \text{nnz} + k^2n)$ operations (where "nnz" is the number of non-zero elements in $A$) and $\mathcal{O}(kn)$ storage, with $k \ll n$ iterations. 
 When $k$ is much smaller than $n$ and $A$ is sufficiently sparse, this approach becomes more efficient than direct methods.
 The additional $k^2n$ term accounts for orthogonalization costs in methods like GMRES, while simpler methods like Conjugate Gradient have lower orthogonalization costs. 
+!<-- > not sure here # https://eigen.tuxfamily.org/dox/group__TutorialSparse.html
+
 
 Each problem type leverages Krylov subspaces differently: linear systems via projection methods like GMRES, eigenvalue problems through Rayleigh-Ritz extraction, and singular value problems using processes like Golub-Kahan bidiagonalization. 
-Convergence can often be accelerated using preconditioning techniques, which transform the original problem into a mathematically equivalent but numerically more favorable one. # add a paragraph in the end
+Convergence can often be accelerated using preconditioning techniques, which transform the original problem into a mathematically equivalent but numerically more favorable one.
 We refer interested readers to @ipsen-1998 for an introduction to Krylov methods, to @saad-2003 for technical details and to @frantz-2023 for examples of their usage in the field of computational fluid dynamics.
 
 # Statement of need
