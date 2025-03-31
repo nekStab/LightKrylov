@@ -49,6 +49,7 @@ module LightKrylov
     public :: abstract_vector
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_vector_${type[0]}$${kind}$
+    public :: dense_vector_${type[0]}$${kind}$
     #:endfor
     public :: innerprod, Gram
     public :: linear_combination
