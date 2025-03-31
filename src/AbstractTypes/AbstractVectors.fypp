@@ -37,6 +37,7 @@ module LightKrylov_AbstractVectors
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
 
     use stdlib_optval, only: optval
+    use stdlib_linalg_blas, only: scal, axpy, dot, dotc
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger
@@ -361,7 +362,42 @@ module LightKrylov_AbstractVectors
     end interface
 
     #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_${type[0]}$${kind}$), public :: dense_vector_${type[0]}$${kind}$
+        ${type}$, allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_${type[0]}$${kind}$
+        !! Sets an `abstract_vector_${type[0]}$${kind}$` to zero.
+        procedure, pass(self), public :: rand => dense_rand_${type[0]}$${kind}$
+        !! Creates a random `abstract_vector_${type[0]}$${kind}$`.
+        procedure, pass(self), public :: scal => dense_scal_${type[0]}$${kind}$
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_${type[0]}$${kind}$
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_${type[0]}$${kind}$
+        !! Computes the dot product between two `abstract_vector_${type[0]}$${kind}$`.
+        procedure, pass(self), public :: get_size => dense_get_size_${type[0]}$${kind}$
+        !! Return size of specific abstract vector
+    end type
+    #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    interface dense_vector_${type[0]}$${kind}$
+        module procedure initialize_dense_vector_${type[0]}$${kind}$
+    end interface
+    #:endfor
+
 contains
+
+    !-----------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
+    !-----------------------------------------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
     function norm_${type[0]}$${kind}$(self) result(alpha)
@@ -397,6 +433,86 @@ contains
         !! Vector whose entries need to change sign.
         call self%scal(-one_${type[0]}$${kind}$)
     end subroutine chsgn_${type[0]}$${kind}$
+
+    #:endfor
+
+    !--------------------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
+    !--------------------------------------------------------------------------------
+    
+    #:for kind, type in RC_KINDS_TYPES
+    module function initialize_dense_vector_${type[0]}$${kind}$(n) result(vec)
+        integer, intent(in) :: n
+        type(dense_vector_${type[0]}$${kind}$) :: vec
+        allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
+        return
+    end function
+
+    subroutine dense_zero_${type[0]}$${kind}$(self)
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        self%data = 0.0_${kind}$
+        return
+    end subroutine
+
+    subroutine dense_rand_${type[0]}$${kind}$(self, ifnorm)
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        #:if type[0] == "r"
+        call random_number(self%data)
+        #:else
+        real(${kind}$), allocatable :: y(:, :)
+        allocate(y(size(self%data), 2)) ; call random_number(y)
+        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        #:endif
+        return
+    end subroutine
+
+    subroutine dense_scal_${type[0]}$${kind}$(self, alpha)
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        ${type}$, intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_${type[0]}$${kind}$(alpha, vec, beta, self)
+        ${type}$, intent(in) :: alpha, beta
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_${type[0]}$${kind}$)
+            if (beta /= 0.0_${kind}$) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        end select
+        return
+    end subroutine
+
+    function dense_dot_${type[0]}$${kind}$(self, vec) result(alpha)
+        class(dense_vector_${type[0]}$${kind}$), intent(in) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
+        ${type}$ :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_${type[0]}$${kind}$)
+            #:if type[0] == "r"
+            alpha = dot(n, self%data, 1, vec%data, 1)
+            #:else
+            alpha = dotc(n, self%data, 1, vec%data, 1)
+            #:endif
+        end select
+        return
+    end function
+
+    function dense_get_size_${type[0]}$${kind}$(self) result(n)
+        class(dense_vector_${type[0]}$${kind}$), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
 
     #:endfor
     
