@@ -471,7 +471,7 @@ contains
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         ${type}$, intent(in) :: alpha
         integer :: n
-        n = self%get_size()
+        n = self%get_size() ; print *, "Dimension in scal :", n
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
