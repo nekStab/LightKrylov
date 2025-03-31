@@ -899,7 +899,7 @@ contains
         class(dense_vector_rsp), intent(inout) :: self
         real(sp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -967,7 +967,7 @@ contains
         class(dense_vector_rdp), intent(inout) :: self
         real(dp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -1037,7 +1037,7 @@ contains
         class(dense_vector_csp), intent(inout) :: self
         complex(sp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -1107,7 +1107,7 @@ contains
         class(dense_vector_cdp), intent(inout) :: self
         complex(dp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
