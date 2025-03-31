@@ -148,9 +148,11 @@ contains
         #:else
         call random_number(alpha)
         #:endif
+        print *, alpha
         
         ! Scale the vector.
         call x%scal(alpha)
+        print *, norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_${kind}$)
