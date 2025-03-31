@@ -48,9 +48,13 @@ module LightKrylov
     ! AbstractVectors exports.
     public :: abstract_vector
     public :: abstract_vector_rsp
+    public :: dense_vector_rsp
     public :: abstract_vector_rdp
+    public :: dense_vector_rdp
     public :: abstract_vector_csp
+    public :: dense_vector_csp
     public :: abstract_vector_cdp
+    public :: dense_vector_cdp
     public :: innerprod, Gram
     public :: linear_combination
     public :: axpby_basis
