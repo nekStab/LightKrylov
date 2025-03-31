@@ -154,11 +154,15 @@ contains
         #:else
         call random_number(alpha)
         #:endif
-        print *, alpha
+        print *, "alpha : ", alpha
+        print *, "x     : ", x%data
         
         ! Scale the vector.
         call x%scal(alpha)
-        print *, norm(x%data - alpha*y%data, 2) 
+        print *, "scal(x) :", x%data
+        print *, "scal(y) :", alpha*y%data
+        print *, "diff    :", x%data - alpha*y%data
+        print *, "norm(diff) :", norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_${kind}$)

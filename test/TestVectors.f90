@@ -147,11 +147,15 @@ contains
         x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         call random_number(alpha)
-        print *, alpha
+        print *, "alpha : ", alpha
+        print *, "x     : ", x%data
         
         ! Scale the vector.
         call x%scal(alpha)
-        print *, norm(x%data - alpha*y%data, 2) 
+        print *, "scal(x) :", x%data
+        print *, "scal(y) :", alpha*y%data
+        print *, "diff    :", x%data - alpha*y%data
+        print *, "norm(diff) :", norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_sp)
@@ -276,11 +280,15 @@ contains
         x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         call random_number(alpha)
-        print *, alpha
+        print *, "alpha : ", alpha
+        print *, "x     : ", x%data
         
         ! Scale the vector.
         call x%scal(alpha)
-        print *, norm(x%data - alpha*y%data, 2) 
+        print *, "scal(x) :", x%data
+        print *, "scal(y) :", alpha*y%data
+        print *, "diff    :", x%data - alpha*y%data
+        print *, "norm(diff) :", norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_dp)
@@ -406,11 +414,15 @@ contains
         y = x
         alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
-        print *, alpha
+        print *, "alpha : ", alpha
+        print *, "x     : ", x%data
         
         ! Scale the vector.
         call x%scal(alpha)
-        print *, norm(x%data - alpha*y%data, 2) 
+        print *, "scal(x) :", x%data
+        print *, "scal(y) :", alpha*y%data
+        print *, "diff    :", x%data - alpha*y%data
+        print *, "norm(diff) :", norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_sp)
@@ -536,11 +548,15 @@ contains
         y = x
         alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
-        print *, alpha
+        print *, "alpha : ", alpha
+        print *, "x     : ", x%data
         
         ! Scale the vector.
         call x%scal(alpha)
-        print *, norm(x%data - alpha*y%data, 2) 
+        print *, "scal(x) :", x%data
+        print *, "scal(y) :", alpha*y%data
+        print *, "diff    :", x%data - alpha*y%data
+        print *, "norm(diff) :", norm(x%data - alpha*y%data, 2) 
 
         ! Check correctness.
         call check(error, norm(x%data - alpha*y%data, 2) < rtol_dp)
