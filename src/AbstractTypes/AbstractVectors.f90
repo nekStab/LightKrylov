@@ -35,6 +35,7 @@ module LightKrylov_AbstractVectors
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
 
     use stdlib_optval, only: optval
+    use stdlib_linalg_blas, only: scal, axpy, dot, dotc
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger
@@ -628,7 +629,110 @@ module LightKrylov_AbstractVectors
 
     end interface
 
+
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_rsp), public :: dense_vector_rsp
+        real(sp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_rsp
+        !! Sets an `abstract_vector_rsp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_rsp
+        !! Creates a random `abstract_vector_rsp`.
+        procedure, pass(self), public :: scal => dense_scal_rsp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_rsp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_rsp
+        !! Computes the dot product between two `abstract_vector_rsp`.
+        procedure, pass(self), public :: get_size => dense_get_size_rsp
+        !! Return size of specific abstract vector
+    end type
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_rdp), public :: dense_vector_rdp
+        real(dp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_rdp
+        !! Sets an `abstract_vector_rdp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_rdp
+        !! Creates a random `abstract_vector_rdp`.
+        procedure, pass(self), public :: scal => dense_scal_rdp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_rdp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_rdp
+        !! Computes the dot product between two `abstract_vector_rdp`.
+        procedure, pass(self), public :: get_size => dense_get_size_rdp
+        !! Return size of specific abstract vector
+    end type
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_csp), public :: dense_vector_csp
+        complex(sp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_csp
+        !! Sets an `abstract_vector_csp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_csp
+        !! Creates a random `abstract_vector_csp`.
+        procedure, pass(self), public :: scal => dense_scal_csp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_csp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_csp
+        !! Computes the dot product between two `abstract_vector_csp`.
+        procedure, pass(self), public :: get_size => dense_get_size_csp
+        !! Return size of specific abstract vector
+    end type
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_cdp), public :: dense_vector_cdp
+        complex(dp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_cdp
+        !! Sets an `abstract_vector_cdp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_cdp
+        !! Creates a random `abstract_vector_cdp`.
+        procedure, pass(self), public :: scal => dense_scal_cdp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_cdp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_cdp
+        !! Computes the dot product between two `abstract_vector_cdp`.
+        procedure, pass(self), public :: get_size => dense_get_size_cdp
+        !! Return size of specific abstract vector
+    end type
+
+    interface dense_vector_rsp
+        module procedure initialize_dense_vector_rsp
+    end interface
+    interface dense_vector_rdp
+        module procedure initialize_dense_vector_rdp
+    end interface
+    interface dense_vector_csp
+        module procedure initialize_dense_vector_csp
+    end interface
+    interface dense_vector_cdp
+        module procedure initialize_dense_vector_cdp
+    end interface
+
 contains
+
+    !-----------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
+    !-----------------------------------------------------------------------
 
     function norm_rsp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
@@ -765,6 +869,267 @@ contains
         !! Vector whose entries need to change sign.
         call self%scal(-one_cdp)
     end subroutine chsgn_cdp
+
+
+    !--------------------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
+    !--------------------------------------------------------------------------------
+    
+    module function initialize_dense_vector_rsp(n) result(vec)
+        integer, intent(in) :: n
+        type(dense_vector_rsp) :: vec
+        allocate(vec%data(n)) ; vec%data = 0.0_sp
+        return
+    end function
+
+    subroutine dense_zero_rsp(self)
+        class(dense_vector_rsp), intent(inout) :: self
+        self%data = 0.0_sp
+        return
+    end subroutine
+
+    subroutine dense_rand_rsp(self, ifnorm)
+        class(dense_vector_rsp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        call random_number(self%data)
+        return
+    end subroutine
+
+    subroutine dense_scal_rsp(self, alpha)
+        class(dense_vector_rsp), intent(inout) :: self
+        real(sp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_rsp(alpha, vec, beta, self)
+        real(sp), intent(in) :: alpha, beta
+        class(dense_vector_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rsp)
+            if (beta /= 0.0_sp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        end select
+        return
+    end subroutine
+
+    function dense_dot_rsp(self, vec) result(alpha)
+        class(dense_vector_rsp), intent(in) :: self
+        class(abstract_vector_rsp), intent(in) :: vec
+        real(sp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rsp)
+            alpha = dot(n, self%data, 1, vec%data, 1)
+        end select
+        return
+    end function
+
+    function dense_get_size_rsp(self) result(n)
+        class(dense_vector_rsp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
+    module function initialize_dense_vector_rdp(n) result(vec)
+        integer, intent(in) :: n
+        type(dense_vector_rdp) :: vec
+        allocate(vec%data(n)) ; vec%data = 0.0_dp
+        return
+    end function
+
+    subroutine dense_zero_rdp(self)
+        class(dense_vector_rdp), intent(inout) :: self
+        self%data = 0.0_dp
+        return
+    end subroutine
+
+    subroutine dense_rand_rdp(self, ifnorm)
+        class(dense_vector_rdp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        call random_number(self%data)
+        return
+    end subroutine
+
+    subroutine dense_scal_rdp(self, alpha)
+        class(dense_vector_rdp), intent(inout) :: self
+        real(dp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_rdp(alpha, vec, beta, self)
+        real(dp), intent(in) :: alpha, beta
+        class(dense_vector_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rdp)
+            if (beta /= 0.0_dp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        end select
+        return
+    end subroutine
+
+    function dense_dot_rdp(self, vec) result(alpha)
+        class(dense_vector_rdp), intent(in) :: self
+        class(abstract_vector_rdp), intent(in) :: vec
+        real(dp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rdp)
+            alpha = dot(n, self%data, 1, vec%data, 1)
+        end select
+        return
+    end function
+
+    function dense_get_size_rdp(self) result(n)
+        class(dense_vector_rdp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
+    module function initialize_dense_vector_csp(n) result(vec)
+        integer, intent(in) :: n
+        type(dense_vector_csp) :: vec
+        allocate(vec%data(n)) ; vec%data = 0.0_sp
+        return
+    end function
+
+    subroutine dense_zero_csp(self)
+        class(dense_vector_csp), intent(inout) :: self
+        self%data = 0.0_sp
+        return
+    end subroutine
+
+    subroutine dense_rand_csp(self, ifnorm)
+        class(dense_vector_csp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        real(sp), allocatable :: y(:, :)
+        allocate(y(size(self%data), 2)) ; call random_number(y)
+        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        return
+    end subroutine
+
+    subroutine dense_scal_csp(self, alpha)
+        class(dense_vector_csp), intent(inout) :: self
+        complex(sp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_csp(alpha, vec, beta, self)
+        complex(sp), intent(in) :: alpha, beta
+        class(dense_vector_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_csp)
+            if (beta /= 0.0_sp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        end select
+        return
+    end subroutine
+
+    function dense_dot_csp(self, vec) result(alpha)
+        class(dense_vector_csp), intent(in) :: self
+        class(abstract_vector_csp), intent(in) :: vec
+        complex(sp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_csp)
+            alpha = dotc(n, self%data, 1, vec%data, 1)
+        end select
+        return
+    end function
+
+    function dense_get_size_csp(self) result(n)
+        class(dense_vector_csp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
+    module function initialize_dense_vector_cdp(n) result(vec)
+        integer, intent(in) :: n
+        type(dense_vector_cdp) :: vec
+        allocate(vec%data(n)) ; vec%data = 0.0_dp
+        return
+    end function
+
+    subroutine dense_zero_cdp(self)
+        class(dense_vector_cdp), intent(inout) :: self
+        self%data = 0.0_dp
+        return
+    end subroutine
+
+    subroutine dense_rand_cdp(self, ifnorm)
+        class(dense_vector_cdp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        real(dp), allocatable :: y(:, :)
+        allocate(y(size(self%data), 2)) ; call random_number(y)
+        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        return
+    end subroutine
+
+    subroutine dense_scal_cdp(self, alpha)
+        class(dense_vector_cdp), intent(inout) :: self
+        complex(dp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_cdp(alpha, vec, beta, self)
+        complex(dp), intent(in) :: alpha, beta
+        class(dense_vector_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_cdp)
+            if (beta /= 0.0_dp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        end select
+        return
+    end subroutine
+
+    function dense_dot_cdp(self, vec) result(alpha)
+        class(dense_vector_cdp), intent(in) :: self
+        class(abstract_vector_cdp), intent(in) :: vec
+        complex(dp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_cdp)
+            alpha = dotc(n, self%data, 1, vec%data, 1)
+        end select
+        return
+    end function
+
+    function dense_get_size_cdp(self) result(n)
+        class(dense_vector_cdp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
 
     
     !--------------------------------------
