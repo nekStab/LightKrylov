@@ -166,10 +166,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_sp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
@@ -341,10 +343,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_dp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
@@ -516,10 +520,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_sp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
@@ -691,10 +697,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_dp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
