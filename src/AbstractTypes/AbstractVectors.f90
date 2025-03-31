@@ -899,7 +899,7 @@ contains
         class(dense_vector_rsp), intent(inout) :: self
         real(sp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -914,6 +914,8 @@ contains
         type is(dense_vector_rsp)
             if (beta /= 0.0_sp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end subroutine
@@ -927,6 +929,8 @@ contains
         select type (vec)
         type is(dense_vector_rsp)
             alpha = dot(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end function
@@ -962,7 +966,7 @@ contains
         class(dense_vector_rdp), intent(inout) :: self
         real(dp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -977,6 +981,8 @@ contains
         type is(dense_vector_rdp)
             if (beta /= 0.0_dp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end subroutine
@@ -990,6 +996,8 @@ contains
         select type (vec)
         type is(dense_vector_rdp)
             alpha = dot(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end function
@@ -1027,7 +1035,7 @@ contains
         class(dense_vector_csp), intent(inout) :: self
         complex(sp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -1042,6 +1050,8 @@ contains
         type is(dense_vector_csp)
             if (beta /= 0.0_sp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end subroutine
@@ -1055,6 +1065,8 @@ contains
         select type (vec)
         type is(dense_vector_csp)
             alpha = dotc(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end function
@@ -1092,7 +1104,7 @@ contains
         class(dense_vector_cdp), intent(inout) :: self
         complex(dp), intent(in) :: alpha
         integer :: n
-        n = self%get_size() ; print *, "Dimension in scal :", n
+        n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
     end subroutine
@@ -1107,6 +1119,8 @@ contains
         type is(dense_vector_cdp)
             if (beta /= 0.0_dp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end subroutine
@@ -1120,6 +1134,8 @@ contains
         select type (vec)
         type is(dense_vector_cdp)
             alpha = dotc(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
     end function
