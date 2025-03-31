@@ -139,7 +139,8 @@ contains
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_rsp(n) ; call x%rand()
+        x = dense_vector_rsp(n) ; call x%rand(ifnorm=.true.)
+        print *, x%data
         y = x
         call random_number(alpha)
         print *, alpha
@@ -263,7 +264,8 @@ contains
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_rdp(n) ; call x%rand()
+        x = dense_vector_rdp(n) ; call x%rand(ifnorm=.true.)
+        print *, x%data
         y = x
         call random_number(alpha)
         print *, alpha
@@ -387,9 +389,11 @@ contains
         complex(sp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_csp(n) ; call x%rand()
+        x = dense_vector_csp(n) ; call x%rand(ifnorm=.true.)
+        print *, x%data
         y = x
         alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = alpha / abs(alpha)
         print *, alpha
         
         ! Scale the vector.
@@ -511,9 +515,11 @@ contains
         complex(dp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_cdp(n) ; call x%rand()
+        x = dense_vector_cdp(n) ; call x%rand(ifnorm=.true.)
+        print *, x%data
         y = x
         alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = alpha / abs(alpha)
         print *, alpha
         
         ! Scale the vector.

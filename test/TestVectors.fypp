@@ -141,10 +141,12 @@ contains
         ${type}$ :: alpha
 
         ! Initialize vector.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
+        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand(ifnorm=.true.)
+        print *, x%data
         y = x
         #:if type[0] == "c"
         alpha = 0.0_${kind}$ ; call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = alpha / abs(alpha)
         #:else
         call random_number(alpha)
         #:endif
