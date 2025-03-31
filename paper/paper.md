@@ -80,7 +80,7 @@ type, abstract :: abstract_vector_rdp
   contains
     ! Abstract procedure to compute the scalar-vector product.
     procedure(abstract_scal_rdp) , pass(self), deferred :: scal
-    ! Abstract procedure to compute y = alpha*x + beta*y
+    ! Abstract procedure to compute y = alpha*x + beta*y.
     procedure(abstract_axpby_rdp), pass(self), deferred:: axpby
     ! Abstract procedure to compute the vector dot product.
     procedure(abstract_dot_rdp)  , pass(self), deferred :: dot
