@@ -151,7 +151,7 @@ contains
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
@@ -293,7 +293,7 @@ contains
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
@@ -436,7 +436,7 @@ contains
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
@@ -579,7 +579,7 @@ contains
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
