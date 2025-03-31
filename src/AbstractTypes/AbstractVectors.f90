@@ -875,7 +875,7 @@ contains
     !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
     !--------------------------------------------------------------------------------
     
-    module function initialize_dense_vector_rsp(n) result(vec)
+    function initialize_dense_vector_rsp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_rsp) :: vec
         allocate(vec%data(n)) ; vec%data = 0.0_sp
@@ -938,7 +938,7 @@ contains
         return
     end function
 
-    module function initialize_dense_vector_rdp(n) result(vec)
+    function initialize_dense_vector_rdp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_rdp) :: vec
         allocate(vec%data(n)) ; vec%data = 0.0_dp
@@ -1001,7 +1001,7 @@ contains
         return
     end function
 
-    module function initialize_dense_vector_csp(n) result(vec)
+    function initialize_dense_vector_csp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_csp) :: vec
         allocate(vec%data(n)) ; vec%data = 0.0_sp
@@ -1066,7 +1066,7 @@ contains
         return
     end function
 
-    module function initialize_dense_vector_cdp(n) result(vec)
+    function initialize_dense_vector_cdp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_cdp) :: vec
         allocate(vec%data(n)) ; vec%data = 0.0_dp

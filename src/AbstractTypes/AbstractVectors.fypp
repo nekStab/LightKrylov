@@ -441,7 +441,7 @@ contains
     !--------------------------------------------------------------------------------
     
     #:for kind, type in RC_KINDS_TYPES
-    module function initialize_dense_vector_${type[0]}$${kind}$(n) result(vec)
+    function initialize_dense_vector_${type[0]}$${kind}$(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_${type[0]}$${kind}$) :: vec
         allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
