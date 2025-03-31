@@ -27,8 +27,7 @@ program Tester
    call greetings()
 
    ! Turn off logging during tests (unless you REALLY want it)
-   call logger%configure(level=error_level, time_stamp=.false.); write(*,*) 'Logging set to error_level.'
-   !call logger%configure(level=none_level, time_stamp=.false.); write(*,*) 'Logging set to none_level.'
+   call logger_setup(log_level=error_level, log_timestamp=.false.); write(*,*) 'Logging set to error_level.'
    write(*,*) ""; write(*,*) ""
 
    status = 0
