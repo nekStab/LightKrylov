@@ -140,13 +140,13 @@ contains
 
         ! Initialize vector.
         x = dense_vector_rsp(n) ; call x%rand(ifnorm=.true.)
-        y = x
+        y = dense_vector_rsp(x%data)
         call random_number(alpha)
         print *, "alpha : ", alpha
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
@@ -277,13 +277,13 @@ contains
 
         ! Initialize vector.
         x = dense_vector_rdp(n) ; call x%rand(ifnorm=.true.)
-        y = x
+        y = dense_vector_rdp(x%data)
         call random_number(alpha)
         print *, "alpha : ", alpha
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
@@ -414,14 +414,14 @@ contains
 
         ! Initialize vector.
         x = dense_vector_csp(n) ; call x%rand(ifnorm=.true.)
-        y = x
+        y = dense_vector_csp(x%data)
         alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
         print *, "alpha : ", alpha
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
@@ -552,14 +552,14 @@ contains
 
         ! Initialize vector.
         x = dense_vector_cdp(n) ; call x%rand(ifnorm=.true.)
-        y = x
+        y = dense_vector_cdp(x%data)
         alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
         print *, "alpha : ", alpha
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         

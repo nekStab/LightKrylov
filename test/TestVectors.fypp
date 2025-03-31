@@ -142,7 +142,7 @@ contains
 
         ! Initialize vector.
         x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand(ifnorm=.true.)
-        y = x
+        y = dense_vector_${type[0]}$${kind}$(x%data)
         #:if type[0] == "c"
         alpha = 0.0_${kind}$ ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
@@ -153,7 +153,7 @@ contains
         print *
         print *, "x     : ", x%data
         print *
-        print *, "y     : ", x%data
+        print *, "y     : ", y%data
         print *
         print *, "x-y     : ", x%data - y%data
         
