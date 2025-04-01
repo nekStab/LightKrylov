@@ -412,7 +412,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        ${type}$ :: A(n, n), b(n), x(n)
+        ${type}$ :: A(n, n) ! Linear Operator.
+        ${type}$ :: b(n)    ! Right-hand side vector.
+        ${type}$ :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_${kind}$_opts) :: opts
         ! GMRES metadata.
@@ -425,14 +427,15 @@ contains
 
         ! Initialize linear problem.
         #:if type[0] == "r"
-        call random_number(A) ; call random_number(b) ; x = 0.0_${kind}$
+        call random_number(A) ; call random_number(b)
         #:else
+        block
         real(${kind}$) :: Adata(n, n, 2), bdata(n, 2)
-        call random_number(Adata) ; call random_number(bdata)
-        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
-        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
-        x = 0.0_${kind}$
+        call random_number(Adata) ; A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        call random_number(bdata) ; b%re = bdata(:, 1) ; b%im = bdata(:, 2)
+        end block
         #:endif
+        x = 0.0_${kind}$
 
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)

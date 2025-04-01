@@ -932,7 +932,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        real(sp) :: A(n, n), b(n), x(n)
+        real(sp) :: A(n, n) ! Linear Operator.
+        real(sp) :: b(n)    ! Right-hand side vector.
+        real(sp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
         ! GMRES metadata.
@@ -944,7 +946,8 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        call random_number(A) ; call random_number(b) ; x = 0.0_sp
+        call random_number(A) ; call random_number(b)
+        x = 0.0_sp
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1009,7 +1012,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        real(dp) :: A(n, n), b(n), x(n)
+        real(dp) :: A(n, n) ! Linear Operator.
+        real(dp) :: b(n)    ! Right-hand side vector.
+        real(dp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
         ! GMRES metadata.
@@ -1021,7 +1026,8 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        call random_number(A) ; call random_number(b) ; x = 0.0_dp
+        call random_number(A) ; call random_number(b)
+        x = 0.0_dp
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1086,7 +1092,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        complex(sp) :: A(n, n), b(n), x(n)
+        complex(sp) :: A(n, n) ! Linear Operator.
+        complex(sp) :: b(n)    ! Right-hand side vector.
+        complex(sp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
         ! GMRES metadata.
@@ -1098,10 +1106,11 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
+        block
         real(sp) :: Adata(n, n, 2), bdata(n, 2)
-        call random_number(Adata) ; call random_number(bdata)
-        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
-        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        call random_number(Adata) ; A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        call random_number(bdata) ; b%re = bdata(:, 1) ; b%im = bdata(:, 2)
+        end block
         x = 0.0_sp
 
         ! GMRES solver.
@@ -1167,7 +1176,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        complex(dp) :: A(n, n), b(n), x(n)
+        complex(dp) :: A(n, n) ! Linear Operator.
+        complex(dp) :: b(n)    ! Right-hand side vector.
+        complex(dp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
         ! GMRES metadata.
@@ -1179,10 +1190,11 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
+        block
         real(dp) :: Adata(n, n, 2), bdata(n, 2)
-        call random_number(Adata) ; call random_number(bdata)
-        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
-        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        call random_number(Adata) ; A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        call random_number(bdata) ; b%re = bdata(:, 1) ; b%im = bdata(:, 2)
+        end block
         x = 0.0_dp
 
         ! GMRES solver.

@@ -54,6 +54,7 @@ module LightKrylov_IterativeSolvers
     public :: gmres
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${type[0]}$${kind}$
+    public :: dense_gmres_${type[0]}$${kind}$
     #:endfor
     public :: fgmres
     #:for kind, type in RC_KINDS_TYPES
@@ -263,7 +264,7 @@ module LightKrylov_IterativeSolvers
         end subroutine
 
         module subroutine dense_gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            ${type}$, intent(inout) :: A(:, :)
+            ${type}$, intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             ${type}$, intent(in) :: b(:)
             !! Right-hand side vector.

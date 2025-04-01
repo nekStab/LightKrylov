@@ -28,7 +28,7 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, type_error, check_info
+    &                             log_debug, stop_error, check_info
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
@@ -52,9 +52,13 @@ module LightKrylov_IterativeSolvers
     public :: svds
     public :: gmres
     public :: gmres_rsp
+    public :: dense_gmres_rsp
     public :: gmres_rdp
+    public :: dense_gmres_rdp
     public :: gmres_csp
+    public :: dense_gmres_csp
     public :: gmres_cdp
+    public :: dense_gmres_cdp
     public :: fgmres
     public :: fgmres_rsp
     public :: fgmres_rdp
@@ -438,7 +442,7 @@ module LightKrylov_IterativeSolvers
         end subroutine
 
         module subroutine dense_gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            real(sp), intent(inout) :: A(:, :)
+            real(sp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             real(sp), intent(in) :: b(:)
             !! Right-hand side vector.
@@ -483,7 +487,7 @@ module LightKrylov_IterativeSolvers
         end subroutine
 
         module subroutine dense_gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            real(dp), intent(inout) :: A(:, :)
+            real(dp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             real(dp), intent(in) :: b(:)
             !! Right-hand side vector.
@@ -528,7 +532,7 @@ module LightKrylov_IterativeSolvers
         end subroutine
 
         module subroutine dense_gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            complex(sp), intent(inout) :: A(:, :)
+            complex(sp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             complex(sp), intent(in) :: b(:)
             !! Right-hand side vector.
@@ -573,7 +577,7 @@ module LightKrylov_IterativeSolvers
         end subroutine
 
         module subroutine dense_gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            complex(dp), intent(inout) :: A(:, :)
+            complex(dp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             complex(dp), intent(in) :: b(:)
             !! Right-hand side vector.
