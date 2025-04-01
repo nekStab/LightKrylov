@@ -95,6 +95,7 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${type[0]}$${kind}$
     end type
+
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract ${type}$ exponential propagator with kind=${kind}$     -----
     !--------------------------------------------------------------------------------------------
@@ -115,8 +116,6 @@ module LightKrylov_AbstractLinops
         real(${kind}$), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
     end type
-
-
     #:endfor
 
     interface adjoint

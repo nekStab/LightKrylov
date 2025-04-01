@@ -92,6 +92,7 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_rsp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_rsp
     end type
+
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) exponential propagator with kind=sp     -----
     !--------------------------------------------------------------------------------------------
@@ -112,8 +113,6 @@ module LightKrylov_AbstractLinops
         real(sp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
     end type
-
-
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
@@ -159,6 +158,7 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_rdp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_rdp
     end type
+
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) exponential propagator with kind=dp     -----
     !--------------------------------------------------------------------------------------------
@@ -179,8 +179,6 @@ module LightKrylov_AbstractLinops
         real(dp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
     end type
-
-
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
@@ -226,6 +224,7 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_csp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_csp
     end type
+
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) exponential propagator with kind=sp     -----
     !--------------------------------------------------------------------------------------------
@@ -246,8 +245,6 @@ module LightKrylov_AbstractLinops
         real(sp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
     end type
-
-
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
@@ -293,6 +290,7 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_cdp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_cdp
     end type
+
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(dp) exponential propagator with kind=dp     -----
     !--------------------------------------------------------------------------------------------
@@ -313,8 +311,6 @@ module LightKrylov_AbstractLinops
         real(dp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
     end type
-
-
 
     interface adjoint
         module procedure initialize_adjoint_rsp
