@@ -52,7 +52,7 @@ contains
         ! Test LinOp.
         type(dense_linop_${type[0]}$${kind}$) :: A
         #:if type[0] == "c"
-        real(${kind}$), allocatable :: Adata(:, :, :)
+        real(${kind}$) :: Adata(n, n, 2)
         #:endif
 
         ! Initialize vectors.
@@ -62,7 +62,6 @@ contains
         ! Initialize matrix.
         A = dense_linop_${type[0]}$${kind}$() ; allocate(A%data(n, n))
         #:if type[0] == "c"
-        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -86,7 +85,7 @@ contains
         ! Test LinOp.
         type(dense_linop_${type[0]}$${kind}$) :: A
         #:if type[0] == "c"
-        real(${kind}$), allocatable :: Adata(:, :, :)
+        real(${kind}$) :: Adata(n, n, 2)
         #:endif
 
         ! Initialize vectors.
@@ -94,9 +93,8 @@ contains
         y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_${type[0]}$${kind}$() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         #:if type[0] == "c"
-        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -121,7 +119,7 @@ contains
         type(dense_linop_${type[0]}$${kind}$) :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
         #:if type[0] == "c"
-        real(${kind}$), allocatable :: Adata(:, :, :)
+        real(${kind}$) :: Adata(n, n, 2)
         #:endif
 
         ! Initialize vectors.
@@ -129,9 +127,8 @@ contains
         y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_${type[0]}$${kind}$() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         #:if type[0] == "c"
-        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)
@@ -156,7 +153,7 @@ contains
         type(dense_linop_${type[0]}$${kind}$) :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
         #:if type[0] == "c"
-        real(${kind}$), allocatable :: Adata(:, :, :)
+        real(${kind}$) :: Adata(n, n, 2)
         #:endif
 
         ! Initialize vectors.
@@ -164,9 +161,8 @@ contains
         y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_${type[0]}$${kind}$() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         #:if type[0] == "c"
-        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
         #:else
         call random_number(A%data)

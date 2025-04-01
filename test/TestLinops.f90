@@ -81,7 +81,7 @@ contains
         y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_rsp() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
@@ -108,7 +108,7 @@ contains
         y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_rsp() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
@@ -135,7 +135,7 @@ contains
         y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_rsp() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
@@ -199,7 +199,7 @@ contains
         y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_rdp() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
@@ -226,7 +226,7 @@ contains
         y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_rdp() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
@@ -253,7 +253,7 @@ contains
         y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_rdp() ; allocate(A%data(n, n))
+        allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
@@ -285,7 +285,7 @@ contains
         type(dense_vector_csp) :: x, y
         ! Test LinOp.
         type(dense_linop_csp) :: A
-        real(sp), allocatable :: Adata(:, :, :)
+        real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_csp(n) ; call x%rand()
@@ -293,7 +293,6 @@ contains
 
         ! Initialize matrix.
         A = dense_linop_csp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -313,15 +312,14 @@ contains
         type(dense_vector_csp) :: x, y
         ! Test LinOp.
         type(dense_linop_csp) :: A
-        real(sp), allocatable :: Adata(:, :, :)
+        real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_csp(n) ; call x%rand()
         y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_csp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
+        allocate(A%data(n, n))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -342,15 +340,14 @@ contains
         ! Test LinOp.
         type(dense_linop_csp) :: A
         type(adjoint_linop_csp), allocatable :: B
-        real(sp), allocatable :: Adata(:, :, :)
+        real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_csp(n) ; call x%rand()
         y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_csp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
+        allocate(A%data(n, n))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -371,15 +368,14 @@ contains
         ! Test LinOp.
         type(dense_linop_csp) :: A
         type(adjoint_linop_csp), allocatable :: B
-        real(sp), allocatable :: Adata(:, :, :)
+        real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_csp(n) ; call x%rand()
         y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_csp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
+        allocate(A%data(n, n))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -411,7 +407,7 @@ contains
         type(dense_vector_cdp) :: x, y
         ! Test LinOp.
         type(dense_linop_cdp) :: A
-        real(dp), allocatable :: Adata(:, :, :)
+        real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_cdp(n) ; call x%rand()
@@ -419,7 +415,6 @@ contains
 
         ! Initialize matrix.
         A = dense_linop_cdp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -439,15 +434,14 @@ contains
         type(dense_vector_cdp) :: x, y
         ! Test LinOp.
         type(dense_linop_cdp) :: A
-        real(dp), allocatable :: Adata(:, :, :)
+        real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_cdp(n) ; call x%rand()
         y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_cdp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
+        allocate(A%data(n, n))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -468,15 +462,14 @@ contains
         ! Test LinOp.
         type(dense_linop_cdp) :: A
         type(adjoint_linop_cdp), allocatable :: B
-        real(dp), allocatable :: Adata(:, :, :)
+        real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_cdp(n) ; call x%rand()
         y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_cdp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
+        allocate(A%data(n, n))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
@@ -497,15 +490,14 @@ contains
         ! Test LinOp.
         type(dense_linop_cdp) :: A
         type(adjoint_linop_cdp), allocatable :: B
-        real(dp), allocatable :: Adata(:, :, :)
+        real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
         x = dense_vector_cdp(n) ; call x%rand()
         y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = dense_linop_cdp() ; allocate(A%data(n, n))
-        allocate(Adata(test_size, test_size, 2))
+        allocate(A%data(n, n))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
         ! Compute matrix-vector product.
