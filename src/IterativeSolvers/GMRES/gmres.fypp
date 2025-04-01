@@ -107,8 +107,9 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        ! allocate(wrk, mold=b)       ; call wrk%zero()
+        wrk = b ; call wrk%zero()
+        allocate(V(kdim+1), mold=b) ; V = b ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_${kind}$
         allocate(e(kdim+1))         ; e = 0.0_${kind}$
         allocate(c(kdim))           ; c = 0.0_${kind}$
@@ -238,6 +239,28 @@ contains
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure 
+    #:endfor
+
+    !--------------------------------------------------------
+    !-----     Convenience wrapper for dense linops     -----
+    !--------------------------------------------------------
+    
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure dense_gmres_${type[0]}$${kind}$
+        ! Internal variables.
+        type(dense_linop_${type[0]}$${kind}$)  :: A_
+        type(dense_vector_${type[0]}$${kind}$) :: b_, x_
+        ! Wrap the dense inputs.
+        A_ = dense_linop_${type[0]}$${kind}$(A)
+        b_ = dense_vector_${type[0]}$${kind}$(b)
+        x_  = dense_vector_${type[0]}$${kind}$(size(b)) ; call x_%zero()
+        ! Call the abstract gmres solver.
+        print *, "calling dense gmres"
+        call gmres_${type[0]}$${kind}$(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+        print *, "outside dense gmres"
+        x = x_%data
+        return
+    end procedure
     #:endfor
 
 end submodule
