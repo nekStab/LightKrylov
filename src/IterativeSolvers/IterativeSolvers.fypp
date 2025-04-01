@@ -54,7 +54,6 @@ module LightKrylov_IterativeSolvers
     public :: gmres
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${type[0]}$${kind}$
-    public :: dense_gmres_${type[0]}$${kind}$
     #:endfor
     public :: fgmres
     #:for kind, type in RC_KINDS_TYPES
@@ -253,29 +252,6 @@ module LightKrylov_IterativeSolvers
             !! Relative solver tolerance
             real(${kind}$), optional, intent(in) :: atol
             !! Absolute solver tolerance
-            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
-            !! Preconditioner (optional).
-            class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
-            logical, optional, intent(in) :: transpose
-            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-            class(abstract_metadata), optional, intent(out) :: meta
-            !! Metadata.
-        end subroutine
-
-        module subroutine dense_gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
-            ${type}$, intent(in) :: A(:, :)
-            !! Matrix to be inverted.
-            ${type}$, intent(in) :: b(:)
-            !! Right-hand side vector.
-            ${type}$, intent(out) :: x(:)
-            !! Solution vector.
-            integer, intent(out) :: info
-            !! Information flag.
-            real(${kind}$), optional, intent(in) :: rtol
-            !! Relative solver tolerance.
-            real(${kind}$), optional, intent(in) :: atol
-            !! Absolute solver tolerance.
             class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
