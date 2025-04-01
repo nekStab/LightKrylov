@@ -105,7 +105,6 @@ module LightKrylov
     public :: gmres
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${type[0]}$${kind}$
-    public :: dense_gmres_${type[0]}$${kind}$
     #:endfor
     public :: fgmres
     #:for kind, type in RC_KINDS_TYPES
