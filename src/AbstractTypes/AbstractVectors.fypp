@@ -549,7 +549,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) y = X(1) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_${type[0]}$${kind}$) ! y = y + X[i]*v[i]
