@@ -67,12 +67,14 @@ module LightKrylov
     public :: Id_${type[0]}$${kind}$
     public :: scaled_linop_${type[0]}$${kind}$
     public :: axpby_linop_${type[0]}$${kind}$
+    public :: dense_linop_${type[0]}$${kind}$
     #:if type[0] == "r"
     public :: abstract_sym_linop_${type[0]}$${kind}$
     #:else
     public :: abstract_hermitian_linop_${type[0]}$${kind}$
     #:endif
     #:endfor
+    public :: adjoint
 
     ! AbstractSystems exports.
     #:for kind, type in RC_KINDS_TYPES

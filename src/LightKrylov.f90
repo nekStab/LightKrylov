@@ -70,6 +70,7 @@ module LightKrylov
     public :: Id_rsp
     public :: scaled_linop_rsp
     public :: axpby_linop_rsp
+    public :: dense_linop_rsp
     public :: abstract_sym_linop_rsp
     public :: abstract_linop_rdp
     public :: abstract_exptA_linop_rdp
@@ -77,6 +78,7 @@ module LightKrylov
     public :: Id_rdp
     public :: scaled_linop_rdp
     public :: axpby_linop_rdp
+    public :: dense_linop_rdp
     public :: abstract_sym_linop_rdp
     public :: abstract_linop_csp
     public :: abstract_exptA_linop_csp
@@ -84,6 +86,7 @@ module LightKrylov
     public :: Id_csp
     public :: scaled_linop_csp
     public :: axpby_linop_csp
+    public :: dense_linop_csp
     public :: abstract_hermitian_linop_csp
     public :: abstract_linop_cdp
     public :: abstract_exptA_linop_cdp
@@ -91,7 +94,9 @@ module LightKrylov
     public :: Id_cdp
     public :: scaled_linop_cdp
     public :: axpby_linop_cdp
+    public :: dense_linop_cdp
     public :: abstract_hermitian_linop_cdp
+    public :: adjoint
 
     ! AbstractSystems exports.
     public :: abstract_system_rsp

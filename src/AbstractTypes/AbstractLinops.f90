@@ -10,6 +10,7 @@ module LightKrylov_AbstractLinops
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
     !!  of two linear operators.
     use stdlib_optval, only: optval
+    use stdlib_linalg_blas, only: gemv
     use LightKrylov_Logger
     use LightKrylov_Constants
     use LightKrylov_Timer_Utils, only: lightkrylov_timer
@@ -113,8 +114,6 @@ module LightKrylov_AbstractLinops
     end type
 
 
-
-
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
@@ -182,8 +181,6 @@ module LightKrylov_AbstractLinops
     end type
 
 
-
-
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
@@ -249,8 +246,6 @@ module LightKrylov_AbstractLinops
         real(sp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
     end type
-
-
 
 
     !------------------------------------------------------------------------------
@@ -321,7 +316,13 @@ module LightKrylov_AbstractLinops
 
 
 
-
+    interface adjoint
+        module procedure initialize_adjoint_rsp
+        module procedure initialize_adjoint_rdp
+        module procedure initialize_adjoint_csp
+        module procedure initialize_adjoint_cdp
+    end interface
+    public :: adjoint
 
     !--------------------------------------------------
     !-----     Definition of the Identity map     -----
@@ -487,9 +488,6 @@ module LightKrylov_AbstractLinops
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
     end type
-
-
-
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
@@ -497,9 +495,6 @@ module LightKrylov_AbstractLinops
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
     end type
-
-
-
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
@@ -507,10 +502,6 @@ module LightKrylov_AbstractLinops
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
     end type
- 
-
-
-
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
@@ -518,10 +509,36 @@ module LightKrylov_AbstractLinops
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
     end type
- 
 
+    !------------------------------------------------
+    !-----     Convenience dense linop type     -----
+    !------------------------------------------------
 
-
+    type, extends(abstract_linop_rsp), public :: dense_linop_rsp
+        real(sp), allocatable :: data(:, :)
+    contains
+        procedure, pass(self), public :: matvec => dense_matvec_rsp
+        procedure, pass(self), public :: rmatvec => dense_rmatvec_rsp
+    end type
+    type, extends(abstract_linop_rdp), public :: dense_linop_rdp
+        real(dp), allocatable :: data(:, :)
+    contains
+        procedure, pass(self), public :: matvec => dense_matvec_rdp
+        procedure, pass(self), public :: rmatvec => dense_rmatvec_rdp
+    end type
+    type, extends(abstract_linop_csp), public :: dense_linop_csp
+        complex(sp), allocatable :: data(:, :)
+    contains
+        procedure, pass(self), public :: matvec => dense_matvec_csp
+        procedure, pass(self), public :: rmatvec => dense_rmatvec_csp
+    end type
+    type, extends(abstract_linop_cdp), public :: dense_linop_cdp
+        complex(dp), allocatable :: data(:, :)
+    contains
+        procedure, pass(self), public :: matvec => dense_matvec_cdp
+        procedure, pass(self), public :: rmatvec => dense_rmatvec_cdp
+    end type
+   
 contains
 
     !--------------------------------------------------------------
@@ -1104,6 +1121,17 @@ contains
     end subroutine axpby_rmatvec_cdp
 
 
+    !-------------------------------------------------
+    !-----     ADJOINT TYPE-BOUND PROCEDURES     -----
+    !-------------------------------------------------
+
+    function initialize_adjoint_rsp(A) result(B)
+        class(abstract_linop_rsp), intent(in) :: A
+        class(adjoint_linop_rsp), allocatable :: B
+        allocate(B) ; B%A = A
+        return
+    end function
+
     subroutine adjoint_matvec_rsp(self, vec_in, vec_out)
         class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
@@ -1123,6 +1151,13 @@ contains
 
         return
     end subroutine adjoint_rmatvec_rsp
+
+    function initialize_adjoint_rdp(A) result(B)
+        class(abstract_linop_rdp), intent(in) :: A
+        class(adjoint_linop_rdp), allocatable :: B
+        allocate(B) ; B%A = A
+        return
+    end function
 
     subroutine adjoint_matvec_rdp(self, vec_in, vec_out)
         class(adjoint_linop_rdp), intent(inout) :: self
@@ -1144,6 +1179,13 @@ contains
         return
     end subroutine adjoint_rmatvec_rdp
 
+    function initialize_adjoint_csp(A) result(B)
+        class(abstract_linop_csp), intent(in) :: A
+        class(adjoint_linop_csp), allocatable :: B
+        allocate(B) ; B%A = A
+        return
+    end function
+
     subroutine adjoint_matvec_csp(self, vec_in, vec_out)
         class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
@@ -1164,6 +1206,13 @@ contains
         return
     end subroutine adjoint_rmatvec_csp
 
+    function initialize_adjoint_cdp(A) result(B)
+        class(abstract_linop_cdp), intent(in) :: A
+        class(adjoint_linop_cdp), allocatable :: B
+        allocate(B) ; B%A = A
+        return
+    end function
+
     subroutine adjoint_matvec_cdp(self, vec_in, vec_out)
         class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
@@ -1183,6 +1232,212 @@ contains
 
         return
     end subroutine adjoint_rmatvec_cdp
+
+
+    !--------------------------------------------------------------------------
+    !-----     Type-bound procedures for convenience dense linop type     -----
+    !--------------------------------------------------------------------------
+
+    subroutine dense_matvec_rsp(self, vec_in, vec_out)
+        class(dense_linop_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec_in
+        class(abstract_vector_rsp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_rsp)
+            select type(vec_out)
+            type is(dense_vector_rsp)
+                block
+                integer :: m, n
+                real(sp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_rsp ; beta = zero_rsp
+                vec_out = dense_vector_rsp(m) 
+                call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+        return
+    end subroutine
+
+    subroutine dense_rmatvec_rsp(self, vec_in, vec_out)
+        class(dense_linop_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec_in
+        class(abstract_vector_rsp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_rsp)
+            select type(vec_out)
+            type is(dense_vector_rsp)
+                block
+                integer :: m, n
+                real(sp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_rsp ; beta = zero_rsp
+                vec_out = dense_vector_rsp(m) 
+                call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+         return
+    end subroutine
+
+    subroutine dense_matvec_rdp(self, vec_in, vec_out)
+        class(dense_linop_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec_in
+        class(abstract_vector_rdp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_rdp)
+            select type(vec_out)
+            type is(dense_vector_rdp)
+                block
+                integer :: m, n
+                real(dp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_rdp ; beta = zero_rdp
+                vec_out = dense_vector_rdp(m) 
+                call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+        return
+    end subroutine
+
+    subroutine dense_rmatvec_rdp(self, vec_in, vec_out)
+        class(dense_linop_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec_in
+        class(abstract_vector_rdp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_rdp)
+            select type(vec_out)
+            type is(dense_vector_rdp)
+                block
+                integer :: m, n
+                real(dp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_rdp ; beta = zero_rdp
+                vec_out = dense_vector_rdp(m) 
+                call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+         return
+    end subroutine
+
+    subroutine dense_matvec_csp(self, vec_in, vec_out)
+        class(dense_linop_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_csp)
+            select type(vec_out)
+            type is(dense_vector_csp)
+                block
+                integer :: m, n
+                complex(sp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_csp ; beta = zero_csp
+                vec_out = dense_vector_csp(m) 
+                call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+        return
+    end subroutine
+
+    subroutine dense_rmatvec_csp(self, vec_in, vec_out)
+        class(dense_linop_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_csp)
+            select type(vec_out)
+            type is(dense_vector_csp)
+                block
+                integer :: m, n
+                complex(sp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_csp ; beta = zero_csp
+                vec_out = dense_vector_csp(m) 
+                call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+         return
+    end subroutine
+
+    subroutine dense_matvec_cdp(self, vec_in, vec_out)
+        class(dense_linop_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_cdp)
+            select type(vec_out)
+            type is(dense_vector_cdp)
+                block
+                integer :: m, n
+                complex(dp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_cdp ; beta = zero_cdp
+                vec_out = dense_vector_cdp(m) 
+                call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+        return
+    end subroutine
+
+    subroutine dense_rmatvec_cdp(self, vec_in, vec_out)
+        class(dense_linop_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_cdp)
+            select type(vec_out)
+            type is(dense_vector_cdp)
+                block
+                integer :: m, n
+                complex(dp) :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_cdp ; beta = zero_cdp
+                vec_out = dense_vector_cdp(m) 
+                call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+         return
+    end subroutine
+
 
 
 end module LightKrylov_AbstractLinops

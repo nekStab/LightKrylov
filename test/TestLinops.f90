@@ -1,6 +1,7 @@
 module TestLinops
     ! Fortran Standard Library
     use stdlib_math, only: is_close, all_close
+    use stdlib_linalg, only: norm, hermitian
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
     ! LightKrylov
@@ -16,6 +17,7 @@ module TestLinops
 
     character(len=*), parameter, private :: this_module      = 'LK_TLinops'
     character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestLinops'
+    integer, parameter :: n = 128
 
     public :: collect_linop_rsp_testsuite
     public :: collect_linop_rdp_testsuite
@@ -44,24 +46,24 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y
+        type(dense_vector_rsp) :: x, y
         ! Test LinOp.
-        type(linop_rsp), allocatable :: A
+        type(dense_linop_rsp) :: A
 
         ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%rand()
+        x = dense_vector_rsp(n) ; call x%rand()
+        y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rsp()
+        A = dense_linop_rsp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
         call A%apply_matvec(x, y)
 
         ! Check result.
-        call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_sp)
-        call check_test(error, 'test_matvec_rsp', eq='norm2(y - A @ x)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_sp)
+        call check_test(error, 'test_matvec_rsp', eq='norm(y - A @ x)')
         
         return
     end subroutine test_matvec_rsp
@@ -70,94 +72,78 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y
+        type(dense_vector_rsp) :: x, y
         ! Test LinOp.
-        type(linop_rsp), allocatable :: A
+        type(dense_linop_rsp) :: A
 
         ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%rand()
+        x = dense_vector_rsp(n) ; call x%rand()
+        y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rsp()
+        A = dense_linop_rsp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
         call A%apply_rmatvec(x, y)
 
         ! Check result.
-        call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_sp)
-        call check_test(error, 'test_rmatvec_rsp', eq='norm2(y - A.T @ x)')
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_sp)
+        call check_test(error, 'test_rmatvec_rsp', eq='norm(y - A.H @ x)')
+       
         return
     end subroutine test_rmatvec_rsp
 
     subroutine test_adjoint_matvec_rsp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y
+        type(dense_vector_rsp) :: x, y
         ! Test LinOp.
-        type(linop_rsp), allocatable :: A
+        type(dense_linop_rsp) :: A
         type(adjoint_linop_rsp), allocatable :: B
 
-        ! Internal variable.
-        real(sp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_rsp(n) ; call x%rand()
+        y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rsp()
+        A = dense_linop_rsp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_matvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_matvec(x, y)
 
         ! Check result.
-        alpha = norm2(y%data - matmul(transpose(A%data), x%data))
-        call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_matvec_rsp', eq='norm2(y - A.T @ x)')
-
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_sp)
+        call check_test(error, 'test_adjoint_matvec_rsp', eq='norm(y - adjoint(A) @ x)')
 
        return
     end subroutine test_adjoint_matvec_rsp
 
     subroutine test_adjoint_rmatvec_rsp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y
+        type(dense_vector_rsp) :: x, y
         ! Test LinOp.
-        type(linop_rsp), allocatable :: A
+        type(dense_linop_rsp) :: A
         type(adjoint_linop_rsp), allocatable :: B
 
-        ! Internal variable.
-        real(sp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_rsp(n) ; call x%rand()
+        y = dense_vector_rsp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rsp()
+        A = dense_linop_rsp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_rmatvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_rmatvec(x, y)
 
         ! Check result.
-        alpha = norm2(y%data - matmul(A%data, x%data))
-        call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_rmatvec_rsp', eq='norm2(y - A @ x)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_sp)
+        call check_test(error, 'test_adjoint_rmatvec_rsp', eq='norm(y - A @ x)')
 
        return
     end subroutine test_adjoint_rmatvec_rsp
@@ -178,24 +164,24 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y
+        type(dense_vector_rdp) :: x, y
         ! Test LinOp.
-        type(linop_rdp), allocatable :: A
+        type(dense_linop_rdp) :: A
 
         ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%rand()
+        x = dense_vector_rdp(n) ; call x%rand()
+        y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rdp()
+        A = dense_linop_rdp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
         call A%apply_matvec(x, y)
 
         ! Check result.
-        call check(error, norm2(y%data - matmul(A%data, x%data)) < rtol_dp)
-        call check_test(error, 'test_matvec_rdp', eq='norm2(y - A @ x)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_dp)
+        call check_test(error, 'test_matvec_rdp', eq='norm(y - A @ x)')
         
         return
     end subroutine test_matvec_rdp
@@ -204,94 +190,78 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y
+        type(dense_vector_rdp) :: x, y
         ! Test LinOp.
-        type(linop_rdp), allocatable :: A
+        type(dense_linop_rdp) :: A
 
         ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%rand()
+        x = dense_vector_rdp(n) ; call x%rand()
+        y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rdp()
+        A = dense_linop_rdp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
         ! Compute matrix-vector product.
         call A%apply_rmatvec(x, y)
 
         ! Check result.
-        call check(error, norm2(y%data - matmul(transpose(A%data), x%data)) < rtol_dp)
-        call check_test(error, 'test_rmatvec_rdp', eq='norm2(y - A.T @ x)')
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_dp)
+        call check_test(error, 'test_rmatvec_rdp', eq='norm(y - A.H @ x)')
+       
         return
     end subroutine test_rmatvec_rdp
 
     subroutine test_adjoint_matvec_rdp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y
+        type(dense_vector_rdp) :: x, y
         ! Test LinOp.
-        type(linop_rdp), allocatable :: A
+        type(dense_linop_rdp) :: A
         type(adjoint_linop_rdp), allocatable :: B
 
-        ! Internal variable.
-        real(dp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_rdp(n) ; call x%rand()
+        y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rdp()
+        A = dense_linop_rdp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_matvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_matvec(x, y)
 
         ! Check result.
-        alpha = norm2(y%data - matmul(transpose(A%data), x%data))
-        call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_matvec_rdp', eq='norm2(y - A.T @ x)')
-
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_dp)
+        call check_test(error, 'test_adjoint_matvec_rdp', eq='norm(y - adjoint(A) @ x)')
 
        return
     end subroutine test_adjoint_matvec_rdp
 
     subroutine test_adjoint_rmatvec_rdp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y
+        type(dense_vector_rdp) :: x, y
         ! Test LinOp.
-        type(linop_rdp), allocatable :: A
+        type(dense_linop_rdp) :: A
         type(adjoint_linop_rdp), allocatable :: B
 
-        ! Internal variable.
-        real(dp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_rdp(n) ; call x%rand()
+        y = dense_vector_rdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_rdp()
+        A = dense_linop_rdp() ; allocate(A%data(n, n))
         call random_number(A%data)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_rmatvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_rmatvec(x, y)
 
         ! Check result.
-        alpha = norm2(y%data - matmul(A%data, x%data))
-        call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_rmatvec_rdp', eq='norm2(y - A @ x)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_dp)
+        call check_test(error, 'test_adjoint_rmatvec_rdp', eq='norm(y - A @ x)')
 
        return
     end subroutine test_adjoint_rmatvec_rdp
@@ -312,17 +282,17 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y
+        type(dense_vector_csp) :: x, y
         ! Test LinOp.
-        type(linop_csp), allocatable :: A
+        type(dense_linop_csp) :: A
         real(sp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%rand()
+        x = dense_vector_csp(n) ; call x%rand()
+        y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_csp()
+        A = dense_linop_csp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
@@ -330,8 +300,8 @@ contains
         call A%apply_matvec(x, y)
 
         ! Check result.
-        call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_sp)
-        call check_test(error, 'test_matvec_csp', eq='norm2(|y - A @ x|)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_sp)
+        call check_test(error, 'test_matvec_csp', eq='norm(y - A @ x)')
         
         return
     end subroutine test_matvec_csp
@@ -340,17 +310,17 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y
+        type(dense_vector_csp) :: x, y
         ! Test LinOp.
-        type(linop_csp), allocatable :: A
+        type(dense_linop_csp) :: A
         real(sp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%rand()
+        x = dense_vector_csp(n) ; call x%rand()
+        y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_csp()
+        A = dense_linop_csp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
@@ -358,82 +328,66 @@ contains
         call A%apply_rmatvec(x, y)
 
         ! Check result.
-        call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_sp)
-        call check_test(error, 'test_rmatvec_csp', eq='norm2(|y - A.H @ x|)')
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_sp)
+        call check_test(error, 'test_rmatvec_csp', eq='norm(y - A.H @ x)')
+       
         return
     end subroutine test_rmatvec_csp
 
     subroutine test_adjoint_matvec_csp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y
+        type(dense_vector_csp) :: x, y
         ! Test LinOp.
-        type(linop_csp), allocatable :: A
+        type(dense_linop_csp) :: A
         type(adjoint_linop_csp), allocatable :: B
         real(sp), allocatable :: Adata(:, :, :)
 
-        ! Internal variable.
-        real(sp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_csp(n) ; call x%rand()
+        y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_csp()
+        A = dense_linop_csp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_matvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_matvec(x, y)
 
         ! Check result.
-        alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
-        call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_matvec_csp', eq='norm2(|y - A.H @ x|)')
-
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_sp)
+        call check_test(error, 'test_adjoint_matvec_csp', eq='norm(y - adjoint(A) @ x)')
 
        return
     end subroutine test_adjoint_matvec_csp
 
     subroutine test_adjoint_rmatvec_csp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y
+        type(dense_vector_csp) :: x, y
         ! Test LinOp.
-        type(linop_csp), allocatable :: A
+        type(dense_linop_csp) :: A
         type(adjoint_linop_csp), allocatable :: B
         real(sp), allocatable :: Adata(:, :, :)
 
-        ! Internal variable.
-        real(sp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_csp(n) ; call x%rand()
+        y = dense_vector_csp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_csp()
+        A = dense_linop_csp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_rmatvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_rmatvec(x, y)
 
         ! Check result.
-        alpha = norm2(abs(y%data - matmul(A%data, x%data)))
-        call check(error, alpha < rtol_sp)
-        call check_test(error, 'test_adjoint_rmatvec_csp', eq='norm2(|y - A @ x|)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_sp)
+        call check_test(error, 'test_adjoint_rmatvec_csp', eq='norm(y - A @ x)')
 
        return
     end subroutine test_adjoint_rmatvec_csp
@@ -454,17 +408,17 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y
+        type(dense_vector_cdp) :: x, y
         ! Test LinOp.
-        type(linop_cdp), allocatable :: A
+        type(dense_linop_cdp) :: A
         real(dp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%rand()
+        x = dense_vector_cdp(n) ; call x%rand()
+        y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_cdp()
+        A = dense_linop_cdp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
@@ -472,8 +426,8 @@ contains
         call A%apply_matvec(x, y)
 
         ! Check result.
-        call check(error, norm2(abs(y%data - matmul(A%data, x%data))) < rtol_dp)
-        call check_test(error, 'test_matvec_cdp', eq='norm2(|y - A @ x|)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_dp)
+        call check_test(error, 'test_matvec_cdp', eq='norm(y - A @ x)')
         
         return
     end subroutine test_matvec_cdp
@@ -482,17 +436,17 @@ contains
         ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y
+        type(dense_vector_cdp) :: x, y
         ! Test LinOp.
-        type(linop_cdp), allocatable :: A
+        type(dense_linop_cdp) :: A
         real(dp), allocatable :: Adata(:, :, :)
 
         ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%rand()
+        x = dense_vector_cdp(n) ; call x%rand()
+        y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_cdp()
+        A = dense_linop_cdp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
@@ -500,82 +454,66 @@ contains
         call A%apply_rmatvec(x, y)
 
         ! Check result.
-        call check(error, norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data))) < rtol_dp)
-        call check_test(error, 'test_rmatvec_cdp', eq='norm2(|y - A.H @ x|)')
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_dp)
+        call check_test(error, 'test_rmatvec_cdp', eq='norm(y - A.H @ x)')
+       
         return
     end subroutine test_rmatvec_cdp
 
     subroutine test_adjoint_matvec_cdp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y
+        type(dense_vector_cdp) :: x, y
         ! Test LinOp.
-        type(linop_cdp), allocatable :: A
+        type(dense_linop_cdp) :: A
         type(adjoint_linop_cdp), allocatable :: B
         real(dp), allocatable :: Adata(:, :, :)
 
-        ! Internal variable.
-        real(dp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_cdp(n) ; call x%rand()
+        y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_cdp()
+        A = dense_linop_cdp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_matvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_matvec(x, y)
 
         ! Check result.
-        alpha = norm2(abs(y%data - matmul(transpose(conjg(A%data)), x%data)))
-        call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_matvec_cdp', eq='norm2(|y - A.H @ x|)')
-
-        
+        call check(error, norm(y%data - matmul(hermitian(A%data), x%data), 2) < rtol_dp)
+        call check_test(error, 'test_adjoint_matvec_cdp', eq='norm(y - adjoint(A) @ x)')
 
        return
     end subroutine test_adjoint_matvec_cdp
 
     subroutine test_adjoint_rmatvec_cdp(error)
-        ! Error type to be returned.
+        ! Error to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y
+        type(dense_vector_cdp) :: x, y
         ! Test LinOp.
-        type(linop_cdp), allocatable :: A
+        type(dense_linop_cdp) :: A
         type(adjoint_linop_cdp), allocatable :: B
         real(dp), allocatable :: Adata(:, :, :)
 
-        ! Internal variable.
-        real(dp) :: alpha
+        ! Initialize vectors.
+        x = dense_vector_cdp(n) ; call x%rand()
+        y = dense_vector_cdp(n) ; call y%zero()
 
         ! Initialize matrix.
-        A = linop_cdp()
+        A = dense_linop_cdp() ; allocate(A%data(n, n))
         allocate(Adata(test_size, test_size, 2))
         call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
 
-        ! Adjoint operator.
-        allocate(B) ; B%A = A
-
-        ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%zero()
-
-        ! Compute adjoint matrix-vector product
-        call B%apply_rmatvec(x, y)
+        ! Compute matrix-vector product.
+        B = adjoint(A) ; call B%apply_rmatvec(x, y)
 
         ! Check result.
-        alpha = norm2(abs(y%data - matmul(A%data, x%data)))
-        call check(error, alpha < rtol_dp)
-        call check_test(error, 'test_adjoint_rmatvec_cdp', eq='norm2(|y - A @ x|)')
+        call check(error, norm(y%data - matmul(A%data, x%data), 2) < rtol_dp)
+        call check_test(error, 'test_adjoint_rmatvec_cdp', eq='norm(y - A @ x)')
 
        return
     end subroutine test_adjoint_rmatvec_cdp
