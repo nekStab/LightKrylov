@@ -1173,7 +1173,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) y = X(1) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rsp) ! y = y + X[i]*v[i]
@@ -1327,7 +1327,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) y = X(1) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rdp) ! y = y + X[i]*v[i]
@@ -1481,7 +1481,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) y = X(1) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_csp) ! y = y + X[i]*v[i]
@@ -1635,7 +1635,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) y = X(1) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_cdp) ! y = y + X[i]*v[i]

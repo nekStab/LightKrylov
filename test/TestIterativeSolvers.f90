@@ -3,7 +3,7 @@ module TestIterativeSolvers
     use iso_fortran_env
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag
+    use stdlib_linalg, only: eye, diag, norm
     use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -21,6 +21,7 @@ module TestIterativeSolvers
 
     character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
     character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
+    integer, parameter :: n = 128
 
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
@@ -931,9 +932,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        type(linop_rsp) , allocatable :: A ! Linear Operator.
-        type(vector_rsp), allocatable :: b ! Right-hand side vector.
-        type(vector_rsp), allocatable :: x ! Solution vector.
+        real(sp) :: A(n, n) ! Linear Operator.
+        real(sp) :: b(n)    ! Right-hand side vector.
+        real(sp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
         ! GMRES metadata.
@@ -945,9 +946,8 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        A = linop_rsp()  ; call init_rand(A)
-        b = vector_rsp() ; call init_rand(b)
-        x = vector_rsp() ; call x%zero()
+        call random_number(A) ; call random_number(b)
+        x = 0.0_sp
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -955,9 +955,9 @@ contains
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rsp')
 
         ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        err = norm(matmul(A, x) - b, 2)
         call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_sp)
+        call check(error, err < norm(b, 2) * rtol_sp)
         call check_test(error, 'test_gmres_rsp', eq='A @ x = b', context=msg)
 
         return
@@ -1012,9 +1012,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        type(linop_rdp) , allocatable :: A ! Linear Operator.
-        type(vector_rdp), allocatable :: b ! Right-hand side vector.
-        type(vector_rdp), allocatable :: x ! Solution vector.
+        real(dp) :: A(n, n) ! Linear Operator.
+        real(dp) :: b(n)    ! Right-hand side vector.
+        real(dp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
         ! GMRES metadata.
@@ -1026,9 +1026,8 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        A = linop_rdp()  ; call init_rand(A)
-        b = vector_rdp() ; call init_rand(b)
-        x = vector_rdp() ; call x%zero()
+        call random_number(A) ; call random_number(b)
+        x = 0.0_dp
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1036,9 +1035,9 @@ contains
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_rdp')
 
         ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        err = norm(matmul(A, x) - b, 2)
         call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_dp)
+        call check(error, err < norm(b, 2) * rtol_dp)
         call check_test(error, 'test_gmres_rdp', eq='A @ x = b', context=msg)
 
         return
@@ -1093,9 +1092,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        type(linop_csp) , allocatable :: A ! Linear Operator.
-        type(vector_csp), allocatable :: b ! Right-hand side vector.
-        type(vector_csp), allocatable :: x ! Solution vector.
+        complex(sp) :: A(n, n) ! Linear Operator.
+        complex(sp) :: b(n)    ! Right-hand side vector.
+        complex(sp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_sp_opts) :: opts
         ! GMRES metadata.
@@ -1107,9 +1106,12 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        A = linop_csp()  ; call init_rand(A)
-        b = vector_csp() ; call init_rand(b)
-        x = vector_csp() ; call x%zero()
+        block
+        real(sp) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        call random_number(bdata) ; b%re = bdata(:, 1) ; b%im = bdata(:, 2)
+        end block
+        x = 0.0_sp
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1117,9 +1119,9 @@ contains
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_csp')
 
         ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        err = norm(matmul(A, x) - b, 2)
         call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_sp)
+        call check(error, err < norm(b, 2) * rtol_sp)
         call check_test(error, 'test_gmres_csp', eq='A @ x = b', context=msg)
 
         return
@@ -1174,9 +1176,9 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        type(linop_cdp) , allocatable :: A ! Linear Operator.
-        type(vector_cdp), allocatable :: b ! Right-hand side vector.
-        type(vector_cdp), allocatable :: x ! Solution vector.
+        complex(dp) :: A(n, n) ! Linear Operator.
+        complex(dp) :: b(n)    ! Right-hand side vector.
+        complex(dp) :: x(n)    ! Solution vector.
         ! GMRES options.
         type(gmres_dp_opts) :: opts
         ! GMRES metadata.
@@ -1188,9 +1190,12 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        A = linop_cdp()  ; call init_rand(A)
-        b = vector_cdp() ; call init_rand(b)
-        x = vector_cdp() ; call x%zero()
+        block
+        real(dp) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        call random_number(bdata) ; b%re = bdata(:, 1) ; b%im = bdata(:, 2)
+        end block
+        x = 0.0_dp
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1198,9 +1203,9 @@ contains
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_cdp')
 
         ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        err = norm(matmul(A, x) - b, 2)
         call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_dp)
+        call check(error, err < norm(b, 2) * rtol_dp)
         call check_test(error, 'test_gmres_cdp', eq='A @ x = b', context=msg)
 
         return

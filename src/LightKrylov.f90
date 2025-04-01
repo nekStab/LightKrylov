@@ -128,9 +128,13 @@ module LightKrylov
     public :: svds
     public :: gmres
     public :: gmres_rsp
+    public :: dense_gmres_rsp
     public :: gmres_rdp
+    public :: dense_gmres_rdp
     public :: gmres_csp
+    public :: dense_gmres_csp
     public :: gmres_cdp
+    public :: dense_gmres_cdp
     public :: fgmres
     public :: fgmres_rsp
     public :: fgmres_rdp

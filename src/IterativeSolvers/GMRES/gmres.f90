@@ -149,8 +149,9 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        ! allocate(wrk, mold=b)       ; call wrk%zero()
+        wrk = b ; call wrk%zero()
+        allocate(V(kdim+1), mold=b) ; V = b ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_sp
         allocate(e(kdim+1))         ; e = 0.0_sp
         allocate(c(kdim))           ; c = 0.0_sp
@@ -326,8 +327,9 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        ! allocate(wrk, mold=b)       ; call wrk%zero()
+        wrk = b ; call wrk%zero()
+        allocate(V(kdim+1), mold=b) ; V = b ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_dp
         allocate(e(kdim+1))         ; e = 0.0_dp
         allocate(c(kdim))           ; c = 0.0_dp
@@ -503,8 +505,9 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        ! allocate(wrk, mold=b)       ; call wrk%zero()
+        wrk = b ; call wrk%zero()
+        allocate(V(kdim+1), mold=b) ; V = b ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_sp
         allocate(e(kdim+1))         ; e = 0.0_sp
         allocate(c(kdim))           ; c = 0.0_sp
@@ -680,8 +683,9 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        ! allocate(wrk, mold=b)       ; call wrk%zero()
+        wrk = b ; call wrk%zero()
+        allocate(V(kdim+1), mold=b) ; V = b ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_dp
         allocate(e(kdim+1))         ; e = 0.0_dp
         allocate(c(kdim))           ; c = 0.0_dp
@@ -812,5 +816,70 @@ contains
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure 
+
+    !--------------------------------------------------------
+    !-----     Convenience wrapper for dense linops     -----
+    !--------------------------------------------------------
+    
+    module procedure dense_gmres_rsp
+        ! Internal variables.
+        type(dense_linop_rsp)  :: A_
+        type(dense_vector_rsp) :: b_, x_
+        ! Wrap the dense inputs.
+        A_ = dense_linop_rsp(A)
+        b_ = dense_vector_rsp(b)
+        x_  = dense_vector_rsp(size(b)) ; call x_%zero()
+        ! Call the abstract gmres solver.
+        print *, "calling dense gmres"
+        call gmres_rsp(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+        print *, "outside dense gmres"
+        x = x_%data
+        return
+    end procedure
+    module procedure dense_gmres_rdp
+        ! Internal variables.
+        type(dense_linop_rdp)  :: A_
+        type(dense_vector_rdp) :: b_, x_
+        ! Wrap the dense inputs.
+        A_ = dense_linop_rdp(A)
+        b_ = dense_vector_rdp(b)
+        x_  = dense_vector_rdp(size(b)) ; call x_%zero()
+        ! Call the abstract gmres solver.
+        print *, "calling dense gmres"
+        call gmres_rdp(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+        print *, "outside dense gmres"
+        x = x_%data
+        return
+    end procedure
+    module procedure dense_gmres_csp
+        ! Internal variables.
+        type(dense_linop_csp)  :: A_
+        type(dense_vector_csp) :: b_, x_
+        ! Wrap the dense inputs.
+        A_ = dense_linop_csp(A)
+        b_ = dense_vector_csp(b)
+        x_  = dense_vector_csp(size(b)) ; call x_%zero()
+        ! Call the abstract gmres solver.
+        print *, "calling dense gmres"
+        call gmres_csp(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+        print *, "outside dense gmres"
+        x = x_%data
+        return
+    end procedure
+    module procedure dense_gmres_cdp
+        ! Internal variables.
+        type(dense_linop_cdp)  :: A_
+        type(dense_vector_cdp) :: b_, x_
+        ! Wrap the dense inputs.
+        A_ = dense_linop_cdp(A)
+        b_ = dense_vector_cdp(b)
+        x_  = dense_vector_cdp(size(b)) ; call x_%zero()
+        ! Call the abstract gmres solver.
+        print *, "calling dense gmres"
+        call gmres_cdp(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+        print *, "outside dense gmres"
+        x = x_%data
+        return
+    end procedure
 
 end submodule
