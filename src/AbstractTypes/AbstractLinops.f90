@@ -1259,7 +1259,7 @@ contains
                 real(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rsp ; beta = zero_rsp
-                vec_out = dense_vector_rsp(m) 
+                vec_out = vec_in
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1284,7 +1284,7 @@ contains
                 real(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rsp ; beta = zero_rsp
-                vec_out = dense_vector_rsp(m) 
+                vec_out = vec_in
                 call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1309,7 +1309,7 @@ contains
                 real(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rdp ; beta = zero_rdp
-                vec_out = dense_vector_rdp(m) 
+                vec_out = vec_in
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1334,7 +1334,7 @@ contains
                 real(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rdp ; beta = zero_rdp
-                vec_out = dense_vector_rdp(m) 
+                vec_out = vec_in
                 call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1359,7 +1359,7 @@ contains
                 complex(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_csp ; beta = zero_csp
-                vec_out = dense_vector_csp(m) 
+                vec_out = vec_in
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1384,7 +1384,7 @@ contains
                 complex(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_csp ; beta = zero_csp
-                vec_out = dense_vector_csp(m) 
+                vec_out = vec_in
                 call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1409,7 +1409,7 @@ contains
                 complex(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_cdp ; beta = zero_cdp
-                vec_out = dense_vector_cdp(m) 
+                vec_out = vec_in
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1434,7 +1434,7 @@ contains
                 complex(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_cdp ; beta = zero_cdp
-                vec_out = dense_vector_cdp(m) 
+                vec_out = vec_in
                 call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default

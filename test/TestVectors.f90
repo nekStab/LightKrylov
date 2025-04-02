@@ -49,10 +49,11 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
         type(dense_vector_rsp) :: x
+        real(sp) :: x_(n)
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_rsp(n) ; call x%rand()
+        x_ = 0.0_sp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
@@ -70,10 +71,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_rsp), allocatable :: x, y, z
+        real(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -92,10 +94,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_rsp), allocatable :: x, y, z
+        real(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -114,11 +117,12 @@ contains
 
         ! Test vectors.
         type(dense_vector_rsp), allocatable :: x, y
+        real(sp) :: x_(n), y_(n)
         real(sp) :: alpha
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -136,11 +140,12 @@ contains
 
         ! Test vector.
         type(dense_vector_rsp), allocatable :: x, y
+        real(sp) :: x_(n), y_(n)
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_rsp(n) ; call x%rand(ifnorm=.true.)
-        y = dense_vector_rsp(x%data)
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
+        y = x
         call random_number(alpha)
         
         ! Scale the vector.
@@ -171,10 +176,11 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
         type(dense_vector_rdp) :: x
+        real(dp) :: x_(n)
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_rdp(n) ; call x%rand()
+        x_ = 0.0_dp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
@@ -192,10 +198,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_rdp), allocatable :: x, y, z
+        real(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -214,10 +221,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_rdp), allocatable :: x, y, z
+        real(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -236,11 +244,12 @@ contains
 
         ! Test vectors.
         type(dense_vector_rdp), allocatable :: x, y
+        real(dp) :: x_(n), y_(n)
         real(dp) :: alpha
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -258,11 +267,12 @@ contains
 
         ! Test vector.
         type(dense_vector_rdp), allocatable :: x, y
+        real(dp) :: x_(n), y_(n)
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_rdp(n) ; call x%rand(ifnorm=.true.)
-        y = dense_vector_rdp(x%data)
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
+        y = x
         call random_number(alpha)
         
         ! Scale the vector.
@@ -293,10 +303,11 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
         type(dense_vector_csp) :: x
+        complex(sp) :: x_(n)
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_csp(n) ; call x%rand()
+        x_ = 0.0_sp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
@@ -314,10 +325,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_csp), allocatable :: x, y, z
+        complex(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -336,10 +348,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_csp), allocatable :: x, y, z
+        complex(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -358,11 +371,12 @@ contains
 
         ! Test vectors.
         type(dense_vector_csp), allocatable :: x, y
+        complex(sp) :: x_(n), y_(n)
         complex(sp) :: alpha
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -380,11 +394,12 @@ contains
 
         ! Test vector.
         type(dense_vector_csp), allocatable :: x, y
+        complex(sp) :: x_(n), y_(n)
         complex(sp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_csp(n) ; call x%rand(ifnorm=.true.)
-        y = dense_vector_csp(x%data)
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
+        y = x
         alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
         
@@ -416,10 +431,11 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
         type(dense_vector_cdp) :: x
+        complex(dp) :: x_(n)
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_cdp(n) ; call x%rand()
+        x_ = 0.0_dp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
@@ -437,10 +453,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_cdp), allocatable :: x, y, z
+        complex(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -459,10 +476,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_cdp), allocatable :: x, y, z
+        complex(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -481,11 +499,12 @@ contains
 
         ! Test vectors.
         type(dense_vector_cdp), allocatable :: x, y
+        complex(dp) :: x_(n), y_(n)
         complex(dp) :: alpha
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -503,11 +522,12 @@ contains
 
         ! Test vector.
         type(dense_vector_cdp), allocatable :: x, y
+        complex(dp) :: x_(n), y_(n)
         complex(dp) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_cdp(n) ; call x%rand(ifnorm=.true.)
-        y = dense_vector_cdp(x%data)
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
+        y = x
         alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
         

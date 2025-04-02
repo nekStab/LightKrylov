@@ -719,22 +719,13 @@ module LightKrylov_AbstractVectors
         !! Return size of specific abstract vector
     end type
 
-    interface dense_vector_rsp
-        module procedure initialize_dense_vector_rsp
+    interface dense_vector
         module procedure initialize_dense_vector_from_array_rsp
-    end interface
-    interface dense_vector_rdp
-        module procedure initialize_dense_vector_rdp
         module procedure initialize_dense_vector_from_array_rdp
-    end interface
-    interface dense_vector_csp
-        module procedure initialize_dense_vector_csp
         module procedure initialize_dense_vector_from_array_csp
-    end interface
-    interface dense_vector_cdp
-        module procedure initialize_dense_vector_cdp
         module procedure initialize_dense_vector_from_array_cdp
     end interface
+    public :: dense_vector
 
 contains
 
@@ -883,13 +874,6 @@ contains
     !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
     !--------------------------------------------------------------------------------
     
-    function initialize_dense_vector_rsp(n) result(vec)
-        integer, intent(in) :: n
-        type(dense_vector_rsp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
-        return
-    end function
-
     function initialize_dense_vector_from_array_rsp(x) result(vec)
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
@@ -955,13 +939,6 @@ contains
         class(dense_vector_rsp), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
-    end function
-
-    function initialize_dense_vector_rdp(n) result(vec)
-        integer, intent(in) :: n
-        type(dense_vector_rdp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
         return
     end function
 
@@ -1033,13 +1010,6 @@ contains
         return
     end function
 
-    function initialize_dense_vector_csp(n) result(vec)
-        integer, intent(in) :: n
-        type(dense_vector_csp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
-        return
-    end function
-
     function initialize_dense_vector_from_array_csp(x) result(vec)
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
@@ -1107,13 +1077,6 @@ contains
         class(dense_vector_csp), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
-    end function
-
-    function initialize_dense_vector_cdp(n) result(vec)
-        integer, intent(in) :: n
-        type(dense_vector_cdp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
         return
     end function
 

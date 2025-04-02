@@ -246,8 +246,8 @@ contains
     type(dense_linop_${type[0]}$${kind}$)  :: A_
     ! Wrap data into convenience types.
     A_ = dense_linop(A)
-    b_ = dense_vector_${type[0]}$${kind}$(b)
-    x_ = dense_vector_${type[0]}$${kind}$(x)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.

@@ -388,12 +388,12 @@ module LightKrylov_AbstractVectors
     end type
     #:endfor
 
+    interface dense_vector
     #:for kind, type in RC_KINDS_TYPES
-    interface dense_vector_${type[0]}$${kind}$
-        module procedure initialize_dense_vector_${type[0]}$${kind}$
         module procedure initialize_dense_vector_from_array_${type[0]}$${kind}$
-    end interface
     #:endfor
+    end interface
+    public :: dense_vector
 
 contains
 
@@ -443,13 +443,6 @@ contains
     !--------------------------------------------------------------------------------
     
     #:for kind, type in RC_KINDS_TYPES
-    function initialize_dense_vector_${type[0]}$${kind}$(n) result(vec)
-        integer, intent(in) :: n
-        type(dense_vector_${type[0]}$${kind}$) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
-        return
-    end function
-
     function initialize_dense_vector_from_array_${type[0]}$${kind}$(x) result(vec)
         ${type}$, intent(in) :: x(:)
         type(dense_vector_${type[0]}$${kind}$) :: vec

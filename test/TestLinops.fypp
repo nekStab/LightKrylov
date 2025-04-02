@@ -49,6 +49,7 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$) :: x, y
+        ${type}$ :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_${type[0]}$${kind}$) :: A
         #:if type[0] == "c"
@@ -56,8 +57,8 @@ contains
         #:endif
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         A = dense_linop_${type[0]}$${kind}$() ; allocate(A%data(n, n))
@@ -82,6 +83,7 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$) :: x, y
+        ${type}$ :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_${type[0]}$${kind}$) :: A
         #:if type[0] == "c"
@@ -89,8 +91,8 @@ contains
         #:endif
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -115,6 +117,7 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$) :: x, y
+        ${type}$ :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_${type[0]}$${kind}$) :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
@@ -123,8 +126,8 @@ contains
         #:endif
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -149,6 +152,7 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$) :: x, y
+        ${type}$ :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_${type[0]}$${kind}$) :: A
         type(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
@@ -157,8 +161,8 @@ contains
         #:endif
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))

@@ -810,8 +810,8 @@ contains
     type(dense_linop_rsp)  :: A_
     ! Wrap data into convenience types.
     A_ = dense_linop(A)
-    b_ = dense_vector_rsp(b)
-    x_ = dense_vector_rsp(x)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
@@ -822,8 +822,8 @@ contains
     type(dense_linop_rdp)  :: A_
     ! Wrap data into convenience types.
     A_ = dense_linop(A)
-    b_ = dense_vector_rdp(b)
-    x_ = dense_vector_rdp(x)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
@@ -834,8 +834,8 @@ contains
     type(dense_linop_csp)  :: A_
     ! Wrap data into convenience types.
     A_ = dense_linop(A)
-    b_ = dense_vector_csp(b)
-    x_ = dense_vector_csp(x)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
@@ -846,8 +846,8 @@ contains
     type(dense_linop_cdp)  :: A_
     ! Wrap data into convenience types.
     A_ = dense_linop(A)
-    b_ = dense_vector_cdp(b)
-    x_ = dense_vector_cdp(x)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.

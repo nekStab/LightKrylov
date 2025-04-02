@@ -55,6 +55,7 @@ module LightKrylov
     public :: dense_vector_csp
     public :: abstract_vector_cdp
     public :: dense_vector_cdp
+    public :: dense_vector
     public :: innerprod, Gram
     public :: linear_combination
     public :: axpby_basis

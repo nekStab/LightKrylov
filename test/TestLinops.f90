@@ -47,12 +47,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rsp) :: x, y
+        real(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rsp) :: A
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         A = dense_linop_rsp() ; allocate(A%data(n, n))
@@ -73,12 +74,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rsp) :: x, y
+        real(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rsp) :: A
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -99,13 +101,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rsp) :: x, y
+        real(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rsp) :: A
         type(adjoint_linop_rsp), allocatable :: B
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -126,13 +129,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rsp) :: x, y
+        real(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rsp) :: A
         type(adjoint_linop_rsp), allocatable :: B
 
         ! Initialize vectors.
-        x = dense_vector_rsp(n) ; call x%rand()
-        y = dense_vector_rsp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -165,12 +169,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rdp) :: x, y
+        real(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rdp) :: A
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         A = dense_linop_rdp() ; allocate(A%data(n, n))
@@ -191,12 +196,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rdp) :: x, y
+        real(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rdp) :: A
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -217,13 +223,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rdp) :: x, y
+        real(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rdp) :: A
         type(adjoint_linop_rdp), allocatable :: B
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -244,13 +251,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_rdp) :: x, y
+        real(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_rdp) :: A
         type(adjoint_linop_rdp), allocatable :: B
 
         ! Initialize vectors.
-        x = dense_vector_rdp(n) ; call x%rand()
-        y = dense_vector_rdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -283,13 +291,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_csp) :: x, y
+        complex(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_csp) :: A
         real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         A = dense_linop_csp() ; allocate(A%data(n, n))
@@ -310,13 +319,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_csp) :: x, y
+        complex(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_csp) :: A
         real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -337,14 +347,15 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_csp) :: x, y
+        complex(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_csp) :: A
         type(adjoint_linop_csp), allocatable :: B
         real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -365,14 +376,15 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_csp) :: x, y
+        complex(sp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_csp) :: A
         type(adjoint_linop_csp), allocatable :: B
         real(sp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_csp(n) ; call x%rand()
-        y = dense_vector_csp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -405,13 +417,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_cdp) :: x, y
+        complex(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_cdp) :: A
         real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         A = dense_linop_cdp() ; allocate(A%data(n, n))
@@ -432,13 +445,14 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_cdp) :: x, y
+        complex(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_cdp) :: A
         real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -459,14 +473,15 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_cdp) :: x, y
+        complex(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_cdp) :: A
         type(adjoint_linop_cdp), allocatable :: B
         real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))
@@ -487,14 +502,15 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vectors.
         type(dense_vector_cdp) :: x, y
+        complex(dp) :: x_(n), y_(n)
         ! Test LinOp.
         type(dense_linop_cdp) :: A
         type(adjoint_linop_cdp), allocatable :: B
         real(dp) :: Adata(n, n, 2)
 
         ! Initialize vectors.
-        x = dense_vector_cdp(n) ; call x%rand()
-        y = dense_vector_cdp(n) ; call y%zero()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%zero()
 
         ! Initialize matrix.
         allocate(A%data(n, n))

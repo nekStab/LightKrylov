@@ -523,7 +523,7 @@ contains
                 ${type}$ :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_${type[0]}$${kind}$ ; beta = zero_${type[0]}$${kind}$
-                vec_out = dense_vector_${type[0]}$${kind}$(m) 
+                vec_out = vec_in
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -548,7 +548,7 @@ contains
                 ${type}$ :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_${type[0]}$${kind}$ ; beta = zero_${type[0]}$${kind}$
-                vec_out = dense_vector_${type[0]}$${kind}$(m) 
+                vec_out = vec_in
                 #:if type[0] == "r"
                 call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 #:else

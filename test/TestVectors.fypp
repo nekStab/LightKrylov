@@ -51,10 +51,11 @@ contains
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
         type(dense_vector_${type[0]}$${kind}$) :: x
+        ${type}$ :: x_(n)
         real(${kind}$) :: alpha
 
         ! Initialize vector.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
+        x_ = 0.0_${kind}$ ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
@@ -72,10 +73,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y, z
+        ${type}$ :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -94,10 +96,11 @@ contains
 
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y, z
+        ${type}$ :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
@@ -116,11 +119,12 @@ contains
 
         ! Test vectors.
         type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y
+        ${type}$ :: x_(n), y_(n)
         ${type}$ :: alpha
 
         ! Initialize vectors.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand()
-        y = dense_vector_${type[0]}$${kind}$(n) ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -138,11 +142,12 @@ contains
 
         ! Test vector.
         type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y
+        ${type}$ :: x_(n), y_(n)
         ${type}$ :: alpha
 
         ! Initialize vector.
-        x = dense_vector_${type[0]}$${kind}$(n) ; call x%rand(ifnorm=.true.)
-        y = dense_vector_${type[0]}$${kind}$(x%data)
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
+        y = x
         #:if type[0] == "c"
         alpha = 0.0_${kind}$ ; call random_number(alpha%re) ; call random_number(alpha%im)
         alpha = alpha / abs(alpha)
