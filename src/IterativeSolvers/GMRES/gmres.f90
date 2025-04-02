@@ -813,7 +813,7 @@ contains
     type(dense_vector_rsp) :: b_, x_
     type(dense_linop_rsp)  :: A_
     ! Wrap data into convenience types.
-    A_ = dense_linop_rsp(A)
+    A_ = dense_linop(A)
     b_ = dense_vector_rsp(b)
     x_ = dense_vector_rsp(x)
 
@@ -829,7 +829,7 @@ contains
     type(dense_vector_rdp) :: b_, x_
     type(dense_linop_rdp)  :: A_
     ! Wrap data into convenience types.
-    A_ = dense_linop_rdp(A)
+    A_ = dense_linop(A)
     b_ = dense_vector_rdp(b)
     x_ = dense_vector_rdp(x)
 
@@ -845,7 +845,7 @@ contains
     type(dense_vector_csp) :: b_, x_
     type(dense_linop_csp)  :: A_
     ! Wrap data into convenience types.
-    A_ = dense_linop_csp(A)
+    A_ = dense_linop(A)
     b_ = dense_vector_csp(b)
     x_ = dense_vector_csp(x)
 
@@ -861,7 +861,7 @@ contains
     type(dense_vector_cdp) :: b_, x_
     type(dense_linop_cdp)  :: A_
     ! Wrap data into convenience types.
-    A_ = dense_linop_cdp(A)
+    A_ = dense_linop(A)
     b_ = dense_vector_cdp(b)
     x_ = dense_vector_cdp(x)
 
