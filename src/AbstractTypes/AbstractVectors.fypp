@@ -369,6 +369,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_${type[0]}$${kind}$), public :: dense_vector_${type[0]}$${kind}$
+        integer :: n
         ${type}$, allocatable :: data(:)
     contains
         private
@@ -390,6 +391,7 @@ module LightKrylov_AbstractVectors
     #:for kind, type in RC_KINDS_TYPES
     interface dense_vector_${type[0]}$${kind}$
         module procedure initialize_dense_vector_${type[0]}$${kind}$
+        module procedure initialize_dense_vector_from_array_${type[0]}$${kind}$
     end interface
     #:endfor
 
@@ -444,12 +446,20 @@ contains
     function initialize_dense_vector_${type[0]}$${kind}$(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_${type[0]}$${kind}$) :: vec
-        allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
+        return
+    end function
+
+    function initialize_dense_vector_from_array_${type[0]}$${kind}$(x) result(vec)
+        ${type}$, intent(in) :: x(:)
+        type(dense_vector_${type[0]}$${kind}$) :: vec
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
     subroutine dense_zero_${type[0]}$${kind}$(self)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = 0.0_${kind}$
         return
     end subroutine
@@ -546,7 +556,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_${type[0]}$${kind}$) ! y = y + X[i]*v[i]
@@ -576,7 +586,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &

@@ -635,6 +635,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_rsp), public :: dense_vector_rsp
+        integer :: n
         real(sp), allocatable :: data(:)
     contains
         private
@@ -656,6 +657,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_rdp), public :: dense_vector_rdp
+        integer :: n
         real(dp), allocatable :: data(:)
     contains
         private
@@ -677,6 +679,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_csp), public :: dense_vector_csp
+        integer :: n
         complex(sp), allocatable :: data(:)
     contains
         private
@@ -698,6 +701,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_cdp), public :: dense_vector_cdp
+        integer :: n
         complex(dp), allocatable :: data(:)
     contains
         private
@@ -717,15 +721,19 @@ module LightKrylov_AbstractVectors
 
     interface dense_vector_rsp
         module procedure initialize_dense_vector_rsp
+        module procedure initialize_dense_vector_from_array_rsp
     end interface
     interface dense_vector_rdp
         module procedure initialize_dense_vector_rdp
+        module procedure initialize_dense_vector_from_array_rdp
     end interface
     interface dense_vector_csp
         module procedure initialize_dense_vector_csp
+        module procedure initialize_dense_vector_from_array_csp
     end interface
     interface dense_vector_cdp
         module procedure initialize_dense_vector_cdp
+        module procedure initialize_dense_vector_from_array_cdp
     end interface
 
 contains
@@ -878,12 +886,20 @@ contains
     function initialize_dense_vector_rsp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_rsp) :: vec
-        allocate(vec%data(n)) ; vec%data = 0.0_sp
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
+        return
+    end function
+
+    function initialize_dense_vector_from_array_rsp(x) result(vec)
+        real(sp), intent(in) :: x(:)
+        type(dense_vector_rsp) :: vec
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
     subroutine dense_zero_rsp(self)
         class(dense_vector_rsp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = 0.0_sp
         return
     end subroutine
@@ -945,12 +961,20 @@ contains
     function initialize_dense_vector_rdp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_rdp) :: vec
-        allocate(vec%data(n)) ; vec%data = 0.0_dp
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
+        return
+    end function
+
+    function initialize_dense_vector_from_array_rdp(x) result(vec)
+        real(dp), intent(in) :: x(:)
+        type(dense_vector_rdp) :: vec
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
     subroutine dense_zero_rdp(self)
         class(dense_vector_rdp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = 0.0_dp
         return
     end subroutine
@@ -1012,12 +1036,20 @@ contains
     function initialize_dense_vector_csp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_csp) :: vec
-        allocate(vec%data(n)) ; vec%data = 0.0_sp
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
+        return
+    end function
+
+    function initialize_dense_vector_from_array_csp(x) result(vec)
+        complex(sp), intent(in) :: x(:)
+        type(dense_vector_csp) :: vec
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
     subroutine dense_zero_csp(self)
         class(dense_vector_csp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = 0.0_sp
         return
     end subroutine
@@ -1081,12 +1113,20 @@ contains
     function initialize_dense_vector_cdp(n) result(vec)
         integer, intent(in) :: n
         type(dense_vector_cdp) :: vec
-        allocate(vec%data(n)) ; vec%data = 0.0_dp
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
+        return
+    end function
+
+    function initialize_dense_vector_from_array_cdp(x) result(vec)
+        complex(dp), intent(in) :: x(:)
+        type(dense_vector_cdp) :: vec
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
     subroutine dense_zero_cdp(self)
         class(dense_vector_cdp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = 0.0_dp
         return
     end subroutine
@@ -1173,7 +1213,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rsp) ! y = y + X[i]*v[i]
@@ -1203,7 +1243,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -1327,7 +1367,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rdp) ! y = y + X[i]*v[i]
@@ -1357,7 +1397,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -1481,7 +1521,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_csp) ! y = y + X[i]*v[i]
@@ -1511,7 +1551,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -1635,7 +1675,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_cdp) ! y = y + X[i]*v[i]
@@ -1665,7 +1705,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
