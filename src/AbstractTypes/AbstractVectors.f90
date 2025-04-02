@@ -877,7 +877,7 @@ contains
     function initialize_dense_vector_from_array_rsp(x) result(vec)
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
-        vec%n = size(x) ; vec%data = x
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
         return
     end function
 
@@ -945,7 +945,7 @@ contains
     function initialize_dense_vector_from_array_rdp(x) result(vec)
         real(dp), intent(in) :: x(:)
         type(dense_vector_rdp) :: vec
-        vec%n = size(x) ; vec%data = x
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
         return
     end function
 
@@ -1013,7 +1013,7 @@ contains
     function initialize_dense_vector_from_array_csp(x) result(vec)
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
-        vec%n = size(x) ; vec%data = x
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
         return
     end function
 
@@ -1083,7 +1083,7 @@ contains
     function initialize_dense_vector_from_array_cdp(x) result(vec)
         complex(dp), intent(in) :: x(:)
         type(dense_vector_cdp) :: vec
-        vec%n = size(x) ; vec%data = x
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
         return
     end function
 
@@ -1176,7 +1176,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rsp) ! y = y + X[i]*v[i]
@@ -1330,7 +1330,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rdp) ! y = y + X[i]*v[i]
@@ -1484,7 +1484,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_csp) ! y = y + X[i]*v[i]
@@ -1638,7 +1638,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_cdp) ! y = y + X[i]*v[i]

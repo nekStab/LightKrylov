@@ -389,9 +389,9 @@ module LightKrylov_AbstractVectors
     #:endfor
 
     interface dense_vector
-    #:for kind, type in RC_KINDS_TYPES
+        #:for kind, type in RC_KINDS_TYPES
         module procedure initialize_dense_vector_from_array_${type[0]}$${kind}$
-    #:endfor
+        #:endfor
     end interface
     public :: dense_vector
 
@@ -446,7 +446,7 @@ contains
     function initialize_dense_vector_from_array_${type[0]}$${kind}$(x) result(vec)
         ${type}$, intent(in) :: x(:)
         type(dense_vector_${type[0]}$${kind}$) :: vec
-        vec%n = size(x) ; vec%data = x
+        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
         return
     end function
 
@@ -549,7 +549,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_${type[0]}$${kind}$) ! y = y + X[i]*v[i]
