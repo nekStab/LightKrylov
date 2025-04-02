@@ -5,7 +5,7 @@ module TestIterativeSolvers
     use iso_fortran_env
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag
+    use stdlib_linalg, only: eye, diag, norm
     use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -23,6 +23,7 @@ module TestIterativeSolvers
 
     character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
     character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
+    integer, parameter :: n = 4
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
@@ -411,9 +412,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        type(linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
-        type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
-        type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
+        ${type}$ :: A(n, n), b(n), x(n)
         ! GMRES options.
         type(gmres_${kind}$_opts) :: opts
         ! GMRES metadata.
@@ -425,9 +424,15 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        A = linop_${type[0]}$${kind}$()  ; call init_rand(A)
-        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
-        x = vector_${type[0]}$${kind}$() ; call x%zero()
+        #:if type[0] == "r"
+        call random_number(A) ; call random_number(b) ; x = 0.0_${kind}$
+        #:else
+        real(${kind}$) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; call random_number(bdata)
+        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        x = 0.0_${kind}$
+        #:endif
 
         ! GMRES solver.
         opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
@@ -435,9 +440,9 @@ contains
         call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_${type[0]}$${kind}$')
 
         ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        err = norm(matmul(A, x) - b, 2)
         call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_${kind}$)
+        call check(error, err < norm(b, 2) * rtol_${kind}$)
         call check_test(error, 'test_gmres_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
 
         return

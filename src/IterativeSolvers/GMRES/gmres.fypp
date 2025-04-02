@@ -108,8 +108,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_${kind}$
         allocate(e(kdim+1))         ; e = 0.0_${kind}$
         allocate(c(kdim))           ; c = 0.0_${kind}$
@@ -142,6 +142,7 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
+                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -242,4 +243,22 @@ contains
     end procedure 
     #:endfor
 
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure dense_gmres_${type[0]}$${kind}$
+    type(dense_vector_${type[0]}$${kind}$) :: b_, x_
+    type(dense_linop_${type[0]}$${kind}$)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop_${type[0]}$${kind}$(A)
+    b_ = dense_vector_${type[0]}$${kind}$(b)
+    x_ = dense_vector_${type[0]}$${kind}$(x)
+
+    print *, "A", A_%data
+    print *, "b", b_%data
+    print *, "x", x_%data
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    #:endfor
 end submodule
