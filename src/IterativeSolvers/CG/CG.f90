@@ -211,8 +211,7 @@ contains
             type is (cg_sp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','cg_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -337,8 +336,7 @@ contains
             type is (cg_dp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','cg_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -463,8 +461,7 @@ contains
             type is (cg_sp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','cg_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -589,8 +586,7 @@ contains
             type is (cg_dp_metadata)
                 meta = cg_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'cg_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','cg_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 

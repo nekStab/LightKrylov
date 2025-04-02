@@ -22,6 +22,7 @@ module LightKrylov_Logger
    logical :: logger_is_active = .false.
 
    public :: stop_error
+   public :: type_error
    public :: check_info
    public :: check_test
    public :: logger
@@ -274,6 +275,23 @@ contains
       call check_info(-1, origin="STOP_ERROR", module=module, procedure=procedure, info_msg=msg)
       return
    end subroutine stop_error
+
+   subroutine type_error(var, type, intent, module, procedure)
+      character(len=*),            intent(in)  :: var
+      !! Name of the variable
+      character(len=*),            intent(in)  :: type
+      !! Required type of the variable
+      character(len=*),            intent(in)  :: intent
+      !! Intent of the argument within the caller
+      character(len=*), optional,  intent(in)  :: module
+      !! The name of the module in which the call happens
+      character(len=*), optional,  intent(in)  :: procedure
+      !! The name of the procedure in which the call happens
+      character(len=128) :: msg
+      msg = "The intent ["//trim(intent)//"] argument '"//trim(var)//"' must be of type '"//trim(type)//"'"
+      call stop_error(msg, module=module, procedure=procedure)
+      return
+   end subroutine type_error
 
    subroutine check_info(info, origin, module, procedure, info_msg)
       integer,                     intent(in)  :: info

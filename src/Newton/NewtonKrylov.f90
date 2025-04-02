@@ -505,8 +505,7 @@ contains
             type is (newton_sp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','newton_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -675,8 +674,7 @@ contains
             type is (newton_dp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','newton_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -845,8 +843,7 @@ contains
             type is (newton_sp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','newton_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -1015,8 +1012,7 @@ contains
             type is (newton_dp_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','newton_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 

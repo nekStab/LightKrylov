@@ -96,8 +96,7 @@ contains
             type is (gmres_${kind}$_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_${kind}$_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','gmres_${kind}$_opts','IN',this_module,this_procedure)
             end select
         else
             opts = gmres_${kind}$_opts()
@@ -232,8 +231,7 @@ contains
             type is (gmres_${kind}$_metadata)
                 meta = gmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_${kind}$_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','gmres_${kind}$_metadata','OUT',this_module,this_procedure)
             end select
         end if
 

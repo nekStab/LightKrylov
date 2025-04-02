@@ -58,12 +58,10 @@ contains
             type is(vector_rdp)
                 vec_out%data = -matmul(self%data, vec_in%data)
             class default
-                call stop_error("The intent [OUT] 'vec_out' must be of type 'vector_rdp'.", &
-                                & this_module, "Poisson2D_matvec")
+                call type_error('vec_out','state_vector','OUT',this_module,'Poisson2D_matvec')
             end select
         class default
-            call stop_error("The intent [IN] 'vec_in' must be of type 'vector_rdp'.", &
-                            & this_module, "Poisson2D_matvec")
+            call type_error('vec_in','state_vector','IN',this_module,'Poisson2D_matvec')
         end select
     end subroutine
 
