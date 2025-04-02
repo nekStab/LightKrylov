@@ -148,8 +148,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_sp
         allocate(e(kdim+1))         ; e = 0.0_sp
         allocate(c(kdim))           ; c = 0.0_sp
@@ -182,6 +182,7 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
+                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -323,8 +324,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_dp
         allocate(e(kdim+1))         ; e = 0.0_dp
         allocate(c(kdim))           ; c = 0.0_dp
@@ -357,6 +358,7 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
+                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -498,8 +500,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_sp
         allocate(e(kdim+1))         ; e = 0.0_sp
         allocate(c(kdim))           ; c = 0.0_sp
@@ -532,6 +534,7 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
+                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -673,8 +676,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_dp
         allocate(e(kdim+1))         ; e = 0.0_dp
         allocate(c(kdim))           ; c = 0.0_dp
@@ -707,6 +710,7 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
+                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -805,4 +809,68 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure 
 
+    module procedure dense_gmres_rsp
+    type(dense_vector_rsp) :: b_, x_
+    type(dense_linop_rsp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop_rsp(A)
+    b_ = dense_vector_rsp(b)
+    x_ = dense_vector_rsp(x)
+
+    print *, "A", A_%data
+    print *, "b", b_%data
+    print *, "x", x_%data
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    module procedure dense_gmres_rdp
+    type(dense_vector_rdp) :: b_, x_
+    type(dense_linop_rdp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop_rdp(A)
+    b_ = dense_vector_rdp(b)
+    x_ = dense_vector_rdp(x)
+
+    print *, "A", A_%data
+    print *, "b", b_%data
+    print *, "x", x_%data
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    module procedure dense_gmres_csp
+    type(dense_vector_csp) :: b_, x_
+    type(dense_linop_csp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop_csp(A)
+    b_ = dense_vector_csp(b)
+    x_ = dense_vector_csp(x)
+
+    print *, "A", A_%data
+    print *, "b", b_%data
+    print *, "x", x_%data
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    module procedure dense_gmres_cdp
+    type(dense_vector_cdp) :: b_, x_
+    type(dense_linop_cdp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop_cdp(A)
+    b_ = dense_vector_cdp(b)
+    x_ = dense_vector_cdp(x)
+
+    print *, "A", A_%data
+    print *, "b", b_%data
+    print *, "x", x_%data
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
 end submodule
