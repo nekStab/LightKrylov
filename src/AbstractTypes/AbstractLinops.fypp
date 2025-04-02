@@ -203,6 +203,13 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => dense_rmatvec_${type[0]}$${kind}$
     end type
     #:endfor
+
+    interface dense_linop
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure initialize_dense_linop_from_array_${type[0]}$${kind}$
+        #:endfor
+    end interface
+    public :: dense_linop
    
 contains
 
@@ -537,6 +544,14 @@ contains
     end subroutine
 
     #:endfor
-
+    
+    #:for kind, type in RC_KINDS_TYPES
+    function initialize_dense_linop_from_array_${type[0]}$${kind}$(A) result(linop)
+        ${type}$, intent(in) :: A(:, :)
+        type(dense_linop_${type[0]}$${kind}$) :: linop
+        linop%data = A
+        return
+    end function
+    #:endfor
 
 end module LightKrylov_AbstractLinops

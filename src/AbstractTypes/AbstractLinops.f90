@@ -454,6 +454,14 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => dense_matvec_cdp
         procedure, pass(self), public :: rmatvec => dense_rmatvec_cdp
     end type
+
+    interface dense_linop
+        module procedure initialize_dense_linop_from_array_rsp
+        module procedure initialize_dense_linop_from_array_rdp
+        module procedure initialize_dense_linop_from_array_csp
+        module procedure initialize_dense_linop_from_array_cdp
+    end interface
+    public :: dense_linop
    
 contains
 
@@ -1354,6 +1362,30 @@ contains
          return
     end subroutine
 
-
+    
+    function initialize_dense_linop_from_array_rsp(A) result(linop)
+        real(sp), intent(in) :: A(:, :)
+        type(dense_linop_rsp) :: linop
+        linop%data = A
+        return
+    end function
+    function initialize_dense_linop_from_array_rdp(A) result(linop)
+        real(dp), intent(in) :: A(:, :)
+        type(dense_linop_rdp) :: linop
+        linop%data = A
+        return
+    end function
+    function initialize_dense_linop_from_array_csp(A) result(linop)
+        complex(sp), intent(in) :: A(:, :)
+        type(dense_linop_csp) :: linop
+        linop%data = A
+        return
+    end function
+    function initialize_dense_linop_from_array_cdp(A) result(linop)
+        complex(dp), intent(in) :: A(:, :)
+        type(dense_linop_cdp) :: linop
+        linop%data = A
+        return
+    end function
 
 end module LightKrylov_AbstractLinops
