@@ -182,7 +182,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -358,7 +357,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -534,7 +532,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -710,7 +707,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
