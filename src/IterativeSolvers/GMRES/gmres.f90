@@ -182,7 +182,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -358,7 +357,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -534,7 +532,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -710,7 +707,6 @@ contains
             call log_information(msg, this_module, this_procedure)
 
             gmres_iter: do k = 1, kdim
-                print *, "Iteration :", iter, "beta = ", beta
                 !> Current number of iterations.
                 iter = iter + 1
                 !> Preconditioner.
@@ -816,10 +812,6 @@ contains
     A_ = dense_linop(A)
     b_ = dense_vector_rsp(b)
     x_ = dense_vector_rsp(x)
-
-    print *, "A", A_%data
-    print *, "b", b_%data
-    print *, "x", x_%data
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
@@ -832,10 +824,6 @@ contains
     A_ = dense_linop(A)
     b_ = dense_vector_rdp(b)
     x_ = dense_vector_rdp(x)
-
-    print *, "A", A_%data
-    print *, "b", b_%data
-    print *, "x", x_%data
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
@@ -848,10 +836,6 @@ contains
     A_ = dense_linop(A)
     b_ = dense_vector_csp(b)
     x_ = dense_vector_csp(x)
-
-    print *, "A", A_%data
-    print *, "b", b_%data
-    print *, "x", x_%data
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
@@ -864,10 +848,6 @@ contains
     A_ = dense_linop(A)
     b_ = dense_vector_cdp(b)
     x_ = dense_vector_cdp(x)
-
-    print *, "A", A_%data
-    print *, "b", b_%data
-    print *, "x", x_%data
     ! Call abstract gmres.
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.

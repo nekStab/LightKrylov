@@ -21,7 +21,7 @@ module TestIterativeSolvers
 
     character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
     character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
-    integer, parameter :: n = 4
+    integer, parameter :: n = 128
 
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
