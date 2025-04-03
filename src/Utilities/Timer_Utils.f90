@@ -161,6 +161,7 @@ module LightKrylov_Timer_Utils
    ! format strings for uniform printing
    character(len=128), parameter :: fmt_h = '(2X,A30," : ",  10X,A9,4(A15))'      ! headers
    character(len=128), parameter :: fmt_t = '(2X,A30," : ",A6,4X,I9,4(1X,F14.6))' ! data total
+   character(len=128), parameter :: fmt_1 = '(2X,A30," : ",A6,4X,I9,1X,F14.6,3(A15))' ! data 1 call
    character(len=128), parameter :: fmt_r = '(2X,30X,3X,   A6,I4,I9,4(1X,F14.6))' ! data reset
    character(len=128), parameter :: fmt_n = '(2X,30X,3X,   A6,I4,I9,A60)'         ! not called
 
@@ -819,7 +820,7 @@ contains
          end if
       end do
       if (count == 1) then
-         write(msg,'(2X,A30," : ",A6,3X,I9,1X,F14.6,3(A15))') trim(t%name), 'total', count, t%etime_data(1), '-', '-', '-'
+         write(msg,fmt_1) trim(t%name), 'total', count, t%etime_data(1), '-', '-', '-'
          call logger%log_message(msg, this_module)
       else if (count > 1) then
          etime = sum(t%etime_data)
