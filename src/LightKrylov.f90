@@ -61,24 +61,28 @@ module LightKrylov
     ! AbstractLinops exports.
     public :: abstract_linop
     public :: abstract_linop_rsp
+    public :: abstract_exptA_linop_rsp
     public :: adjoint_linop_rsp
     public :: Id_rsp
     public :: scaled_linop_rsp
     public :: axpby_linop_rsp
     public :: abstract_sym_linop_rsp
     public :: abstract_linop_rdp
+    public :: abstract_exptA_linop_rdp
     public :: adjoint_linop_rdp
     public :: Id_rdp
     public :: scaled_linop_rdp
     public :: axpby_linop_rdp
     public :: abstract_sym_linop_rdp
     public :: abstract_linop_csp
+    public :: abstract_exptA_linop_csp
     public :: adjoint_linop_csp
     public :: Id_csp
     public :: scaled_linop_csp
     public :: axpby_linop_csp
     public :: abstract_hermitian_linop_csp
     public :: abstract_linop_cdp
+    public :: abstract_exptA_linop_cdp
     public :: adjoint_linop_cdp
     public :: Id_cdp
     public :: scaled_linop_cdp

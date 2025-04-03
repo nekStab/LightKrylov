@@ -8,7 +8,7 @@ program demo
    use rklib_module
    ! LightKrylov for linear algebra
    use LightKrylov
-   use LightKrylov, only: wp => dp
+   use LightKrylov_Constants
    use LightKrylov_Logger
    use LightKrylov_Timing, only: timer => global_lightkrylov_timer
    use LightKrylov_Utils
@@ -34,11 +34,11 @@ program demo
    ! Misc
    type(newton_dp_opts)            :: opts
    integer                         :: i, j, info
-   real(wp)                        :: tol, Tend, t_FTLE, d
-   real(wp), dimension(npts, npts) :: M, Id
-   real(wp), dimension(npts)       :: eval, vec
-   real(wp), dimension(npts, r)    :: u, Lu
-   real(wp), dimension(r, r)       :: Lr
+   real(dp)                        :: tol, Tend, t_FTLE, d
+   real(dp), dimension(npts, npts) :: M, Id
+   real(dp), dimension(npts)       :: eval, vec
+   real(dp), dimension(npts, r)    :: u, Lu
+   real(dp), dimension(r, r)       :: Lr
 
    ! IO
    character(len=20)    :: data_fmt, header_fmt
@@ -63,16 +63,16 @@ program demo
    print *, '########################################################################################'
    print *, ''
 
-   vec = (/0.0_wp, -5.0_wp, 0.05_wp/) ! some intial point
-   Tend = 300.0_wp ! Integration time
+   vec = (/0.0_dp, -5.0_dp, 0.05_dp/) ! some intial point
+   Tend = 300.0_dp ! Integration time
    ! Integrate equations
    call write_report_header
    call nonlinear_integrator%initialize(n=npts, f=NL_rhs, report=roessler_report_file, report_rate=20)
-   call nonlinear_integrator%integrate(0.0_wp, vec, 1.0_wp, Tend, eval)
+   call nonlinear_integrator%integrate(0.0_dp, vec, 1.0_dp, Tend, eval)
    call rename(report_file, 'example/roessler/roessler_attractor.txt')
 
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('time', 14)
-   print data_fmt, 'Initial position :', vec(1), vec(2), vec(3), 0.0_wp
+   print data_fmt, 'Initial position :', vec(1), vec(2), vec(3), 0.0_dp
    print data_fmt, 'Final position :', eval(1), eval(2), eval(3), Tend
    print *, ''
 
@@ -84,8 +84,8 @@ program demo
    print *, '########################################################################################'
    print *, ''
 
-   call set_position((/0.0_wp, 6.1_wp, 1.3_wp/), bf)  ! initial guess
-   bf%T = 6.0_wp ! period guess
+   call set_position((/0.0_dp, 6.1_dp, 1.3_dp/), bf)  ! initial guess
+   bf%T = 6.0_dp ! period guess
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Initial guess PO:', bf%x, bf%y, bf%z, bf%T
    print *, ''
@@ -97,7 +97,7 @@ program demo
    sys_jac%jacobian%X = bf
 
    ! Set tolerance
-   tol = 1e-12_wp
+   tol = 1e-12_dp
 
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
    call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=constant_tol_dp)
@@ -122,8 +122,8 @@ program demo
    print *, '########################################################################################'
    print *, ''
 
-   call set_position((/0.0_wp, 6.1_wp, 1.3_wp/), bf)  ! some initial guess
-   bf%T = 6.0_wp ! period guess
+   call set_position((/0.0_dp, 6.1_dp, 1.3_dp/), bf)  ! some initial guess
+   bf%T = 6.0_dp ! period guess
    print header_fmt, padl('X', 14), padl('Y', 14), padl('Z', 14), padl('T', 14)
    print data_fmt, 'Initial guess PO:  ', bf%x, bf%y, bf%z, bf%T
    print *, ''
@@ -156,7 +156,7 @@ program demo
    sys_floquet%jacobian = floquet_operator()
    sys_floquet%jacobian%X = bf  ! <- periodic orbit
 
-   M = 0.0_wp
+   M = 0.0_dp
    Id = eye(npts)
    do i = 1, npts
       call set_position(Id(:, i), dx)
@@ -199,29 +199,29 @@ program demo
    call orthonormalize_basis(OTD_in)
 
    ! We need long enough to converge to the invariant tangent space
-   Tend = 5.0_wp
-   t_FTLE = 5.0_wp
+   Tend = 5.0_dp
+   t_FTLE = 5.0_dp
    call write_header()
    call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE)
    call rename(report_file_OTD, 'example/roessler/FP_OTD.txt')
    ! get baseflow
    call get_pos(bfp, vec)
    ! get OTD basis vectors
-   u = 0.0_wp
-   Lu = 0.0_wp
+   u = 0.0_dp
+   Lu = 0.0_dp
    do i = 1, r
       call get_pos(OTD_out(i), u(:, i))
       call linear_roessler(u(:, i), vec, Lu(:, i))
    end do
    ! compute Lr
-   Lr = 0.0_wp
+   Lr = 0.0_dp
    do i = 1, r
       do j = 1, r
          Lr(i, j) = dot_product(Lu(:, i), u(:, j))
       end do
    end do
-   eval = 0.0_wp
-   eval(1:r) = real(eigvals(Lr), kind=wp)
+   eval = 0.0_dp
+   eval(1:r) = real(eigvals(Lr), kind=dp)
    print '(*(A16,1X))', ' ', 'lambda_1', 'lambda_2'
    print '(A16,1X,*(F16.9,1X))', 'Reference   ', EV_ref
    print *, ''
@@ -248,7 +248,7 @@ program demo
    call orthonormalize_basis(OTD_in)
 
    ! We need long enough to converge to the invariant periodic tangent space
-   Tend = 30.0_wp*bf%T
+   Tend = 30.0_dp*bf%T
    t_FTLE = bf%T
    call write_header(); call write_header_LE()
    print '(*(A16,1X))', ' ', 'LE_1', 'LE_2'
@@ -275,7 +275,7 @@ program demo
    call orthonormalize_basis(OTD_in)
 
    ! We need long enough for the orbit to return to the chaotic attractor
-   Tend = 60.0_wp*bf%T
+   Tend = 60.0_dp*bf%T
    t_FTLE = bf%T
    call write_header(); call write_header_LE()
    print '(*(A16,1X))', ' ', 'FTLE_1', 'FTLE_2'

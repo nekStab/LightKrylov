@@ -91,6 +91,27 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_rsp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_rsp
     end type
+    !--------------------------------------------------------------------------------------------
+    !-----     Definition of an abstract real(sp) exponential propagator with kind=sp     -----
+    !--------------------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_rsp), public :: abstract_exptA_linop_rsp
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
+        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
+        !! directly.
+        !!
+        !!  @warning
+        !!  While it is not necessary to use this utility operator, it is strongly recommended for operators
+        !!  that correspond to exponential propagators to extend from this abstract type to allow for more
+        !!  rigorous type checks in the application.
+        !!  @endwarning
+        real(sp), public :: tau
+        !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
+    end type
+
 
 
 
@@ -139,6 +160,27 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_rdp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_rdp
     end type
+    !--------------------------------------------------------------------------------------------
+    !-----     Definition of an abstract real(dp) exponential propagator with kind=dp     -----
+    !--------------------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_rdp), public :: abstract_exptA_linop_rdp
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
+        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
+        !! directly.
+        !!
+        !!  @warning
+        !!  While it is not necessary to use this utility operator, it is strongly recommended for operators
+        !!  that correspond to exponential propagators to extend from this abstract type to allow for more
+        !!  rigorous type checks in the application.
+        !!  @endwarning
+        real(dp), public :: tau
+        !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
+    end type
+
 
 
 
@@ -187,6 +229,27 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_csp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_csp
     end type
+    !--------------------------------------------------------------------------------------------
+    !-----     Definition of an abstract complex(sp) exponential propagator with kind=sp     -----
+    !--------------------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_csp), public :: abstract_exptA_linop_csp
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
+        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
+        !! directly.
+        !!
+        !!  @warning
+        !!  While it is not necessary to use this utility operator, it is strongly recommended for operators
+        !!  that correspond to exponential propagators to extend from this abstract type to allow for more
+        !!  rigorous type checks in the application.
+        !!  @endwarning
+        real(sp), public :: tau
+        !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
+    end type
+
 
 
 
@@ -235,6 +298,27 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_cdp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_cdp
     end type
+    !--------------------------------------------------------------------------------------------
+    !-----     Definition of an abstract complex(dp) exponential propagator with kind=dp     -----
+    !--------------------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_cdp), public :: abstract_exptA_linop_cdp
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
+        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
+        !! directly.
+        !!
+        !!  @warning
+        !!  While it is not necessary to use this utility operator, it is strongly recommended for operators
+        !!  that correspond to exponential propagators to extend from this abstract type to allow for more
+        !!  rigorous type checks in the application.
+        !!  @endwarning
+        real(dp), public :: tau
+        !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
+    end type
+
 
 
 

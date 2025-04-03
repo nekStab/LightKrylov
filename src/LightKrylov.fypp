@@ -61,6 +61,7 @@ module LightKrylov
     public :: abstract_linop
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_linop_${type[0]}$${kind}$
+    public :: abstract_exptA_linop_${type[0]}$${kind}$
     public :: adjoint_linop_${type[0]}$${kind}$
     public :: Id_${type[0]}$${kind}$
     public :: scaled_linop_${type[0]}$${kind}$
