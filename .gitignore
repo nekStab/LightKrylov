@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+run_tests.sh
 
 # Log files
 *.log
