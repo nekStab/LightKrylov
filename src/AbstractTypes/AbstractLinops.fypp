@@ -94,6 +94,27 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: matvec => adjoint_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${type[0]}$${kind}$
     end type
+    !--------------------------------------------------------------------------------------------
+    !-----     Definition of an abstract ${type}$ exponential propagator with kind=${kind}$     -----
+    !--------------------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_exptA_linop_${type[0]}$${kind}$
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
+        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
+        !! directly.
+        !!
+        !!  @warning
+        !!  While it is not necessary to use this utility operator, it is strongly recommended for operators
+        !!  that correspond to exponential propagators to extend from this abstract type to allow for more
+        !!  rigorous type checks in the application.
+        !!  @endwarning
+        real(${kind}$), public :: tau
+        !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
+    end type
+
 
 
 
@@ -183,7 +204,7 @@ module LightKrylov_AbstractLinops
     contains
     end type
  
-   #:endif
+    #:endif
 
 
 
