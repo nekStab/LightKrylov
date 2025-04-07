@@ -877,7 +877,7 @@ contains
     function initialize_dense_vector_from_array_rsp(x) result(vec)
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
@@ -945,7 +945,7 @@ contains
     function initialize_dense_vector_from_array_rdp(x) result(vec)
         real(dp), intent(in) :: x(:)
         type(dense_vector_rdp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
@@ -1013,7 +1013,7 @@ contains
     function initialize_dense_vector_from_array_csp(x) result(vec)
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_sp
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
@@ -1083,7 +1083,7 @@ contains
     function initialize_dense_vector_from_array_cdp(x) result(vec)
         complex(dp), intent(in) :: x(:)
         type(dense_vector_cdp) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_dp
+        vec%n = size(x) ; vec%data = x
         return
     end function
 

@@ -446,7 +446,7 @@ contains
     function initialize_dense_vector_from_array_${type[0]}$${kind}$(x) result(vec)
         ${type}$, intent(in) :: x(:)
         type(dense_vector_${type[0]}$${kind}$) :: vec
-        vec%n = n ; allocate(vec%data(n)) ; vec%data = 0.0_${kind}$
+        vec%n = size(x) ; vec%data = x
         return
     end function
 
