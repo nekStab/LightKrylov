@@ -381,8 +381,7 @@ contains
         type is(vector_rsp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_rsp'", &
-                              & this_module, 'dot_rsp')
+            call type_error('vec','vector_rsp','IN',this_module,'dot_rsp')
         end select
     end function dot_rsp
 
@@ -405,8 +404,7 @@ contains
         type is(vector_rsp)
             self%data = alpha*vec%data + beta*self%data
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_rsp'", &
-                              & this_module, 'axpby_rsp')
+            call type_error('vec','vector_rsp','IN',this_module,'axpby_rsp')
         end select
         return
     end subroutine
@@ -442,8 +440,7 @@ contains
         type is(vector_rdp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_rdp'", &
-                              & this_module, 'dot_rdp')
+            call type_error('vec','vector_rdp','IN',this_module,'dot_rdp')
         end select
     end function dot_rdp
 
@@ -466,8 +463,7 @@ contains
         type is(vector_rdp)
             self%data = alpha*vec%data + beta*self%data
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_rdp'", &
-                              & this_module, 'axpby_rdp')
+            call type_error('vec','vector_rdp','IN',this_module,'axpby_rdp')
         end select
         return
     end subroutine
@@ -503,8 +499,7 @@ contains
         type is(vector_csp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_csp'", &
-                              & this_module, 'dot_csp')
+            call type_error('vec','vector_csp','IN',this_module,'dot_csp')
         end select
     end function dot_csp
 
@@ -527,8 +522,7 @@ contains
         type is(vector_csp)
             self%data = alpha*vec%data + beta*self%data
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_csp'", &
-                              & this_module, 'axpby_csp')
+            call type_error('vec','vector_csp','IN',this_module,'axpby_csp')
         end select
         return
     end subroutine
@@ -564,8 +558,7 @@ contains
         type is(vector_cdp)
             alpha = dot_product(self%data, vec%data)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_cdp'", &
-                              & this_module, 'dot_cdp')
+            call type_error('vec','vector_cdp','IN',this_module,'dot_cdp')
         end select
     end function dot_cdp
 
@@ -588,8 +581,7 @@ contains
         type is(vector_cdp)
             self%data = alpha*vec%data + beta*self%data
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'vector_cdp'", &
-                              & this_module, 'axpby_cdp')
+            call type_error('vec','vector_cdp','IN',this_module,'axpby_cdp')
         end select
         return
     end subroutine
@@ -630,12 +622,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rsp'", &
-                              & this_module, 'matvec_rsp')
+                call type_error('vec_out','vector_rsp','OUT',this_module,'matvec_rsp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_rsp'", &
-                              & this_module, 'matvec_rsp')
+            call type_error('vec_in','vector_rsp','IN',this_module,'matvec_rsp')
         end select
     end subroutine matvec_rsp
 
@@ -650,12 +640,10 @@ contains
             type is(vector_rsp)
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rsp'", &
-                              & this_module, 'rmatvec_rsp')
+                call type_error('vec_out','vector_rsp','OUT',this_module,'rmatvec_rsp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_rsp'", &
-                              & this_module, 'rmatvec_rsp')
+            call type_error('vec_in','vector_rsp','IN',this_module,'rmatvec_rsp')
         end select
     end subroutine rmatvec_rsp
 
@@ -672,12 +660,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rsp'", &
-                              & this_module, 'spd_matvec_rsp')
+                call type_error('vec_out','vector_rsp','OUT',this_module,'spd_matvec_rsp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_rsp'", &
-                              & this_module, 'spd_matvec_rsp')
+            call type_error('vec_in','vector_rsp','IN',this_module,'spd_matvec_rsp')
         end select
     end subroutine sdp_matvec_rsp
 
@@ -694,12 +680,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rdp'", &
-                              & this_module, 'matvec_rdp')
+                call type_error('vec_out','vector_rdp','OUT',this_module,'matvec_rdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_rdp'", &
-                              & this_module, 'matvec_rdp')
+            call type_error('vec_in','vector_rdp','IN',this_module,'matvec_rdp')
         end select
     end subroutine matvec_rdp
 
@@ -714,12 +698,10 @@ contains
             type is(vector_rdp)
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rdp'", &
-                              & this_module, 'rmatvec_rdp')
+                call type_error('vec_out','vector_rdp','OUT',this_module,'rmatvec_rdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_rdp'", &
-                              & this_module, 'rmatvec_rdp')
+            call type_error('vec_in','vector_rdp','IN',this_module,'rmatvec_rdp')
         end select
     end subroutine rmatvec_rdp
 
@@ -736,12 +718,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_rdp'", &
-                              & this_module, 'spd_matvec_rdp')
+                call type_error('vec_out','vector_rdp','OUT',this_module,'spd_matvec_rdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_rdp'", &
-                              & this_module, 'spd_matvec_rdp')
+            call type_error('vec_in','vector_rdp','IN',this_module,'spd_matvec_rdp')
         end select
     end subroutine sdp_matvec_rdp
 
@@ -758,12 +738,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_csp'", &
-                              & this_module, 'matvec_csp')
+                call type_error('vec_out','vector_csp','OUT',this_module,'matvec_csp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_csp'", &
-                              & this_module, 'matvec_csp')
+            call type_error('vec_in','vector_csp','IN',this_module,'matvec_csp')
         end select
     end subroutine matvec_csp
 
@@ -778,12 +756,10 @@ contains
             type is(vector_csp)
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_csp'", &
-                              & this_module, 'rmatvec_csp')
+                call type_error('vec_out','vector_csp','OUT',this_module,'rmatvec_csp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_csp'", &
-                              & this_module, 'rmatvec_csp')
+            call type_error('vec_in','vector_csp','IN',this_module,'rmatvec_csp')
         end select
     end subroutine rmatvec_csp
 
@@ -800,12 +776,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_csp'", &
-                              & this_module, 'hermitian_matvec_csp')
+                call type_error('vec_out','vector_csp','OUT',this_module,'hermitian_matvec_csp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_csp'", &
-                              & this_module, 'hermitian_matvec_csp')
+            call type_error('vec_in','vector_csp','IN',this_module,'hermitian_matvec_csp')
         end select
     end subroutine hermitian_matvec_csp
 
@@ -822,12 +796,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_cdp'", &
-                              & this_module, 'matvec_cdp')
+                call type_error('vec_out','vector_cdp','OUT',this_module,'matvec_cdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_cdp'", &
-                              & this_module, 'matvec_cdp')
+            call type_error('vec_in','vector_cdp','IN',this_module,'matvec_cdp')
         end select
     end subroutine matvec_cdp
 
@@ -842,12 +814,10 @@ contains
             type is(vector_cdp)
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_cdp'", &
-                              & this_module, 'rmatvec_cdp')
+                call type_error('vec_out','vector_cdp','OUT',this_module,'rmatvec_cdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_cdp'", &
-                              & this_module, 'rmatvec_cdp')
+            call type_error('vec_in','vector_cdp','IN',this_module,'rmatvec_cdp')
         end select
     end subroutine rmatvec_cdp
 
@@ -864,12 +834,10 @@ contains
                 vec_out%data = matmul(self%data, vec_in%data)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'vector_cdp'", &
-                              & this_module, 'hermitian_matvec_cdp')
+                call type_error('vec_out','vector_cdp','OUT',this_module,'hermitian_matvec_cdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'vector_cdp'", &
-                              & this_module, 'hermitian_matvec_cdp')
+            call type_error('vec_in','vector_cdp','IN',this_module,'hermitian_matvec_cdp')
         end select
     end subroutine hermitian_matvec_cdp
 
@@ -1254,8 +1222,7 @@ contains
         type is(state_vector_rsp)
             alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_rsp'", &
-                              & this_module, 'dot_state_rsp')
+            call type_error('vec','state_vector_rsp','IN',this_module,'dot_state_rsp')
         end select
     end function dot_state_rsp
   
@@ -1277,8 +1244,7 @@ contains
             self%y = beta*self%y + alpha*vec%y
             self%z = beta*self%z + alpha*vec%z
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_rsp'", &
-                              & this_module, 'axpby_state_rsp')
+            call type_error('vec','state_vector_rsp','IN',this_module,'axpby_state_rsp')
         end select
     end subroutine axpby_state_rsp
   
@@ -1321,8 +1287,7 @@ contains
         type is(state_vector_rdp)
             alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_rdp'", &
-                              & this_module, 'dot_state_rdp')
+            call type_error('vec','state_vector_rdp','IN',this_module,'dot_state_rdp')
         end select
     end function dot_state_rdp
   
@@ -1344,8 +1309,7 @@ contains
             self%y = beta*self%y + alpha*vec%y
             self%z = beta*self%z + alpha*vec%z
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector_rdp'", &
-                              & this_module, 'axpby_state_rdp')
+            call type_error('vec','state_vector_rdp','IN',this_module,'axpby_state_rdp')
         end select
     end subroutine axpby_state_rdp
   
@@ -1391,12 +1355,10 @@ contains
                 vec_out%z = b_sp + vec_in%z * (vec_in%x - c_sp)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_rsp'", &
-                              & this_module, 'eval_roessler_rsp')
+                call type_error('vec_out','state_vector_rsp','OUT',this_module,'eval_roessler_rsp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_rsp'", &
-                              & this_module, 'eval_roessler_rsp')
+            call type_error('vec_in','state_vector_rsp','IN',this_module,'eval_roessler_rsp')
         end select
     end subroutine eval_roessler_rsp
 
@@ -1410,8 +1372,7 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call stop_error("The intent [IN] argument 'state' must be of type 'state_vector_rsp'", &
-                              & this_module, 'get_state_rsp')
+            call type_error('state','state_vector_rsp','IN',this_module,'get_state_rsp')
         end select
     end subroutine get_state_rsp
 
@@ -1434,12 +1395,10 @@ contains
                 vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_sp)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_rsp'", &
-                              & this_module, 'lin_roessler_rsp')
+                call type_error('vec_out','state_vector_rsp','OUT',this_module,'lin_roessler_rsp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_rsp'", &
-                              & this_module, 'lin_roessler_rsp')
+            call type_error('vec_in','state_vector_rsp','IN',this_module,'lin_roessler_rsp')
         end select
     end subroutine lin_roessler_rsp
 
@@ -1462,12 +1421,10 @@ contains
                 vec_out%z = -vec_in%x + vec_in%z*(X - c_sp)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_rsp'", &
-                              & this_module, 'adj_lin_roessler_rsp')
+                call type_error('vec_out','state_vector_rsp','OUT',this_module,'adj_lin_roessler_rsp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_rsp'", &
-                              & this_module, 'adj_lin_roessler_rsp')
+            call type_error('vec_in','state_vector_rsp','IN',this_module,'adj_lin_roessler_rsp')
         end select
     end subroutine adj_lin_roessler_rsp
 
@@ -1503,12 +1460,10 @@ contains
                 vec_out%z = b_dp + vec_in%z * (vec_in%x - c_dp)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_rdp'", &
-                              & this_module, 'eval_roessler_rdp')
+                call type_error('vec_out','state_vector_rdp','OUT',this_module,'eval_roessler_rdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_rdp'", &
-                              & this_module, 'eval_roessler_rdp')
+            call type_error('vec_in','state_vector_rdp','IN',this_module,'eval_roessler_rdp')
         end select
     end subroutine eval_roessler_rdp
 
@@ -1522,8 +1477,7 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call stop_error("The intent [IN] argument 'state' must be of type 'state_vector_rdp'", &
-                              & this_module, 'get_state_rdp')
+            call type_error('state','state_vector_rdp','IN',this_module,'get_state_rdp')
         end select
     end subroutine get_state_rdp
 
@@ -1546,12 +1500,10 @@ contains
                 vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_dp)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_rdp'", &
-                              & this_module, 'lin_roessler_rdp')
+                call type_error('vec_out','state_vector_rdp','OUT',this_module,'lin_roessler_rdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_rdp'", &
-                              & this_module, 'lin_roessler_rdp')
+            call type_error('vec_in','state_vector_rdp','IN',this_module,'lin_roessler_rdp')
         end select
     end subroutine lin_roessler_rdp
 
@@ -1574,12 +1526,10 @@ contains
                 vec_out%z = -vec_in%x + vec_in%z*(X - c_dp)
 
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector_rdp'", &
-                              & this_module, 'adj_lin_roessler_rdp')
+                call type_error('vec_out','state_vector_rdp','OUT',this_module,'adj_lin_roessler_rdp')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector_rdp'", &
-                              & this_module, 'adj_lin_roessler_rdp')
+            call type_error('vec_in','state_vector_rdp','IN',this_module,'adj_lin_roessler_rdp')
         end select
     end subroutine adj_lin_roessler_rdp
 

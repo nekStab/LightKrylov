@@ -142,8 +142,7 @@ contains
             type is (fgmres_sp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','fgmres_sp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = fgmres_sp_opts()
@@ -275,8 +274,7 @@ contains
             type is (fgmres_sp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','fgmres_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -323,8 +321,7 @@ contains
             type is (fgmres_dp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','fgmres_dp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = fgmres_dp_opts()
@@ -456,8 +453,7 @@ contains
             type is (fgmres_dp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','fgmres_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -504,8 +500,7 @@ contains
             type is (fgmres_sp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_sp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','fgmres_sp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = fgmres_sp_opts()
@@ -637,8 +632,7 @@ contains
             type is (fgmres_sp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','fgmres_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -685,8 +679,7 @@ contains
             type is (fgmres_dp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'fgmres_dp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','fgmres_dp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = fgmres_dp_opts()
@@ -818,8 +811,7 @@ contains
             type is (fgmres_dp_metadata)
                 meta = fgmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'fgmres_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','fgmres_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
