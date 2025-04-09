@@ -28,7 +28,7 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, check_info
+    &                             log_debug, stop_error, check_info, type_error
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
