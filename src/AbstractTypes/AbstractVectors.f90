@@ -35,6 +35,7 @@ module LightKrylov_AbstractVectors
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
 
     use stdlib_optval, only: optval
+    use stdlib_linalg_blas, only: scal, axpy, dot, dotc
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger
@@ -628,7 +629,109 @@ module LightKrylov_AbstractVectors
 
     end interface
 
+
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_rsp), public :: dense_vector_rsp
+        integer :: n
+        real(sp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_rsp
+        !! Sets an `abstract_vector_rsp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_rsp
+        !! Creates a random `abstract_vector_rsp`.
+        procedure, pass(self), public :: scal => dense_scal_rsp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_rsp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_rsp
+        !! Computes the dot product between two `abstract_vector_rsp`.
+        procedure, pass(self), public :: get_size => dense_get_size_rsp
+        !! Return size of specific abstract vector
+    end type
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_rdp), public :: dense_vector_rdp
+        integer :: n
+        real(dp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_rdp
+        !! Sets an `abstract_vector_rdp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_rdp
+        !! Creates a random `abstract_vector_rdp`.
+        procedure, pass(self), public :: scal => dense_scal_rdp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_rdp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_rdp
+        !! Computes the dot product between two `abstract_vector_rdp`.
+        procedure, pass(self), public :: get_size => dense_get_size_rdp
+        !! Return size of specific abstract vector
+    end type
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_csp), public :: dense_vector_csp
+        integer :: n
+        complex(sp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_csp
+        !! Sets an `abstract_vector_csp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_csp
+        !! Creates a random `abstract_vector_csp`.
+        procedure, pass(self), public :: scal => dense_scal_csp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_csp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_csp
+        !! Computes the dot product between two `abstract_vector_csp`.
+        procedure, pass(self), public :: get_size => dense_get_size_csp
+        !! Return size of specific abstract vector
+    end type
+    !----------------------------------------------------------------------------------
+    !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
+    !----------------------------------------------------------------------------------
+
+    type, extends(abstract_vector_cdp), public :: dense_vector_cdp
+        integer :: n
+        complex(dp), allocatable :: data(:)
+    contains
+        private
+        procedure, pass(self), public :: zero => dense_zero_cdp
+        !! Sets an `abstract_vector_cdp` to zero.
+        procedure, pass(self), public :: rand => dense_rand_cdp
+        !! Creates a random `abstract_vector_cdp`.
+        procedure, pass(self), public :: scal => dense_scal_cdp
+        !! Compute the scalar-vector product.
+        procedure, pass(self), public :: axpby => dense_axpby_cdp
+        !! In-place computation of \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+        procedure, pass(self), public :: dot => dense_dot_cdp
+        !! Computes the dot product between two `abstract_vector_cdp`.
+        procedure, pass(self), public :: get_size => dense_get_size_cdp
+        !! Return size of specific abstract vector
+    end type
+
+    interface dense_vector
+        module procedure initialize_dense_vector_from_array_rsp
+        module procedure initialize_dense_vector_from_array_rdp
+        module procedure initialize_dense_vector_from_array_csp
+        module procedure initialize_dense_vector_from_array_cdp
+    end interface
+    public :: dense_vector
+
 contains
+
+    !-----------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
+    !-----------------------------------------------------------------------
 
     function norm_rsp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
@@ -766,6 +869,287 @@ contains
         call self%scal(-one_cdp)
     end subroutine chsgn_cdp
 
+
+    !--------------------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
+    !--------------------------------------------------------------------------------
+    
+    function initialize_dense_vector_from_array_rsp(x) result(vec)
+        real(sp), intent(in) :: x(:)
+        type(dense_vector_rsp) :: vec
+        vec%n = size(x) ; vec%data = x
+        return
+    end function
+
+    subroutine dense_zero_rsp(self)
+        class(dense_vector_rsp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
+        self%data = 0.0_sp
+        return
+    end subroutine
+
+    subroutine dense_rand_rsp(self, ifnorm)
+        class(dense_vector_rsp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        call random_number(self%data)
+        return
+    end subroutine
+
+    subroutine dense_scal_rsp(self, alpha)
+        class(dense_vector_rsp), intent(inout) :: self
+        real(sp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_rsp(alpha, vec, beta, self)
+        real(sp), intent(in) :: alpha, beta
+        class(dense_vector_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rsp)
+            if (beta /= 0.0_sp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end subroutine
+
+    function dense_dot_rsp(self, vec) result(alpha)
+        class(dense_vector_rsp), intent(in) :: self
+        class(abstract_vector_rsp), intent(in) :: vec
+        real(sp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rsp)
+            alpha = dot(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end function
+
+    function dense_get_size_rsp(self) result(n)
+        class(dense_vector_rsp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
+    function initialize_dense_vector_from_array_rdp(x) result(vec)
+        real(dp), intent(in) :: x(:)
+        type(dense_vector_rdp) :: vec
+        vec%n = size(x) ; vec%data = x
+        return
+    end function
+
+    subroutine dense_zero_rdp(self)
+        class(dense_vector_rdp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
+        self%data = 0.0_dp
+        return
+    end subroutine
+
+    subroutine dense_rand_rdp(self, ifnorm)
+        class(dense_vector_rdp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        call random_number(self%data)
+        return
+    end subroutine
+
+    subroutine dense_scal_rdp(self, alpha)
+        class(dense_vector_rdp), intent(inout) :: self
+        real(dp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_rdp(alpha, vec, beta, self)
+        real(dp), intent(in) :: alpha, beta
+        class(dense_vector_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rdp)
+            if (beta /= 0.0_dp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end subroutine
+
+    function dense_dot_rdp(self, vec) result(alpha)
+        class(dense_vector_rdp), intent(in) :: self
+        class(abstract_vector_rdp), intent(in) :: vec
+        real(dp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_rdp)
+            alpha = dot(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end function
+
+    function dense_get_size_rdp(self) result(n)
+        class(dense_vector_rdp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
+    function initialize_dense_vector_from_array_csp(x) result(vec)
+        complex(sp), intent(in) :: x(:)
+        type(dense_vector_csp) :: vec
+        vec%n = size(x) ; vec%data = x
+        return
+    end function
+
+    subroutine dense_zero_csp(self)
+        class(dense_vector_csp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
+        self%data = 0.0_sp
+        return
+    end subroutine
+
+    subroutine dense_rand_csp(self, ifnorm)
+        class(dense_vector_csp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        real(sp), allocatable :: y(:, :)
+        allocate(y(size(self%data), 2)) ; call random_number(y)
+        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        return
+    end subroutine
+
+    subroutine dense_scal_csp(self, alpha)
+        class(dense_vector_csp), intent(inout) :: self
+        complex(sp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_csp(alpha, vec, beta, self)
+        complex(sp), intent(in) :: alpha, beta
+        class(dense_vector_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_csp)
+            if (beta /= 0.0_sp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end subroutine
+
+    function dense_dot_csp(self, vec) result(alpha)
+        class(dense_vector_csp), intent(in) :: self
+        class(abstract_vector_csp), intent(in) :: vec
+        complex(sp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_csp)
+            alpha = dotc(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end function
+
+    function dense_get_size_csp(self) result(n)
+        class(dense_vector_csp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
+    function initialize_dense_vector_from_array_cdp(x) result(vec)
+        complex(dp), intent(in) :: x(:)
+        type(dense_vector_cdp) :: vec
+        vec%n = size(x) ; vec%data = x
+        return
+    end function
+
+    subroutine dense_zero_cdp(self)
+        class(dense_vector_cdp), intent(inout) :: self
+        if(.not. allocated(self%data)) allocate(self%data(self%n))
+        self%data = 0.0_dp
+        return
+    end subroutine
+
+    subroutine dense_rand_cdp(self, ifnorm)
+        class(dense_vector_cdp), intent(inout) :: self
+        logical, optional, intent(in) :: ifnorm
+        real(dp), allocatable :: y(:, :)
+        allocate(y(size(self%data), 2)) ; call random_number(y)
+        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        return
+    end subroutine
+
+    subroutine dense_scal_cdp(self, alpha)
+        class(dense_vector_cdp), intent(inout) :: self
+        complex(dp), intent(in) :: alpha
+        integer :: n
+        n = self%get_size()
+        call scal(n, alpha, self%data, 1)
+        return
+    end subroutine
+
+    subroutine dense_axpby_cdp(alpha, vec, beta, self)
+        complex(dp), intent(in) :: alpha, beta
+        class(dense_vector_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_cdp)
+            if (beta /= 0.0_dp) call self%scal(beta)
+            call axpy(n, alpha, vec%data, 1, self%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end subroutine
+
+    function dense_dot_cdp(self, vec) result(alpha)
+        class(dense_vector_cdp), intent(in) :: self
+        class(abstract_vector_cdp), intent(in) :: vec
+        complex(dp) :: alpha
+        integer :: n
+        n = self%get_size()
+        select type (vec)
+        type is(dense_vector_cdp)
+            alpha = dotc(n, self%data, 1, vec%data, 1)
+        class default
+            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+        end select
+        return
+    end function
+
+    function dense_get_size_cdp(self) result(n)
+        class(dense_vector_cdp), intent(in) :: self
+        integer :: n
+        n = size(self%data)
+        return
+    end function
+
     
     !--------------------------------------
     !-----      UTILITY FUNCTIONS     -----
@@ -792,7 +1176,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rsp) ! y = y + X[i]*v[i]
@@ -822,7 +1206,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -946,7 +1330,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rdp) ! y = y + X[i]*v[i]
@@ -976,7 +1360,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -1100,7 +1484,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_csp) ! y = y + X[i]*v[i]
@@ -1130,7 +1514,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -1254,7 +1638,7 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, mold=X(1)) ; call y%zero()
+        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_cdp) ! y = y + X[i]*v[i]
@@ -1284,7 +1668,7 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), mold=X(1))
+            allocate(Y(size(B, 2)), source=X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &

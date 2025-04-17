@@ -436,12 +436,58 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine
+
+        module subroutine dense_gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            real(sp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            real(sp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            real(sp), intent(inout) :: x(:)
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
         module subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rdp), intent(in) :: b
             !! Right-hand side vector.
             class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+
+        module subroutine dense_gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            real(dp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            real(dp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            real(dp), intent(inout) :: x(:)
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag.
@@ -480,12 +526,58 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine
+
+        module subroutine dense_gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            complex(sp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            complex(sp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            complex(sp), intent(inout) :: x(:)
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_csp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
         module subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_cdp), intent(in) :: b
             !! Right-hand side vector.
             class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+
+        module subroutine dense_gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            complex(dp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            complex(dp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            complex(dp), intent(inout) :: x(:)
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag.

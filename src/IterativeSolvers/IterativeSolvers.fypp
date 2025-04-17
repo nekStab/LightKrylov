@@ -30,7 +30,8 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, check_info, type_error
+
+    &                             log_debug, stop_error, type_error, check_info
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
@@ -245,6 +246,29 @@ module LightKrylov_IterativeSolvers
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
             !! Right-hand side vector.
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(${kind}$), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(${kind}$), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+
+        module subroutine dense_gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            ${type}$, intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            ${type}$, intent(in) :: b(:)
+            !! Right-hand side vector.
+            ${type}$, intent(inout) :: x(:)
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag.
