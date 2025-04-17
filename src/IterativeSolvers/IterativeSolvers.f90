@@ -28,7 +28,7 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, type_error, check_info
+    &                             log_debug, stop_error, check_info, type_error
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
@@ -1774,9 +1774,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_rsp')
-                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
@@ -1927,9 +1926,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_rdp')
-                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
@@ -2070,9 +2068,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_csp')
-                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
@@ -2213,9 +2210,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_cdp')
-                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
