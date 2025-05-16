@@ -131,12 +131,23 @@ abstract interface
 end interface
 ```
 Using such `abstract` types enables us to focus on the high-level implementation of the different Krylov-based algorithms while leaving the performance-critical details of the different vector and matrix-vector operations to the users.
+After having extended these `abstract` types for their particular applications, users can solve linear systems or compute eigenvalues as easily as
+
+```fortran
+
+! Solve linear system.
+call gmres(A, b, x, info)
+
+! Compute eigenvalues and eigenvectors.
+call eigs(A, V, lambda, residuals, info)
+```
+
 In addition, `LightKrylov` exposes abstract interfaces to define preconditioners, which can improve significantly the convergence of iterative solvers, as well as a Newton-GMRES solver to find the roots of a multivariate function $f : \mathbb{K}^n \to \mathbb{K}^n$ (where $\mathbb{K}$ is a placeholder for $\mathbb{R}$ or $\mathbb{C}$).
 Examples illustrating how to extend these `abstract` types and interfaces for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or to compute unstable periodic orbits of the Rössler system and study its Lyapunov exponents can be found [here](https://github.com/nekStab/LightKrylov/tree/main/example).
 
 # Performances in a production-ready open-source code
 
-`LightKrylov` was successfully integrated into [`neklab`](https://github.com/nekStab/neklab), a toolbox for stability and bifurcation analysis using the high-performance spectral element solver `Nek5000` [@nek5000_citation]. The abstract vector interface allowed direct use of `Nek5000`'s distributed data structures, and the pure-Fortran nature facilitated integration with its existing build system, demonstrating the library's suitability for large-scale HPC applications.
+`LightKrylov` was successfully integrated into [`neklab`](https://github.com/nekStab/neklab), a toolbox for stability and bifurcation analysis using the high-performance spectral element solver `Nek5000`. The abstract vector interface allowed direct use of `Nek5000`'s distributed data structures, and the pure-Fortran nature facilitated integration with its existing build system, demonstrating the library's suitability for large-scale HPC applications.
 
 ## Computing a fixed point of the nonlinear Navier-Stokes equations
 
