@@ -132,28 +132,28 @@ end interface
 ```
 Using such `abstract` types enables us to focus on the high-level implementation of the different Krylov-based algorithms while leaving the performance-critical details of the different vector and matrix-vector operations to the users.
 In addition, `LightKrylov` exposes abstract interfaces to define preconditioners, which can improve significantly the convergence of iterative solvers, as well as a Newton-GMRES solver to find the roots of a multivariate function $f : \mathbb{K}^n \to \mathbb{K}^n$ (where $\mathbb{K}$ is a placeholder for $\mathbb{R}$ or $\mathbb{C}$).
-Examples illustrating how to extend these `abstract` types and interfaces for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or to compute unstable periodic orbits of the Rössler system and study its Lyapunov exponents can be found [here]().
+Examples illustrating how to extend these `abstract` types and interfaces for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or to compute unstable periodic orbits of the Rössler system and study its Lyapunov exponents can be found [here](https://github.com/nekStab/LightKrylov/tree/main/example).
 
 # Performances in a production-ready open-source code
 
-`LightKrylov` was successfully integrated into `neklab` [@citation_if_available], a toolbox for stability and bifurcation analysis using the high-performance spectral element solver `Nek5000` [@nek5000_citation]. The abstract vector interface allowed direct use of `Nek5000`'s distributed data structures, and the pure-Fortran nature facilitated integration with its existing build system, demonstrating the library's suitability for large-scale HPC applications.
+`LightKrylov` was successfully integrated into [`neklab`](https://github.com/nekStab/neklab), a toolbox for stability and bifurcation analysis using the high-performance spectral element solver `Nek5000` [@nek5000_citation]. The abstract vector interface allowed direct use of `Nek5000`'s distributed data structures, and the pure-Fortran nature facilitated integration with its existing build system, demonstrating the library's suitability for large-scale HPC applications.
 
 ## Computing a fixed point of the nonlinear Navier-Stokes equations
 
 Computing (stable or unstable) fixed points of the nonlinear governing equations is a often a necessary step when studying the stability properties of a nonlinear system.
 In hydrodynamic instability applications, this amount to finding a stationary solution of the nonlinear Navier-Stokes equations.
-Using the two-dimensional flow past a circular cylinder as an example, the figure below depicts the convergence history for two fixed point computation techniques, namely `LightKrylov`'s Newton-GMRES solver and the selective frequency damping algorithm (often considered as the gold standard in this community).
+Using the two-dimensional flow past a circular cylinder as an example, the figure below depicts the convergence history for two fixed point computation techniques, namely `LightKrylov`'s Newton-GMRES solver and the selective frequency damping algorithm [@pof-sfd] (often considered as the gold standard in this community).
 
 **ADD FIGURE**
 
 Using the spectral element solver `Nek5000`, the governing equations are discretized with 1996 elements using a 7-th order polynomial approximation in each direction resulting in 127 744 grid points and roughly 350 000 degrees of freedom (i.e. the two velocity components as well as the pressure).
 Both solvers make use of the same initial condition and computations were run on some numbers of Intel something-something processors.
-Note that the Newton-GMRES solver make use of the *time-stepper* approach recently reviewed in @frantz-2023 while the selective frequency damping solver uses the implementation provided by the `KTH Framework` toolbox.
+Note that the Newton-GMRES solver make use of the *time-stepper* approach recently reviewed in @frantz-2023 while the selective frequency damping solver uses the implementation provided by the [`KTH Framework`](https://github.com/KTH-Nek5000/KTH_Framework) toolbox [@kth-framework].
 Leveraging the abstract interfaces provided by `LightKrylov`, the implementation of the Newton-GMRES solver in `neklab` required a very minimal set of modification of the `Nek5000` solver. The code to run this example can found online [here](???).
 
 ## Computing the leading eigenpair of the linearized Navier-Stokes operator
 
-Investigating the spectral properties of the linearized Navier-Stokes operator is critical to better understand the transition to unsteadiness and turbulence in many flow applications. Using once again the two-dimensional cylinder flow as an example, the table below compares the wall-clock time and number of matrix-vector products needed to converge the first pair of complex-conjugate eigenvalues. The two solvers considered include once again `neklab` and `KTH Framework`. While `neklab` uses `LightKrylov`'s abstract interfaces and implementation of the Krylov-Schur algorithm [@?], `KTH Framework` relies under the hood on `ARPACK` [@?] and its reversed communication methodology.
+Investigating the spectral properties of the linearized Navier-Stokes operator is critical to better understand the transition to unsteadiness and turbulence in many flow applications. Using once again the two-dimensional cylinder flow as an example, the table below compares the wall-clock time and number of matrix-vector products needed to converge the first pair of complex-conjugate eigenvalues. The two solvers considered include once again `neklab` and `KTH Framework`. While `neklab` uses `LightKrylov`'s abstract interfaces and implementation of the Krylov-Schur algorithm, `KTH Framework` relies under the hood on `ARPACK` and its reversed communication methodology.
 
 **ADD TABLE**
 
@@ -166,11 +166,12 @@ From table ?, it can be seen that `LightKrylov`'s eigenvalue solver is competiti
 
 # Perspectives
 
-Despite being in its early development stage, `LightKrylov` has already been used in hydrodynamic stability production runs on ??? processors. It has also been successfully interfaced with [`neko`](), a modernized implementation of `Nek5000` running on GPU and is currently in the process of being interfaced with [`dNami`](), a high-performance source code generator for hyperbolic partial differential equations.
+Despite being in its early development stage, `LightKrylov` has already been used in hydrodynamic stability production runs on ??? processors. It has also been successfully interfaced with [`neko`](https://github.com/ExtremeFLOW/neko), a modernized implementation of `Nek5000` running on GPU and is currently in the process of being interfaced with [`dNami`](https://github.com/dNamiLab/dNami), a high-performance source code generator for hyperbolic partial differential equations.
 
 When it comes to the development of the package itself, on-going efforts include:
+
 - **Build system :** Currently, `LightKrylov` relies exclusively on the Fortran package manager `fpm` for its build. While it ensures nice integration into the modern Fortran ecosystem, it also limits its usage to codes build using `fpm` as well. Following what is being done with the Fortran standard library `stdlib`, plans are being made to propose an alternative build system based on `Cmake` for easier integration into non-`fpm` codes.
-- **Krylov processes :** As of summer 2025, `LightKrylov` provides implementations for three of the most important Krylov processes. Future releases will extend this list by including the non-Hermitian Lanczos and two-sided Arnoldi factorizations useful for reduced-order modeling of LTI systems based on moment-matching [@?] as well as the Saunders-Simon-Yip process [@?].
+- **Krylov processes :** As of summer 2025, `LightKrylov` provides implementations for three of the most important Krylov processes. Future releases will extend this list by including the non-Hermitian Lanczos and two-sided Arnoldi factorizations useful for reduced-order modeling of LTI systems based on moment-matching as well as the Saunders-Simon-Yip process [@ssy-krylov].
 - **Iterative solvers :** Beyond `CG` and `GMRES`, the integration of new Krylov processes will enable us to provide implementations for an extended list of iterative linear solvers including `MINRES` (indefinite Hermitian system), `CGNE`, `LSQR` (least-squares problems) and `LSMR` (least-norm problems) to begin with.
 
 It needs to be emphasized finally that the development of `LightKrylov` sprang a community-driven effort in the fortran-lang ecosystem to integrate some of its features (namely the abstraction layer and the iterative solvers) into the standard library `stdlib`.
