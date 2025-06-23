@@ -142,7 +142,7 @@ call gmres(A, b, x, info)
 call eigs(A, V, lambda, residuals, info)
 ```
 
-In addition, `LightKrylov` exposes abstract interfaces to define preconditioners, which can improve significantly the convergence of iterative solvers, as well as a Newton-GMRES solver to find the roots of a multivariate function $f : \mathbb{K}^n \to \mathbb{K}^n$ (where $\mathbb{K}$ is a placeholder for $\mathbb{R}$ or $\mathbb{C}$).
+In addition, `LightKrylov` exposes abstract interfaces to define preconditioners, which can significantly improve the convergence of iterative solvers, as well as a Newton-GMRES solver to find the roots of a multivariate function $f : \mathbb{K}^n \to \mathbb{K}^n$ (where $\mathbb{K}$ is a placeholder for $\mathbb{R}$ or $\mathbb{C}$).
 Examples illustrating how to extend these `abstract` types and interfaces for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or to compute unstable periodic orbits of the Rössler system and study its Lyapunov exponents can be found [here](https://github.com/nekStab/LightKrylov/tree/main/example).
 
 # Performances in a production-ready open-source code
@@ -152,15 +152,15 @@ Examples illustrating how to extend these `abstract` types and interfaces for co
 ## Computing a fixed point of the nonlinear Navier-Stokes equations
 
 Computing (stable or unstable) fixed points of the nonlinear governing equations is a often a necessary step when studying the stability properties of a nonlinear system.
-In hydrodynamic instability applications, this amount to finding a stationary solution of the nonlinear Navier-Stokes equations.
+In hydrodynamic instability applications, this amounts to finding a stationary solution of the nonlinear Navier-Stokes equations.
 Using the two-dimensional flow past a circular cylinder as an example, the figure below depicts the convergence history for two fixed point computation techniques, namely `LightKrylov`'s Newton-GMRES solver and the selective frequency damping algorithm [@pof-sfd] (often considered as the gold standard in this community).
 
 **ADD FIGURE**
 
 Using the spectral element solver `Nek5000`, the governing equations are discretized with 1996 elements using a 7-th order polynomial approximation in each direction resulting in 127 744 grid points and roughly 350 000 degrees of freedom (i.e. the two velocity components as well as the pressure).
 Both solvers make use of the same initial condition and computations were run on some numbers of Intel something-something processors.
-Note that the Newton-GMRES solver make use of the *time-stepper* approach recently reviewed in @frantz-2023 while the selective frequency damping solver uses the implementation provided by the [`KTH Framework`](https://github.com/KTH-Nek5000/KTH_Framework) toolbox [@kth-framework].
-Leveraging the abstract interfaces provided by `LightKrylov`, the implementation of the Newton-GMRES solver in `neklab` required a very minimal set of modification of the `Nek5000` solver. The code to run this example can found online [here](???).
+Note that the Newton-GMRES solver makes use of the *time-stepper* approach recently reviewed in @frantz-2023 while the selective frequency damping solver uses the implementation provided by the [`KTH Framework`](https://github.com/KTH-Nek5000/KTH_Framework) toolbox [@kth-framework].
+Leveraging the abstract interfaces provided by `LightKrylov`, the implementation of the Newton-GMRES solver in `neklab` required no modifications of the `Nek5000` solver. The code to run this example can found online [here](???).
 
 ## Computing the leading eigenpair of the linearized Navier-Stokes operator
 
@@ -170,7 +170,7 @@ Investigating the spectral properties of the linearized Navier-Stokes operator i
 
 Both solvers effectively use a *time-stepper* approach, approximating the leading eigenvalues of the exponential propagator $\exp(\tau \mathbf{A})$ rather than $\mathbf{A}$ directly.
 For both cases, the sampling time is set to $\tau = ??$ and the maximum dimension of the Krylov subspace is set to $\mathrm{dim}(\mathcal{K}) = 64$. All other parameters, including those internal to `Nek5000`, are set to the same values for both solvers. The code to run this example can be found [here](?).
-From table ?, it can be seen that `LightKrylov`'s eigenvalue solver is competitive with `ARPACK` and that the use of extended `abstract` types and object-oriented programming Fortran lead to no computational performances degradation for such large-scale applications.
+From table ?, it can be seen that `LightKrylov`'s eigenvalue solver is competitive with `ARPACK` and that the use of extended `abstract` types and object-oriented programming in Fortran lead to no computational performance degradation for such large-scale applications.
 
 <!-- Figure sizes can be customized by adding an optional second parameter: -->
 <!-- ![Caption for example figure.](figure.png){ width=20% } -->
