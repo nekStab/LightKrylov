@@ -6,6 +6,7 @@ module Ginzburg_Landau
    use LightKrylov_Logger
    ! Standard Library.
    use stdlib_math, only: linspace
+   use stdlib_intrinsics, only: dot_product => stdlib_dot_product
    use stdlib_optval, only: optval
    implicit none
 
@@ -68,7 +69,7 @@ module Ginzburg_Landau
 contains
 
    module procedure construct_exptA
-      A%tau = tau
+   A%tau = tau
    end procedure
 
    !========================================================================
@@ -271,7 +272,7 @@ contains
       type is (state_vector)
          alpha = dot_product(self%state, vec%state)
       class default
-         call type_error('vec','state_vector','IN',this_module,'dot')
+         call type_error('vec', 'state_vector', 'IN', this_module, 'dot')
       end select
    end function dot
 
@@ -289,7 +290,7 @@ contains
       type is (state_vector)
          self%state = beta*self%state + alpha*vec%state
       class default
-         call type_error('vec','state_vector','IN',this_module,'axpby')
+         call type_error('vec', 'state_vector', 'IN', this_module, 'axpby')
       end select
    end subroutine axpby
 
@@ -346,10 +347,10 @@ contains
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call type_error('vec_out','state_vector','OUT',this_module,'direct_solver')
+            call type_error('vec_out', 'state_vector', 'OUT', this_module, 'direct_solver')
          end select
       class default
-         call type_error('vec_in','state_vector','IN',this_module,'direct_solver')
+         call type_error('vec_in', 'state_vector', 'IN', this_module, 'direct_solver')
       end select
    end subroutine direct_solver
 
@@ -381,10 +382,10 @@ contains
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call type_error('vec_out','state_vector','OUT',this_module,'adjoint_solver')
+            call type_error('vec_out', 'state_vector', 'OUT', this_module, 'adjoint_solver')
          end select
       class default
-         call type_error('vec_in','state_vector','IN',this_module,'adjoint_solver')
+         call type_error('vec_in', 'state_vector', 'IN', this_module, 'adjoint_solver')
       end select
    end subroutine adjoint_solver
 
