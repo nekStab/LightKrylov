@@ -1,7 +1,7 @@
 program demo
    use stdlib_io_npy, only: save_npy
-   use LightKrylov, only: wp => dp
    use LightKrylov
+   use LightKrylov_Constants
    use LightKrylov_Logger
    use LightKrylov_Timing, only: timer => global_lightkrylov_timer
    use Ginzburg_Landau
@@ -16,7 +16,7 @@ program demo
    !> Exponential propagator.
    type(exponential_prop), allocatable :: A
    !> Sampling time.
-   real(kind=wp), parameter :: tau = 0.1_wp
+   real(kind=dp), parameter :: tau = 0.1_dp
 
    !---------------------------------------------------
    !-----     KRYLOV-BASED EIGENDECOMPOSITION     -----
@@ -27,15 +27,15 @@ program demo
    !> Krylov subspace.
    type(state_vector), allocatable :: X(:)
    !> Eigenvalues.
-   complex(kind=wp), allocatable :: lambda(:)
+   complex(kind=dp), allocatable :: lambda(:)
    !> Residual.
-   real(kind=wp), allocatable    :: residuals(:)
+   real(kind=dp), allocatable    :: residuals(:)
    !> Information flag.
    integer          :: info
 
    !> Miscellaneous.
    integer       :: i
-   complex(wp) :: eigenvectors(nx, nev)
+   complex(dp) :: eigenvectors(nx, nev)
 
    !=============================================================================
 

@@ -8,7 +8,7 @@ module Roessler_OTD
    use rklib_module
    ! LightKrylov for linear algebra.
    use LightKrylov
-   use LightKrylov, only: wp => dp
+   use LightKrylov_Constants
    use LightKrylov_AbstractVectors
    ! Roessler
    use Roessler
@@ -23,22 +23,22 @@ module Roessler_OTD
    !------------------------------
 
    integer, parameter :: r = 2
-   real(wp), parameter :: t_GS = 5.0_wp ! In finite-precision arithmetic we need to reorthonormalize sometimes
+   real(dp), parameter :: t_GS = 5.0_dp ! In finite-precision arithmetic we need to reorthonormalize sometimes
    character(len=*), parameter :: report_file_OTD = 'example/roessler/output_roessler_OTD.txt'
    character(len=*), parameter :: report_file_OTD_LE = 'example/roessler/output_roessler_OTD_LE.txt'
 
    ! Reference values (https://chaosbook.org/extras/simon/Roessler.html, orbit 1)
-   real(wp), dimension(2), parameter :: EV_ref = (/0.097000856_wp, 0.097000856_wp/)
-   real(wp), dimension(2), parameter :: LE_ref = (/0.0_wp, 0.149141556_wp/)
+   real(dp), dimension(2), parameter :: EV_ref = (/0.097000856_dp, 0.097000856_dp/)
+   real(dp), dimension(2), parameter :: LE_ref = (/0.0_dp, 0.149141556_dp/)
 
    !-------------------------------------------
    !-----     LIGHTKRYLOV VECTOR TYPE     -----
    !-------------------------------------------
 
    type, extends(abstract_vector_rdp), public :: pos_vector
-      real(wp) :: x = 0.0_wp
-      real(wp) :: y = 0.0_wp
-      real(wp) :: z = 0.0_wp
+      real(dp) :: x = 0.0_dp
+      real(dp) :: y = 0.0_dp
+      real(dp) :: z = 0.0_dp
    contains
       private
       procedure, pass(self), public :: zero => zero_p
@@ -66,25 +66,25 @@ contains
    subroutine zero_p(self)
       class(pos_vector), intent(inout) :: self
       ! spatial coordinates of initial condition for orbit
-      self%x = 0.0_wp
-      self%y = 0.0_wp
-      self%z = 0.0_wp
+      self%x = 0.0_dp
+      self%y = 0.0_dp
+      self%z = 0.0_dp
    end subroutine zero_p
 
-   real(wp) function dot_p(self, vec) result(alpha)
+   real(dp) function dot_p(self, vec) result(alpha)
       class(pos_vector), intent(in) :: self
       class(abstract_vector_rdp), intent(in) :: vec
       select type (vec)
       type is (pos_vector)
          alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
       class default
-         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'dot_p')
+         call type_error('vec','pos_vector','IN',this_module,'dot_p')
       end select
    end function dot_p
 
    subroutine scal_p(self, alpha)
       class(pos_vector), intent(inout) :: self
-      real(wp), intent(in)    :: alpha
+      real(dp), intent(in)    :: alpha
       self%x = self%x*alpha
       self%y = self%y*alpha
       self%z = self%z*alpha
@@ -93,14 +93,14 @@ contains
    subroutine axpby_p(alpha, vec, beta, self)
       class(pos_vector), intent(inout) :: self
       class(abstract_vector_rdp), intent(in)    :: vec
-      real(wp), intent(in)    :: alpha, beta
+      real(dp), intent(in)    :: alpha, beta
       select type (vec)
       type is (pos_vector)
          self%x = beta*self%x + alpha*vec%x
          self%y = beta*self%y + alpha*vec%y
          self%z = beta*self%z + alpha*vec%z
       class default
-         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'axpby_p')
+         call type_error('vec','pos_vector','IN',this_module,'axpby_p')
       end select
    end subroutine axpby_p
 
@@ -113,11 +113,11 @@ contains
       class(pos_vector), intent(inout) :: self
       logical, optional, intent(in)    :: ifnorm
       logical :: normalized
-      real(wp) :: mu, var
-      real(wp) :: alpha
+      real(dp) :: mu, var
+      real(dp) :: alpha
 
-      mu = 0.0_wp
-      var = 1.0_wp
+      mu = 0.0_dp
+      var = 1.0_dp
       self%x = normal(mu, var)
       self%y = normal(mu, var)
       self%z = normal(mu, var)
@@ -125,7 +125,7 @@ contains
       normalized = optval(ifnorm, .false.)
       if (normalized) then
          alpha = self%norm()
-         call self%scal(1.0_wp/alpha)
+         call self%scal(1.0_dp/alpha)
       end if
    end subroutine rand_p
 
@@ -133,15 +133,15 @@ contains
       ! Time-integrator.
       class(rk_class), intent(inout)             :: me
       ! Current time.
-      real(kind=wp), intent(in)                :: t
+      real(dp), intent(in)                :: t
       ! State vector.
-      real(kind=wp), dimension(:), intent(in)  :: x
+      real(dp), dimension(:), intent(in)  :: x
       ! Time-derivative.
-      real(kind=wp), dimension(:), intent(out) :: f
+      real(dp), dimension(:), intent(out) :: f
       ! internal
-      real(kind=wp), dimension(npts)   :: bf
-      real(kind=wp), dimension(npts, r) :: q, Lq, fp
-      real(kind=wp), dimension(r, r)    :: Lr, Phi
+      real(dp), dimension(npts)   :: bf
+      real(dp), dimension(npts, r) :: q, Lq, fp
+      real(dp), dimension(r, r)    :: Lr, Phi
       integer :: i, j
 
       bf = x(:npts)
@@ -152,8 +152,8 @@ contains
          call linear_roessler(q(:, i), bf, Lq(:, i))
       end do
       ! build reduced operator and rotation matrix
-      Lr = 0.0_wp
-      Phi = 0.0_wp
+      Lr = 0.0_dp
+      Phi = 0.0_dp
       do i = 1, r
          do j = 1, r
             Lr(i, j) = dot_product(q(:, i), Lq(:, j))
@@ -184,19 +184,19 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)     :: vec_in(r)
       ! Fundamental solution matrix
-      real(wp), intent(in)     :: FTLE_in(r)
+      real(dp), intent(in)     :: FTLE_in(r)
       ! Current simulation time
-      real(wp), intent(inout)  :: time
+      real(dp), intent(inout)  :: time
       ! Integration time for this step.
-      real(wp), intent(in)     :: Tstep
+      real(dp), intent(in)     :: Tstep
       ! Output vector.
       class(abstract_vector_rdp), intent(out)    :: vec_out(r)
       ! Fundamental solution matrix
-      real(wp), intent(out)    :: FTLE_out(r)
+      real(dp), intent(out)    :: FTLE_out(r)
 
       ! internals
-      real(wp)                          :: dt = 1.0_wp
-      real(wp), dimension((r + 1)*npts + r) :: pos_in, pos_out
+      real(dp)                          :: dt = 1.0_dp
+      real(dp), dimension((r + 1)*npts + r) :: pos_in, pos_out
       integer                           :: i
 
       select type (integrator)
@@ -217,7 +217,7 @@ contains
          FTLE_out = pos_out(npts*(r + 1) + 1:)
          time = time + Tstep
       class default
-         call stop_error("The intent [INOUT] argument 'integrator' must be of type 'rks54_class'", this_module, 'OTD_step')
+         call type_error('integrator','rks54_class','INOUT',this_module,'OTD_step')
       end select
    end subroutine OTD_step
 
@@ -227,22 +227,22 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(inout) :: vec_in(r)
       ! Integration time.
-      real(wp), intent(in)    :: Tend
+      real(dp), intent(in)    :: Tend
       ! Output vector.
       class(abstract_vector_rdp), intent(out)   :: vec_out(r)
       ! Integration time for FLTEs
-      real(wp), intent(in)    :: t_FTLE
+      real(dp), intent(in)    :: t_FTLE
       ! restart trajectory at t_FLTE?
       logical, optional, intent(in)    :: if_rst
 
       ! internals
       type(rks54_class)         :: OTD_roessler
       integer                   :: idx(1)
-      real(wp)                  :: time, t_complete, t1, t2, tvec(2)
+      real(dp)                  :: time, t_complete, t1, t2, tvec(2)
       ! logical                   :: if_GS
       integer                   :: i, j, p_cnt
-      real(wp), dimension(r)    :: FTLE_in, FTLE_out
-      real(wp), dimension(npts) :: bf_bkp
+      real(dp), dimension(r)    :: FTLE_in, FTLE_out
+      real(dp), dimension(npts) :: bf_bkp
 
       integer, parameter :: ndof = npts*(r + 1) + r
 
@@ -253,8 +253,8 @@ contains
       call get_pos(bf, bf_bkp)
 
       ! Initialization
-      time = 0.0_wp
-      FTLE_in = 0.0_wp
+      time = 0.0_dp
+      FTLE_in = 0.0_dp
       p_cnt = 0
       tvec = (/t_GS, t_FTLE/)
       idx = minloc(tvec)
@@ -270,26 +270,26 @@ contains
             else
                p_cnt = p_cnt + 1
                call report_LE(FTLE_out, time, t_FTLE, p_cnt)
-               FTLE_in = 0.0_wp                                   ! reset FTLE computation
+               FTLE_in = 0.0_dp                                   ! reset FTLE computation
                if (if_rst) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
             end if
             call copy(vec_in, vec_out)
          end do
          t_complete = modulo(t2, t1)
-         if (t_complete > 1e-4_wp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)
+         if (t_complete > 1e-4_dp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)
          if (t2 == t_GS) then
             call orthonormalize_basis(vec_out)                    ! Reorthonormalize
             FTLE_in = FTLE_out
          else
             p_cnt = p_cnt + 1
             call report_LE(FTLE_out, time, t_FTLE, p_cnt)
-            FTLE_in = 0.0_wp                                      ! reset FTLE computation
+            FTLE_in = 0.0_dp                                      ! reset FTLE computation
             if (if_rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
          end if
          call copy(vec_in, vec_out)
       end do
       t_complete = modulo(Tend, t2)
-      if (t_complete > 1e-4_wp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)
+      if (t_complete > 1e-4_dp) call OTD_step(OTD_roessler, bf, vec_in, FTLE_in, time, t_complete, vec_out, FTLE_out)
    end subroutine OTD_map
 
    !-------------------------------------------
@@ -298,20 +298,20 @@ contains
 
    subroutine get_pos(vec_in, pos)
       class(abstract_vector_rdp), intent(in)  :: vec_in
-      real(wp), dimension(npts), intent(out) :: pos
-      pos = 0.0_wp
+      real(dp), dimension(npts), intent(out) :: pos
+      pos = 0.0_dp
       select type (vec_in)
       type is (pos_vector)
          pos(1) = vec_in%x
          pos(2) = vec_in%y
          pos(3) = vec_in%z
       class default
-         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'get_pos')
+         call type_error('vec','pos_vector','IN',this_module,'get_pos')
       end select
    end subroutine get_pos
 
    subroutine set_pos(pos, vec_out)
-      real(wp), dimension(npts), intent(in)  :: pos
+      real(dp), dimension(npts), intent(in)  :: pos
       class(abstract_vector_rdp), intent(out) :: vec_out
       select type (vec_out)
       type is (pos_vector)
@@ -319,23 +319,23 @@ contains
          vec_out%y = pos(2)
          vec_out%z = pos(3)
       class default
-         call stop_error("The intent [IN] argument 'vec' must be of type 'pos_vector'", this_module, 'set_pos')
+         call type_error('vec_out','pos_vector','OUT',this_module,'set_pos')
       end select
    end subroutine set_pos
 
    subroutine OTD_report_file(me, t, x)
       class(rk_class), intent(inout)      :: me
-      real(wp), intent(in)                :: t
-      real(wp), dimension(:), intent(in)  :: x
+      real(dp), intent(in)                :: t
+      real(dp), dimension(:), intent(in)  :: x
 
       ! internal
-      real(wp), dimension(npts)      :: bf
-      real(wp), dimension(npts, r)    :: q, Lq
-      real(wp), dimension(r, r)       :: Lr, Lsym, qTq
-      real(wp), dimension(r)         :: FTLE, s
-      complex(wp), dimension(r)      :: l
-      complex(wp), dimension(r, r)    :: v
-      complex(wp), dimension(npts, r) :: u, su
+      real(dp), dimension(npts)      :: bf
+      real(dp), dimension(npts, r)    :: q, Lq
+      real(dp), dimension(r, r)       :: Lr, Lsym, qTq
+      real(dp), dimension(r)         :: FTLE, s
+      complex(dp), dimension(r)      :: l
+      complex(dp), dimension(r, r)    :: v
+      complex(dp), dimension(npts, r) :: u, su
       integer                        :: i, j, iunit
       logical                        :: is_cc
       integer, allocatable           :: idx(:)
@@ -348,8 +348,8 @@ contains
          call linear_roessler(q(:, i), bf, Lq(:, i))
       end do
       ! build reduced operator
-      Lr = 0.0_wp
-      qTq = 0.0_wp
+      Lr = 0.0_dp
+      qTq = 0.0_dp
       do i = 1, r
          do j = 1, r
             Lr(i, j) = dot_product(Lq(:, i), q(:, j))
@@ -357,7 +357,7 @@ contains
          end do
       end do
       ! spectral analysis
-      Lsym = 0.5_wp*(Lr + transpose(Lr))
+      Lsym = 0.5_dp*(Lr + transpose(Lr))
       call eig(Lsym, l, right=v)
       s = real(l)
       idx = maxloc(s)
@@ -366,7 +366,7 @@ contains
       call eig(Lr, l, right=v)
       u = matmul(q, v)
       is_cc = .false.
-      if (abs(aimag(l(1))) > 0.0_wp) is_cc = .true.
+      if (abs(aimag(l(1))) > 0.0_dp) is_cc = .true.
 
       open (newunit=iunit, file=report_file_OTD, status='old', action='write', position='append')
       write (iunit, '(*(E16.9,1X))', ADVANCE='NO') t, bf, q
@@ -384,16 +384,16 @@ contains
 
    subroutine report_LE(FTLE, time, period, p_cnt)
       ! Integrated FTLE values
-      real(wp), dimension(r), intent(in) :: FTLE
+      real(dp), dimension(r), intent(in) :: FTLE
       ! simulation
-      real(wp), intent(in) :: time
+      real(dp), intent(in) :: time
       ! period
-      real(wp), intent(in) :: period
+      real(dp), intent(in) :: period
       ! period counter
       integer, intent(in) :: p_cnt
       ! internal
       integer :: iunit
-      real(wp), dimension(r) :: LE
+      real(dp), dimension(r) :: LE
       LE = FTLE/period
       call sort(LE)
       print '(A10,I3,A3,1X,*(F16.9,1X))', 'OTD:  t=', p_cnt, 'T ', LE

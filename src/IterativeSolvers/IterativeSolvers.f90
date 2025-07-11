@@ -28,7 +28,7 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, check_info
+    &                             log_debug, stop_error, check_info, type_error
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
@@ -436,12 +436,58 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine
+
+        module subroutine dense_gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            real(sp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            real(sp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            real(sp), intent(inout) :: x(:)
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
         module subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rdp), intent(in) :: b
             !! Right-hand side vector.
             class(abstract_vector_rdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+
+        module subroutine dense_gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            real(dp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            real(dp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            real(dp), intent(inout) :: x(:)
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag.
@@ -480,12 +526,58 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine
+
+        module subroutine dense_gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            complex(sp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            complex(sp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            complex(sp), intent(inout) :: x(:)
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(sp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(sp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_csp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
         module subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_cdp), intent(in) :: b
             !! Right-hand side vector.
             class(abstract_vector_cdp), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(dp), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(dp), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+
+        module subroutine dense_gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            complex(dp), intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            complex(dp), intent(in) :: b(:)
+            !! Right-hand side vector.
+            complex(dp), intent(inout) :: x(:)
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag.
@@ -1400,19 +1492,23 @@ contains
         !! Output filename. This file will be overwritten
         real(sp), intent(in) :: vals(:)
         !! Intermediate values
-        real(sp), intent(in) :: res(:)
+        real(sp), intent(inout) :: res(:)
         !! Residuals
         real(sp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             do i = 1, k
-                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
+                idx = indices(i)
+                    write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1423,19 +1519,23 @@ contains
         !! Output filename. This file will be overwritten
         real(dp), intent(in) :: vals(:)
         !! Intermediate values
-        real(dp), intent(in) :: res(:)
+        real(dp), intent(inout) :: res(:)
         !! Residuals
         real(dp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             do i = 1, k
-                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
+                idx = indices(i)
+                    write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1446,21 +1546,25 @@ contains
         !! Output filename. This file will be overwritten
         complex(sp), intent(in) :: vals(:)
         !! Intermediate values
-        real(sp), intent(in) :: res(:)
+        real(sp), intent(inout) :: res(:)
         !! Residuals
         real(sp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         real(sp) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
             do i = 1, k
-                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
-                    write (1234, fmt) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
+                idx = indices(i)
+                    modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
+                    write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1471,21 +1575,25 @@ contains
         !! Output filename. This file will be overwritten
         complex(dp), intent(in) :: vals(:)
         !! Intermediate values
-        real(dp), intent(in) :: res(:)
+        real(dp), intent(inout) :: res(:)
         !! Residuals
         real(dp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         real(dp) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
             do i = 1, k
-                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
-                    write (1234, fmt) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
+                idx = indices(i)
+                    modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
+                    write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
             end do 
             close (1234)
         end if
@@ -1666,9 +1774,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_rsp')
-                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
@@ -1819,9 +1926,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_rdp')
-                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
@@ -1962,9 +2068,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_csp')
-                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_csp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 
@@ -2105,9 +2210,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_cdp')
-                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_cdp(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 

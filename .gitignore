@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+run_tests.sh
 
 # Log files
 *.log
@@ -42,4 +43,3 @@
 # test/debug folder
 debug/
 *.css
-doc/

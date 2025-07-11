@@ -30,7 +30,8 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, check_info
+
+    &                             log_debug, stop_error, type_error, check_info
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
@@ -245,6 +246,29 @@ module LightKrylov_IterativeSolvers
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: b
             !! Right-hand side vector.
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: x
+            !! Solution vector.
+            integer, intent(out) :: info
+            !! Information flag.
+            real(${kind}$), optional, intent(in) :: rtol
+            !! Relative solver tolerance
+            real(${kind}$), optional, intent(in) :: atol
+            !! Absolute solver tolerance
+            class(abstract_precond_${type[0]}$${kind}$), optional, intent(inout) :: preconditioner
+            !! Preconditioner (optional).
+            class(abstract_opts), optional, intent(in) :: options
+            !! GMRES options.   
+            logical, optional, intent(in) :: transpose
+            !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+            class(abstract_metadata), optional, intent(out) :: meta
+            !! Metadata.
+        end subroutine
+
+        module subroutine dense_gmres_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            ${type}$, intent(in) :: A(:, :)
+            !! Linear operator to be inverted.
+            ${type}$, intent(in) :: b(:)
+            !! Right-hand side vector.
+            ${type}$, intent(inout) :: x(:)
             !! Solution vector.
             integer, intent(out) :: info
             !! Information flag.
@@ -826,12 +850,13 @@ contains
         !! Output filename. This file will be overwritten
         ${type}$, intent(in) :: vals(:)
         !! Intermediate values
-        real(${kind}$), intent(in) :: res(:)
+        real(${kind}$), intent(inout) :: res(:)
         !! Residuals
         real(${kind}$), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k
+        integer :: i, k, idx
+        integer, allocatable :: indices(:)
         #:if type[0] == "c"
         real(${kind}$) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
@@ -840,6 +865,8 @@ contains
         #:endif
         k = size(vals)
         if (io_rank()) then ! only master rank writes
+            allocate(indices(k))
+            call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
             #:if type[0] == "c"
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
@@ -847,11 +874,12 @@ contains
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
             #:endif
             do i = 1, k
+                idx = indices(i)
                 #:if type[0] == "c"
-                    modulus = sqrt(vals(i)%re**2 + vals(i)%im**2)
-                    write (1234, fmt) k, vals(i)%re, vals(i)%im, modulus, res(i), res(i) < tol
+                    modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
+                    write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
                 #:else
-                    write (1234, fmt) k, vals(i),                res(i), res(i) < tol
+                    write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
                 #:endif
             end do 
             close (1234)
@@ -999,9 +1027,8 @@ contains
                 conv = count(residuals_wrk(:k) < tol)
                 write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
                             & ' steps of the Arnoldi process.'
-                call log_information(msg, module=this_module, procedure='eigs_${type[0]}$${kind}$')
-                if (outpost) call write_results_c${kind}$(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 call log_information(msg, this_module, this_procedure)
+                if (outpost) call write_results_c${kind}$(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
                 if (conv >= nev) exit arnoldi_factorization
             enddo arnoldi_factorization
 

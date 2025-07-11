@@ -3,10 +3,10 @@ module Ginzburg_Landau
    use rklib_module
    ! LightKrylov for linear algebra.
    use LightKrylov
-   use LightKrylov, only: wp => dp
    use LightKrylov_Logger
    ! Standard Library.
    use stdlib_math, only: linspace
+   use stdlib_intrinsics, only: dot_product => stdlib_dot_product
    use stdlib_optval, only: optval
    implicit none
 
@@ -20,24 +20,24 @@ module Ginzburg_Landau
    !------------------------------
 
    ! Mesh related parameters.
-   real(kind=wp), parameter :: L = 200.0_wp ! Domain length
+   real(kind=dp), parameter :: L = 200.0_dp ! Domain length
    integer, parameter :: nx = 512      ! Number of grid points (excluding boundaries).
-   real(kind=wp), parameter :: dx = L/(nx + 1) ! Grid size.
+   real(kind=dp), parameter :: dx = L/(nx + 1) ! Grid size.
 
    ! Physical parameters.
-   complex(kind=wp), parameter :: nu = cmplx(2.0_wp, 0.2_wp, kind=wp)
-   complex(kind=wp), parameter :: gamma = cmplx(1.0_wp, -1.0_wp, kind=wp)
-   real(kind=wp), parameter :: mu_0 = 0.38_wp
-   real(kind=wp), parameter :: c_mu = 0.2_wp
-   real(kind=wp), parameter :: mu_2 = -0.01_wp
-   real(kind=wp)               :: mu(1:nx)
+   complex(kind=dp), parameter :: nu = cmplx(2.0_dp, 0.2_dp, kind=dp)
+   complex(kind=dp), parameter :: gamma = cmplx(1.0_dp, -1.0_dp, kind=dp)
+   real(kind=dp), parameter :: mu_0 = 0.38_dp
+   real(kind=dp), parameter :: c_mu = 0.2_dp
+   real(kind=dp), parameter :: mu_2 = -0.01_dp
+   real(kind=dp)               :: mu(1:nx)
 
    !-------------------------------------------
    !-----     LIGHTKRYLOV VECTOR TYPE     -----
    !-------------------------------------------
 
    type, extends(abstract_vector_cdp), public :: state_vector
-      complex(kind=wp) :: state(nx) = 0.0_wp
+      complex(kind=dp) :: state(nx) = 0.0_dp
    contains
       private
       procedure, pass(self), public :: zero
@@ -52,8 +52,7 @@ module Ginzburg_Landau
    !-----     EXPONENTIAL PROPAGATOR     -----
    !------------------------------------------
 
-   type, extends(abstract_linop_cdp), public :: exponential_prop
-      real(kind=wp), public :: tau ! Integration time.
+   type, extends(abstract_exptA_linop_cdp), public :: exponential_prop
    contains
       private
       procedure, pass(self), public :: matvec => direct_solver
@@ -62,7 +61,7 @@ module Ginzburg_Landau
 
    interface exponential_prop
       module function construct_exptA(tau) result(A)
-         real(kind=wp), intent(in) :: tau
+         real(kind=dp), intent(in) :: tau
          type(exponential_prop) :: A
       end function
    end interface
@@ -70,7 +69,7 @@ module Ginzburg_Landau
 contains
 
    module procedure construct_exptA
-      A%tau = tau
+   A%tau = tau
    end procedure
 
    !========================================================================
@@ -88,13 +87,13 @@ contains
    subroutine initialize_parameters()
       implicit none
       ! Mesh array.
-      real(kind=wp), allocatable :: x(:)
+      real(kind=dp), allocatable :: x(:)
 
       ! Construct mesh.
       x = linspace(-L/2, L/2, nx + 2)
 
       ! Construct mu(x)
-      mu(:) = (mu_0 - c_mu**2) + (mu_2/2.0_wp)*x(2:nx + 1)**2
+      mu(:) = (mu_0 - c_mu**2) + (mu_2/2.0_dp)*x(2:nx + 1)**2
    end subroutine initialize_parameters
 
    !---------------------------------------------------------
@@ -105,20 +104,20 @@ contains
       ! Time-integrator.
       class(rk_class), intent(inout)             :: me
       ! Current time.
-      real(kind=wp), intent(in)                :: t
+      real(kind=dp), intent(in)                :: t
       ! State vector.
-      real(kind=wp), dimension(:), intent(in)  :: x
+      real(kind=dp), dimension(:), intent(in)  :: x
       ! Time-derivative.
-      real(kind=wp), dimension(:), intent(out) :: f
+      real(kind=dp), dimension(:), intent(out) :: f
 
       ! Internal variables.
       integer :: i
-      real(kind=wp), dimension(nx) :: u, du
-      real(kind=wp), dimension(nx) :: v, dv
-      real(kind=wp)                :: d2u, d2v, cu, cv
+      real(kind=dp), dimension(nx) :: u, du
+      real(kind=dp), dimension(nx) :: v, dv
+      real(kind=dp)                :: d2u, d2v, cu, cv
 
       ! Sets the internal variables.
-      f = 0.0_wp
+      f = 0.0_dp
       u = x(1:nx); du = f(1:nx)
       v = x(nx + 1:2*nx); dv = f(nx + 1:2*nx)
 
@@ -181,20 +180,20 @@ contains
       ! Time-integrator.
       class(rk_class), intent(inout)           :: me
       ! Current time.
-      real(kind=wp), intent(in)                :: t
+      real(kind=dp), intent(in)                :: t
       ! State vector.
-      real(kind=wp), dimension(:), intent(in)  :: x
+      real(kind=dp), dimension(:), intent(in)  :: x
       ! Time-derivative.
-      real(kind=wp), dimension(:), intent(out) :: f
+      real(kind=dp), dimension(:), intent(out) :: f
 
       ! Internal variables.
       integer :: i
-      real(kind=wp), dimension(nx) :: u, du
-      real(kind=wp), dimension(nx) :: v, dv
-      real(kind=wp)                :: d2u, d2v, cu, cv
+      real(kind=dp), dimension(nx) :: u, du
+      real(kind=dp), dimension(nx) :: v, dv
+      real(kind=dp)                :: d2u, d2v, cu, cv
 
       ! Sets the internal variables.
-      f = 0.0_wp
+      f = 0.0_dp
       u = x(1:nx); du = f(1:nx)
       v = x(nx + 1:2*nx); dv = f(nx + 1:2*nx)
 
@@ -263,35 +262,35 @@ contains
 
    subroutine zero(self)
       class(state_vector), intent(inout) :: self
-      self%state = 0.0_wp
+      self%state = 0.0_dp
    end subroutine zero
 
-   complex(kind=wp) function dot(self, vec) result(alpha)
+   complex(kind=dp) function dot(self, vec) result(alpha)
       class(state_vector), intent(in) :: self
       class(abstract_vector_cdp), intent(in) :: vec
       select type (vec)
       type is (state_vector)
          alpha = dot_product(self%state, vec%state)
       class default
-         call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'dot')
+         call type_error('vec', 'state_vector', 'IN', this_module, 'dot')
       end select
    end function dot
 
    subroutine scal(self, alpha)
       class(state_vector), intent(inout) :: self
-      complex(kind=wp), intent(in)    :: alpha
+      complex(kind=dp), intent(in)    :: alpha
       self%state = self%state*alpha
    end subroutine scal
 
    subroutine axpby(alpha, vec, beta, self)
       class(state_vector), intent(inout) :: self
       class(abstract_vector_cdp), intent(in)    :: vec
-      complex(kind=wp), intent(in)    :: alpha, beta
+      complex(kind=dp), intent(in)    :: alpha, beta
       select type (vec)
       type is (state_vector)
          self%state = beta*self%state + alpha*vec%state
       class default
-         call stop_error("The intent [IN] argument 'vec' must be of type 'state_vector'", this_module, 'axpby')
+         call type_error('vec', 'state_vector', 'IN', this_module, 'axpby')
       end select
    end subroutine axpby
 
@@ -303,16 +302,16 @@ contains
    subroutine rand(self, ifnorm)
       class(state_vector), intent(inout) :: self
       logical, optional, intent(in)    :: ifnorm
-      real(kind=wp) :: tmp(nx, 2)
+      real(kind=dp) :: tmp(nx, 2)
       ! internals
       logical :: normalize
-      real(kind=wp) :: alpha
+      real(kind=dp) :: alpha
       normalize = optval(ifnorm, .true.)
       call random_number(tmp)
       self%state%re = tmp(:, 1); self%state%im = tmp(:, 2)
       if (normalize) then
          alpha = self%norm()
-         call self%scal(cmplx(1.0_wp, 0.0_wp, kind=wp)/alpha)
+         call self%scal(cmplx(1.0_dp, 0.0_dp, kind=dp)/alpha)
       end if
    end subroutine rand
 
@@ -330,8 +329,8 @@ contains
 
       ! Time-integrator.
       type(rks54_class) :: prop
-      real(kind=wp)     :: dt = 1.0_wp
-      real(kind=wp)     :: state_ic(2*nx), state_fc(2*nx)
+      real(kind=dp)     :: dt = 1.0_dp
+      real(kind=dp)     :: state_ic(2*nx), state_fc(2*nx)
 
       select type (vec_in)
       type is (state_vector)
@@ -343,15 +342,15 @@ contains
             ! Initialize propagator.
             call prop%initialize(n=2*nx, f=rhs)
             ! Integrate forward in time.
-            call prop%integrate(0.0_wp, state_ic, dt, self%tau, state_fc)
+            call prop%integrate(0.0_dp, state_ic, dt, self%tau, state_fc)
             ! Pass-back the state vector.
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'direct_solver')
+            call type_error('vec_out', 'state_vector', 'OUT', this_module, 'direct_solver')
          end select
       class default
-         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'direct_solver')
+         call type_error('vec_in', 'state_vector', 'IN', this_module, 'direct_solver')
       end select
    end subroutine direct_solver
 
@@ -365,8 +364,8 @@ contains
 
       ! Time-integrator.
       type(rks54_class) :: prop
-      real(kind=wp)     :: dt = 1.0_wp
-      real(kind=wp)     :: state_ic(2*nx), state_fc(2*nx)
+      real(kind=dp)     :: dt = 1.0_dp
+      real(kind=dp)     :: state_ic(2*nx), state_fc(2*nx)
 
       select type (vec_in)
       type is (state_vector)
@@ -378,15 +377,15 @@ contains
             ! Initialize propagator.
             call prop%initialize(n=2*nx, f=adjoint_rhs)
             ! Integrate forward in time.
-            call prop%integrate(0.0_wp, state_ic, dt, self%tau, state_fc)
+            call prop%integrate(0.0_dp, state_ic, dt, self%tau, state_fc)
             ! Pass-back the state.
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call stop_error("The intent [OUT] argument 'vec_out' must be of type 'state_vector'", this_module, 'adjoint_solver')
+            call type_error('vec_out', 'state_vector', 'OUT', this_module, 'adjoint_solver')
          end select
       class default
-         call stop_error("The intent [IN] argument 'vec_in' must be of type 'state_vector'", this_module, 'adjoint_solver')
+         call type_error('vec_in', 'state_vector', 'IN', this_module, 'adjoint_solver')
       end select
    end subroutine adjoint_solver
 

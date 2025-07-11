@@ -12,6 +12,7 @@ module LightKrylov_AbstractLinops
     !!  operators, scalar-multiplication of a linear multiplication, as well as addition
     !!  of two linear operators.
     use stdlib_optval, only: optval
+    use stdlib_linalg_blas, only: gemv
     use LightKrylov_Logger
     use LightKrylov_Constants
     use LightKrylov_Timer_Utils, only: lightkrylov_timer
@@ -95,9 +96,34 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${type[0]}$${kind}$
     end type
 
-
-
+    !--------------------------------------------------------------------------------------------
+    !-----     Definition of an abstract ${type}$ exponential propagator with kind=${kind}$     -----
+    !--------------------------------------------------------------------------------------------
+    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_exptA_linop_${type[0]}$${kind}$
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
+        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
+        !! directly.
+        !!
+        !!  @warning
+        !!  While it is not necessary to use this utility operator, it is strongly recommended for operators
+        !!  that correspond to exponential propagators to extend from this abstract type to allow for more
+        !!  rigorous type checks in the application.
+        !!  @endwarning
+        real(${kind}$), public :: tau
+        !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
+    end type
     #:endfor
+
+    interface adjoint
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure initialize_adjoint_${type[0]}$${kind}$
+        #:endfor
+    end interface
+    public :: adjoint
 
     !--------------------------------------------------
     !-----     Definition of the Identity map     -----
@@ -182,12 +208,29 @@ module LightKrylov_AbstractLinops
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
     end type
- 
-   #:endif
-
-
-
+    #:endif
     #:endfor
+
+    !------------------------------------------------
+    !-----     Convenience dense linop type     -----
+    !------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    type, extends(abstract_linop_${type[0]}$${kind}$), public :: dense_linop_${type[0]}$${kind}$
+        ${type}$, allocatable :: data(:, :)
+    contains
+        procedure, pass(self), public :: matvec => dense_matvec_${type[0]}$${kind}$
+        procedure, pass(self), public :: rmatvec => dense_rmatvec_${type[0]}$${kind}$
+    end type
+    #:endfor
+
+    interface dense_linop
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure initialize_dense_linop_from_array_${type[0]}$${kind}$
+        #:endfor
+    end interface
+    public :: dense_linop
+   
 contains
 
     !--------------------------------------------------------------
@@ -427,7 +470,18 @@ contains
 
     #:endfor
 
+    !-------------------------------------------------
+    !-----     ADJOINT TYPE-BOUND PROCEDURES     -----
+    !-------------------------------------------------
+
     #:for kind, type in RC_KINDS_TYPES
+    function initialize_adjoint_${type[0]}$${kind}$(A) result(B)
+        class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
+        class(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
+        allocate(B) ; B%A = A
+        return
+    end function
+
     subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
         class(adjoint_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
@@ -448,6 +502,76 @@ contains
         return
     end subroutine adjoint_rmatvec_${type[0]}$${kind}$
 
+    #:endfor
+
+    !--------------------------------------------------------------------------
+    !-----     Type-bound procedures for convenience dense linop type     -----
+    !--------------------------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine dense_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(dense_linop_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_${type[0]}$${kind}$)
+            select type(vec_out)
+            type is(dense_vector_${type[0]}$${kind}$)
+                block
+                integer :: m, n
+                ${type}$ :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_${type[0]}$${kind}$ ; beta = zero_${type[0]}$${kind}$
+                vec_out = vec_in
+                call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+        return
+    end subroutine
+
+    subroutine dense_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        class(dense_linop_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        select type(vec_in)
+        type is(dense_vector_${type[0]}$${kind}$)
+            select type(vec_out)
+            type is(dense_vector_${type[0]}$${kind}$)
+                block
+                integer :: m, n
+                ${type}$ :: alpha, beta
+                m = size(self%data, 1) ; n = size(self%data, 2)
+                alpha = one_${type[0]}$${kind}$ ; beta = zero_${type[0]}$${kind}$
+                vec_out = vec_in
+                #:if type[0] == "r"
+                call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                #:else
+                call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
+                #:endif
+                end block
+            class default
+                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+            end select
+        class default
+            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+        end select
+         return
+    end subroutine
+
+    #:endfor
+    
+    #:for kind, type in RC_KINDS_TYPES
+    function initialize_dense_linop_from_array_${type[0]}$${kind}$(A) result(linop)
+        ${type}$, intent(in) :: A(:, :)
+        type(dense_linop_${type[0]}$${kind}$) :: linop
+        linop%data = A
+        return
+    end function
     #:endfor
 
 end module LightKrylov_AbstractLinops

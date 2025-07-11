@@ -19,8 +19,10 @@ module LightKrylov_Logger
 
    logical, parameter, private :: exit_on_error = .true.
    logical, parameter, private :: exit_on_test_error = .true.
+   logical :: logger_is_active = .false.
 
    public :: stop_error
+   public :: type_error
    public :: check_info
    public :: check_test
    public :: logger
@@ -98,6 +100,9 @@ contains
          if (stat /= 0) call stop_error('Unable to add stdout to logger.', module=this_module, procedure='logger_setup')
       end if
 
+      ! mark that logger is active
+      logger_is_active = .true.
+
       ! return unit if requested
       if (present(iunit)) iunit = iunit_
       return
@@ -115,8 +120,12 @@ contains
       ! internal
       logical :: flush_
       flush_ = optval(flush_log, .true.)
-      call logger%log_message(msg, module=module, procedure=procedure)
-      if (flush_) call flush_log_units()
+      if (logger_is_active) then
+         call logger%log_message(msg, module=module, procedure=procedure)
+         if (flush_) call flush_log_units()
+      else
+         print '(A)', msg
+      end if
    end subroutine log_message
 
    subroutine log_information(msg, module, procedure, flush_log)
@@ -131,8 +140,12 @@ contains
       ! internal
       logical :: flush_
       flush_ = optval(flush_log, .true.)
-      call logger%log_information(msg, module=module, procedure=procedure)
-      if (flush_) call flush_log_units()
+      if (logger_is_active) then
+         call logger%log_information(msg, module=module, procedure=procedure)
+         if (flush_) call flush_log_units()
+      else
+         print '("INFO: ",A)', msg
+      end if
    end subroutine log_information
 
    subroutine log_warning(msg, module, procedure)
@@ -142,8 +155,12 @@ contains
       !! The name of the module in which the call happens
       character(len=*), optional,  intent(in)  :: procedure
       !! The name of the procedure in which the call happens
-      call logger%log_warning(msg, module=module, procedure=procedure)
-      call flush_log_units()
+      if (logger_is_active) then
+         call logger%log_warning(msg, module=module, procedure=procedure)
+         call flush_log_units()
+      else
+         print '("WARN: ",A)', msg
+      end if
    end subroutine log_warning
 
    subroutine log_error(msg, module, procedure, stat, errmsg)
@@ -157,8 +174,12 @@ contains
       !! status message
       character(len=*), optional,  intent(in)  :: errmsg
       !! error message
-      call logger%log_error(msg, module=module, procedure=procedure)
-      call flush_log_units()
+      if (logger_is_active) then
+         call logger%log_error(msg, module=module, procedure=procedure, stat=stat, errmsg=errmsg)
+         call flush_log_units()
+      else
+         print '(A,": ",A)', msg, errmsg
+      end if
    end subroutine log_error
 
    subroutine log_debug(msg, module, procedure)
@@ -168,8 +189,12 @@ contains
       !! The name of the module in which the call happens
       character(len=*), optional,  intent(in)  :: procedure
       !! The name of the procedure in which the call happens
-      call logger%log_debug(msg, module=module, procedure=procedure)
-      call flush_log_units()
+      if (logger_is_active) then
+         call logger%log_debug(msg, module=module, procedure=procedure)
+         call flush_log_units()
+      else
+         print '("DEBUG: ",A)', msg
+      end if
    end subroutine log_debug
 
    subroutine flush_log_units()
@@ -250,6 +275,23 @@ contains
       call check_info(-1, origin="STOP_ERROR", module=module, procedure=procedure, info_msg=msg)
       return
    end subroutine stop_error
+
+   subroutine type_error(var, type, intent, module, procedure)
+      character(len=*),            intent(in)  :: var
+      !! Name of the variable
+      character(len=*),            intent(in)  :: type
+      !! Required type of the variable
+      character(len=*),            intent(in)  :: intent
+      !! Intent of the argument within the caller
+      character(len=*), optional,  intent(in)  :: module
+      !! The name of the module in which the call happens
+      character(len=*), optional,  intent(in)  :: procedure
+      !! The name of the procedure in which the call happens
+      character(len=128) :: msg
+      msg = "The intent ["//trim(intent)//"] argument '"//trim(var)//"' must be of type '"//trim(type)//"'"
+      call stop_error(msg, module=module, procedure=procedure)
+      return
+   end subroutine type_error
 
    subroutine check_info(info, origin, module, procedure, info_msg)
       integer,                     intent(in)  :: info

@@ -389,8 +389,7 @@ contains
             type is (newton_${kind}$_metadata)
                 meta = newton_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of 'type newton_${kind}$_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','newton_${kind}$_metadata','OUT',this_module,this_procedure)
             end select
         end if
 

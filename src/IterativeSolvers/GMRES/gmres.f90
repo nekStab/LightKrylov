@@ -137,8 +137,7 @@ contains
             type is (gmres_sp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_sp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','gmres_sp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = gmres_sp_opts()
@@ -149,8 +148,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_sp
         allocate(e(kdim+1))         ; e = 0.0_sp
         allocate(c(kdim))           ; c = 0.0_sp
@@ -166,10 +165,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_sp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
@@ -271,8 +272,7 @@ contains
             type is (gmres_sp_metadata)
                 meta = gmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','gmres_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -312,8 +312,7 @@ contains
             type is (gmres_dp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_dp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','gmres_dp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = gmres_dp_opts()
@@ -324,8 +323,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_dp
         allocate(e(kdim+1))         ; e = 0.0_dp
         allocate(c(kdim))           ; c = 0.0_dp
@@ -341,10 +340,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_dp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
@@ -446,8 +447,7 @@ contains
             type is (gmres_dp_metadata)
                 meta = gmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','gmres_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -487,8 +487,7 @@ contains
             type is (gmres_sp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_sp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','gmres_sp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = gmres_sp_opts()
@@ -499,8 +498,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_sp
         allocate(e(kdim+1))         ; e = 0.0_sp
         allocate(c(kdim))           ; c = 0.0_sp
@@ -516,10 +515,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_sp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
@@ -621,8 +622,7 @@ contains
             type is (gmres_sp_metadata)
                 meta = gmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_sp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','gmres_sp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -662,8 +662,7 @@ contains
             type is (gmres_dp_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_dp_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','gmres_dp_opts','IN',this_module,this_procedure)
             end select
         else
             opts = gmres_dp_opts()
@@ -674,8 +673,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_dp
         allocate(e(kdim+1))         ; e = 0.0_dp
         allocate(c(kdim))           ; c = 0.0_dp
@@ -691,10 +690,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_dp) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
@@ -796,8 +797,7 @@ contains
             type is (gmres_dp_metadata)
                 meta = gmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_dp_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','gmres_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -805,4 +805,52 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure 
 
+    module procedure dense_gmres_rsp
+    type(dense_vector_rsp) :: b_, x_
+    type(dense_linop_rsp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop(A)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    module procedure dense_gmres_rdp
+    type(dense_vector_rdp) :: b_, x_
+    type(dense_linop_rdp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop(A)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    module procedure dense_gmres_csp
+    type(dense_vector_csp) :: b_, x_
+    type(dense_linop_csp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop(A)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    module procedure dense_gmres_cdp
+    type(dense_vector_cdp) :: b_, x_
+    type(dense_linop_cdp)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop(A)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
 end submodule

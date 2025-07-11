@@ -96,8 +96,7 @@ contains
             type is (gmres_${kind}$_opts)
                 opts = options
             class default
-                call stop_error("The optional intent [IN] argument 'options' must be of type 'gmres_${kind}$_opts'", &
-                              & this_module, this_procedure)
+                call type_error('options','gmres_${kind}$_opts','IN',this_module,this_procedure)
             end select
         else
             opts = gmres_${kind}$_opts()
@@ -108,8 +107,8 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b)       ; call wrk%zero()
-        allocate(V(kdim+1), mold=b) ; call zero_basis(V)
+        allocate(wrk, source=b)       ; call wrk%zero()
+        allocate(V(kdim+1), source=b) ; call zero_basis(V)
         allocate(H(kdim+1, kdim))   ; H = 0.0_${kind}$
         allocate(e(kdim+1))         ; e = 0.0_${kind}$
         allocate(c(kdim))           ; c = 0.0_${kind}$
@@ -125,10 +124,12 @@ contains
         do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
             !> Initialize data
             H = 0.0_${kind}$ ; call zero_basis(V)
-            if (trans) then
-                call A%apply_rmatvec(x, V(1))
-            else
-                call A%apply_matvec(x, V(1))
+            if (x%norm() /= 0.0_${kind}$) then
+                if (trans) then
+                    call A%apply_rmatvec(x, V(1))
+                else
+                    call A%apply_matvec(x, V(1))
+                endif
             endif
             call V(1)%sub(b) ; call V(1)%chsgn()
             e = 0.0_${kind}$ ; beta = V(1)%norm() ; e(1) = beta
@@ -230,8 +231,7 @@ contains
             type is (gmres_${kind}$_metadata)
                 meta = gmres_meta
             class default
-                call stop_error("The optional intent [OUT] argument 'meta' must be of type 'gmres_${kind}$_metadata'", &
-                              & this_module, this_procedure)
+                call type_error('meta','gmres_${kind}$_metadata','OUT',this_module,this_procedure)
             end select
         end if
 
@@ -240,4 +240,18 @@ contains
     end procedure 
     #:endfor
 
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure dense_gmres_${type[0]}$${kind}$
+    type(dense_vector_${type[0]}$${kind}$) :: b_, x_
+    type(dense_linop_${type[0]}$${kind}$)  :: A_
+    ! Wrap data into convenience types.
+    A_ = dense_linop(A)
+    b_ = dense_vector(b)
+    x_ = dense_vector(x)
+    ! Call abstract gmres.
+    call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
+    ! Extract solution.
+    x = x_%data
+    end procedure
+    #:endfor
 end submodule
