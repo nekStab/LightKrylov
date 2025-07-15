@@ -188,19 +188,6 @@ contains
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_rsp', info='eval correctness', context=msg)
 
-!        ! check eigenvectors
-!        allocate(AX(test_size))
-!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
-!        do i = 1, test_size
-!            call A%apply_matvec(X(i), AX(i))
-!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-!        end do
-!        err = norm2(abs(eigvec_residuals))
-!        call get_err_str(msg, "max err: ", err)
-!        call check(error, err < rtol_sp)
-!        call check_test(error, 'test_evp_rsp', &
-!                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
-
         return
     end subroutine test_evp_rsp
 
@@ -430,19 +417,6 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_rdp', info='eval correctness', context=msg)
 
-!        ! check eigenvectors
-!        allocate(AX(test_size))
-!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
-!        do i = 1, test_size
-!            call A%apply_matvec(X(i), AX(i))
-!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-!        end do
-!        err = norm2(abs(eigvec_residuals))
-!        call get_err_str(msg, "max err: ", err)
-!        call check(error, err < rtol_dp)
-!        call check_test(error, 'test_evp_rdp', &
-!                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
-
         return
     end subroutine test_evp_rdp
 
@@ -588,7 +562,51 @@ contains
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
+        complex(sp) :: a_, b_
 
+        ! Allocate eigenvectors.
+        allocate(X(test_size)) ; call zero_basis(X)
+        
+        ! Initialize linear operator with random tridiagonal Toeplitz matrix.
+        A = linop_csp() ; A%data = 0.0_sp ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_sp, sqrt(1.0_sp*i*(n-i)), kind=sp)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_csp')
+
+        ! Analytical eigenvalues.
+        true_eigvals = zero_csp; k = 1
+        do i = 1, test_size
+            true_eigvals(i) = 2*(test_size-i+1) - 1
+        enddo
+
+        err = maxval(abs(eigvals - true_eigvals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_evp_csp', info='eval correctness', context=msg)
+
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
+        allocate(AX(test_size)) ; call zero_basis(AX)
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_evp_csp', &
+                        & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
         return
     end subroutine test_evp_csp
 
@@ -734,7 +752,51 @@ contains
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
+        complex(dp) :: a_, b_
 
+        ! Allocate eigenvectors.
+        allocate(X(test_size)) ; call zero_basis(X)
+        
+        ! Initialize linear operator with random tridiagonal Toeplitz matrix.
+        A = linop_cdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_dp, sqrt(1.0_dp*i*(n-i)), kind=dp)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_cdp')
+
+        ! Analytical eigenvalues.
+        true_eigvals = zero_cdp; k = 1
+        do i = 1, test_size
+            true_eigvals(i) = 2*(test_size-i+1) - 1
+        enddo
+
+        err = maxval(abs(eigvals - true_eigvals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_evp_cdp', info='eval correctness', context=msg)
+
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
+        allocate(AX(test_size)) ; call zero_basis(AX)
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_evp_cdp', &
+                        & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
         return
     end subroutine test_evp_cdp
 

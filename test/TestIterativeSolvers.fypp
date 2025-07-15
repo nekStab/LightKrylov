@@ -151,7 +151,6 @@ contains
         real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
         character(len=256) :: msg
-        #:if type[0] == "r"
         ${type}$ :: a_, b_
 
         ! Allocate eigenvectors.
@@ -160,6 +159,7 @@ contains
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
 
+        #:if type[0] == "r"
         call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
         do i = 1, n
             ! Diagonal entry.
@@ -170,6 +170,18 @@ contains
                 A%data(i+1, i) = -b_
             endif
         enddo
+        #:else
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_${kind}$, sqrt(1.0_${kind}$*i*(n-i)), kind=${kind}$)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+        #:endif
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
@@ -177,31 +189,36 @@ contains
 
         ! Analytical eigenvalues.
         true_eigvals = zero_c${kind}$; k = 1
+        #:if type[0] == "r"
         do i = 1, test_size, 2
             true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             k = k+1
         enddo
+        #:else
+        do i = 1, test_size
+            true_eigvals(i) = 2*(test_size-i+1) - 1
+        enddo
+        #:endif
 
         err = maxval(abs(eigvals - true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_evp_${type[0]}$${kind}$', info='eval correctness', context=msg)
 
-!        ! check eigenvectors
-!        allocate(AX(test_size))
-!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
-!        do i = 1, test_size
-!            call A%apply_matvec(X(i), AX(i))
-!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-!        end do
-!        err = norm2(abs(eigvec_residuals))
-!        call get_err_str(msg, "max err: ", err)
-!        call check(error, err < rtol_${kind}$)
-!        call check_test(error, 'test_evp_${type[0]}$${kind}$', &
-!                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+        #:if type[0] == "c"
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        allocate(AX(test_size)) ; call zero_basis(AX)
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_evp_${type[0]}$${kind}$', &
+                        & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
         #:endif
-
         return
     end subroutine test_evp_${type[0]}$${kind}$
 
