@@ -271,7 +271,7 @@ contains
             call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
-        err = norm2(abs(eigvec_residuals))
+        err = maxval(abs(eigvec_residuals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_sym_evp_rsp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -513,7 +513,7 @@ contains
             call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
-        err = norm2(abs(eigvec_residuals))
+        err = maxval(abs(eigvec_residuals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_sym_evp_rdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -535,6 +535,7 @@ contains
 
          testsuite = [ &
                     new_unittest("Eigs computation", test_evp_csp), &
+                    new_unittest("Hermitian eigs computation", test_hermitian_evp_csp), &
                     new_unittest("KS eigs computation", test_ks_evp_csp) &
                     ]
         return
@@ -591,12 +592,96 @@ contains
         return
     end subroutine test_evp_csp
 
+    subroutine test_hermitian_evp_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_csp), allocatable :: A
+        ! Eigenvectors.
+        type(vector_csp), allocatable :: X(:)
+        ! evals.
+        real(sp), allocatable :: evals(:)
+        ! Residuals.
+        real(sp), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Toeplitz matrix.
+        complex(sp), allocatable :: T(:, :)
+        complex(sp) :: a_, b_
+        ! Miscellaneous.
+        integer :: i, n
+        real(sp) :: alpha, true_evals(test_size)
+        complex(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
+        type(vector_csp), allocatable :: AX(:)
+        complex(sp), allocatable :: eigvec_residuals(:,:)
+        complex(sp), allocatable, dimension(:,:) :: G
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Create the sym. pos. def. Toeplitz matrix.
+        n = test_size-1
+        allocate(T(n+1, n+1)) ; T = 0.0_sp
+        do i = 1, n+1
+            ! Diagonal entry.
+            T(i, i) = n+1
+            if (i < n+1) then
+                ! Upper diagonal entry.
+                T(i, i+1) = cmplx(0.0_sp, sqrt(1.0_sp*i*(n-i+1)), kind=sp)
+                ! Lower diagonal entry.
+                T(i+1, i) = -T(i, i+1)
+            endif
+        enddo
+
+        ! Allocations.
+        A = hermitian_linop_csp(T)
+        allocate(X(test_size)) ; call zero_basis(X)
+
+        ! Spectral decomposition.
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_sp)
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_hermitian_evp_csp')
+
+        ! Analytical eigenvalues.
+        true_evals = 0.0_sp
+        do i = 1, test_size
+            true_evals(i) = 2*(test_size-i+1) - 1
+        enddo
+
+        ! Check error.
+        err = maxval(abs(true_evals - evals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_hermitian_evp_csp', info='eval correctness', context=msg)
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_hermitian_evp_csp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(X)
+
+        ! Check orthonormality of the eigenvectors.
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_hermitian_evp_csp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
+
+        return
+    end subroutine test_hermitian_evp_csp
 
     subroutine collect_eig_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
                     new_unittest("Eigs computation", test_evp_cdp), &
+                    new_unittest("Hermitian eigs computation", test_hermitian_evp_cdp), &
                     new_unittest("KS eigs computation", test_ks_evp_cdp) &
                     ]
         return
@@ -653,6 +738,89 @@ contains
         return
     end subroutine test_evp_cdp
 
+    subroutine test_hermitian_evp_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_cdp), allocatable :: A
+        ! Eigenvectors.
+        type(vector_cdp), allocatable :: X(:)
+        ! evals.
+        real(dp), allocatable :: evals(:)
+        ! Residuals.
+        real(dp), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Toeplitz matrix.
+        complex(dp), allocatable :: T(:, :)
+        complex(dp) :: a_, b_
+        ! Miscellaneous.
+        integer :: i, n
+        real(dp) :: alpha, true_evals(test_size)
+        complex(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
+        type(vector_cdp), allocatable :: AX(:)
+        complex(dp), allocatable :: eigvec_residuals(:,:)
+        complex(dp), allocatable, dimension(:,:) :: G
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Create the sym. pos. def. Toeplitz matrix.
+        n = test_size-1
+        allocate(T(n+1, n+1)) ; T = 0.0_dp
+        do i = 1, n+1
+            ! Diagonal entry.
+            T(i, i) = n+1
+            if (i < n+1) then
+                ! Upper diagonal entry.
+                T(i, i+1) = cmplx(0.0_dp, sqrt(1.0_dp*i*(n-i+1)), kind=dp)
+                ! Lower diagonal entry.
+                T(i+1, i) = -T(i, i+1)
+            endif
+        enddo
+
+        ! Allocations.
+        A = hermitian_linop_cdp(T)
+        allocate(X(test_size)) ; call zero_basis(X)
+
+        ! Spectral decomposition.
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_dp)
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_hermitian_evp_cdp')
+
+        ! Analytical eigenvalues.
+        true_evals = 0.0_dp
+        do i = 1, test_size
+            true_evals(i) = 2*(test_size-i+1) - 1
+        enddo
+
+        ! Check error.
+        err = maxval(abs(true_evals - evals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_hermitian_evp_cdp', info='eval correctness', context=msg)
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_hermitian_evp_cdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(X)
+
+        ! Check orthonormality of the eigenvectors.
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_hermitian_evp_cdp', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
+
+        return
+    end subroutine test_hermitian_evp_cdp
 
 
 
