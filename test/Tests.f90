@@ -47,7 +47,7 @@ program Tester
                 new_testsuite("Real SVD (sp) Test Suite", collect_svd_rsp_testsuite), &
                 new_testsuite("Real GMRES (sp) Test Suite", collect_gmres_rsp_testsuite), &
                 new_testsuite("Real CG (sp) Test Suite", collect_cg_rsp_testsuite), &
-                ! new_testsuite("Real Expm (sp) Test Suite", collect_expm_rsp_testsuite), &
+                new_testsuite("Real Expm (sp) Test Suite", collect_expm_rsp_testsuite), &
                 new_testsuite("Real Sqrtm (sp) Test Suite", collect_sqrtm_rsp_testsuite), &
                 new_testsuite("Real Newton-Krylov fixed-point iteration (sp) Test Suite", collect_newton_rsp_testsuite) &
                 ]
