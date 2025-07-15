@@ -133,6 +133,7 @@ program Tester
                 ! new_testsuite("Complex Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_csp_testsuite), &
                 new_testsuite("Complex Lanczos tridiagonalization (sp) Test Suite", collect_lanczos_tridiag_csp_testsuite), &
                 new_testsuite("Complex EVP (sp) Test Suite", collect_eig_csp_testsuite), &
+                new_testsuite("Complex SVD (dp) Test Suite", collect_svd_csp_testsuite), &
                 new_testsuite("Complex GMRES (sp) Test Suite", collect_gmres_csp_testsuite), &
                 new_testsuite("Complex CG (sp) Test Suite", collect_cg_csp_testsuite), &
                 new_testsuite("Complex Expm. (sp) Test Suite", collect_expm_csp_testsuite), &
@@ -174,6 +175,8 @@ program Tester
                 new_testsuite("Complex Arnoldi (dp) Test Suite", collect_arnoldi_cdp_testsuite), &
                 ! new_testsuite("Complex Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_cdp_testsuite), &
                 new_testsuite("Complex Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_cdp_testsuite), &
+                new_testsuite("Complex EVP (dp) Test Suite", collect_eig_cdp_testsuite), &
+                new_testsuite("Complex SVD (dp) Test Suite", collect_svd_cdp_testsuite), &
                 new_testsuite("Complex GMRES (dp) Test Suite", collect_gmres_cdp_testsuite), &
                 new_testsuite("Complex CG (dp) Test Suite", collect_cg_cdp_testsuite), &
                 new_testsuite("Complex Expm. (dp) Test Suite", collect_expm_cdp_testsuite), &
