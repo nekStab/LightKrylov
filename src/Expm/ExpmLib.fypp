@@ -101,7 +101,7 @@ module LightKrylov_ExpmLib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm(vec_out, A, vec_in, tau, info, trans)
+        !!      call k_exptA(vec_out, A, vec_in, tau, info, trans)
         !!  ```
         !!
         !!  ### Arguments

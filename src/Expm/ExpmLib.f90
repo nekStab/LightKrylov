@@ -160,7 +160,7 @@ module LightKrylov_ExpmLib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm(vec_out, A, vec_in, tau, info, trans)
+        !!      call k_exptA(vec_out, A, vec_in, tau, info, trans)
         !!  ```
         !!
         !!  ### Arguments
@@ -1208,4 +1208,9 @@ contains
         return
     end subroutine krylov_exptA_cdp
 
+<<<<<<< HEAD:src/Expm/ExpmLib.f90
 end module LightKrylov_ExpmLib
+=======
+
+end module LightKrylov_expmlib
+>>>>>>> origin/main:src/ExpmLib.f90

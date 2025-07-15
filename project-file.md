@@ -64,4 +64,3 @@ We are also very grateful to the [fortran-lang](https://fortran-lang.org/) commu
 
 - [`LightROM`](https://github.com/nekStab/LightROM) : a lightweight Fortran package providing a set of functions for reduced-order modeling, control and estimation of large-scale linear time invariant dynamical systems.
 - [`neklab`](https://github.com/nekStab/neklab) : a bifurcation and stability analysis toolbox based on `LightKrylov` for the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
-

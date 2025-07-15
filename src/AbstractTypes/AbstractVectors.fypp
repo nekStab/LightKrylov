@@ -183,7 +183,7 @@ module LightKrylov_AbstractVectors
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
         !!  If you do need an out-of-place version, you can combine `axpby_basis`
-        !!  with `copy_basis`.
+        !!  with `copy`.
         !!
         !!  ### Example
         !!
@@ -235,7 +235,7 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!
-        !!      call copy_basis(Y, X)
+        !!      call copy(Y, X)
         !!
         !!      ! ... Your code ...
         !!  ```
