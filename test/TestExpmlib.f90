@@ -124,6 +124,18 @@ contains
         call check_test(error, 'test_kexptA_rsp', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
 
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_rsp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
         return
     end subroutine test_kexptA_rsp
 
@@ -293,6 +305,18 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, kdim=nkmax)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_rdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
 
         ! Check result.
@@ -480,6 +504,18 @@ contains
         call check_test(error, 'test_kexptA_csp', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
 
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_csp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
         return
     end subroutine test_kexptA_csp
 
@@ -649,6 +685,18 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_dp, info, kdim=nkmax)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_cdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
 
         ! Check result.
