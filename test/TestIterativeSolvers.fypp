@@ -5,7 +5,7 @@ module TestIterativeSolvers
     use iso_fortran_env
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag, norm
+    use stdlib_linalg, only: eye, diag, norm, hermitian
     use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -413,7 +413,6 @@ contains
         ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
         real(${kind}$) :: err
         character(len=256) :: msg
-        #:if type[0] == "r"
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call zero_basis(U)
@@ -422,6 +421,7 @@ contains
         ! Initialize linear operator with the Strang matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
 
+        #:if type[0] == "r"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = 2.0_${kind}$
@@ -431,6 +431,18 @@ contains
                 A%data(i+1, i) = -one_r${kind}$
             endif
         enddo
+        #:else
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_${kind}$, sqrt(1.0_${kind}$*i*(n-i)), kind=${kind}$)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+        #:endif
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
@@ -439,14 +451,18 @@ contains
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
-        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), hermitian(Vdata)))))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', info='Factorization', eq='A = U @ S @ V.H', context=msg)
 
         ! Check against analytical singular values.
         do i = 1, test_size
+            #:if type[0] == "r"
             true_svdvals(i) = 2.0_${kind}$ * (1.0_${kind}$ + cos(i*pi/(test_size+1)))
+            #:else
+            true_svdvals(i) = 2*(test_size-i+1) - 1
+            #:endif
         enddo
         err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
@@ -471,9 +487,6 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
-
-        
-        #:endif
 
         return
     end subroutine test_svd_${type[0]}$${kind}$

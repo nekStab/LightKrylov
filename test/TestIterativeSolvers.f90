@@ -3,7 +3,7 @@ module TestIterativeSolvers
     use iso_fortran_env
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag, norm
+    use stdlib_linalg, only: eye, diag, norm, hermitian
     use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -883,7 +883,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
-        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), hermitian(Vdata)))))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
@@ -915,8 +915,6 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_svd_rsp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
-
-        
 
         return
     end subroutine test_svd_rsp
@@ -976,7 +974,7 @@ contains
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
-        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), hermitian(Vdata)))))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
@@ -1008,8 +1006,6 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_svd_rdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
-
-        
 
         return
     end subroutine test_svd_rdp
@@ -1045,6 +1041,64 @@ contains
         real(sp) :: err
         character(len=256) :: msg
 
+        ! Allocate eigenvectors.
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
+        
+        ! Initialize linear operator with the Strang matrix.
+        A = linop_csp() ; A%data = 0.0_sp ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_sp, sqrt(1.0_sp*i*(n-i)), kind=sp)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_csp')
+
+        ! Check correctness of full factorization.
+        allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), hermitian(Vdata)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_svd_csp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
+
+        ! Check against analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2*(test_size-i+1) - 1
+        enddo
+        err = maxval(abs(S - true_svdvals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_svd_csp', 'Singular values', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        ! allocate(G(test_size, test_size)) ; G = zero_csp
+        G = Gram(U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_svd_csp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = Gram(V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_svd_csp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+
         return
     end subroutine test_svd_csp
 
@@ -1078,6 +1132,64 @@ contains
         complex(dp), allocatable :: Udata(:, :), Vdata(:, :)
         real(dp) :: err
         character(len=256) :: msg
+
+        ! Allocate eigenvectors.
+        allocate(U(test_size)) ; call zero_basis(U)
+        allocate(V(test_size)) ; call zero_basis(V)
+        
+        ! Initialize linear operator with the Strang matrix.
+        A = linop_cdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
+
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_dp, sqrt(1.0_dp*i*(n-i)), kind=dp)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+
+        ! Compute spectral decomposition.
+        call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_cdp')
+
+        ! Check correctness of full factorization.
+        allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), hermitian(Vdata)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_svd_cdp', info='Factorization', eq='A = U @ S @ V.H', context=msg)
+
+        ! Check against analytical singular values.
+        do i = 1, test_size
+            true_svdvals(i) = 2*(test_size-i+1) - 1
+        enddo
+        err = maxval(abs(S - true_svdvals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_svd_cdp', 'Singular values', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
+        ! allocate(G(test_size, test_size)) ; G = zero_cdp
+        G = Gram(U(1:test_size))
+
+        ! Check orthonormality of the left singular vectors
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_svd_cdp', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
+        G = Gram(V(1:test_size))
+
+        ! Check orthonormality of the right singular vectors
+        err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_svd_cdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
 
         return
     end subroutine test_svd_cdp
