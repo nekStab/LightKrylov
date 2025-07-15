@@ -17,6 +17,9 @@ module LightKrylov
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
+    ! --> Timing utilities
+    use LightKrylov_Timer_Utils
+    use LightKrylov_Timing, only: lk_timer => global_lightkrylov_timer
     ! --> TestTypes
     implicit none
     private
@@ -35,14 +38,25 @@ module LightKrylov
     public :: gmres_dp_opts
     public :: cg_dp_opts
     public :: newton_dp_opts
+    public :: gmres_sp_metadata
+    public :: cg_sp_metadata
+    public :: newton_sp_metadata
+    public :: gmres_dp_metadata
+    public :: cg_dp_metadata
+    public :: newton_dp_metadata
 
     ! AbstractVectors exports.
     public :: abstract_vector
     public :: abstract_vector_rsp
+    public :: dense_vector_rsp
     public :: abstract_vector_rdp
+    public :: dense_vector_rdp
     public :: abstract_vector_csp
+    public :: dense_vector_csp
     public :: abstract_vector_cdp
-    public :: innerprod
+    public :: dense_vector_cdp
+    public :: dense_vector
+    public :: innerprod, Gram
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
@@ -52,29 +66,38 @@ module LightKrylov
     ! AbstractLinops exports.
     public :: abstract_linop
     public :: abstract_linop_rsp
+    public :: abstract_exptA_linop_rsp
     public :: adjoint_linop_rsp
     public :: Id_rsp
     public :: scaled_linop_rsp
     public :: axpby_linop_rsp
+    public :: dense_linop_rsp
     public :: abstract_sym_linop_rsp
     public :: abstract_linop_rdp
+    public :: abstract_exptA_linop_rdp
     public :: adjoint_linop_rdp
     public :: Id_rdp
     public :: scaled_linop_rdp
     public :: axpby_linop_rdp
+    public :: dense_linop_rdp
     public :: abstract_sym_linop_rdp
     public :: abstract_linop_csp
+    public :: abstract_exptA_linop_csp
     public :: adjoint_linop_csp
     public :: Id_csp
     public :: scaled_linop_csp
     public :: axpby_linop_csp
+    public :: dense_linop_csp
     public :: abstract_hermitian_linop_csp
     public :: abstract_linop_cdp
+    public :: abstract_exptA_linop_cdp
     public :: adjoint_linop_cdp
     public :: Id_cdp
     public :: scaled_linop_cdp
     public :: axpby_linop_cdp
+    public :: dense_linop_cdp
     public :: abstract_hermitian_linop_cdp
+    public :: adjoint
 
     ! AbstractSystems exports.
     public :: abstract_system_rsp
@@ -88,7 +111,7 @@ module LightKrylov
     
     ! BaseKrylov exports.
     public :: qr
-    public :: apply_permutation_matrix, apply_inverse_permutation_matrix
+    public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: orthogonalize_against_basis
@@ -113,12 +136,17 @@ module LightKrylov
     public :: gmres_rdp
     public :: gmres_csp
     public :: gmres_cdp
+    public :: fgmres
+    public :: fgmres_rsp
+    public :: fgmres_rdp
+    public :: fgmres_csp
+    public :: fgmres_cdp
     public :: cg
 
     ! Newton-Krylov exports.
     public :: newton
-    public :: constant_atol_sp, dynamic_tol_sp
-    public :: constant_atol_dp, dynamic_tol_dp
+    public :: constant_tol_sp, dynamic_tol_sp
+    public :: constant_tol_dp, dynamic_tol_dp
 
     ! ExpmLib exports.
     public :: abstract_exptA_rsp
@@ -127,7 +155,12 @@ module LightKrylov
     public :: abstract_exptA_cdp
     public :: expm
     public :: kexpm
-    public :: k_exptA
+    public :: krylov_exptA
+
+    ! Timer exports
+    public :: lightkrylov_timer
+    public :: abstract_watch
+    public :: lk_timer
 
 contains
 

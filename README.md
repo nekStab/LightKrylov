@@ -1,12 +1,14 @@
 <img src="imgs/logo-white.png" style="align:center; width:512px" />
 
 
+### Status
 
-|                         **License**                          |                       **Build Status**                       |                      **Documentation**                       |
-| :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
-| [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) | [![ci](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml/badge.svg)](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml) | [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) |
-
-# LightKrylov
+[![Language](https://img.shields.io/badge/-Fortran-734f96?logo=fortran&logoColor=white)](https://github.com/topics/fortran)
+[![GitHub release](https://img.shields.io/github/release/nekStab/LightKrylov.svg)](https://github.com/nekStab/LightKrylov/releases/latest)
+[![Build Status](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml/badge.svg)](https://github.com/nekStab/LightKrylov/actions)
+[![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) 
+[![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStan/LightKrylov)
+[![last-commit](https://img.shields.io/github/last-commit/loiseaujc/quadprog)](https://github.com/loiseaujc/quadprog/commits/main)
 
 Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 

@@ -1,0 +1,68 @@
+#:include "../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+submodule (lightkrylov_basekrylov) golub_kahan_methods
+    implicit none
+contains
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_${type[0]}$${kind}$'
+        integer :: k_start, k_end
+        real(${kind}$) :: tolerance
+        ${type}$ :: alpha, beta
+        integer :: k, kdim
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        info = 0
+
+        ! Krylov subspace dimension.
+        kdim = size(U) - 1
+
+        ! Deals with the optional args.
+        k_start = optval(kstart, 1)
+        k_end   = optval(kend, kdim)
+        tolerance = optval(tol, atol_${kind}$)
+
+        ! Lanczos bidiagonalization.
+        lanczos : do k = k_start, k_end
+            ! Transpose matrix-vector product.
+            call A%apply_rmatvec(U(k), V(k))
+
+            ! Full re-orthogonalization of the right Krylov subspace.
+            if (k > 1) then
+                call double_gram_schmidt_step(V(k), V(:k-1), info, if_chk_orthonormal=.false.)
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', right basis')
+            end if
+
+            ! Normalization step.
+            alpha = V(k)%norm() ; B(k, k) = alpha
+            if (abs(alpha) > tolerance) then
+                call V(k)%scal(one_${type[0]}$${kind}$/alpha)
+            else
+                info = k
+                exit lanczos
+            endif
+
+            ! Matrix-vector product.
+            call A%apply_matvec(V(k), U(k+1))
+
+            ! Full re-orthogonalization of the left Krylov subspace.
+            call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
+            call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure//', left basis')
+
+            ! Normalization step
+            beta = U(k+1)%norm() ; B(k+1, k) = beta
+            if (abs(beta) > tolerance) then
+                call U(k+1)%scal(one_${type[0]}$${kind}$ / beta)
+            else
+                info = k
+                exit lanczos
+            endif
+
+        enddo lanczos
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+        
+        return
+    end procedure
+    #:endfor
+end submodule

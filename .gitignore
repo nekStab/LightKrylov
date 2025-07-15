@@ -30,10 +30,12 @@
 *.exe
 *.out
 *.app
+run_tests.sh
 
 # Log files
 *.log
 *.npy
+*.txt
 
 # swap files
 *~
@@ -41,4 +43,3 @@
 # test/debug folder
 debug/
 *.css
-doc/

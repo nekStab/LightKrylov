@@ -5,7 +5,7 @@ module TestIterativeSolvers
     use iso_fortran_env
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag
+    use stdlib_linalg, only: eye, diag, norm
     use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -21,7 +21,9 @@ module TestIterativeSolvers
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestIterativeSolvers'
+    character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
+    integer, parameter :: n = 128
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_eig_${type[0]}$${kind}$_testsuite
@@ -94,7 +96,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
-        call check_info(info, 'eigs', module=this_module, procedure='test_ks_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_ks_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_c${kind}$; k = 1
@@ -113,7 +115,7 @@ contains
         !allocate(AX(nev))
         !allocate(eigvec_residuals(test_size, nev))
         !do i = 1, nev
-        !    call A%matvec(X(i), AX(i))
+        !    call A%apply_matvec(X(i), AX(i))
         !    eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
         !end do
         !err = norm2(abs(eigvec_residuals))
@@ -169,7 +171,7 @@ contains
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
-        call check_info(info, 'eigs', module=this_module, procedure='test_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_eigvals = zero_c${kind}$; k = 1
@@ -188,7 +190,7 @@ contains
 !        allocate(AX(test_size))
 !        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
 !        do i = 1, test_size
-!            call A%matvec(X(i), AX(i))
+!            call A%apply_matvec(X(i), AX(i))
 !            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
 !        end do
 !        err = norm2(abs(eigvec_residuals))
@@ -248,7 +250,7 @@ contains
 
         ! Spectral decomposition.
         call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_${kind}$)
-        call check_info(info, 'eighs', module=this_module, procedure='test_sym_evp_${type[0]}$${kind}$')
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_sym_evp_${type[0]}$${kind}$')
 
         ! Analytical eigenvalues.
         true_evals = 0.0_${kind}$
@@ -266,7 +268,7 @@ contains
         allocate(AX(test_size))
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
         do i = 1, test_size
-            call A%matvec(X(i), AX(i))
+            call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
         err = norm2(abs(eigvec_residuals))
@@ -275,11 +277,10 @@ contains
         call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, X, X)
+        G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
@@ -347,7 +348,7 @@ contains
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
-        call check_info(info, 'svds', module=this_module, procedure='test_svd_${type[0]}$${kind}$')
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svd_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
@@ -367,21 +368,20 @@ contains
         call check_test(error, 'test_svd_${type[0]}$${kind}$', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, U(1:test_size), U(1:test_size))
+        ! allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
+        G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the right singular vectors.
-        G = zero_${type[0]}$${kind}$
-        call innerprod(G, V(1:test_size), V(1:test_size))
+        G = Gram(V(1:test_size))
 
         ! Check orthonormality of the right singular vectors
-        err = maxval(abs(G - eye(test_size)))
+        err = maxval(abs(G - eye(test_size, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
@@ -412,11 +412,11 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-        type(linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
-        type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
-        type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
+        ${type}$ :: A(n, n), b(n), x(n)
         ! GMRES options.
         type(gmres_${kind}$_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_${kind}$_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -424,19 +424,25 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-        A = linop_${type[0]}$${kind}$()  ; call init_rand(A)
-        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
-        x = vector_${type[0]}$${kind}$() ; call x%zero()
+        #:if type[0] == "r"
+        call random_number(A) ; call random_number(b) ; x = 0.0_${kind}$
+        #:else
+        real(${kind}$) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; call random_number(bdata)
+        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        x = 0.0_${kind}$
+        #:endif
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_${type[0]}$${kind}$')
+        opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_${type[0]}$${kind}$')
 
         ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
+        err = norm(matmul(A, x) - b, 2)
         call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_${kind}$)
+        call check(error, err < norm(b, 2) * rtol_${kind}$)
         call check_test(error, 'test_gmres_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
 
         return
@@ -455,6 +461,8 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
         ! GMRES options.
         type(gmres_${kind}$_opts) :: opts
+        ! GMRES metadata.
+        type(gmres_${kind}$_metadata) :: meta
         ! Information flag.
         integer :: info
         ! Misc
@@ -471,9 +479,9 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size)
-        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
-        call check_info(info, 'gmres', module=this_module, procedure='test_gmres_spd_${type[0]}$${kind}$')
+        opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
+        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_${type[0]}$${kind}$')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))
@@ -510,7 +518,10 @@ contains
         #:endif
         type(vector_${type[0]}$${kind}$), allocatable :: b
         type(vector_${type[0]}$${kind}$), allocatable :: x
+        ! CG options.
         type(cg_${kind}$_opts) :: opts
+        ! CG metadata.
+        type(cg_${kind}$_metadata) :: meta
         ! Information flag
         integer :: info
         ! Misc
@@ -527,9 +538,9 @@ contains
         x = vector_${type[0]}$${kind}$() ; call x%zero()
 
         ! CG solver.
-        opts = cg_${kind}$_opts(maxiter=2*test_size)
-        call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
-        call check_info(info, 'cg', module=this_module, procedure='test_cg_${type[0]}$${kind}$')
+        opts = cg_${kind}$_opts(maxiter=2*test_size, if_print_metadata=.true.)
+        call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_${type[0]}$${kind}$')
 
         ! Check convergence.
         err = norm2(abs(matmul(A%data, x%data) - b%data))

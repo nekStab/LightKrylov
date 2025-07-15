@@ -3,6 +3,7 @@
 module TestVectors
     ! Fortran Standard Library
     use stdlib_math, only: is_close, all_close
+    use stdlib_linalg, only: norm
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
     ! Testdrive
@@ -17,7 +18,9 @@ module TestVectors
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=*), parameter, private :: this_module      = 'LK_TVectors'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestVectors'
+    integer, parameter :: n = 128
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_vector_${type[0]}$${kind}$_testsuite
@@ -47,24 +50,19 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
-        type(vector_${type[0]}$${kind}$), allocatable :: x
+        type(dense_vector_${type[0]}$${kind}$) :: x
+        ${type}$ :: x_(n)
         real(${kind}$) :: alpha
 
         ! Initialize vector.
-        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        x_ = 0.0_${kind}$ ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
 
         ! Check result.
-        #:if type[0] == "c"
-        call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, sqrt(sum(Re(x)^2 + Im(x)^2)))')
-        #:else
-        call check(error, is_close(alpha, norm2(x%data)))
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(x))')
-        #:endif
-        
+        call check(error, is_close(alpha, norm(x%data, 2)))
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm(x, 2))')
         
         return
     end subroutine test_vector_${type[0]}$${kind}$_norm
@@ -74,24 +72,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_${type[0]}$${kind}$), allocatable :: x, y, z
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y, z
+        ${type}$ :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_${type[0]}$${kind}$() ; call x%rand()
-        y = vector_${type[0]}$${kind}$() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%add(y)
 
         ! Check correctness.
-        #:if type[0] == "c"
-        call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm,  sqrt(sum(Re(z - (x+y))^2 + Im(z - (x+y))^2)))')
-        #:else
-        call check(error, norm2(z%data - x%data - y%data) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(z - (x+y)))')
-        #:endif
+        call check(error, norm(z%data - x%data - y%data, 2) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_add
@@ -101,24 +95,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_${type[0]}$${kind}$), allocatable :: x, y, z
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y, z
+        ${type}$ :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_${type[0]}$${kind}$() ; call x%rand()
-        y = vector_${type[0]}$${kind}$() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%sub(y)
 
         ! Check correctness.
-        #:if type[0] == "c"
-        call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
-        #:else
-        call check(error, norm2(z%data - x%data + y%data) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
-        #:endif
+        call check(error, norm(z%data - (x%data - y%data), 2) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_sub
@@ -128,12 +118,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y
+        ${type}$ :: x_(n), y_(n)
         ${type}$ :: alpha
 
         ! Initialize vectors.
-        x = vector_${type[0]}$${kind}$() ; call x%rand()
-        y = vector_${type[0]}$${kind}$() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -150,17 +141,16 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vector.
-        type(vector_${type[0]}$${kind}$), allocatable :: x, y
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: x, y
+        ${type}$ :: x_(n), y_(n)
         ${type}$ :: alpha
-        #:if type[0] == "c"
-        ${type}$ :: tmp(test_size)
-        #:endif
 
         ! Initialize vector.
-        x = vector_${type[0]}$${kind}$() ; call x%rand()
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         #:if type[0] == "c"
         alpha = 0.0_${kind}$ ; call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = alpha / abs(alpha)
         #:else
         call random_number(alpha)
         #:endif
@@ -169,14 +159,8 @@ contains
         call x%scal(alpha)
 
         ! Check correctness.
-        #:if type[0] == "c"
-        tmp = x%data - alpha*y%data
-        call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', eq='sqrt(sum(Re(x - alpha*y)**2 + Im(x - alpha*y)**2))')
-        #:else
-        call check(error, norm2(x%data - alpha*y%data) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', eq='norm2(x - alpha*y)')
-        #:endif
+        call check(error, norm(x%data - alpha*y%data, 2) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_scal', eq='norm(x - alpha*y, 2)')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_scal

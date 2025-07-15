@@ -1,0 +1,251 @@
+#:include "../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+submodule(lightkrylov_utils) utility_functions
+    !-------------------------------
+    !-----     LightKrylov     -----
+    !-------------------------------
+    use stdlib_optval, only: optval
+    use stdlib_linalg_constants, only: ilp
+    use stdlib_linalg_lapack, only: geev, trsen
+    use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
+
+    implicit none(type, external)
+contains
+
+    #:for kind, type in REAL_KINDS_TYPES
+    module procedure log2_${type[0]}$${kind}$
+        y = log(x) / log(2.0_${kind}$)
+    end procedure
+    #:endfor
+
+    !---------------------------------------------
+    !-----     Shape Assertion Utilities     -----
+    !---------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure assert_shape_vector_${type[0]}$${kind}$
+        if (any(shape(v) /= size)) then
+            write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
+                                        & ". Expected length is ", size, ". Aborting due to illegal vector length."
+            call stop_error("Vector length assertion error", module, procedure)
+        endif
+    end procedure
+
+    module procedure assert_shape_matrix_${type[0]}$${kind}$
+        if (any(shape(A) /= size)) then
+            write(output_unit, *) "Matrix "//matname//" has illegal shape", shape(A), &
+                                        & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
+            call stop_error("Matrix shape assertion error", module, procedure)
+        endif
+    end procedure
+    #:endfor
+
+    !--------------------------------------------
+    !-----     Linear Algebra Utilities     -----
+    !--------------------------------------------
+
+    !----- Eigenvalue Decomposition -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure eig_${type[0]}$${kind}$
+        ! Lapack variables.
+        character :: jobvl = "n", jobvr = "v"
+        integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
+        ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
+        #:if type[0] == "c"
+        ${type}$ :: work(2*size(A, 1))
+        real(${kind}$) :: rwork(2*size(A, 1))
+        #:else
+        ${type}$ :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
+        #:endif
+
+        ! Setup variables.
+        n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
+        lwork = #{if type[0] == "c"}# 2*n #{else}# 4*n #{endif}#
+
+        ! Eigendecomposition.
+        #:if type[0] == "c"
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        #:else
+        call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
+        #:endif
+        call check_info(info, "GEEV", this_module, "eig_${type[0]}$${kind}$")
+
+        #:if type[0] == "r"
+        ! Complex eigenvalues.
+        vals = one_c${kind}$*wr + one_im_c${kind}$*wi
+        #:endif
+    end procedure
+    #:endfor
+
+    !----- Schur Factorization ------
+
+    !----- OrdSchur Factorization -----
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure ordschur_${type[0]}$${kind}$
+        ! Lapack variables.
+        character :: job="n", compq="v"
+        integer(ilp) :: info, ldq, ldt, lwork, m, n
+        real(${kind}$) :: s, sep
+        #:if type[0] == "r"
+        integer(ilp) :: iwork(size(T, 1)), liwork
+        ${type}$ :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+        #:else
+        ${type}$ :: w(size(T, 1)), work(size(T, 1))
+        #:endif
+
+        ! Setup variables.
+        n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
+
+        #:if type[0] == "r"
+        liwork = 1
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        #:else
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
+        #:endif
+        call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
+    end procedure
+    #:endfor
+
+    !----- Matrix Square-Root -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure sqrtm_${type[0]}$${kind}$
+        ! Singular value decomposition.
+        real(${kind}$) :: S(size(A, 1))
+        ${type}$ :: U(size(A, 1), size(A, 1)), UT(size(A, 1), size(A, 1))
+        integer(ilp) :: i
+        real(${kind}$) :: symmetry_error
+        character(len=256) :: msg
+
+        info = 0
+        ! Symmetry error.
+        symmetry_error = 0.5_${kind}$ * maxval( abs(A - hermitian(A)) )
+        if (symmetry_error > rtol_${kind}$) then
+            write(msg, "(2(A,E9.2))") "Input matrix is not Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error, ", tol = ", rtol_${kind}$
+            call stop_error(msg, this_module, "sqrtm_${type[0]}$${kind}$")
+        else if (symmetry_error > 10*atol_${kind}$) then
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            call log_warning(msg, this_module, "sqrtm_${type[0]}$${kind}$")
+        endif
+
+        ! Perform SVD.
+        call svd(A, S, U, UT)
+
+        ! Check if matrix is pos. def. (up to tol).
+        do i = 1, size(S)
+            if (S(i) > 10*atol_${kind}$) then
+                S(i) = sqrt(S(i))
+            else
+                S(i) = zero_r${kind}$ ; info = 1
+            endif
+        enddo
+        
+        ! Reconstruct the square root matrix.
+        sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
+    end procedure
+    #:endfor
+
+    !----- Dense Matrix Exponential -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure expm_${type[0]}$${kind}$
+        ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :)
+        real(${kind}$) :: a_norm, c
+        integer :: n, ee, k, s
+        logical :: p
+        integer :: p_order
+
+        ! Deal with optional args.
+        p_order = optval(order, 10)
+
+        n = size(A, 1)
+
+        ! Allocate arrays.
+        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
+
+        ! Compute the L-infinity norm.
+        a_norm = mnorm(A, "inf")
+
+        ! Determine scaling factor for the matrix.
+        ee = int(log2(a_norm)) + 1
+        s = max(0, ee+1)
+
+        ! Scale the input matrix & initialize polynomial.
+        A2 = A / 2.0_${kind}$**s
+        X = A2
+
+        ! Initialize P & Q and add first step.
+        c = 0.5_${kind}$
+        E = eye(n, mold=1.0_${kind}$) ; E = E + c*A2
+
+        Q = eye(n, mold=1.0_${kind}$) ; Q = Q - c*A2
+
+        ! Iteratively compute the Pade approximation.
+        p = .true.
+        do k = 2, p_order
+            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
+            X = matmul(A2, X)
+            E = E + c*X
+            if (p) then
+                Q = Q + c*X
+            else
+                Q = Q - c*X
+            endif
+            p = .not. p
+        enddo
+
+        E = matmul(inv(Q), E)
+        do k = 1, s
+            E = matmul(E, E)
+        enddo
+
+        return
+    end procedure
+    #:endfor
+
+    !----- Givens rotations -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure givens_rotation_${type[0]}$${kind}$
+        g = x / norm(x, 2)
+    end procedure
+
+    module procedure apply_givens_rotation_${type[0]}$${kind}$
+        integer(ilp) :: i, k
+        ${type}$ :: t, g(2)
+
+        !> Size of the column.
+        k = size(h) - 1
+
+        !> Apply previous Givens rotations to this new column.
+        do i = 1, k-1
+            t = c(i)*h(i) + s(i)*h(i+1)
+            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
+            h(i) = t
+        enddo
+
+        !> Compute the sine and cosine compoennts for the next rotation.
+        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
+
+        !> Eliminiate H(k+1, k).
+        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_${kind}$
+    end procedure
+    #:endfor
+
+    !----- Solving triangular systems -----
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure solve_triangular_${type[0]}$${kind}$
+        integer(ilp) :: i, n
+        !> Problem's dimensions.
+        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_${kind}$
+        !> Back-substitution algorithm.
+        x(n) = b(n) / A(n, n)
+        do i = n-1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
+        enddo
+    end procedure
+    #:endfor
+end submodule

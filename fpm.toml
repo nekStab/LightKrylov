@@ -28,6 +28,7 @@ FACE = {git="https://github.com/szaghi/FACE.git"}
 [dev-dependencies]
 test-drive.git = "https://github.com/nekStab/test-drive.git"
 FACE = {git="https://github.com/szaghi/FACE.git"}
+SpecialMatrices = {git="https://github.com/loiseaujc/SpecialMatrices.git"}
 
 [[example]]
 

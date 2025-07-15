@@ -1,35 +1,24 @@
 ---
 project: LightKrylov
 summary: Lightweight implementation of Krylov methods using modern Fortran.
+author: Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz
 src_dir: src
 include: src
-         include
-media_dir: imgs
-exclude: src/TestUtils.f90
-         src/Logger.f90
+exclude_dir: test
+output_dir: API-doc
+page_dir: doc
+media_dir: doc/media
 display: public
          protected
 source: true
 proc_internals: true
+md_extensions: markdown.extensions.toc
 sort: permission-alpha
-extra_mods: iso_fortran_env:https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fFORTRAN_005fENV.html
-            stdlib_io_npy:https://stdlib.fortran-lang.org/module/stdlib_io_npy.html
-            stdlib_linalg:https://stdlib.fortran-lang.org/module/stdlib_linalg.html
-            stdlib_math:https://stdlib.fortran-lang.org/module/stdlib_math.html
-            stdlib_optval:https://stdlib.fortran-lang.org/module/stdlib_optval.html
-            stdlib_sorting:https://stdlib.fortran-lang.org/module/stdlib_sorting.html
-            stdlib_stats:https://stdlib.fortran-lang.org/module/stdlib_stats.html
-            stdlib_stats_distribution_normal:https://stdlib.fortran-lang.org/module/stdlib_stats_distribution_normal.html
-print_creation_date: true
 project_github: https://github.com/nekStab/LightKrylov
+github: https://github.com/nekStab/LightKrylov
 project_website: https://nekstab.github.io/LightKrylov/
-project_download: https://github.com/nekStab/LightKrylov/archive/refs/tags/v0.1.0-beta.zip
-doc_license: by-sa
+favicon: doc/media/favicon.ico
 license: bsd
-author: nekstab/LightKrylov contributors
-email: jean-christophe.loiseau@ensam.eu
-github: https://github.com/nekStab
-twitter: https://x.com/loiseau_jc
 css: ./bootstrap.min.css
 ---
 

@@ -1,6 +1,7 @@
 module TestVectors
     ! Fortran Standard Library
     use stdlib_math, only: is_close, all_close
+    use stdlib_linalg, only: norm
     use stdlib_stats_distribution_normal, only: normal => rvs_normal
     use stdlib_optval, only: optval
     ! Testdrive
@@ -15,7 +16,9 @@ module TestVectors
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestVectors'
+    character(len=*), parameter, private :: this_module      = 'LK_TVectors'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestVectors'
+    integer, parameter :: n = 128
 
     public :: collect_vector_rsp_testsuite
     public :: collect_vector_rdp_testsuite
@@ -45,19 +48,19 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
-        type(vector_rsp), allocatable :: x
+        type(dense_vector_rsp) :: x
+        real(sp) :: x_(n)
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = vector_rsp() ; call x%rand()
+        x_ = 0.0_sp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
 
         ! Check result.
-        call check(error, is_close(alpha, norm2(x%data)))
-        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(x))')
-        
+        call check(error, is_close(alpha, norm(x%data, 2)))
+        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm(x, 2))')
         
         return
     end subroutine test_vector_rsp_norm
@@ -67,19 +70,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y, z
+        type(dense_vector_rsp), allocatable :: x, y, z
+        real(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%add(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data - y%data) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(z - (x+y)))')
+        call check(error, norm(z%data - x%data - y%data, 2) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_rsp_add
@@ -89,19 +93,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y, z
+        type(dense_vector_rsp), allocatable :: x, y, z
+        real(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data + y%data) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
+        call check(error, norm(z%data - (x%data - y%data), 2) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_rsp_sub
@@ -111,12 +116,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_rsp), allocatable :: x, y
+        type(dense_vector_rsp), allocatable :: x, y
+        real(sp) :: x_(n), y_(n)
         real(sp) :: alpha
 
         ! Initialize vectors.
-        x = vector_rsp() ; call x%rand()
-        y = vector_rsp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -133,11 +139,12 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vector.
-        type(vector_rsp), allocatable :: x, y
+        type(dense_vector_rsp), allocatable :: x, y
+        real(sp) :: x_(n), y_(n)
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = vector_rsp() ; call x%rand()
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         call random_number(alpha)
         
@@ -145,8 +152,8 @@ contains
         call x%scal(alpha)
 
         ! Check correctness.
-        call check(error, norm2(x%data - alpha*y%data) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_scal', eq='norm2(x - alpha*y)')
+        call check(error, norm(x%data - alpha*y%data, 2) < rtol_sp)
+        call check_test(error, 'test_vector_rsp_scal', eq='norm(x - alpha*y, 2)')
 
         return
     end subroutine test_vector_rsp_scal
@@ -168,19 +175,19 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
-        type(vector_rdp), allocatable :: x
+        type(dense_vector_rdp) :: x
+        real(dp) :: x_(n)
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = vector_rdp() ; call x%rand()
+        x_ = 0.0_dp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
 
         ! Check result.
-        call check(error, is_close(alpha, norm2(x%data)))
-        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(x))')
-        
+        call check(error, is_close(alpha, norm(x%data, 2)))
+        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm(x, 2))')
         
         return
     end subroutine test_vector_rdp_norm
@@ -190,19 +197,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y, z
+        type(dense_vector_rdp), allocatable :: x, y, z
+        real(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%add(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data - y%data) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(z - (x+y)))')
+        call check(error, norm(z%data - x%data - y%data, 2) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_rdp_add
@@ -212,19 +220,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y, z
+        type(dense_vector_rdp), allocatable :: x, y, z
+        real(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, norm2(z%data - x%data + y%data) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm2(z - (x-y)))')
+        call check(error, norm(z%data - (x%data - y%data), 2) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_rdp_sub
@@ -234,12 +243,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_rdp), allocatable :: x, y
+        type(dense_vector_rdp), allocatable :: x, y
+        real(dp) :: x_(n), y_(n)
         real(dp) :: alpha
 
         ! Initialize vectors.
-        x = vector_rdp() ; call x%rand()
-        y = vector_rdp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -256,11 +266,12 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vector.
-        type(vector_rdp), allocatable :: x, y
+        type(dense_vector_rdp), allocatable :: x, y
+        real(dp) :: x_(n), y_(n)
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = vector_rdp() ; call x%rand()
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         call random_number(alpha)
         
@@ -268,8 +279,8 @@ contains
         call x%scal(alpha)
 
         ! Check correctness.
-        call check(error, norm2(x%data - alpha*y%data) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_scal', eq='norm2(x - alpha*y)')
+        call check(error, norm(x%data - alpha*y%data, 2) < rtol_dp)
+        call check_test(error, 'test_vector_rdp_scal', eq='norm(x - alpha*y, 2)')
 
         return
     end subroutine test_vector_rdp_scal
@@ -291,19 +302,19 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
-        type(vector_csp), allocatable :: x
+        type(dense_vector_csp) :: x
+        complex(sp) :: x_(n)
         real(sp) :: alpha
 
         ! Initialize vector.
-        x = vector_csp() ; call x%rand()
+        x_ = 0.0_sp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
 
         ! Check result.
-        call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
-        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, sqrt(sum(Re(x)^2 + Im(x)^2)))')
-        
+        call check(error, is_close(alpha, norm(x%data, 2)))
+        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, norm(x, 2))')
         
         return
     end subroutine test_vector_csp_norm
@@ -313,19 +324,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y, z
+        type(dense_vector_csp), allocatable :: x, y, z
+        complex(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%add(y)
 
         ! Check correctness.
-        call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm,  sqrt(sum(Re(z - (x+y))^2 + Im(z - (x+y))^2)))')
+        call check(error, norm(z%data - x%data - y%data, 2) < rtol_sp)
+        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_csp_add
@@ -335,19 +347,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y, z
+        type(dense_vector_csp), allocatable :: x, y, z
+        complex(sp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
+        call check(error, norm(z%data - (x%data - y%data), 2) < rtol_sp)
+        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_csp_sub
@@ -357,12 +370,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_csp), allocatable :: x, y
+        type(dense_vector_csp), allocatable :: x, y
+        complex(sp) :: x_(n), y_(n)
         complex(sp) :: alpha
 
         ! Initialize vectors.
-        x = vector_csp() ; call x%rand()
-        y = vector_csp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -379,22 +393,22 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vector.
-        type(vector_csp), allocatable :: x, y
+        type(dense_vector_csp), allocatable :: x, y
+        complex(sp) :: x_(n), y_(n)
         complex(sp) :: alpha
-        complex(sp) :: tmp(test_size)
 
         ! Initialize vector.
-        x = vector_csp() ; call x%rand()
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         alpha = 0.0_sp ; call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = alpha / abs(alpha)
         
         ! Scale the vector.
         call x%scal(alpha)
 
         ! Check correctness.
-        tmp = x%data - alpha*y%data
-        call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_sp)
-        call check_test(error, 'test_vector_csp_scal', eq='sqrt(sum(Re(x - alpha*y)**2 + Im(x - alpha*y)**2))')
+        call check(error, norm(x%data - alpha*y%data, 2) < rtol_sp)
+        call check_test(error, 'test_vector_csp_scal', eq='norm(x - alpha*y, 2)')
 
         return
     end subroutine test_vector_csp_scal
@@ -416,19 +430,19 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Test vector.
-        type(vector_cdp), allocatable :: x
+        type(dense_vector_cdp) :: x
+        complex(dp) :: x_(n)
         real(dp) :: alpha
 
         ! Initialize vector.
-        x = vector_cdp() ; call x%rand()
+        x_ = 0.0_dp ; x = dense_vector(x_) ; call x%rand()
         
         ! Compute its norm.
         alpha = x%norm()
 
         ! Check result.
-        call check(error, is_close(alpha, sqrt(sum(x%data%re**2 + x%data%im**2))))
-        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, sqrt(sum(Re(x)^2 + Im(x)^2)))')
-        
+        call check(error, is_close(alpha, norm(x%data, 2)))
+        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, norm(x, 2))')
         
         return
     end subroutine test_vector_cdp_norm
@@ -438,19 +452,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y, z
+        type(dense_vector_cdp), allocatable :: x, y, z
+        complex(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%add(y)
 
         ! Check correctness.
-        call check(error, sqrt(sum((z%data%re - x%data%re - y%data%re)**2 + (z%data%im - x%data%im - y%data%im)**2)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm,  sqrt(sum(Re(z - (x+y))^2 + Im(z - (x+y))^2)))')
+        call check(error, norm(z%data - x%data - y%data, 2) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_cdp_add
@@ -460,19 +475,20 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y, z
+        type(dense_vector_cdp), allocatable :: x, y, z
+        complex(dp) :: x_(n), y_(n), z_(n)
 
         ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
         z = x
 
         ! Vector addition.
         call z%sub(y)
 
         ! Check correctness.
-        call check(error, sqrt(sum((z%data%re - x%data%re + y%data%re)**2 + (z%data%im - x%data%im + y%data%im)**2)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, sqrt(sum(Re(z - (x-y))^2 + Im(z - (x-y))^2)))')
+        call check(error, norm(z%data - (x%data - y%data), 2) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_cdp_sub
@@ -482,12 +498,13 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vectors.
-        type(vector_cdp), allocatable :: x, y
+        type(dense_vector_cdp), allocatable :: x, y
+        complex(dp) :: x_(n), y_(n)
         complex(dp) :: alpha
 
         ! Initialize vectors.
-        x = vector_cdp() ; call x%rand()
-        y = vector_cdp() ; call y%rand()
+        x = dense_vector(x_) ; call x%rand()
+        y = dense_vector(y_) ; call y%rand()
 
         ! Compute inner-product.
         alpha = x%dot(y)
@@ -504,22 +521,22 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Test vector.
-        type(vector_cdp), allocatable :: x, y
+        type(dense_vector_cdp), allocatable :: x, y
+        complex(dp) :: x_(n), y_(n)
         complex(dp) :: alpha
-        complex(dp) :: tmp(test_size)
 
         ! Initialize vector.
-        x = vector_cdp() ; call x%rand()
+        x = dense_vector(x_) ; call x%rand(ifnorm=.true.)
         y = x
         alpha = 0.0_dp ; call random_number(alpha%re) ; call random_number(alpha%im)
+        alpha = alpha / abs(alpha)
         
         ! Scale the vector.
         call x%scal(alpha)
 
         ! Check correctness.
-        tmp = x%data - alpha*y%data
-        call check(error, sqrt(sum(tmp%re**2 + tmp%im**2)) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_scal', eq='sqrt(sum(Re(x - alpha*y)**2 + Im(x - alpha*y)**2))')
+        call check(error, norm(x%data - alpha*y%data, 2) < rtol_dp)
+        call check_test(error, 'test_vector_cdp_scal', eq='norm(x - alpha*y, 2)')
 
         return
     end subroutine test_vector_cdp_scal

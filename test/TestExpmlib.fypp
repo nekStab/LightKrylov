@@ -20,7 +20,8 @@ module TestExpmlib
 
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestExpmLib'
+    character(len=*), parameter, private :: this_module      = 'LK_TExpmLib'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestExpmLib'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_expm_${type[0]}$${kind}$_testsuite
@@ -66,7 +67,7 @@ contains
         enddo
 
         ! Reference with analytical exponential.
-        Eref = eye(n)
+        Eref = eye(n, mold=1.0_${kind}$)
         do i = 1, n-1
             do j = 1, n-i
                 Eref(i, i+j) = Eref(i, i+j-1)*m/j
@@ -115,7 +116,7 @@ contains
 
         ! Krylov exponential.
         call kexpm(Xkryl, A, Q, tau, rtol_${kind}$, info, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_kexptA_${type[0]}$${kind}$')
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_${type[0]}$${kind}$')
 
         ! Check result.
         call Xkryl%sub(Xref) ; err = Xkryl%norm()
@@ -178,12 +179,12 @@ contains
         ! Compute Krylov matrix exponential using sequential arnoldi method for each input column
         do i = 1,p
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
-            call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_${type[0]}$${kind}$, 1')
+            call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_${type[0]}$${kind}$, 1')
         end do
         
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
-        call check_info(info, 'kexpm', module=this_module, procedure='test_block_kexptA_${type[0]}$${kind}$, 2')
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_${type[0]}$${kind}$, 2')
     
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
@@ -274,7 +275,7 @@ contains
      
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_def_${type[0]}$${kind}$')
+       call check_info(info, 'sqrtm', module=this_module_long, procedure='test_dense_sqrtm_pos_def_${type[0]}$${kind}$')
     
        #:if type[0] == "r"
        err = maxval(matmul(sqrtmA, sqrtmA) - A)
@@ -333,7 +334,7 @@ contains
     
        ! compute matrix square root
        call sqrtm(A, sqrtmA, info)
-       call check_info(info, 'sqrtm', module=this_module, procedure='test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$')
+       call check_info(info, 'sqrtm', module=this_module_long, procedure='test_dense_sqrtm_pos_semi_def_${type[0]}$${kind}$')
     
        #:if type[0] == "r"
        err = maxval(matmul(sqrtmA, sqrtmA) - A)

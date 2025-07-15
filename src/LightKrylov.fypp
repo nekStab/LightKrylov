@@ -19,6 +19,9 @@ module LightKrylov
     use LightKrylov_IterativeSolvers
     ! --> Expmlib
     use LightKrylov_Expmlib
+    ! --> Timing utilities
+    use LightKrylov_Timer_Utils
+    use LightKrylov_Timing, only: lk_timer => global_lightkrylov_timer
     ! --> TestTypes
     implicit none
     private
@@ -36,13 +39,20 @@ module LightKrylov
     public :: cg_${kind}$_opts
     public :: newton_${kind}$_opts
     #:endfor
+    #:for kind in REAL_KINDS
+    public :: gmres_${kind}$_metadata
+    public :: cg_${kind}$_metadata
+    public :: newton_${kind}$_metadata
+    #:endfor
 
     ! AbstractVectors exports.
     public :: abstract_vector
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_vector_${type[0]}$${kind}$
+    public :: dense_vector_${type[0]}$${kind}$
     #:endfor
-    public :: innerprod
+    public :: dense_vector
+    public :: innerprod, Gram
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
@@ -53,16 +63,19 @@ module LightKrylov
     public :: abstract_linop
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_linop_${type[0]}$${kind}$
+    public :: abstract_exptA_linop_${type[0]}$${kind}$
     public :: adjoint_linop_${type[0]}$${kind}$
     public :: Id_${type[0]}$${kind}$
     public :: scaled_linop_${type[0]}$${kind}$
     public :: axpby_linop_${type[0]}$${kind}$
+    public :: dense_linop_${type[0]}$${kind}$
     #:if type[0] == "r"
     public :: abstract_sym_linop_${type[0]}$${kind}$
     #:else
     public :: abstract_hermitian_linop_${type[0]}$${kind}$
     #:endif
     #:endfor
+    public :: adjoint
 
     ! AbstractSystems exports.
     #:for kind, type in RC_KINDS_TYPES
@@ -72,7 +85,7 @@ module LightKrylov
     
     ! BaseKrylov exports.
     public :: qr
-    public :: apply_permutation_matrix, apply_inverse_permutation_matrix
+    public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
     public :: orthogonalize_against_basis
@@ -94,12 +107,16 @@ module LightKrylov
     #:for kind, type in RC_KINDS_TYPES
     public :: gmres_${type[0]}$${kind}$
     #:endfor
+    public :: fgmres
+    #:for kind, type in RC_KINDS_TYPES
+    public :: fgmres_${type[0]}$${kind}$
+    #:endfor
     public :: cg
 
     ! Newton-Krylov exports.
     public :: newton
     #:for kind in REAL_KINDS
-    public :: constant_atol_${kind}$, dynamic_tol_${kind}$
+    public :: constant_tol_${kind}$, dynamic_tol_${kind}$
     #:endfor
 
     ! ExpmLib exports.
@@ -108,7 +125,12 @@ module LightKrylov
     #:endfor
     public :: expm
     public :: kexpm
-    public :: k_exptA
+    public :: krylov_exptA
+
+    ! Timer exports
+    public :: lightkrylov_timer
+    public :: abstract_watch
+    public :: lk_timer
 
 contains
 

@@ -20,7 +20,8 @@ module TestKrylov
     
     private
 
-    character(len=128), parameter, private :: this_module = 'LightKrylov_TestKrylov'
+    character(len=*), parameter, private :: this_module      = 'LK_TBKrylov'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestKrylov'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: collect_qr_${type[0]}$${kind}$_testsuite
@@ -71,7 +72,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, info, tol=atol_${kind}$)
-        call check_info(info, 'qr', module=this_module, procedure='test_qr_factorization_${type[0]}$${kind}$')
+        call check_info(info, 'qr', module=this_module_long, procedure='test_qr_factorization_${type[0]}$${kind}$')
 
         ! Get data.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -84,11 +85,10 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, A(:kdim), A(:kdim))
+        G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_qr_factorization_${type[0]}$${kind}$', &
@@ -145,7 +145,7 @@ contains
 
         ! In-place QR factorization.
         call qr(A, R, perm, info, tol=atol_${kind}$)
-        call check_info(info, 'qr_pivot', module=this_module, procedure='test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$')
 
         ! Extract data
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -159,11 +159,11 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, A(:kdim), A(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
+        G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim)))
+        err = norm2(abs(G - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$', &
@@ -215,7 +215,7 @@ contains
         allocate(H(kdim+1, kdim)) ; H = zero_${type[0]}$${kind}$
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_${kind}$)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, kdim+1)) ; call get_data(Xdata, X)
@@ -227,11 +227,11 @@ contains
 
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
+        G = Gram(X(:kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_arnoldi_factorization_${type[0]}$${kind}$', &
@@ -270,7 +270,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_${type[0]}$${kind}$')
 
         ! Check correctness of full factorization.
         allocate(Xdata(test_size, p*(kdim+1))) ; call get_data(Xdata, X)
@@ -281,11 +281,11 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, X(:p*kdim), X(:p*kdim))
+        ! allocate(G(p*kdim, p*kdim)) ; G = zero_${type[0]}$${kind}$
+        G = Gram(X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim)))
+        err = maxval(abs(G - eye(p*kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_block_arnoldi_factorization_${type[0]}$${kind}$', &
@@ -323,7 +323,7 @@ contains
 
         ! Arnoldi factorization.
         call arnoldi(A, X, H, info, tol=atol_${kind}$)
-        call check_info(info, 'arnoldi', module=this_module, procedure='test_krylov_schur_${type[0]}$${kind}$')
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_krylov_schur_${type[0]}$${kind}$')
 
         ! Krylov-Schur condensation.
         call krylov_schur(n, X, H, select_eigs)
@@ -340,10 +340,8 @@ contains
     contains
         function select_eigs(eigvals) result(selected)
             complex(${kind}$), intent(in) :: eigvals(:)
-            logical                       :: selected(size(eigvals))
-           
+            logical, allocatable :: selected(:)
             selected = abs(eigvals) > median(abs(eigvals))
-            return
         end function select_eigs
     end subroutine test_krylov_schur_${type[0]}$${kind}$
 
@@ -393,7 +391,7 @@ contains
 
         ! Lanczos bidiagonalization.
         call bidiagonalization(A, U, V, B, info, tol=atol_${kind}$)
-        call check_info(info, 'bidiagonalization', module=this_module, &
+        call check_info(info, 'bidiagonalization', module=this_module_long, &
                         & procedure='test_lanczos_bidiag_factorization_${type[0]}$${kind}$')
 
         ! Check correctness.
@@ -407,22 +405,20 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, U(:kdim), U(:kdim))
+        G = Gram(U(:kdim))
 
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_bidiag_factorization_${type[0]}$${kind}$', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        G = zero_${type[0]}$${kind}$
-        call innerprod(G, V(:kdim), V(:kdim))
+        G = Gram(V(:kdim))
 
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_bidiag_factorization_${type[0]}$${kind}$', &
@@ -489,7 +485,7 @@ contains
 
         ! Lanczos factorization.
         call lanczos(A, X, T, info, tol=atol_${kind}$)
-        call check_info(info, 'lanczos', module=this_module, & 
+        call check_info(info, 'lanczos', module=this_module_long, & 
                         & procedure='test_lanczos_tridiag_factorization_${type[0]}$${kind}$')
 
         ! Check correctness.
@@ -503,11 +499,11 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
-        call innerprod(G, X(:kdim), X(:kdim))
+        ! allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
+        G = Gram(X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim)))
+        err = maxval(abs(G - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_tridiag_factorization_${type[0]}$${kind}$', &
