@@ -113,13 +113,6 @@ module LightKrylov_TestUtils
         end function
     end interface
 
-    interface hermitian_linop_rsp
-        pure module function construct_hermitian_linop_rsp(data) result(A)
-            real(sp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_rsp) :: A
-        end function
-    end interface
-
     type, extends(abstract_linop_rdp), public :: linop_rdp
         real(dp), dimension(test_size, test_size) :: data = 0.0_dp
     contains
@@ -148,13 +141,6 @@ module LightKrylov_TestUtils
         end function
     end interface
 
-    interface hermitian_linop_rdp
-        pure module function construct_hermitian_linop_rdp(data) result(A)
-            real(dp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_rdp) :: A
-        end function
-    end interface
-
     type, extends(abstract_linop_csp), public :: linop_csp
         complex(sp), dimension(test_size, test_size) :: data = zero_csp
     contains
@@ -179,10 +165,9 @@ module LightKrylov_TestUtils
     interface hermitian_linop_csp
         pure module function construct_hermitian_linop_csp(data) result(A)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_csp) :: A
+            type(hermitian_linop_csp) :: A
         end function
     end interface
-
     type, extends(abstract_linop_cdp), public :: linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = zero_cdp
     contains
@@ -207,10 +192,9 @@ module LightKrylov_TestUtils
     interface hermitian_linop_cdp
         pure module function construct_hermitian_linop_cdp(data) result(A)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_cdp) :: A
+            type(hermitian_linop_cdp) :: A
         end function
     end interface
-
 
     ! ROESSLER SYSTEM
 

@@ -6,7 +6,7 @@ module Ginzburg_Landau
    use LightKrylov_Logger
    ! Standard Library.
    use stdlib_math, only: linspace
-   use stdlib_intrinsics, only: dot_product => stdlib_dot_product
+   ! use stdlib_intrinsics, only: dot_product => stdlib_dot_product
    use stdlib_optval, only: optval
    implicit none
 
@@ -112,64 +112,32 @@ contains
 
       ! Internal variables.
       integer :: i
-      real(kind=dp), dimension(nx) :: u, du
-      real(kind=dp), dimension(nx) :: v, dv
-      real(kind=dp)                :: d2u, d2v, cu, cv
+      complex(dp), dimension(nx) :: u, du
+      complex(dp)                :: d2u, cu, cv
 
-      ! Sets the internal variables.
-      f = 0.0_dp
-      u = x(1:nx); du = f(1:nx)
-      v = x(nx + 1:2*nx); dv = f(nx + 1:2*nx)
+      ! Set the internal variables.
+      du = 0.0_dp; u = cmplx(x(:nx), x(nx + 1:), kind=dp)
 
       !---------------------------------------------------
-      !-----     Linear Ginzburg Landau Equation     -----
+      !-----     Linear Ginzburg Landau equation     -----
       !---------------------------------------------------
 
-      ! Left most boundary points.
-      cu = u(2)/(2*dx); cv = v(2)/(2*dx)
-      du(1) = -(real(nu)*cu - aimag(nu)*cv) ! Convective term.
-      dv(1) = -(aimag(nu)*cu + real(nu)*cv) ! Convective term.
-
-      d2u = (u(2) - 2*u(1))/dx**2; d2v = (v(2) - 2*v(1))/dx**2
-      du(1) = du(1) + real(gamma)*d2u - aimag(gamma)*d2v ! Diffusion term.
-      dv(1) = dv(1) + aimag(gamma)*d2u + real(gamma)*d2v ! Diffusion term.
-
-      du(1) = du(1) + mu(1)*u(1) ! Non-parallel term.
-      dv(1) = dv(1) + mu(1)*v(1) ! Non-parallel term.
-
-      ! Interior nodes.
-      do i = 2, nx - 1
-         ! Convective term.
-         cu = (u(i + 1) - u(i - 1))/(2*dx)
-         cv = (v(i + 1) - v(i - 1))/(2*dx)
-         du(i) = -(real(nu)*cu - aimag(nu)*cv)
-         dv(i) = -(aimag(nu)*cu + real(nu)*cv)
-
-         ! Diffusion term.
-         d2u = (u(i + 1) - 2*u(i) + u(i - 1))/dx**2
-         d2v = (v(i + 1) - 2*v(i) + v(i - 1))/dx**2
-         du(i) = du(i) + real(gamma)*d2u - aimag(gamma)*d2v
-         dv(i) = dv(i) + aimag(gamma)*d2u + real(gamma)*d2v
-
-         ! Non-parallel term.
-         du(i) = du(i) + mu(i)*u(i)
-         dv(i) = dv(i) + mu(i)*v(i)
+      do concurrent(i=1:nx)
+         if (i == 1) then
+            cu = u(2)/(2*dx); d2u = (u(2) - 2*u(1))/dx**2
+         else if (i == nx) then
+            cu = -u(nx - 1)/(2*dx); d2u = (-2*u(nx) + u(nx - 1))/(2*dx)
+         else
+            cu = (u(i + 1) - u(i - 1))/(2*dx)
+            d2u = (u(i + 1) - 2*u(i) + u(i - 1))/dx**2
+         end if
+         du(i) = -nu*cu + gamma*d2u + mu(i)*u(i)
       end do
 
-      ! Right most boundary points.
-      cu = -u(nx - 1)/(2*dx); cv = -v(nx - 1)/(2*dx)
-      du(nx) = -(real(nu)*cu - aimag(nu)*cv) ! Convective term.
-      dv(nx) = -(aimag(nu)*cu + real(nu)*cv) ! Convective term.
+      ! Copy result to real array.
+      f(:nx) = du%re; f(nx + 1:) = du%im
 
-      d2u = (-2*u(nx) + u(nx - 1))/dx**2; d2v = (-2*v(nx) + v(nx - 1))/dx**2
-      du(nx) = du(nx) + real(gamma)*d2u - aimag(gamma)*d2v ! Diffusion term.
-      dv(nx) = dv(nx) + aimag(gamma)*d2u + real(gamma)*d2v ! Diffusion term.
-
-      du(nx) = du(nx) + mu(nx)*u(nx) ! Non-parallel term.
-      dv(nx) = dv(nx) + mu(nx)*v(nx) ! Non-parallel term.
-
-      ! Copy results to the output array.
-      f(1:nx) = du; f(nx + 1:2*nx) = dv
+      return
    end subroutine rhs
 
    !-----------------------------------------------------------
@@ -188,64 +156,32 @@ contains
 
       ! Internal variables.
       integer :: i
-      real(kind=dp), dimension(nx) :: u, du
-      real(kind=dp), dimension(nx) :: v, dv
-      real(kind=dp)                :: d2u, d2v, cu, cv
+      complex(dp), dimension(nx) :: u, du
+      complex(dp)                :: d2u, cu, cv
 
-      ! Sets the internal variables.
-      f = 0.0_dp
-      u = x(1:nx); du = f(1:nx)
-      v = x(nx + 1:2*nx); dv = f(nx + 1:2*nx)
+      ! Set the internal variables.
+      du = 0.0_dp; u = cmplx(x(:nx), x(nx + 1:), kind=dp)
 
       !---------------------------------------------------
-      !-----     Linear Ginzburg Landau Equation     -----
+      !-----     Linear Ginzburg Landau equation     -----
       !---------------------------------------------------
 
-      ! Left most boundary points.
-      cu = u(2)/(2*dx); cv = v(2)/(2*dx)
-      du(1) = (real(nu)*cu + aimag(nu)*cv) ! Convective term.
-      dv(1) = (-aimag(nu)*cu + real(nu)*cv) ! Convective term.
-
-      d2u = (u(2) - 2*u(1))/dx**2; d2v = (v(2) - 2*v(1))/dx**2
-      du(1) = du(1) + real(gamma)*d2u + aimag(gamma)*d2v ! Diffusion term.
-      dv(1) = dv(1) - aimag(gamma)*d2u + real(gamma)*d2v ! Diffusion term.
-
-      du(1) = du(1) + mu(1)*u(1) ! Non-parallel term.
-      dv(1) = dv(1) + mu(1)*v(1) ! Non-parallel term.
-
-      ! Interior nodes.
-      do i = 2, nx - 1
-         ! Convective term.
-         cu = (u(i + 1) - u(i - 1))/(2*dx)
-         cv = (v(i + 1) - v(i - 1))/(2*dx)
-         du(i) = (real(nu)*cu + aimag(nu)*cv)
-         dv(i) = (-aimag(nu)*cu + real(nu)*cv)
-
-         ! Diffusion term.
-         d2u = (u(i + 1) - 2*u(i) + u(i - 1))/dx**2
-         d2v = (v(i + 1) - 2*v(i) + v(i - 1))/dx**2
-         du(i) = du(i) + real(gamma)*d2u + aimag(gamma)*d2v
-         dv(i) = dv(i) - aimag(gamma)*d2u + real(gamma)*d2v
-
-         ! Non-parallel term.
-         du(i) = du(i) + mu(i)*u(i)
-         dv(i) = dv(i) + mu(i)*v(i)
+      do concurrent(i=1:nx)
+         if (i == 1) then
+            cu = u(2)/(2*dx); d2u = (u(2) - 2*u(1))/dx**2
+         else if (i == nx) then
+            cu = -u(nx - 1)/(2*dx); d2u = (-2*u(nx) + u(nx - 1))/(2*dx)
+         else
+            cu = (u(i + 1) - u(i - 1))/(2*dx)
+            d2u = (u(i + 1) - 2*u(i) + u(i - 1))/dx**2
+         end if
+         du(i) = conjg(nu)*cu + conjg(gamma)*d2u + mu(i)*u(i)
       end do
 
-      ! Right most boundary points.
-      cu = -u(nx - 1)/(2*dx); cv = -v(nx - 1)/(2*dx)
-      du(nx) = (real(nu)*cu + aimag(nu)*cv) ! Convective term.
-      dv(nx) = (-aimag(nu)*cu + real(nu)*cv) ! Convective term.
+      ! Copy result to real array.
+      f(:nx) = du%re; f(nx + 1:) = du%im
 
-      d2u = (-2*u(nx) + u(nx - 1))/dx**2; d2v = (-2*v(nx) + v(nx - 1))/dx**2
-      du(nx) = du(nx) + real(gamma)*d2u + aimag(gamma)*d2v ! Diffusion term.
-      dv(nx) = dv(nx) - aimag(gamma)*d2u + real(gamma)*d2v ! Diffusion term.
-
-      du(nx) = du(nx) + mu(nx)*u(nx) ! Non-parallel term.
-      dv(nx) = dv(nx) + mu(nx)*v(nx) ! Non-parallel term.
-
-      ! Copy results to the output array.
-      f(1:nx) = du; f(nx + 1:2*nx) = dv
+      return
    end subroutine adjoint_rhs
 
    !=========================================================
@@ -373,7 +309,7 @@ contains
          type is (state_vector)
             ! Get the state.
             state_ic(:nx) = vec_in%state%re
-            state_fc(nx + 1:) = vec_in%state%im
+            state_ic(nx + 1:) = vec_in%state%im
             ! Initialize propagator.
             call prop%initialize(n=2*nx, f=adjoint_rhs)
             ! Integrate forward in time.

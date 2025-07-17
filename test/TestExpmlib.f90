@@ -42,7 +42,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_rsp), &
-                        new_unittest("Krylov expm.", test_kexptA_rsp) &
+                        new_unittest("Krylov expm.", test_kexptA_rsp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_rsp) &
                     ]
 
         return
@@ -118,7 +119,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_rsp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
@@ -220,7 +233,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_rdp), &
-                        new_unittest("Krylov expm.", test_kexptA_rdp) &
+                        new_unittest("Krylov expm.", test_kexptA_rdp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_rdp) &
                     ]
 
         return
@@ -296,7 +310,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_rdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
@@ -398,7 +424,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_csp), &
-                        new_unittest("Krylov expm.", test_kexptA_csp) &
+                        new_unittest("Krylov expm.", test_kexptA_csp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_csp) &
                     ]
 
         return
@@ -474,7 +501,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_csp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
@@ -576,7 +615,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_cdp), &
-                        new_unittest("Krylov expm.", test_kexptA_cdp) &
+                        new_unittest("Krylov expm.", test_kexptA_cdp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_cdp) &
                     ]
 
         return
@@ -652,7 +692,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_cdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &
