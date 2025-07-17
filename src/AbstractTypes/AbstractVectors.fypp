@@ -483,13 +483,15 @@ contains
         ${type}$, intent(in) :: alpha, beta
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
-        integer :: n
-        n = self%get_size()
+        integer :: n, m
+        n = self%get_size() ; m = vec%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
         if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_${type[0]}$${kind}$)
         select type (vec)
         type is(dense_vector_${type[0]}$${kind}$)
             if (beta /= zero_${type[0]}$${kind}$) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
+            print *, self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
