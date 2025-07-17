@@ -135,7 +135,8 @@ program Tester
                 new_testsuite("Complex GMRES (sp) Test Suite", collect_gmres_csp_testsuite), &
                 new_testsuite("Complex CG (sp) Test Suite", collect_cg_csp_testsuite), &
                 new_testsuite("Complex Expm. (sp) Test Suite", collect_expm_csp_testsuite), &
-                new_testsuite("Complex Sqrtm (sp) Test Suite", collect_sqrtm_csp_testsuite) &
+                new_testsuite("Complex Sqrtm (sp) Test Suite", collect_sqrtm_csp_testsuite), &
+                new_testsuite("Complex Newton-Krylov fixed-point iteration (sp) Test Suite", collect_newton_csp_testsuite) &
                 ]
 
    write(output_unit, *) "-------------------------------------------------------------------"
@@ -176,7 +177,8 @@ program Tester
                 new_testsuite("Complex GMRES (dp) Test Suite", collect_gmres_cdp_testsuite), &
                 new_testsuite("Complex CG (dp) Test Suite", collect_cg_cdp_testsuite), &
                 new_testsuite("Complex Expm. (dp) Test Suite", collect_expm_cdp_testsuite), &
-                new_testsuite("Complex Sqrtm (dp) Test Suite", collect_sqrtm_cdp_testsuite) &
+                new_testsuite("Complex Sqrtm (dp) Test Suite", collect_sqrtm_cdp_testsuite), &
+                new_testsuite("Complex Newton-Krylov fixed-point iteration (dp) Test Suite", collect_newton_cdp_testsuite) &
                 ]
 
    write(output_unit, *) "-------------------------------------------------------------------"
