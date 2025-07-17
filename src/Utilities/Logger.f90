@@ -600,6 +600,9 @@ contains
             if (info > 0) then
                write(msg,'(A,I0,A)') 'GMRES iteration converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
+            else if (info < 0) then
+               write(msg,'(A,I0,A)') 'Maximum number of GMRES iterations reached (', abs(info), '). Solution tolerance not achieved.'
+               call log_message(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -610,6 +613,9 @@ contains
             if (info > 0) then
                write(msg,'(A,I0,A)') 'CG iteration converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
+            else if (info < 0) then
+               write(msg,'(A,I0,A)') 'Maximum number of CG iterations reached (', abs(info), '). Solution tolerance not achieved.'
+               call log_message(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
@@ -619,6 +625,9 @@ contains
             ! Abstract linear solver
             if (info > 0) then
                write(msg,'(A,I0,A)') 'The linear solver converged after ', info, ' iterations'
+               call log_message(trim(msg), module=module, procedure=procedure)
+            else if (info < 0) then
+               write(msg,'(A,I0,A)') 'Maximum number of iterations reached (', abs(info), '). Solution tolerance not achieved.'
                call log_message(trim(msg), module=module, procedure=procedure)
             else
                write(msg,'(A)') "Undocumented error. "//trim(str)

@@ -260,8 +260,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = gmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (gmres_meta%converged) then
+            info = gmres_meta%n_iter
+        else
+            info = -gmres_meta%n_iter
+        end if
         gmres_meta%info = info
 
         if (opts%if_print_metadata) call gmres_meta%print()
@@ -435,8 +439,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = gmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (gmres_meta%converged) then
+            info = gmres_meta%n_iter
+        else
+            info = -gmres_meta%n_iter
+        end if
         gmres_meta%info = info
 
         if (opts%if_print_metadata) call gmres_meta%print()
@@ -610,8 +618,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = gmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (gmres_meta%converged) then
+            info = gmres_meta%n_iter
+        else
+            info = -gmres_meta%n_iter
+        end if
         gmres_meta%info = info
 
         if (opts%if_print_metadata) call gmres_meta%print()
@@ -785,8 +797,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = gmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (gmres_meta%converged) then
+            info = gmres_meta%n_iter
+        else
+            info = -gmres_meta%n_iter
+        end if
         gmres_meta%info = info
 
         if (opts%if_print_metadata) call gmres_meta%print()
