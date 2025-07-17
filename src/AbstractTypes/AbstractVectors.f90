@@ -972,13 +972,11 @@ contains
         class(dense_vector_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec
         integer :: n, m
-        n = self%get_size() ; m = vec%get_size()
-        if (m /= n) then
-            print *, "Size self :", n
-            print *, "Size vec  :", m
-            error stop "Inconsistent size between the two vectors."
-        endif
-        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_rsp)
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_rsp)
+        n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_rsp)
             if (beta /= zero_rsp) call self%scal(beta)
@@ -998,9 +996,9 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_rsp)
-# 514 "./src/AbstractTypes/AbstractVectors.fypp"
+# 512 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dot(n, self%data, 1, vec%data, 1)
-# 518 "./src/AbstractTypes/AbstractVectors.fypp"
+# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1052,13 +1050,11 @@ contains
         class(dense_vector_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec
         integer :: n, m
-        n = self%get_size() ; m = vec%get_size()
-        if (m /= n) then
-            print *, "Size self :", n
-            print *, "Size vec  :", m
-            error stop "Inconsistent size between the two vectors."
-        endif
-        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_rdp)
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_rdp)
+        n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_rdp)
             if (beta /= zero_rdp) call self%scal(beta)
@@ -1078,9 +1074,9 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_rdp)
-# 514 "./src/AbstractTypes/AbstractVectors.fypp"
+# 512 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dot(n, self%data, 1, vec%data, 1)
-# 518 "./src/AbstractTypes/AbstractVectors.fypp"
+# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1134,13 +1130,11 @@ contains
         class(dense_vector_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec
         integer :: n, m
-        n = self%get_size() ; m = vec%get_size()
-        if (m /= n) then
-            print *, "Size self :", n
-            print *, "Size vec  :", m
-            error stop "Inconsistent size between the two vectors."
-        endif
-        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_csp)
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_csp)
+        n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_csp)
             if (beta /= zero_csp) call self%scal(beta)
@@ -1160,9 +1154,9 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_csp)
-# 516 "./src/AbstractTypes/AbstractVectors.fypp"
+# 514 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dotc(n, self%data, 1, vec%data, 1)
-# 518 "./src/AbstractTypes/AbstractVectors.fypp"
+# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1216,13 +1210,11 @@ contains
         class(dense_vector_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec
         integer :: n, m
-        n = self%get_size() ; m = vec%get_size()
-        if (m /= n) then
-            print *, "Size self :", n
-            print *, "Size vec  :", m
-            error stop "Inconsistent size between the two vectors."
-        endif
-        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_cdp)
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_cdp)
+        n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_cdp)
             if (beta /= zero_cdp) call self%scal(beta)
@@ -1242,9 +1234,9 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_cdp)
-# 516 "./src/AbstractTypes/AbstractVectors.fypp"
+# 514 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dotc(n, self%data, 1, vec%data, 1)
-# 518 "./src/AbstractTypes/AbstractVectors.fypp"
+# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1258,13 +1250,13 @@ contains
         return
     end function
 
-# 532 "./src/AbstractTypes/AbstractVectors.fypp"
+# 530 "./src/AbstractTypes/AbstractVectors.fypp"
     
     !--------------------------------------
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-# 538 "./src/AbstractTypes/AbstractVectors.fypp"
+# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_rsp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1419,7 +1411,7 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
 
-# 538 "./src/AbstractTypes/AbstractVectors.fypp"
+# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_rdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1574,7 +1566,7 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
 
-# 538 "./src/AbstractTypes/AbstractVectors.fypp"
+# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_csp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1729,7 +1721,7 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
 
-# 538 "./src/AbstractTypes/AbstractVectors.fypp"
+# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_cdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1884,5 +1876,5 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
 
-# 693 "./src/AbstractTypes/AbstractVectors.fypp"
+# 691 "./src/AbstractTypes/AbstractVectors.fypp"
 end module LightKrylov_AbstractVectors

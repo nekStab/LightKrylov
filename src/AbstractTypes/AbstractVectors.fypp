@@ -484,13 +484,11 @@ contains
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         integer :: n, m
-        n = self%get_size() ; m = vec%get_size()
-        if (m /= n) then
-            print *, "Size self :", n
-            print *, "Size vec  :", m
-            error stop "Inconsistent size between the two vectors."
-        endif
-        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_${type[0]}$${kind}$)
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_${type[0]}$${kind}$)
+        n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_${type[0]}$${kind}$)
             if (beta /= zero_${type[0]}$${kind}$) call self%scal(beta)
