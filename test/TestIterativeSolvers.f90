@@ -184,7 +184,8 @@ contains
         enddo
 
         do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i)
+            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_sp
+
         enddo
         err = maxval(abs(eigvals - true_eigvals))
         call get_err_str(msg, "max err: ", err)
@@ -416,7 +417,8 @@ contains
         enddo
 
         do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i)
+            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_dp
+
         enddo
         err = maxval(abs(eigvals - true_eigvals))
         call get_err_str(msg, "max err: ", err)
@@ -598,7 +600,8 @@ contains
         enddo
 
         do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i)
+            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_sp
+
         enddo
         err = maxval(abs(eigvals - true_eigvals))
         call get_err_str(msg, "max err: ", err)
@@ -791,7 +794,8 @@ contains
         enddo
 
         do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i)
+            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_dp
+
         enddo
         err = maxval(abs(eigvals - true_eigvals))
         call get_err_str(msg, "max err: ", err)
