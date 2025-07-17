@@ -42,7 +42,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_rsp), &
-                        new_unittest("Krylov expm.", test_kexptA_rsp) &
+                        new_unittest("Krylov expm.", test_kexptA_rsp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_rsp) &
                     ]
 
         return
@@ -232,7 +233,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_rdp), &
-                        new_unittest("Krylov expm.", test_kexptA_rdp) &
+                        new_unittest("Krylov expm.", test_kexptA_rdp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_rdp) &
                     ]
 
         return
@@ -422,7 +424,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_csp), &
-                        new_unittest("Krylov expm.", test_kexptA_csp) &
+                        new_unittest("Krylov expm.", test_kexptA_csp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_csp) &
                     ]
 
         return
@@ -612,7 +615,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_cdp), &
-                        new_unittest("Krylov expm.", test_kexptA_cdp) &
+                        new_unittest("Krylov expm.", test_kexptA_cdp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_cdp) &
                     ]
 
         return

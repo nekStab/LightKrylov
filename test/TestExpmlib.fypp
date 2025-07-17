@@ -43,7 +43,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_${type[0]}$${kind}$), &
-                        new_unittest("Krylov expm.", test_kexptA_${type[0]}$${kind}$) &
+                        new_unittest("Krylov expm.", test_kexptA_${type[0]}$${kind}$), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_${type[0]}$${kind}$) &
                     ]
 
         return
