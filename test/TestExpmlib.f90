@@ -118,7 +118,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
@@ -130,7 +130,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
@@ -308,7 +308,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
@@ -320,7 +320,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
@@ -498,7 +498,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
@@ -510,7 +510,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
@@ -688,7 +688,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &
@@ -700,7 +700,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &

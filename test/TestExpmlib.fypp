@@ -119,7 +119,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_${type[0]}$${kind}$')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_kexptA_${type[0]}$${kind}$', &
@@ -131,7 +131,7 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_${type[0]}$${kind}$')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_kexptA_${type[0]}$${kind}$', &
