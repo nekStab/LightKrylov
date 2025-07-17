@@ -84,9 +84,9 @@ contains
        write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        #:else
-       write(infomsg, '(A4,E7.1,A1,E7.1,A1,E7.1,A1)') 'R: (',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
-       write(infomsg, '(A4,E7.1,A1,E7.1,A1,E7.1,A1)') 'I: (',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        #:endif
 

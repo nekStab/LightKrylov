@@ -208,9 +208,9 @@ contains
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_sp)
-       write(infomsg, '(A4,E7.1,A1,E7.1,A1,E7.1,A1)') 'R: (',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
-       write(infomsg, '(A4,E7.1,A1,E7.1,A1,E7.1,A1)') 'I: (',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
        call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
 
        X%x = zero_csp
@@ -275,9 +275,9 @@ contains
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       write(infomsg, '(A4,E7.1,A1,E7.1,A1,E7.1,A1)') 'R: (',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
-       write(infomsg, '(A4,E7.1,A1,E7.1,A1,E7.1,A1)') 'I: (',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
+       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
        call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
 
        X%x = zero_cdp
