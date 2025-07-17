@@ -188,7 +188,6 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
-                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -203,7 +202,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
+                H(k+1, k) = V(k+1)%norm() 
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rsp / H(k+1, k))
 
                 !-----------------------------------------
@@ -214,7 +213,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
+                beta = abs(e(k+1))
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -365,7 +364,6 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
-                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -380,7 +378,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
+                H(k+1, k) = V(k+1)%norm() 
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rdp / H(k+1, k))
 
                 !-----------------------------------------
@@ -391,7 +389,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
+                beta = abs(e(k+1))
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -542,7 +540,6 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
-                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -557,7 +554,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
+                H(k+1, k) = V(k+1)%norm() 
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_csp / H(k+1, k))
 
                 !-----------------------------------------
@@ -568,7 +565,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
+                beta = abs(e(k+1))
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -719,7 +716,6 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
-                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -734,7 +730,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
+                H(k+1, k) = V(k+1)%norm() 
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_cdp / H(k+1, k))
 
                 !-----------------------------------------
@@ -745,7 +741,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
+                beta = abs(e(k+1))
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
