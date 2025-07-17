@@ -453,7 +453,7 @@ contains
     subroutine dense_zero_${type[0]}$${kind}$(self)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_${kind}$
+        self%data = zero_${type[0]}$${kind}$
         return
     end subroutine
 
@@ -485,9 +485,10 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         integer :: n
         n = self%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_${type[0]}$${kind}$)
         select type (vec)
         type is(dense_vector_${type[0]}$${kind}$)
-            if (beta /= 0.0_${kind}$) call self%scal(beta)
+            if (beta /= zero_${type[0]}$${kind}$) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')

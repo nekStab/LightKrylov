@@ -884,7 +884,7 @@ contains
     subroutine dense_zero_rsp(self)
         class(dense_vector_rsp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_sp
+        self%data = zero_rsp
         return
     end subroutine
 
@@ -910,9 +910,10 @@ contains
         class(abstract_vector_rsp), intent(in) :: vec
         integer :: n
         n = self%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_rsp)
         select type (vec)
         type is(dense_vector_rsp)
-            if (beta /= 0.0_sp) call self%scal(beta)
+            if (beta /= zero_rsp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
@@ -952,7 +953,7 @@ contains
     subroutine dense_zero_rdp(self)
         class(dense_vector_rdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_dp
+        self%data = zero_rdp
         return
     end subroutine
 
@@ -978,9 +979,10 @@ contains
         class(abstract_vector_rdp), intent(in) :: vec
         integer :: n
         n = self%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_rdp)
         select type (vec)
         type is(dense_vector_rdp)
-            if (beta /= 0.0_dp) call self%scal(beta)
+            if (beta /= zero_rdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
@@ -1020,7 +1022,7 @@ contains
     subroutine dense_zero_csp(self)
         class(dense_vector_csp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_sp
+        self%data = zero_csp
         return
     end subroutine
 
@@ -1048,9 +1050,10 @@ contains
         class(abstract_vector_csp), intent(in) :: vec
         integer :: n
         n = self%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_csp)
         select type (vec)
         type is(dense_vector_csp)
-            if (beta /= 0.0_sp) call self%scal(beta)
+            if (beta /= zero_csp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
@@ -1090,7 +1093,7 @@ contains
     subroutine dense_zero_cdp(self)
         class(dense_vector_cdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_dp
+        self%data = zero_cdp
         return
     end subroutine
 
@@ -1118,9 +1121,10 @@ contains
         class(abstract_vector_cdp), intent(in) :: vec
         integer :: n
         n = self%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(self%n), source=zero_cdp)
         select type (vec)
         type is(dense_vector_cdp)
-            if (beta /= 0.0_dp) call self%scal(beta)
+            if (beta /= zero_cdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
