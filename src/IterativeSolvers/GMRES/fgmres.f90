@@ -197,6 +197,7 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -211,7 +212,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm()
+                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rsp / H(k+1, k))
 
                 !-----------------------------------------
@@ -222,7 +223,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1))
+                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -374,6 +375,7 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -388,7 +390,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm()
+                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rdp / H(k+1, k))
 
                 !-----------------------------------------
@@ -399,7 +401,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1))
+                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -551,6 +553,7 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -565,7 +568,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm()
+                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_csp / H(k+1, k))
 
                 !-----------------------------------------
@@ -576,7 +579,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1))
+                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -728,6 +731,7 @@ contains
                 iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                print *, "|| Z ||, || V || :", Z(k)%norm(), V(k)%norm(), k
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -742,7 +746,7 @@ contains
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm()
+                H(k+1, k) = V(k+1)%norm() ; print *, "H(k+1, k) :", abs(H(k+1, k)), k
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_cdp / H(k+1, k))
 
                 !-----------------------------------------
@@ -753,7 +757,7 @@ contains
                 !> Update the right-hand side vector accordingly.
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
-                beta = abs(e(k+1))
+                beta = abs(e(k+1)) ; print *, "fgmres beta :", beta
  
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -821,9 +825,9 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
-# 244 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 245 "./src/IterativeSolvers/GMRES/fgmres.fypp"
 
-# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 247 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_rsp
     type(dense_vector_rsp) :: b_, x_
     type(dense_linop_rsp)  :: A_
@@ -836,7 +840,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
-# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 247 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_rdp
     type(dense_vector_rdp) :: b_, x_
     type(dense_linop_rdp)  :: A_
@@ -849,7 +853,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
-# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 247 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_csp
     type(dense_vector_csp) :: b_, x_
     type(dense_linop_csp)  :: A_
@@ -862,7 +866,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
-# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 247 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_cdp
     type(dense_vector_cdp) :: b_, x_
     type(dense_linop_cdp)  :: A_
@@ -875,6 +879,6 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
-# 259 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 260 "./src/IterativeSolvers/GMRES/fgmres.fypp"
 
 end submodule
