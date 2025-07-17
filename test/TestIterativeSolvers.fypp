@@ -29,6 +29,7 @@ module TestIterativeSolvers
     public :: collect_eig_${type[0]}$${kind}$_testsuite
     public :: collect_svd_${type[0]}$${kind}$_testsuite
     public :: collect_gmres_${type[0]}$${kind}$_testsuite
+    public :: collect_fgmres_${type[0]}$${kind}$_testsuite
     public :: collect_cg_${type[0]}$${kind}$_testsuite
     #:endfor
 
@@ -608,6 +609,61 @@ contains
         return
     end subroutine test_gmres_spd_${type[0]}$${kind}$
 
+    #:endfor
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR FGMRES     -----
+    !----------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_fgmres_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full FGMRES", test_fgmres_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_fgmres_${type[0]}$${kind}$_testsuite
+
+    subroutine test_fgmres_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        ${type}$ :: A(n, n), b(n), x(n)
+        ! FGMRES options.
+        type(fgmres_${kind}$_opts) :: opts
+        ! FGMRES metadata.
+        type(fgmres_${kind}$_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        #:if type[0] == "r"
+        call random_number(A) ; call random_number(b) ; x = 0.0_${kind}$
+        #:else
+        real(${kind}$) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; call random_number(bdata)
+        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        x = 0.0_${kind}$
+        #:endif
+
+        ! FGMRES solver.
+        opts = fgmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
+        call fgmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_${type[0]}$${kind}$')
+
+        ! Check convergence.
+        err = norm(matmul(A, x) - b, 2)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < norm(b, 2) * rtol_${kind}$)
+        call check_test(error, 'test_fgmres_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_fgmres_${type[0]}$${kind}$
+    
     #:endfor
 
     !-----------------------------------------------------------------------

@@ -46,6 +46,7 @@ program Tester
                 new_testsuite("Real EVP (sp) Test Suite", collect_eig_rsp_testsuite), &
                 new_testsuite("Real SVD (sp) Test Suite", collect_svd_rsp_testsuite), &
                 new_testsuite("Real GMRES (sp) Test Suite", collect_gmres_rsp_testsuite), &
+                new_testsuite("Real FGMRES (sp) Test Suite", collect_fgmres_rsp_testsuite), &
                 new_testsuite("Real CG (sp) Test Suite", collect_cg_rsp_testsuite), &
                 new_testsuite("Real Expm (sp) Test Suite", collect_expm_rsp_testsuite), &
                 new_testsuite("Real Sqrtm (sp) Test Suite", collect_sqrtm_rsp_testsuite), &
@@ -90,6 +91,7 @@ program Tester
                 new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
                 new_testsuite("Real SVD (dp) Test Suite", collect_svd_rdp_testsuite), &
                 new_testsuite("Real GMRES (dp) Test Suite", collect_gmres_rdp_testsuite), &
+                new_testsuite("Real FGMRES (dp) Test Suite", collect_fgmres_rdp_testsuite), &
                 new_testsuite("Real CG (dp) Test Suite", collect_cg_rdp_testsuite), &
                 new_testsuite("Real Expm (dp) Test Suite", collect_expm_rdp_testsuite), &
                 new_testsuite("Real Sqrtm (dp) Test Suite", collect_sqrtm_rdp_testsuite), &
@@ -135,6 +137,7 @@ program Tester
                 new_testsuite("Complex EVP (sp) Test Suite", collect_eig_csp_testsuite), &
                 new_testsuite("Complex SVD (dp) Test Suite", collect_svd_csp_testsuite), &
                 new_testsuite("Complex GMRES (sp) Test Suite", collect_gmres_csp_testsuite), &
+                new_testsuite("Complex FGMRES (sp) Test Suite", collect_fgmres_csp_testsuite), &
                 new_testsuite("Complex CG (sp) Test Suite", collect_cg_csp_testsuite), &
                 new_testsuite("Complex Expm. (sp) Test Suite", collect_expm_csp_testsuite), &
                 new_testsuite("Complex Sqrtm (sp) Test Suite", collect_sqrtm_csp_testsuite) &
@@ -178,6 +181,7 @@ program Tester
                 new_testsuite("Complex EVP (dp) Test Suite", collect_eig_cdp_testsuite), &
                 new_testsuite("Complex SVD (dp) Test Suite", collect_svd_cdp_testsuite), &
                 new_testsuite("Complex GMRES (dp) Test Suite", collect_gmres_cdp_testsuite), &
+                new_testsuite("Complex FGMRES (dp) Test Suite", collect_fgmres_cdp_testsuite), &
                 new_testsuite("Complex CG (dp) Test Suite", collect_cg_cdp_testsuite), &
                 new_testsuite("Complex Expm. (dp) Test Suite", collect_expm_cdp_testsuite), &
                 new_testsuite("Complex Sqrtm (dp) Test Suite", collect_sqrtm_cdp_testsuite) &

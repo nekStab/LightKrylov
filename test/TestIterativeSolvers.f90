@@ -26,18 +26,22 @@ module TestIterativeSolvers
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
     public :: collect_gmres_rsp_testsuite
+    public :: collect_fgmres_rsp_testsuite
     public :: collect_cg_rsp_testsuite
     public :: collect_eig_rdp_testsuite
     public :: collect_svd_rdp_testsuite
     public :: collect_gmres_rdp_testsuite
+    public :: collect_fgmres_rdp_testsuite
     public :: collect_cg_rdp_testsuite
     public :: collect_eig_csp_testsuite
     public :: collect_svd_csp_testsuite
     public :: collect_gmres_csp_testsuite
+    public :: collect_fgmres_csp_testsuite
     public :: collect_cg_csp_testsuite
     public :: collect_eig_cdp_testsuite
     public :: collect_svd_cdp_testsuite
     public :: collect_gmres_cdp_testsuite
+    public :: collect_fgmres_cdp_testsuite
     public :: collect_cg_cdp_testsuite
 
 contains
@@ -1577,6 +1581,179 @@ contains
         return
     end subroutine test_gmres_spd_cdp
 
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR FGMRES     -----
+    !----------------------------------------------------------
+
+    subroutine collect_fgmres_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full FGMRES", test_fgmres_rsp) &
+                    ]
+        return
+    end subroutine collect_fgmres_rsp_testsuite
+
+    subroutine test_fgmres_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        real(sp) :: A(n, n), b(n), x(n)
+        ! FGMRES options.
+        type(fgmres_sp_opts) :: opts
+        ! FGMRES metadata.
+        type(fgmres_sp_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        call random_number(A) ; call random_number(b) ; x = 0.0_sp
+
+        ! FGMRES solver.
+        opts = fgmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+        call fgmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_rsp')
+
+        ! Check convergence.
+        err = norm(matmul(A, x) - b, 2)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < norm(b, 2) * rtol_sp)
+        call check_test(error, 'test_fgmres_rsp', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_fgmres_rsp
+    
+    subroutine collect_fgmres_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full FGMRES", test_fgmres_rdp) &
+                    ]
+        return
+    end subroutine collect_fgmres_rdp_testsuite
+
+    subroutine test_fgmres_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        real(dp) :: A(n, n), b(n), x(n)
+        ! FGMRES options.
+        type(fgmres_dp_opts) :: opts
+        ! FGMRES metadata.
+        type(fgmres_dp_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        call random_number(A) ; call random_number(b) ; x = 0.0_dp
+
+        ! FGMRES solver.
+        opts = fgmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+        call fgmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_rdp')
+
+        ! Check convergence.
+        err = norm(matmul(A, x) - b, 2)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < norm(b, 2) * rtol_dp)
+        call check_test(error, 'test_fgmres_rdp', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_fgmres_rdp
+    
+    subroutine collect_fgmres_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full FGMRES", test_fgmres_csp) &
+                    ]
+        return
+    end subroutine collect_fgmres_csp_testsuite
+
+    subroutine test_fgmres_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        complex(sp) :: A(n, n), b(n), x(n)
+        ! FGMRES options.
+        type(fgmres_sp_opts) :: opts
+        ! FGMRES metadata.
+        type(fgmres_sp_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        real(sp) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; call random_number(bdata)
+        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        x = 0.0_sp
+
+        ! FGMRES solver.
+        opts = fgmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+        call fgmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_csp')
+
+        ! Check convergence.
+        err = norm(matmul(A, x) - b, 2)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < norm(b, 2) * rtol_sp)
+        call check_test(error, 'test_fgmres_csp', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_fgmres_csp
+    
+    subroutine collect_fgmres_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full FGMRES", test_fgmres_cdp) &
+                    ]
+        return
+    end subroutine collect_fgmres_cdp_testsuite
+
+    subroutine test_fgmres_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        complex(dp) :: A(n, n), b(n), x(n)
+        ! FGMRES options.
+        type(fgmres_dp_opts) :: opts
+        ! FGMRES metadata.
+        type(fgmres_dp_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        real(dp) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; call random_number(bdata)
+        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        x = 0.0_dp
+
+        ! FGMRES solver.
+        opts = fgmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+        call fgmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_cdp')
+
+        ! Check convergence.
+        err = norm(matmul(A, x) - b, 2)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < norm(b, 2) * rtol_dp)
+        call check_test(error, 'test_fgmres_cdp', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_fgmres_cdp
+    
 
     !-----------------------------------------------------------------------
     !-----     DEFINITION OF THE UNIT TESTS FOR CONJUGATE GRADIENT     -----
