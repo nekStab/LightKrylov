@@ -201,6 +201,9 @@ contains
         enddo
         #:endif
 
+        do i = 1, size(eigvals)
+            print *, eigvals(i), true_eigvals(i)
+        enddo
         err = maxval(abs(eigvals - true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
