@@ -1,3 +1,8 @@
+# 1 "./src/IterativeSolvers/GMRES/fgmres.fypp"
+# 1 "./src/IterativeSolvers/GMRES/../../../include/common.fypp" 1
+# 257 "./src/IterativeSolvers/GMRES/../../../include/common.fypp"
+# 2 "./src/IterativeSolvers/GMRES/fgmres.fypp" 2
+# 3 "./src/IterativeSolvers/GMRES/fgmres.fypp"
 submodule (lightkrylov_iterativesolvers) fgmres_solver
     use stdlib_strings, only: padr
     use stdlib_linalg, only: lstsq, norm
@@ -8,6 +13,7 @@ contains
     !-----     Options and Metadata     -----
     !----------------------------------------
 
+# 14 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure print_fgmres_sp
         ! internals
         character(len=*), parameter :: this_procedure = 'print_fgmres_sp'
@@ -54,6 +60,7 @@ contains
         if (allocated(self%res)) deallocate(self%res)
         return
     end procedure
+# 14 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure print_fgmres_dp
         ! internals
         character(len=*), parameter :: this_procedure = 'print_fgmres_dp'
@@ -100,11 +107,13 @@ contains
         if (allocated(self%res)) deallocate(self%res)
         return
     end procedure
+# 61 "./src/IterativeSolvers/GMRES/fgmres.fypp"
 
     !-------------------------------------------------------------
     !-----     FLEXIBLE GMRES SOLVERS FOR ABSTRACT TYPES     -----
     !-------------------------------------------------------------
 
+# 67 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure fgmres_rsp
        ! Options.
         integer :: kdim, maxiter
@@ -281,6 +290,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
+# 67 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure fgmres_rdp
        ! Options.
         integer :: kdim, maxiter
@@ -457,6 +467,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
+# 67 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure fgmres_csp
        ! Options.
         integer :: kdim, maxiter
@@ -633,6 +644,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
+# 67 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure fgmres_cdp
        ! Options.
         integer :: kdim, maxiter
@@ -809,7 +821,9 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
+# 244 "./src/IterativeSolvers/GMRES/fgmres.fypp"
 
+# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_rsp
     type(dense_vector_rsp) :: b_, x_
     type(dense_linop_rsp)  :: A_
@@ -822,6 +836,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_rdp
     type(dense_vector_rdp) :: b_, x_
     type(dense_linop_rdp)  :: A_
@@ -834,6 +849,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_csp
     type(dense_vector_csp) :: b_, x_
     type(dense_linop_csp)  :: A_
@@ -846,6 +862,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+# 246 "./src/IterativeSolvers/GMRES/fgmres.fypp"
     module procedure dense_fgmres_cdp
     type(dense_vector_cdp) :: b_, x_
     type(dense_linop_cdp)  :: A_
@@ -858,5 +875,6 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+# 259 "./src/IterativeSolvers/GMRES/fgmres.fypp"
 
 end submodule
