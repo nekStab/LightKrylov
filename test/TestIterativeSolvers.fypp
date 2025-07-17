@@ -201,11 +201,7 @@ contains
         enddo
         #:endif
 
-        do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_${kind}$
-
-        enddo
-        err = maxval(abs(eigvals - true_eigvals))
+        err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_evp_${type[0]}$${kind}$', info='eval correctness', context=msg)

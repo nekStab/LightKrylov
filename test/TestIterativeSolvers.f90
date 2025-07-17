@@ -183,11 +183,7 @@ contains
             k = k+1
         enddo
 
-        do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_sp
-
-        enddo
-        err = maxval(abs(eigvals - true_eigvals))
+        err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_rsp', info='eval correctness', context=msg)
@@ -416,11 +412,7 @@ contains
             k = k+1
         enddo
 
-        do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_dp
-
-        enddo
-        err = maxval(abs(eigvals - true_eigvals))
+        err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_rdp', info='eval correctness', context=msg)
@@ -599,11 +591,7 @@ contains
             true_eigvals(i) = 2*(test_size-i+1) - 1
         enddo
 
-        do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_sp
-
-        enddo
-        err = maxval(abs(eigvals - true_eigvals))
+        err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_csp', info='eval correctness', context=msg)
@@ -793,11 +781,7 @@ contains
             true_eigvals(i) = 2*(test_size-i+1) - 1
         enddo
 
-        do i = 1, size(eigvals)
-            print *, eigvals(i), true_eigvals(i), abs(eigvals(i) - true_eigvals(i)), abs(eigvals(i) - true_eigvals(i)) > rtol_dp
-
-        enddo
-        err = maxval(abs(eigvals - true_eigvals))
+        err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_cdp', info='eval correctness', context=msg)
