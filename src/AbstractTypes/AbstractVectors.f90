@@ -1,8 +1,3 @@
-# 1 "./src/AbstractTypes/AbstractVectors.fypp"
-# 1 "./src/AbstractTypes/../../include/common.fypp" 1
-# 257 "./src/AbstractTypes/../../include/common.fypp"
-# 2 "./src/AbstractTypes/AbstractVectors.fypp" 2
-# 3 "./src/AbstractTypes/AbstractVectors.fypp"
 module LightKrylov_AbstractVectors
     !! This module provides the base class `absract_vector` from which all Krylov vectors
     !! needs to be derived. To use `LightKrylov`, you need to extend one of the
@@ -99,19 +94,14 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Rest of your code ...
         !!  ```
-# 100 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure innerprod_vector_rsp
         module procedure innerprod_matrix_rsp
-# 100 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure innerprod_vector_rdp
         module procedure innerprod_matrix_rdp
-# 100 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure innerprod_vector_csp
         module procedure innerprod_matrix_csp
-# 100 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure innerprod_vector_cdp
         module procedure innerprod_matrix_cdp
-# 103 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     interface Gram
@@ -136,15 +126,10 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Rest of your code ...
         !!  ```
-# 128 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure gram_matrix_rsp
-# 128 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure gram_matrix_rdp
-# 128 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure gram_matrix_csp
-# 128 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure gram_matrix_cdp
-# 130 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     interface linear_combination
@@ -181,19 +166,14 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Rest of your code ...
         !!  ```
-# 167 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure linear_combination_vector_rsp
         module procedure linear_combination_matrix_rsp
-# 167 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure linear_combination_vector_rdp
         module procedure linear_combination_matrix_rdp
-# 167 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure linear_combination_vector_csp
         module procedure linear_combination_matrix_csp
-# 167 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure linear_combination_vector_cdp
         module procedure linear_combination_matrix_cdp
-# 170 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     interface axpby_basis
@@ -225,15 +205,10 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Rest of your code ...
         !!  ```
-# 202 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure axpby_basis_rsp
-# 202 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure axpby_basis_rdp
-# 202 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure axpby_basis_csp
-# 202 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure axpby_basis_cdp
-# 204 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     interface zero_basis
@@ -251,15 +226,10 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!  ```
-# 222 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure zero_basis_rsp
-# 222 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure zero_basis_rdp
-# 222 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure zero_basis_csp
-# 222 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure zero_basis_cdp
-# 224 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     interface copy
@@ -278,19 +248,14 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!  ```
-# 243 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure copy_vector_rsp
         ! module procedure copy_basis_rsp
-# 243 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure copy_vector_rdp
         ! module procedure copy_basis_rdp
-# 243 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure copy_vector_csp
         ! module procedure copy_basis_csp
-# 243 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure copy_vector_cdp
         ! module procedure copy_basis_cdp
-# 246 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     interface rand_basis
@@ -309,15 +274,10 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!  ```
-# 265 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure rand_basis_rsp
-# 265 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure rand_basis_rdp
-# 265 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure rand_basis_csp
-# 265 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure rand_basis_cdp
-# 267 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
 
     type, abstract, public :: abstract_vector
@@ -329,7 +289,6 @@ module LightKrylov_AbstractVectors
         !!  @endwarning
     end type abstract_vector
 
-# 279 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) vector with kind=sp     -----
     !----------------------------------------------------------------------------
@@ -415,7 +374,6 @@ module LightKrylov_AbstractVectors
 
     end interface
 
-# 279 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) vector with kind=dp     -----
     !----------------------------------------------------------------------------
@@ -501,7 +459,6 @@ module LightKrylov_AbstractVectors
 
     end interface
 
-# 279 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) vector with kind=sp     -----
     !----------------------------------------------------------------------------
@@ -587,7 +544,6 @@ module LightKrylov_AbstractVectors
 
     end interface
 
-# 279 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract complex(dp) vector with kind=dp     -----
     !----------------------------------------------------------------------------
@@ -673,9 +629,7 @@ module LightKrylov_AbstractVectors
 
     end interface
 
-# 365 "./src/AbstractTypes/AbstractVectors.fypp"
 
-# 367 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -698,7 +652,6 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_rsp
         !! Return size of specific abstract vector
     end type
-# 367 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -721,7 +674,6 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_rdp
         !! Return size of specific abstract vector
     end type
-# 367 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -744,7 +696,6 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_csp
         !! Return size of specific abstract vector
     end type
-# 367 "./src/AbstractTypes/AbstractVectors.fypp"
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -767,18 +718,12 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_cdp
         !! Return size of specific abstract vector
     end type
-# 390 "./src/AbstractTypes/AbstractVectors.fypp"
 
     interface dense_vector
-# 393 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure initialize_dense_vector_from_array_rsp
-# 393 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure initialize_dense_vector_from_array_rdp
-# 393 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure initialize_dense_vector_from_array_csp
-# 393 "./src/AbstractTypes/AbstractVectors.fypp"
         module procedure initialize_dense_vector_from_array_cdp
-# 395 "./src/AbstractTypes/AbstractVectors.fypp"
     end interface
     public :: dense_vector
 
@@ -788,7 +733,6 @@ contains
     !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
     !-----------------------------------------------------------------------
 
-# 405 "./src/AbstractTypes/AbstractVectors.fypp"
     function norm_rsp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_rsp), intent(in) :: self
@@ -823,7 +767,6 @@ contains
         call self%scal(-one_rsp)
     end subroutine chsgn_rsp
 
-# 405 "./src/AbstractTypes/AbstractVectors.fypp"
     function norm_rdp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_rdp), intent(in) :: self
@@ -858,7 +801,6 @@ contains
         call self%scal(-one_rdp)
     end subroutine chsgn_rdp
 
-# 405 "./src/AbstractTypes/AbstractVectors.fypp"
     function norm_csp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_csp), intent(in) :: self
@@ -893,7 +835,6 @@ contains
         call self%scal(-one_csp)
     end subroutine chsgn_csp
 
-# 405 "./src/AbstractTypes/AbstractVectors.fypp"
     function norm_cdp(self) result(alpha)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_cdp), intent(in) :: self
@@ -928,13 +869,11 @@ contains
         call self%scal(-one_cdp)
     end subroutine chsgn_cdp
 
-# 440 "./src/AbstractTypes/AbstractVectors.fypp"
 
     !--------------------------------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
     !--------------------------------------------------------------------------------
     
-# 446 "./src/AbstractTypes/AbstractVectors.fypp"
     function initialize_dense_vector_from_array_rsp(x) result(vec)
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
@@ -952,9 +891,7 @@ contains
     subroutine dense_rand_rsp(self, ifnorm)
         class(dense_vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-# 464 "./src/AbstractTypes/AbstractVectors.fypp"
         call random_number(self%data)
-# 470 "./src/AbstractTypes/AbstractVectors.fypp"
         return
     end subroutine
 
@@ -981,7 +918,6 @@ contains
         type is(dense_vector_rsp)
             if (beta /= zero_rsp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
-            print *, self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -996,9 +932,7 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_rsp)
-# 512 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dot(n, self%data, 1, vec%data, 1)
-# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1012,7 +946,6 @@ contains
         return
     end function
 
-# 446 "./src/AbstractTypes/AbstractVectors.fypp"
     function initialize_dense_vector_from_array_rdp(x) result(vec)
         real(dp), intent(in) :: x(:)
         type(dense_vector_rdp) :: vec
@@ -1030,9 +963,7 @@ contains
     subroutine dense_rand_rdp(self, ifnorm)
         class(dense_vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-# 464 "./src/AbstractTypes/AbstractVectors.fypp"
         call random_number(self%data)
-# 470 "./src/AbstractTypes/AbstractVectors.fypp"
         return
     end subroutine
 
@@ -1059,7 +990,6 @@ contains
         type is(dense_vector_rdp)
             if (beta /= zero_rdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
-            print *, self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1074,9 +1004,7 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_rdp)
-# 512 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dot(n, self%data, 1, vec%data, 1)
-# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1090,7 +1018,6 @@ contains
         return
     end function
 
-# 446 "./src/AbstractTypes/AbstractVectors.fypp"
     function initialize_dense_vector_from_array_csp(x) result(vec)
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
@@ -1108,11 +1035,9 @@ contains
     subroutine dense_rand_csp(self, ifnorm)
         class(dense_vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-# 466 "./src/AbstractTypes/AbstractVectors.fypp"
         real(sp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
-# 470 "./src/AbstractTypes/AbstractVectors.fypp"
         return
     end subroutine
 
@@ -1139,7 +1064,6 @@ contains
         type is(dense_vector_csp)
             if (beta /= zero_csp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
-            print *, self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1154,9 +1078,7 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_csp)
-# 514 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dotc(n, self%data, 1, vec%data, 1)
-# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1170,7 +1092,6 @@ contains
         return
     end function
 
-# 446 "./src/AbstractTypes/AbstractVectors.fypp"
     function initialize_dense_vector_from_array_cdp(x) result(vec)
         complex(dp), intent(in) :: x(:)
         type(dense_vector_cdp) :: vec
@@ -1188,11 +1109,9 @@ contains
     subroutine dense_rand_cdp(self, ifnorm)
         class(dense_vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
-# 466 "./src/AbstractTypes/AbstractVectors.fypp"
         real(dp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
-# 470 "./src/AbstractTypes/AbstractVectors.fypp"
         return
     end subroutine
 
@@ -1219,7 +1138,6 @@ contains
         type is(dense_vector_cdp)
             if (beta /= zero_cdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
-            print *, self%data
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1234,9 +1152,7 @@ contains
         n = self%get_size()
         select type (vec)
         type is(dense_vector_cdp)
-# 514 "./src/AbstractTypes/AbstractVectors.fypp"
             alpha = dotc(n, self%data, 1, vec%data, 1)
-# 516 "./src/AbstractTypes/AbstractVectors.fypp"
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
@@ -1250,13 +1166,11 @@ contains
         return
     end function
 
-# 530 "./src/AbstractTypes/AbstractVectors.fypp"
     
     !--------------------------------------
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_rsp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1411,7 +1325,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
 
-# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_rdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1566,7 +1479,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
 
-# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_csp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1721,7 +1633,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
 
-# 536 "./src/AbstractTypes/AbstractVectors.fypp"
     subroutine linear_combination_vector_cdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1876,5 +1787,4 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
 
-# 691 "./src/AbstractTypes/AbstractVectors.fypp"
 end module LightKrylov_AbstractVectors

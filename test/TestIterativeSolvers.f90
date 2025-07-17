@@ -1,8 +1,3 @@
-# 1 "./test/TestIterativeSolvers.fypp"
-# 1 "./test/../include/common.fypp" 1
-# 257 "./test/../include/common.fypp"
-# 2 "./test/TestIterativeSolvers.fypp" 2
-# 3 "./test/TestIterativeSolvers.fypp"
 module TestIterativeSolvers
     ! Fortran Standard library.
     use iso_fortran_env
@@ -28,31 +23,26 @@ module TestIterativeSolvers
     character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestIterativeSolvers'
     integer, parameter :: n = 128
 
-# 29 "./test/TestIterativeSolvers.fypp"
     public :: collect_eig_rsp_testsuite
     public :: collect_svd_rsp_testsuite
     public :: collect_gmres_rsp_testsuite
     public :: collect_fgmres_rsp_testsuite
     public :: collect_cg_rsp_testsuite
-# 29 "./test/TestIterativeSolvers.fypp"
     public :: collect_eig_rdp_testsuite
     public :: collect_svd_rdp_testsuite
     public :: collect_gmres_rdp_testsuite
     public :: collect_fgmres_rdp_testsuite
     public :: collect_cg_rdp_testsuite
-# 29 "./test/TestIterativeSolvers.fypp"
     public :: collect_eig_csp_testsuite
     public :: collect_svd_csp_testsuite
     public :: collect_gmres_csp_testsuite
     public :: collect_fgmres_csp_testsuite
     public :: collect_cg_csp_testsuite
-# 29 "./test/TestIterativeSolvers.fypp"
     public :: collect_eig_cdp_testsuite
     public :: collect_svd_cdp_testsuite
     public :: collect_gmres_cdp_testsuite
     public :: collect_fgmres_cdp_testsuite
     public :: collect_cg_cdp_testsuite
-# 35 "./test/TestIterativeSolvers.fypp"
 
 contains
 
@@ -60,15 +50,12 @@ contains
     !-----     DEFINITION OF THE UNIT TESTS FOR EIGS     -----
     !---------------------------------------------------------
 
-# 43 "./test/TestIterativeSolvers.fypp"
     subroutine collect_eig_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
                     new_unittest("Eigs computation", test_evp_rsp), &
-# 49 "./test/TestIterativeSolvers.fypp"
                     new_unittest("Sym. eigs computation", test_sym_evp_rsp), &
-# 53 "./test/TestIterativeSolvers.fypp"
                     new_unittest("KS eigs computation", test_ks_evp_rsp) &
                     ]
         return
@@ -96,7 +83,6 @@ contains
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
-# 81 "./test/TestIterativeSolvers.fypp"
         real(sp) :: a_, b_
 
         ! Allocate eigenvectors.
@@ -145,7 +131,6 @@ contains
         !call check(error, err < rtol_sp)
         !call check_test(error, 'test_ks_evp_rsp', & 
         !                      & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
-# 130 "./test/TestIterativeSolvers.fypp"
 
         return
     end subroutine test_ks_evp_rsp
@@ -179,7 +164,6 @@ contains
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_rsp() ; A%data = 0.0_sp ; n = size(A%data, 1)
 
-# 164 "./test/TestIterativeSolvers.fypp"
         call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
         do i = 1, n
             ! Diagonal entry.
@@ -190,7 +174,6 @@ contains
                 A%data(i+1, i) = -b_
             endif
         enddo
-# 186 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
@@ -198,24 +181,20 @@ contains
 
         ! Analytical eigenvalues.
         true_eigvals = zero_csp; k = 1
-# 194 "./test/TestIterativeSolvers.fypp"
         do i = 1, test_size, 2
             true_eigvals(i) = a_*one_csp + (2*b_*cos(k*pi/(test_size+1)))*one_im_csp
             true_eigvals(i+1) = a_*one_csp - (2*b_*cos(k*pi/(test_size+1)))*one_im_csp
             k = k+1
         enddo
-# 204 "./test/TestIterativeSolvers.fypp"
 
         err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_rsp', info='eval correctness', context=msg)
 
-# 223 "./test/TestIterativeSolvers.fypp"
         return
     end subroutine test_evp_rsp
 
-# 227 "./test/TestIterativeSolvers.fypp"
     subroutine test_sym_evp_rsp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -299,17 +278,13 @@ contains
 
         return
     end subroutine test_sym_evp_rsp
-# 395 "./test/TestIterativeSolvers.fypp"
 
-# 43 "./test/TestIterativeSolvers.fypp"
     subroutine collect_eig_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
                     new_unittest("Eigs computation", test_evp_rdp), &
-# 49 "./test/TestIterativeSolvers.fypp"
                     new_unittest("Sym. eigs computation", test_sym_evp_rdp), &
-# 53 "./test/TestIterativeSolvers.fypp"
                     new_unittest("KS eigs computation", test_ks_evp_rdp) &
                     ]
         return
@@ -337,7 +312,6 @@ contains
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
-# 81 "./test/TestIterativeSolvers.fypp"
         real(dp) :: a_, b_
 
         ! Allocate eigenvectors.
@@ -386,7 +360,6 @@ contains
         !call check(error, err < rtol_dp)
         !call check_test(error, 'test_ks_evp_rdp', & 
         !                      & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
-# 130 "./test/TestIterativeSolvers.fypp"
 
         return
     end subroutine test_ks_evp_rdp
@@ -420,7 +393,6 @@ contains
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_rdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
 
-# 164 "./test/TestIterativeSolvers.fypp"
         call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
         do i = 1, n
             ! Diagonal entry.
@@ -431,7 +403,6 @@ contains
                 A%data(i+1, i) = -b_
             endif
         enddo
-# 186 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
@@ -439,24 +410,20 @@ contains
 
         ! Analytical eigenvalues.
         true_eigvals = zero_cdp; k = 1
-# 194 "./test/TestIterativeSolvers.fypp"
         do i = 1, test_size, 2
             true_eigvals(i) = a_*one_cdp + (2*b_*cos(k*pi/(test_size+1)))*one_im_cdp
             true_eigvals(i+1) = a_*one_cdp - (2*b_*cos(k*pi/(test_size+1)))*one_im_cdp
             k = k+1
         enddo
-# 204 "./test/TestIterativeSolvers.fypp"
 
         err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_rdp', info='eval correctness', context=msg)
 
-# 223 "./test/TestIterativeSolvers.fypp"
         return
     end subroutine test_evp_rdp
 
-# 227 "./test/TestIterativeSolvers.fypp"
     subroutine test_sym_evp_rdp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -540,17 +507,13 @@ contains
 
         return
     end subroutine test_sym_evp_rdp
-# 395 "./test/TestIterativeSolvers.fypp"
 
-# 43 "./test/TestIterativeSolvers.fypp"
     subroutine collect_eig_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
                     new_unittest("Eigs computation", test_evp_csp), &
-# 51 "./test/TestIterativeSolvers.fypp"
                     new_unittest("Hermitian eigs computation", test_hermitian_evp_csp), &
-# 53 "./test/TestIterativeSolvers.fypp"
                     new_unittest("KS eigs computation", test_ks_evp_csp) &
                     ]
         return
@@ -578,7 +541,6 @@ contains
         real(sp) :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
-# 130 "./test/TestIterativeSolvers.fypp"
 
         return
     end subroutine test_ks_evp_csp
@@ -612,7 +574,6 @@ contains
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_csp() ; A%data = 0.0_sp ; n = size(A%data, 1)
 
-# 175 "./test/TestIterativeSolvers.fypp"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = n
@@ -623,7 +584,6 @@ contains
                 A%data(i+1, i) = -A%data(i, i+1)
             endif
         enddo
-# 186 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_sp)
@@ -631,18 +591,15 @@ contains
 
         ! Analytical eigenvalues.
         true_eigvals = zero_csp; k = 1
-# 200 "./test/TestIterativeSolvers.fypp"
         do i = 1, test_size
             true_eigvals(i) = 2*(test_size-i+1) - 1
         enddo
-# 204 "./test/TestIterativeSolvers.fypp"
 
         err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_csp', info='eval correctness', context=msg)
 
-# 211 "./test/TestIterativeSolvers.fypp"
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_csp
         allocate(AX(test_size)) ; call zero_basis(AX)
         do i = 1, test_size
@@ -654,11 +611,9 @@ contains
         call check(error, err < rtol_sp)
         call check_test(error, 'test_evp_csp', &
                         & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
-# 223 "./test/TestIterativeSolvers.fypp"
         return
     end subroutine test_evp_csp
 
-# 311 "./test/TestIterativeSolvers.fypp"
     subroutine test_hermitian_evp_csp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -742,17 +697,13 @@ contains
 
         return
     end subroutine test_hermitian_evp_csp
-# 395 "./test/TestIterativeSolvers.fypp"
 
-# 43 "./test/TestIterativeSolvers.fypp"
     subroutine collect_eig_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
                     new_unittest("Eigs computation", test_evp_cdp), &
-# 51 "./test/TestIterativeSolvers.fypp"
                     new_unittest("Hermitian eigs computation", test_hermitian_evp_cdp), &
-# 53 "./test/TestIterativeSolvers.fypp"
                     new_unittest("KS eigs computation", test_ks_evp_cdp) &
                     ]
         return
@@ -780,7 +731,6 @@ contains
         real(dp) :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
-# 130 "./test/TestIterativeSolvers.fypp"
 
         return
     end subroutine test_ks_evp_cdp
@@ -814,7 +764,6 @@ contains
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_cdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
 
-# 175 "./test/TestIterativeSolvers.fypp"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = n
@@ -825,7 +774,6 @@ contains
                 A%data(i+1, i) = -A%data(i, i+1)
             endif
         enddo
-# 186 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_dp)
@@ -833,18 +781,15 @@ contains
 
         ! Analytical eigenvalues.
         true_eigvals = zero_cdp; k = 1
-# 200 "./test/TestIterativeSolvers.fypp"
         do i = 1, test_size
             true_eigvals(i) = 2*(test_size-i+1) - 1
         enddo
-# 204 "./test/TestIterativeSolvers.fypp"
 
         err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_cdp', info='eval correctness', context=msg)
 
-# 211 "./test/TestIterativeSolvers.fypp"
         allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_cdp
         allocate(AX(test_size)) ; call zero_basis(AX)
         do i = 1, test_size
@@ -856,11 +801,9 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_evp_cdp', &
                         & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
-# 223 "./test/TestIterativeSolvers.fypp"
         return
     end subroutine test_evp_cdp
 
-# 311 "./test/TestIterativeSolvers.fypp"
     subroutine test_hermitian_evp_cdp(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -944,16 +887,13 @@ contains
 
         return
     end subroutine test_hermitian_evp_cdp
-# 395 "./test/TestIterativeSolvers.fypp"
 
-# 397 "./test/TestIterativeSolvers.fypp"
 
 
     !---------------------------------------------------------
     !-----     DEFINITION OF THE UNIT TESTS FOR SVDS     -----
     !---------------------------------------------------------
 
-# 404 "./test/TestIterativeSolvers.fypp"
     subroutine collect_svd_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -992,7 +932,6 @@ contains
         ! Initialize linear operator with the Strang matrix.
         A = linop_rsp() ; A%data = 0.0_sp ; n = size(A%data, 1)
 
-# 443 "./test/TestIterativeSolvers.fypp"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = 2.0_sp
@@ -1002,7 +941,6 @@ contains
                 A%data(i+1, i) = -one_rsp
             endif
         enddo
-# 464 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
@@ -1018,9 +956,7 @@ contains
 
         ! Check against analytical singular values.
         do i = 1, test_size
-# 480 "./test/TestIterativeSolvers.fypp"
             true_svdvals(i) = 2.0_sp * (1.0_sp + cos(i*pi/(test_size+1)))
-# 484 "./test/TestIterativeSolvers.fypp"
         enddo
         err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
@@ -1049,7 +985,6 @@ contains
         return
     end subroutine test_svd_rsp
 
-# 404 "./test/TestIterativeSolvers.fypp"
     subroutine collect_svd_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -1088,7 +1023,6 @@ contains
         ! Initialize linear operator with the Strang matrix.
         A = linop_rdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
 
-# 443 "./test/TestIterativeSolvers.fypp"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = 2.0_dp
@@ -1098,7 +1032,6 @@ contains
                 A%data(i+1, i) = -one_rdp
             endif
         enddo
-# 464 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
@@ -1114,9 +1047,7 @@ contains
 
         ! Check against analytical singular values.
         do i = 1, test_size
-# 480 "./test/TestIterativeSolvers.fypp"
             true_svdvals(i) = 2.0_dp * (1.0_dp + cos(i*pi/(test_size+1)))
-# 484 "./test/TestIterativeSolvers.fypp"
         enddo
         err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
@@ -1145,7 +1076,6 @@ contains
         return
     end subroutine test_svd_rdp
 
-# 404 "./test/TestIterativeSolvers.fypp"
     subroutine collect_svd_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -1184,7 +1114,6 @@ contains
         ! Initialize linear operator with the Strang matrix.
         A = linop_csp() ; A%data = 0.0_sp ; n = size(A%data, 1)
 
-# 453 "./test/TestIterativeSolvers.fypp"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = n
@@ -1195,7 +1124,6 @@ contains
                 A%data(i+1, i) = -A%data(i, i+1)
             endif
         enddo
-# 464 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_sp)
@@ -1211,9 +1139,7 @@ contains
 
         ! Check against analytical singular values.
         do i = 1, test_size
-# 482 "./test/TestIterativeSolvers.fypp"
             true_svdvals(i) = 2*(test_size-i+1) - 1
-# 484 "./test/TestIterativeSolvers.fypp"
         enddo
         err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
@@ -1242,7 +1168,6 @@ contains
         return
     end subroutine test_svd_csp
 
-# 404 "./test/TestIterativeSolvers.fypp"
     subroutine collect_svd_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -1281,7 +1206,6 @@ contains
         ! Initialize linear operator with the Strang matrix.
         A = linop_cdp() ; A%data = 0.0_dp ; n = size(A%data, 1)
 
-# 453 "./test/TestIterativeSolvers.fypp"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = n
@@ -1292,7 +1216,6 @@ contains
                 A%data(i+1, i) = -A%data(i, i+1)
             endif
         enddo
-# 464 "./test/TestIterativeSolvers.fypp"
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_dp)
@@ -1308,9 +1231,7 @@ contains
 
         ! Check against analytical singular values.
         do i = 1, test_size
-# 482 "./test/TestIterativeSolvers.fypp"
             true_svdvals(i) = 2*(test_size-i+1) - 1
-# 484 "./test/TestIterativeSolvers.fypp"
         enddo
         err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
@@ -1339,13 +1260,11 @@ contains
         return
     end subroutine test_svd_cdp
 
-# 513 "./test/TestIterativeSolvers.fypp"
 
     !----------------------------------------------------------
     !-----     DEFINITION OF THE UNIT TESTS FOR GMRES     -----
     !----------------------------------------------------------
 
-# 519 "./test/TestIterativeSolvers.fypp"
     subroutine collect_gmres_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1371,9 +1290,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 545 "./test/TestIterativeSolvers.fypp"
         call random_number(A) ; call random_number(b) ; x = 0.0_sp
-# 553 "./test/TestIterativeSolvers.fypp"
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1393,9 +1310,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 573 "./test/TestIterativeSolvers.fypp"
         type(spd_linop_rsp) , allocatable :: A ! Linear Operator.
-# 577 "./test/TestIterativeSolvers.fypp"
         type(vector_rsp), allocatable :: b ! Right-hand side vector.
         type(vector_rsp), allocatable :: x ! Solution vector.
         ! GMRES options.
@@ -1409,9 +1324,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 591 "./test/TestIterativeSolvers.fypp"
         A = spd_linop_rsp()  ; call init_rand(A)
-# 595 "./test/TestIterativeSolvers.fypp"
         b = vector_rsp() ; call init_rand(b)
         x = vector_rsp() ; call x%zero()
 
@@ -1429,7 +1342,6 @@ contains
         return
     end subroutine test_gmres_spd_rsp
 
-# 519 "./test/TestIterativeSolvers.fypp"
     subroutine collect_gmres_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1455,9 +1367,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 545 "./test/TestIterativeSolvers.fypp"
         call random_number(A) ; call random_number(b) ; x = 0.0_dp
-# 553 "./test/TestIterativeSolvers.fypp"
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1477,9 +1387,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 573 "./test/TestIterativeSolvers.fypp"
         type(spd_linop_rdp) , allocatable :: A ! Linear Operator.
-# 577 "./test/TestIterativeSolvers.fypp"
         type(vector_rdp), allocatable :: b ! Right-hand side vector.
         type(vector_rdp), allocatable :: x ! Solution vector.
         ! GMRES options.
@@ -1493,9 +1401,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 591 "./test/TestIterativeSolvers.fypp"
         A = spd_linop_rdp()  ; call init_rand(A)
-# 595 "./test/TestIterativeSolvers.fypp"
         b = vector_rdp() ; call init_rand(b)
         x = vector_rdp() ; call x%zero()
 
@@ -1513,7 +1419,6 @@ contains
         return
     end subroutine test_gmres_spd_rdp
 
-# 519 "./test/TestIterativeSolvers.fypp"
     subroutine collect_gmres_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1539,13 +1444,11 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 547 "./test/TestIterativeSolvers.fypp"
         real(sp) :: Adata(n, n, 2), bdata(n, 2)
         call random_number(Adata) ; call random_number(bdata)
         A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
         b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
         x = 0.0_sp
-# 553 "./test/TestIterativeSolvers.fypp"
 
         ! GMRES solver.
         opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1565,9 +1468,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 575 "./test/TestIterativeSolvers.fypp"
         type(hermitian_linop_csp), allocatable :: A
-# 577 "./test/TestIterativeSolvers.fypp"
         type(vector_csp), allocatable :: b ! Right-hand side vector.
         type(vector_csp), allocatable :: x ! Solution vector.
         ! GMRES options.
@@ -1581,9 +1482,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 593 "./test/TestIterativeSolvers.fypp"
         A = hermitian_linop_csp() ; call init_rand(A)
-# 595 "./test/TestIterativeSolvers.fypp"
         b = vector_csp() ; call init_rand(b)
         x = vector_csp() ; call x%zero()
 
@@ -1601,7 +1500,6 @@ contains
         return
     end subroutine test_gmres_spd_csp
 
-# 519 "./test/TestIterativeSolvers.fypp"
     subroutine collect_gmres_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1627,13 +1525,11 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 547 "./test/TestIterativeSolvers.fypp"
         real(dp) :: Adata(n, n, 2), bdata(n, 2)
         call random_number(Adata) ; call random_number(bdata)
         A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
         b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
         x = 0.0_dp
-# 553 "./test/TestIterativeSolvers.fypp"
 
         ! GMRES solver.
         opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1653,9 +1549,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 575 "./test/TestIterativeSolvers.fypp"
         type(hermitian_linop_cdp), allocatable :: A
-# 577 "./test/TestIterativeSolvers.fypp"
         type(vector_cdp), allocatable :: b ! Right-hand side vector.
         type(vector_cdp), allocatable :: x ! Solution vector.
         ! GMRES options.
@@ -1669,9 +1563,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 593 "./test/TestIterativeSolvers.fypp"
         A = hermitian_linop_cdp() ; call init_rand(A)
-# 595 "./test/TestIterativeSolvers.fypp"
         b = vector_cdp() ; call init_rand(b)
         x = vector_cdp() ; call x%zero()
 
@@ -1689,13 +1581,11 @@ contains
         return
     end subroutine test_gmres_spd_cdp
 
-# 613 "./test/TestIterativeSolvers.fypp"
 
     !----------------------------------------------------------
     !-----     DEFINITION OF THE UNIT TESTS FOR FGMRES     -----
     !----------------------------------------------------------
 
-# 619 "./test/TestIterativeSolvers.fypp"
     subroutine collect_fgmres_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1720,9 +1610,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 644 "./test/TestIterativeSolvers.fypp"
         call random_number(A) ; call random_number(b) ; x = 0.0_sp
-# 652 "./test/TestIterativeSolvers.fypp"
 
         ! FGMRES solver.
         opts = fgmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1738,7 +1626,6 @@ contains
         return
     end subroutine test_fgmres_rsp
     
-# 619 "./test/TestIterativeSolvers.fypp"
     subroutine collect_fgmres_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1763,9 +1650,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 644 "./test/TestIterativeSolvers.fypp"
         call random_number(A) ; call random_number(b) ; x = 0.0_dp
-# 652 "./test/TestIterativeSolvers.fypp"
 
         ! FGMRES solver.
         opts = fgmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1781,7 +1666,6 @@ contains
         return
     end subroutine test_fgmres_rdp
     
-# 619 "./test/TestIterativeSolvers.fypp"
     subroutine collect_fgmres_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1806,13 +1690,11 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 646 "./test/TestIterativeSolvers.fypp"
         real(sp) :: Adata(n, n, 2), bdata(n, 2)
         call random_number(Adata) ; call random_number(bdata)
         A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
         b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
         x = 0.0_sp
-# 652 "./test/TestIterativeSolvers.fypp"
 
         ! FGMRES solver.
         opts = fgmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1828,7 +1710,6 @@ contains
         return
     end subroutine test_fgmres_csp
     
-# 619 "./test/TestIterativeSolvers.fypp"
     subroutine collect_fgmres_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1853,13 +1734,11 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 646 "./test/TestIterativeSolvers.fypp"
         real(dp) :: Adata(n, n, 2), bdata(n, 2)
         call random_number(Adata) ; call random_number(bdata)
         A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
         b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
         x = 0.0_dp
-# 652 "./test/TestIterativeSolvers.fypp"
 
         ! FGMRES solver.
         opts = fgmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
@@ -1875,13 +1754,11 @@ contains
         return
     end subroutine test_fgmres_cdp
     
-# 668 "./test/TestIterativeSolvers.fypp"
 
     !-----------------------------------------------------------------------
     !-----     DEFINITION OF THE UNIT TESTS FOR CONJUGATE GRADIENT     -----
     !-----------------------------------------------------------------------
 
-# 674 "./test/TestIterativeSolvers.fypp"
     subroutine collect_cg_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1894,9 +1771,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 687 "./test/TestIterativeSolvers.fypp"
         type(spd_linop_rsp), allocatable :: A
-# 691 "./test/TestIterativeSolvers.fypp"
         type(vector_rsp), allocatable :: b
         type(vector_rsp), allocatable :: x
         ! CG options.
@@ -1910,9 +1785,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 705 "./test/TestIterativeSolvers.fypp"
         A = spd_linop_rsp() ; call init_rand(A)
-# 709 "./test/TestIterativeSolvers.fypp"
         b = vector_rsp() ; call init_rand(b)
         x = vector_rsp() ; call x%zero()
 
@@ -1930,7 +1803,6 @@ contains
         return
     end subroutine test_cg_rsp
 
-# 674 "./test/TestIterativeSolvers.fypp"
     subroutine collect_cg_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1943,9 +1815,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 687 "./test/TestIterativeSolvers.fypp"
         type(spd_linop_rdp), allocatable :: A
-# 691 "./test/TestIterativeSolvers.fypp"
         type(vector_rdp), allocatable :: b
         type(vector_rdp), allocatable :: x
         ! CG options.
@@ -1959,9 +1829,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 705 "./test/TestIterativeSolvers.fypp"
         A = spd_linop_rdp() ; call init_rand(A)
-# 709 "./test/TestIterativeSolvers.fypp"
         b = vector_rdp() ; call init_rand(b)
         x = vector_rdp() ; call x%zero()
 
@@ -1979,7 +1847,6 @@ contains
         return
     end subroutine test_cg_rdp
 
-# 674 "./test/TestIterativeSolvers.fypp"
     subroutine collect_cg_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -1992,9 +1859,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 689 "./test/TestIterativeSolvers.fypp"
         type(hermitian_linop_csp), allocatable :: A
-# 691 "./test/TestIterativeSolvers.fypp"
         type(vector_csp), allocatable :: b
         type(vector_csp), allocatable :: x
         ! CG options.
@@ -2008,9 +1873,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 707 "./test/TestIterativeSolvers.fypp"
         A = hermitian_linop_csp() ; call init_rand(A)
-# 709 "./test/TestIterativeSolvers.fypp"
         b = vector_csp() ; call init_rand(b)
         x = vector_csp() ; call x%zero()
 
@@ -2028,7 +1891,6 @@ contains
         return
     end subroutine test_cg_csp
 
-# 674 "./test/TestIterativeSolvers.fypp"
     subroutine collect_cg_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
@@ -2041,9 +1903,7 @@ contains
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
         ! Linear problem.
-# 689 "./test/TestIterativeSolvers.fypp"
         type(hermitian_linop_cdp), allocatable :: A
-# 691 "./test/TestIterativeSolvers.fypp"
         type(vector_cdp), allocatable :: b
         type(vector_cdp), allocatable :: x
         ! CG options.
@@ -2057,9 +1917,7 @@ contains
         character(len=256) :: msg
 
         ! Initialize linear problem.
-# 707 "./test/TestIterativeSolvers.fypp"
         A = hermitian_linop_cdp() ; call init_rand(A)
-# 709 "./test/TestIterativeSolvers.fypp"
         b = vector_cdp() ; call init_rand(b)
         x = vector_cdp() ; call x%zero()
 
@@ -2077,7 +1935,6 @@ contains
         return
     end subroutine test_cg_cdp
 
-# 727 "./test/TestIterativeSolvers.fypp"
 
 end module TestIterativeSolvers
 
