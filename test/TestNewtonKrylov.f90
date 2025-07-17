@@ -211,7 +211,7 @@ contains
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        !call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
-       write(infomsg, 'A') 'blank'
+       write(infomsg, '(A)') 'blank'
        call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
 
        X%x = zero_csp
@@ -279,7 +279,7 @@ contains
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        !call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
-       write(infomsg, 'A') 'blank'
+       write(infomsg, '(A)') 'blank'
        call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
 
        X%x = zero_cdp
