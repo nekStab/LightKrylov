@@ -261,8 +261,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = fgmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (fgmres_meta%converged) then
+            info = fgmres_meta%n_iter
+        else
+            info = -fgmres_meta%n_iter
+        end if
         fgmres_meta%info = info
 
         if (opts%if_print_metadata) call fgmres_meta%print()
@@ -437,8 +441,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = fgmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (fgmres_meta%converged) then
+            info = fgmres_meta%n_iter
+        else
+            info = -fgmres_meta%n_iter
+        end if
         fgmres_meta%info = info
 
         if (opts%if_print_metadata) call fgmres_meta%print()
@@ -613,8 +621,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = fgmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (fgmres_meta%converged) then
+            info = fgmres_meta%n_iter
+        else
+            info = -fgmres_meta%n_iter
+        end if
         fgmres_meta%info = info
 
         if (opts%if_print_metadata) call fgmres_meta%print()
@@ -789,8 +801,12 @@ contains
         enddo
         end associate
 
-        ! Returns the number of iterations.
-        info = fgmres_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (fgmres_meta%converged) then
+            info = fgmres_meta%n_iter
+        else
+            info = -fgmres_meta%n_iter
+        end if
         fgmres_meta%info = info
 
         if (opts%if_print_metadata) call fgmres_meta%print()
