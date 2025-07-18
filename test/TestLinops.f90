@@ -185,28 +185,6 @@ contains
             if (allocated(error)) return
         end block
 
-        !-------------------------------
-        !-----     axpby Linop     -----
-        !-------------------------------
-        block
-            type(dense_linop_rsp) :: A, B
-            type(axpby_linop_rsp) :: C
-            real(sp), parameter :: alpha = one_rsp
-            real(sp), parameter :: beta = one_rsp
-
-            ! Initialize vectors.
-            x = dense_vector(x_) ; call x%rand()
-            y = dense_vector(y_) ; call y%zero()
-
-            ! Initialize matrix.
-            allocate(A%data(n, n), B%data(n, n))
-            call random_number(A%data)
-            call random_number(B%data)
-
-            ! Compute matrix-vector product.
-            C = axpby_linop_rsp(A, B, alpha, beta)
-        end block
-
         return
     end subroutine test_special_linops_matvec_rsp
 
@@ -363,28 +341,6 @@ contains
             call check(error, norm(y%data - x%data, 2) < rtol_dp)
             call check_test(error, 'test_Id_matvec_rdp', eq='y - I.H @ x')
             if (allocated(error)) return
-        end block
-
-        !-------------------------------
-        !-----     axpby Linop     -----
-        !-------------------------------
-        block
-            type(dense_linop_rdp) :: A, B
-            type(axpby_linop_rdp) :: C
-            real(dp), parameter :: alpha = one_rdp
-            real(dp), parameter :: beta = one_rdp
-
-            ! Initialize vectors.
-            x = dense_vector(x_) ; call x%rand()
-            y = dense_vector(y_) ; call y%zero()
-
-            ! Initialize matrix.
-            allocate(A%data(n, n), B%data(n, n))
-            call random_number(A%data)
-            call random_number(B%data)
-
-            ! Compute matrix-vector product.
-            C = axpby_linop_rdp(A, B, alpha, beta)
         end block
 
         return
@@ -549,29 +505,6 @@ contains
             if (allocated(error)) return
         end block
 
-        !-------------------------------
-        !-----     axpby Linop     -----
-        !-------------------------------
-        block
-            type(dense_linop_csp) :: A, B
-            type(axpby_linop_csp) :: C
-            complex(sp), parameter :: alpha = one_csp
-            complex(sp), parameter :: beta = one_csp
-            real(sp) :: Adata(n, n, 2)
-
-            ! Initialize vectors.
-            x = dense_vector(x_) ; call x%rand()
-            y = dense_vector(y_) ; call y%zero()
-
-            ! Initialize matrix.
-            allocate(A%data(n, n), B%data(n, n))
-            call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
-            call random_number(Adata) ; B%data%re = Adata(:, :, 1) ; B%data%im = Adata(:, :, 2)
-
-            ! Compute matrix-vector product.
-            C = axpby_linop_csp(A, B, alpha, beta)
-        end block
-
         return
     end subroutine test_special_linops_matvec_csp
 
@@ -732,29 +665,6 @@ contains
             call check(error, norm(y%data - x%data, 2) < rtol_dp)
             call check_test(error, 'test_Id_matvec_cdp', eq='y - I.H @ x')
             if (allocated(error)) return
-        end block
-
-        !-------------------------------
-        !-----     axpby Linop     -----
-        !-------------------------------
-        block
-            type(dense_linop_cdp) :: A, B
-            type(axpby_linop_cdp) :: C
-            complex(dp), parameter :: alpha = one_cdp
-            complex(dp), parameter :: beta = one_cdp
-            real(dp) :: Adata(n, n, 2)
-
-            ! Initialize vectors.
-            x = dense_vector(x_) ; call x%rand()
-            y = dense_vector(y_) ; call y%zero()
-
-            ! Initialize matrix.
-            allocate(A%data(n, n), B%data(n, n))
-            call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
-            call random_number(Adata) ; B%data%re = Adata(:, :, 1) ; B%data%im = Adata(:, :, 2)
-
-            ! Compute matrix-vector product.
-            C = axpby_linop_cdp(A, B, alpha, beta)
         end block
 
         return
