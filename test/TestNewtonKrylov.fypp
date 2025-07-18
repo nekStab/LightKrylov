@@ -81,13 +81,13 @@ contains
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_${kind}$)
        #:if type[0] == "r"
-       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
+       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        #:else
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        !call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
-       write(infomsg, '(A)') 'blank'
+       !write(infomsg, '(A)') 'blank'
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        #:endif
 
