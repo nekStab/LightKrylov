@@ -190,7 +190,7 @@ module LightKrylov_AbstractVectors
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
         !!  If you do need an out-of-place version, you can combine `axpby_basis`
-        !!  with `copy_basis`.
+        !!  with `copy`.
         !!
         !!  ### Example
         !!
@@ -244,7 +244,7 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!
-        !!      call copy_basis(Y, X)
+        !!      call copy(Y, X)
         !!
         !!      ! ... Your code ...
         !!  ```
@@ -884,7 +884,7 @@ contains
     subroutine dense_zero_rsp(self)
         class(dense_vector_rsp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_sp
+        self%data = zero_rsp
         return
     end subroutine
 
@@ -908,11 +908,15 @@ contains
         real(sp), intent(in) :: alpha, beta
         class(dense_vector_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec
-        integer :: n
+        integer :: n, m
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_rsp)
         n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_rsp)
-            if (beta /= 0.0_sp) call self%scal(beta)
+            if (beta /= zero_rsp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
@@ -952,7 +956,7 @@ contains
     subroutine dense_zero_rdp(self)
         class(dense_vector_rdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_dp
+        self%data = zero_rdp
         return
     end subroutine
 
@@ -976,11 +980,15 @@ contains
         real(dp), intent(in) :: alpha, beta
         class(dense_vector_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec
-        integer :: n
+        integer :: n, m
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_rdp)
         n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_rdp)
-            if (beta /= 0.0_dp) call self%scal(beta)
+            if (beta /= zero_rdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
@@ -1020,7 +1028,7 @@ contains
     subroutine dense_zero_csp(self)
         class(dense_vector_csp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_sp
+        self%data = zero_csp
         return
     end subroutine
 
@@ -1046,11 +1054,15 @@ contains
         complex(sp), intent(in) :: alpha, beta
         class(dense_vector_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec
-        integer :: n
+        integer :: n, m
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_csp)
         n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_csp)
-            if (beta /= 0.0_sp) call self%scal(beta)
+            if (beta /= zero_csp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
@@ -1090,7 +1102,7 @@ contains
     subroutine dense_zero_cdp(self)
         class(dense_vector_cdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_dp
+        self%data = zero_cdp
         return
     end subroutine
 
@@ -1116,11 +1128,15 @@ contains
         complex(dp), intent(in) :: alpha, beta
         class(dense_vector_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec
-        integer :: n
+        integer :: n, m
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_cdp)
         n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_cdp)
-            if (beta /= 0.0_dp) call self%scal(beta)
+            if (beta /= zero_cdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')

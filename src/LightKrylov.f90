@@ -33,15 +33,19 @@ module LightKrylov
 
     ! Utils exports.
     public :: gmres_sp_opts
+    public :: fgmres_sp_opts
     public :: cg_sp_opts
     public :: newton_sp_opts
     public :: gmres_dp_opts
+    public :: fgmres_dp_opts
     public :: cg_dp_opts
     public :: newton_dp_opts
     public :: gmres_sp_metadata
+    public :: fgmres_sp_metadata
     public :: cg_sp_metadata
     public :: newton_sp_metadata
     public :: gmres_dp_metadata
+    public :: fgmres_dp_metadata
     public :: cg_dp_metadata
     public :: newton_dp_metadata
 

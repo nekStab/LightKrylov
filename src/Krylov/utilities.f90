@@ -37,6 +37,7 @@ contains
 
     module procedure invperm
         integer :: i
+        allocate(inv_perm(size(perm)), source=0)
         inv_perm(perm) = [(i, i=1, size(perm))]
     end procedure
 

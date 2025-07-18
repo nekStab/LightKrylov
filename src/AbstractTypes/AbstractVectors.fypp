@@ -183,7 +183,7 @@ module LightKrylov_AbstractVectors
         !!
         !!  No out-of-place alternative is currently available in `LightKrylov`.
         !!  If you do need an out-of-place version, you can combine `axpby_basis`
-        !!  with `copy_basis`.
+        !!  with `copy`.
         !!
         !!  ### Example
         !!
@@ -235,7 +235,7 @@ module LightKrylov_AbstractVectors
         !!
         !!      ! ... Your code ...
         !!
-        !!      call copy_basis(Y, X)
+        !!      call copy(Y, X)
         !!
         !!      ! ... Your code ...
         !!  ```
@@ -453,7 +453,7 @@ contains
     subroutine dense_zero_${type[0]}$${kind}$(self)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
-        self%data = 0.0_${kind}$
+        self%data = zero_${type[0]}$${kind}$
         return
     end subroutine
 
@@ -483,11 +483,15 @@ contains
         ${type}$, intent(in) :: alpha, beta
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
-        integer :: n
+        integer :: n, m
+        m = vec%get_size()
+        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_${type[0]}$${kind}$)
         n = self%get_size()
+        if (m /= n) error stop "Inconsistent size between the two vectors."
+
         select type (vec)
         type is(dense_vector_${type[0]}$${kind}$)
-            if (beta /= 0.0_${kind}$) call self%scal(beta)
+            if (beta /= zero_${type[0]}$${kind}$) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
