@@ -37,7 +37,8 @@ contains
                     new_unittest("Matrix-vector product", test_matvec_rsp), &
                     new_unittest("Tranpose Matrix-vector product", test_rmatvec_rsp),  &
                     new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rsp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rsp) &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rsp), &
+                    new_unittest("Special Linops matrix-vector products", test_special_linops_matvec_rsp) &
                     ]
         return
     end subroutine collect_linop_rsp_testsuite
@@ -151,6 +152,63 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_rsp
+    
+    subroutine test_special_linops_matvec_rsp(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(dense_vector_rsp) :: x, y, z
+        real(sp) :: x_(n), y_(n), z_(n)
+
+        !--------------------------------
+        !-----     Identity map     -----
+        !--------------------------------
+        block
+            type(Id_rsp) :: Id
+            
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Compute matrix-vector product.
+            call Id%apply_matvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_sp)
+            call check_test(error, 'test_Id_matvec_rsp', eq='y - I @ x')
+            if (allocated(error)) return
+
+            ! Compute transposed matrix-vector product.
+            call Id%apply_rmatvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_sp)
+            call check_test(error, 'test_Id_matvec_rsp', eq='y - I.H @ x')
+            if (allocated(error)) return
+        end block
+
+        !-------------------------------
+        !-----     axpby Linop     -----
+        !-------------------------------
+        block
+            type(dense_linop_rsp) :: A, B
+            type(axpby_linop_rsp) :: C
+            real(sp), parameter :: alpha = one_rsp
+            real(sp), parameter :: beta = one_rsp
+
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Initialize matrix.
+            allocate(A%data(n, n), B%data(n, n))
+            call random_number(A%data)
+            call random_number(B%data)
+
+            ! Compute matrix-vector product.
+            C = axpby_linop_rsp(A, B, alpha, beta)
+        end block
+
+        return
+    end subroutine test_special_linops_matvec_rsp
 
     subroutine collect_linop_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -159,7 +217,8 @@ contains
                     new_unittest("Matrix-vector product", test_matvec_rdp), &
                     new_unittest("Tranpose Matrix-vector product", test_rmatvec_rdp),  &
                     new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rdp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rdp) &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rdp), &
+                    new_unittest("Special Linops matrix-vector products", test_special_linops_matvec_rdp) &
                     ]
         return
     end subroutine collect_linop_rdp_testsuite
@@ -273,6 +332,63 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_rdp
+    
+    subroutine test_special_linops_matvec_rdp(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(dense_vector_rdp) :: x, y, z
+        real(dp) :: x_(n), y_(n), z_(n)
+
+        !--------------------------------
+        !-----     Identity map     -----
+        !--------------------------------
+        block
+            type(Id_rdp) :: Id
+            
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Compute matrix-vector product.
+            call Id%apply_matvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_dp)
+            call check_test(error, 'test_Id_matvec_rdp', eq='y - I @ x')
+            if (allocated(error)) return
+
+            ! Compute transposed matrix-vector product.
+            call Id%apply_rmatvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_dp)
+            call check_test(error, 'test_Id_matvec_rdp', eq='y - I.H @ x')
+            if (allocated(error)) return
+        end block
+
+        !-------------------------------
+        !-----     axpby Linop     -----
+        !-------------------------------
+        block
+            type(dense_linop_rdp) :: A, B
+            type(axpby_linop_rdp) :: C
+            real(dp), parameter :: alpha = one_rdp
+            real(dp), parameter :: beta = one_rdp
+
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Initialize matrix.
+            allocate(A%data(n, n), B%data(n, n))
+            call random_number(A%data)
+            call random_number(B%data)
+
+            ! Compute matrix-vector product.
+            C = axpby_linop_rdp(A, B, alpha, beta)
+        end block
+
+        return
+    end subroutine test_special_linops_matvec_rdp
 
     subroutine collect_linop_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -281,7 +397,8 @@ contains
                     new_unittest("Matrix-vector product", test_matvec_csp), &
                     new_unittest("Tranpose Matrix-vector product", test_rmatvec_csp),  &
                     new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_csp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_csp) &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_csp), &
+                    new_unittest("Special Linops matrix-vector products", test_special_linops_matvec_csp) &
                     ]
         return
     end subroutine collect_linop_csp_testsuite
@@ -399,6 +516,64 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_csp
+    
+    subroutine test_special_linops_matvec_csp(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(dense_vector_csp) :: x, y, z
+        complex(sp) :: x_(n), y_(n), z_(n)
+
+        !--------------------------------
+        !-----     Identity map     -----
+        !--------------------------------
+        block
+            type(Id_csp) :: Id
+            
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Compute matrix-vector product.
+            call Id%apply_matvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_sp)
+            call check_test(error, 'test_Id_matvec_csp', eq='y - I @ x')
+            if (allocated(error)) return
+
+            ! Compute transposed matrix-vector product.
+            call Id%apply_rmatvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_sp)
+            call check_test(error, 'test_Id_matvec_csp', eq='y - I.H @ x')
+            if (allocated(error)) return
+        end block
+
+        !-------------------------------
+        !-----     axpby Linop     -----
+        !-------------------------------
+        block
+            type(dense_linop_csp) :: A, B
+            type(axpby_linop_csp) :: C
+            complex(sp), parameter :: alpha = one_csp
+            complex(sp), parameter :: beta = one_csp
+            real(sp) :: Adata(n, n, 2)
+
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Initialize matrix.
+            allocate(A%data(n, n), B%data(n, n))
+            call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+            call random_number(Adata) ; B%data%re = Adata(:, :, 1) ; B%data%im = Adata(:, :, 2)
+
+            ! Compute matrix-vector product.
+            C = axpby_linop_csp(A, B, alpha, beta)
+        end block
+
+        return
+    end subroutine test_special_linops_matvec_csp
 
     subroutine collect_linop_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -407,7 +582,8 @@ contains
                     new_unittest("Matrix-vector product", test_matvec_cdp), &
                     new_unittest("Tranpose Matrix-vector product", test_rmatvec_cdp),  &
                     new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_cdp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_cdp) &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_cdp), &
+                    new_unittest("Special Linops matrix-vector products", test_special_linops_matvec_cdp) &
                     ]
         return
     end subroutine collect_linop_cdp_testsuite
@@ -525,6 +701,64 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_cdp
+    
+    subroutine test_special_linops_matvec_cdp(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(dense_vector_cdp) :: x, y, z
+        complex(dp) :: x_(n), y_(n), z_(n)
+
+        !--------------------------------
+        !-----     Identity map     -----
+        !--------------------------------
+        block
+            type(Id_cdp) :: Id
+            
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Compute matrix-vector product.
+            call Id%apply_matvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_dp)
+            call check_test(error, 'test_Id_matvec_cdp', eq='y - I @ x')
+            if (allocated(error)) return
+
+            ! Compute transposed matrix-vector product.
+            call Id%apply_rmatvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_dp)
+            call check_test(error, 'test_Id_matvec_cdp', eq='y - I.H @ x')
+            if (allocated(error)) return
+        end block
+
+        !-------------------------------
+        !-----     axpby Linop     -----
+        !-------------------------------
+        block
+            type(dense_linop_cdp) :: A, B
+            type(axpby_linop_cdp) :: C
+            complex(dp), parameter :: alpha = one_cdp
+            complex(dp), parameter :: beta = one_cdp
+            real(dp) :: Adata(n, n, 2)
+
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Initialize matrix.
+            allocate(A%data(n, n), B%data(n, n))
+            call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+            call random_number(Adata) ; B%data%re = Adata(:, :, 1) ; B%data%im = Adata(:, :, 2)
+
+            ! Compute matrix-vector product.
+            C = axpby_linop_cdp(A, B, alpha, beta)
+        end block
+
+        return
+    end subroutine test_special_linops_matvec_cdp
 
 end module TestLinops
 

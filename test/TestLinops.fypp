@@ -39,7 +39,8 @@ contains
                     new_unittest("Matrix-vector product", test_matvec_${type[0]}$${kind}$), &
                     new_unittest("Tranpose Matrix-vector product", test_rmatvec_${type[0]}$${kind}$),  &
                     new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${type[0]}$${kind}$),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${type[0]}$${kind}$) &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${type[0]}$${kind}$), &
+                    new_unittest("Special Linops matrix-vector products", test_special_linops_matvec_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_linop_${type[0]}$${kind}$_testsuite
@@ -181,6 +182,41 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_${type[0]}$${kind}$
+    
+    subroutine test_special_linops_matvec_${type[0]}$${kind}$(error)
+        ! Error to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(dense_vector_${type[0]}$${kind}$) :: x, y, z
+        ${type}$ :: x_(n), y_(n), z_(n)
+
+        !--------------------------------
+        !-----     Identity map     -----
+        !--------------------------------
+        block
+            type(Id_${type[0]}$${kind}$) :: Id
+            
+            ! Initialize vectors.
+            x = dense_vector(x_) ; call x%rand()
+            y = dense_vector(y_) ; call y%zero()
+
+            ! Compute matrix-vector product.
+            call Id%apply_matvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_${kind}$)
+            call check_test(error, 'test_Id_matvec_${type[0]}$${kind}$', eq='y - I @ x')
+            if (allocated(error)) return
+
+            ! Compute transposed matrix-vector product.
+            call Id%apply_rmatvec(x, y)
+            ! Check results.
+            call check(error, norm(y%data - x%data, 2) < rtol_${kind}$)
+            call check_test(error, 'test_Id_matvec_${type[0]}$${kind}$', eq='y - I.H @ x')
+            if (allocated(error)) return
+        end block
+
+        return
+    end subroutine test_special_linops_matvec_${type[0]}$${kind}$
 
     #:endfor
 end module TestLinops
