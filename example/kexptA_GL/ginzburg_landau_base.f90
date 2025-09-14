@@ -33,7 +33,7 @@ module Ginzburg_Landau_Base
 
    ! Mesh related parameters.
    real(wp), parameter :: L  = 50.0_wp ! Domain length
-   integer,  parameter :: nx = 256      ! Number of grid points (excluding boundaries).
+   integer,  parameter :: nx = 64      ! Number of grid points (excluding boundaries).
    real(wp)            :: dx           ! Grid size.
 
    !-------------------------------------------
@@ -105,15 +105,15 @@ subroutine initialize_parameters()
    ! Define integration weights
    weight          = dx
 
-   print '(A)', ' ----------------------------------------'
-   print '(A)', '    LINEAR GINZBURG LANDAU PARAMETERS'
-   print '(A)', ' ----------------------------------------'
-   print '(4X,A,F10.6," + ",F10.6," i")', 'nu    = ', nu
-   print '(4X,A,F10.6," + ",F10.6," i")', 'gamma = ', gamma
-   print '(4X,A,F10.6)', 'mu_0  = ', mu_0
-   print '(4X,A,F10.6)', 'c_mu  = ', c_mu
-   print '(4X,A,F10.6)', 'mu_2  = ', mu_2
-   print '(A)', ' ----------------------------------------'
+   print '(A)', '#----------------------------------------'
+   print '(A)', '#    LINEAR GINZBURG LANDAU PARAMETERS'
+   print '(A)', '#----------------------------------------'
+   print '(A,4X,A,F10.6," + ",F10.6," i")', '#', 'nu    = ', nu
+   print '(A,4X,A,F10.6," + ",F10.6," i")', '#', 'gamma = ', gamma
+   print '(A,4X,A,F10.6)', '#', 'mu_0  = ', mu_0
+   print '(A,4X,A,F10.6)', '#', 'c_mu  = ', c_mu
+   print '(A,4X,A,F10.6)', '#', 'mu_2  = ', mu_2
+   print '(A)', '#----------------------------------------'
 
    return
 end subroutine initialize_parameters
