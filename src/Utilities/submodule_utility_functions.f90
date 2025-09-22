@@ -6,6 +6,7 @@ submodule(lightkrylov_utils) utility_functions
     use stdlib_linalg_constants, only: ilp
     use stdlib_linalg_lapack, only: geev, trsen
     use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
+    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
 
     implicit none(type, external)
 contains
@@ -89,11 +90,13 @@ contains
     !----- Eigenvalue Decomposition -----
 
     module procedure eig_rsp
+        character(len=*), parameter :: this_procedure = 'eig_rsp'
         ! Lapack variables.
         character :: jobvl = "n", jobvr = "v"
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         real(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         real(sp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -105,13 +108,16 @@ contains
 
         ! Complex eigenvalues.
         vals = one_csp*wr + one_im_csp*wi
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure eig_rdp
+        character(len=*), parameter :: this_procedure = 'eig_rdp'
         ! Lapack variables.
         character :: jobvl = "n", jobvr = "v"
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         real(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         real(dp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -123,14 +129,17 @@ contains
 
         ! Complex eigenvalues.
         vals = one_cdp*wr + one_im_cdp*wi
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure eig_csp
+        character(len=*), parameter :: this_procedure = 'eig_csp'
         ! Lapack variables.
         character :: jobvl = "n", jobvr = "v"
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         complex(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         complex(sp) :: work(2*size(A, 1))
         real(sp) :: rwork(2*size(A, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -140,14 +149,17 @@ contains
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
         call check_info(info, "GEEV", this_module, "eig_csp")
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure eig_cdp
+        character(len=*), parameter :: this_procedure = 'eig_cdp'
         ! Lapack variables.
         character :: jobvl = "n", jobvr = "v"
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         complex(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         complex(dp) :: work(2*size(A, 1))
         real(dp) :: rwork(2*size(A, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -157,18 +169,21 @@ contains
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
         call check_info(info, "GEEV", this_module, "eig_cdp")
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
 
     !----- Schur Factorization ------
 
     !----- OrdSchur Factorization -----
     module procedure ordschur_rsp
+        character(len=*), parameter :: this_procedure = 'ordschur_rsp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(sp) :: s, sep
         integer(ilp) :: iwork(size(T, 1)), liwork
         real(sp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
@@ -176,14 +191,18 @@ contains
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rsp")
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure ordschur_rdp
+        character(len=*), parameter :: this_procedure = 'ordschur_rdp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(dp) :: s, sep
         integer(ilp) :: iwork(size(T, 1)), liwork
         real(dp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
@@ -191,43 +210,55 @@ contains
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rdp")
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure ordschur_csp
+        character(len=*), parameter :: this_procedure = 'ordschur_csp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(sp) :: s, sep
         complex(sp) :: w(size(T, 1)), work(size(T, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_csp")
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure ordschur_cdp
+        character(len=*), parameter :: this_procedure = 'ordschur_cdp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(dp) :: s, sep
         complex(dp) :: w(size(T, 1)), work(size(T, 1))
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_cdp")
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
 
     !----- Matrix Square-Root -----
 
     module procedure sqrtm_rsp
+        character(len=*), parameter :: this_procedure = 'sqrtm_rsp'
         ! Singular value decomposition.
         real(sp) :: S(size(A, 1))
         real(sp) :: U(size(A, 1), size(A, 1)), UT(size(A, 1), size(A, 1))
         integer(ilp) :: i
         real(sp) :: symmetry_error
         character(len=256) :: msg
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         info = 0
         ! Symmetry error.
@@ -255,14 +286,17 @@ contains
         
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure sqrtm_rdp
+        character(len=*), parameter :: this_procedure = 'sqrtm_rdp'
         ! Singular value decomposition.
         real(dp) :: S(size(A, 1))
         real(dp) :: U(size(A, 1), size(A, 1)), UT(size(A, 1), size(A, 1))
         integer(ilp) :: i
         real(dp) :: symmetry_error
         character(len=256) :: msg
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         info = 0
         ! Symmetry error.
@@ -290,14 +324,17 @@ contains
         
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure sqrtm_csp
+        character(len=*), parameter :: this_procedure = 'sqrtm_csp'
         ! Singular value decomposition.
         real(sp) :: S(size(A, 1))
         complex(sp) :: U(size(A, 1), size(A, 1)), UT(size(A, 1), size(A, 1))
         integer(ilp) :: i
         real(sp) :: symmetry_error
         character(len=256) :: msg
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         info = 0
         ! Symmetry error.
@@ -325,14 +362,17 @@ contains
         
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure sqrtm_cdp
+        character(len=*), parameter :: this_procedure = 'sqrtm_cdp'
         ! Singular value decomposition.
         real(dp) :: S(size(A, 1))
         complex(dp) :: U(size(A, 1), size(A, 1)), UT(size(A, 1), size(A, 1))
         integer(ilp) :: i
         real(dp) :: symmetry_error
         character(len=256) :: msg
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         info = 0
         ! Symmetry error.
@@ -360,16 +400,19 @@ contains
         
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
 
     !----- Dense Matrix Exponential -----
 
     module procedure expm_rsp
+        character(len=*), parameter :: this_procedure = 'expm_rsp'
         real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
         integer :: p_order
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deal with optional args.
         p_order = optval(order, 10)
@@ -415,14 +458,17 @@ contains
             E = matmul(E, E)
         enddo
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     module procedure expm_rdp
+        character(len=*), parameter :: this_procedure = 'expm_rdp'
         real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(dp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
         integer :: p_order
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deal with optional args.
         p_order = optval(order, 10)
@@ -468,14 +514,17 @@ contains
             E = matmul(E, E)
         enddo
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     module procedure expm_csp
+        character(len=*), parameter :: this_procedure = 'expm_csp'
         complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(sp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
         integer :: p_order
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deal with optional args.
         p_order = optval(order, 10)
@@ -521,14 +570,17 @@ contains
             E = matmul(E, E)
         enddo
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     module procedure expm_cdp
+        character(len=*), parameter :: this_procedure = 'expm_cdp'
         complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(dp) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
         integer :: p_order
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deal with optional args.
         p_order = optval(order, 10)
@@ -574,6 +626,7 @@ contains
             E = matmul(E, E)
         enddo
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
 

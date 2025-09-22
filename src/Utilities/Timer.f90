@@ -25,7 +25,7 @@ module LightKrylov_Timing
 
 contains
 
-   logical function time_lightkrylov() result(if_time_lightkrylov)
+   pure logical function time_lightkrylov() result(if_time_lightkrylov)
       if_time_lightkrylov = if_time
    end function time_lightkrylov
 
@@ -65,6 +65,7 @@ contains
       call self%add_timer('arnoldi_rsp')
       call self%add_timer('lanczos_bidiagonalization_rsp')
       call self%add_timer('lanczos_tridiagonalization_rsp')
+      call self%add_timer('krylov_schur_rsp')
       ! rdp
       call self%add_timer('qr_with_pivoting_rdp')
       call self%add_timer('qr_no_pivoting_rdp')
@@ -76,6 +77,7 @@ contains
       call self%add_timer('arnoldi_rdp')
       call self%add_timer('lanczos_bidiagonalization_rdp')
       call self%add_timer('lanczos_tridiagonalization_rdp')
+      call self%add_timer('krylov_schur_rdp')
       ! csp
       call self%add_timer('qr_with_pivoting_csp')
       call self%add_timer('qr_no_pivoting_csp')
@@ -87,6 +89,7 @@ contains
       call self%add_timer('arnoldi_csp')
       call self%add_timer('lanczos_bidiagonalization_csp')
       call self%add_timer('lanczos_tridiagonalization_csp')
+      call self%add_timer('krylov_schur_csp')
       ! cdp
       call self%add_timer('qr_with_pivoting_cdp')
       call self%add_timer('qr_no_pivoting_cdp')
@@ -97,9 +100,32 @@ contains
       call self%add_timer('dgs_basis_against_basis_cdp')
       call self%add_timer('arnoldi_cdp')
       call self%add_timer('lanczos_bidiagonalization_cdp')
-      call self%add_timer('lanczos_tridiagonalization_cdp', count=iend)
+      call self%add_timer('lanczos_tridiagonalization_cdp')
+      call self%add_timer('krylov_schur_cdp', count=iend)
       ! define BaseKrylov group
       call self%add_group('BaseKrylov', istart=istart, iend=iend)
+      ! rsp
+      call self%add_timer('eig_rsp', count=istart)
+      call self%add_timer('ordschur_rsp')
+      call self%add_timer('sqrtm_rsp')
+      call self%add_timer('expm_rsp')
+      ! rdp
+      call self%add_timer('eig_rdp')
+      call self%add_timer('ordschur_rdp')
+      call self%add_timer('sqrtm_rdp')
+      call self%add_timer('expm_rdp')
+      ! csp
+      call self%add_timer('eig_csp')
+      call self%add_timer('ordschur_csp')
+      call self%add_timer('sqrtm_csp')
+      call self%add_timer('expm_csp')
+      ! cdp
+      call self%add_timer('eig_cdp')
+      call self%add_timer('ordschur_cdp')
+      call self%add_timer('sqrtm_cdp')
+      call self%add_timer('expm_cdp', count=iend)
+      ! define Utils group
+      call self%add_group('Utils', istart=istart, iend=iend)
       ! timers for LightKrylov_IterativeSolvers
       ! rsp
       call self%add_timer('eigs_rsp', count=istart)

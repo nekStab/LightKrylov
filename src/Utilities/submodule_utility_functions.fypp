@@ -8,6 +8,7 @@ submodule(lightkrylov_utils) utility_functions
     use stdlib_linalg_constants, only: ilp
     use stdlib_linalg_lapack, only: geev, trsen
     use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
+    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
 
     implicit none(type, external)
 contains
@@ -48,6 +49,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure eig_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'eig_${type[0]}$${kind}$'
         ! Lapack variables.
         character :: jobvl = "n", jobvr = "v"
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
@@ -58,6 +60,7 @@ contains
         #:else
         ${type}$ :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
         #:endif
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -75,6 +78,7 @@ contains
         ! Complex eigenvalues.
         vals = one_c${kind}$*wr + one_im_c${kind}$*wi
         #:endif
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     #:endfor
 
@@ -83,6 +87,7 @@ contains
     !----- OrdSchur Factorization -----
     #:for kind, type in RC_KINDS_TYPES
     module procedure ordschur_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'ordschur_${type[0]}$${kind}$'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
@@ -93,6 +98,7 @@ contains
         #:else
         ${type}$ :: w(size(T, 1)), work(size(T, 1))
         #:endif
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
@@ -104,6 +110,8 @@ contains
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
         call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     #:endfor
 
@@ -111,12 +119,14 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure sqrtm_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'sqrtm_${type[0]}$${kind}$'
         ! Singular value decomposition.
         real(${kind}$) :: S(size(A, 1))
         ${type}$ :: U(size(A, 1), size(A, 1)), UT(size(A, 1), size(A, 1))
         integer(ilp) :: i
         real(${kind}$) :: symmetry_error
         character(len=256) :: msg
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         info = 0
         ! Symmetry error.
@@ -144,6 +154,7 @@ contains
         
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     #:endfor
 
@@ -151,11 +162,13 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure expm_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'expm_${type[0]}$${kind}$'
         ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :)
         real(${kind}$) :: a_norm, c
         integer :: n, ee, k, s
         logical :: p
         integer :: p_order
+        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deal with optional args.
         p_order = optval(order, 10)
@@ -201,6 +214,7 @@ contains
             E = matmul(E, E)
         enddo
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         return
     end procedure
     #:endfor
