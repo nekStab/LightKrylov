@@ -96,7 +96,6 @@ contains
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         real(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         real(sp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -108,7 +107,6 @@ contains
 
         ! Complex eigenvalues.
         vals = one_csp*wr + one_im_csp*wi
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure eig_rdp
         character(len=*), parameter :: this_procedure = 'eig_rdp'
@@ -117,7 +115,6 @@ contains
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         real(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         real(dp) :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -129,7 +126,6 @@ contains
 
         ! Complex eigenvalues.
         vals = one_cdp*wr + one_im_cdp*wi
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure eig_csp
         character(len=*), parameter :: this_procedure = 'eig_csp'
@@ -139,7 +135,6 @@ contains
         complex(sp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         complex(sp) :: work(2*size(A, 1))
         real(sp) :: rwork(2*size(A, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -149,7 +144,6 @@ contains
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
         call check_info(info, "GEEV", this_module, "eig_csp")
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure eig_cdp
         character(len=*), parameter :: this_procedure = 'eig_cdp'
@@ -159,7 +153,6 @@ contains
         complex(dp) :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         complex(dp) :: work(2*size(A, 1))
         real(dp) :: rwork(2*size(A, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -169,83 +162,78 @@ contains
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
         call check_info(info, "GEEV", this_module, "eig_cdp")
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
 
     !----- Schur Factorization ------
 
     !----- OrdSchur Factorization -----
     module procedure ordschur_rsp
-        character(len=*), parameter :: this_procedure = 'ordschur_rsp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(sp) :: s, sep
         integer(ilp) :: iwork(size(T, 1)), liwork
         real(sp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
+        if (time_lightkrylov()) call timer%start('trsen')
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rsp")
+        if (time_lightkrylov()) call timer%stop('trsen')
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure ordschur_rdp
-        character(len=*), parameter :: this_procedure = 'ordschur_rdp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(dp) :: s, sep
         integer(ilp) :: iwork(size(T, 1)), liwork
         real(dp) :: wi(size(T, 1)), wr(size(T, 1)), work(size(T, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
+        if (time_lightkrylov()) call timer%start('trsen')
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rdp")
+        if (time_lightkrylov()) call timer%stop('trsen')
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure ordschur_csp
-        character(len=*), parameter :: this_procedure = 'ordschur_csp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(sp) :: s, sep
         complex(sp) :: w(size(T, 1)), work(size(T, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
+        if (time_lightkrylov()) call timer%start('trsen')
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_csp")
+        if (time_lightkrylov()) call timer%stop('trsen')
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     module procedure ordschur_cdp
-        character(len=*), parameter :: this_procedure = 'ordschur_cdp'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(dp) :: s, sep
         complex(dp) :: w(size(T, 1)), work(size(T, 1))
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
+        if (time_lightkrylov()) call timer%start('trsen')
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_cdp")
+        if (time_lightkrylov()) call timer%stop('trsen')
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
 
     !----- Matrix Square-Root -----
@@ -273,7 +261,9 @@ contains
         endif
 
         ! Perform SVD.
+        if (time_lightkrylov()) call timer%start('svd')
         call svd(A, S, U, UT)
+        if (time_lightkrylov()) call timer%stop('svd')
 
         ! Check if matrix is pos. def. (up to tol).
         do i = 1, size(S)
@@ -311,7 +301,9 @@ contains
         endif
 
         ! Perform SVD.
+        if (time_lightkrylov()) call timer%start('svd')
         call svd(A, S, U, UT)
+        if (time_lightkrylov()) call timer%stop('svd')
 
         ! Check if matrix is pos. def. (up to tol).
         do i = 1, size(S)
@@ -349,7 +341,9 @@ contains
         endif
 
         ! Perform SVD.
+        if (time_lightkrylov()) call timer%start('svd')
         call svd(A, S, U, UT)
+        if (time_lightkrylov()) call timer%stop('svd')
 
         ! Check if matrix is pos. def. (up to tol).
         do i = 1, size(S)
@@ -387,7 +381,9 @@ contains
         endif
 
         ! Perform SVD.
+        if (time_lightkrylov()) call timer%start('svd')
         call svd(A, S, U, UT)
+        if (time_lightkrylov()) call timer%stop('svd')
 
         ! Check if matrix is pos. def. (up to tol).
         do i = 1, size(S)

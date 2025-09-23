@@ -60,7 +60,6 @@ contains
         #:else
         ${type}$ :: work(4*size(A, 1)), wr(size(A, 1)), wi(size(A, 1))
         #:endif
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
@@ -78,7 +77,6 @@ contains
         ! Complex eigenvalues.
         vals = one_c${kind}$*wr + one_im_c${kind}$*wi
         #:endif
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     #:endfor
 
@@ -87,7 +85,6 @@ contains
     !----- OrdSchur Factorization -----
     #:for kind, type in RC_KINDS_TYPES
     module procedure ordschur_${type[0]}$${kind}$
-        character(len=*), parameter :: this_procedure = 'ordschur_${type[0]}$${kind}$'
         ! Lapack variables.
         character :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
@@ -98,11 +95,11 @@ contains
         #:else
         ${type}$ :: w(size(T, 1)), work(size(T, 1))
         #:endif
-        if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Setup variables.
         n = size(T, 2) ; ldt = n ; ldq = n ; lwork = max(1, n)
 
+        if (time_lightkrylov()) call timer%start('trsen')
         #:if type[0] == "r"
         liwork = 1
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
@@ -110,8 +107,8 @@ contains
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
         call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
+        if (time_lightkrylov()) call timer%stop('trsen')
 
-        if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure
     #:endfor
 
@@ -141,7 +138,9 @@ contains
         endif
 
         ! Perform SVD.
+        if (time_lightkrylov()) call timer%start('svd')
         call svd(A, S, U, UT)
+        if (time_lightkrylov()) call timer%stop('svd')
 
         ! Check if matrix is pos. def. (up to tol).
         do i = 1, size(S)
