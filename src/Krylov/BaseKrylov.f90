@@ -1136,6 +1136,7 @@ contains
     !----------------------------------------
 
     subroutine krylov_schur_rsp(n, X, H, select_eigs)
+        character(len=*), parameter :: this_procedure = 'krylov_schur_rsp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
         !! left block of the Schur factorization of `H`.
@@ -1156,6 +1157,8 @@ contains
         real(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(sp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
        
         ! Krylov subspace dimension.
         kdim = size(X)-1
@@ -1187,10 +1190,13 @@ contains
         H(:, n+1:) = zero_rsp
         end block
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
         return
     end subroutine krylov_schur_rsp
 
     subroutine krylov_schur_rdp(n, X, H, select_eigs)
+        character(len=*), parameter :: this_procedure = 'krylov_schur_rdp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
         !! left block of the Schur factorization of `H`.
@@ -1211,6 +1217,8 @@ contains
         real(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(dp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
        
         ! Krylov subspace dimension.
         kdim = size(X)-1
@@ -1242,10 +1250,13 @@ contains
         H(:, n+1:) = zero_rdp
         end block
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
         return
     end subroutine krylov_schur_rdp
 
     subroutine krylov_schur_csp(n, X, H, select_eigs)
+        character(len=*), parameter :: this_procedure = 'krylov_schur_csp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
         !! left block of the Schur factorization of `H`.
@@ -1266,6 +1277,8 @@ contains
         complex(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(sp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
        
         ! Krylov subspace dimension.
         kdim = size(X)-1
@@ -1297,10 +1310,13 @@ contains
         H(:, n+1:) = zero_csp
         end block
 
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
         return
     end subroutine krylov_schur_csp
 
     subroutine krylov_schur_cdp(n, X, H, select_eigs)
+        character(len=*), parameter :: this_procedure = 'krylov_schur_cdp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
         !! left block of the Schur factorization of `H`.
@@ -1321,6 +1337,8 @@ contains
         complex(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(dp) :: eigvals(size(H, 2))
         logical :: selected(size(H, 2))
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
        
         ! Krylov subspace dimension.
         kdim = size(X)-1
@@ -1351,6 +1369,8 @@ contains
         H(n+2:, :) = zero_cdp
         H(:, n+1:) = zero_cdp
         end block
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
     end subroutine krylov_schur_cdp

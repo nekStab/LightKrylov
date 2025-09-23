@@ -1,0 +1,115 @@
+#:include "../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+#:set ntc = len(RC_KINDS_TYPES)
+module LightKrylov_Timing
+   !!  This module provides a set of utility functions to define default timers within `LightKrylov`.
+
+   !--------------------------------------------
+   !-----     Standard Fortran Library     -----
+   !--------------------------------------------
+   use stdlib_optval, only: optval
+   use stdlib_ascii, only: to_lower
+
+   !-------------------------------
+   !-----     LightKrylov     -----
+   !-------------------------------
+   use LightKrylov_Logger
+   use LightKrylov_Timer_Utils
+
+   implicit none
+   private
+
+   character(len=*), parameter :: this_module      = 'LK_Timer'
+   character(len=*), parameter :: this_module_long = 'LightKrylov_Timer'
+   logical :: if_time = .false. 
+
+   !----------------------------------
+   !-----     Public exports     -----
+   !----------------------------------
+
+   public :: time_lightkrylov
+   public :: global_lightkrylov_timer
+
+   ! LightKrylov_watch type
+   type, extends(abstract_watch), public :: lightkrylov_watch
+      !! Global timing structure to contain all timers within Lightkrylov
+   contains
+      private
+      procedure, pass(self), public :: set_private_timers_and_name => set_lightkrylov_timers
+   end type lightkrylov_watch
+
+   type(lightkrylov_watch) :: global_lightkrylov_timer
+
+contains
+
+   pure logical function time_lightkrylov() result(if_time_lightkrylov)
+      if_time_lightkrylov = if_time
+   end function time_lightkrylov
+
+   subroutine set_lightkrylov_timer_switch(value)
+      logical, intent(in) :: value     
+      if (if_time .neqv. value) then
+         if_time = value
+         if (if_time) then
+            call log_message('LightKrylov timing enabled.', module=this_module)
+         else
+            call log_message('LightKrylov timing disabled.', module=this_module)
+         end if
+      else
+         call log_debug('LightKrylov timing switched unchanged.', module=this_module)
+      end if      
+   end subroutine set_lightkrylov_timer_switch
+
+   !--------------------------------------------------------------
+   !  Concrete implementations for the lightkrylov_watch type
+   !--------------------------------------------------------------
+
+   subroutine set_lightkrylov_timers(self)
+      !! Initialize global watch within LightKrylov and define private system timers.
+      class(lightkrylov_watch), intent(inout) :: self
+      ! Internal
+      integer :: istart, iend
+      call self%set_watch_name('LightKrylov_timer')
+
+      #:set LAPACK           = { 'name': 'LAPACK','routines': [ 'eig', 'eigh', 'svd', 'trsen' ], 'expand': False }
+      #:set Utils            = { 'name': 'Utils',            'routines': [ 'sqrtm', 'expm', ], 'expand': True }
+      #:set BaseKrylov       = {'name': 'BaseKrylov',       'routines': [ 'qr_with_pivoting', 'qr_no_pivoting', 'orthonormalize_basis','orthogonalize_vector_against_basis','orthogonalize_basis_against_basis','dgs_vector_against_basis','dgs_basis_against_basis','arnoldi','lanczos_bidiagonalization','lanczos_tridiagonalization','krylov_schur'], 'expand': True }
+      #:set IterativeSolvers = { 'name': 'IterativeSolvers', 'routines': [ 'eigs', 'eighs', 'svds', 'gmres', 'fgmres', 'cg' ], 'expand': True }
+      #:set Newton           = { 'name': 'NewtonKrylov',     'routines': [ 'newton' ], 'expand': True }
+      #:set groups = [ LAPACK, Utils, BaseKrylov, IterativeSolvers, Newton ]
+      #:for group in groups
+      ! Timers for ${group['name']}$
+         #:set n = len(group['routines']) - 1
+         #:if group['expand']
+            #:for kind, type in RC_KINDS_TYPES
+      ! ${type[0]}$${kind}$
+               #:for i, routine in enumerate(group['routines'])
+                  #:if i == 0 and (kind, type) == RC_KINDS_TYPES[0]        #! extract starting index of group
+      call self%add_timer('${routine}$_${type[0]}$${kind}$', count=istart)
+                  #:elif i == n and (kind, type) == RC_KINDS_TYPES[-1]     #! extract final index of group
+      call self%add_timer('${routine}$_${type[0]}$${kind}$', count=iend)
+                  #:else
+      call self%add_timer('${routine}$_${type[0]}$${kind}$')
+                  #:endif
+               #:endfor
+            #:endfor
+         #:else
+            #:for i, routine in enumerate(group['routines'])
+               #:if i == 0                                                 #! extract starting index of group
+      call self%add_timer('${routine}$', count=istart)
+               #:elif i == n                                               #! extract final index of group
+      call self%add_timer('${routine}$', count=iend)
+               #:else
+      call self%add_timer('${routine}$')
+               #:endif
+            #:endfor
+         #:endif
+      ! Define ${group['name']}$ group
+      call self%add_group('${group["name"]}$', istart=istart, iend=iend)
+
+      #:endfor
+      ! Enable timing
+      call set_lightkrylov_timer_switch(.true.)
+   end subroutine set_lightkrylov_timers
+
+end module LightKrylov_Timing

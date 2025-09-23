@@ -28,7 +28,6 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-
     &                             log_debug, stop_error, type_error, check_info
 
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
@@ -1755,7 +1754,9 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
+                if (time_lightkrylov()) call timer%start('eig')
                 call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+                if (time_lightkrylov()) call timer%stop('eig')
 
                 ! Compute residuals.
                 beta = H(k+1, k)
@@ -1798,7 +1799,10 @@ contains
         real(sp) :: abs_eigvals(kdim_)
        
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        k = min(k, kdim_);
+        if (time_lightkrylov()) call timer%start('eig')
+        call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        if (time_lightkrylov()) call timer%stop('eig')
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -1907,7 +1911,9 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
+                if (time_lightkrylov()) call timer%start('eig')
                 call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+                if (time_lightkrylov()) call timer%stop('eig')
 
                 ! Compute residuals.
                 beta = H(k+1, k)
@@ -1950,7 +1956,10 @@ contains
         real(dp) :: abs_eigvals(kdim_)
        
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        k = min(k, kdim_);
+        if (time_lightkrylov()) call timer%start('eig')
+        call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        if (time_lightkrylov()) call timer%stop('eig')
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -2058,7 +2067,9 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_sp ; eigvecs_wrk = 0.0_sp
+                if (time_lightkrylov()) call timer%start('eig')
                 call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+                if (time_lightkrylov()) call timer%stop('eig')
 
                 ! Compute residuals.
                 beta = H(k+1, k)
@@ -2092,7 +2103,10 @@ contains
         real(sp) :: abs_eigvals(kdim_)
        
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        k = min(k, kdim_);
+        if (time_lightkrylov()) call timer%start('eig')
+        call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        if (time_lightkrylov()) call timer%stop('eig')
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
@@ -2200,7 +2214,9 @@ contains
 
                 ! Spectral decomposition of the k x k Hessenberg matrix.
                 eigvals_wrk = 0.0_dp ; eigvecs_wrk = 0.0_dp
+                if (time_lightkrylov()) call timer%start('eig')
                 call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+                if (time_lightkrylov()) call timer%stop('eig')
 
                 ! Compute residuals.
                 beta = H(k+1, k)
@@ -2234,7 +2250,10 @@ contains
         real(dp) :: abs_eigvals(kdim_)
        
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_) ; call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        k = min(k, kdim_);
+        if (time_lightkrylov()) call timer%start('eig')
+        call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
+        if (time_lightkrylov()) call timer%stop('eig')
         ! Sort eigenvalues.
         abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
         eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)

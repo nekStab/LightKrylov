@@ -105,7 +105,9 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
 
+            if (time_lightkrylov()) call timer%start('svd')
             call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            if (time_lightkrylov()) call timer%stop('svd')
             vmat(:k, :k) = hermitian(vmat(:k, :k))
 
             residuals_wrk(:k) = svd_residual_rsp(B(k+1, k), vmat(k, :k))
@@ -191,7 +193,9 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
 
+            if (time_lightkrylov()) call timer%start('svd')
             call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            if (time_lightkrylov()) call timer%stop('svd')
             vmat(:k, :k) = hermitian(vmat(:k, :k))
 
             residuals_wrk(:k) = svd_residual_rdp(B(k+1, k), vmat(k, :k))
@@ -277,7 +281,9 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_sp ; umat = 0.0_sp ; vmat = 0.0_sp
 
+            if (time_lightkrylov()) call timer%start('svd')
             call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            if (time_lightkrylov()) call timer%stop('svd')
             vmat(:k, :k) = hermitian(vmat(:k, :k))
 
             residuals_wrk(:k) = svd_residual_csp(B(k+1, k), vmat(k, :k))
@@ -363,7 +369,9 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_dp ; umat = 0.0_dp ; vmat = 0.0_dp
 
+            if (time_lightkrylov()) call timer%start('svd')
             call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            if (time_lightkrylov()) call timer%stop('svd')
             vmat(:k, :k) = hermitian(vmat(:k, :k))
 
             residuals_wrk(:k) = svd_residual_cdp(B(k+1, k), vmat(k, :k))
