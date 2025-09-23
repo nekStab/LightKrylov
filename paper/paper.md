@@ -147,7 +147,7 @@ Examples illustrating how to extend these `abstract` types and interfaces for co
 
 # Performances in a production-ready open-source code
 
-`LightKrylov` was successfully integrated into [`neklab`](https://github.com/nekStab/neklab), a toolbox for stability and bifurcation analysis using the high-performance spectral element solver `Nek5000`. The abstract vector interface allows direct use of `Nek5000`'s distributed data structures, and the pure-Fortran nature facilitated integration with its existing build system, demonstrating the library's suitability for large-scale HPC applications. Leveraging the abstract interfaces provided by `LightKrylov`, the implementation of the Newton-GMRES solver in `neklab` requires no modifications of the `Nek5000` solver.
+`LightKrylov` was successfully integrated into [`neklab`](https://github.com/nekStab/neklab), a toolbox for stability and bifurcation analysis using the high-performance spectral element solver `Nek5000`. The abstract vector interface allows direct use of `Nek5000`'s distributed data structures, and the pure-Fortran nature facilitated integration with its existing build system, demonstrating the library's suitability for large-scale HPC applications.
 
 ## Hydrodynamic stability of an unstable fixed-point of the nonlinear Navier-Stokes equations
 
