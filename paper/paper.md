@@ -90,7 +90,7 @@ abstract interface
   end subroutine
 end interface
 ```
-mimicking the signature of the (extended) BLAS-1 subroutine `axpby`.
+mimicking the signature of the (extended) blas-1 subroutine `axpby`.
 In practice, `LightKrylov` requires the definition of two additional procedures, one to set a vector to zero and the second to fill it with random data.
 
 Similarly, a stripped-down version of an abstract linear operator type is shown below.
@@ -142,7 +142,7 @@ Computing (stable or unstable) fixed points of the nonlinear governing equations
 
 Using the supercritical two-dimensional flow past a circular cylinder at Reynolds number of 100 as an example, we showcase the efficient integration of `LightKrylov` and `Nek5000` and validate the results with algorithms provided by the [`KTH Framework`](https://github.com/KTH-Nek5000/KTH_Framework) toolbox [@kth-framework] based on the same Navier-Stokes solver. In all cases, the governing equations are discretized with 1996 spectral elements using a 5-th order polynomial approximation in each direction resulting in 71 856 grid points and roughly 175 000 degrees of freedom (i.e. the two velocity components as well as the pressure). All computations were run in parallel on 12 Intel Core Ultra 7 processors and the numerical settings, in particular those internal to `Nek5000`, are identical for all runs.
 
-The unstable fixed-point of the nonlinear Navier-Stokes equations is obtained using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver [@frantz-2023] and the `KTH Framework` implementation of the selective frequency damping algorithm [@pof-sfd] (often considered as the gold standard in this community). The top row in \autoref{fig:timings} depicts the streamwise (*u*) velocity distribution at the fixed-point (left) and the pointwise squared difference between the the solutions obtained with the two solution techniques and a tolerance of $\varepsilon = 10^{-8}$ (right). Note that, while the definition of the error norm slightly differs between the methods, the one used by the Newton-GMRES solver is more strict. The code to run this example can be found [here](?).
+The unstable fixed-point of the nonlinear Navier-Stokes equations is obtained using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver [@frantz-2023] and the `KTH Framework` implementation of the selective frequency damping algorithm [@pof-sfd] (often considered as the gold standard in this community). The top row in \autoref{fig:timings} depicts the streamwise (*u*) velocity distribution at the fixed-point (left) and the pointwise squared difference between the solutions obtained with the two solution techniques and a tolerance of $\varepsilon = 10^{-8}$ (right). Note that, while the definition of the error norm slightly differs between the methods, the one used by the Newton-GMRES solver is more strict. The code to run this example can be found [here](?).
 
 For the linear stability analysis, the first complex-conjugate eigenpair is computed with the Krylov-Schur algorithm using `LightKrylov`'s abstract interfaces. In the lower left panel of \autoref{fig:timings}, it is compared to the spectrum computed using `KTH Framework` relying under the hood on `ARPACK`. Both solvers effectively use a *time-stepper* approach, approximating the leading eigenvalues of the exponential propagator $\exp(\tau \mathbf{A})$ rather than $\mathbf{A}$ directly. The code to run this example can be found [here](?).
 
