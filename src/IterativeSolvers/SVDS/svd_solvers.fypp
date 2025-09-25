@@ -77,7 +77,9 @@ contains
             ! SVD of the k x k bidiagonal matrix and residual computation.
             svdvals_wrk = 0.0_${kind}$ ; umat = 0.0_${kind}$ ; vmat = 0.0_${kind}$
 
+            if (time_lightkrylov()) call timer%start('svd')
             call svd(B(:k, :k), svdvals_wrk(:k), umat(:k, :k), vmat(:k, :k))
+            if (time_lightkrylov()) call timer%stop('svd')
             vmat(:k, :k) = hermitian(vmat(:k, :k))
 
             residuals_wrk(:k) = svd_residual_${type[0]}$${kind}$(B(k+1, k), vmat(k, :k))

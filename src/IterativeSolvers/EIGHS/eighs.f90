@@ -106,7 +106,9 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_rsp
+            if (time_lightkrylov()) call timer%start('eigh')
             call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+            if (time_lightkrylov()) call timer%stop('eigh')
 
             ! Compute residuals.
             beta = T(k+1, k)
@@ -200,7 +202,9 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_rdp
+            if (time_lightkrylov()) call timer%start('eigh')
             call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+            if (time_lightkrylov()) call timer%stop('eigh')
 
             ! Compute residuals.
             beta = T(k+1, k)
@@ -294,7 +298,9 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_sp ; eigvecs_wrk = zero_csp
+            if (time_lightkrylov()) call timer%start('eigh')
             call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+            if (time_lightkrylov()) call timer%stop('eigh')
 
             ! Compute residuals.
             beta = T(k+1, k)
@@ -388,7 +394,9 @@ contains
 
             ! Spectral decomposition of the k x k tridiagonal matrix.
             eigvals_wrk = 0.0_dp ; eigvecs_wrk = zero_cdp
+            if (time_lightkrylov()) call timer%start('eigh')
             call eigh(T(:k, :k), eigvals_wrk(:k), vectors=eigvecs_wrk(:k, :k))
+            if (time_lightkrylov()) call timer%stop('eigh')
 
             ! Compute residuals.
             beta = T(k+1, k)
