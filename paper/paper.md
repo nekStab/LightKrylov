@@ -79,7 +79,7 @@ end type
 
 These type-bound procedures correspond to the basic set of operations on vectors: scalar-vector product, linear combination of two vectors, and the dot product. These operations correspond to the essential building blocks required by Krylov algorithms.
 The signatures of these type-bound procedures follow, to the extent possible, the standard signatures of the corresponding `blas` functions for a more familiar use.
-For instance, the `abstract_axpby_rdp` interface is reads
+For instance, the `abstract_axpby_rdp` interface reads
 
 ```fortran
 abstract interface
@@ -91,7 +91,7 @@ abstract interface
 end interface
 ```
 mimicking the signature of the (extended) BLAS-1 subroutine `axpby`.
-Note that, in practice, `LightKrylov` requires the definition of two additional procedures, one to set a vector to zero and the second to fill it with random data.
+In practice, `LightKrylov` requires the definition of two additional procedures, one to set a vector to zero and the second to fill it with random data.
 
 Similarly, a stripped-down version of an abstract linear operator type is shown below.
 
