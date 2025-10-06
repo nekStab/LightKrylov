@@ -35,7 +35,7 @@ module LightKrylov_IterativeSolvers
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
 
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_Solvers'
@@ -78,13 +78,14 @@ module LightKrylov_IterativeSolvers
     contains
         private
         procedure(abstract_apply_rsp), pass(self), public, deferred :: apply
-    end type
+    end type abstract_precond_rsp
 
     abstract interface
         subroutine abstract_apply_rsp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_rsp, abstract_vector_rsp
             import sp
+            implicit none(type, external)
             class(abstract_precond_rsp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_rsp), intent(inout) :: vec
@@ -99,13 +100,14 @@ module LightKrylov_IterativeSolvers
     contains
         private
         procedure(abstract_apply_rdp), pass(self), public, deferred :: apply
-    end type
+    end type abstract_precond_rdp
 
     abstract interface
         subroutine abstract_apply_rdp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_rdp, abstract_vector_rdp
             import dp
+            implicit none(type, external)
             class(abstract_precond_rdp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_rdp), intent(inout) :: vec
@@ -120,13 +122,14 @@ module LightKrylov_IterativeSolvers
     contains
         private
         procedure(abstract_apply_csp), pass(self), public, deferred :: apply
-    end type
+    end type abstract_precond_csp
 
     abstract interface
         subroutine abstract_apply_csp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_csp, abstract_vector_csp
             import sp
+            implicit none(type, external)
             class(abstract_precond_csp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_csp), intent(inout) :: vec
@@ -141,13 +144,14 @@ module LightKrylov_IterativeSolvers
     contains
         private
         procedure(abstract_apply_cdp), pass(self), public, deferred :: apply
-    end type
+    end type abstract_precond_cdp
 
     abstract interface
         subroutine abstract_apply_cdp(self, vec, iter, current_residual, target_residual)
             !! Abstract interface to apply a preconditioner in `LightKrylov`.
             import abstract_precond_cdp, abstract_vector_cdp
             import dp
+            implicit none(type, external)
             class(abstract_precond_cdp), intent(inout) :: self
             !! Preconditioner.
             class(abstract_vector_cdp), intent(inout) :: vec
@@ -167,6 +171,7 @@ module LightKrylov_IterativeSolvers
         subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_metadata, abstract_precond_rsp, sp
+            implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_rsp), intent(in) :: b
@@ -191,6 +196,7 @@ module LightKrylov_IterativeSolvers
         subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_metadata, abstract_precond_rdp, dp
+            implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_rdp), intent(in) :: b
@@ -215,6 +221,7 @@ module LightKrylov_IterativeSolvers
         subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_metadata, abstract_precond_csp, sp
+            implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_csp), intent(in) :: b
@@ -239,6 +246,7 @@ module LightKrylov_IterativeSolvers
         subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_metadata, abstract_precond_cdp, dp
+            implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to invert.
             class(abstract_vector_cdp), intent(in) :: b
@@ -279,7 +287,7 @@ module LightKrylov_IterativeSolvers
         !! Print iteration metadata on exit (default: .false.).
         logical :: sanity_check = .true.
         !! Performs extra matrix-vector product for sanity check.
-    end type
+    end type gmres_sp_opts
 
     type, extends(abstract_metadata), public :: gmres_sp_metadata
         !! GMRES metadata.
@@ -298,20 +306,22 @@ module LightKrylov_IterativeSolvers
     contains
         procedure, pass(self), public :: print => print_gmres_sp
         procedure, pass(self), public :: reset => reset_gmres_sp
-    end type
+    end type gmres_sp_metadata
 
     interface
         module subroutine print_gmres_sp(self, reset_counters, verbose)
+            implicit none(type, external)
             class(gmres_sp_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             !! Reset all counters to zero after printing?
             logical, optional, intent(in) :: verbose
             !! Print the full residual history?
-        end subroutine
+        end subroutine print_gmres_sp
 
         module subroutine reset_gmres_sp(self)
+            implicit none(type, external)
             class(gmres_sp_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine reset_gmres_sp
     end interface
     type, extends(abstract_opts), public :: gmres_dp_opts
         !! GMRES options.
@@ -323,7 +333,7 @@ module LightKrylov_IterativeSolvers
         !! Print iteration metadata on exit (default: .false.).
         logical :: sanity_check = .true.
         !! Performs extra matrix-vector product for sanity check.
-    end type
+    end type gmres_dp_opts
 
     type, extends(abstract_metadata), public :: gmres_dp_metadata
         !! GMRES metadata.
@@ -342,20 +352,22 @@ module LightKrylov_IterativeSolvers
     contains
         procedure, pass(self), public :: print => print_gmres_dp
         procedure, pass(self), public :: reset => reset_gmres_dp
-    end type
+    end type gmres_dp_metadata
 
     interface
         module subroutine print_gmres_dp(self, reset_counters, verbose)
+            implicit none(type, external)
             class(gmres_dp_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             !! Reset all counters to zero after printing?
             logical, optional, intent(in) :: verbose
             !! Print the full residual history?
-        end subroutine
+        end subroutine print_gmres_dp
 
         module subroutine reset_gmres_dp(self)
+            implicit none(type, external)
             class(gmres_dp_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine reset_gmres_dp
     end interface
 
     !----- Interfaces for the GMRES solvers -----
@@ -415,6 +427,7 @@ module LightKrylov_IterativeSolvers
 
         ! --- Interface for GMRES with Abstract Linops and Abstract Vectors ---
         module subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rsp), intent(in) :: b
@@ -435,9 +448,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine gmres_rsp
 
         module subroutine dense_gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             real(sp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             real(sp), intent(in) :: b(:)
@@ -458,8 +472,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_gmres_rsp
         module subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rdp), intent(in) :: b
@@ -480,9 +495,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine gmres_rdp
 
         module subroutine dense_gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             real(dp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             real(dp), intent(in) :: b(:)
@@ -503,8 +519,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_gmres_rdp
         module subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_csp), intent(in) :: b
@@ -525,9 +542,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine gmres_csp
 
         module subroutine dense_gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             complex(sp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             complex(sp), intent(in) :: b(:)
@@ -548,8 +566,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_gmres_csp
         module subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_cdp), intent(in) :: b
@@ -570,9 +589,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine gmres_cdp
 
         module subroutine dense_gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             complex(dp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             complex(dp), intent(in) :: b(:)
@@ -593,7 +613,7 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_gmres_cdp
     end interface
 
     !----------------------------------------------------------------
@@ -613,7 +633,7 @@ module LightKrylov_IterativeSolvers
         !! Print iteration metadata on exit (default: .false.).
         logical :: sanity_check = .true.
         !! Performs extra matrix-vector product for sanity check.
-    end type
+    end type fgmres_sp_opts
 
     type, extends(abstract_metadata), public :: fgmres_sp_metadata
         !! FGMRES metadata.
@@ -632,20 +652,22 @@ module LightKrylov_IterativeSolvers
     contains
         procedure, pass(self), public :: print => print_fgmres_sp
         procedure, pass(self), public :: reset => reset_fgmres_sp
-    end type
+    end type fgmres_sp_metadata
 
     interface
         module subroutine print_fgmres_sp(self, reset_counters, verbose)
+            implicit none(type, external)
             class(fgmres_sp_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             !! Reset all counters to zero after printing?
             logical, optional, intent(in) :: verbose
             !! Print the full residual history?
-        end subroutine
+        end subroutine print_fgmres_sp
 
         module subroutine reset_fgmres_sp(self)
+            implicit none(type, external)
             class(fgmres_sp_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine reset_fgmres_sp
     end interface
     type, extends(abstract_opts), public :: fgmres_dp_opts
         !! FGMRES options.
@@ -657,7 +679,7 @@ module LightKrylov_IterativeSolvers
         !! Print iteration metadata on exit (default: .false.).
         logical :: sanity_check = .true.
         !! Performs extra matrix-vector product for sanity check.
-    end type
+    end type fgmres_dp_opts
 
     type, extends(abstract_metadata), public :: fgmres_dp_metadata
         !! FGMRES metadata.
@@ -676,20 +698,22 @@ module LightKrylov_IterativeSolvers
     contains
         procedure, pass(self), public :: print => print_fgmres_dp
         procedure, pass(self), public :: reset => reset_fgmres_dp
-    end type
+    end type fgmres_dp_metadata
 
     interface
         module subroutine print_fgmres_dp(self, reset_counters, verbose)
+            implicit none(type, external)
             class(fgmres_dp_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             !! Reset all counters to zero after printing?
             logical, optional, intent(in) :: verbose
             !! Print the full residual history?
-        end subroutine
+        end subroutine print_fgmres_dp
 
         module subroutine reset_fgmres_dp(self)
+            implicit none(type, external)
             class(fgmres_dp_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine reset_fgmres_dp
     end interface
 
     !----- Interfaces for the FGMRES solvers -----
@@ -745,6 +769,7 @@ module LightKrylov_IterativeSolvers
         !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or
         !!                              \( A^H x = b \) is being solved.
         module subroutine fgmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rsp), intent(in) :: b
@@ -765,9 +790,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine fgmres_rsp
 
         module subroutine dense_fgmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             real(sp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             real(sp), intent(in) :: b(:)
@@ -788,9 +814,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_fgmres_rsp
        
         module subroutine fgmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rdp), intent(in) :: b
@@ -811,9 +838,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine fgmres_rdp
 
         module subroutine dense_fgmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             real(dp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             real(dp), intent(in) :: b(:)
@@ -834,9 +862,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_fgmres_rdp
        
         module subroutine fgmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_csp), intent(in) :: b
@@ -857,9 +886,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine fgmres_csp
 
         module subroutine dense_fgmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             complex(sp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             complex(sp), intent(in) :: b(:)
@@ -880,9 +910,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_fgmres_csp
        
         module subroutine fgmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_cdp), intent(in) :: b
@@ -903,9 +934,10 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine fgmres_cdp
 
         module subroutine dense_fgmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+            implicit none(type, external)
             complex(dp), intent(in) :: A(:, :)
             !! Linear operator to be inverted.
             complex(dp), intent(in) :: b(:)
@@ -926,7 +958,7 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine dense_fgmres_cdp
        
     end interface
 
@@ -943,7 +975,7 @@ module LightKrylov_IterativeSolvers
         !! Maximum number of `cg` iterations (default: 100).
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type cg_sp_opts
 
     type, extends(abstract_metadata), public :: cg_sp_metadata
         !! Conjugate gradient metadata.
@@ -958,20 +990,22 @@ module LightKrylov_IterativeSolvers
     contains
         procedure, pass(self), public :: print => print_cg_sp
         procedure, pass(self), public :: reset => reset_cg_sp
-    end type
+    end type cg_sp_metadata
 
     interface
         module subroutine print_cg_sp(self, reset_counters, verbose)
+            implicit none(type, external)
             class(cg_sp_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             !! Reset all counters to zero after printing?
             logical, optional, intent(in) :: verbose
             !! Print the residual full residual history?
-        end subroutine
+        end subroutine print_cg_sp
 
         module subroutine reset_cg_sp(self)
+            implicit none(type, external)
             class(cg_sp_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine reset_cg_sp
     end interface
     type, extends(abstract_opts), public :: cg_dp_opts
         !! Conjugate gradient options.
@@ -979,7 +1013,7 @@ module LightKrylov_IterativeSolvers
         !! Maximum number of `cg` iterations (default: 100).
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type cg_dp_opts
 
     type, extends(abstract_metadata), public :: cg_dp_metadata
         !! Conjugate gradient metadata.
@@ -994,20 +1028,22 @@ module LightKrylov_IterativeSolvers
     contains
         procedure, pass(self), public :: print => print_cg_dp
         procedure, pass(self), public :: reset => reset_cg_dp
-    end type
+    end type cg_dp_metadata
 
     interface
         module subroutine print_cg_dp(self, reset_counters, verbose)
+            implicit none(type, external)
             class(cg_dp_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             !! Reset all counters to zero after printing?
             logical, optional, intent(in) :: verbose
             !! Print the residual full residual history?
-        end subroutine
+        end subroutine print_cg_dp
 
         module subroutine reset_cg_dp(self)
+            implicit none(type, external)
             class(cg_dp_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine reset_cg_dp
     end interface
 
     !----- Interfaces for the Conjugate Gradient solvers -----
@@ -1060,6 +1096,7 @@ module LightKrylov_IterativeSolvers
         !!  - `options` (optional)  :   Container for the gmres options given by the `cg_opts` type.
         !!                              It is an `intent(in)` argument.
         module subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            implicit none(type, external)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rsp), intent(in) :: b
@@ -1078,8 +1115,9 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine cg_rsp
         module subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            implicit none(type, external)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_rdp), intent(in) :: b
@@ -1098,8 +1136,9 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine cg_rdp
         module subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            implicit none(type, external)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_csp), intent(in) :: b
@@ -1118,8 +1157,9 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine cg_csp
         module subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+            implicit none(type, external)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
             class(abstract_vector_cdp), intent(in) :: b
@@ -1138,7 +1178,7 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
-        end subroutine
+        end subroutine cg_cdp
     end interface
 
     !------------------------------------------
@@ -1213,6 +1253,7 @@ module LightKrylov_IterativeSolvers
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
         module subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
             class(abstract_vector_rsp), intent(out) :: U(:)
@@ -1232,8 +1273,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine svds_rsp
         module subroutine svds_rdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
             class(abstract_vector_rdp), intent(out) :: U(:)
@@ -1253,8 +1295,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine svds_rdp
         module subroutine svds_csp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
             class(abstract_vector_csp), intent(out) :: U(:)
@@ -1274,8 +1317,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine svds_csp
         module subroutine svds_cdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
             class(abstract_vector_cdp), intent(out) :: U(:)
@@ -1295,7 +1339,7 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine svds_cdp
     end interface
 
     !------------------------------------------------
@@ -1360,6 +1404,7 @@ module LightKrylov_IterativeSolvers
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
         module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1378,8 +1423,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine eighs_rsp
         module subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_rdp), intent(out) :: X(:)
@@ -1398,8 +1444,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine eighs_rdp
         module subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_csp), intent(out) :: X(:)
@@ -1418,8 +1465,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine eighs_csp
         module subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+            implicit none(type, external)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
             class(abstract_vector_cdp), intent(out) :: X(:)
@@ -1438,7 +1486,7 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
-        end subroutine
+        end subroutine eighs_cdp
     end interface
 
     !-------------------------------------
@@ -1467,40 +1515,44 @@ module LightKrylov_IterativeSolvers
         !!  `fname` : Name of the file to save the eigenspectrum.
         module subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
             !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            implicit none(type, external)
             real(sp), intent(in) :: lambda(:)
             !! Eigenalues.
             real(sp), intent(in) :: residuals(:)
             !! Residual of the corresponding Ritz eigenpairs.
             character(len=*), intent(in) :: fname
             !! Name of the output file.
-        end subroutine
+        end subroutine save_eigenspectrum_rsp
         module subroutine save_eigenspectrum_rdp(lambda, residuals, fname)
             !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            implicit none(type, external)
             real(dp), intent(in) :: lambda(:)
             !! Eigenalues.
             real(dp), intent(in) :: residuals(:)
             !! Residual of the corresponding Ritz eigenpairs.
             character(len=*), intent(in) :: fname
             !! Name of the output file.
-        end subroutine
+        end subroutine save_eigenspectrum_rdp
         module subroutine save_eigenspectrum_csp(lambda, residuals, fname)
             !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            implicit none(type, external)
             complex(sp), intent(in) :: lambda(:)
             !! Eigenalues.
             real(sp), intent(in) :: residuals(:)
             !! Residual of the corresponding Ritz eigenpairs.
             character(len=*), intent(in) :: fname
             !! Name of the output file.
-        end subroutine
+        end subroutine save_eigenspectrum_csp
         module subroutine save_eigenspectrum_cdp(lambda, residuals, fname)
             !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+            implicit none(type, external)
             complex(dp), intent(in) :: lambda(:)
             !! Eigenalues.
             real(dp), intent(in) :: residuals(:)
             !! Residual of the corresponding Ritz eigenpairs.
             character(len=*), intent(in) :: fname
             !! Name of the output file.
-        end subroutine
+        end subroutine save_eigenspectrum_cdp
     end interface
 
     interface eigs
@@ -1584,6 +1636,7 @@ contains
 
     subroutine write_results_rsp(filename, vals, res, tol)
         !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        implicit none(type, external)
         character(len=*), intent(in) :: filename
         !! Output filename. This file will be overwritten
         real(sp), intent(in) :: vals(:)
@@ -1608,9 +1661,10 @@ contains
             end do 
             close (1234)
         end if
-    end subroutine
+    end subroutine write_results_rsp
     subroutine write_results_rdp(filename, vals, res, tol)
         !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        implicit none(type, external)
         character(len=*), intent(in) :: filename
         !! Output filename. This file will be overwritten
         real(dp), intent(in) :: vals(:)
@@ -1635,9 +1689,10 @@ contains
             end do 
             close (1234)
         end if
-    end subroutine
+    end subroutine write_results_rdp
     subroutine write_results_csp(filename, vals, res, tol)
         !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        implicit none(type, external)
         character(len=*), intent(in) :: filename
         !! Output filename. This file will be overwritten
         complex(sp), intent(in) :: vals(:)
@@ -1664,9 +1719,10 @@ contains
             end do 
             close (1234)
         end if
-    end subroutine
+    end subroutine write_results_csp
     subroutine write_results_cdp(filename, vals, res, tol)
         !! Prints the intermediate results of iterative eigenvalue/singular value decompositions
+        implicit none(type, external)
         character(len=*), intent(in) :: filename
         !! Output filename. This file will be overwritten
         complex(dp), intent(in) :: vals(:)
@@ -1693,7 +1749,7 @@ contains
             end do 
             close (1234)
         end if
-    end subroutine
+    end subroutine write_results_cdp
 
     elemental pure function compute_residual_rsp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -1742,34 +1798,35 @@ contains
         array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure
+    end procedure save_eigenspectrum_rsp
     module procedure save_eigenspectrum_rdp
         ! Internal variables.
         real(dp) :: array(size(lambda), 2)
         array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure
+    end procedure save_eigenspectrum_rdp
     module procedure save_eigenspectrum_csp
         ! Internal variables.
         real(sp) :: array(size(lambda), 3)
         array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure
+    end procedure save_eigenspectrum_csp
     module procedure save_eigenspectrum_cdp
         ! Internal variables.
         real(dp) :: array(size(lambda), 3)
         array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure
+    end procedure save_eigenspectrum_cdp
 
     !---------------------------------------------------
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
     subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+        implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rsp), intent(out) :: X(:)
@@ -1921,12 +1978,14 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
+            implicit none(type, external)
             complex(sp), intent(in) :: lambda(:)
             logical, allocatable :: selected(:)
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rsp
     subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+        implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_rdp), intent(out) :: X(:)
@@ -2078,12 +2137,14 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
+            implicit none(type, external)
             complex(dp), intent(in) :: lambda(:)
             logical, allocatable :: selected(:)
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rdp
     subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+        implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_csp), intent(out) :: X(:)
@@ -2225,12 +2286,14 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
+            implicit none(type, external)
             complex(sp), intent(in) :: lambda(:)
             logical, allocatable :: selected(:)
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_csp
     subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+        implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
         class(abstract_vector_cdp), intent(out) :: X(:)
@@ -2372,6 +2435,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
         function median_selector(lambda) result(selected)
+            implicit none(type, external)
             complex(dp), intent(in) :: lambda(:)
             logical, allocatable :: selected(:)
             selected = abs(lambda) > median(abs(lambda))

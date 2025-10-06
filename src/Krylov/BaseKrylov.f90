@@ -12,7 +12,6 @@ module LightKrylov_BaseKrylov
     !--------------------------------------------
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
-    use iso_fortran_env
     use stdlib_optval, only: optval
     use stdlib_linalg, only: eye, schur, norm, mnorm
 
@@ -21,13 +20,13 @@ module LightKrylov_BaseKrylov
     !-------------------------------
     use LightKrylov_Constants
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             stop_error, check_info
+                                  stop_error, check_info
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
 
-    implicit none
+    implicit none(type, external)
     private
     
     character(len=*), parameter :: this_module      = 'LK_BKrylov'
@@ -122,6 +121,7 @@ module LightKrylov_BaseKrylov
         !!  - `blksize` (*optional*)    :   `integer` value determining the dimension of a block for the
         !!                                  block Arnoldi factorization. Default is `blksize=1`.
         module subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -140,8 +140,9 @@ module LightKrylov_BaseKrylov
             !! Tolerance to determine whether an invariant subspace has been computed or not.
             integer, optional, intent(in) :: blksize
             !! Block size for block Arnoldi (default 1).
-        end subroutine
+        end subroutine arnoldi_rsp
         module subroutine arnoldi_rdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_rdp), intent(inout) :: X(:)
@@ -160,8 +161,9 @@ module LightKrylov_BaseKrylov
             !! Tolerance to determine whether an invariant subspace has been computed or not.
             integer, optional, intent(in) :: blksize
             !! Block size for block Arnoldi (default 1).
-        end subroutine
+        end subroutine arnoldi_rdp
         module subroutine arnoldi_csp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_csp), intent(inout) :: X(:)
@@ -180,8 +182,9 @@ module LightKrylov_BaseKrylov
             !! Tolerance to determine whether an invariant subspace has been computed or not.
             integer, optional, intent(in) :: blksize
             !! Block size for block Arnoldi (default 1).
-        end subroutine
+        end subroutine arnoldi_csp
         module subroutine arnoldi_cdp(A, X, H, info, kstart, kend, tol, transpose, blksize)
+            implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_cdp), intent(inout) :: X(:)
@@ -200,7 +203,7 @@ module LightKrylov_BaseKrylov
             !! Tolerance to determine whether an invariant subspace has been computed or not.
             integer, optional, intent(in) :: blksize
             !! Block size for block Arnoldi (default 1).
-        end subroutine
+        end subroutine arnoldi_cdp
     end interface
 
     interface lanczos
@@ -264,6 +267,7 @@ module LightKrylov_BaseKrylov
         !!                              to be \( A \)-invariant. By default `tol = atol_sp` or
         !!                              `tol = atol_rp` depending on the kind of `A`.
         module subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             class(abstract_vector_rsp), intent(inout) :: X(:)
             real(sp), intent(inout) :: T(:, :)
@@ -271,8 +275,9 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             integer, optional, intent(in) :: kend
             real(sp), optional, intent(in) :: tol
-        end subroutine  
+        end subroutine lanczos_tridiagonalization_rsp
         module subroutine lanczos_tridiagonalization_rdp(A, X, T, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             class(abstract_vector_rdp), intent(inout) :: X(:)
             real(dp), intent(inout) :: T(:, :)
@@ -280,8 +285,9 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             integer, optional, intent(in) :: kend
             real(dp), optional, intent(in) :: tol
-        end subroutine  
+        end subroutine lanczos_tridiagonalization_rdp
         module subroutine lanczos_tridiagonalization_csp(A, X, T, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             class(abstract_vector_csp), intent(inout) :: X(:)
             complex(sp), intent(inout) :: T(:, :)
@@ -289,8 +295,9 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             integer, optional, intent(in) :: kend
             real(sp), optional, intent(in) :: tol
-        end subroutine  
+        end subroutine lanczos_tridiagonalization_csp
         module subroutine lanczos_tridiagonalization_cdp(A, X, T, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             class(abstract_vector_cdp), intent(inout) :: X(:)
             complex(dp), intent(inout) :: T(:, :)
@@ -298,7 +305,7 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             integer, optional, intent(in) :: kend
             real(dp), optional, intent(in) :: tol
-        end subroutine  
+        end subroutine lanczos_tridiagonalization_cdp
     end interface
 
     interface bidiagonalization
@@ -371,6 +378,7 @@ module LightKrylov_BaseKrylov
         !!                              to be \( A \)-invariant. By default `tol = atol_sp` or
         !!                              `tol = atol_rp` depending on the kind of `A`.
         module subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_rsp), intent(inout) :: U(:)
@@ -388,8 +396,9 @@ module LightKrylov_BaseKrylov
             !! Final index for the Lanczos factorization (default 1).
             real(sp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
-        end subroutine
+        end subroutine lanczos_bidiagonalization_rsp
         module subroutine lanczos_bidiagonalization_rdp(A, U, V, B, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_rdp), intent(inout) :: U(:)
@@ -407,8 +416,9 @@ module LightKrylov_BaseKrylov
             !! Final index for the Lanczos factorization (default 1).
             real(dp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
-        end subroutine
+        end subroutine lanczos_bidiagonalization_rdp
         module subroutine lanczos_bidiagonalization_csp(A, U, V, B, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_csp), intent(inout) :: U(:)
@@ -426,8 +436,9 @@ module LightKrylov_BaseKrylov
             !! Final index for the Lanczos factorization (default 1).
             real(sp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
-        end subroutine
+        end subroutine lanczos_bidiagonalization_csp
         module subroutine lanczos_bidiagonalization_cdp(A, U, V, B, info, kstart, kend, tol)
+            implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_cdp), intent(inout) :: U(:)
@@ -445,7 +456,7 @@ module LightKrylov_BaseKrylov
             !! Final index for the Lanczos factorization (default 1).
             real(dp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
-        end subroutine
+        end subroutine lanczos_bidiagonalization_cdp
     end interface
 
     !-------------------------------------
@@ -507,6 +518,7 @@ module LightKrylov_BaseKrylov
         !!  - `tol` (*optional*)    :   Numerical tolerance to determine whether two vectors are colinear
         !!                              or not. Default `tol = atol_sp` or `tol = atol_dp`.
         module subroutine qr_no_pivoting_rsp(Q, R, info, tol)
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             real(sp), intent(out) :: R(:, :)
@@ -514,9 +526,10 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(sp), optional, intent(in) :: tol
-        end subroutine
+        end subroutine qr_no_pivoting_rsp
 
         module subroutine qr_with_pivoting_rsp(Q, R, perm, info, tol)
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             real(sp), intent(out) :: R(:, :)
@@ -526,8 +539,9 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(sp), optional, intent(in) :: tol
-        end subroutine 
+        end subroutine qr_with_pivoting_rsp
         module subroutine qr_no_pivoting_rdp(Q, R, info, tol)
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             real(dp), intent(out) :: R(:, :)
@@ -535,9 +549,10 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(dp), optional, intent(in) :: tol
-        end subroutine
+        end subroutine qr_no_pivoting_rdp
 
         module subroutine qr_with_pivoting_rdp(Q, R, perm, info, tol)
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             real(dp), intent(out) :: R(:, :)
@@ -547,8 +562,9 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(dp), optional, intent(in) :: tol
-        end subroutine 
+        end subroutine qr_with_pivoting_rdp
         module subroutine qr_no_pivoting_csp(Q, R, info, tol)
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             complex(sp), intent(out) :: R(:, :)
@@ -556,9 +572,10 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(sp), optional, intent(in) :: tol
-        end subroutine
+        end subroutine qr_no_pivoting_csp
 
         module subroutine qr_with_pivoting_csp(Q, R, perm, info, tol)
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             complex(sp), intent(out) :: R(:, :)
@@ -568,8 +585,9 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(sp), optional, intent(in) :: tol
-        end subroutine 
+        end subroutine qr_with_pivoting_csp
         module subroutine qr_no_pivoting_cdp(Q, R, info, tol)
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             complex(dp), intent(out) :: R(:, :)
@@ -577,9 +595,10 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(dp), optional, intent(in) :: tol
-        end subroutine
+        end subroutine qr_no_pivoting_cdp
 
         module subroutine qr_with_pivoting_cdp(Q, R, perm, info, tol)
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: Q(:)
             !! Array of `abstract_vector` to be orthogonalized.
             complex(dp), intent(out) :: R(:, :)
@@ -589,7 +608,7 @@ module LightKrylov_BaseKrylov
             integer, intent(out) :: info
             !! Information flag.
             real(dp), optional, intent(in) :: tol
-        end subroutine 
+        end subroutine qr_with_pivoting_cdp
     end interface
 
     interface permcols
@@ -620,49 +639,57 @@ module LightKrylov_BaseKrylov
         !!  - `perm`    :   Rank-1 array of `integer` corresponding to the desired permutation vector.
         !!                  It is an `intent(in)` argument.
         module subroutine permcols_basis_rsp(Q, perm)
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: Q(:)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_basis_rsp
  
         module subroutine permcols_array_rsp(Q, perm)
+            implicit none(type, external)
             real(sp), intent(inout) :: Q(:, :)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_array_rsp
         module subroutine permcols_basis_rdp(Q, perm)
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: Q(:)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_basis_rdp
  
         module subroutine permcols_array_rdp(Q, perm)
+            implicit none(type, external)
             real(dp), intent(inout) :: Q(:, :)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_array_rdp
         module subroutine permcols_basis_csp(Q, perm)
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: Q(:)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_basis_csp
  
         module subroutine permcols_array_csp(Q, perm)
+            implicit none(type, external)
             complex(sp), intent(inout) :: Q(:, :)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_array_csp
         module subroutine permcols_basis_cdp(Q, perm)
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: Q(:)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_basis_cdp
  
         module subroutine permcols_array_cdp(Q, perm)
+            implicit none(type, external)
             complex(dp), intent(inout) :: Q(:, :)
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
-        end subroutine
+        end subroutine permcols_array_cdp
     end interface
 
     interface 
@@ -682,9 +709,10 @@ module LightKrylov_BaseKrylov
         !!  - `perm`    :   Rank-1 array of `integer` corresponding to the desired permutation vector.
         !!                  It is an `intent(in)` argument.
         module function invperm(perm) result(inv_perm)
+            implicit none(type, external)
             integer, intent(in) :: perm(:)
             integer, allocatable :: inv_perm(:)
-        end function
+        end function invperm
     end interface
 
     interface initialize_krylov_subspace
@@ -708,21 +736,25 @@ module LightKrylov_BaseKrylov
         !!                          Krylov vectors. Note that `X0` need not be an orthonormal
         !!                          basis as this subroutine includes a `call qr(X0)`.
         module subroutine initialize_krylov_subspace_rsp(X, X0)
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: X(:)
             class(abstract_vector_rsp), optional, intent(in) :: X0(:)
-        end subroutine
+        end subroutine initialize_krylov_subspace_rsp
         module subroutine initialize_krylov_subspace_rdp(X, X0)
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: X(:)
             class(abstract_vector_rdp), optional, intent(in) :: X0(:)
-        end subroutine
+        end subroutine initialize_krylov_subspace_rdp
         module subroutine initialize_krylov_subspace_csp(X, X0)
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: X(:)
             class(abstract_vector_csp), optional, intent(in) :: X0(:)
-        end subroutine
+        end subroutine initialize_krylov_subspace_csp
         module subroutine initialize_krylov_subspace_cdp(X, X0)
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: X(:)
             class(abstract_vector_cdp), optional, intent(in) :: X0(:)
-        end subroutine
+        end subroutine initialize_krylov_subspace_cdp
     end interface
 
     interface is_orthonormal
@@ -742,21 +774,25 @@ module LightKrylov_BaseKrylov
         !!  - `X`   :   Array of derived types extended from the base types provided in the
         !!              `AbstractVectors` module.
         module function is_orthonormal_rsp(X) result(ortho)
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(in) :: X(:)
             logical :: ortho
-        end function
+        end function is_orthonormal_rsp
         module function is_orthonormal_rdp(X) result(ortho)
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(in) :: X(:)
             logical :: ortho
-        end function
+        end function is_orthonormal_rdp
         module function is_orthonormal_csp(X) result(ortho)
+            implicit none(type, external)
             class(abstract_vector_csp), intent(in) :: X(:)
             logical :: ortho
-        end function
+        end function is_orthonormal_csp
         module function is_orthonormal_cdp(X) result(ortho)
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(in) :: X(:)
             logical :: ortho
-        end function
+        end function is_orthonormal_cdp
     end interface
 
     interface orthonormalize_basis
@@ -777,30 +813,35 @@ module LightKrylov_BaseKrylov
         !!  - `X`   :   Array of `abstract_vector` to orthonormalize. Note that this process is done
         !!              in-place. It is an `intent(inout)` argument.
         module subroutine orthonormalize_basis_rsp(X)
+            implicit none(type, external)
             !! Orthonormalizes the `abstract_vector` basis `X`
             class(abstract_vector_rsp), intent(inout) :: X(:)
             !! Input `abstract_vector` basis to orthogonalize against
-        end subroutine
+        end subroutine orthonormalize_basis_rsp
         module subroutine orthonormalize_basis_rdp(X)
+            implicit none(type, external)
             !! Orthonormalizes the `abstract_vector` basis `X`
             class(abstract_vector_rdp), intent(inout) :: X(:)
             !! Input `abstract_vector` basis to orthogonalize against
-        end subroutine
+        end subroutine orthonormalize_basis_rdp
         module subroutine orthonormalize_basis_csp(X)
+            implicit none(type, external)
             !! Orthonormalizes the `abstract_vector` basis `X`
             class(abstract_vector_csp), intent(inout) :: X(:)
             !! Input `abstract_vector` basis to orthogonalize against
-        end subroutine
+        end subroutine orthonormalize_basis_csp
         module subroutine orthonormalize_basis_cdp(X)
+            implicit none(type, external)
             !! Orthonormalizes the `abstract_vector` basis `X`
             class(abstract_vector_cdp), intent(inout) :: X(:)
             !! Input `abstract_vector` basis to orthogonalize against
-        end subroutine
+        end subroutine orthonormalize_basis_cdp
     end interface
 
     interface orthogonalize_against_basis
         module subroutine orthogonalize_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
-           !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+            implicit none(type, external)
+            !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_rsp), intent(inout) :: y
             !! Input `abstract_vector` to orthogonalize
             class(abstract_vector_rsp), intent(in)    :: X(:)
@@ -811,9 +852,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             real(sp),                         optional, intent(out)   :: beta(:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_vector_against_basis_rsp
 
         module subroutine orthogonalize_basis_against_basis_rsp(Y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Orthogonalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_rsp), intent(inout) :: Y(:)
             !! Input `abstract_vector` basis to orthogonalize
@@ -825,9 +867,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             real(sp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_basis_against_basis_rsp
         module subroutine orthogonalize_vector_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
-           !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+            implicit none(type, external)
+            !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_rdp), intent(inout) :: y
             !! Input `abstract_vector` to orthogonalize
             class(abstract_vector_rdp), intent(in)    :: X(:)
@@ -838,9 +881,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             real(dp),                         optional, intent(out)   :: beta(:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_vector_against_basis_rdp
 
         module subroutine orthogonalize_basis_against_basis_rdp(Y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Orthogonalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_rdp), intent(inout) :: Y(:)
             !! Input `abstract_vector` basis to orthogonalize
@@ -852,9 +896,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             real(dp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_basis_against_basis_rdp
         module subroutine orthogonalize_vector_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
-           !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+            implicit none(type, external)
+            !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_csp), intent(inout) :: y
             !! Input `abstract_vector` to orthogonalize
             class(abstract_vector_csp), intent(in)    :: X(:)
@@ -865,9 +910,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             complex(sp),                         optional, intent(out)   :: beta(:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_vector_against_basis_csp
 
         module subroutine orthogonalize_basis_against_basis_csp(Y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Orthogonalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_csp), intent(inout) :: Y(:)
             !! Input `abstract_vector` basis to orthogonalize
@@ -879,9 +925,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             complex(sp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_basis_against_basis_csp
         module subroutine orthogonalize_vector_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
-           !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
+            implicit none(type, external)
+            !! Orthogonalizes the `abstract_vector` `y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_cdp), intent(inout) :: y
             !! Input `abstract_vector` to orthogonalize
             class(abstract_vector_cdp), intent(in)    :: X(:)
@@ -892,9 +939,10 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             complex(dp),                         optional, intent(out)   :: beta(:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_vector_against_basis_cdp
 
         module subroutine orthogonalize_basis_against_basis_cdp(Y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Orthogonalizes the `abstract_vector` basis `Y` against a basis `X` of `abstract_vector`.
             class(abstract_vector_cdp), intent(inout) :: Y(:)
             !! Input `abstract_vector` basis to orthogonalize
@@ -906,7 +954,7 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             complex(dp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine orthogonalize_basis_against_basis_cdp
     end interface
 
     interface double_gram_schmidt_step
@@ -949,21 +997,23 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `beta` (*optional*)   :   `real` or `complex` array containing the coefficients \( \beta = X^H y \).
         module subroutine DGS_vector_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
-          !! Computes one step of the double Gram-Schmidt orthogonalization process of the
-          !! `abstract_vector` `y` against the `abstract_vector` basis `X`
-          class(abstract_vector_rsp), intent(inout) :: y
-          !! Input `abstract_vector` to orthogonalize
-          class(abstract_vector_rsp), intent(in)    :: X(:)
-          !! Input `abstract_vector` basis to orthogonalize against
-          integer, intent(out) :: info
-          !! Information flag.
-          logical,                          optional, intent(in)    :: if_chk_orthonormal
-          !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
-          real(sp),                         optional, intent(out)   :: beta(:)
-          !! Projection coefficients if requested
-        end subroutine
+            implicit none(type, external)
+            !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+            !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+            class(abstract_vector_rsp), intent(inout) :: y
+            !! Input `abstract_vector` to orthogonalize
+            class(abstract_vector_rsp), intent(in)    :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+            integer, intent(out) :: info
+            !! Information flag.
+            logical,                          optional, intent(in)    :: if_chk_orthonormal
+            !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+            real(sp),                         optional, intent(out)   :: beta(:)
+            !! Projection coefficients if requested
+        end subroutine DGS_vector_against_basis_rsp
 
         module subroutine DGS_basis_against_basis_rsp(y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Computes one step of the double Gram-Schmidt orthogonalization process of the
             !! `abstract_vector` `y` against the `abstract_vector` basis `X`
             class(abstract_vector_rsp), intent(inout) :: Y(:)
@@ -976,23 +1026,25 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             real(sp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine DGS_basis_against_basis_rsp
         module subroutine DGS_vector_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
-          !! Computes one step of the double Gram-Schmidt orthogonalization process of the
-          !! `abstract_vector` `y` against the `abstract_vector` basis `X`
-          class(abstract_vector_rdp), intent(inout) :: y
-          !! Input `abstract_vector` to orthogonalize
-          class(abstract_vector_rdp), intent(in)    :: X(:)
-          !! Input `abstract_vector` basis to orthogonalize against
-          integer, intent(out) :: info
-          !! Information flag.
-          logical,                          optional, intent(in)    :: if_chk_orthonormal
-          !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
-          real(dp),                         optional, intent(out)   :: beta(:)
-          !! Projection coefficients if requested
-        end subroutine
+            implicit none(type, external)
+            !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+            !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+            class(abstract_vector_rdp), intent(inout) :: y
+            !! Input `abstract_vector` to orthogonalize
+            class(abstract_vector_rdp), intent(in)    :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+            integer, intent(out) :: info
+            !! Information flag.
+            logical,                          optional, intent(in)    :: if_chk_orthonormal
+            !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+            real(dp),                         optional, intent(out)   :: beta(:)
+            !! Projection coefficients if requested
+        end subroutine DGS_vector_against_basis_rdp
 
         module subroutine DGS_basis_against_basis_rdp(y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Computes one step of the double Gram-Schmidt orthogonalization process of the
             !! `abstract_vector` `y` against the `abstract_vector` basis `X`
             class(abstract_vector_rdp), intent(inout) :: Y(:)
@@ -1005,23 +1057,25 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             real(dp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine DGS_basis_against_basis_rdp
         module subroutine DGS_vector_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
-          !! Computes one step of the double Gram-Schmidt orthogonalization process of the
-          !! `abstract_vector` `y` against the `abstract_vector` basis `X`
-          class(abstract_vector_csp), intent(inout) :: y
-          !! Input `abstract_vector` to orthogonalize
-          class(abstract_vector_csp), intent(in)    :: X(:)
-          !! Input `abstract_vector` basis to orthogonalize against
-          integer, intent(out) :: info
-          !! Information flag.
-          logical,                          optional, intent(in)    :: if_chk_orthonormal
-          !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
-          complex(sp),                         optional, intent(out)   :: beta(:)
-          !! Projection coefficients if requested
-        end subroutine
+            implicit none(type, external)
+            !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+            !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+            class(abstract_vector_csp), intent(inout) :: y
+            !! Input `abstract_vector` to orthogonalize
+            class(abstract_vector_csp), intent(in)    :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+            integer, intent(out) :: info
+            !! Information flag.
+            logical,                          optional, intent(in)    :: if_chk_orthonormal
+            !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+            complex(sp),                         optional, intent(out)   :: beta(:)
+            !! Projection coefficients if requested
+        end subroutine DGS_vector_against_basis_csp
 
         module subroutine DGS_basis_against_basis_csp(y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Computes one step of the double Gram-Schmidt orthogonalization process of the
             !! `abstract_vector` `y` against the `abstract_vector` basis `X`
             class(abstract_vector_csp), intent(inout) :: Y(:)
@@ -1034,23 +1088,25 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             complex(sp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine DGS_basis_against_basis_csp
         module subroutine DGS_vector_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
-          !! Computes one step of the double Gram-Schmidt orthogonalization process of the
-          !! `abstract_vector` `y` against the `abstract_vector` basis `X`
-          class(abstract_vector_cdp), intent(inout) :: y
-          !! Input `abstract_vector` to orthogonalize
-          class(abstract_vector_cdp), intent(in)    :: X(:)
-          !! Input `abstract_vector` basis to orthogonalize against
-          integer, intent(out) :: info
-          !! Information flag.
-          logical,                          optional, intent(in)    :: if_chk_orthonormal
-          !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
-          complex(dp),                         optional, intent(out)   :: beta(:)
-          !! Projection coefficients if requested
-        end subroutine
+            implicit none(type, external)
+            !! Computes one step of the double Gram-Schmidt orthogonalization process of the
+            !! `abstract_vector` `y` against the `abstract_vector` basis `X`
+            class(abstract_vector_cdp), intent(inout) :: y
+            !! Input `abstract_vector` to orthogonalize
+            class(abstract_vector_cdp), intent(in)    :: X(:)
+            !! Input `abstract_vector` basis to orthogonalize against
+            integer, intent(out) :: info
+            !! Information flag.
+            logical,                          optional, intent(in)    :: if_chk_orthonormal
+            !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
+            complex(dp),                         optional, intent(out)   :: beta(:)
+            !! Projection coefficients if requested
+        end subroutine DGS_vector_against_basis_cdp
 
         module subroutine DGS_basis_against_basis_cdp(y, X, info, if_chk_orthonormal, beta)
+            implicit none(type, external)
             !! Computes one step of the double Gram-Schmidt orthogonalization process of the
             !! `abstract_vector` `y` against the `abstract_vector` basis `X`
             class(abstract_vector_cdp), intent(inout) :: Y(:)
@@ -1063,7 +1119,7 @@ module LightKrylov_BaseKrylov
             !! Check that input Krylov vectors `X` form an orthonormal basis (expensive!)
             complex(dp),                         optional, intent(out)   :: beta(:,:)
             !! Projection coefficients if requested
-        end subroutine
+        end subroutine DGS_basis_against_basis_cdp
     end interface
 
     interface krylov_schur
@@ -1119,11 +1175,13 @@ module LightKrylov_BaseKrylov
     abstract interface
         function eigvals_select_sp(lambda) result(selected)
             import sp
+            implicit none(type, external)
             complex(sp), intent(in) :: lambda(:)
             logical, allocatable          :: selected(:)
         end function eigvals_select_sp
         function eigvals_select_dp(lambda) result(selected)
             import dp
+            implicit none(type, external)
             complex(dp), intent(in) :: lambda(:)
             logical, allocatable          :: selected(:)
         end function eigvals_select_dp
