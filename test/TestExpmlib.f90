@@ -1166,5 +1166,4 @@ contains
     end subroutine test_dense_sqrtm_pos_semi_def_cdp
 
 
-end module
-
+end module TestExpmLib
