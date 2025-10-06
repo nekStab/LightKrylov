@@ -1,7 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_basekrylov) krylov_utilities
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -11,18 +11,18 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure permcols_basis_${type[0]}$${kind}$
         call copy(Q, Q(perm))
-    end procedure
+    end procedure permcols_basis_${type[0]}$${kind}$
 
     module procedure permcols_array_${type[0]}$${kind}$
         Q = Q(:, perm)
-    end procedure
+    end procedure permcols_array_${type[0]}$${kind}$
     #:endfor
 
     module procedure invperm
         integer :: i
         allocate(inv_perm(size(perm)), source=0)
         inv_perm(perm) = [(i, i=1, size(perm))]
-    end procedure
+    end procedure invperm
 
     !----------------------------------------------
     !-----     Initialize Krylov subspace     -----
@@ -45,7 +45,7 @@ contains
         endif
 
         return
-    end procedure
+    end procedure initialize_krylov_subspace_${type[0]}$${kind}$
     #:endfor
    
     !----------------------------------------
@@ -65,7 +65,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure orthonormalize_basis_${type[0]}$${kind}$
     #:endfor
 
     !---------------------------------------------------
@@ -81,7 +81,7 @@ contains
             ! The basis is not orthonormal. Cannot orthonormalize.
             ortho = .false.
         end if
-    end procedure
+    end procedure is_orthonormal_${type[0]}$${kind}$
     #:endfor
 
-end submodule
+end submodule krylov_utilities
