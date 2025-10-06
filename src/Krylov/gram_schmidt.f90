@@ -1,5 +1,5 @@
 submodule (lightkrylov_basekrylov) gram_schmidt_process
-    implicit none
+    implicit none(type, external)
 contains
 
     !--------------------------------------------
@@ -37,7 +37,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure DGS_vector_against_basis_rsp
 
     module procedure DGS_basis_against_basis_rsp
         character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_rsp'
@@ -69,7 +69,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure DGS_basis_against_basis_rsp
     module procedure DGS_vector_against_basis_rdp
         character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_rdp'
         logical                      :: chk_X_orthonormality
@@ -101,7 +101,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure DGS_vector_against_basis_rdp
 
     module procedure DGS_basis_against_basis_rdp
         character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_rdp'
@@ -133,7 +133,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure DGS_basis_against_basis_rdp
     module procedure DGS_vector_against_basis_csp
         character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_csp'
         logical                      :: chk_X_orthonormality
@@ -165,7 +165,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure DGS_vector_against_basis_csp
 
     module procedure DGS_basis_against_basis_csp
         character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_csp'
@@ -197,7 +197,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure DGS_basis_against_basis_csp
     module procedure DGS_vector_against_basis_cdp
         character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_cdp'
         logical                      :: chk_X_orthonormality
@@ -229,7 +229,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure DGS_vector_against_basis_cdp
 
     module procedure DGS_basis_against_basis_cdp
         character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_cdp'
@@ -261,7 +261,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure DGS_basis_against_basis_cdp
 
     !-------------------------------------------------------------------------------
     !-----     ORTHOGONALIZE VECTOR/BASIS AGAINST ALREADY ORTHOGONAL BASIS     -----
@@ -311,7 +311,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure orthogonalize_vector_against_basis_rsp
 
     module procedure orthogonalize_basis_against_basis_rsp
         character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_rsp'
@@ -361,7 +361,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure orthogonalize_basis_against_basis_rsp
     module procedure orthogonalize_vector_against_basis_rdp
         character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_rdp'
         logical  :: chk_X_orthonormality
@@ -406,7 +406,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure orthogonalize_vector_against_basis_rdp
 
     module procedure orthogonalize_basis_against_basis_rdp
         character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_rdp'
@@ -456,7 +456,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure orthogonalize_basis_against_basis_rdp
     module procedure orthogonalize_vector_against_basis_csp
         character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_csp'
         logical  :: chk_X_orthonormality
@@ -501,7 +501,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure orthogonalize_vector_against_basis_csp
 
     module procedure orthogonalize_basis_against_basis_csp
         character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_csp'
@@ -551,7 +551,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure orthogonalize_basis_against_basis_csp
     module procedure orthogonalize_vector_against_basis_cdp
         character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_cdp'
         logical  :: chk_X_orthonormality
@@ -596,7 +596,7 @@ contains
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
         return
-    end procedure
+    end procedure orthogonalize_vector_against_basis_cdp
 
     module procedure orthogonalize_basis_against_basis_cdp
         character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_cdp'
@@ -646,7 +646,6 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
         return
-    end procedure
+    end procedure orthogonalize_basis_against_basis_cdp
 
-end submodule
-
+end submodule gram_schmidt_process

@@ -1,5 +1,5 @@
 submodule (lightkrylov_basekrylov) lanczos_methods
-    implicit none
+    implicit none(type, external)
 contains
     module procedure lanczos_tridiagonalization_rsp
         character(len=*), parameter :: this_procedure = 'lanczos_tridiagonalization_rsp'
@@ -40,7 +40,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_tridiagonalization_rsp
 
     subroutine update_tridiag_matrix_rsp(T, X, k)
         integer, intent(in) :: k
@@ -102,7 +102,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_tridiagonalization_rdp
 
     subroutine update_tridiag_matrix_rdp(T, X, k)
         integer, intent(in) :: k
@@ -164,7 +164,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_tridiagonalization_csp
 
     subroutine update_tridiag_matrix_csp(T, X, k)
         integer, intent(in) :: k
@@ -226,7 +226,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_tridiagonalization_cdp
 
     subroutine update_tridiag_matrix_cdp(T, X, k)
         integer, intent(in) :: k
@@ -249,5 +249,4 @@ contains
 
         return
     end subroutine update_tridiag_matrix_cdp
-end submodule
-
+end submodule lanczos_methods
