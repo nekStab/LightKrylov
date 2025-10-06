@@ -17,7 +17,7 @@ module LightKrylov_AbstractLinops
     use LightKrylov_Timing, only: time_lightkrylov
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_Linops'
@@ -64,13 +64,14 @@ module LightKrylov_AbstractLinops
         !! Wrapper for matvec including the counter increment
         procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_rsp
         !! Wrapper for rmatvec including the counter increment
-    end type
+    end type abstract_linop_rsp
 
     abstract interface
         subroutine abstract_matvec_rsp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_rsp
+            implicit none(type, external)
             class(abstract_linop_rsp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_rsp), intent(in)  :: vec_in
@@ -91,7 +92,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_rsp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_rsp
-    end type
+    end type adjoint_linop_rsp
 
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) exponential propagator with kind=sp     -----
@@ -112,7 +113,7 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         real(sp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
-    end type
+    end type abstract_exptA_linop_rsp
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
@@ -130,13 +131,14 @@ module LightKrylov_AbstractLinops
         !! Wrapper for matvec including the counter increment
         procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_rdp
         !! Wrapper for rmatvec including the counter increment
-    end type
+    end type abstract_linop_rdp
 
     abstract interface
         subroutine abstract_matvec_rdp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_rdp
+            implicit none(type, external)
             class(abstract_linop_rdp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_rdp), intent(in)  :: vec_in
@@ -157,7 +159,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_rdp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_rdp
-    end type
+    end type adjoint_linop_rdp
 
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract real(dp) exponential propagator with kind=dp     -----
@@ -178,7 +180,7 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         real(dp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
-    end type
+    end type abstract_exptA_linop_rdp
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
@@ -196,13 +198,14 @@ module LightKrylov_AbstractLinops
         !! Wrapper for matvec including the counter increment
         procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_csp
         !! Wrapper for rmatvec including the counter increment
-    end type
+    end type abstract_linop_csp
 
     abstract interface
         subroutine abstract_matvec_csp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_csp
+            implicit none(type, external)
             class(abstract_linop_csp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_csp), intent(in)  :: vec_in
@@ -223,7 +226,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_csp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_csp
-    end type
+    end type adjoint_linop_csp
 
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(sp) exponential propagator with kind=sp     -----
@@ -244,7 +247,7 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         real(sp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
-    end type
+    end type abstract_exptA_linop_csp
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(dp) operator with kind=dp     -----
     !------------------------------------------------------------------------------
@@ -262,13 +265,14 @@ module LightKrylov_AbstractLinops
         !! Wrapper for matvec including the counter increment
         procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_cdp
         !! Wrapper for rmatvec including the counter increment
-    end type
+    end type abstract_linop_cdp
 
     abstract interface
         subroutine abstract_matvec_cdp(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_cdp
+            implicit none(type, external)
             class(abstract_linop_cdp) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_cdp), intent(in)  :: vec_in
@@ -289,7 +293,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_cdp
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_cdp
-    end type
+    end type adjoint_linop_cdp
 
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract complex(dp) exponential propagator with kind=dp     -----
@@ -310,7 +314,7 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         real(dp), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
-    end type
+    end type abstract_exptA_linop_cdp
 
     interface adjoint
         module procedure initialize_adjoint_rsp
@@ -331,7 +335,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => id_matvec_rsp
         procedure, pass(self), public :: rmatvec => id_matvec_rsp
-    end type
+    end type Id_rsp
 
     type, extends(abstract_linop_rdp), public :: Id_rdp
         !! Utility type to define the Identity operator. Note that the type-bound procedures
@@ -340,7 +344,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => id_matvec_rdp
         procedure, pass(self), public :: rmatvec => id_matvec_rdp
-    end type
+    end type Id_rdp
 
     type, extends(abstract_linop_csp), public :: Id_csp
         !! Utility type to define the Identity operator. Note that the type-bound procedures
@@ -349,7 +353,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => id_matvec_csp
         procedure, pass(self), public :: rmatvec => id_matvec_csp
-    end type
+    end type Id_csp
 
     type, extends(abstract_linop_cdp), public :: Id_cdp
         !! Utility type to define the Identity operator. Note that the type-bound procedures
@@ -358,7 +362,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => id_matvec_cdp
         procedure, pass(self), public :: rmatvec => id_matvec_cdp
-    end type
+    end type Id_cdp
 
 
     !----------------------------------------------
@@ -377,7 +381,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => scaled_matvec_rsp
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_rsp
-    end type
+    end type scaled_linop_rsp
     type, extends(abstract_linop_rdp), public :: scaled_linop_rdp
         !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a real-valued operator and
         !! \( \sigma \in \mathbb{R} \). The definitions of `matvec` and `rmatvec` are directly inherited from those used to define
@@ -390,7 +394,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => scaled_matvec_rdp
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_rdp
-    end type
+    end type scaled_linop_rdp
     type, extends(abstract_linop_csp), public :: scaled_linop_csp
         !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex(sp)-valued operator
         !! and \( \sigma \in \mathbb{R}\ ) or \( \mathbb{C} \).
@@ -402,7 +406,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => scaled_matvec_csp
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_csp
-    end type
+    end type scaled_linop_csp
     type, extends(abstract_linop_cdp), public :: scaled_linop_cdp
         !! Defines a scaled linear operator \( \mathbf{B} = \sigma \mathbf{A} \) with \( \mathbf{A} \) a complex(dp)-valued operator
         !! and \( \sigma \in \mathbb{R}\ ) or \( \mathbb{C} \).
@@ -414,7 +418,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => scaled_matvec_cdp
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_cdp
-    end type
+    end type scaled_linop_cdp
 
     !------------------------------------------------
     !-----     Definition of axpby operator     -----
@@ -433,7 +437,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => axpby_matvec_rsp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_rsp
-    end type
+    end type axpby_linop_rsp
     type, extends(abstract_linop_rdp), public :: axpby_linop_rdp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
         !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
@@ -447,7 +451,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => axpby_matvec_rdp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_rdp
-    end type
+    end type axpby_linop_rdp
     type, extends(abstract_linop_csp), public :: axpby_linop_csp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
         !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
@@ -461,7 +465,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => axpby_matvec_csp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_csp
-    end type
+    end type axpby_linop_csp
     type, extends(abstract_linop_cdp), public :: axpby_linop_cdp
         !! Utility type to define a composite linear operator \( \mathbf{C} = \alpha \mathbf{A} + \beta \mathbf{B} \).
         !! The definitions of `matvec` and `rmatvec` are directly inherited from those used to define `A` and `B`.
@@ -475,7 +479,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => axpby_matvec_cdp
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_cdp
-    end type
+    end type axpby_linop_cdp
 
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
@@ -483,28 +487,28 @@ module LightKrylov_AbstractLinops
     type, abstract, extends(abstract_linop_rsp), public :: abstract_sym_linop_rsp
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
-    end type
+    end type abstract_sym_linop_rsp
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
     type, abstract, extends(abstract_linop_rdp), public :: abstract_sym_linop_rdp
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
-    end type
+    end type abstract_sym_linop_rdp
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_csp), public :: abstract_hermitian_linop_csp
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
-    end type
+    end type abstract_hermitian_linop_csp
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_cdp), public :: abstract_hermitian_linop_cdp
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
-    end type
+    end type abstract_hermitian_linop_cdp
 
     !------------------------------------------------
     !-----     Convenience dense linop type     -----
@@ -515,25 +519,25 @@ module LightKrylov_AbstractLinops
     contains
         procedure, pass(self), public :: matvec => dense_matvec_rsp
         procedure, pass(self), public :: rmatvec => dense_rmatvec_rsp
-    end type
+    end type dense_linop_rsp
     type, extends(abstract_linop_rdp), public :: dense_linop_rdp
         real(dp), allocatable :: data(:, :)
     contains
         procedure, pass(self), public :: matvec => dense_matvec_rdp
         procedure, pass(self), public :: rmatvec => dense_rmatvec_rdp
-    end type
+    end type dense_linop_rdp
     type, extends(abstract_linop_csp), public :: dense_linop_csp
         complex(sp), allocatable :: data(:, :)
     contains
         procedure, pass(self), public :: matvec => dense_matvec_csp
         procedure, pass(self), public :: rmatvec => dense_rmatvec_csp
-    end type
+    end type dense_linop_csp
     type, extends(abstract_linop_cdp), public :: dense_linop_cdp
         complex(dp), allocatable :: data(:, :)
     contains
         procedure, pass(self), public :: matvec => dense_matvec_cdp
         procedure, pass(self), public :: rmatvec => dense_rmatvec_cdp
-    end type
+    end type dense_linop_cdp
 
     interface dense_linop
         module procedure initialize_dense_linop_from_array_rsp
@@ -551,6 +555,7 @@ contains
 
     pure integer function get_counter(self, trans) result(count)
       !! Getter function for the number of matvec calls
+        implicit none(type, external)
       class(abstract_linop), intent(in) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -563,6 +568,7 @@ contains
 
     subroutine reset_counter(self, trans, procedure, counter, reset_timer, soft_reset, clean_timer)
       !! Setter routine to reset the matvec counter and reset timers
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -601,6 +607,7 @@ contains
     subroutine print_timer_info(self, trans)
       !! Getter routine to print the current timing information for matvec/rmatvec
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
       !! matvec or rmatvec?
@@ -617,6 +624,7 @@ contains
     subroutine reset_linop_timer(self, trans, soft, clean)
       !! Setter routine to reset the matvec/rmatvec timers
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
       !! matvec or rmatvec?
@@ -640,6 +648,7 @@ contains
     subroutine finalize_linop_timer(self)
       !! Finalize the matvec/rmatvec timers
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       call self%matvec_timer%finalize()
       call self%rmatvec_timer%finalize()
@@ -650,6 +659,7 @@ contains
     !---------------------------------------------------------------------
 
     subroutine apply_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -667,6 +677,7 @@ contains
     end subroutine apply_matvec_rsp
 
     subroutine apply_rmatvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -683,6 +694,7 @@ contains
         return
     end subroutine apply_rmatvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -700,6 +712,7 @@ contains
     end subroutine apply_matvec_rdp
 
     subroutine apply_rmatvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -716,6 +729,7 @@ contains
         return
     end subroutine apply_rmatvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -733,6 +747,7 @@ contains
     end subroutine apply_matvec_csp
 
     subroutine apply_rmatvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -749,6 +764,7 @@ contains
         return
     end subroutine apply_rmatvec_csp
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -766,6 +782,7 @@ contains
     end subroutine apply_matvec_cdp
 
     subroutine apply_rmatvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -787,6 +804,7 @@ contains
     !------------------------------------------------------------------------------
 
     subroutine id_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(Id_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -794,6 +812,7 @@ contains
         return
     end subroutine id_matvec_rsp
     subroutine id_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(Id_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -801,6 +820,7 @@ contains
         return
     end subroutine id_matvec_rdp
     subroutine id_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(Id_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -808,6 +828,7 @@ contains
         return
     end subroutine id_matvec_csp
     subroutine id_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(Id_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -816,6 +837,7 @@ contains
     end subroutine id_matvec_cdp
 
     subroutine scaled_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -824,6 +846,7 @@ contains
     end subroutine scaled_matvec_rsp
 
     subroutine scaled_rmatvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -831,6 +854,7 @@ contains
         return
     end subroutine scaled_rmatvec_rsp
     subroutine scaled_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -839,6 +863,7 @@ contains
     end subroutine scaled_matvec_rdp
 
     subroutine scaled_rmatvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -846,6 +871,7 @@ contains
         return
     end subroutine scaled_rmatvec_rdp
     subroutine scaled_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -854,6 +880,7 @@ contains
     end subroutine scaled_matvec_csp
 
     subroutine scaled_rmatvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -861,6 +888,7 @@ contains
         return
     end subroutine scaled_rmatvec_csp
     subroutine scaled_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -869,6 +897,7 @@ contains
     end subroutine scaled_matvec_cdp
 
     subroutine scaled_rmatvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -877,6 +906,7 @@ contains
     end subroutine scaled_rmatvec_cdp
 
     subroutine axpby_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -908,6 +938,7 @@ contains
     end subroutine axpby_matvec_rsp
 
     subroutine axpby_rmatvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -939,6 +970,7 @@ contains
     end subroutine axpby_rmatvec_rsp
 
     subroutine axpby_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -970,6 +1002,7 @@ contains
     end subroutine axpby_matvec_rdp
 
     subroutine axpby_rmatvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -1001,6 +1034,7 @@ contains
     end subroutine axpby_rmatvec_rdp
 
     subroutine axpby_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1032,6 +1066,7 @@ contains
     end subroutine axpby_matvec_csp
 
     subroutine axpby_rmatvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1063,6 +1098,7 @@ contains
     end subroutine axpby_rmatvec_csp
 
     subroutine axpby_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -1094,6 +1130,7 @@ contains
     end subroutine axpby_matvec_cdp
 
     subroutine axpby_rmatvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -1130,13 +1167,15 @@ contains
     !-------------------------------------------------
 
     function initialize_adjoint_rsp(A) result(B)
+        implicit none(type, external)
         class(abstract_linop_rsp), intent(in) :: A
         class(adjoint_linop_rsp), allocatable :: B
         allocate(B) ; B%A = A
         return
-    end function
+    end function initialize_adjoint_rsp
 
     subroutine adjoint_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -1147,6 +1186,7 @@ contains
     end subroutine adjoint_matvec_rsp
 
     subroutine adjoint_rmatvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -1157,13 +1197,15 @@ contains
     end subroutine adjoint_rmatvec_rsp
 
     function initialize_adjoint_rdp(A) result(B)
+        implicit none(type, external)
         class(abstract_linop_rdp), intent(in) :: A
         class(adjoint_linop_rdp), allocatable :: B
         allocate(B) ; B%A = A
         return
-    end function
+    end function initialize_adjoint_rdp
 
     subroutine adjoint_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -1174,6 +1216,7 @@ contains
     end subroutine adjoint_matvec_rdp
 
     subroutine adjoint_rmatvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -1184,13 +1227,15 @@ contains
     end subroutine adjoint_rmatvec_rdp
 
     function initialize_adjoint_csp(A) result(B)
+        implicit none(type, external)
         class(abstract_linop_csp), intent(in) :: A
         class(adjoint_linop_csp), allocatable :: B
         allocate(B) ; B%A = A
         return
-    end function
+    end function initialize_adjoint_csp
 
     subroutine adjoint_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1201,6 +1246,7 @@ contains
     end subroutine adjoint_matvec_csp
 
     subroutine adjoint_rmatvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1211,13 +1257,15 @@ contains
     end subroutine adjoint_rmatvec_csp
 
     function initialize_adjoint_cdp(A) result(B)
+        implicit none(type, external)
         class(abstract_linop_cdp), intent(in) :: A
         class(adjoint_linop_cdp), allocatable :: B
         allocate(B) ; B%A = A
         return
-    end function
+    end function initialize_adjoint_cdp
 
     subroutine adjoint_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -1228,6 +1276,7 @@ contains
     end subroutine adjoint_matvec_cdp
 
     subroutine adjoint_rmatvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -1243,6 +1292,7 @@ contains
     !--------------------------------------------------------------------------
 
     subroutine dense_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -1265,9 +1315,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
         return
-    end subroutine
+    end subroutine dense_matvec_rsp
 
     subroutine dense_rmatvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -1290,9 +1341,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
          return
-    end subroutine
+    end subroutine dense_rmatvec_rsp
 
     subroutine dense_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -1315,9 +1367,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
         return
-    end subroutine
+    end subroutine dense_matvec_rdp
 
     subroutine dense_rmatvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -1340,9 +1393,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
          return
-    end subroutine
+    end subroutine dense_rmatvec_rdp
 
     subroutine dense_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1365,9 +1419,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
         return
-    end subroutine
+    end subroutine dense_matvec_csp
 
     subroutine dense_rmatvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1390,9 +1445,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
          return
-    end subroutine
+    end subroutine dense_rmatvec_csp
 
     subroutine dense_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -1415,9 +1471,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
         return
-    end subroutine
+    end subroutine dense_matvec_cdp
 
     subroutine dense_rmatvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
@@ -1440,32 +1497,36 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
          return
-    end subroutine
+    end subroutine dense_rmatvec_cdp
 
     
     function initialize_dense_linop_from_array_rsp(A) result(linop)
+        implicit none(type, external)
         real(sp), intent(in) :: A(:, :)
         type(dense_linop_rsp) :: linop
         linop%data = A
         return
-    end function
+    end function initialize_dense_linop_from_array_rsp
     function initialize_dense_linop_from_array_rdp(A) result(linop)
+        implicit none(type, external)
         real(dp), intent(in) :: A(:, :)
         type(dense_linop_rdp) :: linop
         linop%data = A
         return
-    end function
+    end function initialize_dense_linop_from_array_rdp
     function initialize_dense_linop_from_array_csp(A) result(linop)
+        implicit none(type, external)
         complex(sp), intent(in) :: A(:, :)
         type(dense_linop_csp) :: linop
         linop%data = A
         return
-    end function
+    end function initialize_dense_linop_from_array_csp
     function initialize_dense_linop_from_array_cdp(A) result(linop)
+        implicit none(type, external)
         complex(dp), intent(in) :: A(:, :)
         type(dense_linop_cdp) :: linop
         linop%data = A
         return
-    end function
+    end function initialize_dense_linop_from_array_cdp
 
 end module LightKrylov_AbstractLinops

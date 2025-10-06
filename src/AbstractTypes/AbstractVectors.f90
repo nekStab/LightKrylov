@@ -39,7 +39,7 @@ module LightKrylov_AbstractVectors
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_Vectors'
@@ -318,12 +318,13 @@ module LightKrylov_AbstractVectors
         !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_rsp
         !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
-    end type
+    end type abstract_vector_rsp
 
     abstract interface
         subroutine abstract_zero_rsp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_rsp
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_rsp
@@ -331,6 +332,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_rand_rsp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_rsp
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rsp
@@ -338,6 +340,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_scal_rsp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_rsp, sp
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: self
             !! Input/Output vector.
             real(sp), intent(in) :: alpha
@@ -347,6 +350,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_axpby_rsp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rsp, sp
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_rsp), intent(in) :: vec
@@ -357,6 +361,7 @@ module LightKrylov_AbstractVectors
         function abstract_dot_rsp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_rsp, sp
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             real(sp) :: alpha
@@ -366,6 +371,7 @@ module LightKrylov_AbstractVectors
         function abstract_get_size_rsp(self) result(N)
             !! Abstract interface to return the size of the specific abstract vector.
             import abstract_vector_rsp
+            implicit none(type, external)
             class(abstract_vector_rsp), intent(in) :: self
             !! Vectors whose dot product will be computed.
             integer :: N
@@ -403,12 +409,13 @@ module LightKrylov_AbstractVectors
         !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_rdp
         !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
-    end type
+    end type abstract_vector_rdp
 
     abstract interface
         subroutine abstract_zero_rdp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_rdp
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_rdp
@@ -416,6 +423,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_rand_rdp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_rdp
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rdp
@@ -423,6 +431,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_scal_rdp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_rdp, dp
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: self
             !! Input/Output vector.
             real(dp), intent(in) :: alpha
@@ -432,6 +441,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_axpby_rdp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_rdp, dp
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_rdp), intent(in) :: vec
@@ -442,6 +452,7 @@ module LightKrylov_AbstractVectors
         function abstract_dot_rdp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_rdp, dp
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             real(dp) :: alpha
@@ -451,6 +462,7 @@ module LightKrylov_AbstractVectors
         function abstract_get_size_rdp(self) result(N)
             !! Abstract interface to return the size of the specific abstract vector.
             import abstract_vector_rdp
+            implicit none(type, external)
             class(abstract_vector_rdp), intent(in) :: self
             !! Vectors whose dot product will be computed.
             integer :: N
@@ -488,12 +500,13 @@ module LightKrylov_AbstractVectors
         !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_csp
         !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
-    end type
+    end type abstract_vector_csp
 
     abstract interface
         subroutine abstract_zero_csp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_csp
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_csp
@@ -501,6 +514,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_rand_csp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_csp
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_csp
@@ -508,6 +522,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_scal_csp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_csp, sp
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: self
             !! Input/Output vector.
             complex(sp), intent(in) :: alpha
@@ -517,6 +532,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_axpby_csp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_csp, sp
+            implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_csp), intent(in) :: vec
@@ -527,6 +543,7 @@ module LightKrylov_AbstractVectors
         function abstract_dot_csp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_csp, sp
+            implicit none(type, external)
             class(abstract_vector_csp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             complex(sp) :: alpha
@@ -536,6 +553,7 @@ module LightKrylov_AbstractVectors
         function abstract_get_size_csp(self) result(N)
             !! Abstract interface to return the size of the specific abstract vector.
             import abstract_vector_csp
+            implicit none(type, external)
             class(abstract_vector_csp), intent(in) :: self
             !! Vectors whose dot product will be computed.
             integer :: N
@@ -573,12 +591,13 @@ module LightKrylov_AbstractVectors
         !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_cdp
         !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
-    end type
+    end type abstract_vector_cdp
 
     abstract interface
         subroutine abstract_zero_cdp(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_cdp
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_cdp
@@ -586,6 +605,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_rand_cdp(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_cdp
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_cdp
@@ -593,6 +613,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_scal_cdp(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_cdp, dp
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: self
             !! Input/Output vector.
             complex(dp), intent(in) :: alpha
@@ -602,6 +623,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_axpby_cdp(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_cdp, dp
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_cdp), intent(in) :: vec
@@ -612,6 +634,7 @@ module LightKrylov_AbstractVectors
         function abstract_dot_cdp(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_cdp, dp
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             complex(dp) :: alpha
@@ -621,6 +644,7 @@ module LightKrylov_AbstractVectors
         function abstract_get_size_cdp(self) result(N)
             !! Abstract interface to return the size of the specific abstract vector.
             import abstract_vector_cdp
+            implicit none(type, external)
             class(abstract_vector_cdp), intent(in) :: self
             !! Vectors whose dot product will be computed.
             integer :: N
@@ -651,7 +675,7 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_rsp`.
         procedure, pass(self), public :: get_size => dense_get_size_rsp
         !! Return size of specific abstract vector
-    end type
+    end type dense_vector_rsp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -673,7 +697,7 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_rdp`.
         procedure, pass(self), public :: get_size => dense_get_size_rdp
         !! Return size of specific abstract vector
-    end type
+    end type dense_vector_rdp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -695,7 +719,7 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_csp`.
         procedure, pass(self), public :: get_size => dense_get_size_csp
         !! Return size of specific abstract vector
-    end type
+    end type dense_vector_csp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
@@ -717,7 +741,7 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_cdp`.
         procedure, pass(self), public :: get_size => dense_get_size_cdp
         !! Return size of specific abstract vector
-    end type
+    end type dense_vector_cdp
 
     interface dense_vector
         module procedure initialize_dense_vector_from_array_rsp
@@ -734,6 +758,7 @@ contains
     !-----------------------------------------------------------------------
 
     function norm_rsp(self) result(alpha)
+        implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_rsp), intent(in) :: self
         !! Vector whose norm needs to be computed.
@@ -743,6 +768,7 @@ contains
     end function norm_rsp
 
     subroutine sub_rsp(self, vec)
+        implicit none(type, external)
         !! Subtract two `abstract_vector` in-place.
         class(abstract_vector_rsp), intent(inout) :: self
         !! Input/Output vector.
@@ -752,6 +778,7 @@ contains
     end subroutine sub_rsp
 
     subroutine add_rsp(self, vec)
+        implicit none(type, external)
         !! Add two `abstract_vector` in-place.
         class(abstract_vector_rsp), intent(inout) :: self
         !! Input/Output vector.
@@ -761,6 +788,7 @@ contains
     end subroutine add_rsp
 
     subroutine chsgn_rsp(self)
+        implicit none(type, external)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rsp), intent(inout) :: self
         !! Vector whose entries need to change sign.
@@ -768,6 +796,7 @@ contains
     end subroutine chsgn_rsp
 
     function norm_rdp(self) result(alpha)
+        implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_rdp), intent(in) :: self
         !! Vector whose norm needs to be computed.
@@ -777,6 +806,7 @@ contains
     end function norm_rdp
 
     subroutine sub_rdp(self, vec)
+        implicit none(type, external)
         !! Subtract two `abstract_vector` in-place.
         class(abstract_vector_rdp), intent(inout) :: self
         !! Input/Output vector.
@@ -786,6 +816,7 @@ contains
     end subroutine sub_rdp
 
     subroutine add_rdp(self, vec)
+        implicit none(type, external)
         !! Add two `abstract_vector` in-place.
         class(abstract_vector_rdp), intent(inout) :: self
         !! Input/Output vector.
@@ -795,6 +826,7 @@ contains
     end subroutine add_rdp
 
     subroutine chsgn_rdp(self)
+        implicit none(type, external)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_rdp), intent(inout) :: self
         !! Vector whose entries need to change sign.
@@ -802,6 +834,7 @@ contains
     end subroutine chsgn_rdp
 
     function norm_csp(self) result(alpha)
+        implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_csp), intent(in) :: self
         !! Vector whose norm needs to be computed.
@@ -811,6 +844,7 @@ contains
     end function norm_csp
 
     subroutine sub_csp(self, vec)
+        implicit none(type, external)
         !! Subtract two `abstract_vector` in-place.
         class(abstract_vector_csp), intent(inout) :: self
         !! Input/Output vector.
@@ -820,6 +854,7 @@ contains
     end subroutine sub_csp
 
     subroutine add_csp(self, vec)
+        implicit none(type, external)
         !! Add two `abstract_vector` in-place.
         class(abstract_vector_csp), intent(inout) :: self
         !! Input/Output vector.
@@ -829,6 +864,7 @@ contains
     end subroutine add_csp
 
     subroutine chsgn_csp(self)
+        implicit none(type, external)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_csp), intent(inout) :: self
         !! Vector whose entries need to change sign.
@@ -836,6 +872,7 @@ contains
     end subroutine chsgn_csp
 
     function norm_cdp(self) result(alpha)
+        implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_cdp), intent(in) :: self
         !! Vector whose norm needs to be computed.
@@ -845,6 +882,7 @@ contains
     end function norm_cdp
 
     subroutine sub_cdp(self, vec)
+        implicit none(type, external)
         !! Subtract two `abstract_vector` in-place.
         class(abstract_vector_cdp), intent(inout) :: self
         !! Input/Output vector.
@@ -854,6 +892,7 @@ contains
     end subroutine sub_cdp
 
     subroutine add_cdp(self, vec)
+        implicit none(type, external)
         !! Add two `abstract_vector` in-place.
         class(abstract_vector_cdp), intent(inout) :: self
         !! Input/Output vector.
@@ -863,6 +902,7 @@ contains
     end subroutine add_cdp
 
     subroutine chsgn_cdp(self)
+        implicit none(type, external)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_cdp), intent(inout) :: self
         !! Vector whose entries need to change sign.
@@ -875,36 +915,41 @@ contains
     !--------------------------------------------------------------------------------
     
     function initialize_dense_vector_from_array_rsp(x) result(vec)
+        implicit none(type, external)
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
         vec%n = size(x) ; vec%data = x
         return
-    end function
+    end function initialize_dense_vector_from_array_rsp
 
     subroutine dense_zero_rsp(self)
+        implicit none(type, external)
         class(dense_vector_rsp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_rsp
         return
-    end subroutine
+    end subroutine dense_zero_rsp
 
     subroutine dense_rand_rsp(self, ifnorm)
+        implicit none(type, external)
         class(dense_vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         call random_number(self%data)
         return
-    end subroutine
+    end subroutine dense_rand_rsp
 
     subroutine dense_scal_rsp(self, alpha)
+        implicit none(type, external)
         class(dense_vector_rsp), intent(inout) :: self
         real(sp), intent(in) :: alpha
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
-    end subroutine
+    end subroutine dense_scal_rsp
 
     subroutine dense_axpby_rsp(alpha, vec, beta, self)
+        implicit none(type, external)
         real(sp), intent(in) :: alpha, beta
         class(dense_vector_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec
@@ -922,9 +967,10 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end subroutine
+    end subroutine dense_axpby_rsp
 
     function dense_dot_rsp(self, vec) result(alpha)
+        implicit none(type, external)
         class(dense_vector_rsp), intent(in) :: self
         class(abstract_vector_rsp), intent(in) :: vec
         real(sp) :: alpha
@@ -937,46 +983,52 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end function
+    end function dense_dot_rsp
 
     function dense_get_size_rsp(self) result(n)
+        implicit none(type, external)
         class(dense_vector_rsp), intent(in) :: self
         integer :: n
         n = size(self%data)
         return
-    end function
+    end function dense_get_size_rsp
 
     function initialize_dense_vector_from_array_rdp(x) result(vec)
+        implicit none(type, external)
         real(dp), intent(in) :: x(:)
         type(dense_vector_rdp) :: vec
         vec%n = size(x) ; vec%data = x
         return
-    end function
+    end function initialize_dense_vector_from_array_rdp
 
     subroutine dense_zero_rdp(self)
+        implicit none(type, external)
         class(dense_vector_rdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_rdp
         return
-    end subroutine
+    end subroutine dense_zero_rdp
 
     subroutine dense_rand_rdp(self, ifnorm)
+        implicit none(type, external)
         class(dense_vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         call random_number(self%data)
         return
-    end subroutine
+    end subroutine dense_rand_rdp
 
     subroutine dense_scal_rdp(self, alpha)
+        implicit none(type, external)
         class(dense_vector_rdp), intent(inout) :: self
         real(dp), intent(in) :: alpha
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
-    end subroutine
+    end subroutine dense_scal_rdp
 
     subroutine dense_axpby_rdp(alpha, vec, beta, self)
+        implicit none(type, external)
         real(dp), intent(in) :: alpha, beta
         class(dense_vector_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec
@@ -994,9 +1046,10 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end subroutine
+    end subroutine dense_axpby_rdp
 
     function dense_dot_rdp(self, vec) result(alpha)
+        implicit none(type, external)
         class(dense_vector_rdp), intent(in) :: self
         class(abstract_vector_rdp), intent(in) :: vec
         real(dp) :: alpha
@@ -1009,48 +1062,54 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end function
+    end function dense_dot_rdp
 
     function dense_get_size_rdp(self) result(n)
+        implicit none(type, external)
         class(dense_vector_rdp), intent(in) :: self
         integer :: n
         n = size(self%data)
         return
-    end function
+    end function dense_get_size_rdp
 
     function initialize_dense_vector_from_array_csp(x) result(vec)
+        implicit none(type, external)
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
         vec%n = size(x) ; vec%data = x
         return
-    end function
+    end function initialize_dense_vector_from_array_csp
 
     subroutine dense_zero_csp(self)
+        implicit none(type, external)
         class(dense_vector_csp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_csp
         return
-    end subroutine
+    end subroutine dense_zero_csp
 
     subroutine dense_rand_csp(self, ifnorm)
+        implicit none(type, external)
         class(dense_vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         real(sp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
         return
-    end subroutine
+    end subroutine dense_rand_csp
 
     subroutine dense_scal_csp(self, alpha)
+        implicit none(type, external)
         class(dense_vector_csp), intent(inout) :: self
         complex(sp), intent(in) :: alpha
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
-    end subroutine
+    end subroutine dense_scal_csp
 
     subroutine dense_axpby_csp(alpha, vec, beta, self)
+        implicit none(type, external)
         complex(sp), intent(in) :: alpha, beta
         class(dense_vector_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec
@@ -1068,9 +1127,10 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end subroutine
+    end subroutine dense_axpby_csp
 
     function dense_dot_csp(self, vec) result(alpha)
+        implicit none(type, external)
         class(dense_vector_csp), intent(in) :: self
         class(abstract_vector_csp), intent(in) :: vec
         complex(sp) :: alpha
@@ -1083,48 +1143,54 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end function
+    end function dense_dot_csp
 
     function dense_get_size_csp(self) result(n)
+        implicit none(type, external)
         class(dense_vector_csp), intent(in) :: self
         integer :: n
         n = size(self%data)
         return
-    end function
+    end function dense_get_size_csp
 
     function initialize_dense_vector_from_array_cdp(x) result(vec)
+        implicit none(type, external)
         complex(dp), intent(in) :: x(:)
         type(dense_vector_cdp) :: vec
         vec%n = size(x) ; vec%data = x
         return
-    end function
+    end function initialize_dense_vector_from_array_cdp
 
     subroutine dense_zero_cdp(self)
+        implicit none(type, external)
         class(dense_vector_cdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_cdp
         return
-    end subroutine
+    end subroutine dense_zero_cdp
 
     subroutine dense_rand_cdp(self, ifnorm)
+        implicit none(type, external)
         class(dense_vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         real(dp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
         return
-    end subroutine
+    end subroutine dense_rand_cdp
 
     subroutine dense_scal_cdp(self, alpha)
+        implicit none(type, external)
         class(dense_vector_cdp), intent(inout) :: self
         complex(dp), intent(in) :: alpha
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
-    end subroutine
+    end subroutine dense_scal_cdp
 
     subroutine dense_axpby_cdp(alpha, vec, beta, self)
+        implicit none(type, external)
         complex(dp), intent(in) :: alpha, beta
         class(dense_vector_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec
@@ -1142,9 +1208,10 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end subroutine
+    end subroutine dense_axpby_cdp
 
     function dense_dot_cdp(self, vec) result(alpha)
+        implicit none(type, external)
         class(dense_vector_cdp), intent(in) :: self
         class(abstract_vector_cdp), intent(in) :: vec
         complex(dp) :: alpha
@@ -1157,14 +1224,15 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end function
+    end function dense_dot_cdp
 
     function dense_get_size_cdp(self) result(n)
+        implicit none(type, external)
         class(dense_vector_cdp), intent(in) :: self
         integer :: n
         n = size(self%data)
         return
-    end function
+    end function dense_get_size_cdp
 
     
     !--------------------------------------
@@ -1175,6 +1243,7 @@ contains
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        implicit none(type, external)
         class(abstract_vector_rsp), allocatable, intent(out) :: y
         !! Ouput vector.
         class(abstract_vector_rsp), intent(in) :: X(:)
@@ -1204,6 +1273,7 @@ contains
     subroutine linear_combination_matrix_rsp(Y, X, B)
         !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        implicit none(type, external)
         class(abstract_vector_rsp), allocatable, intent(out) :: Y(:)
         !! Output matrix.
         class(abstract_vector_rsp), intent(in) :: X(:)
@@ -1242,6 +1312,7 @@ contains
 
     function gram_matrix_rsp(X) result(G)
         !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: X(:)
         real(sp) :: G(size(X), size(X))
         integer :: i, j
@@ -1257,6 +1328,7 @@ contains
     function innerprod_vector_rsp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: X(:), y
         !! Bases of `abstract_vector` whose inner products need to be computed.
         real(sp) :: v(size(X))
@@ -1276,6 +1348,7 @@ contains
     function innerprod_matrix_rsp(X, Y) result(M)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: X(:), Y(:)
         !! Bases of `abstract_vector` whose inner products need to be computed.
         real(sp) :: M(size(X), size(Y))
@@ -1298,6 +1371,7 @@ contains
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(sp)
         !! numbers.
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
         class(abstract_vector_rsp), intent(inout) :: y
@@ -1308,11 +1382,13 @@ contains
     end subroutine axpby_basis_rsp
 
     impure elemental subroutine zero_basis_rsp(X)
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(inout) :: X
         call X%zero()
     end subroutine zero_basis_rsp
 
     impure elemental subroutine copy_vector_rsp(out, from)
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: from
         class(abstract_vector_rsp), intent(out) :: out
         ! Copy array.
@@ -1320,6 +1396,7 @@ contains
     end subroutine copy_vector_rsp
 
     impure elemental subroutine rand_basis_rsp(X, ifnorm)
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
@@ -1329,6 +1406,7 @@ contains
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        implicit none(type, external)
         class(abstract_vector_rdp), allocatable, intent(out) :: y
         !! Ouput vector.
         class(abstract_vector_rdp), intent(in) :: X(:)
@@ -1358,6 +1436,7 @@ contains
     subroutine linear_combination_matrix_rdp(Y, X, B)
         !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        implicit none(type, external)
         class(abstract_vector_rdp), allocatable, intent(out) :: Y(:)
         !! Output matrix.
         class(abstract_vector_rdp), intent(in) :: X(:)
@@ -1396,6 +1475,7 @@ contains
 
     function gram_matrix_rdp(X) result(G)
         !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: X(:)
         real(dp) :: G(size(X), size(X))
         integer :: i, j
@@ -1411,6 +1491,7 @@ contains
     function innerprod_vector_rdp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: X(:), y
         !! Bases of `abstract_vector` whose inner products need to be computed.
         real(dp) :: v(size(X))
@@ -1430,6 +1511,7 @@ contains
     function innerprod_matrix_rdp(X, Y) result(M)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: X(:), Y(:)
         !! Bases of `abstract_vector` whose inner products need to be computed.
         real(dp) :: M(size(X), size(Y))
@@ -1452,6 +1534,7 @@ contains
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(dp)
         !! numbers.
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
         class(abstract_vector_rdp), intent(inout) :: y
@@ -1462,11 +1545,13 @@ contains
     end subroutine axpby_basis_rdp
 
     impure elemental subroutine zero_basis_rdp(X)
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(inout) :: X
         call X%zero()
     end subroutine zero_basis_rdp
 
     impure elemental subroutine copy_vector_rdp(out, from)
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: from
         class(abstract_vector_rdp), intent(out) :: out
         ! Copy array.
@@ -1474,6 +1559,7 @@ contains
     end subroutine copy_vector_rdp
 
     impure elemental subroutine rand_basis_rdp(X, ifnorm)
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
@@ -1483,6 +1569,7 @@ contains
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        implicit none(type, external)
         class(abstract_vector_csp), allocatable, intent(out) :: y
         !! Ouput vector.
         class(abstract_vector_csp), intent(in) :: X(:)
@@ -1512,6 +1599,7 @@ contains
     subroutine linear_combination_matrix_csp(Y, X, B)
         !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        implicit none(type, external)
         class(abstract_vector_csp), allocatable, intent(out) :: Y(:)
         !! Output matrix.
         class(abstract_vector_csp), intent(in) :: X(:)
@@ -1550,6 +1638,7 @@ contains
 
     function gram_matrix_csp(X) result(G)
         !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: X(:)
         complex(sp) :: G(size(X), size(X))
         integer :: i, j
@@ -1565,6 +1654,7 @@ contains
     function innerprod_vector_csp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: X(:), y
         !! Bases of `abstract_vector` whose inner products need to be computed.
         complex(sp) :: v(size(X))
@@ -1584,6 +1674,7 @@ contains
     function innerprod_matrix_csp(X, Y) result(M)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: X(:), Y(:)
         !! Bases of `abstract_vector` whose inner products need to be computed.
         complex(sp) :: M(size(X), size(Y))
@@ -1606,6 +1697,7 @@ contains
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(sp)
         !! numbers.
+        implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
         class(abstract_vector_csp), intent(inout) :: y
@@ -1616,11 +1708,13 @@ contains
     end subroutine axpby_basis_csp
 
     impure elemental subroutine zero_basis_csp(X)
+        implicit none(type, external)
         class(abstract_vector_csp), intent(inout) :: X
         call X%zero()
     end subroutine zero_basis_csp
 
     impure elemental subroutine copy_vector_csp(out, from)
+        implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: from
         class(abstract_vector_csp), intent(out) :: out
         ! Copy array.
@@ -1628,6 +1722,7 @@ contains
     end subroutine copy_vector_csp
 
     impure elemental subroutine rand_basis_csp(X, ifnorm)
+        implicit none(type, external)
         class(abstract_vector_csp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
@@ -1637,6 +1732,7 @@ contains
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        implicit none(type, external)
         class(abstract_vector_cdp), allocatable, intent(out) :: y
         !! Ouput vector.
         class(abstract_vector_cdp), intent(in) :: X(:)
@@ -1666,6 +1762,7 @@ contains
     subroutine linear_combination_matrix_cdp(Y, X, B)
         !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        implicit none(type, external)
         class(abstract_vector_cdp), allocatable, intent(out) :: Y(:)
         !! Output matrix.
         class(abstract_vector_cdp), intent(in) :: X(:)
@@ -1704,6 +1801,7 @@ contains
 
     function gram_matrix_cdp(X) result(G)
         !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: X(:)
         complex(dp) :: G(size(X), size(X))
         integer :: i, j
@@ -1719,6 +1817,7 @@ contains
     function innerprod_vector_cdp(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: X(:), y
         !! Bases of `abstract_vector` whose inner products need to be computed.
         complex(dp) :: v(size(X))
@@ -1738,6 +1837,7 @@ contains
     function innerprod_matrix_cdp(X, Y) result(M)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: X(:), Y(:)
         !! Bases of `abstract_vector` whose inner products need to be computed.
         complex(dp) :: M(size(X), size(Y))
@@ -1760,6 +1860,7 @@ contains
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(dp)
         !! numbers.
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
         class(abstract_vector_cdp), intent(inout) :: y
@@ -1770,11 +1871,13 @@ contains
     end subroutine axpby_basis_cdp
 
     impure elemental subroutine zero_basis_cdp(X)
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(inout) :: X
         call X%zero()
     end subroutine zero_basis_cdp
 
     impure elemental subroutine copy_vector_cdp(out, from)
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: from
         class(abstract_vector_cdp), intent(out) :: out
         ! Copy array.
@@ -1782,6 +1885,7 @@ contains
     end subroutine copy_vector_cdp
 
     impure elemental subroutine rand_basis_cdp(X, ifnorm)
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)

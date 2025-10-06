@@ -41,7 +41,7 @@ module LightKrylov_AbstractVectors
     use LightKrylov_Constants
     use LightKrylov_Utils
     use LightKrylov_Logger
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_Vectors'
@@ -305,12 +305,13 @@ module LightKrylov_AbstractVectors
         !! Subtracts two `abstract_vector`, i.e. \( \mathbf{y} \leftarrow \mathbf{y} - \mathbf{x} \).
         procedure, pass(self), public :: chsgn => chsgn_${type[0]}$${kind}$
         !! Change the sign of a vector, i.e. \( \mathbf{x} \leftarrow -\mathbf{x} \).
-    end type
+    end type abstract_vector_${type[0]}$${kind}$
 
     abstract interface
         subroutine abstract_zero_${type[0]}$${kind}$(self)
             !! Abstract interface to zero-out a vector in-place.
             import abstract_vector_${type[0]}$${kind}$
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Vector to be zeroed-out.
         end subroutine abstract_zero_${type[0]}$${kind}$
@@ -318,6 +319,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_rand_${type[0]}$${kind}$(self, ifnorm)
             !! Abstract interface to generate a random (normalized) vector.
             import abstract_vector_${type[0]}$${kind}$
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_${type[0]}$${kind}$
@@ -325,6 +327,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_scal_${type[0]}$${kind}$(self, alpha)
             !! Abstract interface to scale a vector.
             import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Input/Output vector.
             ${type}$, intent(in) :: alpha
@@ -334,6 +337,7 @@ module LightKrylov_AbstractVectors
         subroutine abstract_axpby_${type[0]}$${kind}$(alpha, vec, beta, self)
             !! Abstract interface to add/scale two vectors in-place.
             import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
             !! Input/Output vector.
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
@@ -344,6 +348,7 @@ module LightKrylov_AbstractVectors
         function abstract_dot_${type[0]}$${kind}$(self, vec) result(alpha)
             !! Abstract interface to compute the dot product.
             import abstract_vector_${type[0]}$${kind}$, ${kind}$
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self, vec
             !! Vectors whose dot product will be computed.
             ${type}$ :: alpha
@@ -353,6 +358,7 @@ module LightKrylov_AbstractVectors
         function abstract_get_size_${type[0]}$${kind}$(self) result(N)
             !! Abstract interface to return the size of the specific abstract vector.
             import abstract_vector_${type[0]}$${kind}$
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
             !! Vectors whose dot product will be computed.
             integer :: N
@@ -385,7 +391,7 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_${type[0]}$${kind}$`.
         procedure, pass(self), public :: get_size => dense_get_size_${type[0]}$${kind}$
         !! Return size of specific abstract vector
-    end type
+    end type dense_vector_${type[0]}$${kind}$
     #:endfor
 
     interface dense_vector
@@ -403,6 +409,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     function norm_${type[0]}$${kind}$(self) result(alpha)
+        implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
         !! Vector whose norm needs to be computed.
@@ -412,6 +419,7 @@ contains
     end function norm_${type[0]}$${kind}$
 
     subroutine sub_${type[0]}$${kind}$(self, vec)
+        implicit none(type, external)
         !! Subtract two `abstract_vector` in-place.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Input/Output vector.
@@ -421,6 +429,7 @@ contains
     end subroutine sub_${type[0]}$${kind}$
 
     subroutine add_${type[0]}$${kind}$(self, vec)
+        implicit none(type, external)
         !! Add two `abstract_vector` in-place.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Input/Output vector.
@@ -430,6 +439,7 @@ contains
     end subroutine add_${type[0]}$${kind}$
 
     subroutine chsgn_${type[0]}$${kind}$(self)
+        implicit none(type, external)
         !! Changes the sign of the `abstract_vector`.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Vector whose entries need to change sign.
@@ -444,20 +454,23 @@ contains
     
     #:for kind, type in RC_KINDS_TYPES
     function initialize_dense_vector_from_array_${type[0]}$${kind}$(x) result(vec)
+        implicit none(type, external)
         ${type}$, intent(in) :: x(:)
         type(dense_vector_${type[0]}$${kind}$) :: vec
         vec%n = size(x) ; vec%data = x
         return
-    end function
+    end function initialize_dense_vector_from_array_${type[0]}$${kind}$
 
     subroutine dense_zero_${type[0]}$${kind}$(self)
+        implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_${type[0]}$${kind}$
         return
-    end subroutine
+    end subroutine dense_zero_${type[0]}$${kind}$
 
     subroutine dense_rand_${type[0]}$${kind}$(self, ifnorm)
+        implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         #:if type[0] == "r"
@@ -468,18 +481,20 @@ contains
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
         #:endif
         return
-    end subroutine
+    end subroutine dense_rand_${type[0]}$${kind}$
 
     subroutine dense_scal_${type[0]}$${kind}$(self, alpha)
+        implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         ${type}$, intent(in) :: alpha
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
         return
-    end subroutine
+    end subroutine dense_scal_${type[0]}$${kind}$
 
     subroutine dense_axpby_${type[0]}$${kind}$(alpha, vec, beta, self)
+        implicit none(type, external)
         ${type}$, intent(in) :: alpha, beta
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
@@ -497,9 +512,10 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end subroutine
+    end subroutine dense_axpby_${type[0]}$${kind}$
 
     function dense_dot_${type[0]}$${kind}$(self, vec) result(alpha)
+        implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(in) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
         ${type}$ :: alpha
@@ -516,14 +532,15 @@ contains
             call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
         end select
         return
-    end function
+    end function dense_dot_${type[0]}$${kind}$
 
     function dense_get_size_${type[0]}$${kind}$(self) result(n)
+        implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(in) :: self
         integer :: n
         n = size(self%data)
         return
-    end function
+    end function dense_get_size_${type[0]}$${kind}$
 
     #:endfor
     
@@ -536,6 +553,7 @@ contains
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), allocatable, intent(out) :: y
         !! Ouput vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
@@ -565,6 +583,7 @@ contains
     subroutine linear_combination_matrix_${type[0]}$${kind}$(Y, X, B)
         !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), allocatable, intent(out) :: Y(:)
         !! Output matrix.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
@@ -603,6 +622,7 @@ contains
 
     function gram_matrix_${type[0]}$${kind}$(X) result(G)
         !! Computes the inner product/Gram matrix associated with the basis \( \mathbf{X} \).
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
         ${type}$ :: G(size(X), size(X))
         integer :: i, j
@@ -618,6 +638,7 @@ contains
     function innerprod_vector_${type[0]}$${kind}$(X, y) result(v)
         !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), y
         !! Bases of `abstract_vector` whose inner products need to be computed.
         ${type}$ :: v(size(X))
@@ -637,6 +658,7 @@ contains
     function innerprod_matrix_${type[0]}$${kind}$(X, Y) result(M)
         !! Computes the inner product matrix \( \mathbf{M} = \mathbf{X}^H \mathbf{Y} \) between
         !! two bases of `abstract_vector`.
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), Y(:)
         !! Bases of `abstract_vector` whose inner products need to be computed.
         ${type}$ :: M(size(X), size(Y))
@@ -659,6 +681,7 @@ contains
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are ${type}$
         !! numbers.
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: x
         !! Input/Ouput array of `abstract_vector`.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: y
@@ -669,11 +692,13 @@ contains
     end subroutine axpby_basis_${type[0]}$${kind}$
 
     impure elemental subroutine zero_basis_${type[0]}$${kind}$(X)
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
         call X%zero()
     end subroutine zero_basis_${type[0]}$${kind}$
 
     impure elemental subroutine copy_vector_${type[0]}$${kind}$(out, from)
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out
         ! Copy array.
@@ -681,6 +706,7 @@ contains
     end subroutine copy_vector_${type[0]}$${kind}$
 
     impure elemental subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
