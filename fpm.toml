@@ -23,7 +23,6 @@ source-form = "free"
 
 [dependencies]
 stdlib = "*"
-test-drive.git = "https://github.com/nekStab/test-drive.git"
 FACE = {git="https://github.com/szaghi/FACE.git"}
 
 [dev-dependencies]

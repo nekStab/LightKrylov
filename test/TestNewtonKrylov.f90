@@ -12,6 +12,7 @@ module TestNewtonKrylov
     use LightKrylov_Utils
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
     implicit none
     
