@@ -11,7 +11,7 @@ module TestVectors
     use LightKrylov_Logger
     ! Test Utilities
     use LightKrylov_TestUtils
-    
+    use TestUtils    
     implicit none
     
     private
