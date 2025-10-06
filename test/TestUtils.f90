@@ -3,21 +3,24 @@ module TestUtils
    use stdlib_ascii, only: to_lower
    use stdlib_strings, only: replace_all
    use testdrive, only: error_type
+   implicit none(type, external)
    private
    interface
       module subroutine check_test(error, test_name, info, eq, context)
          use face
+         implicit none(type, external)
          type(error_type), allocatable, intent(inout) :: error
          character(len=*), intent(in)    :: test_name
          character(len=*), optional, intent(in)    :: info
          character(len=*), optional, intent(in)    :: eq
          character(len=*), optional, intent(in)    :: context
-      end subroutine
+      end subroutine check_test
    end interface
    public :: check_test
 contains
    module subroutine check_test(error, test_name, info, eq, context)
       use face
+      implicit none(type, external)
       type(error_type), allocatable, intent(inout) :: error
       character(len=*), intent(in)    :: test_name
       character(len=*), optional, intent(in)    :: info
@@ -69,4 +72,4 @@ contains
       end if
 
    end subroutine check_test
-end module
+end module TestUtils
