@@ -12,7 +12,7 @@ module LightKrylov_NewtonKrylov
     use LightKrylov_IterativeSolvers
     use LightKrylov_Utils
 
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_NwtKryl'
@@ -36,7 +36,7 @@ module LightKrylov_NewtonKrylov
         !! Ignored if ifbisect = .false.
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type newton_${kind}$_opts
     
     #:endfor
 
@@ -62,7 +62,7 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: print => print_newton_${kind}$
         procedure, pass(self), public :: reset => reset_newton_${kind}$
         procedure, pass(self), public :: record => record_data_${kind}$
-    end type
+    end type newton_${kind}$_metadata
    
     #:endfor
 
@@ -129,6 +129,7 @@ module LightKrylov_NewtonKrylov
         #:for kind in REAL_KINDS
         subroutine abstract_scheduler_${kind}$(tol, target_tol, rnorm, iter, info)
             import ${kind}$
+            implicit none(type, external)
             !! Abstract interface to define a tolerance scheduler for the Newton iteration
             real(${kind}$), intent(out) :: tol
             !! Tolerance to be used
@@ -152,6 +153,7 @@ contains
 
     #:for kind in REAL_KINDS
     subroutine print_newton_${kind}$(self, reset_counters, verbose)
+        implicit none(type, external)
         character(len=*), parameter :: this_procedure = 'print_newton_${kind}$'
         class(newton_${kind}$_metadata), intent(inout) :: self
         logical, optional, intent(in) :: reset_counters
@@ -206,9 +208,9 @@ contains
 
     subroutine record_data_${kind}$(self, res, tol)
         class(newton_${kind}$_metadata), intent(inout) :: self
-        real(${kind}$) :: res
+        real(${kind}$), intent(in) :: res
         !! Residual of the current evaluation
-        real(${kind}$) :: tol
+        real(${kind}$), intent(in) :: tol
         !! Tolerance of the current evaluation
         if (.not.allocated(self%res)) then
             allocate(self%res(1))
@@ -435,8 +437,8 @@ contains
         step    = one_${type[0]}$${kind}$
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_${type[0]}$${kind}$, invphi2*one_${type[0]}$${kind}$, invphi*one_${type[0]}$${kind}$, one_${type[0]}$${kind}$ /)
-        res   = (/ rold, zero_r${kind}$, zero_r${kind}$, zero_r${kind}$ /)
+        alpha = [zero_${type[0]}$${kind}$, invphi2*one_${type[0]}$${kind}$, invphi*one_${type[0]}$${kind}$, one_${type[0]}$${kind}$]
+        res   = [rold, zero_r${kind}$, zero_r${kind}$, zero_r${kind}$]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -505,7 +507,7 @@ contains
         end if
 
         return
-    end subroutine
+    end subroutine increment_bisection_${type[0]}$${kind}$
 
     #:endfor
 
