@@ -11,7 +11,7 @@ module TestSpecialMatrices
    use LightKrylov_TestUtils
    ! SpecialMatrices
    use SpecialMatrices
-
+   use TestUtils   
    implicit none(type, external)
    private
 

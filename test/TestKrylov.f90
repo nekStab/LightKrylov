@@ -13,6 +13,7 @@ module TestKrylov
     use LightKrylov_AbstractVectors
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
     implicit none (type, external)
 

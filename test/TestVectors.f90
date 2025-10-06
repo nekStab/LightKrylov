@@ -11,9 +11,8 @@ module TestVectors
     use LightKrylov_Logger
     ! Test Utilities
     use LightKrylov_TestUtils
-
+    use TestUtils
     implicit none (type, external)
-
     private
 
     character(len=*), parameter, private :: this_module      = 'LK_TVectors'

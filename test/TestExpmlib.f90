@@ -13,6 +13,7 @@ module TestExpmlib
     use LightKrylov_Utils, only : eig, sqrtm
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
     implicit none (type, external)
 
