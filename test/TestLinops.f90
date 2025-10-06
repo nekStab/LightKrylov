@@ -11,7 +11,7 @@ module TestLinops
     ! Test Utilities
     use LightKrylov_TestUtils
 
-    implicit none
+    implicit none (type, external)
     
     private
 

@@ -15,8 +15,8 @@ module TestNewtonKrylov
     ! Test Utilities
     use LightKrylov_TestUtils
 
-    implicit none
-    
+    implicit none (type, external)
+
     private
 
     character(len=*), parameter, private :: this_module      = 'LK_TNwtKryl'

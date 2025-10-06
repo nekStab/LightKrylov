@@ -1,6 +1,6 @@
 module TestIterativeSolvers
     ! Fortran Standard library.
-    use iso_fortran_env
+    use iso_fortran_env, only: output_unit
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag, norm, hermitian
@@ -15,8 +15,8 @@ module TestIterativeSolvers
     ! Test Utilities
     use LightKrylov_TestUtils
 
-    implicit none
-    
+    implicit none (type, external)
+
     private
 
     character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
@@ -80,7 +80,7 @@ contains
         type(vector_rsp), allocatable :: AX(:)
         complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
-        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
         real(sp) :: a_, b_
@@ -153,7 +153,7 @@ contains
         type(vector_rsp), allocatable :: AX(:)
         complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
-        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
         real(sp) :: a_, b_
@@ -309,7 +309,7 @@ contains
         type(vector_rdp), allocatable :: AX(:)
         complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
-        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
         real(dp) :: a_, b_
@@ -382,7 +382,7 @@ contains
         type(vector_rdp), allocatable :: AX(:)
         complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
-        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
         real(dp) :: a_, b_
@@ -538,7 +538,7 @@ contains
         type(vector_csp), allocatable :: AX(:)
         complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
-        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
 
@@ -563,7 +563,7 @@ contains
         type(vector_csp), allocatable :: AX(:)
         complex(sp), allocatable :: eigvec_residuals(:,:)
         complex(sp) :: true_eigvals(test_size)
-        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         real(sp) :: err
         character(len=256) :: msg
         complex(sp) :: a_, b_
@@ -728,7 +728,7 @@ contains
         type(vector_cdp), allocatable :: AX(:)
         complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
-        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
 
@@ -753,7 +753,7 @@ contains
         type(vector_cdp), allocatable :: AX(:)
         complex(dp), allocatable :: eigvec_residuals(:,:)
         complex(dp) :: true_eigvals(test_size)
-        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         real(dp) :: err
         character(len=256) :: msg
         complex(dp) :: a_, b_
@@ -919,7 +919,7 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
-        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         real(sp), allocatable :: G(:, :)
         real(sp), allocatable :: Udata(:, :), Vdata(:, :)
         real(sp) :: err
@@ -1010,7 +1010,7 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
-        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         real(dp), allocatable :: G(:, :)
         real(dp), allocatable :: Udata(:, :), Vdata(:, :)
         real(dp) :: err
@@ -1101,7 +1101,7 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         real(sp) :: true_svdvals(test_size)
-        real(sp) :: pi = 4.0_sp * atan(1.0_sp)
+        real(sp), parameter :: pi = 4.0_sp * atan(1.0_sp)
         complex(sp), allocatable :: G(:, :)
         complex(sp), allocatable :: Udata(:, :), Vdata(:, :)
         real(sp) :: err
@@ -1193,7 +1193,7 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         real(dp) :: true_svdvals(test_size)
-        real(dp) :: pi = 4.0_dp * atan(1.0_dp)
+        real(dp), parameter :: pi = 4.0_dp * atan(1.0_dp)
         complex(dp), allocatable :: G(:, :)
         complex(dp), allocatable :: Udata(:, :), Vdata(:, :)
         real(dp) :: err
