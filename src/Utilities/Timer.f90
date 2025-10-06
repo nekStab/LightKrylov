@@ -13,7 +13,7 @@ module LightKrylov_Timing
    use LightKrylov_Logger
    use LightKrylov_Timer_Utils
 
-   implicit none
+   implicit none(type, external)
    private
 
    character(len=*), parameter :: this_module      = 'LK_Timer'

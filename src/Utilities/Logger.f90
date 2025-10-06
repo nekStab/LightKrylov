@@ -12,7 +12,7 @@ module LightKrylov_Logger
    ! LightKrylov
    use LightKrylov_Constants
 
-   implicit none
+   implicit none(type, external)
    private
 
    character(len=128), parameter :: this_module = 'LightKrylov_Logger'

@@ -8,7 +8,7 @@ module LightKrylov_TestUtils
     use LightKrylov_Logger
     use LightKrylov_Constants
     
-    implicit none
+    implicit none(type, external)
     
     private
 
@@ -91,12 +91,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_rsp
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
-    end type
+    end type linop_rsp
     interface linop_rsp
         pure module function construct_linop_rsp(data) result(A)
+            implicit none(type, external)
             real(sp), dimension(test_size, test_size), intent(in) :: data
             type(linop_rsp) :: A
-        end function
+        end function construct_linop_rsp
     end interface
 
     type, extends(abstract_sym_linop_rsp), public :: spd_linop_rsp
@@ -105,12 +106,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => sdp_matvec_rsp
         procedure, pass(self), public :: rmatvec => sdp_matvec_rsp
-    end type
+    end type spd_linop_rsp
     interface spd_linop_rsp
         pure module function construct_spd_linop_rsp(data) result(A)
+            implicit none(type, external)
             real(sp), dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_rsp) :: A
-        end function
+        end function construct_spd_linop_rsp
     end interface
 
     type, extends(abstract_linop_rdp), public :: linop_rdp
@@ -119,12 +121,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_rdp
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
-    end type
+    end type linop_rdp
     interface linop_rdp
         pure module function construct_linop_rdp(data) result(A)
+            implicit none(type, external)
             real(dp), dimension(test_size, test_size), intent(in) :: data
             type(linop_rdp) :: A
-        end function
+        end function construct_linop_rdp
     end interface
 
     type, extends(abstract_sym_linop_rdp), public :: spd_linop_rdp
@@ -133,12 +136,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => sdp_matvec_rdp
         procedure, pass(self), public :: rmatvec => sdp_matvec_rdp
-    end type
+    end type spd_linop_rdp
     interface spd_linop_rdp
         pure module function construct_spd_linop_rdp(data) result(A)
+            implicit none(type, external)
             real(dp), dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_rdp) :: A
-        end function
+        end function construct_spd_linop_rdp
     end interface
 
     type, extends(abstract_linop_csp), public :: linop_csp
@@ -147,12 +151,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_csp
         procedure, pass(self), public :: rmatvec => rmatvec_csp
-    end type
+    end type linop_csp
     interface linop_csp
         pure module function construct_linop_csp(data) result(A)
+            implicit none(type, external)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
             type(linop_csp) :: A
-        end function
+        end function construct_linop_csp
     end interface
 
     type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
@@ -161,12 +166,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_csp
         procedure, pass(self), public :: rmatvec => hermitian_matvec_csp
-    end type
+    end type hermitian_linop_csp
     interface hermitian_linop_csp
         pure module function construct_hermitian_linop_csp(data) result(A)
+            implicit none(type, external)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
             type(hermitian_linop_csp) :: A
-        end function
+        end function construct_hermitian_linop_csp
     end interface
     type, extends(abstract_linop_cdp), public :: linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = zero_cdp
@@ -174,12 +180,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_cdp
         procedure, pass(self), public :: rmatvec => rmatvec_cdp
-    end type
+    end type linop_cdp
     interface linop_cdp
         pure module function construct_linop_cdp(data) result(A)
+            implicit none(type, external)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
             type(linop_cdp) :: A
-        end function
+        end function construct_linop_cdp
     end interface
 
     type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
@@ -188,12 +195,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_cdp
         procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
-    end type
+    end type hermitian_linop_cdp
     interface hermitian_linop_cdp
         pure module function construct_hermitian_linop_cdp(data) result(A)
+            implicit none(type, external)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
             type(hermitian_linop_cdp) :: A
-        end function
+        end function construct_hermitian_linop_cdp
     end interface
 
     ! ROESSLER SYSTEM
@@ -321,32 +329,32 @@ contains
 
     module procedure construct_linop_rsp
     A%data = data
-    end procedure
+    end procedure construct_linop_rsp
 
     module procedure construct_spd_linop_rsp
     A%data = data
-    end procedure
+    end procedure construct_spd_linop_rsp
     module procedure construct_linop_rdp
     A%data = data
-    end procedure
+    end procedure construct_linop_rdp
 
     module procedure construct_spd_linop_rdp
     A%data = data
-    end procedure
+    end procedure construct_spd_linop_rdp
     module procedure construct_linop_csp
     A%data = data
-    end procedure
+    end procedure construct_linop_csp
 
     module procedure construct_hermitian_linop_csp
     A%data = data
-    end procedure
+    end procedure construct_hermitian_linop_csp
     module procedure construct_linop_cdp
     A%data = data
-    end procedure
+    end procedure construct_linop_cdp
 
     module procedure construct_hermitian_linop_cdp
     A%data = data
-    end procedure
+    end procedure construct_hermitian_linop_cdp
 
     !----------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST VECTORS     -----
@@ -391,7 +399,7 @@ contains
             call type_error('vec','vector_rsp','IN',this_module,'axpby_rsp')
         end select
         return
-    end subroutine
+    end subroutine axpby_rsp
 
     subroutine rand_rsp(self, ifnorm)
         class(vector_rsp), intent(inout) :: self
@@ -450,7 +458,7 @@ contains
             call type_error('vec','vector_rdp','IN',this_module,'axpby_rdp')
         end select
         return
-    end subroutine
+    end subroutine axpby_rdp
 
     subroutine rand_rdp(self, ifnorm)
         class(vector_rdp), intent(inout) :: self
@@ -509,7 +517,7 @@ contains
             call type_error('vec','vector_csp','IN',this_module,'axpby_csp')
         end select
         return
-    end subroutine
+    end subroutine axpby_csp
 
     subroutine rand_csp(self, ifnorm)
         class(vector_csp), intent(inout) :: self
@@ -568,7 +576,7 @@ contains
             call type_error('vec','vector_cdp','IN',this_module,'axpby_cdp')
         end select
         return
-    end subroutine
+    end subroutine axpby_cdp
 
     subroutine rand_cdp(self, ifnorm)
         class(vector_cdp), intent(inout) :: self
@@ -1164,7 +1172,7 @@ contains
     subroutine get_err_str_sp(msg, info, err)
         character(len=*), intent(inout) :: msg
         character(len=*), intent(in)    :: info
-        real(sp) :: err
+        real(sp), intent(in) :: err
 
         ! internals
         character(len=9) :: value_str
@@ -1177,7 +1185,7 @@ contains
     subroutine get_err_str_dp(msg, info, err)
         character(len=*), intent(inout) :: msg
         character(len=*), intent(in)    :: info
-        real(dp) :: err
+        real(dp), intent(in) :: err
 
         ! internals
         character(len=9) :: value_str
