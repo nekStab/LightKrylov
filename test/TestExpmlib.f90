@@ -1,6 +1,6 @@
 module TestExpmlib
     ! Fortran Standard Library.
-    use iso_fortran_env
+    use iso_fortran_env, only: output_unit
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_io_npy, only: save_npy
@@ -15,7 +15,7 @@ module TestExpmlib
     use LightKrylov_TestUtils
     use TestUtils
 
-    implicit none
+    implicit none (type, external)
 
     private
 
@@ -96,7 +96,7 @@ contains
         class(vector_rsp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         real(sp), allocatable :: E(:, :)
         real(sp), parameter :: tau = 0.1_sp
@@ -104,7 +104,7 @@ contains
         real(sp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_rsp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -194,18 +194,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rsp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rsp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -287,7 +286,7 @@ contains
         class(vector_rdp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         real(dp), allocatable :: E(:, :)
         real(dp), parameter :: tau = 0.1_dp
@@ -295,7 +294,7 @@ contains
         real(dp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_rdp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -385,18 +384,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rdp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rdp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -478,7 +476,7 @@ contains
         class(vector_csp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         complex(sp), allocatable :: E(:, :)
         real(sp), parameter :: tau = 0.1_sp
@@ -486,7 +484,7 @@ contains
         real(sp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_csp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -576,18 +574,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_csp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_csp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -669,7 +666,7 @@ contains
         class(vector_cdp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         complex(dp), allocatable :: E(:, :)
         real(dp), parameter :: tau = 0.1_dp
@@ -677,7 +674,7 @@ contains
         real(dp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_cdp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -767,18 +764,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_cdp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_cdp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -1171,5 +1167,4 @@ contains
     end subroutine test_dense_sqrtm_pos_semi_def_cdp
 
 
-end module
-
+end module TestExpmLib

@@ -19,7 +19,7 @@ module LightKrylov_ExpmLib
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
 
-    implicit none
+    implicit none(type, external)
     private
     
     character(len=*), parameter :: this_module      = 'LK_ExpmLib'
@@ -40,6 +40,7 @@ module LightKrylov_ExpmLib
             import ${kind}$
             import abstract_vector_${type[0]}$${kind}$
             import abstract_linop_${type[0]}$${kind}$
+            implicit none(type, external)
             !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
             !! Solution vector.
@@ -125,6 +126,7 @@ module LightKrylov_ExpmLib
 contains
     #:for kind, type in RC_KINDS_TYPES
     subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
@@ -229,6 +231,7 @@ contains
     end subroutine kexpm_vec_${type[0]}$${kind}$
 
     subroutine kexpm_mat_${type[0]}$${kind}$(C, A, B, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
@@ -340,7 +343,7 @@ contains
             enddo expm_arnoldi
         endif
 
-        if (err_est .le. tol) then
+        if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -354,6 +357,7 @@ contains
     end subroutine kexpm_mat_${type[0]}$${kind}$
 
     subroutine krylov_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
+        implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A

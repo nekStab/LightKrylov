@@ -2,7 +2,7 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestIterativeSolvers
     ! Fortran Standard library.
-    use iso_fortran_env
+    use iso_fortran_env, only: output_unit
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag, norm, hermitian
@@ -18,8 +18,8 @@ module TestIterativeSolvers
     use LightKrylov_TestUtils
     use TestUtils
 
-    implicit none
-    
+    implicit none (type, external)
+
     private
 
     character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
@@ -75,7 +75,7 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
         complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
-        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$), parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
         character(len=256) :: msg
         #:if type[0] == "r"
@@ -150,7 +150,7 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
         complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
-        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$), parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
         character(len=256) :: msg
         ${type}$ :: a_, b_
@@ -427,7 +427,7 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         real(${kind}$) :: true_svdvals(test_size)
-        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$), parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         ${type}$, allocatable :: G(:, :)
         ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
         real(${kind}$) :: err

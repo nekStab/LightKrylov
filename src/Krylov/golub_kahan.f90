@@ -1,5 +1,5 @@
 submodule (lightkrylov_basekrylov) golub_kahan_methods
-    implicit none
+    implicit none(type, external)
 contains
     module procedure lanczos_bidiagonalization_rsp
         character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_rsp'
@@ -60,7 +60,8 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_bidiagonalization_rsp
+
     module procedure lanczos_bidiagonalization_rdp
         character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_rdp'
         integer :: k_start, k_end
@@ -120,7 +121,8 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_bidiagonalization_rdp
+
     module procedure lanczos_bidiagonalization_csp
         character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_csp'
         integer :: k_start, k_end
@@ -180,7 +182,8 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_bidiagonalization_csp
+
     module procedure lanczos_bidiagonalization_cdp
         character(len=*), parameter :: this_procedure = 'lanczos_bidiagonalization_cdp'
         integer :: k_start, k_end
@@ -240,5 +243,6 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
-end submodule
+    end procedure lanczos_bidiagonalization_cdp
+
+end submodule golub_kahan_methods

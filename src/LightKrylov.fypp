@@ -23,7 +23,7 @@ module LightKrylov
     use LightKrylov_Timer_Utils
     use LightKrylov_Timing, only: lk_timer => global_lightkrylov_timer
     ! --> TestTypes
-    implicit none
+    implicit none(type, external)
     private
 
     ! LightKrylov exports.

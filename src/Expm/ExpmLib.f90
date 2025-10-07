@@ -17,7 +17,7 @@ module LightKrylov_ExpmLib
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
 
-    implicit none
+    implicit none(type, external)
     private
     
     character(len=*), parameter :: this_module      = 'LK_ExpmLib'
@@ -39,6 +39,7 @@ module LightKrylov_ExpmLib
             import sp
             import abstract_vector_rsp
             import abstract_linop_rsp
+            implicit none(type, external)
             !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_rsp), intent(out) :: vec_out
             !! Solution vector.
@@ -58,6 +59,7 @@ module LightKrylov_ExpmLib
             import dp
             import abstract_vector_rdp
             import abstract_linop_rdp
+            implicit none(type, external)
             !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_rdp), intent(out) :: vec_out
             !! Solution vector.
@@ -77,6 +79,7 @@ module LightKrylov_ExpmLib
             import sp
             import abstract_vector_csp
             import abstract_linop_csp
+            implicit none(type, external)
             !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_csp), intent(out) :: vec_out
             !! Solution vector.
@@ -96,6 +99,7 @@ module LightKrylov_ExpmLib
             import dp
             import abstract_vector_cdp
             import abstract_linop_cdp
+            implicit none(type, external)
             !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_cdp), intent(out) :: vec_out
             !! Solution vector.
@@ -184,6 +188,7 @@ module LightKrylov_ExpmLib
 
 contains
     subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_rsp), intent(inout) :: A
@@ -288,6 +293,7 @@ contains
     end subroutine kexpm_vec_rsp
 
     subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_rsp), intent(inout) :: A
@@ -399,7 +405,7 @@ contains
             enddo expm_arnoldi
         endif
 
-        if (err_est .le. tol) then
+        if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -413,6 +419,7 @@ contains
     end subroutine kexpm_mat_rsp
 
     subroutine krylov_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
+        implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_rsp), intent(inout) :: A
@@ -440,6 +447,7 @@ contains
         return
     end subroutine krylov_exptA_rsp
     subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_rdp), intent(inout) :: A
@@ -544,6 +552,7 @@ contains
     end subroutine kexpm_vec_rdp
 
     subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_rdp), intent(inout) :: A
@@ -655,7 +664,7 @@ contains
             enddo expm_arnoldi
         endif
 
-        if (err_est .le. tol) then
+        if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -669,6 +678,7 @@ contains
     end subroutine kexpm_mat_rdp
 
     subroutine krylov_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
+        implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_rdp), intent(inout) :: A
@@ -696,6 +706,7 @@ contains
         return
     end subroutine krylov_exptA_rdp
     subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_csp), intent(inout) :: A
@@ -800,6 +811,7 @@ contains
     end subroutine kexpm_vec_csp
 
     subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_csp), intent(inout) :: A
@@ -911,7 +923,7 @@ contains
             enddo expm_arnoldi
         endif
 
-        if (err_est .le. tol) then
+        if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -925,6 +937,7 @@ contains
     end subroutine kexpm_mat_csp
 
     subroutine krylov_exptA_csp(vec_out, A, vec_in, tau, info, trans)
+        implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_csp), intent(inout) :: A
@@ -952,6 +965,7 @@ contains
         return
     end subroutine krylov_exptA_csp
     subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: c
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_cdp), intent(inout) :: A
@@ -1056,6 +1070,7 @@ contains
     end subroutine kexpm_vec_cdp
 
     subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim)
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: C(:)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_cdp), intent(inout) :: A
@@ -1167,7 +1182,7 @@ contains
             enddo expm_arnoldi
         endif
 
-        if (err_est .le. tol) then
+        if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
@@ -1181,6 +1196,7 @@ contains
     end subroutine kexpm_mat_cdp
 
     subroutine krylov_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
+        implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: vec_out
         !! Solution vector.
         class(abstract_linop_cdp), intent(inout) :: A

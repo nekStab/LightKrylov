@@ -1,7 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_basekrylov) lanczos_methods
-    implicit none
+    implicit none(type, external)
 contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure lanczos_tridiagonalization_${type[0]}$${kind}$
@@ -43,7 +43,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure lanczos_tridiagonalization_${type[0]}$${kind}$
 
     subroutine update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
         integer, intent(in) :: k
@@ -67,5 +67,4 @@ contains
         return
     end subroutine update_tridiag_matrix_${type[0]}$${kind}$
     #:endfor
-end submodule
-
+end submodule lanczos_methods

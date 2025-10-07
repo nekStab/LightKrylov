@@ -23,9 +23,9 @@ module LightKrylov_Utils
     use LightKrylov_Constants
     ! use LightKrylov_Logger
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             stop_error, check_info
+                                  stop_error, check_info
 
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_Utils'
@@ -51,7 +51,7 @@ module LightKrylov_Utils
 
     type, abstract, public :: abstract_opts
         !! Abstract type for options from which all others are extended.
-    end type
+    end type abstract_opts
 
     type, abstract, public :: abstract_metadata
         !! Abstract type for solver metadata from which all others are extended.
@@ -59,20 +59,22 @@ module LightKrylov_Utils
         contains
         procedure(abstract_print_metadata), pass(self), deferred, public :: print
         procedure(abstract_reset_metadata), pass(self), deferred, public :: reset
-    end type
+    end type abstract_metadata
 
     abstract interface
         subroutine abstract_print_metadata(self, reset_counters, verbose)
             import abstract_metadata
+            implicit none(type, external)
             class(abstract_metadata), intent(inout) :: self
             logical, optional, intent(in) :: reset_counters
             logical, optional, intent(in) :: verbose
-        end subroutine
+        end subroutine abstract_print_metadata
 
         subroutine abstract_reset_metadata(self)
             import abstract_metadata
+            implicit none(type, external)
             class(abstract_metadata), intent(inout) :: self
-        end subroutine
+        end subroutine abstract_reset_metadata
     end interface
 
     !-------------------------------------
@@ -87,20 +89,22 @@ module LightKrylov_Utils
         !! matrix is as expected. It throws an error if not.
         #:for kind, type in RC_KINDS_TYPES
         module subroutine assert_shape_vector_${type[0]}$${kind}$(v, size, vecname, module, procedure)
+            implicit none(type, external)
             ${type}$, intent(in) :: v(:)
             integer, intent(in) :: size(:)
             character(len=*), intent(in) :: vecname
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
-        end subroutine
+        end subroutine assert_shape_vector_${type[0]}$${kind}$
 
         module subroutine assert_shape_matrix_${type[0]}$${kind}$(A, size, matname, module, procedure)
+            implicit none(type, external)
             ${type}$, intent(in) :: A(:, :)
             integer, intent(in) :: size(:)
             character(len=*), intent(in) :: matname
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
-        end subroutine
+        end subroutine assert_shape_matrix_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -108,8 +112,9 @@ module LightKrylov_Utils
         !! Utility function to compute the base-2 logarithm of a real number.
         #:for kind, type in REAL_KINDS_TYPES
         elemental ${type}$ module function log2_${type[0]}$${kind}$(x) result(y)
+            implicit none(type, external)
             ${type}$, intent(in) :: x
-        end function
+        end function log2_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -147,10 +152,11 @@ module LightKrylov_Utils
         !!  @endnote
         #:for kind, type in RC_KINDS_TYPES
         module subroutine eig_${type[0]}$${kind}$(A, vecs, vals)
+            implicit none(type, external)
             ${type}$, intent(in) :: A(:, :)
             ${type}$, intent(out) :: vecs(:, :)
             complex(${kind}$), intent(out) :: vals(:)
-        end subroutine
+        end subroutine eig_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -182,10 +188,11 @@ module LightKrylov_Utils
         !!  It is an `intent(in)` arguement.
         #:for kind, type in RC_KINDS_TYPES
         module subroutine ordschur_${type[0]}$${kind}$(T, Q, selected)
+            implicit none(type, external)
             ${type}$, intent(inout) :: T(:, :)
             ${type}$, intent(inout) :: Q(:, :)
             logical, intent(in) :: selected(:)
-        end subroutine
+        end subroutine ordschur_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -213,10 +220,11 @@ module LightKrylov_Utils
         !!  `info`: Information flag. It is an `intent(out)` argument. 
         #:for kind, type in RC_KINDS_TYPES
         module subroutine sqrtm_${type[0]}$${kind}$(A, sqrtA, info)
+            implicit none(type, external)
             ${type}$, intent(inout) :: A(:, :)
             ${type}$, intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
-        end subroutine
+        end subroutine sqrtm_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -240,50 +248,54 @@ module LightKrylov_Utils
         !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
         #:for kind, type in RC_KINDS_TYPES
         module function expm_${type[0]}$${kind}$(A, order) result(E)
+            implicit none(type, external)
             ${type}$, intent(in) :: A(:, :)
             !! Matrix to be exponentiated.
             ${type}$ :: E(size(A, 1), size(A, 1))
             !! Output matrix E = exp(tA).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
-        end function
+        end function expm_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface givens_rotation
         #:for kind, type in RC_KINDS_TYPES
         pure module function givens_rotation_${type[0]}$${kind}$(x) result(g)
+            implicit none(type, external)
             ${type}$, intent(in) :: x(2)
             !! Vector whose second needs to be eliminated.
             ${type}$             :: g(2)
             !! Entries of the Givens rotation matrix.
-        end function
+        end function givens_rotation_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface apply_givens_rotation
         #:for kind, type in RC_KINDS_TYPES
         pure module subroutine apply_givens_rotation_${type[0]}$${kind}$(h, c, s)
+            implicit none(type, external)
             ${type}$, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             ${type}$, intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
             ${type}$, intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
-        end subroutine
+        end subroutine apply_givens_rotation_${type[0]}$${kind}$
         #:endfor
     end interface
 
     interface solve_triangular
         #:for kind, type in RC_KINDS_TYPES
         pure module function solve_triangular_${type[0]}$${kind}$(A, b) result(x)
+            implicit none(type, external)
             ${type}$, intent(in) :: A(:, :)
             !! Matrix to invert.
             ${type}$, intent(in) :: b(:)
             !! Right-hand side vector.
             ${type}$, allocatable :: x(:)
             !! Solution vector.
-        end function
+        end function solve_triangular_${type[0]}$${kind}$
         #:endfor
     end interface
-end module
+end module LightKrylov_Utils

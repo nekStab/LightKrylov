@@ -11,9 +11,8 @@ module TestSpecialMatrices
    use LightKrylov_TestUtils
    ! SpecialMatrices
    use SpecialMatrices
-   use TestUtils
-
-   implicit none
+   use TestUtils   
+   implicit none(type, external)
    private
 
    character(len=*), parameter, private :: this_module = "LK_TSpecialMatrices"
@@ -33,14 +32,14 @@ module TestSpecialMatrices
       private
       procedure, pass(self), public :: matvec => matvec_rdp
       procedure, pass(self), public :: rmatvec => rmatvec_rdp
-   end type
+   end type AbstractPoisson2D
 
    type, extends(abstract_precond_rdp) :: BlockJacobiPreconditioner
       type(SymTridiagonal), allocatable :: D
    contains
       private
       procedure, pass(self), public :: apply => apply_blockjacobi
-   end type
+   end type BlockJacobiPreconditioner
 
 contains
 
@@ -64,14 +63,14 @@ contains
       class default
          call type_error('vec_in', 'state_vector', 'IN', this_module, 'Poisson2D_matvec')
       end select
-   end subroutine
+   end subroutine matvec_rdp
 
    subroutine rmatvec_rdp(self, vec_in, vec_out)
       class(AbstractPoisson2D), intent(inout) :: self
       class(abstract_vector_rdp), intent(in) :: vec_in
       class(abstract_vector_rdp), intent(out) :: vec_out
       call matvec_rdp(self, vec_in, vec_out)
-   end subroutine
+   end subroutine rmatvec_rdp
 
    function construct_preconditioner(A) result(M)
       type(Poisson2D), intent(in) :: A
@@ -84,7 +83,7 @@ contains
       ev = [(-1.0_dp/dx**2, i=1, nx - 1)]
       D = SymTridiagonal(dv, ev)
       M = BlockJacobiPreconditioner(); M%D = D
-   end function
+   end function construct_preconditioner
 
    subroutine apply_blockjacobi(self, vec, iter, current_residual, target_residual)
       class(BlockJacobiPreconditioner), intent(inout) :: self
@@ -107,7 +106,7 @@ contains
          end do
          vec%data = y
       end select
-   end subroutine
+   end subroutine apply_blockjacobi
 
    !--------------------------------------------------------------------
    !-----     DEFINITION OF THE UNIT TESTS FOR SPECIALMATRICES     -----
@@ -118,7 +117,7 @@ contains
       testsuite = [ &
                   new_unittest("Precond. Conj. Gradient (Poisson2D)", test_pcg_poisson_rdp) &
                   ]
-   end subroutine
+   end subroutine collect_specialmatrices_rdp_testsuite
 
    subroutine test_pcg_poisson_rdp(error)
       ! Error type.
@@ -155,6 +154,6 @@ contains
       call get_err_str(msg, "max_err:", err)
       call check(error, err < b%norm()*rtol_dp)
       call check_test(error, 'test_pcg_poisson_rdp', eq='A @ x = b', context=msg)
-   end subroutine
+   end subroutine test_pcg_poisson_rdp
 
-end module
+end module TestSpecialMatrices

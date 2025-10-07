@@ -16,7 +16,7 @@ program Tester
    use TestNewtonKrylov
    use TestSpecialMatrices
 
-   implicit none
+   implicit none(type, external)
 
    ! Unit-test related.
    integer :: status, is

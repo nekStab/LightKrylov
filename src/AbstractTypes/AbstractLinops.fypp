@@ -19,7 +19,7 @@ module LightKrylov_AbstractLinops
     use LightKrylov_Timing, only: time_lightkrylov
     use LightKrylov_Utils
     use LightKrylov_AbstractVectors
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_Linops'
@@ -67,13 +67,14 @@ module LightKrylov_AbstractLinops
         !! Wrapper for matvec including the counter increment
         procedure, pass(self), public :: apply_rmatvec => apply_rmatvec_${type[0]}$${kind}$
         !! Wrapper for rmatvec including the counter increment
-    end type
+    end type abstract_linop_${type[0]}$${kind}$
 
     abstract interface
         subroutine abstract_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
             !! Interface for the matrix-vector product.
             use lightkrylov_AbstractVectors
             import abstract_linop_${type[0]}$${kind}$
+            implicit none(type, external)
             class(abstract_linop_${type[0]}$${kind}$) , intent(inout)  :: self
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
@@ -94,7 +95,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => adjoint_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => adjoint_rmatvec_${type[0]}$${kind}$
-    end type
+    end type adjoint_linop_${type[0]}$${kind}$
 
     !--------------------------------------------------------------------------------------------
     !-----     Definition of an abstract ${type}$ exponential propagator with kind=${kind}$     -----
@@ -115,7 +116,7 @@ module LightKrylov_AbstractLinops
         !!  @endwarning
         real(${kind}$), public :: tau
         !! Time horizon for the temporal integration. This variable must be set when the operator is instantiated.
-    end type
+    end type abstract_exptA_linop_${type[0]}$${kind}$
     #:endfor
 
     interface adjoint
@@ -137,7 +138,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => id_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => id_matvec_${type[0]}$${kind}$
-    end type
+    end type Id_${type[0]}$${kind}$
 
     #:endfor
 
@@ -167,7 +168,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => scaled_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => scaled_rmatvec_${type[0]}$${kind}$
-    end type
+    end type scaled_linop_${type[0]}$${kind}$
     #:endfor
 
     !------------------------------------------------
@@ -188,7 +189,7 @@ module LightKrylov_AbstractLinops
         private
         procedure, pass(self), public :: matvec => axpby_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => axpby_rmatvec_${type[0]}$${kind}$
-    end type
+    end type axpby_linop_${type[0]}$${kind}$
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
@@ -199,7 +200,7 @@ module LightKrylov_AbstractLinops
     type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_sym_linop_${type[0]}$${kind}$
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
-    end type
+    end type abstract_sym_linop_${type[0]}$${kind}$
     #:else
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
@@ -207,7 +208,7 @@ module LightKrylov_AbstractLinops
     type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_hermitian_linop_${type[0]}$${kind}$
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
-    end type
+    end type abstract_hermitian_linop_${type[0]}$${kind}$
     #:endif
     #:endfor
 
@@ -221,7 +222,7 @@ module LightKrylov_AbstractLinops
     contains
         procedure, pass(self), public :: matvec => dense_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => dense_rmatvec_${type[0]}$${kind}$
-    end type
+    end type dense_linop_${type[0]}$${kind}$
     #:endfor
 
     interface dense_linop
@@ -239,6 +240,7 @@ contains
 
     pure integer function get_counter(self, trans) result(count)
       !! Getter function for the number of matvec calls
+        implicit none(type, external)
       class(abstract_linop), intent(in) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -251,6 +253,7 @@ contains
 
     subroutine reset_counter(self, trans, procedure, counter, reset_timer, soft_reset, clean_timer)
       !! Setter routine to reset the matvec counter and reset timers
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -289,6 +292,7 @@ contains
     subroutine print_timer_info(self, trans)
       !! Getter routine to print the current timing information for matvec/rmatvec
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
       !! matvec or rmatvec?
@@ -305,6 +309,7 @@ contains
     subroutine reset_linop_timer(self, trans, soft, clean)
       !! Setter routine to reset the matvec/rmatvec timers
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
       !! matvec or rmatvec?
@@ -328,6 +333,7 @@ contains
     subroutine finalize_linop_timer(self)
       !! Finalize the matvec/rmatvec timers
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
+        implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       call self%matvec_timer%finalize()
       call self%rmatvec_timer%finalize()
@@ -339,6 +345,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine apply_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -356,6 +363,7 @@ contains
     end subroutine apply_matvec_${type[0]}$${kind}$
 
     subroutine apply_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -379,6 +387,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine id_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(Id_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -389,6 +398,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine scaled_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -397,6 +407,7 @@ contains
     end subroutine scaled_matvec_${type[0]}$${kind}$
 
     subroutine scaled_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(scaled_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -407,6 +418,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine axpby_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -438,6 +450,7 @@ contains
     end subroutine axpby_matvec_${type[0]}$${kind}$
 
     subroutine axpby_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(axpby_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -476,13 +489,15 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     function initialize_adjoint_${type[0]}$${kind}$(A) result(B)
+        implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         class(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
         allocate(B) ; B%A = A
         return
-    end function
+    end function initialize_adjoint_${type[0]}$${kind}$
 
     subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -493,6 +508,7 @@ contains
     end subroutine adjoint_matvec_${type[0]}$${kind}$
 
     subroutine adjoint_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(adjoint_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -510,6 +526,7 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine dense_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -532,9 +549,10 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
         return
-    end subroutine
+    end subroutine dense_matvec_${type[0]}$${kind}$
 
     subroutine dense_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
         class(dense_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
@@ -561,17 +579,18 @@ contains
             call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
         end select
          return
-    end subroutine
+    end subroutine dense_rmatvec_${type[0]}$${kind}$
 
     #:endfor
     
     #:for kind, type in RC_KINDS_TYPES
     function initialize_dense_linop_from_array_${type[0]}$${kind}$(A) result(linop)
+        implicit none(type, external)
         ${type}$, intent(in) :: A(:, :)
         type(dense_linop_${type[0]}$${kind}$) :: linop
         linop%data = A
         return
-    end function
+    end function initialize_dense_linop_from_array_${type[0]}$${kind}$
     #:endfor
 
 end module LightKrylov_AbstractLinops

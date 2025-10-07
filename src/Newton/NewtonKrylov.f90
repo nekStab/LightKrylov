@@ -10,7 +10,7 @@ module LightKrylov_NewtonKrylov
     use LightKrylov_IterativeSolvers
     use LightKrylov_Utils
 
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_NwtKryl'
@@ -33,7 +33,7 @@ module LightKrylov_NewtonKrylov
         !! Ignored if ifbisect = .false.
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type newton_sp_opts
     
     type, extends(abstract_opts), public :: newton_dp_opts
         !! Options for Newton-Krylov fixed-point iteration.
@@ -46,7 +46,7 @@ module LightKrylov_NewtonKrylov
         !! Ignored if ifbisect = .false.
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type newton_dp_opts
     
 
     type, extends(abstract_metadata), public :: newton_sp_metadata
@@ -70,7 +70,7 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: print => print_newton_sp
         procedure, pass(self), public :: reset => reset_newton_sp
         procedure, pass(self), public :: record => record_data_sp
-    end type
+    end type newton_sp_metadata
    
     type, extends(abstract_metadata), public :: newton_dp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
@@ -93,7 +93,7 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: print => print_newton_dp
         procedure, pass(self), public :: reset => reset_newton_dp
         procedure, pass(self), public :: record => record_data_dp
-    end type
+    end type newton_dp_metadata
    
 
 
@@ -159,6 +159,7 @@ module LightKrylov_NewtonKrylov
     abstract interface
         subroutine abstract_scheduler_sp(tol, target_tol, rnorm, iter, info)
             import sp
+            implicit none(type, external)
             !! Abstract interface to define a tolerance scheduler for the Newton iteration
             real(sp), intent(out) :: tol
             !! Tolerance to be used
@@ -174,6 +175,7 @@ module LightKrylov_NewtonKrylov
 
         subroutine abstract_scheduler_dp(tol, target_tol, rnorm, iter, info)
             import dp
+            implicit none(type, external)
             !! Abstract interface to define a tolerance scheduler for the Newton iteration
             real(dp), intent(out) :: tol
             !! Tolerance to be used
@@ -195,6 +197,7 @@ contains
     !------------------------------------------------------
 
     subroutine print_newton_sp(self, reset_counters, verbose)
+        implicit none(type, external)
         character(len=*), parameter :: this_procedure = 'print_newton_sp'
         class(newton_sp_metadata), intent(inout) :: self
         logical, optional, intent(in) :: reset_counters
@@ -249,9 +252,9 @@ contains
 
     subroutine record_data_sp(self, res, tol)
         class(newton_sp_metadata), intent(inout) :: self
-        real(sp) :: res
+        real(sp), intent(in) :: res
         !! Residual of the current evaluation
-        real(sp) :: tol
+        real(sp), intent(in) :: tol
         !! Tolerance of the current evaluation
         if (.not.allocated(self%res)) then
             allocate(self%res(1))
@@ -270,6 +273,7 @@ contains
     end subroutine record_data_sp
 
     subroutine print_newton_dp(self, reset_counters, verbose)
+        implicit none(type, external)
         character(len=*), parameter :: this_procedure = 'print_newton_dp'
         class(newton_dp_metadata), intent(inout) :: self
         logical, optional, intent(in) :: reset_counters
@@ -324,9 +328,9 @@ contains
 
     subroutine record_data_dp(self, res, tol)
         class(newton_dp_metadata), intent(inout) :: self
-        real(dp) :: res
+        real(dp), intent(in) :: res
         !! Residual of the current evaluation
-        real(dp) :: tol
+        real(dp), intent(in) :: tol
         !! Tolerance of the current evaluation
         if (.not.allocated(self%res)) then
             allocate(self%res(1))
@@ -1052,8 +1056,8 @@ contains
         step    = one_rsp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_rsp, invphi2*one_rsp, invphi*one_rsp, one_rsp /)
-        res   = (/ rold, zero_rsp, zero_rsp, zero_rsp /)
+        alpha = [zero_rsp, invphi2*one_rsp, invphi*one_rsp, one_rsp]
+        res   = [rold, zero_rsp, zero_rsp, zero_rsp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1122,7 +1126,7 @@ contains
         end if
 
         return
-    end subroutine
+    end subroutine increment_bisection_rsp
 
     subroutine increment_bisection_rdp(X, sys, increment, rold, tol, maxstep)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
@@ -1153,8 +1157,8 @@ contains
         step    = one_rdp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_rdp, invphi2*one_rdp, invphi*one_rdp, one_rdp /)
-        res   = (/ rold, zero_rdp, zero_rdp, zero_rdp /)
+        alpha = [zero_rdp, invphi2*one_rdp, invphi*one_rdp, one_rdp]
+        res   = [rold, zero_rdp, zero_rdp, zero_rdp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1223,7 +1227,7 @@ contains
         end if
 
         return
-    end subroutine
+    end subroutine increment_bisection_rdp
 
     subroutine increment_bisection_csp(X, sys, increment, rold, tol, maxstep)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
@@ -1254,8 +1258,8 @@ contains
         step    = one_csp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_csp, invphi2*one_csp, invphi*one_csp, one_csp /)
-        res   = (/ rold, zero_rsp, zero_rsp, zero_rsp /)
+        alpha = [zero_csp, invphi2*one_csp, invphi*one_csp, one_csp]
+        res   = [rold, zero_rsp, zero_rsp, zero_rsp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1324,7 +1328,7 @@ contains
         end if
 
         return
-    end subroutine
+    end subroutine increment_bisection_csp
 
     subroutine increment_bisection_cdp(X, sys, increment, rold, tol, maxstep)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
@@ -1355,8 +1359,8 @@ contains
         step    = one_cdp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_cdp, invphi2*one_cdp, invphi*one_cdp, one_cdp /)
-        res   = (/ rold, zero_rdp, zero_rdp, zero_rdp /)
+        alpha = [zero_cdp, invphi2*one_cdp, invphi*one_cdp, one_cdp]
+        res   = [rold, zero_rdp, zero_rdp, zero_rdp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1425,7 +1429,7 @@ contains
         end if
 
         return
-    end subroutine
+    end subroutine increment_bisection_cdp
 
 
     !--------------------------------------------------------------------

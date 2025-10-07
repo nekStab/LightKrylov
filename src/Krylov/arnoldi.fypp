@@ -1,7 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_basekrylov) arnoldi_method
-    implicit none
+    implicit none(type, external)
 contains
     
     #:for kind, type in RC_KINDS_TYPES
@@ -71,7 +71,7 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
         
         return
-    end procedure
+    end procedure arnoldi_${type[0]}$${kind}$
     #:endfor
    
-end submodule
+end submodule arnoldi_method
