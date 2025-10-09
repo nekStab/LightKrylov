@@ -41,8 +41,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_tridiagonalization_${type[0]}$${kind}$
 
     subroutine update_tridiag_matrix_${type[0]}$${kind}$(T, X, k)
@@ -63,8 +61,7 @@ contains
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis_p1', this_module, 'update_tridiag_matrix_${type[0]}$${kind}$')
-
-        return
     end subroutine update_tridiag_matrix_${type[0]}$${kind}$
+
     #:endfor
 end submodule lanczos_methods

@@ -69,9 +69,7 @@ contains
         enddo blk_arnoldi
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure arnoldi_${type[0]}$${kind}$
+
     #:endfor
-   
 end submodule arnoldi_method

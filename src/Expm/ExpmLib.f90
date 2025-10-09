@@ -36,11 +36,11 @@ module LightKrylov_ExpmLib
 
     abstract interface
         subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
+            !! Abstract interface to define the matrix exponential-vector product.
             import sp
             import abstract_vector_rsp
             import abstract_linop_rsp
             implicit none(type, external)
-            !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_rsp), intent(out) :: vec_out
             !! Solution vector.
             class(abstract_linop_rsp), intent(inout) :: A
@@ -56,11 +56,11 @@ module LightKrylov_ExpmLib
         end subroutine abstract_exptA_rsp
 
         subroutine abstract_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
+            !! Abstract interface to define the matrix exponential-vector product.
             import dp
             import abstract_vector_rdp
             import abstract_linop_rdp
             implicit none(type, external)
-            !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_rdp), intent(out) :: vec_out
             !! Solution vector.
             class(abstract_linop_rdp), intent(inout) :: A
@@ -76,11 +76,11 @@ module LightKrylov_ExpmLib
         end subroutine abstract_exptA_rdp
 
         subroutine abstract_exptA_csp(vec_out, A, vec_in, tau, info, trans)
+            !! Abstract interface to define the matrix exponential-vector product.
             import sp
             import abstract_vector_csp
             import abstract_linop_csp
             implicit none(type, external)
-            !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_csp), intent(out) :: vec_out
             !! Solution vector.
             class(abstract_linop_csp), intent(inout) :: A
@@ -96,11 +96,11 @@ module LightKrylov_ExpmLib
         end subroutine abstract_exptA_csp
 
         subroutine abstract_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
+            !! Abstract interface to define the matrix exponential-vector product.
             import dp
             import abstract_vector_cdp
             import abstract_linop_cdp
             implicit none(type, external)
-            !! Abstract interface to define the matrix exponential-vector product.
             class(abstract_vector_cdp), intent(out) :: vec_out
             !! Solution vector.
             class(abstract_linop_cdp), intent(inout) :: A
@@ -188,9 +188,9 @@ module LightKrylov_ExpmLib
 
 contains
     subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
+        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: c
-        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: b
@@ -288,14 +288,12 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_vec_rsp
 
     subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim)
+        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: C(:)
-        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: B(:)
@@ -414,11 +412,11 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_mat_rsp
 
     subroutine krylov_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! on a vector that conforms to the `abstract_exptA_rsp` interface.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: vec_out
         !! Solution vector.
@@ -443,13 +441,12 @@ contains
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', this_module, this_procedure)
-
-        return
     end subroutine krylov_exptA_rsp
+
     subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
+        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: c
-        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: b
@@ -547,14 +544,12 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_vec_rdp
 
     subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim)
+        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: C(:)
-        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: B(:)
@@ -673,11 +668,11 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_mat_rdp
 
     subroutine krylov_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! on a vector that conforms to the `abstract_exptA_rdp` interface.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: vec_out
         !! Solution vector.
@@ -702,13 +697,12 @@ contains
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', this_module, this_procedure)
-
-        return
     end subroutine krylov_exptA_rdp
+
     subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
+        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: c
-        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: b
@@ -806,14 +800,12 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_vec_csp
 
     subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim)
+        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: C(:)
-        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: B(:)
@@ -932,11 +924,11 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_mat_csp
 
     subroutine krylov_exptA_csp(vec_out, A, vec_in, tau, info, trans)
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! on a vector that conforms to the `abstract_exptA_csp` interface.
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: vec_out
         !! Solution vector.
@@ -961,13 +953,12 @@ contains
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', this_module, this_procedure)
-
-        return
     end subroutine krylov_exptA_csp
+
     subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
+        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: c
-        !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: b
@@ -1065,14 +1056,12 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_vec_cdp
 
     subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim)
+        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: C(:)
-        !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \).
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: B(:)
@@ -1191,11 +1180,11 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
-
-        return
     end subroutine kexpm_mat_cdp
 
     subroutine krylov_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! on a vector that conforms to the `abstract_exptA_cdp` interface.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: vec_out
         !! Solution vector.
@@ -1220,8 +1209,6 @@ contains
 
         call kexpm(vec_out, A, vec_in, tau, tol, info, trans=trans, kdim=kdim)
         call check_info(info, 'kexpm', this_module, this_procedure)
-
-        return
     end subroutine krylov_exptA_cdp
 
 end module LightKrylov_ExpmLib

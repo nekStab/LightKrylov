@@ -5,7 +5,6 @@ module LightKrylov_AbstractSystems
     use LightKrylov_Logger
     use LightKrylov_Constants
     use LightKrylov_Timer_Utils, only: lightkrylov_timer
-    use LightKrylov_Timing, only: time_lightkrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     implicit none(type, external)
@@ -16,7 +15,13 @@ module LightKrylov_AbstractSystems
 
     ! Base type for abstract systems.
     type, abstract, public :: abstract_system
-    private
+        !!  Base type to define an abstract system. All other system types defined
+        !!  in `LightKrylov` derive from this fundamental one.
+        !!
+        !!  @warning
+        !!  Users should not extend this abstract class to define their own types.
+        !!  @endwarning
+        private
         integer :: eval_counter = 0
         type(lightkrylov_timer) :: eval_timer = lightkrylov_timer('system eval timer')
     contains
@@ -38,7 +43,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract Jacobian linop for kind=sp
     type, abstract, extends(abstract_linop_rsp), public :: abstract_jacobian_linop_rsp
-        !! Abstract type for the local linearization of the system around the state X
+        !! Abstract type for the local linearization of the system around the state X.
+        !! This type is intended for use within the abstract_system type.
         class(abstract_vector_rsp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
@@ -46,7 +52,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract system for kind=sp.
     type, abstract, extends(abstract_system), public :: abstract_system_rsp
-        !! System for Newton fixed-point iteration via the Jacobian
+        !! Base type to extend in order to define a real(sp)-valued system for
+        !! Newton fixed-point iteration via the Jacobian.
         class(abstract_jacobian_linop_rsp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -81,7 +88,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract Jacobian linop for kind=dp
     type, abstract, extends(abstract_linop_rdp), public :: abstract_jacobian_linop_rdp
-        !! Abstract type for the local linearization of the system around the state X
+        !! Abstract type for the local linearization of the system around the state X.
+        !! This type is intended for use within the abstract_system type.
         class(abstract_vector_rdp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
@@ -89,7 +97,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract system for kind=dp.
     type, abstract, extends(abstract_system), public :: abstract_system_rdp
-        !! System for Newton fixed-point iteration via the Jacobian
+        !! Base type to extend in order to define a real(dp)-valued system for
+        !! Newton fixed-point iteration via the Jacobian.
         class(abstract_jacobian_linop_rdp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -124,7 +133,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract Jacobian linop for kind=sp
     type, abstract, extends(abstract_linop_csp), public :: abstract_jacobian_linop_csp
-        !! Abstract type for the local linearization of the system around the state X
+        !! Abstract type for the local linearization of the system around the state X.
+        !! This type is intended for use within the abstract_system type.
         class(abstract_vector_csp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
@@ -132,7 +142,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract system for kind=sp.
     type, abstract, extends(abstract_system), public :: abstract_system_csp
-        !! System for Newton fixed-point iteration via the Jacobian
+        !! Base type to extend in order to define a complex(sp)-valued system for
+        !! Newton fixed-point iteration via the Jacobian.
         class(abstract_jacobian_linop_csp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -167,7 +178,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract Jacobian linop for kind=dp
     type, abstract, extends(abstract_linop_cdp), public :: abstract_jacobian_linop_cdp
-        !! Abstract type for the local linearization of the system around the state X
+        !! Abstract type for the local linearization of the system around the state X.
+        !! This type is intended for use within the abstract_system type.
         class(abstract_vector_cdp), allocatable :: X
         !! System state around which the equatons are linearized.
     contains
@@ -175,7 +187,8 @@ module LightKrylov_AbstractSystems
 
     ! Abstract system for kind=dp.
     type, abstract, extends(abstract_system), public :: abstract_system_cdp
-        !! System for Newton fixed-point iteration via the Jacobian
+        !! Base type to extend in order to define a complex(dp)-valued system for
+        !! Newton fixed-point iteration via the Jacobian.
         class(abstract_jacobian_linop_cdp), allocatable :: jacobian
         !! System Jacobian \( \left. \frac{\partial \mathbf{F}}{\partial \mathbf{X}} \right|_{X^*} \).
     contains
@@ -211,13 +224,14 @@ contains
     !---------------------------------------------------------------
  
     pure integer function get_eval_counter(self) result(count)
+        !! Getter function for the number of system evaluations.
         implicit none(type, external)
-        !! Getter function for the number of eval calls
         class(abstract_system), intent(in) :: self
         count = self%eval_counter
     end function get_eval_counter
 
     subroutine reset_eval_counter(self, procedure, counter, reset_timer, soft_reset, clean_timer)
+        !! Setter function to reset the system evaluation counter.
         implicit none(type, external)
         class(abstract_system), intent(inout) :: self
         character(len=*), intent(in) :: procedure
@@ -247,7 +261,7 @@ contains
     end subroutine reset_eval_counter
 
     subroutine print_timer_info(self)
-        !! Print the current timing data for the system evaluation
+        !! Print the current timing data for the system evaluation.
         !! Note: Wrapper of the corresponding routine from lightkrylov_timer
         implicit none(type, external)
         class(abstract_system), intent(inout) :: self
@@ -255,7 +269,7 @@ contains
     end subroutine print_timer_info
 
     subroutine reset_eval_timer(self, soft, clean)
-        !! Setter routine to reset the system evaluation timer
+        !! Setter routine to reset the system evaluation timer.
         !! Note: Wrapper of the corresponding routine from lightkrylov_timer
         implicit none(type, external)
         class(abstract_system), intent(inout) :: self
@@ -265,16 +279,16 @@ contains
     end subroutine reset_eval_timer
 
     subroutine finalize_eval_timer(self)
-        !! Finalize the system evaluation timer and print summary
+        !! Finalize the system evaluation timer and print summary.
         !! Note: Wrapper of the corresponding routine from lightkrylov_timer
         implicit none(type, external)
         class(abstract_system), intent(inout) :: self
         call self%eval_timer%finalize()
     end subroutine finalize_eval_timer
 
-    !---------------------------------------------------------------------
-    !-----     Wrapper for system response to increment counters     -----
-    !---------------------------------------------------------------------
+    !----------------------------------------------------------------------
+    !-----     Wrappers for system response to increment counters     -----
+    !----------------------------------------------------------------------
 
     subroutine eval_rsp(self, vec_in, vec_out, atol)
         implicit none(type, external)

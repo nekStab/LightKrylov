@@ -18,6 +18,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -101,9 +102,8 @@ contains
 
         enddo qr_step
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_with_pivoting_${type[0]}$${kind}$
+
     #:endfor
 
     !---------------------------------------------
@@ -159,9 +159,8 @@ contains
             call Q(j)%scal(one_r${kind}$ / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_no_pivoting_${type[0]}$${kind}$
+
     #:endfor
 
     !-------------------------------------
@@ -191,8 +190,7 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        return
     end procedure swap_columns_${type[0]}$${kind}$
+    
     #:endfor
 end submodule qr_solvers

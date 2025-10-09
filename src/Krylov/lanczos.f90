@@ -38,8 +38,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_tridiagonalization_rsp
 
     subroutine update_tridiag_matrix_rsp(T, X, k)
@@ -60,9 +58,8 @@ contains
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis_p1', this_module, 'update_tridiag_matrix_rsp')
-
-        return
     end subroutine update_tridiag_matrix_rsp
+
     module procedure lanczos_tridiagonalization_rdp
         character(len=*), parameter :: this_procedure = 'lanczos_tridiagonalization_rdp'
         integer :: k_start, k_end
@@ -100,8 +97,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_tridiagonalization_rdp
 
     subroutine update_tridiag_matrix_rdp(T, X, k)
@@ -122,9 +117,8 @@ contains
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis_p1', this_module, 'update_tridiag_matrix_rdp')
-
-        return
     end subroutine update_tridiag_matrix_rdp
+
     module procedure lanczos_tridiagonalization_csp
         character(len=*), parameter :: this_procedure = 'lanczos_tridiagonalization_csp'
         integer :: k_start, k_end
@@ -162,8 +156,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_tridiagonalization_csp
 
     subroutine update_tridiag_matrix_csp(T, X, k)
@@ -184,9 +176,8 @@ contains
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis_p1', this_module, 'update_tridiag_matrix_csp')
-
-        return
     end subroutine update_tridiag_matrix_csp
+
     module procedure lanczos_tridiagonalization_cdp
         character(len=*), parameter :: this_procedure = 'lanczos_tridiagonalization_cdp'
         integer :: k_start, k_end
@@ -224,8 +215,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_tridiagonalization_cdp
 
     subroutine update_tridiag_matrix_cdp(T, X, k)
@@ -246,7 +235,6 @@ contains
         ! Full re-orthogonalization against existing basis
         call double_gram_schmidt_step(X(k+1), X(:k), info, if_chk_orthonormal=.false.)
         call check_info(info, 'orthogonalize_against_basis_p1', this_module, 'update_tridiag_matrix_cdp')
-
-        return
     end subroutine update_tridiag_matrix_cdp
+
 end submodule lanczos_methods
