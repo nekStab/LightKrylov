@@ -102,7 +102,6 @@ contains
 
       ! return unit if requested
       if (present(iunit)) iunit = iunit_
-      return
    end subroutine logger_setup
 
    subroutine log_message(msg, module, procedure, flush_log)
@@ -246,7 +245,6 @@ contains
       call set_comm_size(1)
       call logger%log_message(trim(msg), this_module, this_procedure)
 #endif
-      return
    end subroutine comm_setup
 
    subroutine comm_close()
@@ -259,7 +257,6 @@ contains
 #else
       ierr = 0
 #endif
-      return
    end subroutine comm_close
 
    subroutine stop_error(msg, module, procedure)
@@ -270,7 +267,6 @@ contains
       character(len=*), optional, intent(in)  :: procedure
       !! The name of the procedure in which the call happens
       call check_info(-1, origin="STOP_ERROR", module=module, procedure=procedure, info_msg=msg)
-      return
    end subroutine stop_error
 
    subroutine type_error(var, type, intent, module, procedure)
@@ -287,7 +283,6 @@ contains
       character(len=128) :: msg
       msg = "The intent ["//trim(intent)//"] argument '"//trim(var)//"' must be of type '"//trim(type)//"'"
       call stop_error(msg, module=module, procedure=procedure)
-      return
    end subroutine type_error
 
    subroutine check_info(info, origin, module, procedure, info_msg)
@@ -666,14 +661,11 @@ contains
             ierr = -1
          end if
       end if ! info /= 0
-
       call error_handler(ierr)
-
    end subroutine check_info
 
    subroutine error_handler(ierr)
       integer, intent(in) :: ierr
-
       if (ierr == 0) then
          return
       else
@@ -684,7 +676,6 @@ contains
             STOP 1
          end if
       end if
-
    end subroutine error_handler
 
 end module LightKrylov_Logger

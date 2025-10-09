@@ -1,7 +1,7 @@
 submodule (lightkrylov_iterativesolvers) fgmres_solver
     use stdlib_strings, only: padr
     use stdlib_linalg, only: lstsq, norm
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -42,7 +42,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure
 
     module procedure reset_fgmres_sp
@@ -52,8 +51,8 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-        return
     end procedure
+
     module procedure print_fgmres_dp
         ! internals
         character(len=*), parameter :: this_procedure = 'print_fgmres_dp'
@@ -88,7 +87,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure
 
     module procedure reset_fgmres_dp
@@ -98,7 +96,6 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-        return
     end procedure
 
     !-------------------------------------------------------------
@@ -279,8 +276,8 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure
+
     module procedure fgmres_rdp
        ! Options.
         integer :: kdim, maxiter
@@ -455,8 +452,8 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure
+
     module procedure fgmres_csp
        ! Options.
         integer :: kdim, maxiter
@@ -631,8 +628,8 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure
+
     module procedure fgmres_cdp
        ! Options.
         integer :: kdim, maxiter
@@ -807,8 +804,8 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure
+
 
     module procedure dense_fgmres_rsp
     type(dense_vector_rsp) :: b_, x_
@@ -822,6 +819,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+
     module procedure dense_fgmres_rdp
     type(dense_vector_rdp) :: b_, x_
     type(dense_linop_rdp)  :: A_
@@ -834,6 +832,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+
     module procedure dense_fgmres_csp
     type(dense_vector_csp) :: b_, x_
     type(dense_linop_csp)  :: A_
@@ -846,6 +845,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+
     module procedure dense_fgmres_cdp
     type(dense_vector_cdp) :: b_, x_
     type(dense_linop_cdp)  :: A_

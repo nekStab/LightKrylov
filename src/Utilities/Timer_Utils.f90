@@ -11,18 +11,18 @@ module LightKrylov_Timer_Utils
    ! Timer type
    type, public :: lightkrylov_timer
       !! Individual timer.
-      !! Atomic timer that is associated to a particular 'event' by name which may be a 
+      !! Atomic timer that is associated to a particular 'event' by name which may be a
       !! procedure or a user-defined string at instantiation.
       !!
-      !! The timing information in gathered for each timer independently. The individual 
-      !! timers are gathered into groups (relevant only for timing output) and managed 
-      !! by a central watch that is derived from  the `abstract_watch` type. The 
-      !! individual timers are rarely user independently but all timing actions are 
+      !! The timing information in gathered for each timer independently. The individual
+      !! timers are gathered into groups (relevant only for timing output) and managed
+      !! by a central watch that is derived from  the `abstract_watch` type. The
+      !! individual timers are rarely user independently but all timing actions are
       !! typically performed via procedures in the central timer.
       !!
-      !! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers 
-      !! associated with the types `abstract_linop` and `abstract_system`, respectively, 
-      !! which are managed via their parent types and the corresponding type-bound 
+      !! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers
+      !! associated with the types `abstract_linop` and `abstract_system`, respectively,
+      !! which are managed via their parent types and the corresponding type-bound
       !! procedures only.
       private
       character(len=128), public :: name = 'default_timer'
@@ -327,7 +327,7 @@ contains
       if (restart_timer) call self%start()
    end function get_timer_etime
 
-   subroutine get_timer_data(self, restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)
+   subroutine get_timer_data(self,restart,etime,etmin,etmax,etimp,lcount,rcount,gcount)
       !! Type-bound to lightkrylov_timer: Getter routine to return the timer data.
       !! Note: If it is running, the timer is stopped.
       class(lightkrylov_timer), intent(inout) :: self
@@ -600,7 +600,7 @@ contains
       etime = self%timers(id)%get_time(restart)
    end function get_timer_etime_by_name
 
-   subroutine get_timer_data_by_name(self, name, restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)
+   subroutine get_timer_data_by_name(self,name,restart,etime,etmin,etmax,etimp,lcount,rcount,gcount)
       !! Type-bound to abstract_watch: Getter routine to return the data for timer referenced by name.
       !! Notes: Wrapper of the corresponding routine from lightkrylov_timer.
       !!        If it is running, the timer is stopped.
@@ -659,7 +659,8 @@ contains
       do i = 1, self%timer_count
          call self%timers(i)%reset(soft, clean, verbose=.false.)
       end do
-      write (msg, '(A,2(A,I0))') 'All timers reset: ', 'private: ', self%private_count, ', user: ', self%user_count
+      write (msg, '(A,2(A,I0))') 'All timers reset: ', 'private: ', self%private_count, &
+            & ', user: ', self%user_count
       call logger%log_message(msg, this_module, self%name)
       write (msg, '(A,L,3X,A,L)') 'soft reset: ', soft_, 'flush timers: ', clean_
       call logger%log_message(msg, this_module, self%name)

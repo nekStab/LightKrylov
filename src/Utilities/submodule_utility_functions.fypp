@@ -67,7 +67,8 @@ contains
 
         ! Eigendecomposition.
         #:if type[0] == "c"
-        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, &
+            & info)
         #:else
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
         #:endif
@@ -102,7 +103,8 @@ contains
         if (time_lightkrylov()) call timer%start('trsen')
         #:if type[0] == "r"
         liwork = 1
-        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, &
+               & iwork, liwork, info)
         #:else
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
@@ -132,7 +134,8 @@ contains
                 & symmetry_error, ", tol = ", rtol_${kind}$
             call stop_error(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         else if (symmetry_error > 10*atol_${kind}$) then
-            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error
             call log_warning(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         endif
 
@@ -149,7 +152,7 @@ contains
                 S(i) = zero_r${kind}$ ; info = 1
             endif
         enddo
-        
+
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -258,7 +261,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_${type[0]}$${kind}$
-    
+
     #:endfor
 end submodule utility_functions
 

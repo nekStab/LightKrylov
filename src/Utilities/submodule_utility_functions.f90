@@ -146,7 +146,8 @@ contains
         lwork =  2*n 
 
         ! Eigendecomposition.
-        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, &
+            & info)
         call check_info(info, "GEEV", this_module, "eig_csp")
 
     end procedure eig_csp
@@ -165,7 +166,8 @@ contains
         lwork =  2*n 
 
         ! Eigendecomposition.
-        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, &
+            & info)
         call check_info(info, "GEEV", this_module, "eig_cdp")
 
     end procedure eig_cdp
@@ -186,7 +188,8 @@ contains
 
         if (time_lightkrylov()) call timer%start('trsen')
         liwork = 1
-        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, &
+               & iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rsp")
         if (time_lightkrylov()) call timer%stop('trsen')
     end procedure ordschur_rsp
@@ -204,7 +207,8 @@ contains
 
         if (time_lightkrylov()) call timer%start('trsen')
         liwork = 1
-        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, &
+               & iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rdp")
         if (time_lightkrylov()) call timer%stop('trsen')
     end procedure ordschur_rdp
@@ -261,7 +265,8 @@ contains
                 & symmetry_error, ", tol = ", rtol_sp
             call stop_error(msg, this_module, "sqrtm_rsp")
         else if (symmetry_error > 10*atol_sp) then
-            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error
             call log_warning(msg, this_module, "sqrtm_rsp")
         endif
 
@@ -278,7 +283,7 @@ contains
                 S(i) = zero_rsp ; info = 1
             endif
         enddo
-        
+
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -302,7 +307,8 @@ contains
                 & symmetry_error, ", tol = ", rtol_dp
             call stop_error(msg, this_module, "sqrtm_rdp")
         else if (symmetry_error > 10*atol_dp) then
-            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error
             call log_warning(msg, this_module, "sqrtm_rdp")
         endif
 
@@ -319,7 +325,7 @@ contains
                 S(i) = zero_rdp ; info = 1
             endif
         enddo
-        
+
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -343,7 +349,8 @@ contains
                 & symmetry_error, ", tol = ", rtol_sp
             call stop_error(msg, this_module, "sqrtm_csp")
         else if (symmetry_error > 10*atol_sp) then
-            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error
             call log_warning(msg, this_module, "sqrtm_csp")
         endif
 
@@ -360,7 +367,7 @@ contains
                 S(i) = zero_rsp ; info = 1
             endif
         enddo
-        
+
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -384,7 +391,8 @@ contains
                 & symmetry_error, ", tol = ", rtol_dp
             call stop_error(msg, this_module, "sqrtm_cdp")
         else if (symmetry_error > 10*atol_dp) then
-            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error
             call log_warning(msg, this_module, "sqrtm_cdp")
         endif
 
@@ -401,7 +409,7 @@ contains
                 S(i) = zero_rdp ; info = 1
             endif
         enddo
-        
+
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -747,7 +755,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_rsp
-    
+
     module procedure solve_triangular_rdp
         integer(ilp) :: i, n
         !> Problem's dimensions.
@@ -758,7 +766,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_rdp
-    
+
     module procedure solve_triangular_csp
         integer(ilp) :: i, n
         !> Problem's dimensions.
@@ -769,7 +777,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_csp
-    
+
     module procedure solve_triangular_cdp
         integer(ilp) :: i, n
         !> Problem's dimensions.
@@ -780,6 +788,6 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_cdp
-    
+
 end submodule utility_functions
 

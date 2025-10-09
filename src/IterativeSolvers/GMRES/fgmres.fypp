@@ -3,7 +3,7 @@
 submodule (lightkrylov_iterativesolvers) fgmres_solver
     use stdlib_strings, only: padr
     use stdlib_linalg, only: lstsq, norm
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -45,7 +45,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure
 
     module procedure reset_fgmres_${kind}$
@@ -55,10 +54,9 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-        return
     end procedure
-    #:endfor
 
+    #:endfor
     !-------------------------------------------------------------
     !-----     FLEXIBLE GMRES SOLVERS FOR ABSTRACT TYPES     -----
     !-------------------------------------------------------------
@@ -238,8 +236,8 @@ contains
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure
+
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
@@ -255,6 +253,6 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
-    #:endfor
 
+    #:endfor
 end submodule

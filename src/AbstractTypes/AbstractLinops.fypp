@@ -286,7 +286,6 @@ contains
         end if
       end if
       if (reset_timer_) call self%reset_timer(trans, soft_reset, clean_timer)
-      return
     end subroutine reset_counter
 
     subroutine print_timer_info(self, trans)
@@ -377,7 +376,6 @@ contains
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
-        return
     end subroutine apply_rmatvec_${type[0]}$${kind}$
     #:endfor
 
@@ -392,7 +390,6 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         call copy(vec_out, vec_in)
-        return
     end subroutine id_matvec_${type[0]}$${kind}$
     #:endfor
 
@@ -403,7 +400,6 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_matvec_${type[0]}$${kind}$
 
     subroutine scaled_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -412,7 +408,6 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_rmatvec_${type[0]}$${kind}$
     #:endfor
 
@@ -445,8 +440,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_matvec_${type[0]}$${kind}$
 
     subroutine axpby_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -477,8 +470,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_rmatvec_${type[0]}$${kind}$
 
     #:endfor
@@ -493,7 +484,6 @@ contains
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         class(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
         allocate(B) ; B%A = A
-        return
     end function initialize_adjoint_${type[0]}$${kind}$
 
     subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -501,10 +491,7 @@ contains
         class(adjoint_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
-
         call self%A%apply_rmatvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_matvec_${type[0]}$${kind}$
 
     subroutine adjoint_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -512,10 +499,7 @@ contains
         class(adjoint_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
-
         call self%A%apply_matvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_rmatvec_${type[0]}$${kind}$
 
     #:endfor
@@ -548,7 +532,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_${type[0]}$${kind}$','IN',this_module,'dense_matvec_${type[0]}$${kind}$')
         end select
-        return
     end subroutine dense_matvec_${type[0]}$${kind}$
 
     subroutine dense_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -578,7 +561,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_${type[0]}$${kind}$','IN',this_module,'dense_rmatvec_${type[0]}$${kind}$')
         end select
-         return
     end subroutine dense_rmatvec_${type[0]}$${kind}$
 
     #:endfor
@@ -589,7 +571,6 @@ contains
         ${type}$, intent(in) :: A(:, :)
         type(dense_linop_${type[0]}$${kind}$) :: linop
         linop%data = A
-        return
     end function initialize_dense_linop_from_array_${type[0]}$${kind}$
     #:endfor
 

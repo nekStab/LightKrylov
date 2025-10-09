@@ -438,7 +438,6 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
         call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
@@ -604,7 +603,6 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
         call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
@@ -770,7 +768,6 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
         call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
@@ -936,7 +933,6 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
         call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)

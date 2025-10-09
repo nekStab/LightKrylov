@@ -607,7 +607,6 @@ contains
         end if
       end if
       if (reset_timer_) call self%reset_timer(trans, soft_reset, clean_timer)
-      return
     end subroutine reset_counter
 
     subroutine print_timer_info(self, trans)
@@ -697,7 +696,6 @@ contains
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
-        return
     end subroutine apply_rmatvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -732,7 +730,6 @@ contains
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
-        return
     end subroutine apply_rmatvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -767,7 +764,6 @@ contains
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
-        return
     end subroutine apply_rmatvec_csp
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -802,7 +798,6 @@ contains
         call self%rmatvec_timer%stop()
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
-        return
     end subroutine apply_rmatvec_cdp
 
     !------------------------------------------------------------------------------
@@ -815,7 +810,6 @@ contains
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
-        return
     end subroutine id_matvec_rsp
     subroutine id_matvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -823,7 +817,6 @@ contains
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
-        return
     end subroutine id_matvec_rdp
     subroutine id_matvec_csp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -831,7 +824,6 @@ contains
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
-        return
     end subroutine id_matvec_csp
     subroutine id_matvec_cdp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -839,7 +831,6 @@ contains
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
         call copy(vec_out, vec_in)
-        return
     end subroutine id_matvec_cdp
 
     subroutine scaled_matvec_rsp(self, vec_in, vec_out)
@@ -848,7 +839,6 @@ contains
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_matvec_rsp
 
     subroutine scaled_rmatvec_rsp(self, vec_in, vec_out)
@@ -857,7 +847,6 @@ contains
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_rmatvec_rsp
     subroutine scaled_matvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -865,7 +854,6 @@ contains
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_matvec_rdp
 
     subroutine scaled_rmatvec_rdp(self, vec_in, vec_out)
@@ -874,7 +862,6 @@ contains
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_rmatvec_rdp
     subroutine scaled_matvec_csp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -882,7 +869,6 @@ contains
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_matvec_csp
 
     subroutine scaled_rmatvec_csp(self, vec_in, vec_out)
@@ -891,7 +877,6 @@ contains
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_rmatvec_csp
     subroutine scaled_matvec_cdp(self, vec_in, vec_out)
         implicit none(type, external)
@@ -899,7 +884,6 @@ contains
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_matvec_cdp
 
     subroutine scaled_rmatvec_cdp(self, vec_in, vec_out)
@@ -908,7 +892,6 @@ contains
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
-        return
     end subroutine scaled_rmatvec_cdp
 
     subroutine axpby_matvec_rsp(self, vec_in, vec_out)
@@ -939,8 +922,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_matvec_rsp
 
     subroutine axpby_rmatvec_rsp(self, vec_in, vec_out)
@@ -971,8 +952,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_rmatvec_rsp
 
     subroutine axpby_matvec_rdp(self, vec_in, vec_out)
@@ -1003,8 +982,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_matvec_rdp
 
     subroutine axpby_rmatvec_rdp(self, vec_in, vec_out)
@@ -1035,8 +1012,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_rmatvec_rdp
 
     subroutine axpby_matvec_csp(self, vec_in, vec_out)
@@ -1067,8 +1042,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_matvec_csp
 
     subroutine axpby_rmatvec_csp(self, vec_in, vec_out)
@@ -1099,8 +1072,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_rmatvec_csp
 
     subroutine axpby_matvec_cdp(self, vec_in, vec_out)
@@ -1131,8 +1102,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_matvec_cdp
 
     subroutine axpby_rmatvec_cdp(self, vec_in, vec_out)
@@ -1163,8 +1132,6 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
-
-        return
     end subroutine axpby_rmatvec_cdp
 
 
@@ -1177,7 +1144,6 @@ contains
         class(abstract_linop_rsp), intent(in) :: A
         class(adjoint_linop_rsp), allocatable :: B
         allocate(B) ; B%A = A
-        return
     end function initialize_adjoint_rsp
 
     subroutine adjoint_matvec_rsp(self, vec_in, vec_out)
@@ -1185,10 +1151,7 @@ contains
         class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-
         call self%A%apply_rmatvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_matvec_rsp
 
     subroutine adjoint_rmatvec_rsp(self, vec_in, vec_out)
@@ -1196,10 +1159,7 @@ contains
         class(adjoint_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-
         call self%A%apply_matvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_rmatvec_rsp
 
     function initialize_adjoint_rdp(A) result(B)
@@ -1207,7 +1167,6 @@ contains
         class(abstract_linop_rdp), intent(in) :: A
         class(adjoint_linop_rdp), allocatable :: B
         allocate(B) ; B%A = A
-        return
     end function initialize_adjoint_rdp
 
     subroutine adjoint_matvec_rdp(self, vec_in, vec_out)
@@ -1215,10 +1174,7 @@ contains
         class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-
         call self%A%apply_rmatvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_matvec_rdp
 
     subroutine adjoint_rmatvec_rdp(self, vec_in, vec_out)
@@ -1226,10 +1182,7 @@ contains
         class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-
         call self%A%apply_matvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_rmatvec_rdp
 
     function initialize_adjoint_csp(A) result(B)
@@ -1237,7 +1190,6 @@ contains
         class(abstract_linop_csp), intent(in) :: A
         class(adjoint_linop_csp), allocatable :: B
         allocate(B) ; B%A = A
-        return
     end function initialize_adjoint_csp
 
     subroutine adjoint_matvec_csp(self, vec_in, vec_out)
@@ -1245,10 +1197,7 @@ contains
         class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-
         call self%A%apply_rmatvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_matvec_csp
 
     subroutine adjoint_rmatvec_csp(self, vec_in, vec_out)
@@ -1256,10 +1205,7 @@ contains
         class(adjoint_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-
         call self%A%apply_matvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_rmatvec_csp
 
     function initialize_adjoint_cdp(A) result(B)
@@ -1267,7 +1213,6 @@ contains
         class(abstract_linop_cdp), intent(in) :: A
         class(adjoint_linop_cdp), allocatable :: B
         allocate(B) ; B%A = A
-        return
     end function initialize_adjoint_cdp
 
     subroutine adjoint_matvec_cdp(self, vec_in, vec_out)
@@ -1275,10 +1220,7 @@ contains
         class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-
         call self%A%apply_rmatvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_matvec_cdp
 
     subroutine adjoint_rmatvec_cdp(self, vec_in, vec_out)
@@ -1286,10 +1228,7 @@ contains
         class(adjoint_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-
         call self%A%apply_matvec(vec_in, vec_out)
-
-        return
     end subroutine adjoint_rmatvec_cdp
 
 
@@ -1320,7 +1259,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_rsp','IN',this_module,'dense_matvec_rsp')
         end select
-        return
     end subroutine dense_matvec_rsp
 
     subroutine dense_rmatvec_rsp(self, vec_in, vec_out)
@@ -1346,7 +1284,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_rsp','IN',this_module,'dense_rmatvec_rsp')
         end select
-         return
     end subroutine dense_rmatvec_rsp
 
     subroutine dense_matvec_rdp(self, vec_in, vec_out)
@@ -1372,7 +1309,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_rdp','IN',this_module,'dense_matvec_rdp')
         end select
-        return
     end subroutine dense_matvec_rdp
 
     subroutine dense_rmatvec_rdp(self, vec_in, vec_out)
@@ -1398,7 +1334,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_rdp','IN',this_module,'dense_rmatvec_rdp')
         end select
-         return
     end subroutine dense_rmatvec_rdp
 
     subroutine dense_matvec_csp(self, vec_in, vec_out)
@@ -1424,7 +1359,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_csp','IN',this_module,'dense_matvec_csp')
         end select
-        return
     end subroutine dense_matvec_csp
 
     subroutine dense_rmatvec_csp(self, vec_in, vec_out)
@@ -1450,7 +1384,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_csp','IN',this_module,'dense_rmatvec_csp')
         end select
-         return
     end subroutine dense_rmatvec_csp
 
     subroutine dense_matvec_cdp(self, vec_in, vec_out)
@@ -1476,7 +1409,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_cdp','IN',this_module,'dense_matvec_cdp')
         end select
-        return
     end subroutine dense_matvec_cdp
 
     subroutine dense_rmatvec_cdp(self, vec_in, vec_out)
@@ -1502,7 +1434,6 @@ contains
         class default
             call type_error('vec_in','dense_vector_cdp','IN',this_module,'dense_rmatvec_cdp')
         end select
-         return
     end subroutine dense_rmatvec_cdp
 
     
@@ -1511,28 +1442,24 @@ contains
         real(sp), intent(in) :: A(:, :)
         type(dense_linop_rsp) :: linop
         linop%data = A
-        return
     end function initialize_dense_linop_from_array_rsp
     function initialize_dense_linop_from_array_rdp(A) result(linop)
         implicit none(type, external)
         real(dp), intent(in) :: A(:, :)
         type(dense_linop_rdp) :: linop
         linop%data = A
-        return
     end function initialize_dense_linop_from_array_rdp
     function initialize_dense_linop_from_array_csp(A) result(linop)
         implicit none(type, external)
         complex(sp), intent(in) :: A(:, :)
         type(dense_linop_csp) :: linop
         linop%data = A
-        return
     end function initialize_dense_linop_from_array_csp
     function initialize_dense_linop_from_array_cdp(A) result(linop)
         implicit none(type, external)
         complex(dp), intent(in) :: A(:, :)
         type(dense_linop_cdp) :: linop
         linop%data = A
-        return
     end function initialize_dense_linop_from_array_cdp
 
 end module LightKrylov_AbstractLinops
