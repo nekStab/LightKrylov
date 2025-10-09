@@ -414,7 +414,7 @@ module LightKrylov_Utils
     interface apply_givens_rotation
         module subroutine apply_givens_rotation_rsp(h, c, s)
             implicit none(type, external)
-            real(sp), intent(inout) :: h(:)
+            real(sp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             real(sp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
@@ -423,7 +423,7 @@ module LightKrylov_Utils
         end subroutine apply_givens_rotation_rsp
         module subroutine apply_givens_rotation_rdp(h, c, s)
             implicit none(type, external)
-            real(dp), intent(inout) :: h(:)
+            real(dp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             real(dp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
@@ -432,7 +432,7 @@ module LightKrylov_Utils
         end subroutine apply_givens_rotation_rdp
         module subroutine apply_givens_rotation_csp(h, c, s)
             implicit none(type, external)
-            complex(sp), intent(inout) :: h(:)
+            complex(sp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             complex(sp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
@@ -441,7 +441,7 @@ module LightKrylov_Utils
         end subroutine apply_givens_rotation_csp
         module subroutine apply_givens_rotation_cdp(h, c, s)
             implicit none(type, external)
-            complex(dp), intent(inout) :: h(:)
+            complex(dp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             complex(dp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.

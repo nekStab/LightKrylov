@@ -274,7 +274,7 @@ module LightKrylov_Utils
         #:for kind, type in RC_KINDS_TYPES
         module subroutine apply_givens_rotation_${type[0]}$${kind}$(h, c, s)
             implicit none(type, external)
-            ${type}$, intent(inout) :: h(:)
+            ${type}$, target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             ${type}$, intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
