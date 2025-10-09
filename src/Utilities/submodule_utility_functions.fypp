@@ -246,20 +246,5 @@ contains
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_${kind}$
     end procedure apply_givens_rotation_${type[0]}$${kind}$
     #:endfor
-
-    !----- Solving triangular systems -----
-
-    #:for kind, type in RC_KINDS_TYPES
-    module procedure solve_triangular_${type[0]}$${kind}$
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_${kind}$
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_${type[0]}$${kind}$
-    #:endfor
 end submodule utility_functions
 

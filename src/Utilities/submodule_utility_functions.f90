@@ -724,48 +724,5 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
     end procedure apply_givens_rotation_cdp
-
-    !----- Solving triangular systems -----
-
-    module procedure solve_triangular_rsp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_rsp
-    module procedure solve_triangular_rdp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_rdp
-    module procedure solve_triangular_csp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_csp
-    module procedure solve_triangular_cdp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_cdp
 end submodule utility_functions
 

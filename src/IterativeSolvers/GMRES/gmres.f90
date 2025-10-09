@@ -1,5 +1,6 @@
 submodule (lightkrylov_iterativesolvers) gmres_solver
     use stdlib_strings, only: padr
+    use stdlib_linalg_lapack, only: trtrs
     implicit none
 contains
 
@@ -117,7 +118,8 @@ contains
         ! Hessenberg matrix.
         real(sp), allocatable :: H(:, :)
         ! Least-squares variables.
-        real(sp), allocatable :: y(:), e(:)
+        real(sp), target, allocatable :: e(:)
+        real(sp), pointer :: y(:, :)
         real(sp) :: beta
         ! Givens rotations.
         real(sp), allocatable :: c(:), s(:)
@@ -228,8 +230,9 @@ contains
             enddo gmres_iter
 
             ! Update solution.
-            k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
-            call linear_combination(dx, V(:k), y)
+            k = min(k, kdim)
+            y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -292,7 +295,8 @@ contains
         ! Hessenberg matrix.
         real(dp), allocatable :: H(:, :)
         ! Least-squares variables.
-        real(dp), allocatable :: y(:), e(:)
+        real(dp), target, allocatable :: e(:)
+        real(dp), pointer :: y(:, :)
         real(dp) :: beta
         ! Givens rotations.
         real(dp), allocatable :: c(:), s(:)
@@ -403,8 +407,9 @@ contains
             enddo gmres_iter
 
             ! Update solution.
-            k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
-            call linear_combination(dx, V(:k), y)
+            k = min(k, kdim)
+            y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -467,7 +472,8 @@ contains
         ! Hessenberg matrix.
         complex(sp), allocatable :: H(:, :)
         ! Least-squares variables.
-        complex(sp), allocatable :: y(:), e(:)
+        complex(sp), target, allocatable :: e(:)
+        complex(sp), pointer :: y(:, :)
         real(sp) :: beta
         ! Givens rotations.
         complex(sp), allocatable :: c(:), s(:)
@@ -578,8 +584,9 @@ contains
             enddo gmres_iter
 
             ! Update solution.
-            k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
-            call linear_combination(dx, V(:k), y)
+            k = min(k, kdim)
+            y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -642,7 +649,8 @@ contains
         ! Hessenberg matrix.
         complex(dp), allocatable :: H(:, :)
         ! Least-squares variables.
-        complex(dp), allocatable :: y(:), e(:)
+        complex(dp), target, allocatable :: e(:)
+        complex(dp), pointer :: y(:, :)
         real(dp) :: beta
         ! Givens rotations.
         complex(dp), allocatable :: c(:), s(:)
@@ -753,8 +761,9 @@ contains
             enddo gmres_iter
 
             ! Update solution.
-            k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
-            call linear_combination(dx, V(:k), y)
+            k = min(k, kdim)
+            y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
