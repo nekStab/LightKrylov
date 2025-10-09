@@ -107,7 +107,8 @@ module LightKrylov_AbstractVectors
         !!
         !!  ### Description
         !!
-        !!  This interface provides methods for computing the Gram matrix associated to a basis of `abstract_vector` \( \mathbf{X} \).
+        !!  This interface provides methods for computing the Gram matrix associated to a basis of 
+        !!  `abstract_vector` \( \mathbf{X} \).
         !!
         !!  ### Example
         !!
@@ -321,6 +322,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_${type[0]}$${kind}$
             implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+            !! Vector to be initialized.
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_${type[0]}$${kind}$
 
@@ -329,7 +331,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_${type[0]}$${kind}$, ${kind}$
             implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
-            !! Input/Output vector.
+            !! Vector to be scaled.
             ${type}$, intent(in) :: alpha
             !! Scaling factor.
         end subroutine abstract_scal_${type[0]}$${kind}$
@@ -360,7 +362,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_${type[0]}$${kind}$
             implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(in) :: self
-            !! Vectors whose dot product will be computed.
+            !! Vector for which to return the size.
             integer :: N
             !! Size of the vector
         end function abstract_get_size_${type[0]}$${kind}$
@@ -424,7 +426,7 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
         !! Input/Output vector.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
-        !! Vector to be added.
+        !! Vector to be subtracted.
         call self%axpby(-one_${type[0]}$${kind}$, vec, one_${type[0]}$${kind}$)
     end subroutine sub_${type[0]}$${kind}$
 
@@ -458,7 +460,6 @@ contains
         ${type}$, intent(in) :: x(:)
         type(dense_vector_${type[0]}$${kind}$) :: vec
         vec%n = size(x) ; vec%data = x
-        return
     end function initialize_dense_vector_from_array_${type[0]}$${kind}$
 
     subroutine dense_zero_${type[0]}$${kind}$(self)
@@ -466,7 +467,6 @@ contains
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_${type[0]}$${kind}$
-        return
     end subroutine dense_zero_${type[0]}$${kind}$
 
     subroutine dense_rand_${type[0]}$${kind}$(self, ifnorm)
@@ -480,7 +480,6 @@ contains
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
         #:endif
-        return
     end subroutine dense_rand_${type[0]}$${kind}$
 
     subroutine dense_scal_${type[0]}$${kind}$(self, alpha)
@@ -490,7 +489,6 @@ contains
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
-        return
     end subroutine dense_scal_${type[0]}$${kind}$
 
     subroutine dense_axpby_${type[0]}$${kind}$(alpha, vec, beta, self)
@@ -502,16 +500,15 @@ contains
         m = vec%get_size()
         if(.not. allocated(self%data)) allocate(self%data(m), source=zero_${type[0]}$${kind}$)
         n = self%get_size()
-        if (m /= n) error stop "Inconsistent size between the two vectors."
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
 
         select type (vec)
         type is(dense_vector_${type[0]}$${kind}$)
             if (beta /= zero_${type[0]}$${kind}$) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_${type[0]}$${kind}$','IN',this_module,'dense_axpby_${type[0]}$${kind}$')
         end select
-        return
     end subroutine dense_axpby_${type[0]}$${kind}$
 
     function dense_dot_${type[0]}$${kind}$(self, vec) result(alpha)
@@ -529,9 +526,8 @@ contains
             alpha = dotc(n, self%data, 1, vec%data, 1)
             #:endif
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_${type[0]}$${kind}$','IN',this_module,'dense_dot_${type[0]}$${kind}$')
         end select
-        return
     end function dense_dot_${type[0]}$${kind}$
 
     function dense_get_size_${type[0]}$${kind}$(self) result(n)
@@ -539,7 +535,6 @@ contains
         class(dense_vector_${type[0]}$${kind}$), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
     end function dense_get_size_${type[0]}$${kind}$
 
     #:endfor
@@ -576,8 +571,6 @@ contains
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_${type[0]}$${kind}$) ! y = y + X[i]*v[i]
         enddo
-
-        return
     end subroutine linear_combination_vector_${type[0]}$${kind}$
 
     subroutine linear_combination_matrix_${type[0]}$${kind}$(Y, X, B)
@@ -616,8 +609,6 @@ contains
                 call Y(j)%axpby(B(i, j), X(i), one_${type[0]}$${kind}$) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
-
-        return
     end subroutine linear_combination_matrix_${type[0]}$${kind}$
 
     function gram_matrix_${type[0]}$${kind}$(X) result(G)
@@ -632,27 +623,24 @@ contains
                 G(j, i) = G(i, j)
             enddo
         enddo
-        return
     end function gram_matrix_${type[0]}$${kind}$
 
-    function innerprod_vector_${type[0]}$${kind}$(X, y) result(v)
-        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+    function innerprod_vector_${type[0]}$${kind}$(X, v) result(y)
+        !! Computes the inner product vector \( \mathbf{y} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
         implicit none(type, external)
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), y
-        !! Bases of `abstract_vector` whose inner products need to be computed.
-        ${type}$ :: v(size(X))
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:), v
+        !! Basis and single instance of `abstract_vector` whose inner products need to be computed.
+        ${type}$ :: y(size(X))
         !! Resulting inner-product vector.
 
         ! Local variables.
         integer :: i
 
-        v = zero_${type[0]}$${kind}$
+        y = zero_${type[0]}$${kind}$
         do i = 1, size(X)
-            v(i) = X(i)%dot(y)
+            y(i) = X(i)%dot(v)
         enddo
-        
-        return
     end function innerprod_vector_${type[0]}$${kind}$
 
     function innerprod_matrix_${type[0]}$${kind}$(X, Y) result(M)
@@ -673,22 +661,20 @@ contains
                 M(i, j) = X(i)%dot(Y(j))
             enddo
         enddo
-
-        return
     end function innerprod_matrix_${type[0]}$${kind}$
 
-    impure elemental subroutine axpby_basis_${type[0]}$${kind}$(alpha, x, beta, y)
+    impure elemental subroutine axpby_basis_${type[0]}$${kind}$(alpha, X, beta, Y)
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are ${type}$
         !! numbers.
         implicit none(type, external)
-        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: x
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: y
-        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Y
+        !! Array of `abstract_vector` to be added/subtracted to/from `X`.
         ${type}$, intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call y%axpby(alpha, x, beta)
+        call Y%axpby(alpha, X, beta)
     end subroutine axpby_basis_${type[0]}$${kind}$
 
     impure elemental subroutine zero_basis_${type[0]}$${kind}$(X)

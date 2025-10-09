@@ -15,6 +15,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_rsp
+
         module subroutine swap_columns_rdp(Q, R, Rii, perm, i, j)
             implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: Q(:)
@@ -28,6 +29,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_rdp
+
         module subroutine swap_columns_csp(Q, R, Rii, perm, i, j)
             implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: Q(:)
@@ -41,6 +43,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_csp
+
         module subroutine swap_columns_cdp(Q, R, Rii, perm, i, j)
             implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: Q(:)
@@ -54,6 +57,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_cdp
+
     end interface
 
 contains
@@ -131,9 +135,8 @@ contains
 
         enddo qr_step
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_with_pivoting_rsp
+
     module procedure qr_with_pivoting_rdp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rdp'
         real(dp) :: tolerance
@@ -203,9 +206,8 @@ contains
 
         enddo qr_step
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_with_pivoting_rdp
+
     module procedure qr_with_pivoting_csp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_csp'
         real(sp) :: tolerance
@@ -275,9 +277,8 @@ contains
 
         enddo qr_step
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_with_pivoting_csp
+
     module procedure qr_with_pivoting_cdp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_cdp'
         real(dp) :: tolerance
@@ -347,9 +348,8 @@ contains
 
         enddo qr_step
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_with_pivoting_cdp
+
 
     !---------------------------------------------
     !-----     STANDARD QR FACTORIZATION     -----
@@ -399,9 +399,8 @@ contains
             call Q(j)%scal(one_rsp / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_no_pivoting_rsp
+
     module procedure qr_no_pivoting_rdp
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_rdp'
         real(dp) :: tolerance
@@ -446,9 +445,8 @@ contains
             call Q(j)%scal(one_rdp / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_no_pivoting_rdp
+
     module procedure qr_no_pivoting_csp
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_csp'
         real(sp) :: tolerance
@@ -493,9 +491,8 @@ contains
             call Q(j)%scal(one_rsp / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_no_pivoting_csp
+
     module procedure qr_no_pivoting_cdp
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_cdp'
         real(dp) :: tolerance
@@ -540,9 +537,8 @@ contains
             call Q(j)%scal(one_rdp / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure qr_no_pivoting_cdp
+
 
     !-------------------------------------
     !-----     Utility functions     -----
@@ -570,9 +566,8 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        return
     end procedure swap_columns_rsp
+    
     module procedure swap_columns_rdp
         class(abstract_vector_rdp), allocatable :: Qwrk
         real(dp), allocatable :: Rwrk(:)
@@ -595,9 +590,8 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        return
     end procedure swap_columns_rdp
+    
     module procedure swap_columns_csp
         class(abstract_vector_csp), allocatable :: Qwrk
         complex(sp), allocatable :: Rwrk(:)
@@ -620,9 +614,8 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        return
     end procedure swap_columns_csp
+    
     module procedure swap_columns_cdp
         class(abstract_vector_cdp), allocatable :: Qwrk
         complex(dp), allocatable :: Rwrk(:)
@@ -645,7 +638,6 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        return
     end procedure swap_columns_cdp
+    
 end submodule qr_solvers

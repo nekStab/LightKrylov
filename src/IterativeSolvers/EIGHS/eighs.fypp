@@ -3,7 +3,7 @@
 submodule (lightkrylov_iterativesolvers) hermitian_eigensolvers
     use stdlib_strings, only: padr
     use stdlib_linalg, only: eigh
-    implicit none
+    implicit none(type, external)
     character(len=*), parameter :: eighs_output = 'eighs_output.txt'
 contains
 
@@ -18,10 +18,9 @@ contains
         real(${kind}$) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function eigenvalue_residual_${type[0]}$${kind}$
+
     #:endfor
-   
     !--------------------------------------------------
     !-----     ABSTRACT HERMITIAN EIGENSOLVER     -----
     !--------------------------------------------------
@@ -116,15 +115,10 @@ contains
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_${type[0]}$${kind}$)
             enddo
         enddo
-        
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
 
     #:endfor
-   
-
 end submodule
 

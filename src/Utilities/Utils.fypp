@@ -21,7 +21,6 @@ module LightKrylov_Utils
     !-----     LightKrylov     -----
     !-------------------------------
     use LightKrylov_Constants
-    ! use LightKrylov_Logger
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
                                   stop_error, check_info
 
@@ -105,6 +104,7 @@ module LightKrylov_Utils
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
         end subroutine assert_shape_matrix_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -137,7 +137,8 @@ module LightKrylov_Utils
         !!
         !!  ### Arguments
         !!
-        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an `intent(in)` argument.
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an 
+        !!  `intent(in)` argument.
         !!
         !!  `vecs`: Square array of the same size, type, and kind as `A` containing the eigenvectors
         !!  (following LAPACK's convention for `real` matrices). It is an `intent(out)` argument.
@@ -157,6 +158,7 @@ module LightKrylov_Utils
             ${type}$, intent(out) :: vecs(:, :)
             complex(${kind}$), intent(out) :: vals(:)
         end subroutine eig_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -177,15 +179,15 @@ module LightKrylov_Utils
         !!  ### Arguments
         !!
         !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix. 
-        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` argument.
+        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` 
+        !!  argument.
         !!  
         !!  `Q`: Two-dimensional square array of the same size, type and kind as `A`. It contains
         !!  the original Schur basis on entry and the re-ordered one on exit.
         !!  It is an `intent(inout)` argument.
         !!
         !!  `selected`: `logical` rank-1 array selecting which eigenvalues need to be moved in the
-        !!  upper left block of the Schur factorization.
-        !!  It is an `intent(in)` arguement.
+        !!  upper left block of the Schur factorization. It is an `intent(in)` arguement.
         #:for kind, type in RC_KINDS_TYPES
         module subroutine ordschur_${type[0]}$${kind}$(T, Q, selected)
             implicit none(type, external)
@@ -193,6 +195,7 @@ module LightKrylov_Utils
             ${type}$, intent(inout) :: Q(:, :)
             logical, intent(in) :: selected(:)
         end subroutine ordschur_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -225,6 +228,7 @@ module LightKrylov_Utils
             ${type}$, intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -252,10 +256,11 @@ module LightKrylov_Utils
             ${type}$, intent(in) :: A(:, :)
             !! Matrix to be exponentiated.
             ${type}$ :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(tA).
+            !! Output matrix E = exp(A).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
         end function expm_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -264,10 +269,11 @@ module LightKrylov_Utils
         pure module function givens_rotation_${type[0]}$${kind}$(x) result(g)
             implicit none(type, external)
             ${type}$, intent(in) :: x(2)
-            !! Vector whose second needs to be eliminated.
+            !! Vector whose second entry needs to be eliminated.
             ${type}$             :: g(2)
             !! Entries of the Givens rotation matrix.
         end function givens_rotation_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -282,6 +288,7 @@ module LightKrylov_Utils
             ${type}$, intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -296,6 +303,7 @@ module LightKrylov_Utils
             ${type}$, allocatable :: x(:)
             !! Solution vector.
         end function solve_triangular_${type[0]}$${kind}$
+
         #:endfor
     end interface
 end module LightKrylov_Utils

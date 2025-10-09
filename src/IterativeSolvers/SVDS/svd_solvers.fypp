@@ -2,7 +2,7 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_iterativesolvers) svds_solver
     use stdlib_linalg, only: hermitian, svd
-    implicit none
+    implicit none(type, external)
     character(len=*), parameter :: svds_output = 'svds_output.txt'
 contains
 
@@ -17,7 +17,6 @@ contains
         real(${kind}$) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function svd_residual_${type[0]}$${kind}$
     #:endfor
 
@@ -110,8 +109,6 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure
 
     #:endfor

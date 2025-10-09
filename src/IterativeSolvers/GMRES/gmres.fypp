@@ -2,7 +2,7 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_iterativesolvers) gmres_solver
     use stdlib_strings, only: padr
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -44,7 +44,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure
 
     module procedure reset_gmres_${kind}$
@@ -54,10 +53,9 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-        return
     end procedure
-    #:endfor
 
+    #:endfor
     !----------------------------------------------------
     !-----     GMRES SOLVERS FOR ABSTRACT TYPES     -----
     !----------------------------------------------------
@@ -237,7 +235,8 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure
+
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
@@ -253,5 +252,6 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+    
     #:endfor
 end submodule

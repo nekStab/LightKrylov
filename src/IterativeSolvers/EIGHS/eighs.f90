@@ -1,7 +1,7 @@
 submodule (lightkrylov_iterativesolvers) hermitian_eigensolvers
     use stdlib_strings, only: padr
     use stdlib_linalg, only: eigh
-    implicit none
+    implicit none(type, external)
     character(len=*), parameter :: eighs_output = 'eighs_output.txt'
 contains
 
@@ -15,8 +15,8 @@ contains
         real(sp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function eigenvalue_residual_rsp
+
     elemental pure function eigenvalue_residual_rdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         real(dp), intent(in) :: beta
@@ -26,8 +26,8 @@ contains
         real(dp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function eigenvalue_residual_rdp
+
     elemental pure function eigenvalue_residual_csp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         complex(sp), intent(in) :: beta
@@ -37,8 +37,8 @@ contains
         real(sp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function eigenvalue_residual_csp
+
     elemental pure function eigenvalue_residual_cdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
         complex(dp), intent(in) :: beta
@@ -48,9 +48,8 @@ contains
         real(dp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function eigenvalue_residual_cdp
-   
+
     !--------------------------------------------------
     !-----     ABSTRACT HERMITIAN EIGENSOLVER     -----
     !--------------------------------------------------
@@ -144,11 +143,8 @@ contains
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rsp)
             enddo
         enddo
-        
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
 
     module procedure eighs_rdp
@@ -240,11 +236,8 @@ contains
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rdp)
             enddo
         enddo
-        
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
 
     module procedure eighs_csp
@@ -336,11 +329,8 @@ contains
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_csp)
             enddo
         enddo
-        
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
 
     module procedure eighs_cdp
@@ -432,14 +422,9 @@ contains
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_cdp)
             enddo
         enddo
-        
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure 
-
-   
 
 end submodule
 
