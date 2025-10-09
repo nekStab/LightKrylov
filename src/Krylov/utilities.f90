@@ -1,5 +1,5 @@
 submodule (lightkrylov_basekrylov) krylov_utilities
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -8,37 +8,38 @@ contains
 
     module procedure permcols_basis_rsp
         call copy(Q, Q(perm))
-    end procedure
+    end procedure permcols_basis_rsp
 
     module procedure permcols_array_rsp
         Q = Q(:, perm)
-    end procedure
+    end procedure permcols_array_rsp
     module procedure permcols_basis_rdp
         call copy(Q, Q(perm))
-    end procedure
+    end procedure permcols_basis_rdp
 
     module procedure permcols_array_rdp
         Q = Q(:, perm)
-    end procedure
+    end procedure permcols_array_rdp
     module procedure permcols_basis_csp
         call copy(Q, Q(perm))
-    end procedure
+    end procedure permcols_basis_csp
 
     module procedure permcols_array_csp
         Q = Q(:, perm)
-    end procedure
+    end procedure permcols_array_csp
     module procedure permcols_basis_cdp
         call copy(Q, Q(perm))
-    end procedure
+    end procedure permcols_basis_cdp
 
     module procedure permcols_array_cdp
         Q = Q(:, perm)
-    end procedure
+    end procedure permcols_array_cdp
 
     module procedure invperm
         integer :: i
+        allocate(inv_perm(size(perm)), source=0)
         inv_perm(perm) = [(i, i=1, size(perm))]
-    end procedure
+    end procedure invperm
 
     !----------------------------------------------
     !-----     Initialize Krylov subspace     -----
@@ -58,9 +59,7 @@ contains
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
-
-        return
-    end procedure
+    end procedure initialize_krylov_subspace_rsp
     module procedure initialize_krylov_subspace_rdp
         integer :: p
 
@@ -75,9 +74,7 @@ contains
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
-
-        return
-    end procedure
+    end procedure initialize_krylov_subspace_rdp
     module procedure initialize_krylov_subspace_csp
         integer :: p
 
@@ -92,9 +89,7 @@ contains
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
-
-        return
-    end procedure
+    end procedure initialize_krylov_subspace_csp
     module procedure initialize_krylov_subspace_cdp
         integer :: p
 
@@ -109,9 +104,7 @@ contains
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
-
-        return
-    end procedure
+    end procedure initialize_krylov_subspace_cdp
    
     !----------------------------------------
     !-----     Orthonormalize basis     -----
@@ -127,9 +120,8 @@ contains
         call qr(X, R, info)
         call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure orthonormalize_basis_rsp
 
-        return
-    end procedure
     module procedure orthonormalize_basis_rdp
         character(len=*), parameter :: this_procedure = 'orthonormalize_basis_rdp'
         real(dp) :: R(size(X),size(X))
@@ -140,9 +132,8 @@ contains
         call qr(X, R, info)
         call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure orthonormalize_basis_rdp
 
-        return
-    end procedure
     module procedure orthonormalize_basis_csp
         character(len=*), parameter :: this_procedure = 'orthonormalize_basis_csp'
         complex(sp) :: R(size(X),size(X))
@@ -153,9 +144,8 @@ contains
         call qr(X, R, info)
         call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure orthonormalize_basis_csp
 
-        return
-    end procedure
     module procedure orthonormalize_basis_cdp
         character(len=*), parameter :: this_procedure = 'orthonormalize_basis_cdp'
         complex(dp) :: R(size(X),size(X))
@@ -166,9 +156,7 @@ contains
         call qr(X, R, info)
         call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-
-        return
-    end procedure
+    end procedure orthonormalize_basis_cdp
 
     !---------------------------------------------------
     !-----     Check orthonormality of a basis     -----
@@ -179,36 +167,39 @@ contains
         ortho = .true.
         G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
+            ! The basis is not orthonormal.
             ortho = .false.
         end if
-    end procedure
+    end procedure is_orthonormal_rsp
+
     module procedure is_orthonormal_rdp
         real(dp), dimension(size(X), size(X)) :: G
         ortho = .true.
         G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
+            ! The basis is not orthonormal.
             ortho = .false.
         end if
-    end procedure
+    end procedure is_orthonormal_rdp
+
     module procedure is_orthonormal_csp
         complex(sp), dimension(size(X), size(X)) :: G
         ortho = .true.
         G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
+            ! The basis is not orthonormal.
             ortho = .false.
         end if
-    end procedure
+    end procedure is_orthonormal_csp
+
     module procedure is_orthonormal_cdp
         complex(dp), dimension(size(X), size(X)) :: G
         ortho = .true.
         G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
+            ! The basis is not orthonormal.
             ortho = .false.
         end if
-    end procedure
+    end procedure is_orthonormal_cdp
 
-end submodule
+end submodule krylov_utilities

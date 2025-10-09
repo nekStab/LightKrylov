@@ -10,7 +10,7 @@ module LightKrylov_TestUtils
     use LightKrylov_Logger
     use LightKrylov_Constants
     
-    implicit none
+    implicit none(type, external)
     
     private
 
@@ -61,12 +61,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
-    end type
+    end type linop_${type[0]}$${kind}$
     interface linop_${type[0]}$${kind}$
         pure module function construct_linop_${type[0]}$${kind}$(data) result(A)
+            implicit none(type, external)
             ${type}$, dimension(test_size, test_size), intent(in) :: data
             type(linop_${type[0]}$${kind}$) :: A
-        end function
+        end function construct_linop_${type[0]}$${kind}$
     end interface
 
     type, extends(abstract_sym_linop_${type[0]}$${kind}$), public :: spd_linop_${type[0]}$${kind}$
@@ -75,12 +76,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => sdp_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => sdp_matvec_${type[0]}$${kind}$
-    end type
+    end type spd_linop_${type[0]}$${kind}$
     interface spd_linop_${type[0]}$${kind}$
         pure module function construct_spd_linop_${type[0]}$${kind}$(data) result(A)
+            implicit none(type, external)
             ${type}$, dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_${type[0]}$${kind}$) :: A
-        end function
+        end function construct_spd_linop_${type[0]}$${kind}$
     end interface
 
     #:else
@@ -90,12 +92,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => rmatvec_${type[0]}$${kind}$
-    end type
+    end type linop_${type[0]}$${kind}$
     interface linop_${type[0]}$${kind}$
         pure module function construct_linop_${type[0]}$${kind}$(data) result(A)
+            implicit none(type, external)
             ${type}$, dimension(test_size, test_size), intent(in) :: data
             type(linop_${type[0]}$${kind}$) :: A
-        end function
+        end function construct_linop_${type[0]}$${kind}$
     end interface
 
     type, extends(abstract_hermitian_linop_${type[0]}$${kind}$), public :: hermitian_linop_${type[0]}$${kind}$
@@ -104,15 +107,15 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_${type[0]}$${kind}$
         procedure, pass(self), public :: rmatvec => hermitian_matvec_${type[0]}$${kind}$
-    end type
-    #:endif
+    end type hermitian_linop_${type[0]}$${kind}$
     interface hermitian_linop_${type[0]}$${kind}$
         pure module function construct_hermitian_linop_${type[0]}$${kind}$(data) result(A)
+            implicit none(type, external)
             ${type}$, dimension(test_size, test_size), intent(in) :: data
-            type(linop_${type[0]}$${kind}$) :: A
-        end function
+            type(hermitian_linop_${type[0]}$${kind}$) :: A
+        end function construct_hermitian_linop_${type[0]}$${kind}$
     end interface
-
+    #:endif
     #:endfor
 
     ! ROESSLER SYSTEM
@@ -225,16 +228,16 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure construct_linop_${type[0]}$${kind}$
     A%data = data
-    end procedure
+    end procedure construct_linop_${type[0]}$${kind}$
 
     #:if type[0] == "r"
     module procedure construct_spd_linop_${type[0]}$${kind}$
     A%data = data
-    end procedure
+    end procedure construct_spd_linop_${type[0]}$${kind}$
     #:else
     module procedure construct_hermitian_linop_${type[0]}$${kind}$
     A%data = data
-    end procedure
+    end procedure construct_hermitian_linop_${type[0]}$${kind}$
     #:endif
     #:endfor
 
@@ -281,8 +284,7 @@ contains
         class default
             call type_error('vec','vector_${type[0]}$${kind}$','IN',this_module,'axpby_${type[0]}$${kind}$')
         end select
-        return
-    end subroutine
+    end subroutine axpby_${type[0]}$${kind}$
 
     subroutine rand_${type[0]}$${kind}$(self, ifnorm)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
@@ -307,7 +309,6 @@ contains
     end subroutine rand_${type[0]}$${kind}$
 
     #:endfor
-
     !---------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST LINOPS     -----
     !---------------------------------------------------------
@@ -317,7 +318,6 @@ contains
         class(linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -337,12 +337,13 @@ contains
         class(linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
             type is(vector_${type[0]}$${kind}$)
+
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
+
             class default
                 call type_error('vec_out','vector_${type[0]}$${kind}$','OUT',this_module,'rmatvec_${type[0]}$${kind}$')
             end select
@@ -356,7 +357,6 @@ contains
         class(spd_linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -376,7 +376,6 @@ contains
         class(hermitian_linop_${type[0]}$${kind}$), intent(inout)  :: self
         class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
         class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -394,7 +393,6 @@ contains
     #:endif
 
     #:endfor
-
     !----------------------------------------------------
     !-----     EXTRACT DATA FROM ABSTRACT TYPES     -----
     !----------------------------------------------------
@@ -423,7 +421,6 @@ contains
     end subroutine get_data_linop_${type[0]}$${kind}$
 
     #:endfor
-
     !----------------------------------------------
     !-----     PUT DATA TO ABSTRACT TYPES     -----
     !----------------------------------------------
@@ -453,7 +450,6 @@ contains
     end subroutine put_data_linop_${type[0]}$${kind}$
 
     #:endfor
-
     !--------------------------------------------------------------
     !-----     INITIALIZE ABSTRACT TYPES WITH RANDOM DATA     -----
     !--------------------------------------------------------------
@@ -492,10 +488,8 @@ contains
         ${type}$, allocatable :: data(:, :)
         allocate(mu(test_size, test_size)) ; mu = zero_${type[0]}$${kind}$
         allocate(var(test_size, test_size)) ; var = one_${type[0]}$${kind}$
-
         data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01_${kind}$*eye(test_size, mold=1.0_${kind}$)
-
     end subroutine init_rand_spd_linop_${type[0]}$${kind}$
     #:else
     subroutine init_rand_hermitian_linop_${type[0]}$${kind}$(linop)
@@ -509,7 +503,6 @@ contains
         data = normal(mu, var)
         data = matmul(data, hermitian(data))/test_size + 0.01_${kind}$*eye(test_size, mold=1.0_${kind}$)
         linop%data = data
-
     end subroutine init_rand_hermitian_linop_${type[0]}$${kind}$
     #:endif
 
@@ -519,17 +512,13 @@ contains
     subroutine get_err_str_${kind}$(msg, info, err)
         character(len=*), intent(inout) :: msg
         character(len=*), intent(in)    :: info
-        real(${kind}$) :: err
-
+        real(${kind}$), intent(in) :: err
         ! internals
         character(len=9) :: value_str
         character(len=*), parameter :: indent = repeat(" ", 4)
-
         write(value_str, '(E9.2)') err
         msg = indent // info // value_str // achar(10)
-       
     end subroutine get_err_str_${kind}$
-    #:endfor
 
     !---------------------------------------------------
     !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
@@ -630,7 +619,6 @@ contains
     subroutine get_state_r${kind}$(state, X, Y, Z)
         class(abstract_vector_r${kind}$),   intent(in)  :: state
         real(${kind}$),                 intent(out) :: X, Y, z
-
         select type (state)
         type is (state_vector_r${kind}$)
             X = state%x
@@ -645,11 +633,10 @@ contains
         class(jacobian_r${kind}$),            intent(inout)  :: self
         class(abstract_vector_r${kind}$), intent(in)  :: vec_in
         class(abstract_vector_r${kind}$), intent(out) :: vec_out
-
+        ! internal
         real(${kind}$) :: X, Y, Z
 
         call get_state_r${kind}$(self%X, X, Y, Z)
-
         select type(vec_in)
         type is(state_vector_r${kind}$)
             select type(vec_out)
@@ -671,11 +658,10 @@ contains
         class(jacobian_r${kind}$),            intent(inout)  :: self
         class(abstract_vector_r${kind}$), intent(in)  :: vec_in
         class(abstract_vector_r${kind}$), intent(out) :: vec_out
-
+        ! internal
         real(${kind}$) :: X, Y, Z
         
         call get_state_r${kind}$(self%X, X, Y, Z)
-
         select type(vec_in)
         type is(state_vector_r${kind}$)
             select type(vec_out)
@@ -695,7 +681,7 @@ contains
 
     subroutine roessler_analytical_fp_r${kind}$(fp1, fp2)
         class(state_vector_r${kind}$), intent(out) :: fp1, fp2
-
+        ! internal
         real(${kind}$) :: d
 
         d = sqrt(c_${kind}$**2 - 4*a_${kind}$*b_${kind}$)

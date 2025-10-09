@@ -8,7 +8,7 @@ module LightKrylov_TestUtils
     use LightKrylov_Logger
     use LightKrylov_Constants
     
-    implicit none
+    implicit none(type, external)
     
     private
 
@@ -95,12 +95,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_rsp
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
-    end type
+    end type linop_rsp
     interface linop_rsp
         pure module function construct_linop_rsp(data) result(A)
+            implicit none(type, external)
             real(sp), dimension(test_size, test_size), intent(in) :: data
             type(linop_rsp) :: A
-        end function
+        end function construct_linop_rsp
     end interface
 
     type, extends(abstract_sym_linop_rsp), public :: spd_linop_rsp
@@ -109,19 +110,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => sdp_matvec_rsp
         procedure, pass(self), public :: rmatvec => sdp_matvec_rsp
-    end type
+    end type spd_linop_rsp
     interface spd_linop_rsp
         pure module function construct_spd_linop_rsp(data) result(A)
+            implicit none(type, external)
             real(sp), dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_rsp) :: A
-        end function
-    end interface
-
-    interface hermitian_linop_rsp
-        pure module function construct_hermitian_linop_rsp(data) result(A)
-            real(sp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_rsp) :: A
-        end function
+        end function construct_spd_linop_rsp
     end interface
 
     type, extends(abstract_linop_rdp), public :: linop_rdp
@@ -130,12 +125,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_rdp
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
-    end type
+    end type linop_rdp
     interface linop_rdp
         pure module function construct_linop_rdp(data) result(A)
+            implicit none(type, external)
             real(dp), dimension(test_size, test_size), intent(in) :: data
             type(linop_rdp) :: A
-        end function
+        end function construct_linop_rdp
     end interface
 
     type, extends(abstract_sym_linop_rdp), public :: spd_linop_rdp
@@ -144,19 +140,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => sdp_matvec_rdp
         procedure, pass(self), public :: rmatvec => sdp_matvec_rdp
-    end type
+    end type spd_linop_rdp
     interface spd_linop_rdp
         pure module function construct_spd_linop_rdp(data) result(A)
+            implicit none(type, external)
             real(dp), dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_rdp) :: A
-        end function
-    end interface
-
-    interface hermitian_linop_rdp
-        pure module function construct_hermitian_linop_rdp(data) result(A)
-            real(dp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_rdp) :: A
-        end function
+        end function construct_spd_linop_rdp
     end interface
 
     type, extends(abstract_linop_csp), public :: linop_csp
@@ -165,12 +155,13 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec  => matvec_csp
         procedure, pass(self), public :: rmatvec => rmatvec_csp
-    end type
+    end type linop_csp
     interface linop_csp
         pure module function construct_linop_csp(data) result(A)
+            implicit none(type, external)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
             type(linop_csp) :: A
-        end function
+        end function construct_linop_csp
     end interface
 
     type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
@@ -179,26 +170,27 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_csp
         procedure, pass(self), public :: rmatvec => hermitian_matvec_csp
-    end type
+    end type hermitian_linop_csp
     interface hermitian_linop_csp
         pure module function construct_hermitian_linop_csp(data) result(A)
+            implicit none(type, external)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_csp) :: A
-        end function
+            type(hermitian_linop_csp) :: A
+        end function construct_hermitian_linop_csp
     end interface
-
     type, extends(abstract_linop_cdp), public :: linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = zero_cdp
     contains
         private
         procedure, pass(self), public :: matvec  => matvec_cdp
         procedure, pass(self), public :: rmatvec => rmatvec_cdp
-    end type
+    end type linop_cdp
     interface linop_cdp
         pure module function construct_linop_cdp(data) result(A)
+            implicit none(type, external)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
             type(linop_cdp) :: A
-        end function
+        end function construct_linop_cdp
     end interface
 
     type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
@@ -207,14 +199,14 @@ module LightKrylov_TestUtils
         private
         procedure, pass(self), public :: matvec => hermitian_matvec_cdp
         procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
-    end type
+    end type hermitian_linop_cdp
     interface hermitian_linop_cdp
         pure module function construct_hermitian_linop_cdp(data) result(A)
+            implicit none(type, external)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_cdp) :: A
-        end function
+            type(hermitian_linop_cdp) :: A
+        end function construct_hermitian_linop_cdp
     end interface
-
 
     ! ROESSLER SYSTEM
 
@@ -396,32 +388,32 @@ contains
 
     module procedure construct_linop_rsp
     A%data = data
-    end procedure
+    end procedure construct_linop_rsp
 
     module procedure construct_spd_linop_rsp
     A%data = data
-    end procedure
+    end procedure construct_spd_linop_rsp
     module procedure construct_linop_rdp
     A%data = data
-    end procedure
+    end procedure construct_linop_rdp
 
     module procedure construct_spd_linop_rdp
     A%data = data
-    end procedure
+    end procedure construct_spd_linop_rdp
     module procedure construct_linop_csp
     A%data = data
-    end procedure
+    end procedure construct_linop_csp
 
     module procedure construct_hermitian_linop_csp
     A%data = data
-    end procedure
+    end procedure construct_hermitian_linop_csp
     module procedure construct_linop_cdp
     A%data = data
-    end procedure
+    end procedure construct_linop_cdp
 
     module procedure construct_hermitian_linop_cdp
     A%data = data
-    end procedure
+    end procedure construct_hermitian_linop_cdp
 
     !----------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST VECTORS     -----
@@ -465,8 +457,7 @@ contains
         class default
             call type_error('vec','vector_rsp','IN',this_module,'axpby_rsp')
         end select
-        return
-    end subroutine
+    end subroutine axpby_rsp
 
     subroutine rand_rsp(self, ifnorm)
         class(vector_rsp), intent(inout) :: self
@@ -524,8 +515,7 @@ contains
         class default
             call type_error('vec','vector_rdp','IN',this_module,'axpby_rdp')
         end select
-        return
-    end subroutine
+    end subroutine axpby_rdp
 
     subroutine rand_rdp(self, ifnorm)
         class(vector_rdp), intent(inout) :: self
@@ -583,8 +573,7 @@ contains
         class default
             call type_error('vec','vector_csp','IN',this_module,'axpby_csp')
         end select
-        return
-    end subroutine
+    end subroutine axpby_csp
 
     subroutine rand_csp(self, ifnorm)
         class(vector_csp), intent(inout) :: self
@@ -642,8 +631,7 @@ contains
         class default
             call type_error('vec','vector_cdp','IN',this_module,'axpby_cdp')
         end select
-        return
-    end subroutine
+    end subroutine axpby_cdp
 
     subroutine rand_cdp(self, ifnorm)
         class(vector_cdp), intent(inout) :: self
@@ -663,7 +651,6 @@ contains
         endif
     end subroutine rand_cdp
 
-
     !---------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST LINOPS     -----
     !---------------------------------------------------------
@@ -672,7 +659,6 @@ contains
         class(linop_rsp), intent(inout)  :: self
         class(abstract_vector_rsp)       , intent(in)  :: vec_in
         class(abstract_vector_rsp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_rsp)
             select type(vec_out)
@@ -692,12 +678,13 @@ contains
         class(linop_rsp), intent(inout)  :: self
         class(abstract_vector_rsp)       , intent(in)  :: vec_in
         class(abstract_vector_rsp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_rsp)
             select type(vec_out)
             type is(vector_rsp)
+
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
+
             class default
                 call type_error('vec_out','vector_rsp','OUT',this_module,'rmatvec_rsp')
             end select
@@ -710,7 +697,6 @@ contains
         class(spd_linop_rsp), intent(inout)  :: self
         class(abstract_vector_rsp)       , intent(in)  :: vec_in
         class(abstract_vector_rsp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_rsp)
             select type(vec_out)
@@ -730,7 +716,6 @@ contains
         class(linop_rdp), intent(inout)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
         class(abstract_vector_rdp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -750,12 +735,13 @@ contains
         class(linop_rdp), intent(inout)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
         class(abstract_vector_rdp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
             type is(vector_rdp)
+
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
+
             class default
                 call type_error('vec_out','vector_rdp','OUT',this_module,'rmatvec_rdp')
             end select
@@ -768,7 +754,6 @@ contains
         class(spd_linop_rdp), intent(inout)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
         class(abstract_vector_rdp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -788,7 +773,6 @@ contains
         class(linop_csp), intent(inout)  :: self
         class(abstract_vector_csp)       , intent(in)  :: vec_in
         class(abstract_vector_csp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_csp)
             select type(vec_out)
@@ -808,12 +792,13 @@ contains
         class(linop_csp), intent(inout)  :: self
         class(abstract_vector_csp)       , intent(in)  :: vec_in
         class(abstract_vector_csp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_csp)
             select type(vec_out)
             type is(vector_csp)
+
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
+
             class default
                 call type_error('vec_out','vector_csp','OUT',this_module,'rmatvec_csp')
             end select
@@ -826,7 +811,6 @@ contains
         class(hermitian_linop_csp), intent(inout)  :: self
         class(abstract_vector_csp)       , intent(in)  :: vec_in
         class(abstract_vector_csp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_csp)
             select type(vec_out)
@@ -846,7 +830,6 @@ contains
         class(linop_cdp), intent(inout)  :: self
         class(abstract_vector_cdp)       , intent(in)  :: vec_in
         class(abstract_vector_cdp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_cdp)
             select type(vec_out)
@@ -866,12 +849,13 @@ contains
         class(linop_cdp), intent(inout)  :: self
         class(abstract_vector_cdp)       , intent(in)  :: vec_in
         class(abstract_vector_cdp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_cdp)
             select type(vec_out)
             type is(vector_cdp)
+
                 vec_out%data = matmul(hermitian(self%data), vec_in%data)
+
             class default
                 call type_error('vec_out','vector_cdp','OUT',this_module,'rmatvec_cdp')
             end select
@@ -884,7 +868,6 @@ contains
         class(hermitian_linop_cdp), intent(inout)  :: self
         class(abstract_vector_cdp)       , intent(in)  :: vec_in
         class(abstract_vector_cdp)       , intent(out) :: vec_out
-
         select type(vec_in)
         type is(vector_cdp)
             select type(vec_out)
@@ -899,7 +882,6 @@ contains
             call type_error('vec_in','vector_cdp','IN',this_module,'hermitian_matvec_cdp')
         end select
     end subroutine hermitian_matvec_cdp
-
 
     !----------------------------------------------------
     !-----     EXTRACT DATA FROM ABSTRACT TYPES     -----
@@ -992,7 +974,6 @@ contains
         type(linop_cdp), intent(in) :: linop_in
         mat_out = linop_in%data
     end subroutine get_data_linop_cdp
-
 
     !----------------------------------------------
     !-----     PUT DATA TO ABSTRACT TYPES     -----
@@ -1090,7 +1071,6 @@ contains
         linop_out%data = mat_in
     end subroutine put_data_linop_cdp
 
-
     !--------------------------------------------------------------
     !-----     INITIALIZE ABSTRACT TYPES WITH RANDOM DATA     -----
     !--------------------------------------------------------------
@@ -1123,10 +1103,8 @@ contains
         real(sp), allocatable :: data(:, :)
         allocate(mu(test_size, test_size)) ; mu = zero_rsp
         allocate(var(test_size, test_size)) ; var = one_rsp
-
         data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01_sp*eye(test_size, mold=1.0_sp)
-
     end subroutine init_rand_spd_linop_rsp
 
     subroutine init_rand_vec_rdp(x)
@@ -1157,10 +1135,8 @@ contains
         real(dp), allocatable :: data(:, :)
         allocate(mu(test_size, test_size)) ; mu = zero_rdp
         allocate(var(test_size, test_size)) ; var = one_rdp
-
         data = normal(mu, var)
         linop%data = matmul(data, transpose(data))/test_size + 0.01_dp*eye(test_size, mold=1.0_dp)
-
     end subroutine init_rand_spd_linop_rdp
 
     subroutine init_rand_vec_csp(x)
@@ -1196,7 +1172,6 @@ contains
         data = normal(mu, var)
         data = matmul(data, hermitian(data))/test_size + 0.01_sp*eye(test_size, mold=1.0_sp)
         linop%data = data
-
     end subroutine init_rand_hermitian_linop_csp
 
     subroutine init_rand_vec_cdp(x)
@@ -1232,35 +1207,29 @@ contains
         data = normal(mu, var)
         data = matmul(data, hermitian(data))/test_size + 0.01_dp*eye(test_size, mold=1.0_dp)
         linop%data = data
-
     end subroutine init_rand_hermitian_linop_cdp
 
 
     subroutine get_err_str_sp(msg, info, err)
         character(len=*), intent(inout) :: msg
         character(len=*), intent(in)    :: info
-        real(sp) :: err
-
+        real(sp), intent(in) :: err
         ! internals
         character(len=9) :: value_str
         character(len=*), parameter :: indent = repeat(" ", 4)
-
         write(value_str, '(E9.2)') err
         msg = indent // info // value_str // achar(10)
-       
     end subroutine get_err_str_sp
+
     subroutine get_err_str_dp(msg, info, err)
         character(len=*), intent(inout) :: msg
         character(len=*), intent(in)    :: info
-        real(dp) :: err
-
+        real(dp), intent(in) :: err
         ! internals
         character(len=9) :: value_str
         character(len=*), parameter :: indent = repeat(" ", 4)
-
         write(value_str, '(E9.2)') err
         msg = indent // info // value_str // achar(10)
-       
     end subroutine get_err_str_dp
 
     !---------------------------------------------------
@@ -1424,7 +1393,6 @@ contains
     subroutine get_state_rsp(state, X, Y, Z)
         class(abstract_vector_rsp),   intent(in)  :: state
         real(sp),                 intent(out) :: X, Y, z
-
         select type (state)
         type is (state_vector_rsp)
             X = state%x
@@ -1439,11 +1407,10 @@ contains
         class(jacobian_rsp),            intent(inout)  :: self
         class(abstract_vector_rsp), intent(in)  :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-
+        ! internal
         real(sp) :: X, Y, Z
 
         call get_state_rsp(self%X, X, Y, Z)
-
         select type(vec_in)
         type is(state_vector_rsp)
             select type(vec_out)
@@ -1465,11 +1432,10 @@ contains
         class(jacobian_rsp),            intent(inout)  :: self
         class(abstract_vector_rsp), intent(in)  :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-
+        ! internal
         real(sp) :: X, Y, Z
         
         call get_state_rsp(self%X, X, Y, Z)
-
         select type(vec_in)
         type is(state_vector_rsp)
             select type(vec_out)
@@ -1489,7 +1455,7 @@ contains
 
     subroutine roessler_analytical_fp_rsp(fp1, fp2)
         class(state_vector_rsp), intent(out) :: fp1, fp2
-
+        ! internal
         real(sp) :: d
 
         d = sqrt(c_sp**2 - 4*a_sp*b_sp)
@@ -1529,7 +1495,6 @@ contains
     subroutine get_state_rdp(state, X, Y, Z)
         class(abstract_vector_rdp),   intent(in)  :: state
         real(dp),                 intent(out) :: X, Y, z
-
         select type (state)
         type is (state_vector_rdp)
             X = state%x
@@ -1544,11 +1509,10 @@ contains
         class(jacobian_rdp),            intent(inout)  :: self
         class(abstract_vector_rdp), intent(in)  :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-
+        ! internal
         real(dp) :: X, Y, Z
 
         call get_state_rdp(self%X, X, Y, Z)
-
         select type(vec_in)
         type is(state_vector_rdp)
             select type(vec_out)
@@ -1570,11 +1534,10 @@ contains
         class(jacobian_rdp),            intent(inout)  :: self
         class(abstract_vector_rdp), intent(in)  :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-
+        ! internal
         real(dp) :: X, Y, Z
         
         call get_state_rdp(self%X, X, Y, Z)
-
         select type(vec_in)
         type is(state_vector_rdp)
             select type(vec_out)
@@ -1594,7 +1557,7 @@ contains
 
     subroutine roessler_analytical_fp_rdp(fp1, fp2)
         class(state_vector_rdp), intent(out) :: fp1, fp2
-
+        ! internal
         real(dp) :: d
 
         d = sqrt(c_dp**2 - 4*a_dp*b_dp)

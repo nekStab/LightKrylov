@@ -1,7 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_basekrylov) gram_schmidt_process
-    implicit none
+    implicit none(type, external)
 contains
 
     !--------------------------------------------
@@ -11,14 +11,27 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure DGS_vector_against_basis_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'DGS_vector_against_basis_${type[0]}$${kind}$'
-        logical                      :: chk_X_orthonormality
         ${type}$, dimension(size(X)) :: proj_coefficients, wrk
+        ! internal
+        logical :: chk_X_orthonormality
+        logical :: is_ortho
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
+
+        ! optional orthonormality check
+        if (chk_X_orthonormality) then
+            is_ortho = is_orthonormal_${type[0]}$${kind}$(X)
+            if (is_ortho) then
+                call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
+                & this_module, this_procedure)
+            else 
+                call stop_error("Input basis not orthonormal.", this_module, this_procedure)
+            end if
+        end if
 
         proj_coefficients = zero_${type[0]}$${kind}$; wrk = zero_${type[0]}$${kind}$
 
@@ -38,20 +51,31 @@ contains
             beta = proj_coefficients
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
-
-        return
-    end procedure
+    end procedure DGS_vector_against_basis_${type[0]}$${kind}$
 
     module procedure DGS_basis_against_basis_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'DGS_basis_against_basis_${type[0]}$${kind}$'
-        logical                              :: chk_X_orthonormality
         ${type}$, dimension(size(X),size(Y)) :: proj_coefficients, wrk
+        ! internal
+        logical :: chk_X_orthonormality
+        logical :: is_ortho
 
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
+
+        ! optional orthonormality check
+        if (chk_X_orthonormality) then
+            is_ortho = is_orthonormal_${type[0]}$${kind}$(X)
+            if (is_ortho) then
+                call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
+                & this_module, this_procedure)
+            else 
+                call stop_error("Input basis not orthonormal.", this_module, this_procedure)
+            end if
+        end if
 
         proj_coefficients = zero_${type[0]}$${kind}$; wrk = zero_${type[0]}$${kind}$
 
@@ -71,10 +95,9 @@ contains
             beta = proj_coefficients
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
-    end procedure
-    #:endfor
+    end procedure DGS_basis_against_basis_${type[0]}$${kind}$
 
+    #:endfor
     !-------------------------------------------------------------------------------
     !-----     ORTHOGONALIZE VECTOR/BASIS AGAINST ALREADY ORTHOGONAL BASIS     -----
     !-------------------------------------------------------------------------------
@@ -82,8 +105,10 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure orthogonalize_vector_against_basis_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'orthogonalize_vector_against_basis_${type[0]}$${kind}$'
-        logical  :: chk_X_orthonormality
         ${type}$ :: proj_coefficients(size(X))
+        ! internal
+        logical :: chk_X_orthonormality
+        logical :: is_ortho
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
@@ -94,19 +119,15 @@ contains
         ! check for zero vector
         if (y%norm() < atol_${kind}$) info = 1
 
+        ! optional orthonormality check
         if (chk_X_orthonormality) then
-            block 
-            ${type}$, dimension(size(X), size(X)) :: G
-            G = Gram(X)
-            if (abs(G(size(X),size(X))) < rtol_${kind}$) then
-                ! The last vector in X is zero, it does not impact orthogonalisation
-                info = -2
-            else if (mnorm(G - eye(size(X)), "Fro") > rtol_${kind}$) then
-                ! The basis is not orthonormal. Cannot orthonormalize.
-                info = -1
-                return
+            is_ortho = is_orthonormal_${type[0]}$${kind}$(X)
+            if (is_ortho) then
+                call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
+                & this_module, this_procedure)
+            else 
+                call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
-            end block
         end if
 
         ! orthogonalize
@@ -123,14 +144,15 @@ contains
             beta = proj_coefficients
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
-    end procedure
+    end procedure orthogonalize_vector_against_basis_${type[0]}$${kind}$
 
     module procedure orthogonalize_basis_against_basis_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'orthogonalize_basis_against_basis_${type[0]}$${kind}$'
-        logical  :: chk_X_orthonormality
         ${type}$ :: proj_coefficients(size(X), size(Y))
-        integer  :: i
+        ! internal
+        integer :: i
+        logical :: chk_X_orthonormality
+        logical :: is_ortho
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         info = 0
@@ -143,19 +165,15 @@ contains
             if (Y(i)%norm() < atol_${kind}$) info = i
         end do
 
+        ! optional orthonormality check
         if (chk_X_orthonormality) then
-            block 
-            ${type}$, dimension(size(X), size(X)) :: G
-            G = Gram(X)
-            if (abs(G(size(X),size(X))) < rtol_${kind}$) then
-                ! The last vector in X is zero, it does not impact orthogonalisation
-                info = -2
-            else if (mnorm(G - eye(size(X)), "Fro") > rtol_${kind}$) then
-                ! The basis is not orthonormal. Cannot orthonormalize.
-                info = -1
-                return
+            is_ortho = is_orthonormal_${type[0]}$${kind}$(X)
+            if (is_ortho) then
+                call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
+                & this_module, this_procedure)
+            else 
+                call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
-            end block
         end if
 
         ! orthogonalize
@@ -172,10 +190,7 @@ contains
             beta = proj_coefficients
         end if
         if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure orthogonalize_basis_against_basis_${type[0]}$${kind}$
 
-        return
-    end procedure
     #:endfor
-
-end submodule
-
+end submodule gram_schmidt_process

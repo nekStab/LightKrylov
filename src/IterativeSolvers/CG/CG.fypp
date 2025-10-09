@@ -2,7 +2,7 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_iterativesolvers) cg_solver
     use stdlib_strings, only: padr
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -43,7 +43,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure 
 
     module procedure reset_cg_${kind}$
@@ -52,8 +51,8 @@ contains
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
     end procedure
-    #:endfor
 
+    #:endfor
     !-------------------------------------------------
     !-----     CG SOLVERS FOR ABSTRACT TYPES     -----
     !-------------------------------------------------
@@ -76,7 +75,6 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_${kind}$)
@@ -188,11 +186,8 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', this_module, this_procedure)
-
-        return
     end procedure
-    #:endfor
 
+    #:endfor
 end submodule
 

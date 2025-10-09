@@ -15,15 +15,16 @@ program demo
 
    !> Exponential propagator.
    type(exponential_prop), allocatable :: A
+   type(adjoint_linop_cdp), allocatable :: A_adj
    !> Sampling time.
-   real(kind=dp), parameter :: tau = 0.1_dp
+   real(kind=dp), parameter :: tau = 0.01_dp
 
    !---------------------------------------------------
    !-----     KRYLOV-BASED EIGENDECOMPOSITION     -----
    !---------------------------------------------------
 
    !> Number of eigenvalues we wish to converge.
-   integer, parameter :: nev = 32
+   integer, parameter :: nev = 8
    !> Krylov subspace.
    type(state_vector), allocatable :: X(:)
    !> Eigenvalues.
@@ -59,20 +60,16 @@ program demo
    !> Initialize Krylov subspace.
    allocate (X(nev)); call zero_basis(X)
 
-   !------------------------------------------
-   !-----     EIGENVALUE COMPUTATION     -----
-   !------------------------------------------
+   !-------------------------------------------------
+   !-----     RIGHT EIGENVECTOR COMPUTATION     -----
+   !-------------------------------------------------
 
    !> Call to LightKrylov.
-   call eigs(A, X, lambda, residuals, info)
+   call eigs(A, X, lambda, residuals, info, kdim=2*nev)
    call check_info(info, 'eigs', module=this_module, procedure='main')
 
    !> Transform eigenspectrum from unit-disk to standard complex plane.
    lambda = log(lambda)/tau
-
-   !--------------------------------
-   !-----     SAVE TO DISK     -----
-   !--------------------------------
 
    !> Save the eigenspectrum.
    call save_eigenspectrum(lambda, residuals, "example/ginzburg_landau/eigenspectrum.npy")
@@ -84,6 +81,28 @@ program demo
 
    !> Save eigenvectors to disk.
    call save_npy("example/ginzburg_landau/eigenvectors.npy", eigenvectors)
+
+   !------------------------------------------------
+   !-----     LEFT EIGENVECTOR COMPUTATION     -----
+   !------------------------------------------------
+
+   !> Call to LightKrylov.
+   call eigs(A, X, lambda, residuals, info, kdim=2*nev, transpose=.true.)
+   call check_info(info, 'eigs', module=this_module, procedure='main')
+
+   !> Transform eigenspectrum from unit-disk to standard complex plane.
+   lambda = log(lambda)/tau
+
+   !> Save the eigenspectrum.
+   call save_eigenspectrum(lambda, residuals, "example/ginzburg_landau/adjoint_eigenspectrum.npy")
+
+   !> Reconstruct the leading eigenvectors from the Krylov basis.
+   do i = 1, nev
+      eigenvectors(:, i) = X(i)%state
+   end do
+
+   !> Save eigenvectors to disk.
+   call save_npy("example/ginzburg_landau/adjoint_eigenvectors.npy", eigenvectors)
 
    ! Print timing info for exponential propagator
    call A%finalize_timer()

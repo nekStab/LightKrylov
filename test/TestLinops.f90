@@ -10,8 +10,9 @@ module TestLinops
     use LightKrylov_Logger
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
-    implicit none
+    implicit none (type, external)
     
     private
 

@@ -1,6 +1,6 @@
 submodule (lightkrylov_iterativesolvers) gmres_solver
     use stdlib_strings, only: padr
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -41,7 +41,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure
 
     module procedure reset_gmres_sp
@@ -51,8 +50,8 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-        return
     end procedure
+
     module procedure print_gmres_dp
         ! internals
         character(len=*), parameter :: this_procedure = 'print_gmres_dp'
@@ -87,7 +86,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure
 
     module procedure reset_gmres_dp
@@ -97,7 +95,6 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-        return
     end procedure
 
     !----------------------------------------------------
@@ -282,7 +279,8 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure
+
     module procedure gmres_rdp
        ! Options.
         integer :: kdim, maxiter
@@ -461,7 +459,8 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure
+
     module procedure gmres_csp
        ! Options.
         integer :: kdim, maxiter
@@ -640,7 +639,8 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure
+
     module procedure gmres_cdp
        ! Options.
         integer :: kdim, maxiter
@@ -819,7 +819,8 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure
+
 
     module procedure dense_gmres_rsp
     type(dense_vector_rsp) :: b_, x_
@@ -833,6 +834,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+    
     module procedure dense_gmres_rdp
     type(dense_vector_rdp) :: b_, x_
     type(dense_linop_rdp)  :: A_
@@ -845,6 +847,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+    
     module procedure dense_gmres_csp
     type(dense_vector_csp) :: b_, x_
     type(dense_linop_csp)  :: A_
@@ -857,6 +860,7 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+    
     module procedure dense_gmres_cdp
     type(dense_vector_cdp) :: b_, x_
     type(dense_linop_cdp)  :: A_
@@ -869,4 +873,5 @@ contains
     ! Extract solution.
     x = x_%data
     end procedure
+    
 end submodule

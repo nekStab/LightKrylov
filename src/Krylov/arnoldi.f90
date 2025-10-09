@@ -1,5 +1,5 @@
 submodule (lightkrylov_basekrylov) arnoldi_method
-    implicit none
+    implicit none(type, external)
 contains
     
     module procedure arnoldi_rsp
@@ -66,9 +66,8 @@ contains
         enddo blk_arnoldi
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
+    end procedure arnoldi_rsp
+
     module procedure arnoldi_rdp
         character(len=*), parameter :: this_procedure = 'arnoldi_rdp'
         integer :: k_start, k_end, p
@@ -133,9 +132,8 @@ contains
         enddo blk_arnoldi
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
+    end procedure arnoldi_rdp
+
     module procedure arnoldi_csp
         character(len=*), parameter :: this_procedure = 'arnoldi_csp'
         integer :: k_start, k_end, p
@@ -200,9 +198,8 @@ contains
         enddo blk_arnoldi
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
+    end procedure arnoldi_csp
+
     module procedure arnoldi_cdp
         character(len=*), parameter :: this_procedure = 'arnoldi_cdp'
         integer :: k_start, k_end, p
@@ -267,8 +264,6 @@ contains
         enddo blk_arnoldi
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
-   
-end submodule
+    end procedure arnoldi_cdp
+
+end submodule arnoldi_method

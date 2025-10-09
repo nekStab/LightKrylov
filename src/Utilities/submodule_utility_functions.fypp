@@ -16,7 +16,7 @@ contains
     #:for kind, type in REAL_KINDS_TYPES
     module procedure log2_${type[0]}$${kind}$
         y = log(x) / log(2.0_${kind}$)
-    end procedure
+    end procedure log2_${type[0]}$${kind}$
     #:endfor
 
     !---------------------------------------------
@@ -30,7 +30,7 @@ contains
                                         & ". Expected length is ", size, ". Aborting due to illegal vector length."
             call stop_error("Vector length assertion error", module, procedure)
         endif
-    end procedure
+    end procedure assert_shape_vector_${type[0]}$${kind}$
 
     module procedure assert_shape_matrix_${type[0]}$${kind}$
         if (any(shape(A) /= size)) then
@@ -38,9 +38,9 @@ contains
                                         & ". Expected shape is ", size, ". Aborting due to illegal matrix shape."
             call stop_error("Matrix shape assertion error", module, procedure)
         endif
-    end procedure
-    #:endfor
+    end procedure assert_shape_matrix_${type[0]}$${kind}$
 
+    #:endfor
     !--------------------------------------------
     !-----     Linear Algebra Utilities     -----
     !--------------------------------------------
@@ -51,7 +51,7 @@ contains
     module procedure eig_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'eig_${type[0]}$${kind}$'
         ! Lapack variables.
-        character :: jobvl = "n", jobvr = "v"
+        character, parameter :: jobvl = "n", jobvr = "v"
         integer(ilp) :: n, lwork, info, lda, ldvl, ldvr
         ${type}$ :: A_tilde(size(A, 1), size(A, 2)), vl(1, size(A, 2))
         #:if type[0] == "c"
@@ -67,7 +67,8 @@ contains
 
         ! Eigendecomposition.
         #:if type[0] == "c"
-        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, info)
+        call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, &
+            & info)
         #:else
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
         #:endif
@@ -77,16 +78,16 @@ contains
         ! Complex eigenvalues.
         vals = one_c${kind}$*wr + one_im_c${kind}$*wi
         #:endif
-    end procedure
-    #:endfor
+    end procedure eig_${type[0]}$${kind}$
 
+    #:endfor
     !----- Schur Factorization ------
 
     !----- OrdSchur Factorization -----
     #:for kind, type in RC_KINDS_TYPES
     module procedure ordschur_${type[0]}$${kind}$
         ! Lapack variables.
-        character :: job="n", compq="v"
+        character, parameter :: job="n", compq="v"
         integer(ilp) :: info, ldq, ldt, lwork, m, n
         real(${kind}$) :: s, sep
         #:if type[0] == "r"
@@ -102,16 +103,16 @@ contains
         if (time_lightkrylov()) call timer%start('trsen')
         #:if type[0] == "r"
         liwork = 1
-        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
+        call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, &
+               & iwork, liwork, info)
         #:else
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         #:endif
         call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
         if (time_lightkrylov()) call timer%stop('trsen')
+    end procedure ordschur_${type[0]}$${kind}$
 
-    end procedure
     #:endfor
-
     !----- Matrix Square-Root -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -133,7 +134,8 @@ contains
                 & symmetry_error, ", tol = ", rtol_${kind}$
             call stop_error(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         else if (symmetry_error > 10*atol_${kind}$) then
-            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", symmetry_error
+            write(msg, "(A, E9.2)") "Input matrix is not exactly Hermitian. 0.5*max(A - A.H) =", &
+                & symmetry_error
             call log_warning(msg, this_module, "sqrtm_${type[0]}$${kind}$")
         endif
 
@@ -150,13 +152,13 @@ contains
                 S(i) = zero_r${kind}$ ; info = 1
             endif
         enddo
-        
+
         ! Reconstruct the square root matrix.
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
-    #:endfor
+    end procedure sqrtm_${type[0]}$${kind}$
 
+    #:endfor
     !----- Dense Matrix Exponential -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -214,16 +216,15 @@ contains
         enddo
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
-    end procedure
-    #:endfor
+    end procedure expm_${type[0]}$${kind}$
 
+    #:endfor
     !----- Givens rotations -----
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure givens_rotation_${type[0]}$${kind}$
         g = x / norm(x, 2)
-    end procedure
+    end procedure givens_rotation_${type[0]}$${kind}$
 
     module procedure apply_givens_rotation_${type[0]}$${kind}$
         integer(ilp) :: i, k
@@ -244,9 +245,9 @@ contains
 
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_${kind}$
-    end procedure
-    #:endfor
+    end procedure apply_givens_rotation_${type[0]}$${kind}$
 
+    #:endfor
     !----- Solving triangular systems -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -259,6 +260,8 @@ contains
         do i = n-1, 1, -1
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
-    end procedure
+    end procedure solve_triangular_${type[0]}$${kind}$
+
     #:endfor
-end submodule
+end submodule utility_functions
+

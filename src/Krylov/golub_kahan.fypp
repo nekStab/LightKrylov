@@ -1,7 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_basekrylov) golub_kahan_methods
-    implicit none
+    implicit none(type, external)
 contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure lanczos_bidiagonalization_${type[0]}$${kind}$
@@ -61,8 +61,7 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
+    end procedure lanczos_bidiagonalization_${type[0]}$${kind}$
+
     #:endfor
-end submodule
+end submodule golub_kahan_methods

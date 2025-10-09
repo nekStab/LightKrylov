@@ -1,6 +1,6 @@
 submodule (lightkrylov_iterativesolvers) cg_solver
     use stdlib_strings, only: padr
-    implicit none
+    implicit none(type, external)
 contains
 
     !----------------------------------------
@@ -40,7 +40,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure 
 
     module procedure reset_cg_sp
@@ -49,6 +48,7 @@ contains
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
     end procedure
+
     module procedure print_cg_dp
         character(len=*), parameter :: this_procedure = 'print_cg_dp'
         integer :: i
@@ -82,7 +82,6 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end procedure 
 
     module procedure reset_cg_dp
@@ -113,7 +112,6 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -221,10 +219,8 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', this_module, this_procedure)
-
-        return
     end procedure
+
     module procedure cg_rdp
         ! Options.
         integer :: maxiter
@@ -242,7 +238,6 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -350,10 +345,8 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', this_module, this_procedure)
-
-        return
     end procedure
+
     module procedure cg_csp
         ! Options.
         integer :: maxiter
@@ -371,7 +364,6 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_sp)
@@ -479,10 +471,8 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', this_module, this_procedure)
-
-        return
     end procedure
+
     module procedure cg_cdp
         ! Options.
         integer :: maxiter
@@ -500,7 +490,6 @@ contains
         integer :: i
         character(len=256) :: msg
 
-        call log_debug('start', this_module, this_procedure)
         if (time_lightkrylov()) call timer%start(this_procedure)
         ! Deals with the optional args.
         rtol_ = optval(rtol, rtol_dp)
@@ -608,9 +597,6 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        call log_debug('end', this_module, this_procedure)
-
-        return
     end procedure
 
 end submodule

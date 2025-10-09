@@ -23,7 +23,7 @@ module LightKrylov
     use LightKrylov_Timer_Utils
     use LightKrylov_Timing, only: lk_timer => global_lightkrylov_timer
     ! --> TestTypes
-    implicit none
+    implicit none(type, external)
     private
 
     ! LightKrylov exports.
@@ -36,11 +36,13 @@ module LightKrylov
     ! Utils exports.
     #:for kind in REAL_KINDS
     public :: gmres_${kind}$_opts
+    public :: fgmres_${kind}$_opts
     public :: cg_${kind}$_opts
     public :: newton_${kind}$_opts
     #:endfor
     #:for kind in REAL_KINDS
     public :: gmres_${kind}$_metadata
+    public :: fgmres_${kind}$_metadata
     public :: cg_${kind}$_metadata
     public :: newton_${kind}$_metadata
     #:endfor

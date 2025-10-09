@@ -1,6 +1,6 @@
 module TestKrylov
     ! Fortran Standard Library.
-    use iso_fortran_env
+    use iso_fortran_env, only: output_unit
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye
     use stdlib_stats, only: median
@@ -13,9 +13,10 @@ module TestKrylov
     use LightKrylov_AbstractVectors
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
-    implicit none
-    
+    implicit none (type, external)
+
     private
 
     character(len=*), parameter, private :: this_module      = 'LK_TBKrylov'
@@ -65,7 +66,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_rsp), allocatable :: A(:)
         ! Upper triangular matrix.
-        real(sp) :: R(kdim, kdim) = zero_rsp
+        real(sp) :: R(kdim, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -75,7 +76,7 @@ contains
         character(len=256) :: msg
 
         ! Initialiaze matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A); R = zero_rsp
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -199,7 +200,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_rdp), allocatable :: A(:)
         ! Upper triangular matrix.
-        real(dp) :: R(kdim, kdim) = zero_rdp
+        real(dp) :: R(kdim, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -209,7 +210,7 @@ contains
         character(len=256) :: msg
 
         ! Initialiaze matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A); R = zero_rdp
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -333,7 +334,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_csp), allocatable :: A(:)
         ! Upper triangular matrix.
-        complex(sp) :: R(kdim, kdim) = zero_csp
+        complex(sp) :: R(kdim, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -343,7 +344,7 @@ contains
         character(len=256) :: msg
 
         ! Initialiaze matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A); R = zero_csp
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
@@ -467,7 +468,7 @@ contains
         integer, parameter :: kdim = test_size
         type(vector_cdp), allocatable :: A(:)
         ! Upper triangular matrix.
-        complex(dp) :: R(kdim, kdim) = zero_cdp
+        complex(dp) :: R(kdim, kdim)
         ! Information flag.
         integer :: info
         ! Miscellaneous.
@@ -477,7 +478,7 @@ contains
         character(len=256) :: msg
 
         ! Initialiaze matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim)) ; call init_rand(A); R = zero_cdp
 
         ! Get data.
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)

@@ -1,6 +1,6 @@
 module TestExpmlib
     ! Fortran Standard Library.
-    use iso_fortran_env
+    use iso_fortran_env, only: output_unit
     use stdlib_math, only: is_close, all_close
     use stdlib_linalg, only: eye, diag
     use stdlib_io_npy, only: save_npy
@@ -13,8 +13,9 @@ module TestExpmlib
     use LightKrylov_Utils, only : eig, sqrtm
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
-    implicit none
+    implicit none (type, external)
 
     private
 
@@ -42,7 +43,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_rsp), &
-                        new_unittest("Krylov expm.", test_kexptA_rsp) &
+                        new_unittest("Krylov expm.", test_kexptA_rsp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_rsp) &
                     ]
 
         return
@@ -94,7 +96,7 @@ contains
         class(vector_rsp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         real(sp), allocatable :: E(:, :)
         real(sp), parameter :: tau = 0.1_sp
@@ -102,7 +104,7 @@ contains
         real(sp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_rsp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -118,7 +120,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_rsp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rsp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_rsp', &
@@ -180,18 +194,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rsp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rsp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -220,7 +233,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_rdp), &
-                        new_unittest("Krylov expm.", test_kexptA_rdp) &
+                        new_unittest("Krylov expm.", test_kexptA_rdp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_rdp) &
                     ]
 
         return
@@ -272,7 +286,7 @@ contains
         class(vector_rdp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         real(dp), allocatable :: E(:, :)
         real(dp), parameter :: tau = 0.1_dp
@@ -280,7 +294,7 @@ contains
         real(dp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_rdp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -296,7 +310,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_rdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_rdp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_rdp', &
@@ -358,18 +384,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rdp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_rdp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -398,7 +423,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_csp), &
-                        new_unittest("Krylov expm.", test_kexptA_csp) &
+                        new_unittest("Krylov expm.", test_kexptA_csp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_csp) &
                     ]
 
         return
@@ -450,7 +476,7 @@ contains
         class(vector_csp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         complex(sp), allocatable :: E(:, :)
         real(sp), parameter :: tau = 0.1_sp
@@ -458,7 +484,7 @@ contains
         real(sp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_csp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -474,7 +500,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_kexptA_csp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_csp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_kexptA_csp', &
@@ -536,18 +574,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_csp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_csp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -576,7 +613,8 @@ contains
 
         testsuite = [ &
                         new_unittest("Dense expm.", test_dense_expm_cdp), &
-                        new_unittest("Krylov expm.", test_kexptA_cdp) &
+                        new_unittest("Krylov expm.", test_kexptA_cdp), &
+                        new_unittest("Block Krylov expm.", test_block_kexptA_cdp) &
                     ]
 
         return
@@ -628,7 +666,7 @@ contains
         class(vector_cdp), allocatable :: Q, Xref, Xkryl
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
-    
+
         ! ----- Internal variables -----
         complex(dp), allocatable :: E(:, :)
         real(dp), parameter :: tau = 0.1_dp
@@ -636,7 +674,7 @@ contains
         real(dp) :: err
         integer :: info
         character(len=256) :: msg
-        
+
         ! Initialize data.
         A = linop_cdp() ; call init_rand(A)
         allocate(Q) ; call init_rand(Q)
@@ -652,7 +690,19 @@ contains
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
 
         ! Check result.
-        call Xkryl%sub(Xref) ; err = Xkryl%norm()
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_kexptA_cdp', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call krylov_exptA(Xkryl, A, Q, tau, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_cdp')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_kexptA_cdp', &
@@ -714,18 +764,17 @@ contains
             call kexpm(C(i), A, B(i), tau, tol, info, kdim=nkmax)
             call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_cdp, 1')
         end do
-        
+
         ! Compute Krylov matrix exponential using block-arnoldi method
         call kexpm(Cblk, A, B, tau, tol, info, kdim=nkmax)
         call check_info(info, 'kexpm', module=this_module_long, procedure='test_block_kexptA_cdp, 2')
-    
+
         do i = 1, p
             write(output_unit, *) C(i)%norm(), Cblk(i)%norm()
             call C(i)%sub(Cref(i)) ; call Cblk(i)%sub(Cref(i))
         end do
 
         ! Compute 2-norm of the error
-        
         do i = 1, size(C)
             do j = 1, size(C)
                 err(i, j) = C(i)%dot(C(j))
@@ -1118,5 +1167,4 @@ contains
     end subroutine test_dense_sqrtm_pos_semi_def_cdp
 
 
-end module
-
+end module TestExpmLib

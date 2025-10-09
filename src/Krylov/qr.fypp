@@ -1,11 +1,12 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 submodule (lightkrylov_basekrylov) qr_solvers
-    implicit none
+    implicit none(type, external)
 
     interface swap_columns
         #: for kind, type in RC_KINDS_TYPES
         module subroutine swap_columns_${type[0]}$${kind}$(Q, R, Rii, perm, i, j)
+            implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Q(:)
             !! Vector basis whose i-th and j-th columns need swapping.
             ${type}$, intent(inout) :: R(:, :)
@@ -16,7 +17,8 @@ submodule (lightkrylov_basekrylov) qr_solvers
             !! Column ordering.
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
-        end subroutine
+        end subroutine swap_columns_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -100,9 +102,8 @@ contains
 
         enddo qr_step
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
+    end procedure qr_with_pivoting_${type[0]}$${kind}$
+
     #:endfor
 
     !---------------------------------------------
@@ -158,9 +159,8 @@ contains
             call Q(j)%scal(one_r${kind}$ / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
-    end procedure
+    end procedure qr_no_pivoting_${type[0]}$${kind}$
+
     #:endfor
 
     !-------------------------------------
@@ -190,8 +190,7 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        return
-    end procedure
+    end procedure swap_columns_${type[0]}$${kind}$
+    
     #:endfor
-end submodule
+end submodule qr_solvers

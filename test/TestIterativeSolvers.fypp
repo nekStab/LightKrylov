@@ -2,10 +2,10 @@
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module TestIterativeSolvers
     ! Fortran Standard library.
-    use iso_fortran_env
+    use iso_fortran_env, only: output_unit
     use stdlib_io_npy, only: save_npy
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag, norm
+    use stdlib_linalg, only: eye, diag, norm, hermitian
     use stdlib_stats, only : median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -16,9 +16,10 @@ module TestIterativeSolvers
     use LightKrylov_AbstractVectors
     ! Test Utilities
     use LightKrylov_TestUtils
+    use TestUtils
 
-    implicit none
-    
+    implicit none (type, external)
+
     private
 
     character(len=*), parameter, private :: this_module      = 'LK_TSolvers'
@@ -29,6 +30,7 @@ module TestIterativeSolvers
     public :: collect_eig_${type[0]}$${kind}$_testsuite
     public :: collect_svd_${type[0]}$${kind}$_testsuite
     public :: collect_gmres_${type[0]}$${kind}$_testsuite
+    public :: collect_fgmres_${type[0]}$${kind}$_testsuite
     public :: collect_cg_${type[0]}$${kind}$_testsuite
     #:endfor
 
@@ -46,6 +48,8 @@ contains
                     new_unittest("Eigs computation", test_evp_${type[0]}$${kind}$), &
                     #:if type[0] == "r"
                     new_unittest("Sym. eigs computation", test_sym_evp_${type[0]}$${kind}$), &
+                    #:else
+                    new_unittest("Hermitian eigs computation", test_hermitian_evp_${type[0]}$${kind}$), &
                     #:endif
                     new_unittest("KS eigs computation", test_ks_evp_${type[0]}$${kind}$) &
                     ]
@@ -71,7 +75,7 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
         complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
-        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$), parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
         character(len=256) :: msg
         #:if type[0] == "r"
@@ -146,10 +150,9 @@ contains
         type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
         complex(${kind}$), allocatable :: eigvec_residuals(:,:)
         complex(${kind}$) :: true_eigvals(test_size)
-        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$), parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         real(${kind}$) :: err
         character(len=256) :: msg
-        #:if type[0] == "r"
         ${type}$ :: a_, b_
 
         ! Allocate eigenvectors.
@@ -158,6 +161,7 @@ contains
         ! Initialize linear operator with random tridiagonal Toeplitz matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
 
+        #:if type[0] == "r"
         call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
         do i = 1, n
             ! Diagonal entry.
@@ -168,6 +172,18 @@ contains
                 A%data(i+1, i) = -b_
             endif
         enddo
+        #:else
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_${kind}$, sqrt(1.0_${kind}$*i*(n-i)), kind=${kind}$)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+        #:endif
 
         ! Compute spectral decomposition.
         call eigs(A, X, eigvals, residuals, info, tolerance=atol_${kind}$)
@@ -175,31 +191,36 @@ contains
 
         ! Analytical eigenvalues.
         true_eigvals = zero_c${kind}$; k = 1
+        #:if type[0] == "r"
         do i = 1, test_size, 2
             true_eigvals(i) = a_*one_c${kind}$ + (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             true_eigvals(i+1) = a_*one_c${kind}$ - (2*b_*cos(k*pi/(test_size+1)))*one_im_c${kind}$
             k = k+1
         enddo
+        #:else
+        do i = 1, test_size
+            true_eigvals(i) = 2*(test_size-i+1) - 1
+        enddo
+        #:endif
 
-        err = maxval(abs(eigvals - true_eigvals))
+        err = maxval(abs(eigvals - true_eigvals) / abs(true_eigvals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_evp_${type[0]}$${kind}$', info='eval correctness', context=msg)
 
-!        ! check eigenvectors
-!        allocate(AX(test_size))
-!        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
-!        do i = 1, test_size
-!            call A%apply_matvec(X(i), AX(i))
-!            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
-!        end do
-!        err = norm2(abs(eigvec_residuals))
-!        call get_err_str(msg, "max err: ", err)
-!        call check(error, err < rtol_${kind}$)
-!        call check_test(error, 'test_evp_${type[0]}$${kind}$', &
-!                                 & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+        #:if type[0] == "c"
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        allocate(AX(test_size)) ; call zero_basis(AX)
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - eigvals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_evp_${type[0]}$${kind}$', &
+                        & info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
         #:endif
-
         return
     end subroutine test_evp_${type[0]}$${kind}$
 
@@ -271,7 +292,7 @@ contains
             call A%apply_matvec(X(i), AX(i))
             eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
         end do
-        err = norm2(abs(eigvec_residuals))
+        err = maxval(abs(eigvec_residuals))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
@@ -287,6 +308,90 @@ contains
 
         return
     end subroutine test_sym_evp_${type[0]}$${kind}$
+    #:else
+    subroutine test_hermitian_evp_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        ! Eigenvectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! evals.
+        real(${kind}$), allocatable :: evals(:)
+        ! Residuals.
+        real(${kind}$), allocatable :: residuals(:)
+        ! Information flag.
+        integer :: info
+        ! Toeplitz matrix.
+        ${type}$, allocatable :: T(:, :)
+        ${type}$ :: a_, b_
+        ! Miscellaneous.
+        integer :: i, n
+        real(${kind}$) :: alpha, true_evals(test_size)
+        ${type}$, parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        type(vector_${type[0]}$${kind}$), allocatable :: AX(:)
+        complex(${kind}$), allocatable :: eigvec_residuals(:,:)
+        ${type}$, allocatable, dimension(:,:) :: G
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Create the sym. pos. def. Toeplitz matrix.
+        n = test_size-1
+        allocate(T(n+1, n+1)) ; T = 0.0_${kind}$
+        do i = 1, n+1
+            ! Diagonal entry.
+            T(i, i) = n+1
+            if (i < n+1) then
+                ! Upper diagonal entry.
+                T(i, i+1) = cmplx(0.0_${kind}$, sqrt(1.0_${kind}$*i*(n-i+1)), kind=${kind}$)
+                ! Lower diagonal entry.
+                T(i+1, i) = -T(i, i+1)
+            endif
+        enddo
+
+        ! Allocations.
+        A = hermitian_linop_${type[0]}$${kind}$(T)
+        allocate(X(test_size)) ; call zero_basis(X)
+
+        ! Spectral decomposition.
+        call eighs(A, X, evals, residuals, info, kdim=test_size, tolerance=atol_${kind}$)
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_hermitian_evp_${type[0]}$${kind}$')
+
+        ! Analytical eigenvalues.
+        true_evals = 0.0_${kind}$
+        do i = 1, test_size
+            true_evals(i) = 2*(test_size-i+1) - 1
+        enddo
+
+        ! Check error.
+        err = maxval(abs(true_evals - evals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_hermitian_evp_${type[0]}$${kind}$', info='eval correctness', context=msg)
+
+        ! check eigenvectors
+        allocate(AX(test_size))
+        allocate(eigvec_residuals(test_size, test_size)); eigvec_residuals = zero_c${kind}$
+        do i = 1, test_size
+            call A%apply_matvec(X(i), AX(i))
+            eigvec_residuals(:, i) = AX(i)%data - evals(i)*X(i)%data
+        end do
+        err = maxval(abs(eigvec_residuals))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_hermitian_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(X)
+
+        ! Check orthonormality of the eigenvectors.
+        err = maxval(abs(G - eye(test_size, mold=1.0_${kind}$)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_hermitian_evp_${type[0]}$${kind}$', info='Eigenvector orthonormality', eq='V.H @ V = I', context=msg)
+
+        return
+    end subroutine test_hermitian_evp_${type[0]}$${kind}$
     #:endif
 
     #:endfor
@@ -322,12 +427,11 @@ contains
         ! Miscellaneous.
         integer :: i, k, n
         real(${kind}$) :: true_svdvals(test_size)
-        real(${kind}$) :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
+        real(${kind}$), parameter :: pi = 4.0_${kind}$ * atan(1.0_${kind}$)
         ${type}$, allocatable :: G(:, :)
         ${type}$, allocatable :: Udata(:, :), Vdata(:, :)
         real(${kind}$) :: err
         character(len=256) :: msg
-        #:if type[0] == "r"
 
         ! Allocate eigenvectors.
         allocate(U(test_size)) ; call zero_basis(U)
@@ -336,6 +440,7 @@ contains
         ! Initialize linear operator with the Strang matrix.
         A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
 
+        #:if type[0] == "r"
         do i = 1, n
             ! Diagonal entry.
             A%data(i, i) = 2.0_${kind}$
@@ -345,6 +450,18 @@ contains
                 A%data(i+1, i) = -one_r${kind}$
             endif
         enddo
+        #:else
+        do i = 1, n
+            ! Diagonal entry.
+            A%data(i, i) = n
+            if (i < n) then
+                ! Upper diagonal entry.
+                A%data(i, i+1) = cmplx(0.0_${kind}$, sqrt(1.0_${kind}$*i*(n-i)), kind=${kind}$)
+                ! Lower diagonal entry.
+                A%data(i+1, i) = -A%data(i, i+1)
+            endif
+        enddo
+        #:endif
 
         ! Compute spectral decomposition.
         call svds(A, U, S, V, residuals, info, tolerance=atol_${kind}$)
@@ -353,14 +470,18 @@ contains
         ! Check correctness of full factorization.
         allocate(Udata(test_size, test_size)) ; call get_data(Udata, U)
         allocate(Vdata(test_size, test_size)) ; call get_data(Vdata, V)
-        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), transpose(Vdata)))))
+        err = maxval(abs(A%data - matmul(Udata, matmul(diag(s), hermitian(Vdata)))))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', info='Factorization', eq='A = U @ S @ V.H', context=msg)
 
         ! Check against analytical singular values.
         do i = 1, test_size
+            #:if type[0] == "r"
             true_svdvals(i) = 2.0_${kind}$ * (1.0_${kind}$ + cos(i*pi/(test_size+1)))
+            #:else
+            true_svdvals(i) = 2*(test_size-i+1) - 1
+            #:endif
         enddo
         err = maxval(abs(S - true_svdvals))
         call get_err_str(msg, "max err: ", err)
@@ -385,9 +506,6 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
-
-        
-        #:endif
 
         return
     end subroutine test_svd_${type[0]}$${kind}$
@@ -492,6 +610,61 @@ contains
         return
     end subroutine test_gmres_spd_${type[0]}$${kind}$
 
+    #:endfor
+
+    !----------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR FGMRES     -----
+    !----------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_fgmres_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+                    new_unittest("Full FGMRES", test_fgmres_${type[0]}$${kind}$) &
+                    ]
+        return
+    end subroutine collect_fgmres_${type[0]}$${kind}$_testsuite
+
+    subroutine test_fgmres_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear problem.
+        ${type}$ :: A(n, n), b(n), x(n)
+        ! FGMRES options.
+        type(fgmres_${kind}$_opts) :: opts
+        ! FGMRES metadata.
+        type(fgmres_${kind}$_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Misc
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear problem.
+        #:if type[0] == "r"
+        call random_number(A) ; call random_number(b) ; x = 0.0_${kind}$
+        #:else
+        real(${kind}$) :: Adata(n, n, 2), bdata(n, 2)
+        call random_number(Adata) ; call random_number(bdata)
+        A%re = Adata(:, :, 1) ; A%im = Adata(:, :, 2)
+        b%re = bdata(:, 1)    ; b%im = bdata(:, 2)
+        x = 0.0_${kind}$
+        #:endif
+
+        ! FGMRES solver.
+        opts = fgmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
+        call fgmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_${type[0]}$${kind}$')
+
+        ! Check convergence.
+        err = norm(matmul(A, x) - b, 2)
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < norm(b, 2) * rtol_${kind}$)
+        call check_test(error, 'test_fgmres_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
+
+        return
+    end subroutine test_fgmres_${type[0]}$${kind}$
+    
     #:endfor
 
     !-----------------------------------------------------------------------

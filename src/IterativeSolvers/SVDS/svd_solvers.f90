@@ -1,6 +1,6 @@
 submodule (lightkrylov_iterativesolvers) svds_solver
     use stdlib_linalg, only: hermitian, svd
-    implicit none
+    implicit none(type, external)
     character(len=*), parameter :: svds_output = 'svds_output.txt'
 contains
 
@@ -14,7 +14,6 @@ contains
         real(sp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function svd_residual_rsp
     elemental pure function svd_residual_rdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -25,7 +24,6 @@ contains
         real(dp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function svd_residual_rdp
     elemental pure function svd_residual_csp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -36,7 +34,6 @@ contains
         real(sp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function svd_residual_csp
     elemental pure function svd_residual_cdp(beta, x) result(residual)
         !! Computes the residual associated with a Ritz eigenpair.
@@ -47,7 +44,6 @@ contains
         real(dp) :: residual
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
-        return
     end function svd_residual_cdp
 
     !----------------------------------------
@@ -138,8 +134,6 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure
 
     module procedure svds_rdp
@@ -226,8 +220,6 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure
 
     module procedure svds_csp
@@ -314,8 +306,6 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure
 
     module procedure svds_cdp
@@ -402,8 +392,6 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure
 
 end submodule

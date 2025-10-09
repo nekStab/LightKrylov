@@ -10,7 +10,7 @@ module LightKrylov_NewtonKrylov
     use LightKrylov_IterativeSolvers
     use LightKrylov_Utils
 
-    implicit none
+    implicit none(type, external)
     private
 
     character(len=*), parameter :: this_module      = 'LK_NwtKryl'
@@ -33,7 +33,7 @@ module LightKrylov_NewtonKrylov
         !! Ignored if ifbisect = .false.
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type newton_sp_opts
     
     type, extends(abstract_opts), public :: newton_dp_opts
         !! Options for Newton-Krylov fixed-point iteration.
@@ -46,7 +46,7 @@ module LightKrylov_NewtonKrylov
         !! Ignored if ifbisect = .false.
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
-    end type
+    end type newton_dp_opts
     
 
     type, extends(abstract_metadata), public :: newton_sp_metadata
@@ -70,7 +70,7 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: print => print_newton_sp
         procedure, pass(self), public :: reset => reset_newton_sp
         procedure, pass(self), public :: record => record_data_sp
-    end type
+    end type newton_sp_metadata
    
     type, extends(abstract_metadata), public :: newton_dp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
@@ -93,63 +93,77 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: print => print_newton_dp
         procedure, pass(self), public :: reset => reset_newton_dp
         procedure, pass(self), public :: record => record_data_dp
-    end type
+    end type newton_dp_metadata
    
 
 
 
     interface newton
-        !! Implements the simple Newton-Krylov method for finding roots (fixed points) of a nonlinear vector-valued function
-        !! \( F(\mathbf{X}) \), i.e. solutions \( \mathbf{X}^* \) such that \( F(\mathbf{X}^*) - \mathbf{X}^* = \mathbf{0} \) 
-        !! starting from an initial guess via successive solution increments based on local linearization \( \mathbf{J}_\mathbf{X} \) 
-        !! (the Jacobian) of the nonlinear function in the vicinity of the current solution.
+        !! Implements the simple Newton-Krylov method for finding roots (fixed points) of a 
+        !! nonlinear vector-valued function \( F(\mathbf{X}) \), i.e. solutions \( \mathbf{X}^* \) 
+        !! such that \( F(\mathbf{X}^*) - \mathbf{X}^* = \mathbf{0} \) starting from an 
+        !! initial guess via successive solution increments based on local linearization 
+        !! \( \mathbf{J}_\mathbf{X} \) (the Jacobian) of the nonlinear function in the 
+        !! vicinity of the current solution.
         !!
         !! **Algorthmic Features**
         !!
-        !! - At iteration \(k\), the standard Newton step \( \mathbf{\delta x}_k\) is computed as the solution of the linear system
+        !! - At iteration \(k\), the standard Newton step \( \mathbf{\delta x}_k\) is 
+        !!   computed as the solution of the linear system
         !!   
         !! $$ \mathbf{J}_\mathbf{X_k} \mathbf{\delta x}_k = \mathbf{r}_k $$
         !!
-        !!   where \( \mathbf{r}_k = -F(\mathbf{X}_k) \) is the residual of the nonlinear function. The new guess for the fixed
-        !!   point is then given by:
+        !!   where \( \mathbf{r}_k = -F(\mathbf{X}_k) \) is the residual of the nonlinear 
+        !!   function. The new guess for the fixed point is then given by:
         !!
         !! $$ \mathbf{X}_{k+1} = \mathbf{X}_k + \alpha \mathbf{\delta x}_k$$
         !!
-        !!   where \( \alpha \in \left( 0, 1 \right] \) parametrizes the step length. The standard Newton algorithm sets \( \alpha = 1 \).
+        !!   where \( \alpha \in \left( 0, 1 \right] \) parametrizes the step length. The 
+        !!   standard Newton algorithm sets \( \alpha = 1 \).
         !!
-        !! - The Jacobian is never assembled and the linear system is solved using one of the available iterative solvers.
-        !! - When the residual norm does not decrease during iteration indicating that the linearization is not a very
-        !!   accurate model of the function's behaviour, which often happens during the initial iterations, a 1D step bisection
-        !!   method based on the golden ratio is implemented to dampen the step and improve convergence of the method.
-        !! - The implementation allows for dynamic tolerances (also known as inexact Newton), where the approximation for 
-        !!   the residual and the linear system can be solved with relaxed tolerances to reduce overall time to solution.
-        !! - The method is suitable to both fixed points and periodic orbits via the choice of residual and corresponding
-        !!   Jacobian matrix. In the case of unforced periodic orbits, the period is itself an unknown that must be included
-        !!   in the iteration.
+        !! - The Jacobian is never assembled and the linear system is solved using one of 
+        !!   the available iterative solvers.
+        !! - When the residual norm does not decrease during iteration indicating that the 
+        !!   linearization is not a very accurate model of the function's behaviour, which 
+        !!   often happens during the initial iterations, a 1D step bisection method based 
+        !!   on the golden ratio is implemented to dampen the step and improve convergence 
+        !!   of the method.
+        !! - The implementation allows for dynamic tolerances (also known as inexact Newton), 
+        !!   where the approximation for the residual and the linear system can be solved 
+        !!   with relaxed tolerances to reduce overall time to solution.
+        !! - The method is suitable to both fixed points and periodic orbits via the choice 
+        !!   of residual and corresponding Jacobian matrix. In the case of unforced periodic 
+        !!   orbits, the period is itself an unknown that must be included in the iteration.
         !!
         !! **Advantages**
         !!
-        !! - The iterative solution of the linear systems has a comparatively low storage footprint.
-        !! - If the Newton iteration converges, the convergence is formally asymptotically of second order. Using dynamic
-        !!   tolerances and line searches slightly reduce this convergence rate in exchange for a larger convergence region.
+        !! - The iterative solution of the linear systems has a comparatively low storage 
+        !!   footprint.
+        !! - If the Newton iteration converges, the convergence is formally asymptotically 
+        !!   of second order. Using dynamic tolerances and line searches slightly reduce 
+        !!   this convergence rate in exchange for a larger convergence region.
         !! 
         !! **Limitations**
         !!
-        !! - The method is not guaranteed to converge if the initial guess is too far from the fixed point. 
-        !!   If the Newton iteration diverges even with step bisection, the best suggestion is to find a 
-        !!   better initial guess. If this is not feasible, some alternatives to improve the convergence 
-        !!   of the Newton iteration are possible (but not implemented to date), including various line search
-        !!   algorithms and trust region methods (doglog, double dogleg, hookstep, ...).
+        !! - The method is not guaranteed to converge if the initial guess is too far from 
+        !!   the fixed point. If the Newton iteration diverges even with step bisection, 
+        !!   the best suggestion is to find a better initial guess. If this is not feasible, 
+        !!   some alternatives to improve the convergence of the Newton iteration are possible 
+        !!   (but not implemented to date), including various line search algorithms and trust 
+        !!   region methods (doglog, double dogleg, hookstep, ...).
         !!
         !! **References**
         !!
-        !! - Sánchez, J., Net, M., Garcıa-Archilla, B., & Simó, C. (2004). "Newton–Krylov continuation of periodic orbits 
-        !!   for Navier–Stokes flows". Journal of Computational Physics, 201(1), 13-33.
-        !! - Viswanath, D. (2007). "Recurrent motions within plane Couette turbulence". Journal of Fluid Mechanics, 580, 339-358.
-        !! - Duguet, Y., Pringle, C. C. T., Kerswell, R. R. (2008). "Relative periodic orbits in transitional pipe flow". Physics
-        !!   of Fluids, 20(11), 114102.
-        !! - Frantz, R. A., Loiseau, J. C., & Robinet, J. C. (2023). "Krylov methods for large-scale dynamical systems: Application 
-        !!   in fluid dynamics". Applied Mechanics Reviews, 75(3), 030802.
+        !! - Sánchez, J., Net, M., Garcıa-Archilla, B., & Simó, C. (2004). "Newton–Krylov 
+        !!   continuation of periodic orbits for Navier–Stokes flows". Journal of Computational 
+        !!   Physics, 201(1), 13-33.
+        !! - Viswanath, D. (2007). "Recurrent motions within plane Couette turbulence". 
+        !!   Journal of Fluid Mechanics, 580, 339-358. 
+        !! - Duguet, Y., Pringle, C. C. T., Kerswell, R. R. (2008). "Relative periodic orbits 
+        !!   in transitional pipe flow". Physics  of Fluids, 20(11), 114102.
+        !! - Frantz, R. A., Loiseau, J. C., & Robinet, J. C. (2023). "Krylov methods for 
+        !!   large-scale dynamical systems: Application in fluid dynamics". Applied Mechanics
+        !!   Reviews, 75(3), 030802.
         module procedure newton_rsp
         module procedure newton_rdp
         module procedure newton_csp
@@ -158,8 +172,9 @@ module LightKrylov_NewtonKrylov
 
     abstract interface
         subroutine abstract_scheduler_sp(tol, target_tol, rnorm, iter, info)
-            import sp
             !! Abstract interface to define a tolerance scheduler for the Newton iteration
+            import sp
+            implicit none(type, external)
             real(sp), intent(out) :: tol
             !! Tolerance to be used
             real(sp), intent(in) :: target_tol
@@ -173,8 +188,9 @@ module LightKrylov_NewtonKrylov
         end subroutine abstract_scheduler_sp
 
         subroutine abstract_scheduler_dp(tol, target_tol, rnorm, iter, info)
-            import dp
             !! Abstract interface to define a tolerance scheduler for the Newton iteration
+            import dp
+            implicit none(type, external)
             real(dp), intent(out) :: tol
             !! Tolerance to be used
             real(dp), intent(in) :: target_tol
@@ -195,6 +211,7 @@ contains
     !------------------------------------------------------
 
     subroutine print_newton_sp(self, reset_counters, verbose)
+        implicit none(type, external)
         character(len=*), parameter :: this_procedure = 'print_newton_sp'
         class(newton_sp_metadata), intent(inout) :: self
         logical, optional, intent(in) :: reset_counters
@@ -233,7 +250,6 @@ contains
             call logger%log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end subroutine print_newton_sp
 
     subroutine reset_newton_sp(self)
@@ -244,14 +260,13 @@ contains
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
         if (allocated(self%tol)) deallocate(self%tol)
-        return
     end subroutine reset_newton_sp
 
     subroutine record_data_sp(self, res, tol)
         class(newton_sp_metadata), intent(inout) :: self
-        real(sp) :: res
+        real(sp), intent(in) :: res
         !! Residual of the current evaluation
-        real(sp) :: tol
+        real(sp), intent(in) :: tol
         !! Tolerance of the current evaluation
         if (.not.allocated(self%res)) then
             allocate(self%res(1))
@@ -266,10 +281,10 @@ contains
             self%tol = [ self%tol, tol ]
         end if
         self%eval_counter_record = self%eval_counter_record + 1
-        return
     end subroutine record_data_sp
 
     subroutine print_newton_dp(self, reset_counters, verbose)
+        implicit none(type, external)
         character(len=*), parameter :: this_procedure = 'print_newton_dp'
         class(newton_dp_metadata), intent(inout) :: self
         logical, optional, intent(in) :: reset_counters
@@ -308,7 +323,6 @@ contains
             call logger%log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-        return
     end subroutine print_newton_dp
 
     subroutine reset_newton_dp(self)
@@ -319,14 +333,13 @@ contains
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
         if (allocated(self%tol)) deallocate(self%tol)
-        return
     end subroutine reset_newton_dp
 
     subroutine record_data_dp(self, res, tol)
         class(newton_dp_metadata), intent(inout) :: self
-        real(dp) :: res
+        real(dp), intent(in) :: res
         !! Residual of the current evaluation
-        real(dp) :: tol
+        real(dp), intent(in) :: tol
         !! Tolerance of the current evaluation
         if (.not.allocated(self%res)) then
             allocate(self%res(1))
@@ -341,10 +354,7 @@ contains
             self%tol = [ self%tol, tol ]
         end if
         self%eval_counter_record = self%eval_counter_record + 1
-        return
     end subroutine record_data_dp
-
-
 
     subroutine newton_rsp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
         class(abstract_system_rsp),                         intent(inout) :: sys
@@ -428,11 +438,9 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
-        write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, this_module, this_procedure)
+        call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
@@ -511,8 +519,6 @@ contains
 
         call sys%reset_eval_counter('newton%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end subroutine newton_rsp
 
     subroutine newton_rdp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
@@ -597,11 +603,9 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
-        write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, this_module, this_procedure)
+        call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
@@ -680,8 +684,6 @@ contains
 
         call sys%reset_eval_counter('newton%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end subroutine newton_rdp
 
     subroutine newton_csp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
@@ -766,11 +768,9 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
-        write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, this_module, this_procedure)
+        call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
@@ -849,8 +849,6 @@ contains
 
         call sys%reset_eval_counter('newton%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end subroutine newton_csp
 
     subroutine newton_cdp(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
@@ -935,11 +933,9 @@ contains
             call logger%log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-            return
         end if
 
-        write(msg,'(A)') 'Starting Newton iteration ...'
-        call logger%log_information(msg, this_module, this_procedure)
+        call logger%log_information('Starting Newton iteration ...', this_module, this_procedure)
         ! Newton iteration
         newton: do i = 1, maxiter
 
@@ -1018,8 +1014,6 @@ contains
 
         call sys%reset_eval_counter('newton%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end subroutine newton_cdp
 
 
@@ -1052,8 +1046,8 @@ contains
         step    = one_rsp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_rsp, invphi2*one_rsp, invphi*one_rsp, one_rsp /)
-        res   = (/ rold, zero_rsp, zero_rsp, zero_rsp /)
+        alpha = [zero_rsp, invphi2*one_rsp, invphi*one_rsp, one_rsp]
+        res   = [rold, zero_rsp, zero_rsp, zero_rsp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1120,9 +1114,7 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call logger%log_information(msg, this_module, this_procedure)
         end if
-
-        return
-    end subroutine
+    end subroutine increment_bisection_rsp
 
     subroutine increment_bisection_rdp(X, sys, increment, rold, tol, maxstep)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
@@ -1153,8 +1145,8 @@ contains
         step    = one_rdp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_rdp, invphi2*one_rdp, invphi*one_rdp, one_rdp /)
-        res   = (/ rold, zero_rdp, zero_rdp, zero_rdp /)
+        alpha = [zero_rdp, invphi2*one_rdp, invphi*one_rdp, one_rdp]
+        res   = [rold, zero_rdp, zero_rdp, zero_rdp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1221,9 +1213,7 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call logger%log_information(msg, this_module, this_procedure)
         end if
-
-        return
-    end subroutine
+    end subroutine increment_bisection_rdp
 
     subroutine increment_bisection_csp(X, sys, increment, rold, tol, maxstep)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
@@ -1254,8 +1244,8 @@ contains
         step    = one_csp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_csp, invphi2*one_csp, invphi*one_csp, one_csp /)
-        res   = (/ rold, zero_rsp, zero_rsp, zero_rsp /)
+        alpha = [zero_csp, invphi2*one_csp, invphi*one_csp, one_csp]
+        res   = [rold, zero_rsp, zero_rsp, zero_rsp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1322,9 +1312,7 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call logger%log_information(msg, this_module, this_procedure)
         end if
-
-        return
-    end subroutine
+    end subroutine increment_bisection_csp
 
     subroutine increment_bisection_cdp(X, sys, increment, rold, tol, maxstep)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
@@ -1355,8 +1343,8 @@ contains
         step    = one_cdp
         invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
         invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
-        alpha = (/ zero_cdp, invphi2*one_cdp, invphi*one_cdp, one_cdp /)
-        res   = (/ rold, zero_rdp, zero_rdp, zero_rdp /)
+        alpha = [zero_cdp, invphi2*one_cdp, invphi*one_cdp, one_cdp]
+        res   = [rold, zero_rdp, zero_rdp, zero_rdp]
 
         call X%add(increment)
         ! evaluate residual norm
@@ -1423,9 +1411,7 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call logger%log_information(msg, this_module, this_procedure)
         end if
-
-        return
-    end subroutine
+    end subroutine increment_bisection_cdp
 
 
     !--------------------------------------------------------------------
@@ -1456,7 +1442,6 @@ contains
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
             call logger%log_information(msg, this_module, this_procedure)
         end if
-        return
     end subroutine constant_tol_sp
 
     subroutine dynamic_tol_sp(tol, target_tol, rnorm, iter, info)
@@ -1496,7 +1481,6 @@ contains
             write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
             call logger%log_information(msg, this_module, this_procedure)
         end if
-        return
     end subroutine dynamic_tol_sp
 
     !--------------------------------------------------------------------
@@ -1527,7 +1511,6 @@ contains
             write(msg,'(A,E9.2)') 'Solver tolerance set to tol= ', tol
             call logger%log_information(msg, this_module, this_procedure)
         end if
-        return
     end subroutine constant_tol_dp
 
     subroutine dynamic_tol_dp(tol, target_tol, rnorm, iter, info)
@@ -1567,8 +1550,6 @@ contains
             write(msg,'(A,E9.2)') 'solver tolerances unchanged at tol= ', tol_old
             call logger%log_information(msg, this_module, this_procedure)
         end if
-        return
     end subroutine dynamic_tol_dp
-
 
 end module LightKrylov_NewtonKrylov
