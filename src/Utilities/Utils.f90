@@ -436,7 +436,7 @@ module LightKrylov_Utils
     end interface
 
     interface apply_givens_rotation
-        module subroutine apply_givens_rotation_rsp(h, c, s)
+        pure module subroutine apply_givens_rotation_rsp(h, c, s)
             implicit none(type, external)
             real(sp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.

@@ -661,7 +661,6 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = r; h(k+1) = 0.0_sp
     end procedure apply_givens_rotation_rsp
-
     module procedure givens_rotation_rdp
         g = x / norm(x, 2)
     end procedure givens_rotation_rdp
@@ -680,7 +679,6 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = r; h(k+1) = 0.0_dp
     end procedure apply_givens_rotation_rdp
-
     module procedure givens_rotation_csp
         g = x / norm(x, 2)
     end procedure givens_rotation_csp
@@ -702,7 +700,6 @@ contains
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
 
     end procedure apply_givens_rotation_csp
-
     module procedure givens_rotation_cdp
         g = x / norm(x, 2)
     end procedure givens_rotation_cdp
