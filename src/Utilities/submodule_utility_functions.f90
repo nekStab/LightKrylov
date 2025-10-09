@@ -4,7 +4,7 @@ submodule(lightkrylov_utils) utility_functions
     !-------------------------------
     use stdlib_optval, only: optval
     use stdlib_linalg_constants, only: ilp
-    use stdlib_linalg_lapack, only: geev, trsen
+    use stdlib_linalg_lapack, only: geev, trsen, lartg, rot
     use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
 
@@ -634,8 +634,8 @@ contains
 
     module procedure apply_givens_rotation_rsp
         integer(ilp) :: i, k
-        real(sp) :: t, g(2)
-
+        real(sp) :: t, r, g(2)
+        
         !> Size of the column.
         k = size(h) - 1
 
@@ -647,10 +647,9 @@ contains
         enddo
 
         !> Compute the sine and cosine compoennts for the next rotation.
-        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
+        call lartg(h(k), h(k+1), c(k), s(k), r)
         !> Eliminiate H(k+1, k).
-        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
+        h(k) = r; h(k+1) = 0.0_sp
     end procedure apply_givens_rotation_rsp
     module procedure givens_rotation_rdp
         g = x / norm(x, 2)
@@ -658,8 +657,8 @@ contains
 
     module procedure apply_givens_rotation_rdp
         integer(ilp) :: i, k
-        real(dp) :: t, g(2)
-
+        real(dp) :: t, r, g(2)
+        
         !> Size of the column.
         k = size(h) - 1
 
@@ -671,10 +670,9 @@ contains
         enddo
 
         !> Compute the sine and cosine compoennts for the next rotation.
-        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
+        call lartg(h(k), h(k+1), c(k), s(k), r)
         !> Eliminiate H(k+1, k).
-        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
+        h(k) = r; h(k+1) = 0.0_dp
     end procedure apply_givens_rotation_rdp
     module procedure givens_rotation_csp
         g = x / norm(x, 2)
@@ -682,8 +680,8 @@ contains
 
     module procedure apply_givens_rotation_csp
         integer(ilp) :: i, k
-        complex(sp) :: t, g(2)
-
+        complex(sp) :: t, r, g(2)
+        
         !> Size of the column.
         k = size(h) - 1
 
@@ -696,7 +694,6 @@ contains
 
         !> Compute the sine and cosine compoennts for the next rotation.
         g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
     end procedure apply_givens_rotation_csp
@@ -706,8 +703,8 @@ contains
 
     module procedure apply_givens_rotation_cdp
         integer(ilp) :: i, k
-        complex(dp) :: t, g(2)
-
+        complex(dp) :: t, r, g(2)
+        
         !> Size of the column.
         k = size(h) - 1
 
@@ -720,7 +717,6 @@ contains
 
         !> Compute the sine and cosine compoennts for the next rotation.
         g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
     end procedure apply_givens_rotation_cdp

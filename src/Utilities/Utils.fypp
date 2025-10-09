@@ -272,7 +272,7 @@ module LightKrylov_Utils
 
     interface apply_givens_rotation
         #:for kind, type in RC_KINDS_TYPES
-        pure module subroutine apply_givens_rotation_${type[0]}$${kind}$(h, c, s)
+        module subroutine apply_givens_rotation_${type[0]}$${kind}$(h, c, s)
             implicit none(type, external)
             ${type}$, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
