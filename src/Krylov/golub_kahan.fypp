@@ -61,8 +61,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_bidiagonalization_${type[0]}$${kind}$
 
     #:endfor

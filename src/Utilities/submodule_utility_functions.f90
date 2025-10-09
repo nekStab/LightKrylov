@@ -37,6 +37,7 @@ contains
             call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure assert_shape_matrix_rsp
+
     module procedure assert_shape_vector_rdp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
@@ -52,6 +53,7 @@ contains
             call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure assert_shape_matrix_rdp
+
     module procedure assert_shape_vector_csp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
@@ -67,6 +69,7 @@ contains
             call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure assert_shape_matrix_csp
+
     module procedure assert_shape_vector_cdp
         if (any(shape(v) /= size)) then
             write(output_unit, *) "Vector "//vecname//" has illegal length", shape(v), &
@@ -108,6 +111,7 @@ contains
         ! Complex eigenvalues.
         vals = one_csp*wr + one_im_csp*wi
     end procedure eig_rsp
+
     module procedure eig_rdp
         character(len=*), parameter :: this_procedure = 'eig_rdp'
         ! Lapack variables.
@@ -127,6 +131,7 @@ contains
         ! Complex eigenvalues.
         vals = one_cdp*wr + one_im_cdp*wi
     end procedure eig_rdp
+
     module procedure eig_csp
         character(len=*), parameter :: this_procedure = 'eig_csp'
         ! Lapack variables.
@@ -145,6 +150,7 @@ contains
         call check_info(info, "GEEV", this_module, "eig_csp")
 
     end procedure eig_csp
+
     module procedure eig_cdp
         character(len=*), parameter :: this_procedure = 'eig_cdp'
         ! Lapack variables.
@@ -183,8 +189,8 @@ contains
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rsp")
         if (time_lightkrylov()) call timer%stop('trsen')
-
     end procedure ordschur_rsp
+
     module procedure ordschur_rdp
         ! Lapack variables.
         character, parameter :: job="n", compq="v"
@@ -201,8 +207,8 @@ contains
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, wr, wi, m, s, sep, work, lwork, iwork, liwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_rdp")
         if (time_lightkrylov()) call timer%stop('trsen')
-
     end procedure ordschur_rdp
+
     module procedure ordschur_csp
         ! Lapack variables.
         character, parameter :: job="n", compq="v"
@@ -217,8 +223,8 @@ contains
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_csp")
         if (time_lightkrylov()) call timer%stop('trsen')
-
     end procedure ordschur_csp
+
     module procedure ordschur_cdp
         ! Lapack variables.
         character, parameter :: job="n", compq="v"
@@ -233,7 +239,6 @@ contains
         call trsen(job, compq, selected, n, T, ldt, Q, ldq, w, m, s, sep, work, lwork, info)
         call check_info(info, "TRSEN", this_module, "ordschur_cdp")
         if (time_lightkrylov()) call timer%stop('trsen')
-
     end procedure ordschur_cdp
 
     !----- Matrix Square-Root -----
@@ -278,6 +283,7 @@ contains
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure sqrtm_rsp
+
     module procedure sqrtm_rdp
         character(len=*), parameter :: this_procedure = 'sqrtm_rdp'
         ! Singular value decomposition.
@@ -318,6 +324,7 @@ contains
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure sqrtm_rdp
+
     module procedure sqrtm_csp
         character(len=*), parameter :: this_procedure = 'sqrtm_csp'
         ! Singular value decomposition.
@@ -358,6 +365,7 @@ contains
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure sqrtm_csp
+
     module procedure sqrtm_cdp
         character(len=*), parameter :: this_procedure = 'sqrtm_cdp'
         ! Singular value decomposition.
@@ -455,8 +463,8 @@ contains
         enddo
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure expm_rsp
+
     module procedure expm_rdp
         character(len=*), parameter :: this_procedure = 'expm_rdp'
         real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
@@ -511,8 +519,8 @@ contains
         enddo
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure expm_rdp
+
     module procedure expm_csp
         character(len=*), parameter :: this_procedure = 'expm_csp'
         complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
@@ -567,8 +575,8 @@ contains
         enddo
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure expm_csp
+
     module procedure expm_cdp
         character(len=*), parameter :: this_procedure = 'expm_cdp'
         complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
@@ -623,7 +631,6 @@ contains
         enddo
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure expm_cdp
 
     !----- Givens rotations -----
@@ -652,6 +659,7 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
     end procedure apply_givens_rotation_rsp
+
     module procedure givens_rotation_rdp
         g = x / norm(x, 2)
     end procedure givens_rotation_rdp
@@ -676,6 +684,7 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
     end procedure apply_givens_rotation_rdp
+
     module procedure givens_rotation_csp
         g = x / norm(x, 2)
     end procedure givens_rotation_csp
@@ -700,6 +709,7 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
     end procedure apply_givens_rotation_csp
+
     module procedure givens_rotation_cdp
         g = x / norm(x, 2)
     end procedure givens_rotation_cdp
@@ -737,6 +747,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_rsp
+    
     module procedure solve_triangular_rdp
         integer(ilp) :: i, n
         !> Problem's dimensions.
@@ -747,6 +758,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_rdp
+    
     module procedure solve_triangular_csp
         integer(ilp) :: i, n
         !> Problem's dimensions.
@@ -757,6 +769,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_csp
+    
     module procedure solve_triangular_cdp
         integer(ilp) :: i, n
         !> Problem's dimensions.
@@ -767,5 +780,6 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_cdp
+    
 end submodule utility_functions
 

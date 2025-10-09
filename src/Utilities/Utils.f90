@@ -19,7 +19,6 @@ module LightKrylov_Utils
     !-----     LightKrylov     -----
     !-------------------------------
     use LightKrylov_Constants
-    ! use LightKrylov_Logger
     use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
                                   stop_error, check_info
 
@@ -102,6 +101,7 @@ module LightKrylov_Utils
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
         end subroutine assert_shape_matrix_rsp
+
         module subroutine assert_shape_vector_rdp(v, size, vecname, module, procedure)
             implicit none(type, external)
             real(dp), intent(in) :: v(:)
@@ -119,6 +119,7 @@ module LightKrylov_Utils
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
         end subroutine assert_shape_matrix_rdp
+
         module subroutine assert_shape_vector_csp(v, size, vecname, module, procedure)
             implicit none(type, external)
             complex(sp), intent(in) :: v(:)
@@ -136,6 +137,7 @@ module LightKrylov_Utils
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
         end subroutine assert_shape_matrix_csp
+
         module subroutine assert_shape_vector_cdp(v, size, vecname, module, procedure)
             implicit none(type, external)
             complex(dp), intent(in) :: v(:)
@@ -153,6 +155,7 @@ module LightKrylov_Utils
             character(len=*), intent(in) :: module
             character(len=*), intent(in) :: procedure
         end subroutine assert_shape_matrix_cdp
+
     end interface
 
     interface log2
@@ -186,7 +189,8 @@ module LightKrylov_Utils
         !!
         !!  ### Arguments
         !!
-        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an `intent(in)` argument.
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an 
+        !!  `intent(in)` argument.
         !!
         !!  `vecs`: Square array of the same size, type, and kind as `A` containing the eigenvectors
         !!  (following LAPACK's convention for `real` matrices). It is an `intent(out)` argument.
@@ -205,24 +209,28 @@ module LightKrylov_Utils
             real(sp), intent(out) :: vecs(:, :)
             complex(sp), intent(out) :: vals(:)
         end subroutine eig_rsp
+
         module subroutine eig_rdp(A, vecs, vals)
             implicit none(type, external)
             real(dp), intent(in) :: A(:, :)
             real(dp), intent(out) :: vecs(:, :)
             complex(dp), intent(out) :: vals(:)
         end subroutine eig_rdp
+
         module subroutine eig_csp(A, vecs, vals)
             implicit none(type, external)
             complex(sp), intent(in) :: A(:, :)
             complex(sp), intent(out) :: vecs(:, :)
             complex(sp), intent(out) :: vals(:)
         end subroutine eig_csp
+
         module subroutine eig_cdp(A, vecs, vals)
             implicit none(type, external)
             complex(dp), intent(in) :: A(:, :)
             complex(dp), intent(out) :: vecs(:, :)
             complex(dp), intent(out) :: vals(:)
         end subroutine eig_cdp
+
     end interface
 
     interface ordschur
@@ -242,39 +250,43 @@ module LightKrylov_Utils
         !!  ### Arguments
         !!
         !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix. 
-        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` argument.
+        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` 
+        !!  argument.
         !!  
         !!  `Q`: Two-dimensional square array of the same size, type and kind as `A`. It contains
         !!  the original Schur basis on entry and the re-ordered one on exit.
         !!  It is an `intent(inout)` argument.
         !!
         !!  `selected`: `logical` rank-1 array selecting which eigenvalues need to be moved in the
-        !!  upper left block of the Schur factorization.
-        !!  It is an `intent(in)` arguement.
+        !!  upper left block of the Schur factorization. It is an `intent(in)` arguement.
         module subroutine ordschur_rsp(T, Q, selected)
             implicit none(type, external)
             real(sp), intent(inout) :: T(:, :)
             real(sp), intent(inout) :: Q(:, :)
             logical, intent(in) :: selected(:)
         end subroutine ordschur_rsp
+
         module subroutine ordschur_rdp(T, Q, selected)
             implicit none(type, external)
             real(dp), intent(inout) :: T(:, :)
             real(dp), intent(inout) :: Q(:, :)
             logical, intent(in) :: selected(:)
         end subroutine ordschur_rdp
+
         module subroutine ordschur_csp(T, Q, selected)
             implicit none(type, external)
             complex(sp), intent(inout) :: T(:, :)
             complex(sp), intent(inout) :: Q(:, :)
             logical, intent(in) :: selected(:)
         end subroutine ordschur_csp
+
         module subroutine ordschur_cdp(T, Q, selected)
             implicit none(type, external)
             complex(dp), intent(inout) :: T(:, :)
             complex(dp), intent(inout) :: Q(:, :)
             logical, intent(in) :: selected(:)
         end subroutine ordschur_cdp
+
     end interface
 
     interface sqrtm
@@ -305,24 +317,28 @@ module LightKrylov_Utils
             real(sp), intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_rsp
+
         module subroutine sqrtm_rdp(A, sqrtA, info)
             implicit none(type, external)
             real(dp), intent(inout) :: A(:, :)
             real(dp), intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_rdp
+
         module subroutine sqrtm_csp(A, sqrtA, info)
             implicit none(type, external)
             complex(sp), intent(inout) :: A(:, :)
             complex(sp), intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_csp
+
         module subroutine sqrtm_cdp(A, sqrtA, info)
             implicit none(type, external)
             complex(dp), intent(inout) :: A(:, :)
             complex(dp), intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_cdp
+
     end interface
 
     interface expm
@@ -348,68 +364,76 @@ module LightKrylov_Utils
             real(sp), intent(in) :: A(:, :)
             !! Matrix to be exponentiated.
             real(sp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(tA).
+            !! Output matrix E = exp(A).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
         end function expm_rsp
+
         module function expm_rdp(A, order) result(E)
             implicit none(type, external)
             real(dp), intent(in) :: A(:, :)
             !! Matrix to be exponentiated.
             real(dp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(tA).
+            !! Output matrix E = exp(A).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
         end function expm_rdp
+
         module function expm_csp(A, order) result(E)
             implicit none(type, external)
             complex(sp), intent(in) :: A(:, :)
             !! Matrix to be exponentiated.
             complex(sp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(tA).
+            !! Output matrix E = exp(A).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
         end function expm_csp
+
         module function expm_cdp(A, order) result(E)
             implicit none(type, external)
             complex(dp), intent(in) :: A(:, :)
             !! Matrix to be exponentiated.
             complex(dp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(tA).
+            !! Output matrix E = exp(A).
             integer, intent(in), optional :: order
             !! Order of the Pade approximation.
         end function expm_cdp
+
     end interface
 
     interface givens_rotation
         pure module function givens_rotation_rsp(x) result(g)
             implicit none(type, external)
             real(sp), intent(in) :: x(2)
-            !! Vector whose second needs to be eliminated.
+            !! Vector whose second entry needs to be eliminated.
             real(sp)             :: g(2)
             !! Entries of the Givens rotation matrix.
         end function givens_rotation_rsp
+
         pure module function givens_rotation_rdp(x) result(g)
             implicit none(type, external)
             real(dp), intent(in) :: x(2)
-            !! Vector whose second needs to be eliminated.
+            !! Vector whose second entry needs to be eliminated.
             real(dp)             :: g(2)
             !! Entries of the Givens rotation matrix.
         end function givens_rotation_rdp
+
         pure module function givens_rotation_csp(x) result(g)
             implicit none(type, external)
             complex(sp), intent(in) :: x(2)
-            !! Vector whose second needs to be eliminated.
+            !! Vector whose second entry needs to be eliminated.
             complex(sp)             :: g(2)
             !! Entries of the Givens rotation matrix.
         end function givens_rotation_csp
+
         pure module function givens_rotation_cdp(x) result(g)
             implicit none(type, external)
             complex(dp), intent(in) :: x(2)
-            !! Vector whose second needs to be eliminated.
+            !! Vector whose second entry needs to be eliminated.
             complex(dp)             :: g(2)
             !! Entries of the Givens rotation matrix.
         end function givens_rotation_cdp
+
     end interface
 
     interface apply_givens_rotation
@@ -422,6 +446,7 @@ module LightKrylov_Utils
             real(sp), intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_rsp
+
         pure module subroutine apply_givens_rotation_rdp(h, c, s)
             implicit none(type, external)
             real(dp), intent(inout) :: h(:)
@@ -431,6 +456,7 @@ module LightKrylov_Utils
             real(dp), intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_rdp
+
         pure module subroutine apply_givens_rotation_csp(h, c, s)
             implicit none(type, external)
             complex(sp), intent(inout) :: h(:)
@@ -440,6 +466,7 @@ module LightKrylov_Utils
             complex(sp), intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_csp
+
         pure module subroutine apply_givens_rotation_cdp(h, c, s)
             implicit none(type, external)
             complex(dp), intent(inout) :: h(:)
@@ -449,6 +476,7 @@ module LightKrylov_Utils
             complex(dp), intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_cdp
+
     end interface
 
     interface solve_triangular
@@ -461,6 +489,7 @@ module LightKrylov_Utils
             real(sp), allocatable :: x(:)
             !! Solution vector.
         end function solve_triangular_rsp
+
         pure module function solve_triangular_rdp(A, b) result(x)
             implicit none(type, external)
             real(dp), intent(in) :: A(:, :)
@@ -470,6 +499,7 @@ module LightKrylov_Utils
             real(dp), allocatable :: x(:)
             !! Solution vector.
         end function solve_triangular_rdp
+
         pure module function solve_triangular_csp(A, b) result(x)
             implicit none(type, external)
             complex(sp), intent(in) :: A(:, :)
@@ -479,6 +509,7 @@ module LightKrylov_Utils
             complex(sp), allocatable :: x(:)
             !! Solution vector.
         end function solve_triangular_csp
+
         pure module function solve_triangular_cdp(A, b) result(x)
             implicit none(type, external)
             complex(dp), intent(in) :: A(:, :)
@@ -488,5 +519,6 @@ module LightKrylov_Utils
             complex(dp), allocatable :: x(:)
             !! Solution vector.
         end function solve_triangular_cdp
+
     end interface
 end module LightKrylov_Utils

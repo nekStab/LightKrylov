@@ -39,8 +39,8 @@ contains
             call stop_error("Matrix shape assertion error", module, procedure)
         endif
     end procedure assert_shape_matrix_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !--------------------------------------------
     !-----     Linear Algebra Utilities     -----
     !--------------------------------------------
@@ -78,8 +78,8 @@ contains
         vals = one_c${kind}$*wr + one_im_c${kind}$*wi
         #:endif
     end procedure eig_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !----- Schur Factorization ------
 
     !----- OrdSchur Factorization -----
@@ -108,10 +108,9 @@ contains
         #:endif
         call check_info(info, "TRSEN", this_module, "ordschur_${type[0]}$${kind}$")
         if (time_lightkrylov()) call timer%stop('trsen')
-
     end procedure ordschur_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !----- Matrix Square-Root -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -155,8 +154,8 @@ contains
         sqrtA = matmul(U, matmul(diag(S), hermitian(U)))
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure sqrtm_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !----- Dense Matrix Exponential -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -214,10 +213,9 @@ contains
         enddo
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        return
     end procedure expm_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !----- Givens rotations -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -245,8 +243,8 @@ contains
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_${kind}$
     end procedure apply_givens_rotation_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !----- Solving triangular systems -----
 
     #:for kind, type in RC_KINDS_TYPES
@@ -260,6 +258,7 @@ contains
             x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
         enddo
     end procedure solve_triangular_${type[0]}$${kind}$
+    
     #:endfor
 end submodule utility_functions
 

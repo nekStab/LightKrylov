@@ -43,8 +43,6 @@ contains
             ! Orthonormalize.
             call orthonormalize_basis(X(:p))
         endif
-
-        return
     end procedure initialize_krylov_subspace_${type[0]}$${kind}$
     #:endfor
    
@@ -63,11 +61,9 @@ contains
         call qr(X, R, info)
         call check_info(info, 'qr', this_module, this_procedure)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-
-        return
     end procedure orthonormalize_basis_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
     !---------------------------------------------------
     !-----     Check orthonormality of a basis     -----
     !---------------------------------------------------
@@ -78,10 +74,10 @@ contains
         ortho = .true.
         G = Gram(X)
         if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal. Cannot orthonormalize.
+            ! The basis is not orthonormal.
             ortho = .false.
         end if
     end procedure is_orthonormal_${type[0]}$${kind}$
-    #:endfor
 
+    #:endfor
 end submodule krylov_utilities

@@ -109,7 +109,8 @@ module LightKrylov_AbstractVectors
         !!
         !!  ### Description
         !!
-        !!  This interface provides methods for computing the Gram matrix associated to a basis of `abstract_vector` \( \mathbf{X} \).
+        !!  This interface provides methods for computing the Gram matrix associated to a basis of 
+        !!  `abstract_vector` \( \mathbf{X} \).
         !!
         !!  ### Example
         !!
@@ -334,6 +335,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_rsp
             implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: self
+            !! Vector to be initialized.
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rsp
 
@@ -342,7 +344,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_rsp, sp
             implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: self
-            !! Input/Output vector.
+            !! Vector to be scaled.
             real(sp), intent(in) :: alpha
             !! Scaling factor.
         end subroutine abstract_scal_rsp
@@ -373,7 +375,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_rsp
             implicit none(type, external)
             class(abstract_vector_rsp), intent(in) :: self
-            !! Vectors whose dot product will be computed.
+            !! Vector for which to return the size.
             integer :: N
             !! Size of the vector
         end function abstract_get_size_rsp
@@ -425,6 +427,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_rdp
             implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: self
+            !! Vector to be initialized.
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_rdp
 
@@ -433,7 +436,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_rdp, dp
             implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: self
-            !! Input/Output vector.
+            !! Vector to be scaled.
             real(dp), intent(in) :: alpha
             !! Scaling factor.
         end subroutine abstract_scal_rdp
@@ -464,7 +467,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_rdp
             implicit none(type, external)
             class(abstract_vector_rdp), intent(in) :: self
-            !! Vectors whose dot product will be computed.
+            !! Vector for which to return the size.
             integer :: N
             !! Size of the vector
         end function abstract_get_size_rdp
@@ -516,6 +519,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_csp
             implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: self
+            !! Vector to be initialized.
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_csp
 
@@ -524,7 +528,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_csp, sp
             implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: self
-            !! Input/Output vector.
+            !! Vector to be scaled.
             complex(sp), intent(in) :: alpha
             !! Scaling factor.
         end subroutine abstract_scal_csp
@@ -555,7 +559,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_csp
             implicit none(type, external)
             class(abstract_vector_csp), intent(in) :: self
-            !! Vectors whose dot product will be computed.
+            !! Vector for which to return the size.
             integer :: N
             !! Size of the vector
         end function abstract_get_size_csp
@@ -607,6 +611,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_cdp
             implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: self
+            !! Vector to be initialized.
             logical, optional, intent(in) :: ifnorm
         end subroutine abstract_rand_cdp
 
@@ -615,7 +620,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_cdp, dp
             implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: self
-            !! Input/Output vector.
+            !! Vector to be scaled.
             complex(dp), intent(in) :: alpha
             !! Scaling factor.
         end subroutine abstract_scal_cdp
@@ -646,7 +651,7 @@ module LightKrylov_AbstractVectors
             import abstract_vector_cdp
             implicit none(type, external)
             class(abstract_vector_cdp), intent(in) :: self
-            !! Vectors whose dot product will be computed.
+            !! Vector for which to return the size.
             integer :: N
             !! Size of the vector
         end function abstract_get_size_cdp
@@ -773,7 +778,7 @@ contains
         class(abstract_vector_rsp), intent(inout) :: self
         !! Input/Output vector.
         class(abstract_vector_rsp), intent(in) :: vec
-        !! Vector to be added.
+        !! Vector to be subtracted.
         call self%axpby(-one_rsp, vec, one_rsp)
     end subroutine sub_rsp
 
@@ -811,7 +816,7 @@ contains
         class(abstract_vector_rdp), intent(inout) :: self
         !! Input/Output vector.
         class(abstract_vector_rdp), intent(in) :: vec
-        !! Vector to be added.
+        !! Vector to be subtracted.
         call self%axpby(-one_rdp, vec, one_rdp)
     end subroutine sub_rdp
 
@@ -849,7 +854,7 @@ contains
         class(abstract_vector_csp), intent(inout) :: self
         !! Input/Output vector.
         class(abstract_vector_csp), intent(in) :: vec
-        !! Vector to be added.
+        !! Vector to be subtracted.
         call self%axpby(-one_csp, vec, one_csp)
     end subroutine sub_csp
 
@@ -887,7 +892,7 @@ contains
         class(abstract_vector_cdp), intent(inout) :: self
         !! Input/Output vector.
         class(abstract_vector_cdp), intent(in) :: vec
-        !! Vector to be added.
+        !! Vector to be subtracted.
         call self%axpby(-one_cdp, vec, one_cdp)
     end subroutine sub_cdp
 
@@ -919,7 +924,6 @@ contains
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
         vec%n = size(x) ; vec%data = x
-        return
     end function initialize_dense_vector_from_array_rsp
 
     subroutine dense_zero_rsp(self)
@@ -927,7 +931,6 @@ contains
         class(dense_vector_rsp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_rsp
-        return
     end subroutine dense_zero_rsp
 
     subroutine dense_rand_rsp(self, ifnorm)
@@ -935,7 +938,6 @@ contains
         class(dense_vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         call random_number(self%data)
-        return
     end subroutine dense_rand_rsp
 
     subroutine dense_scal_rsp(self, alpha)
@@ -945,7 +947,6 @@ contains
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
-        return
     end subroutine dense_scal_rsp
 
     subroutine dense_axpby_rsp(alpha, vec, beta, self)
@@ -957,16 +958,15 @@ contains
         m = vec%get_size()
         if(.not. allocated(self%data)) allocate(self%data(m), source=zero_rsp)
         n = self%get_size()
-        if (m /= n) error stop "Inconsistent size between the two vectors."
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
 
         select type (vec)
         type is(dense_vector_rsp)
             if (beta /= zero_rsp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_rsp','IN',this_module,'dense_axpby_rsp')
         end select
-        return
     end subroutine dense_axpby_rsp
 
     function dense_dot_rsp(self, vec) result(alpha)
@@ -980,9 +980,8 @@ contains
         type is(dense_vector_rsp)
             alpha = dot(n, self%data, 1, vec%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_rsp','IN',this_module,'dense_dot_rsp')
         end select
-        return
     end function dense_dot_rsp
 
     function dense_get_size_rsp(self) result(n)
@@ -990,7 +989,6 @@ contains
         class(dense_vector_rsp), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
     end function dense_get_size_rsp
 
     function initialize_dense_vector_from_array_rdp(x) result(vec)
@@ -998,7 +996,6 @@ contains
         real(dp), intent(in) :: x(:)
         type(dense_vector_rdp) :: vec
         vec%n = size(x) ; vec%data = x
-        return
     end function initialize_dense_vector_from_array_rdp
 
     subroutine dense_zero_rdp(self)
@@ -1006,7 +1003,6 @@ contains
         class(dense_vector_rdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_rdp
-        return
     end subroutine dense_zero_rdp
 
     subroutine dense_rand_rdp(self, ifnorm)
@@ -1014,7 +1010,6 @@ contains
         class(dense_vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         call random_number(self%data)
-        return
     end subroutine dense_rand_rdp
 
     subroutine dense_scal_rdp(self, alpha)
@@ -1024,7 +1019,6 @@ contains
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
-        return
     end subroutine dense_scal_rdp
 
     subroutine dense_axpby_rdp(alpha, vec, beta, self)
@@ -1036,16 +1030,15 @@ contains
         m = vec%get_size()
         if(.not. allocated(self%data)) allocate(self%data(m), source=zero_rdp)
         n = self%get_size()
-        if (m /= n) error stop "Inconsistent size between the two vectors."
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
 
         select type (vec)
         type is(dense_vector_rdp)
             if (beta /= zero_rdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_rdp','IN',this_module,'dense_axpby_rdp')
         end select
-        return
     end subroutine dense_axpby_rdp
 
     function dense_dot_rdp(self, vec) result(alpha)
@@ -1059,9 +1052,8 @@ contains
         type is(dense_vector_rdp)
             alpha = dot(n, self%data, 1, vec%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_rdp','IN',this_module,'dense_dot_rdp')
         end select
-        return
     end function dense_dot_rdp
 
     function dense_get_size_rdp(self) result(n)
@@ -1069,7 +1061,6 @@ contains
         class(dense_vector_rdp), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
     end function dense_get_size_rdp
 
     function initialize_dense_vector_from_array_csp(x) result(vec)
@@ -1077,7 +1068,6 @@ contains
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
         vec%n = size(x) ; vec%data = x
-        return
     end function initialize_dense_vector_from_array_csp
 
     subroutine dense_zero_csp(self)
@@ -1085,7 +1075,6 @@ contains
         class(dense_vector_csp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_csp
-        return
     end subroutine dense_zero_csp
 
     subroutine dense_rand_csp(self, ifnorm)
@@ -1095,7 +1084,6 @@ contains
         real(sp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
-        return
     end subroutine dense_rand_csp
 
     subroutine dense_scal_csp(self, alpha)
@@ -1105,7 +1093,6 @@ contains
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
-        return
     end subroutine dense_scal_csp
 
     subroutine dense_axpby_csp(alpha, vec, beta, self)
@@ -1117,16 +1104,15 @@ contains
         m = vec%get_size()
         if(.not. allocated(self%data)) allocate(self%data(m), source=zero_csp)
         n = self%get_size()
-        if (m /= n) error stop "Inconsistent size between the two vectors."
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
 
         select type (vec)
         type is(dense_vector_csp)
             if (beta /= zero_csp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_csp','IN',this_module,'dense_axpby_csp')
         end select
-        return
     end subroutine dense_axpby_csp
 
     function dense_dot_csp(self, vec) result(alpha)
@@ -1140,9 +1126,8 @@ contains
         type is(dense_vector_csp)
             alpha = dotc(n, self%data, 1, vec%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_csp','IN',this_module,'dense_dot_csp')
         end select
-        return
     end function dense_dot_csp
 
     function dense_get_size_csp(self) result(n)
@@ -1150,7 +1135,6 @@ contains
         class(dense_vector_csp), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
     end function dense_get_size_csp
 
     function initialize_dense_vector_from_array_cdp(x) result(vec)
@@ -1158,7 +1142,6 @@ contains
         complex(dp), intent(in) :: x(:)
         type(dense_vector_cdp) :: vec
         vec%n = size(x) ; vec%data = x
-        return
     end function initialize_dense_vector_from_array_cdp
 
     subroutine dense_zero_cdp(self)
@@ -1166,7 +1149,6 @@ contains
         class(dense_vector_cdp), intent(inout) :: self
         if(.not. allocated(self%data)) allocate(self%data(self%n))
         self%data = zero_cdp
-        return
     end subroutine dense_zero_cdp
 
     subroutine dense_rand_cdp(self, ifnorm)
@@ -1176,7 +1158,6 @@ contains
         real(dp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2)) ; call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
-        return
     end subroutine dense_rand_cdp
 
     subroutine dense_scal_cdp(self, alpha)
@@ -1186,7 +1167,6 @@ contains
         integer :: n
         n = self%get_size()
         call scal(n, alpha, self%data, 1)
-        return
     end subroutine dense_scal_cdp
 
     subroutine dense_axpby_cdp(alpha, vec, beta, self)
@@ -1198,16 +1178,15 @@ contains
         m = vec%get_size()
         if(.not. allocated(self%data)) allocate(self%data(m), source=zero_cdp)
         n = self%get_size()
-        if (m /= n) error stop "Inconsistent size between the two vectors."
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
 
         select type (vec)
         type is(dense_vector_cdp)
             if (beta /= zero_cdp) call self%scal(beta)
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_cdp','IN',this_module,'dense_axpby_cdp')
         end select
-        return
     end subroutine dense_axpby_cdp
 
     function dense_dot_cdp(self, vec) result(alpha)
@@ -1221,9 +1200,8 @@ contains
         type is(dense_vector_cdp)
             alpha = dotc(n, self%data, 1, vec%data, 1)
         class default
-            call stop_error("The intent [IN] argument 'vec' must be of type 'dense_vector'", this_module, 'dot')
+            call type_error('vec','dense_vector_cdp','IN',this_module,'dense_dot_cdp')
         end select
-        return
     end function dense_dot_cdp
 
     function dense_get_size_cdp(self) result(n)
@@ -1231,7 +1209,6 @@ contains
         class(dense_vector_cdp), intent(in) :: self
         integer :: n
         n = size(self%data)
-        return
     end function dense_get_size_cdp
 
     
@@ -1266,8 +1243,6 @@ contains
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rsp) ! y = y + X[i]*v[i]
         enddo
-
-        return
     end subroutine linear_combination_vector_rsp
 
     subroutine linear_combination_matrix_rsp(Y, X, B)
@@ -1306,8 +1281,6 @@ contains
                 call Y(j)%axpby(B(i, j), X(i), one_rsp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
-
-        return
     end subroutine linear_combination_matrix_rsp
 
     function gram_matrix_rsp(X) result(G)
@@ -1322,27 +1295,24 @@ contains
                 G(j, i) = G(i, j)
             enddo
         enddo
-        return
     end function gram_matrix_rsp
 
-    function innerprod_vector_rsp(X, y) result(v)
-        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+    function innerprod_vector_rsp(X, v) result(y)
+        !! Computes the inner product vector \( \mathbf{y} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
         implicit none(type, external)
-        class(abstract_vector_rsp), intent(in) :: X(:), y
-        !! Bases of `abstract_vector` whose inner products need to be computed.
-        real(sp) :: v(size(X))
+        class(abstract_vector_rsp), intent(in) :: X(:), v
+        !! Basis and single instance of `abstract_vector` whose inner products need to be computed.
+        real(sp) :: y(size(X))
         !! Resulting inner-product vector.
 
         ! Local variables.
         integer :: i
 
-        v = zero_rsp
+        y = zero_rsp
         do i = 1, size(X)
-            v(i) = X(i)%dot(y)
+            y(i) = X(i)%dot(v)
         enddo
-        
-        return
     end function innerprod_vector_rsp
 
     function innerprod_matrix_rsp(X, Y) result(M)
@@ -1363,22 +1333,20 @@ contains
                 M(i, j) = X(i)%dot(Y(j))
             enddo
         enddo
-
-        return
     end function innerprod_matrix_rsp
 
-    impure elemental subroutine axpby_basis_rsp(alpha, x, beta, y)
+    impure elemental subroutine axpby_basis_rsp(alpha, X, beta, Y)
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(sp)
         !! numbers.
         implicit none(type, external)
-        class(abstract_vector_rsp), intent(in) :: x
+        class(abstract_vector_rsp), intent(in) :: X
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_rsp), intent(inout) :: y
-        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        class(abstract_vector_rsp), intent(inout) :: Y
+        !! Array of `abstract_vector` to be added/subtracted to/from `X`.
         real(sp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call y%axpby(alpha, x, beta)
+        call Y%axpby(alpha, X, beta)
     end subroutine axpby_basis_rsp
 
     impure elemental subroutine zero_basis_rsp(X)
@@ -1429,8 +1397,6 @@ contains
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_rdp) ! y = y + X[i]*v[i]
         enddo
-
-        return
     end subroutine linear_combination_vector_rdp
 
     subroutine linear_combination_matrix_rdp(Y, X, B)
@@ -1469,8 +1435,6 @@ contains
                 call Y(j)%axpby(B(i, j), X(i), one_rdp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
-
-        return
     end subroutine linear_combination_matrix_rdp
 
     function gram_matrix_rdp(X) result(G)
@@ -1485,27 +1449,24 @@ contains
                 G(j, i) = G(i, j)
             enddo
         enddo
-        return
     end function gram_matrix_rdp
 
-    function innerprod_vector_rdp(X, y) result(v)
-        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+    function innerprod_vector_rdp(X, v) result(y)
+        !! Computes the inner product vector \( \mathbf{y} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
         implicit none(type, external)
-        class(abstract_vector_rdp), intent(in) :: X(:), y
-        !! Bases of `abstract_vector` whose inner products need to be computed.
-        real(dp) :: v(size(X))
+        class(abstract_vector_rdp), intent(in) :: X(:), v
+        !! Basis and single instance of `abstract_vector` whose inner products need to be computed.
+        real(dp) :: y(size(X))
         !! Resulting inner-product vector.
 
         ! Local variables.
         integer :: i
 
-        v = zero_rdp
+        y = zero_rdp
         do i = 1, size(X)
-            v(i) = X(i)%dot(y)
+            y(i) = X(i)%dot(v)
         enddo
-        
-        return
     end function innerprod_vector_rdp
 
     function innerprod_matrix_rdp(X, Y) result(M)
@@ -1526,22 +1487,20 @@ contains
                 M(i, j) = X(i)%dot(Y(j))
             enddo
         enddo
-
-        return
     end function innerprod_matrix_rdp
 
-    impure elemental subroutine axpby_basis_rdp(alpha, x, beta, y)
+    impure elemental subroutine axpby_basis_rdp(alpha, X, beta, Y)
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are real(dp)
         !! numbers.
         implicit none(type, external)
-        class(abstract_vector_rdp), intent(in) :: x
+        class(abstract_vector_rdp), intent(in) :: X
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_rdp), intent(inout) :: y
-        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        class(abstract_vector_rdp), intent(inout) :: Y
+        !! Array of `abstract_vector` to be added/subtracted to/from `X`.
         real(dp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call y%axpby(alpha, x, beta)
+        call Y%axpby(alpha, X, beta)
     end subroutine axpby_basis_rdp
 
     impure elemental subroutine zero_basis_rdp(X)
@@ -1592,8 +1551,6 @@ contains
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_csp) ! y = y + X[i]*v[i]
         enddo
-
-        return
     end subroutine linear_combination_vector_csp
 
     subroutine linear_combination_matrix_csp(Y, X, B)
@@ -1632,8 +1589,6 @@ contains
                 call Y(j)%axpby(B(i, j), X(i), one_csp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
-
-        return
     end subroutine linear_combination_matrix_csp
 
     function gram_matrix_csp(X) result(G)
@@ -1648,27 +1603,24 @@ contains
                 G(j, i) = G(i, j)
             enddo
         enddo
-        return
     end function gram_matrix_csp
 
-    function innerprod_vector_csp(X, y) result(v)
-        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+    function innerprod_vector_csp(X, v) result(y)
+        !! Computes the inner product vector \( \mathbf{y} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
         implicit none(type, external)
-        class(abstract_vector_csp), intent(in) :: X(:), y
-        !! Bases of `abstract_vector` whose inner products need to be computed.
-        complex(sp) :: v(size(X))
+        class(abstract_vector_csp), intent(in) :: X(:), v
+        !! Basis and single instance of `abstract_vector` whose inner products need to be computed.
+        complex(sp) :: y(size(X))
         !! Resulting inner-product vector.
 
         ! Local variables.
         integer :: i
 
-        v = zero_csp
+        y = zero_csp
         do i = 1, size(X)
-            v(i) = X(i)%dot(y)
+            y(i) = X(i)%dot(v)
         enddo
-        
-        return
     end function innerprod_vector_csp
 
     function innerprod_matrix_csp(X, Y) result(M)
@@ -1689,22 +1641,20 @@ contains
                 M(i, j) = X(i)%dot(Y(j))
             enddo
         enddo
-
-        return
     end function innerprod_matrix_csp
 
-    impure elemental subroutine axpby_basis_csp(alpha, x, beta, y)
+    impure elemental subroutine axpby_basis_csp(alpha, X, beta, Y)
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(sp)
         !! numbers.
         implicit none(type, external)
-        class(abstract_vector_csp), intent(in) :: x
+        class(abstract_vector_csp), intent(in) :: X
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_csp), intent(inout) :: y
-        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        class(abstract_vector_csp), intent(inout) :: Y
+        !! Array of `abstract_vector` to be added/subtracted to/from `X`.
         complex(sp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call y%axpby(alpha, x, beta)
+        call Y%axpby(alpha, X, beta)
     end subroutine axpby_basis_csp
 
     impure elemental subroutine zero_basis_csp(X)
@@ -1755,8 +1705,6 @@ contains
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_cdp) ! y = y + X[i]*v[i]
         enddo
-
-        return
     end subroutine linear_combination_vector_cdp
 
     subroutine linear_combination_matrix_cdp(Y, X, B)
@@ -1795,8 +1743,6 @@ contains
                 call Y(j)%axpby(B(i, j), X(i), one_cdp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
         enddo
-
-        return
     end subroutine linear_combination_matrix_cdp
 
     function gram_matrix_cdp(X) result(G)
@@ -1811,27 +1757,24 @@ contains
                 G(j, i) = G(i, j)
             enddo
         enddo
-        return
     end function gram_matrix_cdp
 
-    function innerprod_vector_cdp(X, y) result(v)
-        !! Computes the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{v} \) between
+    function innerprod_vector_cdp(X, v) result(y)
+        !! Computes the inner product vector \( \mathbf{y} = \mathbf{X}^H \mathbf{v} \) between
         !! a basis `X` of `abstract_vector` and `v`, a single `abstract_vector`.
         implicit none(type, external)
-        class(abstract_vector_cdp), intent(in) :: X(:), y
-        !! Bases of `abstract_vector` whose inner products need to be computed.
-        complex(dp) :: v(size(X))
+        class(abstract_vector_cdp), intent(in) :: X(:), v
+        !! Basis and single instance of `abstract_vector` whose inner products need to be computed.
+        complex(dp) :: y(size(X))
         !! Resulting inner-product vector.
 
         ! Local variables.
         integer :: i
 
-        v = zero_cdp
+        y = zero_cdp
         do i = 1, size(X)
-            v(i) = X(i)%dot(y)
+            y(i) = X(i)%dot(v)
         enddo
-        
-        return
     end function innerprod_vector_cdp
 
     function innerprod_matrix_cdp(X, Y) result(M)
@@ -1852,22 +1795,20 @@ contains
                 M(i, j) = X(i)%dot(Y(j))
             enddo
         enddo
-
-        return
     end function innerprod_matrix_cdp
 
-    impure elemental subroutine axpby_basis_cdp(alpha, x, beta, y)
+    impure elemental subroutine axpby_basis_cdp(alpha, X, beta, Y)
         !! Compute in-place \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where
         !! `X` and `Y` are arrays of `abstract_vector` and `alpha` and `beta` are complex(dp)
         !! numbers.
         implicit none(type, external)
-        class(abstract_vector_cdp), intent(in) :: x
+        class(abstract_vector_cdp), intent(in) :: X
         !! Input/Ouput array of `abstract_vector`.
-        class(abstract_vector_cdp), intent(inout) :: y
-        !! Array of `abstract_vector` to be added/subtracted to `X`.
+        class(abstract_vector_cdp), intent(inout) :: Y
+        !! Array of `abstract_vector` to be added/subtracted to/from `X`.
         complex(dp), intent(in) :: alpha, beta
         !! Scalar multipliers.
-        call y%axpby(alpha, x, beta)
+        call Y%axpby(alpha, X, beta)
     end subroutine axpby_basis_cdp
 
     impure elemental subroutine zero_basis_cdp(X)

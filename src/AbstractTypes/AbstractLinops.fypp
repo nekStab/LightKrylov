@@ -16,8 +16,6 @@ module LightKrylov_AbstractLinops
     use LightKrylov_Logger
     use LightKrylov_Constants
     use LightKrylov_Timer_Utils, only: lightkrylov_timer
-    use LightKrylov_Timing, only: time_lightkrylov
-    use LightKrylov_Utils
     use LightKrylov_AbstractVectors
     implicit none(type, external)
     private
@@ -26,8 +24,8 @@ module LightKrylov_AbstractLinops
     character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractLinops'
 
     type, abstract, public :: abstract_linop
-        !!  Base type to define an abstract linear operator. All other types defined in
-        !!  `LightKrylov` derive from this fundamental one.
+        !!  Base type to define an abstract linear operator. All other operator types defined
+        !!  in `LightKrylov` derive from this fundamental one.
         !!
         !!  @warning
         !!  Users should not extend this abstract class to define their own types.
@@ -88,7 +86,7 @@ module LightKrylov_AbstractLinops
         !! Utility type to define an adjoint linear operator. The definition of `matvec` and `rmatvec`
         !! are directly inherited from those used to define `A`. Note that this utility does not
         !! compute the adjoint for you. It simply provides a utility to define a new operator
-        !! with `matvec` and `rmatvec` being switched.
+        !! with `matvec` and `rmatvec` switched.
         class(abstract_linop_${type[0]}$${kind}$), allocatable :: A
         !! Linear operator whose adjoint needs to be defined.
     contains
@@ -104,8 +102,10 @@ module LightKrylov_AbstractLinops
         !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
         !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
+        !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
-        !! Note that explicit knowledge or definition of the Jacobian is NOT required. This utility function
+        !!
+        !! Note that explicit knowledge or definition of the Jacobian is not required. This utility function
         !! is intended for the use in conjuction with a time-stepper algorithm that computes the integral
         !! directly.
         !!
@@ -543,10 +543,10 @@ contains
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+                call type_error('vec_out','dense_vector_${type[0]}$${kind}$','OUT',this_module,'dense_matvec_${type[0]}$${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+            call type_error('vec_in','dense_vector_${type[0]}$${kind}$','IN',this_module,'dense_matvec_${type[0]}$${kind}$')
         end select
         return
     end subroutine dense_matvec_${type[0]}$${kind}$
@@ -573,10 +573,10 @@ contains
                 #:endif
                 end block
             class default
-                call stop_error("The intent [OUT] argument 'vec_out' must be of type 'dense_vector'", this_module, 'matvec')
+                call type_error('vec_out','dense_vector_${type[0]}$${kind}$','OUT',this_module,'dense_rmatvec_${type[0]}$${kind}$')
             end select
         class default
-            call stop_error("The intent [IN] argument 'vec_in' must be of type 'dense_vector'", this_module, 'matvec')
+            call type_error('vec_in','dense_vector_${type[0]}$${kind}$','IN',this_module,'dense_rmatvec_${type[0]}$${kind}$')
         end select
          return
     end subroutine dense_rmatvec_${type[0]}$${kind}$

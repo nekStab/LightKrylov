@@ -11,17 +11,19 @@ module LightKrylov_Timer_Utils
    ! Timer type
    type, public :: lightkrylov_timer
       !! Individual timer.
-      !! Atomic timer that is associated to a particular 'event' by name which may be a procedure or a
-      !! user-defined string at instantiation.
+      !! Atomic timer that is associated to a particular 'event' by name which may be a 
+      !! procedure or a user-defined string at instantiation.
       !!
-      !! The timing information in gathered for each timer independently. The individual timers are gathered
-      !! into groups (relevant only for timing output) and managed by a central watch that is derived from
-      !! the `abstract_watch` type. The individual timers are rarely user independently but all timing
-      !! actions are typically performed via procedures in the central timer.
+      !! The timing information in gathered for each timer independently. The individual 
+      !! timers are gathered into groups (relevant only for timing output) and managed 
+      !! by a central watch that is derived from  the `abstract_watch` type. The 
+      !! individual timers are rarely user independently but all timing actions are 
+      !! typically performed via procedures in the central timer.
       !!
-      !! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers associated with the types
-      !! `abstract_linop` and `abstract_system`, respectively, which are managed via their parent types and the
-      !! corresponding type-bound procedures only.
+      !! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers 
+      !! associated with the types `abstract_linop` and `abstract_system`, respectively, 
+      !! which are managed via their parent types and the corresponding type-bound 
+      !! procedures only.
       private
       character(len=128), public :: name = 'default_timer'
       !! Timer name.

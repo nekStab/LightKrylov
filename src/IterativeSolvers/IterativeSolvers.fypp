@@ -9,10 +9,11 @@ module LightKrylov_IterativeSolvers
     !!                  operator \( A \).
     !!  - `svds`    :   Compute the leading singular triplets of a linear operator \( A \).
     !!  - `gmres`   :   Solve the linear system \( Ax = b \) using the *generalized minimum residual method*.
-    !!  - `cg`      :   Solve the linear system \( Ax = b \) where \( A \) is symmetric positive definite using the *Conjugate Gradient* method.
+    !!  - `cg`      :   Solve the linear system \( Ax = b \) where \( A \) is symmetric 
+    !!                  positive definite using the *Conjugate Gradient* method.
     !!
     !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
-    !!  to `LightKrylov`. Note that these features are still experimental however.
+    !!  to `LightKrylov`. Note that these features are still experimental for now.
 
     !--------------------------------------------
     !-----     Fortran Standard Library     -----
@@ -29,9 +30,8 @@ module LightKrylov_IterativeSolvers
     !-------------------------------
     use LightKrylov_Constants
     use LightKrylov_Utils
-    use LightKrylov_Logger, only: log_warning, log_error, log_message, log_information, &
-    &                             log_debug, stop_error, type_error, check_info
-
+    use LightKrylov_Logger, only: log_information, log_message, log_debug, &
+                                    & type_error, stop_error, check_info
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
@@ -127,6 +127,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine abstract_linear_solver_${type[0]}$${kind}$
+
     #:endfor
     end interface
 
@@ -184,6 +185,7 @@ module LightKrylov_IterativeSolvers
             class(gmres_${kind}$_metadata), intent(inout) :: self
         end subroutine reset_gmres_${kind}$
     end interface
+
     #:endfor
 
     !----- Interfaces for the GMRES solvers -----
@@ -212,7 +214,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  - `A`   :   Linear operator derived from one of the `abstract_linop` provided by the
+        !!  - `A`   :   Linear operator derived from one of the `abstract_linop` types provided by the
         !!              `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
@@ -232,14 +234,14 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs
         !!                                      to be consistent with the `abstract_preconditioner` interface.
-        !!                                      It is an `intent(in)` argument.
+        !!                                      It is an optional `intent(in)` argument.
         !!
         !!  - `options` (optional)  :   Container for the gmres options given by the `gmres_opts` type.
-        !!                              It is an `intent(in)` argument.
+        !!                              It is an optional `intent(in)` argument.
         !!
-        !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or \( A^H x = b \) is being solver.
+        !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or \( A^H x = b \) is being solved.
         !!
-        !!  - `meta` (optional) :   Container for the gmres metada. It needs to be of type `gmres_medata`.
+        !!  - `meta` (optional) :   Container for the gmres metadata. It needs to be of type `gmres_metadata`.
 
         ! --- Interface for GMRES with Abstract Linops and Abstract Vectors ---
         #:for kind, type in RC_KINDS_TYPES
@@ -290,6 +292,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine dense_gmres_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -347,6 +350,7 @@ module LightKrylov_IterativeSolvers
             class(fgmres_${kind}$_metadata), intent(inout) :: self
         end subroutine reset_fgmres_${kind}$
     end interface
+
     #:endfor
 
     !----- Interfaces for the FGMRES solvers -----
@@ -375,7 +379,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  - `A`   :   Linear operator derived from one of the `abstract_linop` provided by the
+        !!  - `A`   :   Linear operator derived from one of the `abstract_linop` types provided by the
         !!              `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
@@ -393,11 +397,12 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be consistent with the
-        !!                                      `abstract_preconditioner` interface. It is an `intent(in)` argument.
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be 
+        !!                                      consistent with the `abstract_preconditioner` interface. 
+        !!                                      It is an optional `intent(in)` argument.
         !!
         !!  - `options` (optional)  :   Container for the gmres options given by the `gmres_opts` type.
-        !!                              It is an `intent(in)` argument.
+        !!                              It is an optional `intent(in)` argument.
         !!
         !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or
         !!                              \( A^H x = b \) is being solved.
@@ -499,8 +504,8 @@ module LightKrylov_IterativeSolvers
             class(cg_${kind}$_metadata), intent(inout) :: self
         end subroutine reset_cg_${kind}$
     end interface
-    #:endfor
 
+    #:endfor
     !----- Interfaces for the Conjugate Gradient solvers -----
     interface cg
         !!  ### Description
@@ -527,8 +532,8 @@ module LightKrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  - `A`   :   Linear operator derived from one of the `abstract_sym_linop` or `abstract_hermitian_linop` types provided
-        !               by the `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!  - `A`   :   Linear operator derived from one of the `abstract_sym_linop` or `abstract_hermitian_linop` 
+        !!              types provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
         !!              by the `AbstractVectors` module. It needs to have the same type and kind as `A`.
@@ -545,11 +550,12 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be consistent with the
-        !!                                      `abstract_preconditioner` interface. It is an `intent(in)` argument.
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be 
+        !!                                      consistent with the `abstract_preconditioner` interface. 
+        !!                                      It is an optional `intent(in)` argument.
         !!
         !!  - `options` (optional)  :   Container for the gmres options given by the `cg_opts` type.
-        !!                              It is an `intent(in)` argument.
+        !!                              It is an optional `intent(in)` argument.
         #:for kind, type in RC_KINDS_TYPES
         module subroutine cg_${type[0]}$${kind}$(A, b, x, info, rtol, atol, preconditioner, options, meta)
             implicit none(type, external)
@@ -576,6 +582,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine cg_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -626,14 +633,14 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `U`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!              contains the left singular vectors of `A`. Note that the dimension of `U` fixes
-        !!              the number of eigenpairs computed.
+        !!              the number of eigenpairs computed. It is an `intent(out)` argument.
         !!
         !!  - `S`   :   Rank-1 array of `real` numbers. On exit, it contains the leading
         !!              singular values of `A`. It is an `intent(out)` argument.
         !!
         !!  - `V`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!              contains the left singular vectors of `A`. Note that the dimension of `U` fixes
-        !!              the number of eigenpairs computed.
+        !!              the number of eigenpairs computed. It is an `intent(out)` argument.
         !!
         !!  - `residuals`   :   Rank-1 array of `real` numbers. On exit, it contains the residuals
         !!                      associated with each singular triplet. It is an `intent(out)` argument.
@@ -641,11 +648,11 @@ module LightKrylov_IterativeSolvers
         !!  - `info`    :   `integer` Information flag.
         !!
         !!  - `kdim` (*optional*)   :   `integer`, maximum dimension of the Krylov subspace used to
-        !!                              approximate the leading singular triplets. It is an `intent(in)`
-        !!                              argument. By default, `kdim = 4*size(X)`.
+        !!                              approximate the leading singular triplets. It is an optional
+        !!                              `intent(in)` argument. By default, `kdim = 4*size(X)`.
         !!
         !!  - `tolerance` (*optional*)  :   `real` tolerance below which a triplet is considered as being converged. It is an
-        !!                                  `intent(in)` agument. By default, tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!                                  optional `intent(in)` argument. By default, tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!  @note
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
@@ -673,6 +680,7 @@ module LightKrylov_IterativeSolvers
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
         end subroutine svds_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -685,8 +693,8 @@ module LightKrylov_IterativeSolvers
     interface eighs
         !!  ### Description
         !!
-        !!  Computes the leading eigenpairs of a symmetric operator \(A\)
-        !!  using the Lanczos iterative process. Given a square linear operator \(A\), it finds
+        !!  Computes the leading eigenpairs of a symmetric operator \(A\) using the 
+        !!  Lanczos iterative process. Given a square linear operator \(A\), it finds
         !!  the leading eigvalues and eigvectors such that:
         !!
         !!  \[
@@ -716,7 +724,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `X`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!              contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
-        !!              the number of eigenpairs computed.
+        !!              the number of eigenpairs computed. It is an `intent(out)` argument.
         !!
         !!  - `eigvals` :   Rank-1 array of `real` numbers. On exit, it contains the leading
         !!                  eigenvalues of `A`. It is an `intent(out)` argument.
@@ -727,11 +735,11 @@ module LightKrylov_IterativeSolvers
         !!  - `info`    :   `integer` Information flag.
         !!
         !!  - `kdim` (*optional*)   :   `integer`, maximum dimension of the Krylov subspace used to
-        !!                              approximate the leading eigenpairs. It is an `intent(in)`
+        !!                              approximate the leading eigenpairs. It is an optional `intent(in)`
         !!                              argument. By default, `kdim = 4*size(X)`.
         !!
         !!  - `tolerance` (*optional*)  :   `real` tolerance below which an eigenpair is considered as
-        !!                                  being converged. It is an `intent(in)` agument. By default,
+        !!                                  being converged. It is an optional `intent(in)` argument. By default,
         !!                                  `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!  @note
         !!  This implementation does not currently include an automatic restarting procedure
@@ -763,6 +771,7 @@ module LightKrylov_IterativeSolvers
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
         end subroutine eighs_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -784,12 +793,13 @@ module LightKrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  - `eigvals`     :   `complex` rank-1 array containing the eigenvalues.
+        !!  - `eigvals`     :   `complex` rank-1 array containing the eigenvalues. It is an
+        !!                      `intent(in)` argument.
         !!
         !!  - `residuals`   :   `real` rank-1 array containing the residuals associated to each
-        !!                      eigenvalues.
+        !!                      eigenvalues. It is an `intent(in)` argument.
         !!
-        !!  `fname` : Name of the file to save the eigenspectrum.
+        !!  `fname` : Name of the file to save the eigenspectrum. It is an `intent(in)` argument.
         #:for kind, type in RC_KINDS_TYPES
         module subroutine save_eigenspectrum_${type[0]}$${kind}$(lambda, residuals, fname)
             !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
@@ -801,6 +811,7 @@ module LightKrylov_IterativeSolvers
             character(len=*), intent(in) :: fname
             !! Name of the output file.
         end subroutine save_eigenspectrum_${type[0]}$${kind}$
+
         #:endfor
     end interface
 
@@ -809,7 +820,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  Computes the leading eigenpairs of a square linear operator \(A\)
         !!  using the Arnoldi iterative process. Given a square linear operator \(A\), it finds
-        !!  the leading eigvalues and eigvectorss such that:
+        !!  the leading eigenvalues and eigenvectors such that:
         !!
         !!  \[
         !!      Ax = \lambda x
@@ -844,7 +855,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `X`   :   Array of `abstract_vectors` with the same type and kind as `A`. On exit, it
         !!              contains the leading eigenvectors of `A`. Note that the dimension of `X` fixes
-        !!              the number of eigenpairs computed.
+        !!              the number of eigenpairs computed. It is an `intent(out)` argument.
         !!
         !!  - `eigvals` :   Rank-1 array of `real` numbers. On exit, it contains the leading
         !!                  eigenvalues of `A`. It is an `intent(out)` argument.
@@ -855,26 +866,22 @@ module LightKrylov_IterativeSolvers
         !!  - `info`    :   `integer` Information flag.
         !!
         !!  - `kdim` (*optional*)   :   `integer`, maximum dimension of the Krylov subspace used to
-        !!                              approximate the leading eigenpairs. It is an `intent(in)`
+        !!                              approximate the leading eigenpairs. It is an optional `intent(in)`
         !!                              argument. By default, `kdim = 4*size(X)`.
         !!
         !!  - `select` (*optional*) : Function to select which eigenvalues to compute.
         !!
         !!  - `tolerance` (*optional*)  :   `real` tolerance below which an eigenpair is considered as
-        !!                                  being converged. It is an `intent(in)` agument. By default,
-        !!                                  `tolerance = rtol_sp` or `tolerance = rtol_dp`.
+        !!                                  being converged. It is an optional `intent(in)` argument.
+        !!                                  By default, `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!
         !!  - `transpose` (*optional*)  :   `logical` flag determining whether the eigenvalues of \(A\)
-        !!                             or \(A^H\) need to be computed.
+        !!                                  or \(A^H\) need to be computed. It is an optional `intent(in)` 
+        !!                                  argument.
         #:for kind, type in RC_KINDS_TYPES
         module procedure eigs_${type[0]}$${kind}$
         #:endfor
     end interface
-
-
-
-
-
 
 contains
 
@@ -904,7 +911,7 @@ contains
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         #:endif
         k = size(vals)
-        if (io_rank()) then ! only master rank writes
+        if (io_rank()) then ! only IO rank writes
             allocate(indices(k))
             call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
@@ -925,6 +932,7 @@ contains
             close (1234)
         end if
     end subroutine write_results_${type[0]}$${kind}$
+
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
@@ -938,6 +946,7 @@ contains
         !! Residual associated to the corresponding Ritz eigenpair.
         residual = abs(beta*x)
     end function compute_residual_${type[0]}$${kind}$
+
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
@@ -953,6 +962,7 @@ contains
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
     end procedure save_eigenspectrum_${type[0]}$${kind}$
+
     #:endfor
 
     !---------------------------------------------------
@@ -1110,7 +1120,6 @@ contains
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
-                ! call X(i)%axpby(one_${type[0]}$${kind}$, Xwrk(j), eigvecs_wrk(j, i))
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_${type[0]}$${kind}$)
             enddo
         enddo
@@ -1125,6 +1134,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_${type[0]}$${kind}$
+    
     #:endfor
 
 end module LightKrylov_IterativeSolvers

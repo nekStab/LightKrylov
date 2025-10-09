@@ -58,8 +58,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_bidiagonalization_rsp
 
     module procedure lanczos_bidiagonalization_rdp
@@ -119,8 +117,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_bidiagonalization_rdp
 
     module procedure lanczos_bidiagonalization_csp
@@ -180,8 +176,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_bidiagonalization_csp
 
     module procedure lanczos_bidiagonalization_cdp
@@ -241,8 +235,6 @@ contains
         enddo lanczos
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
-        
-        return
     end procedure lanczos_bidiagonalization_cdp
 
 end submodule golub_kahan_methods
