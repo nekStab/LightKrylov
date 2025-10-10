@@ -3,6 +3,7 @@
 submodule (lightkrylov_iterativesolvers) fgmres_solver
     use stdlib_strings, only: padr
     use stdlib_linalg, only: lstsq, norm
+    use stdlib_linalg_lapack, only: trtrs
     implicit none(type, external)
 contains
 
@@ -75,7 +76,8 @@ contains
         ! Hessenberg matrix.
         ${type}$, allocatable :: H(:, :)
         ! Least-squares variables.
-        ${type}$, allocatable :: y(:), e(:)
+        ${type}$, target, allocatable :: e(:)
+        ${type}$, pointer :: y(:, :)
         real(${kind}$) :: beta
         ! Givens rotations.
         ${type}$, allocatable :: c(:), s(:)
@@ -187,8 +189,9 @@ contains
             enddo gmres_iter
 
             ! Update solution.
-            k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
-            call linear_combination(dx, Z(:k), y) ; call x%add(dx)
+            k = min(k, kdim)
+            y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            call linear_combination(dx, Z(:k), e(:k)) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then
