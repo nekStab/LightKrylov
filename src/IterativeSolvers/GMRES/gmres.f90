@@ -123,7 +123,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rsp'
-        integer :: k, iter
+        integer :: k
         class(abstract_vector_rsp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -158,10 +158,9 @@ contains
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
         call A%reset_counter(trans, 'gmres%init')
 
-        info = 0 ; iter = 0
-
+        info = 0
         associate(ifprecond => present(preconditioner))
-        do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
+        do while ((.not. gmres_meta%converged) .and. (gmres_meta%n_outer <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
             if (x%norm() /= 0.0_sp) then
@@ -175,14 +174,14 @@ contains
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_rsp/beta)
             c = 0.0_sp ; s = 0.0_sp
-            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
-            write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+            if (gmres_meta%n_outer == 0) then
+               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
-            call log_information(msg, this_module, this_procedure)
+               call log_information(msg, this_module, this_procedure)
+            end if
 
             gmres_iter: do k = 1, kdim
-                !> Current number of iterations.
-                iter = iter + 1
                 !> Preconditioner.
                 wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
@@ -301,7 +300,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rdp'
-        integer :: k, iter
+        integer :: k
         class(abstract_vector_rdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -336,10 +335,9 @@ contains
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
         call A%reset_counter(trans, 'gmres%init')
 
-        info = 0 ; iter = 0
-
+        info = 0
         associate(ifprecond => present(preconditioner))
-        do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
+        do while ((.not. gmres_meta%converged) .and. (gmres_meta%n_outer <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
             if (x%norm() /= 0.0_dp) then
@@ -353,14 +351,14 @@ contains
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_rdp/beta)
             c = 0.0_dp ; s = 0.0_dp
-            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
-            write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+            if (gmres_meta%n_outer == 0) then
+               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
-            call log_information(msg, this_module, this_procedure)
+               call log_information(msg, this_module, this_procedure)
+            end if
 
             gmres_iter: do k = 1, kdim
-                !> Current number of iterations.
-                iter = iter + 1
                 !> Preconditioner.
                 wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
@@ -479,7 +477,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_csp'
-        integer :: k, iter
+        integer :: k
         class(abstract_vector_csp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -514,10 +512,9 @@ contains
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
         call A%reset_counter(trans, 'gmres%init')
 
-        info = 0 ; iter = 0
-
+        info = 0
         associate(ifprecond => present(preconditioner))
-        do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
+        do while ((.not. gmres_meta%converged) .and. (gmres_meta%n_outer <= maxiter))
             !> Initialize data
             H = 0.0_sp ; call zero_basis(V)
             if (x%norm() /= 0.0_sp) then
@@ -531,14 +528,14 @@ contains
             e = 0.0_sp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_csp/beta)
             c = 0.0_sp ; s = 0.0_sp
-            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
-            write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+            if (gmres_meta%n_outer == 0) then
+               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
-            call log_information(msg, this_module, this_procedure)
+               call log_information(msg, this_module, this_procedure)
+            end if
 
             gmres_iter: do k = 1, kdim
-                !> Current number of iterations.
-                iter = iter + 1
                 !> Preconditioner.
                 wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
@@ -657,7 +654,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_cdp'
-        integer :: k, iter
+        integer :: k
         class(abstract_vector_cdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -692,10 +689,9 @@ contains
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
         call A%reset_counter(trans, 'gmres%init')
 
-        info = 0 ; iter = 0
-
+        info = 0
         associate(ifprecond => present(preconditioner))
-        do while ((.not. gmres_meta%converged) .and. (iter <= maxiter))
+        do while ((.not. gmres_meta%converged) .and. (gmres_meta%n_outer <= maxiter))
             !> Initialize data
             H = 0.0_dp ; call zero_basis(V)
             if (x%norm() /= 0.0_dp) then
@@ -709,14 +705,14 @@ contains
             e = 0.0_dp ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_cdp/beta)
             c = 0.0_dp ; s = 0.0_dp
-            allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
-            write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+            if (gmres_meta%n_outer == 0) then
+               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
-            call log_information(msg, this_module, this_procedure)
+               call log_information(msg, this_module, this_procedure)
+            end if
 
             gmres_iter: do k = 1, kdim
-                !> Current number of iterations.
-                iter = iter + 1
                 !> Preconditioner.
                 wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
