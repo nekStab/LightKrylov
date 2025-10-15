@@ -50,9 +50,9 @@ Some examples can be found in the `example` folder. These include:
 
 Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
 
-| [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Laplace operator**]() | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
-| :---------------------: | :----------------------: | :--------------------: |
-|       ![](https://nekstab.github.io/LightKrylov/page/examples/ginzburg_landau_modal_analysis.png)    |        ADD FIGURE        | ADD FIGURE |
+| [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
+| :---------------------: | :----------------------: |
+| ![](https://nekstab.github.io/LightKrylov/page/examples/ginzburg_landau_modal_analysis.png) | ![](https://nekstab.github.io/LightKrylov/page/examples/roessler_chaotic_attractor_and_periodic_orbit.png) |
 
 ## Installation
 
