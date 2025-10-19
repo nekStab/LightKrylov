@@ -37,7 +37,6 @@ module LightKrylov_Utils
     public :: eig
     public :: ordschur
     public :: sqrtm
-    public :: expm
     public :: givens_rotation
     public :: apply_givens_rotation
 
@@ -337,66 +336,6 @@ module LightKrylov_Utils
             complex(dp), intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_cdp
-
-    end interface
-
-    interface expm
-        !!  ### Description
-        !!
-        !!  Evaluate the exponential of a dense matrix using Pade approximations.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      E = expm(A, order)
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
-        !!
-        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
-        !!
-        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
-        module function expm_rsp(A, order) result(E)
-            implicit none(type, external)
-            real(sp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            real(sp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_rsp
-
-        module function expm_rdp(A, order) result(E)
-            implicit none(type, external)
-            real(dp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            real(dp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_rdp
-
-        module function expm_csp(A, order) result(E)
-            implicit none(type, external)
-            complex(sp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            complex(sp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_csp
-
-        module function expm_cdp(A, order) result(E)
-            implicit none(type, external)
-            complex(dp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            complex(dp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_cdp
 
     end interface
 

@@ -39,7 +39,6 @@ module LightKrylov_Utils
     public :: eig
     public :: ordschur
     public :: sqrtm
-    public :: expm
     public :: givens_rotation
     public :: apply_givens_rotation
 
@@ -227,38 +226,6 @@ module LightKrylov_Utils
             ${type}$, intent(out) :: sqrtA(:, :)
             integer, intent(out) :: info
         end subroutine sqrtm_${type[0]}$${kind}$
-
-        #:endfor
-    end interface
-
-    interface expm
-        !!  ### Description
-        !!
-        !!  Evaluate the exponential of a dense matrix using Pade approximations.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      E = expm(A, order)
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
-        !!
-        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
-        !!
-        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
-        #:for kind, type in RC_KINDS_TYPES
-        module function expm_${type[0]}$${kind}$(A, order) result(E)
-            implicit none(type, external)
-            ${type}$, intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            ${type}$ :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_${type[0]}$${kind}$
 
         #:endfor
     end interface
