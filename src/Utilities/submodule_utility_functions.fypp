@@ -159,66 +159,6 @@ contains
     end procedure sqrtm_${type[0]}$${kind}$
 
     #:endfor
-    !----- Dense Matrix Exponential -----
-
-    #:for kind, type in RC_KINDS_TYPES
-    module procedure expm_${type[0]}$${kind}$
-        character(len=*), parameter :: this_procedure = 'expm_${type[0]}$${kind}$'
-        ${type}$, allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(${kind}$) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-        if (time_lightkrylov()) call timer%start(this_procedure)
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_${kind}$**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_${kind}$
-        E = eye(n, mold=1.0_${kind}$) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_${kind}$) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure expm_${type[0]}$${kind}$
-
-    #:endfor
     !----- Givens rotations -----
 
     #:for kind, type in RC_KINDS_TYPES

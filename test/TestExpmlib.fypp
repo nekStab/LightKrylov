@@ -4,7 +4,7 @@ module TestExpmlib
     ! Fortran Standard Library.
     use iso_fortran_env, only: output_unit
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, diag
+    use stdlib_linalg, only: eye, diag, expm
     use stdlib_io_npy, only: save_npy
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check

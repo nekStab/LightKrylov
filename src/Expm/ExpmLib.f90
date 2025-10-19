@@ -7,7 +7,7 @@ module LightKrylov_ExpmLib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: mnorm, norm
+    use stdlib_linalg, only: mnorm, norm, expm
 
     ! LightKrylov.
     use LightKrylov_Constants
