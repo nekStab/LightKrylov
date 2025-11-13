@@ -40,11 +40,9 @@ In contrast, Krylov methods only need a function computing the matrix-vector pro
 
 `LightKrylov` provides Fortran users with SciPy-inspired interfaces to widely used Krylov techniques, including:
 
-- **Krylov processes:** Arnoldi factorization, Golub-Kahan bidiagonalization, and Lanczos tridiagonalization.
-- **Krylov methods:**
-    - **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRES.
-    - **Spectral decomposition -** Krylov-Schur method for non-Hermitian operators, Lanczos tridiagonalization for Hermitian ones.
-    - **SVD -** Golub-Kahan bidiagonalization.
+- **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRES.
+- **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalization for Hermitian ones.
+- **SVD -** Golub-Kahan bidiagonalization.
 
 Libraries exposing more methods exist in other languages, e.g., `Krylov.jl` [@montoison-2023] or `PETSc` [@petsc-web-page].
 Integrating these into existing Fortran codes can however present challenges (e.g. dependency management or potential performance overhead for instance).
@@ -53,8 +51,8 @@ Finally, its build process relies on the Fortran package manager `fpm`, facilita
 
 ## A focus on abstract linear operators and abstract vectors
 
-Krylov methods can be implemented without explicit reference to the data structure used to represent a vector or a linear operator, nor to how the matrix-vector product is implemented.
-To do so, `LightKrylov` uses modern Fortran `abstract` type constructs.
+Krylov methods can be implemented without explicit reference to the data structure used to represent a vector or linear operator, nor to how the matrix-vector product is implemented.
+To do so, `LightKrylov` uses modern Fortran `abstract` types.
 A stripped-down version of the abstract vector type is shown below.
 
 ```fortran
@@ -69,7 +67,7 @@ type, abstract :: abstract_vector_rdp
 end type
 ```
 
-These type-bound procedures cover the basic operations on vectors: scalar-vector product, linear combination of two vectors, and the dot product. These operations are the essential building blocks required by Krylov algorithms.
+The type-bound procedures cover the basic operations on vectors: scalar-vector product, linear combination of two vectors, and the dot product. These operations are the essential building blocks required by Krylov algorithms.
 Their signatures follow, to the extent possible, the BLAS standard.
 For instance, the `abstract_axpby_rdp` interface reads
 
@@ -133,7 +131,7 @@ Using the two-dimensional flow past a circular cylinder at Reynolds number of 10
 Discretization of the governing equations leads to systems with approximately 175,000 degrees of freedom.
 All computations were run in parallel on 12 Intel Core Ultra 7 processors and the numerical settings, in particular those internal to `Nek5000`, are identical for all runs.
 
-The unstable fixed point of the nonlinear Navier-Stokes equations is computed using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver [@frantz-2023] and the selected frequency damping [@pof-sfd] implementation from `KTH Framework` .
+The unstable fixed point of the nonlinear Navier-Stokes equations is computed using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver and the selected frequency damping implementation from `KTH Framework` .
 Likewise, the leading eigenpair of the corresponding linearized Navier-Stokes operator is computed using `LightKrylov`'s implementation of the Krylov-Schur algorithm and the `KTH Framework`'s wrapper for `ARPACK`.
 
 A visual comparison is provided in \autoref{fig:timings} showing excellent agreement.
@@ -143,16 +141,16 @@ The table in the lower-right panel of \autoref{fig:timings} summarizes the wall-
 
 # Perspectives
 
-Despite being in its early development stage, `LightKrylov` has already been used in hydrodynamic stability production runs on dozens of processors. It has also been interfaced with [`neko`](https://github.com/ExtremeFLOW/neko), a modernized implementation of `Nek5000` running on GPUs, and is currently being interfaced with [`dNami`](https://github.com/dNamiLab/dNami), a high-performance source code generator for hyperbolic partial differential equations.
+Despite being in its early development stage, `LightKrylov` has already been used in production runs on dozens of processors. It has also been interfaced with [`neko`](https://github.com/ExtremeFLOW/neko), a modernized implementation of `Nek5000` running on GPUs, and is currently being interfaced with [`dNami`](https://github.com/dNamiLab/dNami), a high-performance source code generator for hyperbolic partial differential equations.
 
 Ongoing development efforts include:
 
-- **Build system:** `LightKrylov` relies on the Fortran package manager `fpm` for its build. While it ensures nice integration into the modern Fortran ecosystem, it also limits its usage to codes built using `fpm`. An additional build system based on `CMake` for easier integration into non-`fpm` codes will be proposed shortly.
-- **Krylov processes:** As of summer 2025, `LightKrylov` provides implementations for three of the most important Krylov processes. Future releases will include the non-Hermitian Lanczos and two-sided Arnoldi factorizations useful for reduced-order modeling of linear time-invariant (LTI) systems as well as the Saunders-Simon-Yip process [@ssy-krylov].
-- **Iterative solvers:** Beyond `CG` and `GMRES`, the integration of new Krylov processes will enable us to provide an extended list of iterative solvers, including `MINRES` (indefinite Hermitian systems), `CGNE` and `LSQR` (least-squares problems), and `LSMR` (least-norm problems).
+- **Build system:** `LightKrylov` relies on the Fortran package manager `fpm` for its build. While it ensures nice integration into the modern Fortran ecosystem, it also limits its usage to codes built using `fpm`. A build system based on `CMake` for easier integration into non-`fpm` codes will be proposed shortly.
+- **Krylov processes:** `LightKrylov` currently provides implementations for three of the most important Krylov processes. Future releases will include the non-Hermitian Lanczos and two-sided Arnoldi factorizations useful for reduced-order modeling of linear time-invariant systems, and the Saunders-Simon-Yip process [@ssy-krylov].
+- **Iterative solvers:** The integration of new Krylov processes will enable us to provide an extended list of solvers, including `MINRES`, `CGNE`, `LSQR`, and `LSMR`.
 
 ### Acknowledgements
 
-We acknowledge the financial support of the French National Agency for Research (ANR) through the ANR-33-CE46-0008-CONMAN grant agreement. We would also like to thank the [fortran-lang](https://fortran-lang.org/) community for the development of [`stdlib`](https://stdlib.fortran-lang.org/), and in particular Frederico Perini, Jeremie Vandenplas, and Jose Alvez for their work on the `stdlib_linalg` module which `LightKrylov` relies on.
+We acknowledge the financial support of the French National Agency for Research (ANR) through the ANR-33-CE46-0008-CONMAN grant agreement. We also thank the [fortran-lang](https://fortran-lang.org/) community for the development of [`stdlib`](https://stdlib.fortran-lang.org/), and in particular Frederico Perini, Jeremie Vandenplas, and Jose Alvez for their work on the `stdlib_linalg` module.
 
 # References
