@@ -29,18 +29,16 @@ bibliography: paper.bib
 
 # Summary
 
-[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package with minimal dependencies providing a collection of Krylov-based methods for solving linear systems, computing the leading eigenpairs of a linear operator as well as its leading singular triplets.
-When solving linear algebra problems, direct methods tend to have a computational cost scaling as $\mathcal{O}(n^3)$ making them impractical for very large-scale problems.
-Even when $A$ is sparse, care needs to be taken when computing matrix factorizations since they can incur an $\mathcal{O}(n^2)$ storage cost in the worst case by introducing fill-in.
-In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (or $u \leftarrow A^H v$) to iteratively construct a *Krylov subspace* [@krylov-1931] from which the solutions can be extracted.
-We refer interested readers to @ipsen-1998 for an introduction to Krylov methods, to @saad-2003 for technical details, and to @frantz-2023 for examples in the field of computational fluid dynamics.
+[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package with minimal dependencies providing a collection of Krylov-based methods for large-scale linear algebra.
+Direct methods tend to have a computational cost scaling as $\mathcal{O}(n^3)$ making them impractical for large-scale problems.
+Even when $A$ is sparse, computing matrix factorizations can incur an $\mathcal{O}(n^2)$ storage cost in the worst case by introducing fill-in.
+In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (or $u \leftarrow A^H v$) to iteratively construct a *Krylov subspace* [@krylov-1931] from which the solutions can be extracted, see @ipsen-1998, @saad-2003 and to @frantz-2023.
 
 # Statement of need
 
 ## A collection of Krylov-based algorithms in pure modern Fortran
 
-`LightKrylov` aims to provide Fortran users with familiar SciPy-inspired interfaces to widely used Krylov techniques.
-These include:
+`LightKrylov` provides Fortran users with SciPy-inspired interfaces to widely used Krylov techniques, including:
 
 - **Krylov processes:** Arnoldi factorization, Golub-Kahan bidiagonalization, as well as Lanczos tridiagonalization for Hermitian operators.
 - **Krylov methods:**
@@ -49,19 +47,15 @@ These include:
     - **SVD -** restarted Golub-Kahan bidiagonalization.
 
 Libraries exposing more methods exist in other languages, e.g., `Krylov.jl` [@montoison-2023] in Julia or `PETSc` [@petsc-web-page].
-Integrating multi-language libraries into existing Fortran codes often presents significant challenges related to build systems, dependency management, or potential performance overhead from language interfacing ("two-language problem"). In contrast, `LightKrylov` provides a pure Fortran alternative, compliant with the Fortran 2018 standard, and only requires the Fortran standard library `stdlib` as an external runtime dependency.
-It leverages `stdlib` not only for basic utilities but specifically builds upon `stdlib_linalg` for foundational linear algebra operations, ensuring adherence to community standards and benefiting from its rapid, ongoing development.
+Integrating multi-language libraries into existing Fortran codes often presents significant challenges (e.g. dependency management or potential performance overhead for instance).
+In contrast, `LightKrylov` provides a pure Fortran alternative, compliant with the Fortran 2018 standard, and only requires the Fortran standard library `stdlib` as an external runtime dependency.
 
-Additionally, using `fypp` [@fypp-webpage] as a build-time dependency significantly reduces code duplication and maintenance effort, ensuring consistency across different data types (`single`, `double`, `extended`, and `quadruple precision`) both for `real` and `complex` numbers while keeping the core algorithmic logic centralized. `fypp` is a Python-based Fortran preprocessor automatically generating the necessary code for different data types.
+Additionally, using `fypp` [@fypp-webpage] as a build-time dependency significantly reduces code duplication and maintenance effort, ensuring consistency across different data types (`single`, `double`, `extended`, and `quadruple precision`) both for `real` and `complex` numbers while keeping the core algorithmic logic centralized.
 Finally, its build process relies on the Fortran package manager `fpm`, greatly facilitating its installation and integration with the modern Fortran ecosystem.
-
-**Licensing:** `LightKrylov` is distributed under the permissive BSD 3-Clause License, encouraging broad adoption and contribution.
-
-**Testing/CI:** The library includes a suite of unit and integration tests executed via GitHub Actions. The set of compilers currently tested includes `gfortran` (versions 12–14) and the Intel `ifort` and `ifx` compilers. The operating systems include the latest Ubuntu, Windows, and macOS 13.
 
 ## A focus on abstract linear operators and abstract vectors
 
-Krylov methods can be implemented without explicit reference to the particular data structure used to represent a vector or a linear operator, nor to how the actual matrix-vector product is implemented.
+Krylov methods can be implemented without explicit reference to the data structure used to represent a vector or a linear operator, nor to how the actual matrix-vector product is implemented.
 To do so, `LightKrylov` uses modern Fortran `abstract` type constructs.
 A stripped-down version of the abstract vector type is shown below.
 
@@ -78,7 +72,7 @@ end type
 ```
 
 These type-bound procedures cover the basic operations on vectors: scalar-vector product, linear combination of two vectors, and the dot product. These operations are the essential building blocks required by Krylov algorithms.
-The signatures of these type-bound procedures follow, to the extent possible, the standard signatures of the corresponding BLAS functions for a more familiar use.
+Their signatures follow, to the extent possible, the BLAS standard for a more familiar use.
 For instance, the `abstract_axpby_rdp` interface reads
 
 ```fortran
@@ -91,7 +85,6 @@ abstract interface
 end interface
 ```
 mimicking the signature of the (extended) BLAS-1 subroutine `axpby`.
-In practice, `LightKrylov` requires the definition of two additional procedures, one to set a vector to zero and the second to fill it with random data.
 
 Similarly, a stripped-down version of an abstract linear operator type is shown below.
 
@@ -118,7 +111,7 @@ abstract interface
 end interface
 ```
 
-Using such `abstract` types enables us to focus on the high-level implementation of the different Krylov-based algorithms while leaving the performance-critical details of the vector and matrix-vector operations to the users.
+Using such `abstract` types enables us to focus on the high-level implementation of the different algorithms while leaving the performance-critical details to the users.
 After extending these `abstract` types for their particular applications, users can solve linear systems or compute eigenvalues as easily as
 
 ```fortran
@@ -129,8 +122,8 @@ call gmres(A, b, x, info)
 call eigs(A, V, lambda, residuals, info)
 ```
 
-In addition, `LightKrylov` exposes abstract interfaces to define preconditioners, as well as a Newton-GMRES solver to find the roots of a multivariate function $f : \mathbb{K}^n \to \mathbb{K}^n$ (where $\mathbb{K}$ is a placeholder for $\mathbb{R}$ or $\mathbb{C}$).
-Examples illustrating how to extend these `abstract` types and interfaces for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or computing unstable periodic orbits of the Rössler system and studying their Lyapunov exponents can be found [here](https://github.com/nekStab/LightKrylov/tree/main/example).
+In addition, `LightKrylov` exposes abstract interfaces for preconditioners, as well as a Newton-GMRES solver.
+Examples illustrating how to extend these `abstract` types for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or computing unstable periodic orbits of the Rössler system and studying their Lyapunov exponents can be found [here](https://github.com/nekStab/LightKrylov/tree/main/example).
 
 # Performance in a production-ready open-source codebase
 
@@ -156,11 +149,9 @@ Despite being in its early development stage, `LightKrylov` has already been use
 
 Ongoing development efforts include:
 
-- **Build system:** `LightKrylov` relies on the Fortran package manager `fpm` for its build. While it ensures nice integration into the modern Fortran ecosystem, it also limits its usage to codes built using `fpm` as well. An additional build system based on `CMake` for easier integration into non-`fpm` codes will be proposed shortly.
-- **Krylov processes:** As of summer 2025, `LightKrylov` provides implementations for three of the most important Krylov processes. Future releases will extend this list by including the non-Hermitian Lanczos and two-sided Arnoldi factorizations useful for reduced-order modeling of linear time-invariant (LTI) systems as well as the Saunders-Simon-Yip process [@ssy-krylov].
+- **Build system:** `LightKrylov` relies on the Fortran package manager `fpm` for its build. While it ensures nice integration into the modern Fortran ecosystem, it also limits its usage to codes built using `fpm`. An additional build system based on `CMake` for easier integration into non-`fpm` codes will be proposed shortly.
+- **Krylov processes:** As of summer 2025, `LightKrylov` provides implementations for three of the most important Krylov processes. Future releases will include the non-Hermitian Lanczos and two-sided Arnoldi factorizations useful for reduced-order modeling of linear time-invariant (LTI) systems as well as the Saunders-Simon-Yip process [@ssy-krylov].
 - **Iterative solvers:** Beyond `CG` and `GMRES`, the integration of new Krylov processes will enable us to provide an extended list of iterative solvers, including `MINRES` (indefinite Hermitian systems), `CGNE` and `LSQR` (least-squares problems), and `LSMR` (least-norm problems).
-
-Finally, the development of `LightKrylov` spurred a community-driven effort in the fortran-lang ecosystem to integrate some of its features (namely the abstraction layer and the iterative solvers) into the Fortran standard library `stdlib`.
 
 ### Acknowledgements
 
