@@ -81,33 +81,9 @@ abstract interface
 end interface
 ```
 mimicking the signature of the (extended) BLAS-1 subroutine `axpby`.
-
-Similarly, a stripped-down version of an abstract linear operator type is shown below.
-
-```fortran
-type, abstract :: abstract_linop_rdp
-  contains
-    ! Abstract procedure to compute the matrix-vector product y = A * x
-    procedure(abstract_matvec_rdp), pass(self), deferred :: matvec
-    ! Abstract procedure to compute the matrix-vector product y = A^H * x
-    procedure(abstract_matvec_rdp), pass(self), deferred :: rmatvec
-end type
-```
-
-The two type-bound procedures need to implement the matrix-vector and transposed matrix-vector products.
-The corresponding abstract interface reads
-
-```fortran
-abstract interface
-  subroutine abstract_matvec_rdp(self, vec_in, vec_out)
-    class(abstract_linop_rdp), intent(inout) :: self
-    class(abstract_vector_rdp), intent(in)    :: vec_in
-    class(abstract_vector_rdp), intent(out)   :: vec_out
-  end subroutine
-end interface
-```
-
+Abstract linear operators are defined similarly, with two type-bound procedures required to implement the matrix-vector and transpose matrix-vector product.
 Using `abstract` types enables us to focus on the high-level implementation of the different algorithms while leaving the performance-critical details to the users.
+In addition, `LightKrylov` exposes abstract types for preconditioners, as well as a Newton-GMRES solver for nonlinear systems.
 After extending these `abstract` types for their application, one can solve linear systems or compute eigenvalues as easily as
 
 ```fortran
@@ -118,7 +94,6 @@ call gmres(A, b, x, info)
 call eigs(A, V, lambda, residuals, info)
 ```
 
-In addition, `LightKrylov` exposes abstract interfaces for preconditioners, and a Newton-GMRES solver.
 <!-- Examples illustrating how to extend these `abstract` types for computing the leading eigenpairs of the linearized Ginzburg-Landau equation or computing unstable periodic orbits of the Rössler system and studying their Lyapunov exponents can be found [here](https://github.com/nekStab/LightKrylov/tree/main/example). -->
 
 # Performance in a production-ready open-source codebase
