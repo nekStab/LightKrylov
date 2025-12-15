@@ -39,9 +39,7 @@ contains
         integer :: i, iostat
         character(len=100) :: errmsg
         allocate(inv_perm(size(perm)), source=0, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="invperm")
+        call check_allocation(iostat, errmsg, this_module, "invperm")
         inv_perm(perm) = [(i, i=1, size(perm))]
     end procedure invperm
 

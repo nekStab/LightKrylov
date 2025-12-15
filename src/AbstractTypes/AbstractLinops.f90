@@ -13,6 +13,7 @@ module LightKrylov_AbstractLinops
     use stdlib_linalg_blas, only: gemv
     use LightKrylov_Logger
     use LightKrylov_Constants
+    use LightKrylov_Utils
     use LightKrylov_Timer_Utils, only: lightkrylov_timer
     use LightKrylov_AbstractVectors
     implicit none(type, external)
@@ -907,9 +908,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_matvec_rsp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_matvec_rsp")
         call wrk%zero()
 
         ! w = A @ x
@@ -943,9 +942,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_rmatvec_rsp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_rsp")
         call wrk%zero()
 
         ! w = A @ x
@@ -979,9 +976,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_matvec_rdp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_matvec_rdp")
         call wrk%zero()
 
         ! w = A @ x
@@ -1015,9 +1010,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_rmatvec_rdp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_rdp")
         call wrk%zero()
 
         ! w = A @ x
@@ -1051,9 +1044,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_matvec_csp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_matvec_csp")
         call wrk%zero()
 
         ! w = A @ x
@@ -1087,9 +1078,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_rmatvec_csp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_csp")
         call wrk%zero()
 
         ! w = A @ x
@@ -1123,9 +1112,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_matvec_cdp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_matvec_cdp")
         call wrk%zero()
 
         ! w = A @ x
@@ -1159,9 +1146,7 @@ contains
 
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="axpby_rmatvec_cdp")
+        call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_cdp")
         call wrk%zero()
 
         ! w = A @ x
@@ -1194,9 +1179,7 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         allocate(B, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="initialize_adjoint_rsp")
+        call check_allocation(iostat, errmsg, this_module, "initialize_adjoint_rsp")
         B%A = A
     end function initialize_adjoint_rsp
 
@@ -1223,9 +1206,7 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         allocate(B, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="initialize_adjoint_rdp")
+        call check_allocation(iostat, errmsg, this_module, "initialize_adjoint_rdp")
         B%A = A
     end function initialize_adjoint_rdp
 
@@ -1252,9 +1233,7 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         allocate(B, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="initialize_adjoint_csp")
+        call check_allocation(iostat, errmsg, this_module, "initialize_adjoint_csp")
         B%A = A
     end function initialize_adjoint_csp
 
@@ -1281,9 +1260,7 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         allocate(B, stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="initialize_adjoint_cdp")
+        call check_allocation(iostat, errmsg, this_module, "initialize_adjoint_cdp")
         B%A = A
     end function initialize_adjoint_cdp
 

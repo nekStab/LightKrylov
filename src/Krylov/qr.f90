@@ -555,14 +555,9 @@ contains
 
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_rsp")
-        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_rsp")
-        Rwrk = zero_rsp
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
+        allocate(Rwrk(max(1, n)), source=zero_rsp, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -588,14 +583,9 @@ contains
 
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_rdp")
-        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_rdp")
-        Rwrk = zero_rdp
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
+        allocate(Rwrk(max(1, n)), source=zero_rdp, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -621,14 +611,9 @@ contains
 
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_csp")
-        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_csp")
-        Rwrk = zero_rsp
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
+        allocate(Rwrk(max(1, n)), source=zero_csp, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -654,14 +639,9 @@ contains
 
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_cdp")
-        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
-        if (iostat /= 0) call stop_error(errmsg, &
-                                         module=this_module, &
-                                         procedure="swap_columns_cdp")
-        Rwrk = zero_rdp
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
+        allocate(Rwrk(max(1, n)), source=zero_cdp, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
 
         ! Swap columns.
         call copy(Qwrk, Q(j))

@@ -1674,12 +1674,14 @@ contains
         real(sp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k, idx
+        integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
+        character(len=100) :: errmsg
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
-            allocate(indices(k))
+            allocate(indices(k), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "write_results_rsp")
             call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
@@ -1703,12 +1705,14 @@ contains
         real(dp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k, idx
+        integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
+        character(len=100) :: errmsg
         character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
-            allocate(indices(k))
+            allocate(indices(k), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "write_results_rdp")
             call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,2(A18),A6)') 'Iter', 'value', 'residual', 'conv'
@@ -1732,13 +1736,15 @@ contains
         real(sp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k, idx
+        integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
+        character(len=100) :: errmsg
         real(sp) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
-            allocate(indices(k))
+            allocate(indices(k), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "write_results_csp")
             call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
@@ -1763,13 +1769,15 @@ contains
         real(dp), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k, idx
+        integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
+        character(len=100) :: errmsg
         real(dp) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
-            allocate(indices(k))
+            allocate(indices(k), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "write_results_cdp")
             call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
                 write (1234, '(A6,4(A18),A6)') 'Iter', 'Re', 'Im', 'modulus', 'residual', 'conv'
@@ -1904,7 +1912,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eigs_rsp'
         integer :: nev, conv
-        integer :: i, j, k, niter, krst
+        integer :: i, j, k, niter, krst, iostat
         real(sp) :: tol, x0_norm
         real(sp) :: beta
         real(sp) :: alpha
@@ -1919,20 +1927,28 @@ contains
         outpost = optval(write_intermediate, .true.)
 
         ! Allocate eigenvalues.
-        allocate(eigvals(nev)) ; eigvals = 0.0_sp
+        allocate(eigvals(nev), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rsp")
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call zero_basis(Xwrk)
+
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_rsp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(H(kdim_+1, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        allocate(eigvals_wrk(kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rsp")
 
         ! Ritz eigenpairs computation.
         H = 0.0_sp
@@ -2063,7 +2079,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eigs_rdp'
         integer :: nev, conv
-        integer :: i, j, k, niter, krst
+        integer :: i, j, k, niter, krst, iostat
         real(dp) :: tol, x0_norm
         real(dp) :: beta
         real(dp) :: alpha
@@ -2078,20 +2094,28 @@ contains
         outpost = optval(write_intermediate, .true.)
 
         ! Allocate eigenvalues.
-        allocate(eigvals(nev)) ; eigvals = 0.0_dp
+        allocate(eigvals(nev), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rdp")
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call zero_basis(Xwrk)
+
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_rdp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(H(kdim_+1, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        allocate(eigvals_wrk(kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_rdp")
 
         ! Ritz eigenpairs computation.
         H = 0.0_dp
@@ -2222,7 +2246,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eigs_csp'
         integer :: nev, conv
-        integer :: i, j, k, niter, krst
+        integer :: i, j, k, niter, krst, iostat
         real(sp) :: tol, x0_norm
         complex(sp) :: beta
         logical :: outpost
@@ -2236,20 +2260,28 @@ contains
         outpost = optval(write_intermediate, .true.)
 
         ! Allocate eigenvalues.
-        allocate(eigvals(nev)) ; eigvals = 0.0_sp
+        allocate(eigvals(nev), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_csp")
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call zero_basis(Xwrk)
+
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_csp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(H(kdim_+1, kdim_)) ; H = 0.0_sp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_sp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(H(kdim_+1, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        allocate(eigvals_wrk(kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_csp")
 
         ! Ritz eigenpairs computation.
         H = 0.0_sp
@@ -2371,7 +2403,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eigs_cdp'
         integer :: nev, conv
-        integer :: i, j, k, niter, krst
+        integer :: i, j, k, niter, krst, iostat
         real(dp) :: tol, x0_norm
         complex(dp) :: beta
         logical :: outpost
@@ -2385,20 +2417,28 @@ contains
         outpost = optval(write_intermediate, .true.)
 
         ! Allocate eigenvalues.
-        allocate(eigvals(nev)) ; eigvals = 0.0_dp
+        allocate(eigvals(nev), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_cdp")
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call zero_basis(Xwrk)
+
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_cdp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(H(kdim_+1, kdim_)) ; H = 0.0_dp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_dp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(H(kdim_+1, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        allocate(eigvals_wrk(kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_cdp")
 
         ! Ritz eigenpairs computation.
         H = 0.0_dp

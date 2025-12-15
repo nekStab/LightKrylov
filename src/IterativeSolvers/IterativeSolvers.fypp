@@ -902,8 +902,9 @@ contains
         real(${kind}$), intent(in) :: tol
         !! Convergence tolerance
         ! internals
-        integer :: i, k, idx
+        integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
+        character(len=100) :: errmsg
         #:if type[0] == "c"
         real(${kind}$) :: modulus
         character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
@@ -912,7 +913,8 @@ contains
         #:endif
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
-            allocate(indices(k))
+            allocate(indices(k), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "write_results_${type[0]}$${kind}$")
             call sort_index(res, indices) ! res is returned in sorted order
             open (1234, file=filename, status='replace', action='write')
             #:if type[0] == "c"
@@ -1009,7 +1011,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eigs_${type[0]}$${kind}$'
         integer :: nev, conv
-        integer :: i, j, k, niter, krst
+        integer :: i, j, k, niter, krst, iostat
         real(${kind}$) :: tol, x0_norm
         ${type}$ :: beta
         #:if type[0] == "r"
@@ -1026,20 +1028,28 @@ contains
         outpost = optval(write_intermediate, .true.)
 
         ! Allocate eigenvalues.
-        allocate(eigvals(nev)) ; eigvals = 0.0_${kind}$
+        allocate(eigvals(nev), source=zero_c${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call zero_basis(Xwrk)
+
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_${type[0]}$${kind}$/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(H(kdim_+1, kdim_)) ; H = 0.0_${kind}$
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = 0.0_${kind}$
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_${kind}$
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
+        allocate(H(kdim_+1, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        allocate(eigvals_wrk(kdim_), source=zero_c${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        allocate(residuals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
 
         ! Ritz eigenpairs computation.
         H = 0.0_${kind}$
