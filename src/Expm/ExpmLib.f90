@@ -230,13 +230,11 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(X(nk+1), source=b, stat=iostat, errmsg=msg)
+        allocate(X(nk+1), Xwrk, &
+                 source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(E(nk+1, nk+1), source=H, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Xwrk, source=b, stat=iostat, errmsg=msg)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
+                 source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
@@ -249,7 +247,6 @@ contains
         else
             call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_rsp / beta)
-            H = 0.0_sp
 
             expm_arnoldi: do k = 1, nk
                 km = k-1 ; kp = k+1
@@ -343,23 +340,22 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(R(p, p), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(X(p*(nk+1)), source=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), source=zero_rsp, stat=iostat, errmsg=msg)
+        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
+                 source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Scratch arrays.
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), &
+                 source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Cwrk(p), source=B(1), stat=iostat, errmsg=msg)
+
+        allocate(X(p*(nk+1)), Cwrk(p), &
+                 source=B(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+
+        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        R = 0.0_sp
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
@@ -500,13 +496,11 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(X(nk+1), source=b, stat=iostat, errmsg=msg)
+        allocate(X(nk+1), Xwrk, &
+                 source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(E(nk+1, nk+1), source=H, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Xwrk, source=b, stat=iostat, errmsg=msg)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
+                 source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
@@ -519,7 +513,6 @@ contains
         else
             call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_rdp / beta)
-            H = 0.0_dp
 
             expm_arnoldi: do k = 1, nk
                 km = k-1 ; kp = k+1
@@ -613,23 +606,22 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(R(p, p), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(X(p*(nk+1)), source=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), source=zero_rdp, stat=iostat, errmsg=msg)
+        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
+                 source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Scratch arrays.
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), &
+                 source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Cwrk(p), source=B(1), stat=iostat, errmsg=msg)
+
+        allocate(X(p*(nk+1)), Cwrk(p), &
+                 source=B(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+
+        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        R = 0.0_dp
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
@@ -770,13 +762,11 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(X(nk+1), source=b, stat=iostat, errmsg=msg)
+        allocate(X(nk+1), Xwrk, &
+                 source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(E(nk+1, nk+1), source=H, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Xwrk, source=b, stat=iostat, errmsg=msg)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
+                 source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
@@ -789,7 +779,6 @@ contains
         else
             call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_csp / beta)
-            H = 0.0_sp
 
             expm_arnoldi: do k = 1, nk
                 km = k-1 ; kp = k+1
@@ -883,23 +872,22 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(R(p, p), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(X(p*(nk+1)), source=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), source=zero_csp, stat=iostat, errmsg=msg)
+        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
+                 source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Scratch arrays.
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), &
+                 source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Cwrk(p), source=B(1), stat=iostat, errmsg=msg)
+
+        allocate(X(p*(nk+1)), Cwrk(p), &
+                 source=B(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+
+        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        R = 0.0_sp
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
@@ -1040,13 +1028,11 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(X(nk+1), source=b, stat=iostat, errmsg=msg)
+        allocate(X(nk+1), Xwrk, &
+                 source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(E(nk+1, nk+1), source=H, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Xwrk, source=b, stat=iostat, errmsg=msg)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
+                 source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
@@ -1059,7 +1045,6 @@ contains
         else
             call zero_basis(X)
             call X(1)%add(b) ; call X(1)%scal(one_cdp / beta)
-            H = 0.0_dp
 
             expm_arnoldi: do k = 1, nk
                 km = k-1 ; kp = k+1
@@ -1153,23 +1138,22 @@ contains
         info = 0
 
         ! Allocate arrays.
-        allocate(R(p, p), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(X(p*(nk+1)), source=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), source=zero_cdp, stat=iostat, errmsg=msg)
+        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
+                 source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Scratch arrays.
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), &
+                 source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(Cwrk(p), source=B(1), stat=iostat, errmsg=msg)
+
+        allocate(X(p*(nk+1)), Cwrk(p), &
+                 source=B(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+
+        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        R = 0.0_dp
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
