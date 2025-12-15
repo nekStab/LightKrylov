@@ -83,7 +83,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_${type[0]}$${kind}$'
-        integer :: k
+        integer :: k, iostat
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -107,12 +107,20 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_${kind}$
-        allocate(e(kdim+1))         ; e = 0.0_${kind}$
-        allocate(c(kdim))           ; c = 0.0_${kind}$
-        allocate(s(kdim))           ; s = 0.0_${kind}$
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
+        call zero_basis(V)
+        allocate(H(kdim+1, kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg) 
+        call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
+        allocate(e(kdim+1), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
+        allocate(c(kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
+        allocate(s(kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_${kind}$_metadata() ; gmres_meta%converged = .false.
@@ -135,7 +143,8 @@ contains
             call V(1)%scal(one_${type[0]}$${kind}$/beta)
             c = 0.0_${kind}$ ; s = 0.0_${kind}$
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               call check_allocation(iostat, msg, this_module, "gmres_${type[0]}$${kind}$")
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
