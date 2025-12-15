@@ -465,7 +465,14 @@ contains
     subroutine dense_zero_${type[0]}$${kind}$(self)
         implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
-        if(.not. allocated(self%data)) allocate(self%data(self%n))
+        integer :: iostat
+        character(len=100) :: errmsg
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            if (iostat /= 0) call stop_error(errmsg, &
+                                             module=this_module, &
+                                             procedure="dense_zero_${type[0]}$${kind}$")
+        endif
         self%data = zero_${type[0]}$${kind}$
     end subroutine dense_zero_${type[0]}$${kind}$
 
@@ -473,11 +480,17 @@ contains
         implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
+        integer :: iostat
+        character(len=100) :: errmsg
         #:if type[0] == "r"
         call random_number(self%data)
         #:else
         real(${kind}$), allocatable :: y(:, :)
-        allocate(y(size(self%data), 2)) ; call random_number(y)
+        allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="dense_rand_${type[0]}$${kind}$")
+        call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
         #:endif
     end subroutine dense_rand_${type[0]}$${kind}$
@@ -496,9 +509,15 @@ contains
         ${type}$, intent(in) :: alpha, beta
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec
-        integer :: n, m
+        integer :: n, m, iostat
+        character(len=100) :: errmsg
         m = vec%get_size()
-        if(.not. allocated(self%data)) allocate(self%data(m), source=zero_${type[0]}$${kind}$)
+        if(.not. allocated(self%data)) then
+            allocate(self%data(m), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=errmsg)
+            if (iostat /= 0) call stop_error(errmsg, &
+                                             module=this_module, &
+                                             procedure="dense_axpby_${type[0]}$${kind}$")
+        endif
         n = self%get_size()
         if (m /= n) call stop_error("Inconsistent size between the two vectors.")
 
@@ -557,7 +576,8 @@ contains
         !! Coordinates of `y` in the Krylov basis `X`.
 
         ! Internal variables
-        integer :: i
+        integer :: i, iostat
+        character(len=100) :: errmsg
 
         ! Check sizes.
         if (size(X) /= size(v)) then
@@ -566,7 +586,13 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) allocate(y, source=X(1)) ; call y%zero()
+        if (.not. allocated(y)) then
+            allocate(y, source=X(1), stat=iostat, errmsg=errmsg)
+            if (iostat /= 0) call stop_error(errmsg, &
+                                             module=this_module, &
+                                             procedure="linear_combination_vector_${type[0]}$${kind}$")
+        endif
+        call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
             call y%axpby(v(i), X(i), one_${type[0]}$${kind}$) ! y = y + X[i]*v[i]
@@ -585,21 +611,25 @@ contains
         !! Coefficients of the linear combinations.
 
         ! Internal variables.
-        integer :: i, j
+        integer :: i, j, iostat
+        character(len=100) :: errmsg
     
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
-                              & this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
+                            this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
         endif
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), source=X(1))
+            allocate(Y(size(B, 2)), source=X(1), stat=iostat, errmsg=errmsg)
+            if (iostat /= 0) call stop_error(errmsg, &
+                                             module=this_module, &
+                                             procedure="linear_combination_matrix_${type[0]}$${kind}$")
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                              & this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
+                                this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
             endif
         endif
 
