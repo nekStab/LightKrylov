@@ -171,13 +171,22 @@ contains
     module procedure swap_columns_${type[0]}$${kind}$
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk
         ${type}$, allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
+        integer :: iwrk, m, n, iostat
+        character(len=100) :: errmsg
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_r${kind}$
+        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_${type[0]}$${kind}$")
+        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_${type[0]}$${kind}$")
+        Rwrk = zero_r${kind}$
 
         ! Swap columns.
         call copy(Qwrk, Q(j))

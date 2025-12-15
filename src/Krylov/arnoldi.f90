@@ -9,12 +9,17 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         real(sp), allocatable :: res(:)
-        integer :: k, i, kdim, kpm, kp, kpp
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="arnoldi_rsp")
+        res = zero_rsp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -75,12 +80,17 @@ contains
         real(dp) :: tolerance
         real(dp) :: beta
         real(dp), allocatable :: res(:)
-        integer :: k, i, kdim, kpm, kp, kpp
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="arnoldi_rdp")
+        res = zero_rdp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -141,12 +151,17 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         complex(sp), allocatable :: res(:)
-        integer :: k, i, kdim, kpm, kp, kpp
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rsp ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="arnoldi_csp")
+        res = zero_rsp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p
@@ -207,12 +222,17 @@ contains
         real(dp) :: tolerance
         real(dp) :: beta
         complex(dp), allocatable :: res(:)
-        integer :: k, i, kdim, kpm, kp, kpp
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
         ! Deals with optional non-unity blksize and allocations.
-        p = optval(blksize, 1) ; allocate(res(p)) ; res = zero_rdp ; info = 0
+        p = optval(blksize, 1) ; allocate(res(p), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="arnoldi_cdp")
+        res = zero_rdp ; info = 0
 
         ! Check dimensions.
         kdim = (size(X) - p) / p

@@ -547,13 +547,22 @@ contains
     module procedure swap_columns_rsp
         class(abstract_vector_rsp), allocatable :: Qwrk
         real(sp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
+        integer :: iwrk, m, n, iostat
+        character(len=100) :: errmsg
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
+        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_rsp")
+        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_rsp")
+        Rwrk = zero_rsp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -571,13 +580,22 @@ contains
     module procedure swap_columns_rdp
         class(abstract_vector_rdp), allocatable :: Qwrk
         real(dp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
+        integer :: iwrk, m, n, iostat
+        character(len=100) :: errmsg
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
+        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_rdp")
+        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_rdp")
+        Rwrk = zero_rdp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -595,13 +613,22 @@ contains
     module procedure swap_columns_csp
         class(abstract_vector_csp), allocatable :: Qwrk
         complex(sp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
+        integer :: iwrk, m, n, iostat
+        character(len=100) :: errmsg
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rsp
+        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_csp")
+        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_csp")
+        Rwrk = zero_rsp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
@@ -619,13 +646,22 @@ contains
     module procedure swap_columns_cdp
         class(abstract_vector_cdp), allocatable :: Qwrk
         complex(dp), allocatable :: Rwrk(:)
-        integer :: iwrk, m, n
+        integer :: iwrk, m, n, iostat
+        character(len=100) :: errmsg
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1)) ; allocate(Rwrk(max(1, n))) ; Rwrk = zero_rdp
+        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_cdp")
+        allocate(Rwrk(max(1, n)), stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="swap_columns_cdp")
+        Rwrk = zero_rdp
 
         ! Swap columns.
         call copy(Qwrk, Q(j))
