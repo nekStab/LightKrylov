@@ -420,9 +420,15 @@ contains
 
         ! Working array.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_matvec_${type[0]}$${kind}$")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -450,9 +456,15 @@ contains
 
         ! Working array.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_rmatvec_${type[0]}$${kind}$")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -483,7 +495,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         class(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
-        allocate(B) ; B%A = A
+        integer :: iostat
+        character(len=100) :: errmsg
+        allocate(B, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="initialize_adjoint_${type[0]}$${kind}$")
+        B%A = A
     end function initialize_adjoint_${type[0]}$${kind}$
 
     subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)

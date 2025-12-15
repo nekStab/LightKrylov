@@ -902,9 +902,15 @@ contains
 
         ! Working array.
         class(abstract_vector_rsp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_matvec_rsp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -932,9 +938,15 @@ contains
 
         ! Working array.
         class(abstract_vector_rsp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_rmatvec_rsp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -962,9 +974,15 @@ contains
 
         ! Working array.
         class(abstract_vector_rdp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_matvec_rdp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -992,9 +1010,15 @@ contains
 
         ! Working array.
         class(abstract_vector_rdp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_rmatvec_rdp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -1022,9 +1046,15 @@ contains
 
         ! Working array.
         class(abstract_vector_csp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_matvec_csp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -1052,9 +1082,15 @@ contains
 
         ! Working array.
         class(abstract_vector_csp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_rmatvec_csp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -1082,9 +1118,15 @@ contains
 
         ! Working array.
         class(abstract_vector_cdp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_matvec_cdp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -1112,9 +1154,15 @@ contains
 
         ! Working array.
         class(abstract_vector_cdp), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="axpby_rmatvec_cdp")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -1143,7 +1191,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_rsp), intent(in) :: A
         class(adjoint_linop_rsp), allocatable :: B
-        allocate(B) ; B%A = A
+        integer :: iostat
+        character(len=100) :: errmsg
+        allocate(B, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="initialize_adjoint_rsp")
+        B%A = A
     end function initialize_adjoint_rsp
 
     subroutine adjoint_matvec_rsp(self, vec_in, vec_out)
@@ -1166,7 +1220,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_rdp), intent(in) :: A
         class(adjoint_linop_rdp), allocatable :: B
-        allocate(B) ; B%A = A
+        integer :: iostat
+        character(len=100) :: errmsg
+        allocate(B, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="initialize_adjoint_rdp")
+        B%A = A
     end function initialize_adjoint_rdp
 
     subroutine adjoint_matvec_rdp(self, vec_in, vec_out)
@@ -1189,7 +1249,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_csp), intent(in) :: A
         class(adjoint_linop_csp), allocatable :: B
-        allocate(B) ; B%A = A
+        integer :: iostat
+        character(len=100) :: errmsg
+        allocate(B, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="initialize_adjoint_csp")
+        B%A = A
     end function initialize_adjoint_csp
 
     subroutine adjoint_matvec_csp(self, vec_in, vec_out)
@@ -1212,7 +1278,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_cdp), intent(in) :: A
         class(adjoint_linop_cdp), allocatable :: B
-        allocate(B) ; B%A = A
+        integer :: iostat
+        character(len=100) :: errmsg
+        allocate(B, stat=iostat, errmsg=errmsg)
+        if (iostat /= 0) call stop_error(errmsg, &
+                                         module=this_module, &
+                                         procedure="initialize_adjoint_cdp")
+        B%A = A
     end function initialize_adjoint_cdp
 
     subroutine adjoint_matvec_cdp(self, vec_in, vec_out)
