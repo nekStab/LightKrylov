@@ -47,6 +47,9 @@ module LightKrylov_AbstractLinops
         !! Finalize timers and print complete history_info
     end type abstract_linop
 
+    type, abstract, extends(abstract_linop), public :: abstract_sym_linop
+    end type abstract_sym_linop
+
     #:for kind, type in RC_KINDS_TYPES
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract ${type}$ operator with kind=${kind}$     -----
@@ -197,18 +200,59 @@ module LightKrylov_AbstractLinops
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
-    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_sym_linop_${type[0]}$${kind}$
+    type, abstract, extends(abstract_sym_linop), public :: abstract_sym_linop_${type[0]}$${kind}$
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
+        private
+        ! User defined procedures
+        procedure(abstract_sym_matvec_${type[0]}$${kind}$), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_sym_matvec_${type[0]}$${kind}$
+        !! Wrapper for matvec including the counter increment
     end type abstract_sym_linop_${type[0]}$${kind}$
+    abstract interface
+        subroutine abstract_sym_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_sym_linop_${type[0]}$${kind}$
+            implicit none(type, external)
+            class(abstract_sym_linop_${type[0]}$${kind}$) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_sym_matvec_${type[0]}$${kind}$
+    end interface
     #:else
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_hermitian_linop_${type[0]}$${kind}$
+    type, abstract, extends(abstract_sym_linop), public :: abstract_hermitian_linop_${type[0]}$${kind}$
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
+        ! User defined procedures
+        procedure(abstract_herm_matvec_${type[0]}$${kind}$), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_herm_matvec_${type[0]}$${kind}$
+        !! Wrapper for matvec including the counter increment
     end type abstract_hermitian_linop_${type[0]}$${kind}$
+    abstract interface
+        subroutine abstract_herm_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_hermitian_linop_${type[0]}$${kind}$
+            implicit none(type, external)
+            class(abstract_hermitian_linop_${type[0]}$${kind}$) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_herm_matvec_${type[0]}$${kind}$
+    end interface
     #:endif
     #:endfor
 
@@ -377,6 +421,45 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_${type[0]}$${kind}$
+
+    #:if type.startswith("real")
+    subroutine apply_sym_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_sym_linop_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_sym_matvec_${type[0]}$${kind}$
+    #:else
+    subroutine apply_herm_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_herm_matvec_${type[0]}$${kind}$
+
+    #:endif
     #:endfor
 
     !------------------------------------------------------------------------------
