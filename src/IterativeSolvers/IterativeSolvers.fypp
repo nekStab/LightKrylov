@@ -1029,11 +1029,11 @@ contains
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev), source=zero_c${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -1043,13 +1043,13 @@ contains
             call Xwrk(1)%rand(.true.)
         endif
         allocate(H(kdim_+1, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvecs_wrk(kdim_, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvals_wrk(kdim_), source=zero_c${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(residuals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_${type[0]}$${kind}$")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         H = 0.0_${kind}$

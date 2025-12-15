@@ -148,19 +148,19 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call wrk%zero()
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg) 
-        call check_allocation(iostat, msg, this_module, "gmres_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(c(kdim), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(s(kdim), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
@@ -184,7 +184,7 @@ contains
             c = 0.0_sp ; s = 0.0_sp
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
-               call check_allocation(iostat, msg, this_module, "gmres_rsp")
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
@@ -334,19 +334,19 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call wrk%zero()
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg) 
-        call check_allocation(iostat, msg, this_module, "gmres_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(c(kdim), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(s(kdim), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
@@ -370,7 +370,7 @@ contains
             c = 0.0_dp ; s = 0.0_dp
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
-               call check_allocation(iostat, msg, this_module, "gmres_rdp")
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
@@ -520,19 +520,19 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call wrk%zero()
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg) 
-        call check_allocation(iostat, msg, this_module, "gmres_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(c(kdim), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(s(kdim), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
@@ -556,7 +556,7 @@ contains
             c = 0.0_sp ; s = 0.0_sp
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
-               call check_allocation(iostat, msg, this_module, "gmres_csp")
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
@@ -706,19 +706,19 @@ contains
 
         ! Initialize working variables.
         allocate(wrk, source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call wrk%zero()
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg) 
-        call check_allocation(iostat, msg, this_module, "gmres_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(c(kdim), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(s(kdim), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "gmres_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
@@ -742,7 +742,7 @@ contains
             c = 0.0_dp ; s = 0.0_dp
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
-               call check_allocation(iostat, msg, this_module, "gmres_cdp")
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)

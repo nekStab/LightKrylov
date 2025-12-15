@@ -1928,11 +1928,11 @@ contains
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -1942,13 +1942,13 @@ contains
             call Xwrk(1)%rand(.true.)
         endif
         allocate(H(kdim_+1, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvecs_wrk(kdim_, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvals_wrk(kdim_), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rsp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         H = 0.0_sp
@@ -2095,11 +2095,11 @@ contains
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2109,13 +2109,13 @@ contains
             call Xwrk(1)%rand(.true.)
         endif
         allocate(H(kdim_+1, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvecs_wrk(kdim_, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvals_wrk(kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_rdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         H = 0.0_dp
@@ -2261,11 +2261,11 @@ contains
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2275,13 +2275,13 @@ contains
             call Xwrk(1)%rand(.true.)
         endif
         allocate(H(kdim_+1, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvecs_wrk(kdim_, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvals_wrk(kdim_), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_csp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         H = 0.0_sp
@@ -2418,11 +2418,11 @@ contains
 
         ! Allocate eigenvalues.
         allocate(eigvals(nev), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2432,13 +2432,13 @@ contains
             call Xwrk(1)%rand(.true.)
         endif
         allocate(H(kdim_+1, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvecs_wrk(kdim_, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(eigvals_wrk(kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, "eigs_cdp")
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         H = 0.0_dp
