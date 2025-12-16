@@ -46,6 +46,9 @@ module LightKrylov_AbstractLinops
         !! Finalize timers and print complete history_info
     end type abstract_linop
 
+    type, abstract, extends(abstract_linop), public :: abstract_sym_linop
+    end type abstract_sym_linop
+
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) operator with kind=sp     -----
     !------------------------------------------------------------------------------
@@ -491,31 +494,113 @@ module LightKrylov_AbstractLinops
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
-    type, abstract, extends(abstract_linop_rsp), public :: abstract_sym_linop_rsp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_sym_linop_rsp
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
+        private
+        ! User defined procedures
+        procedure(abstract_sym_matvec_rsp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_sym_matvec_rsp
+        !! Wrapper for matvec including the counter increment
     end type abstract_sym_linop_rsp
+    abstract interface
+        subroutine abstract_sym_matvec_rsp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_sym_linop_rsp
+            implicit none(type, external)
+            class(abstract_sym_linop_rsp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_rsp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_rsp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_sym_matvec_rsp
+    end interface
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
-    type, abstract, extends(abstract_linop_rdp), public :: abstract_sym_linop_rdp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_sym_linop_rdp
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
+        private
+        ! User defined procedures
+        procedure(abstract_sym_matvec_rdp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_sym_matvec_rdp
+        !! Wrapper for matvec including the counter increment
     end type abstract_sym_linop_rdp
+    abstract interface
+        subroutine abstract_sym_matvec_rdp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_sym_linop_rdp
+            implicit none(type, external)
+            class(abstract_sym_linop_rdp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_rdp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_rdp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_sym_matvec_rdp
+    end interface
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_csp), public :: abstract_hermitian_linop_csp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_hermitian_linop_csp
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
+        ! User defined procedures
+        procedure(abstract_herm_matvec_csp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_herm_matvec_csp
+        !! Wrapper for matvec including the counter increment
     end type abstract_hermitian_linop_csp
+    abstract interface
+        subroutine abstract_herm_matvec_csp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_hermitian_linop_csp
+            implicit none(type, external)
+            class(abstract_hermitian_linop_csp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_csp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_csp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_herm_matvec_csp
+    end interface
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_cdp), public :: abstract_hermitian_linop_cdp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_hermitian_linop_cdp
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
+        ! User defined procedures
+        procedure(abstract_herm_matvec_cdp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_herm_matvec_cdp
+        !! Wrapper for matvec including the counter increment
     end type abstract_hermitian_linop_cdp
+    abstract interface
+        subroutine abstract_herm_matvec_cdp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_hermitian_linop_cdp
+            implicit none(type, external)
+            class(abstract_hermitian_linop_cdp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_cdp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_cdp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_herm_matvec_cdp
+    end interface
 
     !------------------------------------------------
     !-----     Convenience dense linop type     -----
@@ -698,6 +783,24 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_rsp
+
+    subroutine apply_sym_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_sym_linop_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec_in
+        class(abstract_vector_rsp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_sym_matvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: self
@@ -732,6 +835,24 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_rdp
+
+    subroutine apply_sym_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_sym_linop_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec_in
+        class(abstract_vector_rdp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_sym_matvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: self
@@ -766,6 +887,25 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_csp
+
+    subroutine apply_herm_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_hermitian_linop_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_herm_matvec_csp
+
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: self
@@ -800,6 +940,25 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_cdp
+
+    subroutine apply_herm_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_hermitian_linop_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_herm_matvec_cdp
+
 
     !------------------------------------------------------------------------------
     !-----     Concrete matvec/rmatvec implementations for special linops     -----
