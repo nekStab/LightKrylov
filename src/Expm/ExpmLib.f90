@@ -7,7 +7,7 @@ module LightKrylov_ExpmLib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: mnorm, norm, expm
+    use stdlib_linalg, only: mnorm, norm, matrix_exp, expm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -211,7 +211,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rsp'
         integer, parameter :: kmax = 100
-        integer :: k, km, kp, nk
+        integer :: k, km, kp, nk, i, j
         ! Arnoldi factorization.
         class(abstract_vector_rsp), pointer :: Xwrk(:)
         real(sp), allocatable :: H(:, :)
@@ -278,7 +278,10 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                E(:kp, :kp) = expm(tau*H(:kp, :kp))
+                do concurrent(i=1:kp, j=1:kp, i <= j+1)
+                    E(i, j) = tau*H(i, j)
+                enddo
+                call matrix_exp(E(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(wrk, Xwrk(:kp), E(:kp, 1))
@@ -489,7 +492,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rdp'
         integer, parameter :: kmax = 100
-        integer :: k, km, kp, nk
+        integer :: k, km, kp, nk, i, j
         ! Arnoldi factorization.
         class(abstract_vector_rdp), pointer :: Xwrk(:)
         real(dp), allocatable :: H(:, :)
@@ -556,7 +559,10 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                E(:kp, :kp) = expm(tau*H(:kp, :kp))
+                do concurrent(i=1:kp, j=1:kp, i <= j+1)
+                    E(i, j) = tau*H(i, j)
+                enddo
+                call matrix_exp(E(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(wrk, Xwrk(:kp), E(:kp, 1))
@@ -767,7 +773,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_csp'
         integer, parameter :: kmax = 100
-        integer :: k, km, kp, nk
+        integer :: k, km, kp, nk, i, j
         ! Arnoldi factorization.
         class(abstract_vector_csp), pointer :: Xwrk(:)
         complex(sp), allocatable :: H(:, :)
@@ -834,7 +840,10 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                E(:kp, :kp) = expm(tau*H(:kp, :kp))
+                do concurrent(i=1:kp, j=1:kp, i <= j+1)
+                    E(i, j) = tau*H(i, j)
+                enddo
+                call matrix_exp(E(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(wrk, Xwrk(:kp), E(:kp, 1))
@@ -1045,7 +1054,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_cdp'
         integer, parameter :: kmax = 100
-        integer :: k, km, kp, nk
+        integer :: k, km, kp, nk, i, j
         ! Arnoldi factorization.
         class(abstract_vector_cdp), pointer :: Xwrk(:)
         complex(dp), allocatable :: H(:, :)
@@ -1112,7 +1121,10 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                E(:kp, :kp) = expm(tau*H(:kp, :kp))
+                do concurrent(i=1:kp, j=1:kp, i <= j+1)
+                    E(i, j) = tau*H(i, j)
+                enddo
+                call matrix_exp(E(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(wrk, Xwrk(:kp), E(:kp, 1))

@@ -9,7 +9,7 @@ module LightKrylov_ExpmLib
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: mnorm, norm, expm
+    use stdlib_linalg, only: mnorm, norm, matrix_exp, expm
 
     ! LightKrylov.
     use LightKrylov_Constants
@@ -149,7 +149,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_${type[0]}$${kind}$'
         integer, parameter :: kmax = 100
-        integer :: k, km, kp, nk
+        integer :: k, km, kp, nk, i, j
         ! Arnoldi factorization.
         class(abstract_vector_${type[0]}$${kind}$), pointer :: Xwrk(:)
         ${type}$, allocatable :: H(:, :)
@@ -216,7 +216,10 @@ contains
                 endif
 
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
-                E(:kp, :kp) = expm(tau*H(:kp, :kp))
+                do concurrent(i=1:kp, j=1:kp, i <= j+1)
+                    E(i, j) = tau*H(i, j)
+                enddo
+                call matrix_exp(E(:kp, :kp))
 
                 ! Project back into original space.
                 call linear_combination(wrk, Xwrk(:kp), E(:kp, 1))
