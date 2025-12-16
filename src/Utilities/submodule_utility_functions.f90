@@ -11,6 +11,10 @@ submodule(lightkrylov_utils) utility_functions
     implicit none(type, external)
 contains
 
+    module procedure check_allocation
+    if (iostat /= 0) call stop_error(msg, module=module, procedure=procedure)
+    end procedure check_allocation
+
     module procedure log2_rsp
         y = log(x) / log(2.0_sp)
     end procedure log2_rsp

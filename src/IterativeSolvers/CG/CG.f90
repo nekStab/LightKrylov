@@ -109,7 +109,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'cg_rsp'
-        integer :: i
+        integer :: i, iostat
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -124,9 +124,15 @@ contains
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
-        allocate(r, mold=b)  ; call r%zero()
-        allocate(p, mold=b)  ; call p%zero()
-        allocate(Ap, mold=b) ; call Ap%zero()
+        allocate(r, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call r%zero()
+        allocate(p, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call p%zero()
+        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_sp_metadata()
@@ -147,7 +153,8 @@ contains
             p = r ; r_dot_r_old = r%dot(r)
         endif
 
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+        allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
@@ -231,7 +238,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'cg_rdp'
-        integer :: i
+        integer :: i, iostat
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -246,9 +253,15 @@ contains
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
-        allocate(r, mold=b)  ; call r%zero()
-        allocate(p, mold=b)  ; call p%zero()
-        allocate(Ap, mold=b) ; call Ap%zero()
+        allocate(r, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call r%zero()
+        allocate(p, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call p%zero()
+        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_dp_metadata()
@@ -269,7 +282,8 @@ contains
             p = r ; r_dot_r_old = r%dot(r)
         endif
 
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+        allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
@@ -353,7 +367,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'cg_csp'
-        integer :: i
+        integer :: i, iostat
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -368,9 +382,15 @@ contains
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
-        allocate(r, mold=b)  ; call r%zero()
-        allocate(p, mold=b)  ; call p%zero()
-        allocate(Ap, mold=b) ; call Ap%zero()
+        allocate(r, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call r%zero()
+        allocate(p, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call p%zero()
+        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_sp_metadata()
@@ -391,7 +411,8 @@ contains
             p = r ; r_dot_r_old = r%dot(r)
         endif
 
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+        allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter
@@ -475,7 +496,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'cg_cdp'
-        integer :: i
+        integer :: i, iostat
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -490,9 +511,15 @@ contains
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
         ! Initialize vectors.
-        allocate(r, mold=b)  ; call r%zero()
-        allocate(p, mold=b)  ; call p%zero()
-        allocate(Ap, mold=b) ; call Ap%zero()
+        allocate(r, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call r%zero()
+        allocate(p, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call p%zero()
+        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_dp_metadata()
@@ -513,7 +540,8 @@ contains
             p = r ; r_dot_r_old = r%dot(r)
         endif
 
-        allocate(cg_meta%res(1)); cg_meta%res(1) = sqrt(abs(r_dot_r_old))
+        allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Conjugate gradient iteration.
         cg_loop: do i = 1, maxiter

@@ -32,6 +32,7 @@ module LightKrylov_Utils
     !-----     Public exports     -----
     !----------------------------------
 
+    public :: check_allocation
     public :: assert_shape
     public :: log2
     public :: eig
@@ -78,6 +79,13 @@ module LightKrylov_Utils
 
     ! NOTE : Most of these functions will gradually disappear as more stable
     !        versions make their ways into the Fortran stdlib library.
+
+    interface
+        module subroutine check_allocation(iostat, msg, module, procedure)
+            integer, intent(in) :: iostat
+            character(len=*), intent(in) :: msg, module, procedure
+        end subroutine check_allocation
+    end interface
 
     interface assert_shape
         !! This interface provides methods to assert tha thte shape of its input vector or

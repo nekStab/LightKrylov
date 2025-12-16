@@ -38,7 +38,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'svds_${type[0]}$${kind}$'
         integer :: nsv, conv
-        integer :: i, j, k
+        integer :: i, j, k, iostat
         real(${kind}$) :: tol, u0_norm
         logical :: outpost
         character(len=256) :: msg
@@ -51,19 +51,28 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_${type[0]}$${kind}$/u0_norm)
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1)) ; call zero_basis(Vwrk)
-        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_${kind}$
-        allocate(umat(kdim_, kdim_)) ; umat = 0.0_${kind}$
-        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_${kind}$
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
-        allocate(B(kdim_+1, kdim_)) ; B = 0.0_${kind}$
+        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(umat(kdim_, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(vmat(kdim_, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(B(kdim_+1, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         info = 0
 

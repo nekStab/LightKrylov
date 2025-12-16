@@ -84,7 +84,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_${type[0]}$${kind}$'
-        integer :: k
+        integer :: k, iostat
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -108,13 +108,23 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_${kind}$
-        allocate(e(kdim+1))         ; e = 0.0_${kind}$
-        allocate(c(kdim))           ; c = 0.0_${kind}$
-        allocate(s(kdim))           ; s = 0.0_${kind}$
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(V)
+        allocate(Z(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Z)
+        allocate(H(kdim+1, kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(e(kdim+1), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(c(kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(s(kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         fgmres_meta = fgmres_${kind}$_metadata() ; fgmres_meta%converged = .false.
@@ -137,7 +147,8 @@ contains
             call V(1)%scal(one_${type[0]}$${kind}$/beta)
             c = 0.0_${kind}$ ; s = 0.0_${kind}$
             if (fgmres_meta%n_outer == 0) then
-               allocate(fgmres_meta%res(1)) ; fgmres_meta%res(1) = abs(beta)
+               allocate(fgmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'FGMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)

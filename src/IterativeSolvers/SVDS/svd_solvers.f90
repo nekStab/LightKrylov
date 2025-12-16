@@ -63,7 +63,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'svds_rsp'
         integer :: nsv, conv
-        integer :: i, j, k
+        integer :: i, j, k, iostat
         real(sp) :: tol, u0_norm
         logical :: outpost
         character(len=256) :: msg
@@ -76,19 +76,28 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_rsp/u0_norm)
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1)) ; call zero_basis(Vwrk)
-        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
-        allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
-        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
-        allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
+        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(umat(kdim_, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(vmat(kdim_, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(B(kdim_+1, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         info = 0
 
@@ -149,7 +158,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'svds_rdp'
         integer :: nsv, conv
-        integer :: i, j, k
+        integer :: i, j, k, iostat
         real(dp) :: tol, u0_norm
         logical :: outpost
         character(len=256) :: msg
@@ -162,19 +171,28 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_rdp/u0_norm)
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1)) ; call zero_basis(Vwrk)
-        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
-        allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
-        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
-        allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
+        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(umat(kdim_, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(vmat(kdim_, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(B(kdim_+1, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         info = 0
 
@@ -235,7 +253,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'svds_csp'
         integer :: nsv, conv
-        integer :: i, j, k
+        integer :: i, j, k, iostat
         real(sp) :: tol, u0_norm
         logical :: outpost
         character(len=256) :: msg
@@ -248,19 +266,28 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_csp/u0_norm)
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1)) ; call zero_basis(Vwrk)
-        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_sp
-        allocate(umat(kdim_, kdim_)) ; umat = 0.0_sp
-        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
-        allocate(B(kdim_+1, kdim_)) ; B = 0.0_sp
+        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(umat(kdim_, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(vmat(kdim_, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(B(kdim_+1, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         info = 0
 
@@ -321,7 +348,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'svds_cdp'
         integer :: nsv, conv
-        integer :: i, j, k
+        integer :: i, j, k, iostat
         real(dp) :: tol, u0_norm
         logical :: outpost
         character(len=256) :: msg
@@ -334,19 +361,28 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1)) ; call zero_basis(Uwrk)
+        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
             u0_norm = u0%norm(); call Uwrk(1)%scal(one_cdp/u0_norm)
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1)) ; call zero_basis(Vwrk)
-        allocate(svdvals_wrk(kdim_)) ; svdvals_wrk = 0.0_dp
-        allocate(umat(kdim_, kdim_)) ; umat = 0.0_dp
-        allocate(vmat(kdim_, kdim_)) ; vmat = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
-        allocate(B(kdim_+1, kdim_)) ; B = 0.0_dp
+        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Vwrk)
+        allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(umat(kdim_, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(vmat(kdim_, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(B(kdim_+1, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         info = 0
 

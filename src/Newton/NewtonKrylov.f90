@@ -268,15 +268,17 @@ contains
         !! Residual of the current evaluation
         real(sp), intent(in) :: tol
         !! Tolerance of the current evaluation
+        integer :: iostat
+        character(len=100) :: msg
         if (.not.allocated(self%res)) then
-            allocate(self%res(1))
-            self%res(1) = res
+            allocate(self%res(1), source=res, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, "record_data_sp")
         else
             self%res = [ self%res, res ]
         end if
         if (.not.allocated(self%tol)) then
-            allocate(self%tol(1))
-            self%tol(1) = tol
+            allocate(self%tol(1), source=tol, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, "record_data_sp")
         else
             self%tol = [ self%tol, tol ]
         end if
@@ -341,15 +343,17 @@ contains
         !! Residual of the current evaluation
         real(dp), intent(in) :: tol
         !! Tolerance of the current evaluation
+        integer :: iostat
+        character(len=100) :: msg
         if (.not.allocated(self%res)) then
-            allocate(self%res(1))
-            self%res(1) = res
+            allocate(self%res(1), source=res, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, "record_data_dp")
         else
             self%res = [ self%res, res ]
         end if
         if (.not.allocated(self%tol)) then
-            allocate(self%tol(1))
-            self%tol(1) = tol
+            allocate(self%tol(1), source=tol, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, "record_data_dp")
         else
             self%tol = [ self%tol, tol ]
         end if
@@ -389,7 +393,7 @@ contains
         procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
         class(abstract_vector_rsp), allocatable        :: residual, increment
         real(sp)           :: rnorm, tol, target_tol
-        integer            :: i, maxiter, maxstep_bisection
+        integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_sp_metadata) :: newton_meta
         character(len=256) :: msg
         
@@ -416,8 +420,12 @@ contains
         info = 0 
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X); call residual%zero()
-        allocate(increment,source=X); call increment%zero()
+        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
+        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%zero()
         ! Initialize metadata & reset eval counter
         newton_meta = newton_sp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -554,7 +562,7 @@ contains
         procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
         class(abstract_vector_rdp), allocatable        :: residual, increment
         real(dp)           :: rnorm, tol, target_tol
-        integer            :: i, maxiter, maxstep_bisection
+        integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_dp_metadata) :: newton_meta
         character(len=256) :: msg
         
@@ -581,8 +589,12 @@ contains
         info = 0 
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X); call residual%zero()
-        allocate(increment,source=X); call increment%zero()
+        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
+        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%zero()
         ! Initialize metadata & reset eval counter
         newton_meta = newton_dp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -719,7 +731,7 @@ contains
         procedure(abstract_scheduler_sp),      pointer :: tolerance_scheduler => null()
         class(abstract_vector_csp), allocatable        :: residual, increment
         real(sp)           :: rnorm, tol, target_tol
-        integer            :: i, maxiter, maxstep_bisection
+        integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_sp_metadata) :: newton_meta
         character(len=256) :: msg
         
@@ -746,8 +758,12 @@ contains
         info = 0 
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X); call residual%zero()
-        allocate(increment,source=X); call increment%zero()
+        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
+        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%zero()
         ! Initialize metadata & reset eval counter
         newton_meta = newton_sp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -884,7 +900,7 @@ contains
         procedure(abstract_scheduler_dp),      pointer :: tolerance_scheduler => null()
         class(abstract_vector_cdp), allocatable        :: residual, increment
         real(dp)           :: rnorm, tol, target_tol
-        integer            :: i, maxiter, maxstep_bisection
+        integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_dp_metadata) :: newton_meta
         character(len=256) :: msg
         
@@ -911,8 +927,12 @@ contains
         info = 0 
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X); call residual%zero()
-        allocate(increment,source=X); call increment%zero()
+        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
+        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%zero()
         ! Initialize metadata & reset eval counter
         newton_meta = newton_dp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -1034,18 +1054,19 @@ contains
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_rsp'
-        integer :: i, j, idx(1)
+        integer :: i, j, idx(1), iostat
         real(sp) :: invphi, invphi2
         real(sp) :: alpha(4), step
         real(sp) :: res(4)
         class(abstract_vector_rsp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, source=X)
-        allocate(residual, source=X); call residual%zero()
+        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
         step    = one_rsp
-        invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
-        invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
+        invphi  = (sqrt(5.0_sp) - 1.0_sp)/2.0_sp  ! 1 / phi
+        invphi2 = (3.0_sp - sqrt(5.0_sp))/2.0_sp  ! 1 / phi**2
         alpha = [zero_rsp, invphi2*one_rsp, invphi*one_rsp, one_rsp]
         res   = [rold, zero_rsp, zero_rsp, zero_rsp]
 
@@ -1133,18 +1154,19 @@ contains
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_rdp'
-        integer :: i, j, idx(1)
+        integer :: i, j, idx(1), iostat
         real(dp) :: invphi, invphi2
         real(dp) :: alpha(4), step
         real(dp) :: res(4)
         class(abstract_vector_rdp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, source=X)
-        allocate(residual, source=X); call residual%zero()
+        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
         step    = one_rdp
-        invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
-        invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
+        invphi  = (sqrt(5.0_dp) - 1.0_dp)/2.0_dp  ! 1 / phi
+        invphi2 = (3.0_dp - sqrt(5.0_dp))/2.0_dp  ! 1 / phi**2
         alpha = [zero_rdp, invphi2*one_rdp, invphi*one_rdp, one_rdp]
         res   = [rold, zero_rdp, zero_rdp, zero_rdp]
 
@@ -1232,18 +1254,19 @@ contains
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_csp'
-        integer :: i, j, idx(1)
+        integer :: i, j, idx(1), iostat
         real(sp) :: invphi, invphi2
         complex(sp) :: alpha(4), step
         real(sp) :: res(4)
         class(abstract_vector_csp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, source=X)
-        allocate(residual, source=X); call residual%zero()
+        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
         step    = one_csp
-        invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
-        invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
+        invphi  = (sqrt(5.0_sp) - 1.0_sp)/2.0_sp  ! 1 / phi
+        invphi2 = (3.0_sp - sqrt(5.0_sp))/2.0_sp  ! 1 / phi**2
         alpha = [zero_csp, invphi2*one_csp, invphi*one_csp, one_csp]
         res   = [rold, zero_rsp, zero_rsp, zero_rsp]
 
@@ -1331,18 +1354,19 @@ contains
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_cdp'
-        integer :: i, j, idx(1)
+        integer :: i, j, idx(1), iostat
         real(dp) :: invphi, invphi2
         complex(dp) :: alpha(4), step
         real(dp) :: res(4)
         class(abstract_vector_cdp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, source=X)
-        allocate(residual, source=X); call residual%zero()
+        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
         step    = one_cdp
-        invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
-        invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
+        invphi  = (sqrt(5.0_dp) - 1.0_dp)/2.0_dp  ! 1 / phi
+        invphi2 = (3.0_dp - sqrt(5.0_dp))/2.0_dp  ! 1 / phi**2
         alpha = [zero_cdp, invphi2*one_cdp, invphi*one_cdp, one_cdp]
         res   = [rold, zero_rdp, zero_rdp, zero_rdp]
 

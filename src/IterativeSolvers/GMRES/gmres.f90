@@ -123,7 +123,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rsp'
-        integer :: k
+        integer :: k, iostat
         class(abstract_vector_rsp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -147,12 +147,20 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_sp
-        allocate(e(kdim+1))         ; e = 0.0_sp
-        allocate(c(kdim))           ; c = 0.0_sp
-        allocate(s(kdim))           ; s = 0.0_sp
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(V)
+        allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg) 
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(e(kdim+1), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(c(kdim), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(s(kdim), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
@@ -175,7 +183,8 @@ contains
             call V(1)%scal(one_rsp/beta)
             c = 0.0_sp ; s = 0.0_sp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
@@ -300,7 +309,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rdp'
-        integer :: k
+        integer :: k, iostat
         class(abstract_vector_rdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -324,12 +333,20 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_dp
-        allocate(e(kdim+1))         ; e = 0.0_dp
-        allocate(c(kdim))           ; c = 0.0_dp
-        allocate(s(kdim))           ; s = 0.0_dp
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(V)
+        allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg) 
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(e(kdim+1), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(c(kdim), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(s(kdim), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
@@ -352,7 +369,8 @@ contains
             call V(1)%scal(one_rdp/beta)
             c = 0.0_dp ; s = 0.0_dp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
@@ -477,7 +495,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_csp'
-        integer :: k
+        integer :: k, iostat
         class(abstract_vector_csp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -501,12 +519,20 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_sp
-        allocate(e(kdim+1))         ; e = 0.0_sp
-        allocate(c(kdim))           ; c = 0.0_sp
-        allocate(s(kdim))           ; s = 0.0_sp
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(V)
+        allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg) 
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(e(kdim+1), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(c(kdim), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(s(kdim), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_sp_metadata() ; gmres_meta%converged = .false.
@@ -529,7 +555,8 @@ contains
             call V(1)%scal(one_csp/beta)
             c = 0.0_sp ; s = 0.0_sp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
@@ -654,7 +681,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_cdp'
-        integer :: k
+        integer :: k, iostat
         class(abstract_vector_cdp), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -678,12 +705,20 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_dp
-        allocate(e(kdim+1))         ; e = 0.0_dp
-        allocate(c(kdim))           ; c = 0.0_dp
-        allocate(s(kdim))           ; s = 0.0_dp
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(V)
+        allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg) 
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(e(kdim+1), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(c(kdim), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(s(kdim), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         gmres_meta = gmres_dp_metadata() ; gmres_meta%converged = .false.
@@ -706,7 +741,8 @@ contains
             call V(1)%scal(one_cdp/beta)
             c = 0.0_dp ; s = 0.0_dp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1)) ; gmres_meta%res(1) = abs(beta)
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)

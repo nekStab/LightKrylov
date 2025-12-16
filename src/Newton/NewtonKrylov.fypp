@@ -224,15 +224,17 @@ contains
         !! Residual of the current evaluation
         real(${kind}$), intent(in) :: tol
         !! Tolerance of the current evaluation
+        integer :: iostat
+        character(len=100) :: msg
         if (.not.allocated(self%res)) then
-            allocate(self%res(1))
-            self%res(1) = res
+            allocate(self%res(1), source=res, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, "record_data_${kind}$")
         else
             self%res = [ self%res, res ]
         end if
         if (.not.allocated(self%tol)) then
-            allocate(self%tol(1))
-            self%tol(1) = tol
+            allocate(self%tol(1), source=tol, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, "record_data_${kind}$")
         else
             self%tol = [ self%tol, tol ]
         end if
@@ -274,7 +276,7 @@ contains
         procedure(abstract_scheduler_${kind}$),      pointer :: tolerance_scheduler => null()
         class(abstract_vector_${type[0]}$${kind}$), allocatable        :: residual, increment
         real(${kind}$)           :: rnorm, tol, target_tol
-        integer            :: i, maxiter, maxstep_bisection
+        integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_${kind}$_metadata) :: newton_meta
         character(len=256) :: msg
         
@@ -301,8 +303,12 @@ contains
         info = 0 
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X); call residual%zero()
-        allocate(increment,source=X); call increment%zero()
+        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
+        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%zero()
         ! Initialize metadata & reset eval counter
         newton_meta = newton_${kind}$_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -426,7 +432,7 @@ contains
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_${type[0]}$${kind}$'
-        integer :: i, j, idx(1)
+        integer :: i, j, idx(1), iostat
         real(${kind}$) :: invphi, invphi2
         #:if type[0] == "c"
         complex(${kind}$) :: alpha(4), step
@@ -437,11 +443,12 @@ contains
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, source=X)
-        allocate(residual, source=X); call residual%zero()
+        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%zero()
         step    = one_${type[0]}$${kind}$
-        invphi  = (sqrt(5.0) - 1.0)/2.0  ! 1 / phi
-        invphi2 = (3.0 - sqrt(5.0))/2.0  ! 1 / phi**2
+        invphi  = (sqrt(5.0_${kind}$) - 1.0_${kind}$)/2.0_${kind}$  ! 1 / phi
+        invphi2 = (3.0_${kind}$ - sqrt(5.0_${kind}$))/2.0_${kind}$  ! 1 / phi**2
         alpha = [zero_${type[0]}$${kind}$, invphi2*one_${type[0]}$${kind}$, invphi*one_${type[0]}$${kind}$, one_${type[0]}$${kind}$]
         res   = [rold, zero_r${kind}$, zero_r${kind}$, zero_r${kind}$]
 
