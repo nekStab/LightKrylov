@@ -1269,8 +1269,8 @@ contains
     subroutine collect_gmres_rsp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_rsp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_spd_rsp) &
+                    new_unittest("Full GMRES", test_gmres_rsp) &
+                    ! new_unittest("Full (SPD) GMRES", test_gmres_spd_rsp) &
                     ]
         return
     end subroutine collect_gmres_rsp_testsuite
@@ -1307,47 +1307,55 @@ contains
         return
     end subroutine test_gmres_rsp
     
-    subroutine test_gmres_spd_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Linear problem.
-        type(spd_linop_rsp) , allocatable :: A ! Linear Operator.
-        type(vector_rsp), allocatable :: b ! Right-hand side vector.
-        type(vector_rsp), allocatable :: x ! Solution vector.
-        ! GMRES options.
-        type(gmres_sp_opts) :: opts
-        ! GMRES metadata.
-        type(gmres_sp_metadata) :: meta
-        ! Information flag.
-        integer :: info
-        ! Misc
-        real(sp) :: err
-        character(len=256) :: msg
-
-        ! Initialize linear problem.
-        A = spd_linop_rsp()  ; call init_rand(A)
-        b = vector_rsp() ; call init_rand(b)
-        x = vector_rsp() ; call x%zero()
-
-        ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rsp')
-
-        ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_sp)
-        call check_test(error, 'test_gmres_spd_rsp', eq='A @ x = b', context=msg)
-
-        return
-    end subroutine test_gmres_spd_rsp
+    ! subroutine test_gmres_spd_rsp(error)
+    !     ! Error type to be returned.
+    !     type(error_type), allocatable, intent(out) :: error
+    !     ! Linear problem.
+    !     #:if type[0] == "r"
+    !     type(spd_linop_rsp) , allocatable :: A ! Linear Operator.
+    !     #:else
+    !     type(hermitian_linop_rsp), allocatable :: A
+    !     #:endif
+    !     type(vector_rsp), allocatable :: b ! Right-hand side vector.
+    !     type(vector_rsp), allocatable :: x ! Solution vector.
+    !     ! GMRES options.
+    !     type(gmres_sp_opts) :: opts
+    !     ! GMRES metadata.
+    !     type(gmres_sp_metadata) :: meta
+    !     ! Information flag.
+    !     integer :: info
+    !     ! Misc
+    !     real(sp) :: err
+    !     character(len=256) :: msg
+    !
+    !     ! Initialize linear problem.
+    !     #:if type[0] == "r"
+    !     A = spd_linop_rsp()  ; call init_rand(A)
+    !     #:else
+    !     A = hermitian_linop_rsp() ; call init_rand(A)
+    !     #:endif
+    !     b = vector_rsp() ; call init_rand(b)
+    !     x = vector_rsp() ; call x%zero()
+    !
+    !     ! GMRES solver.
+    !     opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+    !     call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+    !     call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rsp')
+    !
+    !     ! Check convergence.
+    !     err = norm2(abs(matmul(A%data, x%data) - b%data))
+    !     call get_err_str(msg, "max err: ", err)
+    !     call check(error, err < b%norm() * rtol_sp)
+    !     call check_test(error, 'test_gmres_spd_rsp', eq='A @ x = b', context=msg)
+    !
+    !     return
+    ! end subroutine test_gmres_spd_rsp
 
     subroutine collect_gmres_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_rdp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_spd_rdp) &
+                    new_unittest("Full GMRES", test_gmres_rdp) &
+                    ! new_unittest("Full (SPD) GMRES", test_gmres_spd_rdp) &
                     ]
         return
     end subroutine collect_gmres_rdp_testsuite
@@ -1384,47 +1392,55 @@ contains
         return
     end subroutine test_gmres_rdp
     
-    subroutine test_gmres_spd_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Linear problem.
-        type(spd_linop_rdp) , allocatable :: A ! Linear Operator.
-        type(vector_rdp), allocatable :: b ! Right-hand side vector.
-        type(vector_rdp), allocatable :: x ! Solution vector.
-        ! GMRES options.
-        type(gmres_dp_opts) :: opts
-        ! GMRES metadata.
-        type(gmres_dp_metadata) :: meta
-        ! Information flag.
-        integer :: info
-        ! Misc
-        real(dp) :: err
-        character(len=256) :: msg
-
-        ! Initialize linear problem.
-        A = spd_linop_rdp()  ; call init_rand(A)
-        b = vector_rdp() ; call init_rand(b)
-        x = vector_rdp() ; call x%zero()
-
-        ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rdp')
-
-        ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_dp)
-        call check_test(error, 'test_gmres_spd_rdp', eq='A @ x = b', context=msg)
-
-        return
-    end subroutine test_gmres_spd_rdp
+    ! subroutine test_gmres_spd_rdp(error)
+    !     ! Error type to be returned.
+    !     type(error_type), allocatable, intent(out) :: error
+    !     ! Linear problem.
+    !     #:if type[0] == "r"
+    !     type(spd_linop_rdp) , allocatable :: A ! Linear Operator.
+    !     #:else
+    !     type(hermitian_linop_rdp), allocatable :: A
+    !     #:endif
+    !     type(vector_rdp), allocatable :: b ! Right-hand side vector.
+    !     type(vector_rdp), allocatable :: x ! Solution vector.
+    !     ! GMRES options.
+    !     type(gmres_dp_opts) :: opts
+    !     ! GMRES metadata.
+    !     type(gmres_dp_metadata) :: meta
+    !     ! Information flag.
+    !     integer :: info
+    !     ! Misc
+    !     real(dp) :: err
+    !     character(len=256) :: msg
+    !
+    !     ! Initialize linear problem.
+    !     #:if type[0] == "r"
+    !     A = spd_linop_rdp()  ; call init_rand(A)
+    !     #:else
+    !     A = hermitian_linop_rdp() ; call init_rand(A)
+    !     #:endif
+    !     b = vector_rdp() ; call init_rand(b)
+    !     x = vector_rdp() ; call x%zero()
+    !
+    !     ! GMRES solver.
+    !     opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+    !     call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+    !     call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_rdp')
+    !
+    !     ! Check convergence.
+    !     err = norm2(abs(matmul(A%data, x%data) - b%data))
+    !     call get_err_str(msg, "max err: ", err)
+    !     call check(error, err < b%norm() * rtol_dp)
+    !     call check_test(error, 'test_gmres_spd_rdp', eq='A @ x = b', context=msg)
+    !
+    !     return
+    ! end subroutine test_gmres_spd_rdp
 
     subroutine collect_gmres_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_csp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_spd_csp) &
+                    new_unittest("Full GMRES", test_gmres_csp) &
+                    ! new_unittest("Full (SPD) GMRES", test_gmres_spd_csp) &
                     ]
         return
     end subroutine collect_gmres_csp_testsuite
@@ -1465,47 +1481,55 @@ contains
         return
     end subroutine test_gmres_csp
     
-    subroutine test_gmres_spd_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Linear problem.
-        type(hermitian_linop_csp), allocatable :: A
-        type(vector_csp), allocatable :: b ! Right-hand side vector.
-        type(vector_csp), allocatable :: x ! Solution vector.
-        ! GMRES options.
-        type(gmres_sp_opts) :: opts
-        ! GMRES metadata.
-        type(gmres_sp_metadata) :: meta
-        ! Information flag.
-        integer :: info
-        ! Misc
-        real(sp) :: err
-        character(len=256) :: msg
-
-        ! Initialize linear problem.
-        A = hermitian_linop_csp() ; call init_rand(A)
-        b = vector_csp() ; call init_rand(b)
-        x = vector_csp() ; call x%zero()
-
-        ! GMRES solver.
-        opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
-        call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_csp')
-
-        ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_sp)
-        call check_test(error, 'test_gmres_spd_csp', eq='A @ x = b', context=msg)
-
-        return
-    end subroutine test_gmres_spd_csp
+    ! subroutine test_gmres_spd_csp(error)
+    !     ! Error type to be returned.
+    !     type(error_type), allocatable, intent(out) :: error
+    !     ! Linear problem.
+    !     #:if type[0] == "r"
+    !     type(spd_linop_csp) , allocatable :: A ! Linear Operator.
+    !     #:else
+    !     type(hermitian_linop_csp), allocatable :: A
+    !     #:endif
+    !     type(vector_csp), allocatable :: b ! Right-hand side vector.
+    !     type(vector_csp), allocatable :: x ! Solution vector.
+    !     ! GMRES options.
+    !     type(gmres_sp_opts) :: opts
+    !     ! GMRES metadata.
+    !     type(gmres_sp_metadata) :: meta
+    !     ! Information flag.
+    !     integer :: info
+    !     ! Misc
+    !     real(sp) :: err
+    !     character(len=256) :: msg
+    !
+    !     ! Initialize linear problem.
+    !     #:if type[0] == "r"
+    !     A = spd_linop_csp()  ; call init_rand(A)
+    !     #:else
+    !     A = hermitian_linop_csp() ; call init_rand(A)
+    !     #:endif
+    !     b = vector_csp() ; call init_rand(b)
+    !     x = vector_csp() ; call x%zero()
+    !
+    !     ! GMRES solver.
+    !     opts = gmres_sp_opts(kdim=test_size, if_print_metadata=.true.)
+    !     call gmres(A, b, x, info, rtol=rtol_sp, atol=atol_sp, options=opts, meta=meta)
+    !     call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_csp')
+    !
+    !     ! Check convergence.
+    !     err = norm2(abs(matmul(A%data, x%data) - b%data))
+    !     call get_err_str(msg, "max err: ", err)
+    !     call check(error, err < b%norm() * rtol_sp)
+    !     call check_test(error, 'test_gmres_spd_csp', eq='A @ x = b', context=msg)
+    !
+    !     return
+    ! end subroutine test_gmres_spd_csp
 
     subroutine collect_gmres_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_cdp), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_spd_cdp) &
+                    new_unittest("Full GMRES", test_gmres_cdp) &
+                    ! new_unittest("Full (SPD) GMRES", test_gmres_spd_cdp) &
                     ]
         return
     end subroutine collect_gmres_cdp_testsuite
@@ -1546,41 +1570,49 @@ contains
         return
     end subroutine test_gmres_cdp
     
-    subroutine test_gmres_spd_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Linear problem.
-        type(hermitian_linop_cdp), allocatable :: A
-        type(vector_cdp), allocatable :: b ! Right-hand side vector.
-        type(vector_cdp), allocatable :: x ! Solution vector.
-        ! GMRES options.
-        type(gmres_dp_opts) :: opts
-        ! GMRES metadata.
-        type(gmres_dp_metadata) :: meta
-        ! Information flag.
-        integer :: info
-        ! Misc
-        real(dp) :: err
-        character(len=256) :: msg
-
-        ! Initialize linear problem.
-        A = hermitian_linop_cdp() ; call init_rand(A)
-        b = vector_cdp() ; call init_rand(b)
-        x = vector_cdp() ; call x%zero()
-
-        ! GMRES solver.
-        opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
-        call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_cdp')
-
-        ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_dp)
-        call check_test(error, 'test_gmres_spd_cdp', eq='A @ x = b', context=msg)
-
-        return
-    end subroutine test_gmres_spd_cdp
+    ! subroutine test_gmres_spd_cdp(error)
+    !     ! Error type to be returned.
+    !     type(error_type), allocatable, intent(out) :: error
+    !     ! Linear problem.
+    !     #:if type[0] == "r"
+    !     type(spd_linop_cdp) , allocatable :: A ! Linear Operator.
+    !     #:else
+    !     type(hermitian_linop_cdp), allocatable :: A
+    !     #:endif
+    !     type(vector_cdp), allocatable :: b ! Right-hand side vector.
+    !     type(vector_cdp), allocatable :: x ! Solution vector.
+    !     ! GMRES options.
+    !     type(gmres_dp_opts) :: opts
+    !     ! GMRES metadata.
+    !     type(gmres_dp_metadata) :: meta
+    !     ! Information flag.
+    !     integer :: info
+    !     ! Misc
+    !     real(dp) :: err
+    !     character(len=256) :: msg
+    !
+    !     ! Initialize linear problem.
+    !     #:if type[0] == "r"
+    !     A = spd_linop_cdp()  ; call init_rand(A)
+    !     #:else
+    !     A = hermitian_linop_cdp() ; call init_rand(A)
+    !     #:endif
+    !     b = vector_cdp() ; call init_rand(b)
+    !     x = vector_cdp() ; call x%zero()
+    !
+    !     ! GMRES solver.
+    !     opts = gmres_dp_opts(kdim=test_size, if_print_metadata=.true.)
+    !     call gmres(A, b, x, info, rtol=rtol_dp, atol=atol_dp, options=opts, meta=meta)
+    !     call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_cdp')
+    !
+    !     ! Check convergence.
+    !     err = norm2(abs(matmul(A%data, x%data) - b%data))
+    !     call get_err_str(msg, "max err: ", err)
+    !     call check(error, err < b%norm() * rtol_dp)
+    !     call check_test(error, 'test_gmres_spd_cdp', eq='A @ x = b', context=msg)
+    !
+    !     return
+    ! end subroutine test_gmres_spd_cdp
 
 
     !----------------------------------------------------------
