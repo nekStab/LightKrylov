@@ -171,7 +171,6 @@ contains
         allocate(X(nk+1), Xwrk, &
                  source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
