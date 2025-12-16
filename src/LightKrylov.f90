@@ -157,7 +157,6 @@ module LightKrylov
     public :: abstract_exptA_rdp
     public :: abstract_exptA_csp
     public :: abstract_exptA_cdp
-    public :: expm
     public :: kexpm
     public :: krylov_exptA
 

@@ -34,15 +34,14 @@ module LightKrylov_Utils
     !-----     Public exports     -----
     !----------------------------------
 
+    public :: check_allocation
     public :: assert_shape
     public :: log2
     public :: eig
     public :: ordschur
     public :: sqrtm
-    public :: expm
     public :: givens_rotation
     public :: apply_givens_rotation
-    public :: solve_triangular
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -82,6 +81,13 @@ module LightKrylov_Utils
 
     ! NOTE : Most of these functions will gradually disappear as more stable
     !        versions make their ways into the Fortran stdlib library.
+
+    interface
+        module subroutine check_allocation(iostat, msg, module, procedure)
+            integer, intent(in) :: iostat
+            character(len=*), intent(in) :: msg, module, procedure
+        end subroutine check_allocation
+    end interface
 
     interface assert_shape
         !! This interface provides methods to assert tha thte shape of its input vector or
@@ -232,38 +238,6 @@ module LightKrylov_Utils
         #:endfor
     end interface
 
-    interface expm
-        !!  ### Description
-        !!
-        !!  Evaluate the exponential of a dense matrix using Pade approximations.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      E = expm(A, order)
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
-        !!
-        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
-        !!
-        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
-        #:for kind, type in RC_KINDS_TYPES
-        module function expm_${type[0]}$${kind}$(A, order) result(E)
-            implicit none(type, external)
-            ${type}$, intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            ${type}$ :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_${type[0]}$${kind}$
-
-        #:endfor
-    end interface
-
     interface givens_rotation
         #:for kind, type in RC_KINDS_TYPES
         pure module function givens_rotation_${type[0]}$${kind}$(x) result(g)
@@ -281,28 +255,13 @@ module LightKrylov_Utils
         #:for kind, type in RC_KINDS_TYPES
         pure module subroutine apply_givens_rotation_${type[0]}$${kind}$(h, c, s)
             implicit none(type, external)
-            ${type}$, intent(inout) :: h(:)
+            ${type}$, target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             ${type}$, intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
             ${type}$, intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_${type[0]}$${kind}$
-
-        #:endfor
-    end interface
-
-    interface solve_triangular
-        #:for kind, type in RC_KINDS_TYPES
-        pure module function solve_triangular_${type[0]}$${kind}$(A, b) result(x)
-            implicit none(type, external)
-            ${type}$, intent(in) :: A(:, :)
-            !! Matrix to invert.
-            ${type}$, intent(in) :: b(:)
-            !! Right-hand side vector.
-            ${type}$, allocatable :: x(:)
-            !! Solution vector.
-        end function solve_triangular_${type[0]}$${kind}$
 
         #:endfor
     end interface

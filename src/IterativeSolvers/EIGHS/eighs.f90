@@ -71,7 +71,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eighs_rsp'
-        integer :: i, j, k, nev, conv
+        integer :: i, j, k, nev, conv, iostat
         real(sp) :: tol
         real(sp) :: beta
         logical :: outpost
@@ -85,17 +85,23 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_rsp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_rsp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rsp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(T(kdim_+1, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         lanczos_iter : do k = 1, kdim_
@@ -164,7 +170,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eighs_rdp'
-        integer :: i, j, k, nev, conv
+        integer :: i, j, k, nev, conv, iostat
         real(dp) :: tol
         real(dp) :: beta
         logical :: outpost
@@ -178,17 +184,23 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_rdp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_rdp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_rdp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(T(kdim_+1, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         lanczos_iter : do k = 1, kdim_
@@ -257,7 +269,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eighs_csp'
-        integer :: i, j, k, nev, conv
+        integer :: i, j, k, nev, conv, iostat
         real(sp) :: tol
         complex(sp) :: beta
         logical :: outpost
@@ -271,17 +283,23 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_csp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_csp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_csp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_sp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_sp
+        allocate(T(kdim_+1, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_csp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         lanczos_iter : do k = 1, kdim_
@@ -350,7 +368,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eighs_cdp'
-        integer :: i, j, k, nev, conv
+        integer :: i, j, k, nev, conv, iostat
         real(dp) :: tol
         complex(dp) :: beta
         logical :: outpost
@@ -364,17 +382,23 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_cdp/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_cdp
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_cdp
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_dp
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_dp
+        allocate(T(kdim_+1, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_cdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         lanczos_iter : do k = 1, kdim_

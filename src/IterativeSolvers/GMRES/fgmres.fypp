@@ -3,6 +3,7 @@
 submodule (lightkrylov_iterativesolvers) fgmres_solver
     use stdlib_strings, only: padr
     use stdlib_linalg, only: lstsq, norm
+    use stdlib_linalg_lapack, only: trtrs
     implicit none(type, external)
 contains
 
@@ -75,14 +76,15 @@ contains
         ! Hessenberg matrix.
         ${type}$, allocatable :: H(:, :)
         ! Least-squares variables.
-        ${type}$, allocatable :: y(:), e(:)
+        ${type}$, target, allocatable :: e(:)
+        ${type}$, pointer :: y(:, :)
         real(${kind}$) :: beta
         ! Givens rotations.
         ${type}$, allocatable :: c(:), s(:)
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_${type[0]}$${kind}$'
-        integer :: k, iter
+        integer :: k, iostat
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx, wrk
         character(len=256) :: msg
 
@@ -106,22 +108,31 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b)       ; call wrk%zero()
-        allocate(V(kdim+1), source=b) ; call zero_basis(V)
-        allocate(Z(kdim+1), source=b) ; call zero_basis(Z)
-        allocate(H(kdim+1, kdim))   ; H = 0.0_${kind}$
-        allocate(e(kdim+1))         ; e = 0.0_${kind}$
-        allocate(c(kdim))           ; c = 0.0_${kind}$
-        allocate(s(kdim))           ; s = 0.0_${kind}$
+        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%zero()
+        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(V)
+        allocate(Z(kdim+1), source=b, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Z)
+        allocate(H(kdim+1, kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(e(kdim+1), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(c(kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(s(kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Initialize metadata and & reset matvec counter
         fgmres_meta = fgmres_${kind}$_metadata() ; fgmres_meta%converged = .false.
         call A%reset_counter(trans, 'fgmres%init')
 
-        info = 0 ; iter = 0
-
+        info = 0
         associate(ifprecond => present(preconditioner))
-        do while ((.not. fgmres_meta%converged) .and. (iter <= maxiter))
+        do while ((.not. fgmres_meta%converged) .and. (fgmres_meta%n_outer <= maxiter))
             !> Initialize data
             H = 0.0_${kind}$ ; call zero_basis(V)
             if (x%norm() /= 0.0_${kind}$) then
@@ -135,14 +146,15 @@ contains
             e = 0.0_${kind}$ ; beta = V(1)%norm() ; e(1) = beta
             call V(1)%scal(one_${type[0]}$${kind}$/beta)
             c = 0.0_${kind}$ ; s = 0.0_${kind}$
-            allocate(fgmres_meta%res(1)) ; fgmres_meta%res(1) = abs(beta)
-            write(msg,'(2(A,E11.4))') 'FGMRES(k)   init step     : |res|= ', &
+            if (fgmres_meta%n_outer == 0) then
+               allocate(fgmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
+               call check_allocation(iostat, msg, this_module, this_procedure)
+               write(msg,'(2(A,E11.4))') 'FGMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
-            call log_information(msg, this_module, this_procedure)
+               call log_information(msg, this_module, this_procedure)
+            end if
 
             gmres_iter: do k = 1, kdim
-                !> Current number of iterations.
-                iter = iter + 1
                 !> Preconditioner.
                 call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
 
@@ -187,8 +199,9 @@ contains
             enddo gmres_iter
 
             ! Update solution.
-            k = min(k, kdim) ; y = solve_triangular(H(:k, :k), e(:k))
-            call linear_combination(dx, Z(:k), y) ; call x%add(dx)
+            k = min(k, kdim)
+            y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            call linear_combination(dx, Z(:k), e(:k)) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
             if (trans) then

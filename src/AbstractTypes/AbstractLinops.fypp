@@ -15,6 +15,7 @@ module LightKrylov_AbstractLinops
     use stdlib_linalg_blas, only: gemv
     use LightKrylov_Logger
     use LightKrylov_Constants
+    use LightKrylov_Utils
     use LightKrylov_Timer_Utils, only: lightkrylov_timer
     use LightKrylov_AbstractVectors
     implicit none(type, external)
@@ -420,9 +421,13 @@ contains
 
         ! Working array.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "axpby_matvec_${type[0]}$${kind}$")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -450,9 +455,13 @@ contains
 
         ! Working array.
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
+        integer :: iostat
+        character(len=100) :: errmsg
 
         ! Allocate working array.
-        allocate(wrk, mold=vec_in) ; call wrk%zero()
+        allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_${type[0]}$${kind}$")
+        call wrk%zero()
 
         ! w = A @ x
         if (self%transA) then
@@ -483,7 +492,11 @@ contains
         implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(in) :: A
         class(adjoint_linop_${type[0]}$${kind}$), allocatable :: B
-        allocate(B) ; B%A = A
+        integer :: iostat
+        character(len=100) :: errmsg
+        allocate(B, stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "initialize_adjoint_${type[0]}$${kind}$")
+        B%A = A
     end function initialize_adjoint_${type[0]}$${kind}$
 
     subroutine adjoint_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)

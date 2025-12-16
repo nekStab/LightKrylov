@@ -43,7 +43,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'eighs_${type[0]}$${kind}$'
-        integer :: i, j, k, nev, conv
+        integer :: i, j, k, nev, conv, iostat
         real(${kind}$) :: tol
         ${type}$ :: beta
         logical :: outpost
@@ -57,17 +57,23 @@ contains
         outpost = optval(write_intermediate, .false.)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1)) ; call zero_basis(Xwrk)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
             x0_norm = x0%norm(); call Xwrk(1)%scal(one_${type[0]}$${kind}$/x0_norm)
         else
             call Xwrk(1)%rand(.true.)
         endif
-        allocate(T(kdim_+1, kdim_)) ; T = zero_${type[0]}$${kind}$
-        allocate(eigvecs_wrk(kdim_, kdim_)) ; eigvecs_wrk = zero_${type[0]}$${kind}$
-        allocate(eigvals_wrk(kdim_)) ; eigvals_wrk = 0.0_${kind}$
-        allocate(residuals_wrk(kdim_)) ; residuals_wrk = 0.0_${kind}$
+        allocate(T(kdim_+1, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(eigvals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
+        allocate(residuals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
+        call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Ritz eigenpairs computation.
         lanczos_iter : do k = 1, kdim_

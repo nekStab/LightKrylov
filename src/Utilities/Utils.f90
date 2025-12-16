@@ -32,15 +32,14 @@ module LightKrylov_Utils
     !-----     Public exports     -----
     !----------------------------------
 
+    public :: check_allocation
     public :: assert_shape
     public :: log2
     public :: eig
     public :: ordschur
     public :: sqrtm
-    public :: expm
     public :: givens_rotation
     public :: apply_givens_rotation
-    public :: solve_triangular
 
     !-------------------------------------------------
     !-----     Options for iterative solvers     -----
@@ -80,6 +79,13 @@ module LightKrylov_Utils
 
     ! NOTE : Most of these functions will gradually disappear as more stable
     !        versions make their ways into the Fortran stdlib library.
+
+    interface
+        module subroutine check_allocation(iostat, msg, module, procedure)
+            integer, intent(in) :: iostat
+            character(len=*), intent(in) :: msg, module, procedure
+        end subroutine check_allocation
+    end interface
 
     interface assert_shape
         !! This interface provides methods to assert tha thte shape of its input vector or
@@ -341,66 +347,6 @@ module LightKrylov_Utils
 
     end interface
 
-    interface expm
-        !!  ### Description
-        !!
-        !!  Evaluate the exponential of a dense matrix using Pade approximations.
-        !!
-        !!  ### Syntax
-        !!
-        !!  ```fortran
-        !!      E = expm(A, order)
-        !!  ```
-        !!
-        !!  ### Arguments
-        !!
-        !!  `E` : `real` or `complex` rank-2 array with \( E = \exp(A) \).
-        !!
-        !!  `A` : `real` or `complex` matrix that needs to be exponentiated.
-        !!
-        !!  `order` (optional) : Order of the Pade approximation. By default `order = 10`.
-        module function expm_rsp(A, order) result(E)
-            implicit none(type, external)
-            real(sp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            real(sp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_rsp
-
-        module function expm_rdp(A, order) result(E)
-            implicit none(type, external)
-            real(dp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            real(dp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_rdp
-
-        module function expm_csp(A, order) result(E)
-            implicit none(type, external)
-            complex(sp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            complex(sp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_csp
-
-        module function expm_cdp(A, order) result(E)
-            implicit none(type, external)
-            complex(dp), intent(in) :: A(:, :)
-            !! Matrix to be exponentiated.
-            complex(dp) :: E(size(A, 1), size(A, 1))
-            !! Output matrix E = exp(A).
-            integer, intent(in), optional :: order
-            !! Order of the Pade approximation.
-        end function expm_cdp
-
-    end interface
-
     interface givens_rotation
         pure module function givens_rotation_rsp(x) result(g)
             implicit none(type, external)
@@ -439,7 +385,7 @@ module LightKrylov_Utils
     interface apply_givens_rotation
         pure module subroutine apply_givens_rotation_rsp(h, c, s)
             implicit none(type, external)
-            real(sp), intent(inout) :: h(:)
+            real(sp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             real(sp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
@@ -449,7 +395,7 @@ module LightKrylov_Utils
 
         pure module subroutine apply_givens_rotation_rdp(h, c, s)
             implicit none(type, external)
-            real(dp), intent(inout) :: h(:)
+            real(dp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             real(dp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
@@ -459,7 +405,7 @@ module LightKrylov_Utils
 
         pure module subroutine apply_givens_rotation_csp(h, c, s)
             implicit none(type, external)
-            complex(sp), intent(inout) :: h(:)
+            complex(sp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             complex(sp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
@@ -469,56 +415,13 @@ module LightKrylov_Utils
 
         pure module subroutine apply_givens_rotation_cdp(h, c, s)
             implicit none(type, external)
-            complex(dp), intent(inout) :: h(:)
+            complex(dp), target, contiguous, intent(inout) :: h(:)
             !! k-th column of the Hessenberg matrix.
             complex(dp), intent(inout) :: c(:)
             !! Cosine components of the Givens rotations.
             complex(dp), intent(inout) :: s(:)
             !! Sine components of the Givens rotations.
         end subroutine apply_givens_rotation_cdp
-
-    end interface
-
-    interface solve_triangular
-        pure module function solve_triangular_rsp(A, b) result(x)
-            implicit none(type, external)
-            real(sp), intent(in) :: A(:, :)
-            !! Matrix to invert.
-            real(sp), intent(in) :: b(:)
-            !! Right-hand side vector.
-            real(sp), allocatable :: x(:)
-            !! Solution vector.
-        end function solve_triangular_rsp
-
-        pure module function solve_triangular_rdp(A, b) result(x)
-            implicit none(type, external)
-            real(dp), intent(in) :: A(:, :)
-            !! Matrix to invert.
-            real(dp), intent(in) :: b(:)
-            !! Right-hand side vector.
-            real(dp), allocatable :: x(:)
-            !! Solution vector.
-        end function solve_triangular_rdp
-
-        pure module function solve_triangular_csp(A, b) result(x)
-            implicit none(type, external)
-            complex(sp), intent(in) :: A(:, :)
-            !! Matrix to invert.
-            complex(sp), intent(in) :: b(:)
-            !! Right-hand side vector.
-            complex(sp), allocatable :: x(:)
-            !! Solution vector.
-        end function solve_triangular_csp
-
-        pure module function solve_triangular_cdp(A, b) result(x)
-            implicit none(type, external)
-            complex(dp), intent(in) :: A(:, :)
-            !! Matrix to invert.
-            complex(dp), intent(in) :: b(:)
-            !! Right-hand side vector.
-            complex(dp), allocatable :: x(:)
-            !! Solution vector.
-        end function solve_triangular_cdp
 
     end interface
 end module LightKrylov_Utils

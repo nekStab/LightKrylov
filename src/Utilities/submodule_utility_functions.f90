@@ -4,12 +4,16 @@ submodule(lightkrylov_utils) utility_functions
     !-------------------------------
     use stdlib_optval, only: optval
     use stdlib_linalg_constants, only: ilp
-    use stdlib_linalg_lapack, only: geev, trsen
+    use stdlib_linalg_lapack, only: geev, trsen, lartg, lasr
     use stdlib_linalg, only: hermitian, svd, diag, eye, mnorm, inv, norm
     use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
 
     implicit none(type, external)
 contains
+
+    module procedure check_allocation
+    if (iostat /= 0) call stop_error(msg, module=module, procedure=procedure)
+    end procedure check_allocation
 
     module procedure log2_rsp
         y = log(x) / log(2.0_sp)
@@ -415,232 +419,6 @@ contains
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure sqrtm_cdp
 
-    !----- Dense Matrix Exponential -----
-
-    module procedure expm_rsp
-        character(len=*), parameter :: this_procedure = 'expm_rsp'
-        real(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(sp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-        if (time_lightkrylov()) call timer%start(this_procedure)
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_sp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_sp
-        E = eye(n, mold=1.0_sp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure expm_rsp
-
-    module procedure expm_rdp
-        character(len=*), parameter :: this_procedure = 'expm_rdp'
-        real(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(dp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-        if (time_lightkrylov()) call timer%start(this_procedure)
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_dp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_dp
-        E = eye(n, mold=1.0_dp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure expm_rdp
-
-    module procedure expm_csp
-        character(len=*), parameter :: this_procedure = 'expm_csp'
-        complex(sp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(sp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-        if (time_lightkrylov()) call timer%start(this_procedure)
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_sp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_sp
-        E = eye(n, mold=1.0_sp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_sp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure expm_csp
-
-    module procedure expm_cdp
-        character(len=*), parameter :: this_procedure = 'expm_cdp'
-        complex(dp), allocatable :: A2(:, :), Q(:, :), X(:, :)
-        real(dp) :: a_norm, c
-        integer :: n, ee, k, s
-        logical :: p
-        integer :: p_order
-        if (time_lightkrylov()) call timer%start(this_procedure)
-
-        ! Deal with optional args.
-        p_order = optval(order, 10)
-
-        n = size(A, 1)
-
-        ! Allocate arrays.
-        allocate(A2(n, n)) ; allocate(X(n, n)) ; allocate(Q(n, n))
-
-        ! Compute the L-infinity norm.
-        a_norm = mnorm(A, "inf")
-
-        ! Determine scaling factor for the matrix.
-        ee = int(log2(a_norm)) + 1
-        s = max(0, ee+1)
-
-        ! Scale the input matrix & initialize polynomial.
-        A2 = A / 2.0_dp**s
-        X = A2
-
-        ! Initialize P & Q and add first step.
-        c = 0.5_dp
-        E = eye(n, mold=1.0_dp) ; E = E + c*A2
-
-        Q = eye(n, mold=1.0_dp) ; Q = Q - c*A2
-
-        ! Iteratively compute the Pade approximation.
-        p = .true.
-        do k = 2, p_order
-            c = c*(p_order - k + 1) / (k * (2*p_order - k + 1))
-            X = matmul(A2, X)
-            E = E + c*X
-            if (p) then
-                Q = Q + c*X
-            else
-                Q = Q - c*X
-            endif
-            p = .not. p
-        enddo
-
-        E = matmul(inv(Q), E)
-        do k = 1, s
-            E = matmul(E, E)
-        enddo
-
-        if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure expm_cdp
-
     !----- Givens rotations -----
 
     module procedure givens_rotation_rsp
@@ -648,146 +426,78 @@ contains
     end procedure givens_rotation_rsp
 
     module procedure apply_givens_rotation_rsp
-        integer(ilp) :: i, k
-        real(sp) :: t, g(2)
-
+        integer(ilp) :: k
+        real(sp) :: r
+        real(sp), pointer :: hmat(:, :)
         !> Size of the column.
         k = size(h) - 1
-
         !> Apply previous Givens rotations to this new column.
-        do i = 1, k-1
-            t = c(i)*h(i) + s(i)*h(i+1)
-            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
-            h(i) = t
-        enddo
-
+        hmat(1:k, 1:1) => h(:k)
+        call lasr("L", "V", "F", k, 1, c(:k-1), s(:k-1), hmat, k)
         !> Compute the sine and cosine compoennts for the next rotation.
-        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
+        call lartg(h(k), h(k+1), c(k), s(k), r)
         !> Eliminiate H(k+1, k).
-        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
+        h(k) = r; h(k+1) = 0.0_sp
     end procedure apply_givens_rotation_rsp
-
     module procedure givens_rotation_rdp
         g = x / norm(x, 2)
     end procedure givens_rotation_rdp
 
     module procedure apply_givens_rotation_rdp
-        integer(ilp) :: i, k
-        real(dp) :: t, g(2)
-
+        integer(ilp) :: k
+        real(dp) :: r
+        real(dp), pointer :: hmat(:, :)
         !> Size of the column.
         k = size(h) - 1
-
         !> Apply previous Givens rotations to this new column.
-        do i = 1, k-1
-            t = c(i)*h(i) + s(i)*h(i+1)
-            h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
-            h(i) = t
-        enddo
-
+        hmat(1:k, 1:1) => h(:k)
+        call lasr("L", "V", "F", k, 1, c(:k-1), s(:k-1), hmat, k)
         !> Compute the sine and cosine compoennts for the next rotation.
-        g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
+        call lartg(h(k), h(k+1), c(k), s(k), r)
         !> Eliminiate H(k+1, k).
-        h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
+        h(k) = r; h(k+1) = 0.0_dp
     end procedure apply_givens_rotation_rdp
-
     module procedure givens_rotation_csp
         g = x / norm(x, 2)
     end procedure givens_rotation_csp
 
     module procedure apply_givens_rotation_csp
         integer(ilp) :: i, k
-        complex(sp) :: t, g(2)
-
+        complex(sp) :: t, r, g(2)
         !> Size of the column.
         k = size(h) - 1
-
         !> Apply previous Givens rotations to this new column.
         do i = 1, k-1
             t = c(i)*h(i) + s(i)*h(i+1)
             h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
             h(i) = t
         enddo
-
         !> Compute the sine and cosine compoennts for the next rotation.
         g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_sp
-    end procedure apply_givens_rotation_csp
 
+    end procedure apply_givens_rotation_csp
     module procedure givens_rotation_cdp
         g = x / norm(x, 2)
     end procedure givens_rotation_cdp
 
     module procedure apply_givens_rotation_cdp
         integer(ilp) :: i, k
-        complex(dp) :: t, g(2)
-
+        complex(dp) :: t, r, g(2)
         !> Size of the column.
         k = size(h) - 1
-
         !> Apply previous Givens rotations to this new column.
         do i = 1, k-1
             t = c(i)*h(i) + s(i)*h(i+1)
             h(i+1) = -s(i)*h(i) + c(i)*h(i+1)
             h(i) = t
         enddo
-
         !> Compute the sine and cosine compoennts for the next rotation.
         g = givens_rotation([h(k), h(k+1)]) ; c(k) = g(1) ; s(k) = g(2)
-
         !> Eliminiate H(k+1, k).
         h(k) = c(k)*h(k) + s(k)*h(k+1) ; h(k+1) = 0.0_dp
+
     end procedure apply_givens_rotation_cdp
-
-    !----- Solving triangular systems -----
-
-    module procedure solve_triangular_rsp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_rsp
-
-    module procedure solve_triangular_rdp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_rdp
-
-    module procedure solve_triangular_csp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_sp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_csp
-
-    module procedure solve_triangular_cdp
-        integer(ilp) :: i, n
-        !> Problem's dimensions.
-        n = size(A, 1) ; allocate(x, mold=b) ; x = 0.0_dp
-        !> Back-substitution algorithm.
-        x(n) = b(n) / A(n, n)
-        do i = n-1, 1, -1
-            x(i) = (b(i) - sum(A(i, i+1:) * x(i+1:))) / A(i, i)
-        enddo
-    end procedure solve_triangular_cdp
-
 end submodule utility_functions
 

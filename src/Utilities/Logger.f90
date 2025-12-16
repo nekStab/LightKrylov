@@ -280,7 +280,7 @@ contains
       !! The name of the module in which the call happens
       character(len=*), optional, intent(in)  :: procedure
       !! The name of the procedure in which the call happens
-      character(len=128) :: msg
+      character(len=256) :: msg
       msg = "The intent ["//trim(intent)//"] argument '"//trim(var)//"' must be of type '"//trim(type)//"'"
       call stop_error(msg, module=module, procedure=procedure)
    end subroutine type_error
