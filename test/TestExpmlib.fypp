@@ -94,7 +94,7 @@ contains
         ! Test matrix.
         class(linop_${type[0]}$${kind}$), allocatable :: A
         ! Basis vectors.
-        class(vector_${type[0]}$${kind}$), allocatable :: Q, Xref, Xkryl
+        class(vector_${type[0]}$${kind}$), allocatable :: Q, Xref, Xkryl, Subspace(:)
         ! Krylov subspace dimension.
         integer, parameter :: kdim = test_size
 
@@ -111,6 +111,7 @@ contains
         allocate(Q) ; call init_rand(Q)
         allocate(Xref) ; call Xref%zero()
         allocate(XKryl) ; call Xkryl%zero()
+        allocate(Subspace(nkmax+1)) ; call zero_basis(Subspace)
 
         ! Dense computation.
         allocate(E(kdim, kdim)) ; E = expm(tau*A%data)
@@ -138,6 +139,23 @@ contains
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_kexptA_${type[0]}$${kind}$', &
                                  & eq='Comparison with dense matrix exponential', context=msg)
+
+        !-------------------------------------
+        !-----     Low-level routine     -----
+        !-------------------------------------
+
+        ! Krylov exponential.
+        call Xkryl%zero()
+        call kexpm(Xkryl, A, Q, tau, rtol_${kind}$, info, X=Subspace)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_${type[0]}$${kind}$')
+
+        ! Check result.
+        call Xkryl%sub(Xref) ; err = Xkryl%norm() / Xref%norm()
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_${type[0]}$${kind}$', &
+                                 & eq='Comparison with dense matrix exponential', context=msg)
+
 
         return
     end subroutine test_kexptA_${type[0]}$${kind}$

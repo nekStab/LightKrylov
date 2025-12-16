@@ -125,7 +125,7 @@ module LightKrylov_ExpmLib
 
 contains
     #:for kind, type in RC_KINDS_TYPES
-    subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, kdim)
+    subroutine kexpm_vec_${type[0]}$${kind}$(c, A, b, tau, tol, info, trans, X, kdim)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: c
@@ -141,6 +141,8 @@ contains
         !! Information flag.
         logical, optional, intent(in) :: trans
         !! Use transpose?
+        class(abstract_vector_${type[0]}$${kind}$), target, optional, intent(inout) :: X(:)
+        !! Krylov subspace.
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
 
@@ -149,26 +151,35 @@ contains
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
         ! Arnoldi factorization.
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), pointer :: Xwrk(:)
         ${type}$, allocatable :: H(:, :)
         ! Normaliztion & temporary arrays.
         ${type}$, allocatable :: E(:, :)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
         real(${kind}$) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
         integer :: nsteps, iostat
         character(len=256) :: msg
-    
+
+        ! Ensure either optional kdim or optional X is being used.
+        if (present(X)) then
+            nsteps = size(X) - 1
+            Xwrk(1:nsteps+1) => X
+        else
+            nsteps = optval(kdim, kmax)
+            allocate(Xwrk(nsteps+1), source=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+
         ! Deals with optional args.
         transpose = optval(trans, .false.)
-        nsteps    = optval(kdim, kmax)
         nk        = nsteps
 
         info = 0
 
         ! Allocate arrays.
-        allocate(X(nk+1), Xwrk, &
+        allocate(wrk, &
                  source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
@@ -184,8 +195,8 @@ contains
             err_est = 0.0_${kind}$
             kp = 1
         else
-            call zero_basis(X)
-            call X(1)%add(b) ; call X(1)%scal(one_${type[0]}$${kind}$ / beta)
+            call zero_basis(Xwrk)
+            call Xwrk(1)%add(b) ; call Xwrk(1)%scal(one_${type[0]}$${kind}$ / beta)
 
             expm_arnoldi: do k = 1, nk
                 km = k-1 ; kp = k+1
@@ -194,7 +205,7 @@ contains
                 E = 0.0_${kind}$
 
                 ! Compute k-th step Arnoldi factorization.
-                call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose)
+                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', this_module, this_procedure)
 
                 ! Compute approximation.
@@ -208,8 +219,8 @@ contains
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_${type[0]}$${kind}$, Xwrk, zero_${type[0]}$${kind}$)
+                call linear_combination(wrk, Xwrk(:kp), E(:kp, 1))
+                call c%axpby(beta*one_${type[0]}$${kind}$, wrk, zero_${type[0]}$${kind}$)
 
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
