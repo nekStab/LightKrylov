@@ -520,6 +520,7 @@ contains
         msg = indent // info // value_str // achar(10)
     end subroutine get_err_str_${kind}$
 
+    #:endfor
     !---------------------------------------------------
     !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
     !---------------------------------------------------
