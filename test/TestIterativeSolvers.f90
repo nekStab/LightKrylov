@@ -981,7 +981,7 @@ contains
         err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_svd_rsp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+        call check_test(error, 'test_svd_rsp', info='svec orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_svd_rsp
@@ -1072,7 +1072,7 @@ contains
         err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_svd_rdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+        call check_test(error, 'test_svd_rdp', info='svec orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_svd_rdp
@@ -1164,7 +1164,7 @@ contains
         err = maxval(abs(G - eye(test_size, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_svd_csp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+        call check_test(error, 'test_svd_csp', info='svec orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_svd_csp
@@ -1256,7 +1256,7 @@ contains
         err = maxval(abs(G - eye(test_size, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_svd_cdp', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+        call check_test(error, 'test_svd_cdp', info='svec orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_svd_cdp

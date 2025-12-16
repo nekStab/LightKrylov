@@ -505,7 +505,7 @@ contains
         err = maxval(abs(G - eye(test_size, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
-        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_svd_${type[0]}$${kind}$

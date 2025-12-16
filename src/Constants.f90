@@ -42,7 +42,7 @@ module LightKrylov_Constants
    !! Real-valued double precision zero.
    complex(dp), parameter, public :: one_cdp = cmplx(1.0_dp, 0.0_dp, kind=dp)
    !! Complex-valued double precision one.
-   complex(sp), parameter, public :: one_im_cdp = cmplx(0.0_dp, 1.0_dp, kind=dp)
+   complex(dp), parameter, public :: one_im_cdp = cmplx(0.0_dp, 1.0_dp, kind=dp)
    !! Complex-valued double precision imaginary unit.
    complex(dp), parameter, public :: zero_cdp = cmplx(0.0_dp, 0.0_dp, kind=dp)
    !! Complex-valued double precision zero.

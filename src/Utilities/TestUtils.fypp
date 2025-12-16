@@ -25,9 +25,9 @@ module LightKrylov_TestUtils
     public :: get_err_str
 
     ! Roessler
-    #:for kind in REAL_KINDS
-    public :: get_state_r${kind}$
-    public :: roessler_analytical_fp_r${kind}$
+    #:for kind, type in RC_KINDS_TYPES
+    public :: get_state_${type[0]}$${kind}$
+    public :: roessler_analytical_fp_${type[0]}$${kind}$
     #:endfor
 
     !-----------------------------------------------
@@ -151,6 +151,37 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: matvec => lin_roessler_r${kind}$
        procedure, pass(self), public :: rmatvec => adj_lin_roessler_r${kind}$
     end type jacobian_r${kind}$
+    #:endfor
+
+    ! COMPLEXIFIED ROESSLER SYSTEM
+
+    #:for kind in REAL_KINDS
+    type, extends(abstract_vector_c${kind}$), public :: state_vector_c${kind}$
+       complex(${kind}$) :: x = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+       complex(${kind}$) :: y = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+       complex(${kind}$) :: z = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+    contains
+       private
+       procedure, pass(self), public :: zero => zero_state_c${kind}$
+       procedure, pass(self), public :: dot => dot_state_c${kind}$
+       procedure, pass(self), public :: scal => scal_state_c${kind}$
+       procedure, pass(self), public :: axpby => axpby_state_c${kind}$
+       procedure, pass(self), public :: rand => rand_state_c${kind}$
+       procedure, pass(self), public :: get_size => get_size_state_c${kind}$
+    end type state_vector_c${kind}$
+
+    type, extends(abstract_system_c${kind}$), public :: roessler_c${kind}$
+    contains
+       private
+       procedure, pass(self), public :: response => eval_roessler_c${kind}$
+    end type roessler_c${kind}$
+
+    type, extends(abstract_jacobian_linop_c${kind}$), public :: jacobian_c${kind}$
+    contains
+       private
+       procedure, pass(self), public :: matvec => lin_roessler_c${kind}$
+       procedure, pass(self), public :: rmatvec => adj_lin_roessler_c${kind}$
+    end type jacobian_c${kind}$
     #:endfor
 
     interface get_data
@@ -490,9 +521,9 @@ contains
     end subroutine get_err_str_${kind}$
 
     #:endfor
-    !-----------------------------------------------
+    !---------------------------------------------------
     !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
-    !-----------------------------------------------
+    !---------------------------------------------------
  
     #:for kind in REAL_KINDS
     subroutine zero_state_r${kind}$(self)
@@ -579,10 +610,10 @@ contains
                 vec_out%z = b_${kind}$ + vec_in%z * (vec_in%x - c_${kind}$)
 
             class default
-                call type_error('vec_out','state_vector_${type[0]}$${kind}$','OUT',this_module,'eval_roessler_r${kind}$')
+                call type_error('vec_out','state_vector_r${kind}$','OUT',this_module,'eval_roessler_r${kind}$')
             end select
         class default
-            call type_error('vec_in','state_vector_${type[0]}$${kind}$','IN',this_module,'eval_roessler_r${kind}$')
+            call type_error('vec_in','state_vector_r${kind}$','IN',this_module,'eval_roessler_r${kind}$')
         end select
     end subroutine eval_roessler_r${kind}$
 
@@ -595,7 +626,7 @@ contains
             Y = state%y
             Z = state%z
         class default
-            call type_error('state','state_vector_${type[0]}$${kind}$','IN',this_module,'get_state_r${kind}$')
+            call type_error('state','state_vector_r${kind}$','IN',this_module,'get_state_r${kind}$')
         end select
     end subroutine get_state_r${kind}$
 
@@ -617,10 +648,10 @@ contains
                 vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
 
             class default
-                call type_error('vec_out','state_vector_${type[0]}$${kind}$','OUT',this_module,'lin_roessler_r${kind}$')
+                call type_error('vec_out','state_vector_r${kind}$','OUT',this_module,'lin_roessler_r${kind}$')
             end select
         class default
-            call type_error('vec_in','state_vector_${type[0]}$${kind}$','IN',this_module,'lin_roessler_r${kind}$')
+            call type_error('vec_in','state_vector_r${kind}$','IN',this_module,'lin_roessler_r${kind}$')
         end select
     end subroutine lin_roessler_r${kind}$
 
@@ -642,10 +673,10 @@ contains
                 vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
 
             class default
-                call type_error('vec_out','state_vector_${type[0]}$${kind}$','OUT',this_module,'adj_lin_roessler_r${kind}$')
+                call type_error('vec_out','state_vector_r${kind}$','OUT',this_module,'adj_lin_roessler_r${kind}$')
             end select
         class default
-            call type_error('vec_in','state_vector_${type[0]}$${kind}$','IN',this_module,'adj_lin_roessler_r${kind}$')
+            call type_error('vec_in','state_vector_r${kind}$','IN',this_module,'adj_lin_roessler_r${kind}$')
         end select
     end subroutine adj_lin_roessler_r${kind}$
 
@@ -664,6 +695,186 @@ contains
         fp2%y = (-c_${kind}$ - d)/(2*a_${kind}$)
         fp2%z = ( c_${kind}$ + d)/(2*a_${kind}$)
     end subroutine roessler_analytical_fp_r${kind}$
+
+    #:endfor
+
+    !----------------------------------------------------------------
+    !-----     COMPLEXIFIED ROESSLER SYSTEM TYPE DEFINITION     -----
+    !----------------------------------------------------------------
+ 
+    #:for kind in REAL_KINDS
+    subroutine zero_state_c${kind}$(self)
+        class(state_vector_c${kind}$), intent(inout) :: self
+        self%x = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+        self%y = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+        self%z = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
+    end subroutine zero_state_c${kind}$
+  
+    complex(${kind}$) function dot_state_c${kind}$(self, vec) result(alpha)
+        class(state_vector_c${kind}$)   , intent(in) :: self
+        class(abstract_vector_c${kind}$), intent(in) :: vec
+        select type(vec)
+        type is(state_vector_c${kind}$)
+            alpha = self%x*conjg(vec%x) + self%y*conjg(vec%y) + self%z*conjg(vec%z)
+        class default
+            call type_error('vec','state_vector_c${kind}$','IN',this_module,'dot_state_c${kind}$')
+        end select
+    end function dot_state_c${kind}$
+  
+    subroutine scal_state_c${kind}$(self, alpha)
+        class(state_vector_c${kind}$), intent(inout) :: self
+        complex(${kind}$)            , intent(in)    :: alpha
+        self%x = self%x * alpha
+        self%y = self%y * alpha
+        self%z = self%z * alpha
+    end subroutine scal_state_c${kind}$
+  
+    subroutine axpby_state_c${kind}$(alpha, vec, beta, self)
+        class(state_vector_c${kind}$)   , intent(inout) :: self
+        class(abstract_vector_c${kind}$), intent(in)    :: vec
+        complex(${kind}$)                  , intent(in)    :: alpha, beta
+        select type(vec)
+        type is(state_vector_c${kind}$)
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
+        class default
+            call type_error('vec','state_vector_c${kind}$','IN',this_module,'axpby_state_c${kind}$')
+        end select
+    end subroutine axpby_state_c${kind}$
+  
+    integer function get_size_state_c${kind}$(self) result(N)
+        class(state_vector_c${kind}$), intent(in) :: self
+        N = 3
+    end function get_size_state_c${kind}$
+  
+    subroutine rand_state_c${kind}$(self, ifnorm)
+        class(state_vector_c${kind}$), intent(inout) :: self
+        logical, optional,   intent(in)        :: ifnorm
+        logical :: normalized
+        real(${kind}$) :: mu, var
+        real(${kind}$) :: alpha
+    
+        mu = zero_r${kind}$
+        var = one_r${kind}$
+        self%x = cmplx(normal(mu, var), normal(mu,var), kind=${kind}$)
+        self%y = cmplx(normal(mu, var), normal(mu,var), kind=${kind}$)
+        self%z = cmplx(normal(mu, var), normal(mu,var), kind=${kind}$)
+    
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(one_c${kind}$/alpha)
+        endif
+    end subroutine rand_state_c${kind}$
+
+    #:endfor
+
+    #:for kind in REAL_KINDS
+    subroutine eval_roessler_c${kind}$(self, vec_in, vec_out, atol)
+        class(roessler_c${kind}$),            intent(inout)  :: self
+        class(abstract_vector_c${kind}$), intent(in)  :: vec_in
+        class(abstract_vector_c${kind}$), intent(out) :: vec_out
+        real(${kind}$),                    intent(in)  :: atol
+
+        select type(vec_in)
+        type is(state_vector_c${kind}$)
+            select type(vec_out)
+            type is(state_vector_c${kind}$)
+
+                vec_out%x = -vec_in%y - one_im_c${kind}$*vec_in%z
+                vec_out%y = vec_in%x + a_${kind}$ * vec_in%y
+                vec_out%z = b_${kind}$ + vec_in%z * (vec_in%x - c_${kind}$)
+
+            class default
+                call type_error('vec_out','state_vector_c${kind}$','OUT',this_module,'eval_roessler_c${kind}$')
+            end select
+        class default
+            call type_error('vec_in','state_vector_c${kind}$','IN',this_module,'eval_roessler_c${kind}$')
+        end select
+    end subroutine eval_roessler_c${kind}$
+
+    subroutine get_state_c${kind}$(state, X, Y, Z)
+        class(abstract_vector_c${kind}$),   intent(in)  :: state
+        real(${kind}$),                 intent(out) :: X, Y, z
+
+        select type (state)
+        type is (state_vector_c${kind}$)
+            X = state%x
+            Y = state%y
+            Z = state%z
+        class default
+            call type_error('state','state_vector_c${kind}$','IN',this_module,'get_state_c${kind}$')
+        end select
+    end subroutine get_state_c${kind}$
+
+    subroutine lin_roessler_c${kind}$(self, vec_in, vec_out)
+        class(jacobian_c${kind}$),            intent(inout)  :: self
+        class(abstract_vector_c${kind}$), intent(in)  :: vec_in
+        class(abstract_vector_c${kind}$), intent(out) :: vec_out
+
+        real(${kind}$) :: X, Y, Z
+
+        call get_state_c${kind}$(self%X, X, Y, Z)
+
+        select type(vec_in)
+        type is(state_vector_c${kind}$)
+            select type(vec_out)
+            type is(state_vector_c${kind}$)
+
+                vec_out%x = -vec_in%y - one_im_c${kind}$*vec_in%z
+                vec_out%y =  vec_in%x + a_${kind}$*vec_in%y
+                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
+
+            class default
+                call type_error('vec_out','state_vector_c${kind}$','OUT',this_module,'lin_roessler_c${kind}$')
+            end select
+        class default
+            call type_error('vec_in','state_vector_c${kind}$','IN',this_module,'lin_roessler_c${kind}$')
+        end select
+    end subroutine lin_roessler_c${kind}$
+
+    subroutine adj_lin_roessler_c${kind}$(self, vec_in, vec_out)
+        class(jacobian_c${kind}$),            intent(inout)  :: self
+        class(abstract_vector_c${kind}$), intent(in)  :: vec_in
+        class(abstract_vector_c${kind}$), intent(out) :: vec_out
+
+        real(${kind}$) :: X, Y, Z
+        
+        call get_state_c${kind}$(self%X, X, Y, Z)
+
+        select type(vec_in)
+        type is(state_vector_c${kind}$)
+            select type(vec_out)
+            type is(state_vector_c${kind}$) 
+
+                vec_out%x =  vec_in%y + one_im_c${kind}$*vec_in%z*Z
+                vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
+                vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
+
+            class default
+                call type_error('vec_out','state_vector_c${kind}$','OUT',this_module,'adj_lin_roessler_c${kind}$')
+            end select
+        class default
+            call type_error('vec_in','state_vector_c${kind}$','IN',this_module,'adj_lin_roessler_c${kind}$')
+        end select
+    end subroutine adj_lin_roessler_c${kind}$
+
+    subroutine roessler_analytical_fp_c${kind}$(fp1, fp2)
+        class(state_vector_c${kind}$), intent(out) :: fp1, fp2
+
+        complex(${kind}$) :: d
+
+        d = sqrt(c_${kind}$**2 - 4*one_im_c${kind}$*a_${kind}$*b_${kind}$)
+
+        fp1%z = ( c_${kind}$ - d)/(2*one_im_c${kind}$*a_${kind}$)
+        fp1%x = one_im_c${kind}$*a_${kind}$*fp1%z
+        fp1%y = -one_im_c${kind}$*fp1%z
+
+        fp2%z = ( c_${kind}$ + d)/(2*one_im_c${kind}$*a_${kind}$)
+        fp2%x = one_im_c${kind}$*a_${kind}$*fp2%z
+        fp2%y = -one_im_c${kind}$*fp2%z
+    end subroutine roessler_analytical_fp_c${kind}$
 
     #:endfor
 end module LightKrylov_TestUtils

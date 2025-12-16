@@ -27,6 +27,10 @@ module LightKrylov_TestUtils
     public :: roessler_analytical_fp_rsp
     public :: get_state_rdp
     public :: roessler_analytical_fp_rdp
+    public :: get_state_csp
+    public :: roessler_analytical_fp_csp
+    public :: get_state_cdp
+    public :: roessler_analytical_fp_cdp
 
     !-----------------------------------------------
     !-----     TEST VECTOR TYPE DEFINITION     -----
@@ -266,6 +270,61 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: matvec => lin_roessler_rdp
        procedure, pass(self), public :: rmatvec => adj_lin_roessler_rdp
     end type jacobian_rdp
+
+    ! COMPLEXIFIED ROESSLER SYSTEM
+
+    type, extends(abstract_vector_csp), public :: state_vector_csp
+       complex(sp) :: x = cmplx(0.0_sp, 0.0_sp, kind=sp)
+       complex(sp) :: y = cmplx(0.0_sp, 0.0_sp, kind=sp)
+       complex(sp) :: z = cmplx(0.0_sp, 0.0_sp, kind=sp)
+    contains
+       private
+       procedure, pass(self), public :: zero => zero_state_csp
+       procedure, pass(self), public :: dot => dot_state_csp
+       procedure, pass(self), public :: scal => scal_state_csp
+       procedure, pass(self), public :: axpby => axpby_state_csp
+       procedure, pass(self), public :: rand => rand_state_csp
+       procedure, pass(self), public :: get_size => get_size_state_csp
+    end type state_vector_csp
+
+    type, extends(abstract_system_csp), public :: roessler_csp
+    contains
+       private
+       procedure, pass(self), public :: response => eval_roessler_csp
+    end type roessler_csp
+
+    type, extends(abstract_jacobian_linop_csp), public :: jacobian_csp
+    contains
+       private
+       procedure, pass(self), public :: matvec => lin_roessler_csp
+       procedure, pass(self), public :: rmatvec => adj_lin_roessler_csp
+    end type jacobian_csp
+    type, extends(abstract_vector_cdp), public :: state_vector_cdp
+       complex(dp) :: x = cmplx(0.0_dp, 0.0_dp, kind=dp)
+       complex(dp) :: y = cmplx(0.0_dp, 0.0_dp, kind=dp)
+       complex(dp) :: z = cmplx(0.0_dp, 0.0_dp, kind=dp)
+    contains
+       private
+       procedure, pass(self), public :: zero => zero_state_cdp
+       procedure, pass(self), public :: dot => dot_state_cdp
+       procedure, pass(self), public :: scal => scal_state_cdp
+       procedure, pass(self), public :: axpby => axpby_state_cdp
+       procedure, pass(self), public :: rand => rand_state_cdp
+       procedure, pass(self), public :: get_size => get_size_state_cdp
+    end type state_vector_cdp
+
+    type, extends(abstract_system_cdp), public :: roessler_cdp
+    contains
+       private
+       procedure, pass(self), public :: response => eval_roessler_cdp
+    end type roessler_cdp
+
+    type, extends(abstract_jacobian_linop_cdp), public :: jacobian_cdp
+    contains
+       private
+       procedure, pass(self), public :: matvec => lin_roessler_cdp
+       procedure, pass(self), public :: rmatvec => adj_lin_roessler_cdp
+    end type jacobian_cdp
 
     interface get_data
         module procedure get_data_vec_rsp
@@ -1173,9 +1232,9 @@ contains
         msg = indent // info // value_str // achar(10)
     end subroutine get_err_str_dp
 
-    !-----------------------------------------------
+    !---------------------------------------------------
     !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
-    !-----------------------------------------------
+    !---------------------------------------------------
  
     subroutine zero_state_rsp(self)
         class(state_vector_rsp), intent(inout) :: self
@@ -1511,5 +1570,351 @@ contains
         fp2%y = (-c_dp - d)/(2*a_dp)
         fp2%z = ( c_dp + d)/(2*a_dp)
     end subroutine roessler_analytical_fp_rdp
+
+
+    !----------------------------------------------------------------
+    !-----     COMPLEXIFIED ROESSLER SYSTEM TYPE DEFINITION     -----
+    !----------------------------------------------------------------
+ 
+    subroutine zero_state_csp(self)
+        class(state_vector_csp), intent(inout) :: self
+        self%x = cmplx(0.0_sp, 0.0_sp, kind=sp)
+        self%y = cmplx(0.0_sp, 0.0_sp, kind=sp)
+        self%z = cmplx(0.0_sp, 0.0_sp, kind=sp)
+    end subroutine zero_state_csp
+  
+    complex(sp) function dot_state_csp(self, vec) result(alpha)
+        class(state_vector_csp)   , intent(in) :: self
+        class(abstract_vector_csp), intent(in) :: vec
+        select type(vec)
+        type is(state_vector_csp)
+            alpha = self%x*conjg(vec%x) + self%y*conjg(vec%y) + self%z*conjg(vec%z)
+        class default
+            call type_error('vec','state_vector_csp','IN',this_module,'dot_state_csp')
+        end select
+    end function dot_state_csp
+  
+    subroutine scal_state_csp(self, alpha)
+        class(state_vector_csp), intent(inout) :: self
+        complex(sp)            , intent(in)    :: alpha
+        self%x = self%x * alpha
+        self%y = self%y * alpha
+        self%z = self%z * alpha
+    end subroutine scal_state_csp
+  
+    subroutine axpby_state_csp(alpha, vec, beta, self)
+        class(state_vector_csp)   , intent(inout) :: self
+        class(abstract_vector_csp), intent(in)    :: vec
+        complex(sp)                  , intent(in)    :: alpha, beta
+        select type(vec)
+        type is(state_vector_csp)
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
+        class default
+            call type_error('vec','state_vector_csp','IN',this_module,'axpby_state_csp')
+        end select
+    end subroutine axpby_state_csp
+  
+    integer function get_size_state_csp(self) result(N)
+        class(state_vector_csp), intent(in) :: self
+        N = 3
+    end function get_size_state_csp
+  
+    subroutine rand_state_csp(self, ifnorm)
+        class(state_vector_csp), intent(inout) :: self
+        logical, optional,   intent(in)        :: ifnorm
+        logical :: normalized
+        real(sp) :: mu, var
+        real(sp) :: alpha
+    
+        mu = zero_rsp
+        var = one_rsp
+        self%x = cmplx(normal(mu, var), normal(mu,var), kind=sp)
+        self%y = cmplx(normal(mu, var), normal(mu,var), kind=sp)
+        self%z = cmplx(normal(mu, var), normal(mu,var), kind=sp)
+    
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(one_csp/alpha)
+        endif
+    end subroutine rand_state_csp
+
+    subroutine zero_state_cdp(self)
+        class(state_vector_cdp), intent(inout) :: self
+        self%x = cmplx(0.0_dp, 0.0_dp, kind=dp)
+        self%y = cmplx(0.0_dp, 0.0_dp, kind=dp)
+        self%z = cmplx(0.0_dp, 0.0_dp, kind=dp)
+    end subroutine zero_state_cdp
+  
+    complex(dp) function dot_state_cdp(self, vec) result(alpha)
+        class(state_vector_cdp)   , intent(in) :: self
+        class(abstract_vector_cdp), intent(in) :: vec
+        select type(vec)
+        type is(state_vector_cdp)
+            alpha = self%x*conjg(vec%x) + self%y*conjg(vec%y) + self%z*conjg(vec%z)
+        class default
+            call type_error('vec','state_vector_cdp','IN',this_module,'dot_state_cdp')
+        end select
+    end function dot_state_cdp
+  
+    subroutine scal_state_cdp(self, alpha)
+        class(state_vector_cdp), intent(inout) :: self
+        complex(dp)            , intent(in)    :: alpha
+        self%x = self%x * alpha
+        self%y = self%y * alpha
+        self%z = self%z * alpha
+    end subroutine scal_state_cdp
+  
+    subroutine axpby_state_cdp(alpha, vec, beta, self)
+        class(state_vector_cdp)   , intent(inout) :: self
+        class(abstract_vector_cdp), intent(in)    :: vec
+        complex(dp)                  , intent(in)    :: alpha, beta
+        select type(vec)
+        type is(state_vector_cdp)
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
+        class default
+            call type_error('vec','state_vector_cdp','IN',this_module,'axpby_state_cdp')
+        end select
+    end subroutine axpby_state_cdp
+  
+    integer function get_size_state_cdp(self) result(N)
+        class(state_vector_cdp), intent(in) :: self
+        N = 3
+    end function get_size_state_cdp
+  
+    subroutine rand_state_cdp(self, ifnorm)
+        class(state_vector_cdp), intent(inout) :: self
+        logical, optional,   intent(in)        :: ifnorm
+        logical :: normalized
+        real(dp) :: mu, var
+        real(dp) :: alpha
+    
+        mu = zero_rdp
+        var = one_rdp
+        self%x = cmplx(normal(mu, var), normal(mu,var), kind=dp)
+        self%y = cmplx(normal(mu, var), normal(mu,var), kind=dp)
+        self%z = cmplx(normal(mu, var), normal(mu,var), kind=dp)
+    
+        normalized = optval(ifnorm, .false.)
+        if (normalized) then
+            alpha = self%norm()
+            call self%scal(one_cdp/alpha)
+        endif
+    end subroutine rand_state_cdp
+
+
+    subroutine eval_roessler_csp(self, vec_in, vec_out, atol)
+        class(roessler_csp),            intent(inout)  :: self
+        class(abstract_vector_csp), intent(in)  :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        real(sp),                    intent(in)  :: atol
+
+        select type(vec_in)
+        type is(state_vector_csp)
+            select type(vec_out)
+            type is(state_vector_csp)
+
+                vec_out%x = -vec_in%y - one_im_csp*vec_in%z
+                vec_out%y = vec_in%x + a_sp * vec_in%y
+                vec_out%z = b_sp + vec_in%z * (vec_in%x - c_sp)
+
+            class default
+                call type_error('vec_out','state_vector_csp','OUT',this_module,'eval_roessler_csp')
+            end select
+        class default
+            call type_error('vec_in','state_vector_csp','IN',this_module,'eval_roessler_csp')
+        end select
+    end subroutine eval_roessler_csp
+
+    subroutine get_state_csp(state, X, Y, Z)
+        class(abstract_vector_csp),   intent(in)  :: state
+        real(sp),                 intent(out) :: X, Y, z
+
+        select type (state)
+        type is (state_vector_csp)
+            X = state%x
+            Y = state%y
+            Z = state%z
+        class default
+            call type_error('state','state_vector_csp','IN',this_module,'get_state_csp')
+        end select
+    end subroutine get_state_csp
+
+    subroutine lin_roessler_csp(self, vec_in, vec_out)
+        class(jacobian_csp),            intent(inout)  :: self
+        class(abstract_vector_csp), intent(in)  :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+
+        real(sp) :: X, Y, Z
+
+        call get_state_csp(self%X, X, Y, Z)
+
+        select type(vec_in)
+        type is(state_vector_csp)
+            select type(vec_out)
+            type is(state_vector_csp)
+
+                vec_out%x = -vec_in%y - one_im_csp*vec_in%z
+                vec_out%y =  vec_in%x + a_sp*vec_in%y
+                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_sp)
+
+            class default
+                call type_error('vec_out','state_vector_csp','OUT',this_module,'lin_roessler_csp')
+            end select
+        class default
+            call type_error('vec_in','state_vector_csp','IN',this_module,'lin_roessler_csp')
+        end select
+    end subroutine lin_roessler_csp
+
+    subroutine adj_lin_roessler_csp(self, vec_in, vec_out)
+        class(jacobian_csp),            intent(inout)  :: self
+        class(abstract_vector_csp), intent(in)  :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+
+        real(sp) :: X, Y, Z
+        
+        call get_state_csp(self%X, X, Y, Z)
+
+        select type(vec_in)
+        type is(state_vector_csp)
+            select type(vec_out)
+            type is(state_vector_csp) 
+
+                vec_out%x =  vec_in%y + one_im_csp*vec_in%z*Z
+                vec_out%y = -vec_in%x + a_sp*vec_in%y
+                vec_out%z = -vec_in%x + vec_in%z*(X - c_sp)
+
+            class default
+                call type_error('vec_out','state_vector_csp','OUT',this_module,'adj_lin_roessler_csp')
+            end select
+        class default
+            call type_error('vec_in','state_vector_csp','IN',this_module,'adj_lin_roessler_csp')
+        end select
+    end subroutine adj_lin_roessler_csp
+
+    subroutine roessler_analytical_fp_csp(fp1, fp2)
+        class(state_vector_csp), intent(out) :: fp1, fp2
+
+        complex(sp) :: d
+
+        d = sqrt(c_sp**2 - 4*one_im_csp*a_sp*b_sp)
+
+        fp1%z = ( c_sp - d)/(2*one_im_csp*a_sp)
+        fp1%x = one_im_csp*a_sp*fp1%z
+        fp1%y = -one_im_csp*fp1%z
+
+        fp2%z = ( c_sp + d)/(2*one_im_csp*a_sp)
+        fp2%x = one_im_csp*a_sp*fp2%z
+        fp2%y = -one_im_csp*fp2%z
+    end subroutine roessler_analytical_fp_csp
+
+    subroutine eval_roessler_cdp(self, vec_in, vec_out, atol)
+        class(roessler_cdp),            intent(inout)  :: self
+        class(abstract_vector_cdp), intent(in)  :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        real(dp),                    intent(in)  :: atol
+
+        select type(vec_in)
+        type is(state_vector_cdp)
+            select type(vec_out)
+            type is(state_vector_cdp)
+
+                vec_out%x = -vec_in%y - one_im_cdp*vec_in%z
+                vec_out%y = vec_in%x + a_dp * vec_in%y
+                vec_out%z = b_dp + vec_in%z * (vec_in%x - c_dp)
+
+            class default
+                call type_error('vec_out','state_vector_cdp','OUT',this_module,'eval_roessler_cdp')
+            end select
+        class default
+            call type_error('vec_in','state_vector_cdp','IN',this_module,'eval_roessler_cdp')
+        end select
+    end subroutine eval_roessler_cdp
+
+    subroutine get_state_cdp(state, X, Y, Z)
+        class(abstract_vector_cdp),   intent(in)  :: state
+        real(dp),                 intent(out) :: X, Y, z
+
+        select type (state)
+        type is (state_vector_cdp)
+            X = state%x
+            Y = state%y
+            Z = state%z
+        class default
+            call type_error('state','state_vector_cdp','IN',this_module,'get_state_cdp')
+        end select
+    end subroutine get_state_cdp
+
+    subroutine lin_roessler_cdp(self, vec_in, vec_out)
+        class(jacobian_cdp),            intent(inout)  :: self
+        class(abstract_vector_cdp), intent(in)  :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+
+        real(dp) :: X, Y, Z
+
+        call get_state_cdp(self%X, X, Y, Z)
+
+        select type(vec_in)
+        type is(state_vector_cdp)
+            select type(vec_out)
+            type is(state_vector_cdp)
+
+                vec_out%x = -vec_in%y - one_im_cdp*vec_in%z
+                vec_out%y =  vec_in%x + a_dp*vec_in%y
+                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_dp)
+
+            class default
+                call type_error('vec_out','state_vector_cdp','OUT',this_module,'lin_roessler_cdp')
+            end select
+        class default
+            call type_error('vec_in','state_vector_cdp','IN',this_module,'lin_roessler_cdp')
+        end select
+    end subroutine lin_roessler_cdp
+
+    subroutine adj_lin_roessler_cdp(self, vec_in, vec_out)
+        class(jacobian_cdp),            intent(inout)  :: self
+        class(abstract_vector_cdp), intent(in)  :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+
+        real(dp) :: X, Y, Z
+        
+        call get_state_cdp(self%X, X, Y, Z)
+
+        select type(vec_in)
+        type is(state_vector_cdp)
+            select type(vec_out)
+            type is(state_vector_cdp) 
+
+                vec_out%x =  vec_in%y + one_im_cdp*vec_in%z*Z
+                vec_out%y = -vec_in%x + a_dp*vec_in%y
+                vec_out%z = -vec_in%x + vec_in%z*(X - c_dp)
+
+            class default
+                call type_error('vec_out','state_vector_cdp','OUT',this_module,'adj_lin_roessler_cdp')
+            end select
+        class default
+            call type_error('vec_in','state_vector_cdp','IN',this_module,'adj_lin_roessler_cdp')
+        end select
+    end subroutine adj_lin_roessler_cdp
+
+    subroutine roessler_analytical_fp_cdp(fp1, fp2)
+        class(state_vector_cdp), intent(out) :: fp1, fp2
+
+        complex(dp) :: d
+
+        d = sqrt(c_dp**2 - 4*one_im_cdp*a_dp*b_dp)
+
+        fp1%z = ( c_dp - d)/(2*one_im_cdp*a_dp)
+        fp1%x = one_im_cdp*a_dp*fp1%z
+        fp1%y = -one_im_cdp*fp1%z
+
+        fp2%z = ( c_dp + d)/(2*one_im_cdp*a_dp)
+        fp2%x = one_im_cdp*a_dp*fp2%z
+        fp2%y = -one_im_cdp*fp2%z
+    end subroutine roessler_analytical_fp_cdp
 
 end module LightKrylov_TestUtils

@@ -171,8 +171,12 @@ contains
         enddo cg_loop
         end associate
 
-        ! Set and copy info flag for completeness
-        info = cg_meta%n_iter
+        ! Returns the number of iterations if converged
+        if (cg_meta%converged) then
+            info = cg_meta%n_iter
+        else
+            info = -cg_meta%n_iter
+        end if
         cg_meta%info = info
 
         if (opts%if_print_metadata) call cg_meta%print()

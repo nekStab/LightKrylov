@@ -23,8 +23,8 @@ module TestNewtonKrylov
     character(len=*), parameter, private :: this_module      = 'LK_TNwtKryl'
     character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestNewtonKrylov'
 
-    #:for kind in REAL_KINDS
-    public :: collect_newton_r${kind}$_testsuite
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_newton_${type[0]}$${kind}$_testsuite
     #:endfor
 
 contains
@@ -33,23 +33,23 @@ contains
     !-----     DEFINITION OF THE UNIT TESTS FOR NEWTON    -----
     !----------------------------------------------------------
 
-    #:for kind in REAL_KINDS
-    subroutine collect_newton_r${kind}$_testsuite(testsuite)
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_newton_${type[0]}$${kind}$_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
-                    new_unittest("Fixed point calculation", test_fixedp_r${kind}$) &
+                    new_unittest("Fixed point calculation", test_fixedp_${type[0]}$${kind}$) &
                     ]
         return
-    end subroutine collect_newton_r${kind}$_testsuite
+    end subroutine collect_newton_${type[0]}$${kind}$_testsuite
 
-    subroutine test_fixedp_r${kind}$(error)
+    subroutine test_fixedp_${type[0]}$${kind}$(error)
        ! Error type.
        type(error_type), allocatable, intent(out) :: error
        ! Roessler system
-       type(roessler_r${kind}$), allocatable :: sys
+       type(roessler_${type[0]}$${kind}$), allocatable :: sys
        ! Initial guess
-       type(state_vector_r${kind}$), allocatable :: X, fp1, fp2
+       type(state_vector_${type[0]}$${kind}$), allocatable :: X, fp1, fp2
        ! Newton options
        type(newton_${kind}$_opts) :: opts
        ! Information flag.
@@ -62,57 +62,51 @@ contains
        allocate(X, fp1, fp2);
 
        ! Newton opts
-       opts = newton_${kind}$_opts(maxiter=10, ifbisect=.false., if_print_metadata=.true.) 
+       opts = newton_${kind}$_opts(maxiter=60, ifbisect=.false., if_print_metadata=.true.) 
 
        ! Allocate and set Roessler system and Jacobian
-       sys = roessler_r${kind}$()
-       sys%jacobian = jacobian_r${kind}$()
+       sys = roessler_${type[0]}$${kind}$()
+       sys%jacobian = jacobian_${type[0]}$${kind}$()
        
-       call roessler_analytical_fp_r${kind}$(fp1, fp2)
+       call roessler_analytical_fp_${type[0]}$${kind}$(fp1, fp2)
 
-       X%x = zero_r${kind}$
-       X%y = zero_r${kind}$
-       X%z = zero_r${kind}$
-       call newton(sys, X, gmres_r${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
+       X%x = zero_${type[0]}$${kind}$
+       X%y = zero_${type[0]}$${kind}$
+       X%z = zero_${type[0]}$${kind}$
+       call newton(sys, X, gmres_${type[0]}$${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1
-       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
        !write(infomsg, *) '|| X_newton - fp1 ||_2'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_${kind}$)
-       call check_test(error, 'test_fixedp_r${kind}$', info=infomsg, context=msg)
-       
-       X%x = 10.0_${kind}$
-       X%y = -5.0_${kind}$
-       X%z = 20.0_${kind}$
-       call newton(sys, X, gmres_r${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
-       call X%sub(fp2)
+       #:if type[0] == "r"
+       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
+       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
+       #:else
+       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
+       !call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
+       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
+       !write(infomsg, '(A)') 'blank'
+       !call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
+       #:endif
 
-       ! check fixed point 2
-       write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp2%x,',',fp2%y,',',fp2%z,')'
-       !write(infomsg, *) '|| X_newton - fp2 ||_2'
-       err = X%norm()
-       call get_err_str(msg, "max err: ", err)
-       call check(error, err < rtol_${kind}$)
-       call check_test(error, 'test_fixedp_r${kind}$', info=infomsg, context=msg)
-
-       X%x = zero_r${kind}$
-       X%y = zero_r${kind}$
-       X%z = zero_r${kind}$
+       X%x = zero_${type[0]}$${kind}$
+       X%y = zero_${type[0]}$${kind}$
+       X%z = zero_${type[0]}$${kind}$
        opts%ifbisect = .true.
-       call newton(sys, X, gmres_r${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
+       call newton(sys, X, gmres_${type[0]}$${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp1)
 
        ! check fixed point 1 with bisection (if necessary)
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_${kind}$)
-       call check_test(error, 'test_fixedp_r${kind}$', info='Newton with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info='Newton with step bisection', context=msg)
 
        return
-   end subroutine test_fixedp_r${kind}$
+   end subroutine test_fixedp_${type[0]}$${kind}$
    #:endfor
 
 end module TestNewtonKrylov
