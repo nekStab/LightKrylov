@@ -102,7 +102,7 @@ Likewise, the leading eigenpair of the corresponding linearized Navier-Stokes op
 A visual comparison is provided in \autoref{fig:timings} showing excellent agreement.
 The table in the lower-right panel of \autoref{fig:timings} summarizes the wall-clock times of the `neklab` computations. Isolating the intrinsic cost of the algorithms in `LightKrylov` from the cost of the calls to LAPACK and the linear and nonlinear Navier-Stokes solvers (`matvec` and `response`, respectively) shows that extended `abstract` types and object-oriented programming in Fortran incurs a negligible computational overhead for such large-scale applications.
 
-![Validation of `LightKrylov`: Newton-GMRES and `eigs`. The top row depicts the streamwise velocity of the unstable solution computed using `LightKrylov` and the pointwise difference with the reference one computed with `KTH Framework`.](LK_newton_eigs_timings.png){#fig:timings}
+![Validation of `LightKrylov`: Newton-GMRES and `eigs`. The top row depicts the streamwise velocity of the unstable solution computed using `LightKrylov` and the pointwise difference with the reference one computed with `KTH Framework`.](LK_newton_eigs_timings.pdf){#fig:timings}
 
 # Perspectives
 
