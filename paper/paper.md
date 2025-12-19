@@ -32,7 +32,7 @@ bibliography: paper.bib
 [`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package providing a collection of Krylov methods for large-scale linear algebra.
 Direct methods tend to have a computational cost scaling as $\mathcal{O}(n^3)$ making them impractical for large-scale problems.
 Even when $A$ is sparse, computing matrix factorizations can incur an $\mathcal{O}(n^2)$ storage cost in the worst case by introducing fill-in.
-In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (or $u \leftarrow A^H v$) to iteratively construct a *Krylov subspace* [@krylov-1931] from which the solutions can be extracted, see @ipsen-1998, @saad-2003 and to @frantz-2023.
+In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (or $u \leftarrow A^H v$) to iteratively construct a *Krylov subspace* [@krylov-1931] from which the solutions can be extracted, see @ipsen-1998, @saad-2003 and @frantz-2023.
 
 # Statement of need
 
@@ -40,13 +40,13 @@ In contrast, Krylov methods only need a function computing the matrix-vector pro
 
 `LightKrylov` provides Fortran users with SciPy-inspired interfaces to widely used Krylov techniques, including:
 
-- **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRESi [@saad:fgmres:siam].
+- **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRES [@saad:fgmres:siam].
 - **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalization for Hermitian ones.
 - **SVD -** Golub-Kahan bidiagonalization.
 
 Libraries exposing more methods exist in other languages, e.g., `Krylov.jl` [@montoison-2023] or `PETSc` [@petsc-web-page].
 Integrating these into existing Fortran codes can however present challenges (e.g. dependency management).
-In contrast, `LightKrylov` is a pure Fortran alternative, compliant with the 2018 standard, and requiring only the Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/), as an dependency.
+In contrast, `LightKrylov` is a pure Fortran alternative, compliant with the 2018 standard, and requiring only the community-led Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/), as an dependency.
 Finally, its build process relies on the Fortran package manager `fpm`, facilitating its integration with the modern Fortran ecosystem.
 
 ## A focus on abstract linear operators and abstract vectors
