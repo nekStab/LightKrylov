@@ -139,14 +139,19 @@ For more details, please refer to each of the examples.
 
 ## Contributing
 
-### Current developers
-
 `LightKrylov` is currently developed and maintained by a team of three:
 - [Jean-Christophe Loiseau](https://loiseaujc.github.io/) : Assistant Professor of Applied maths and Fluid dynamics at [DynFluid](https://dynfluid.ensam.eu/), Arts et Métiers Institute of Technology, Paris, France.
 - [Ricardo Frantz](https://github.com/ricardofrantz) : PhD in Fluid dynamics (Arts et Métiers, France, 2022) and currently postdoctoral researcher at DynFluid.
 - [Simon Kern](https://github.com/Simkern/) : PhD in Fluid dynamics (KTH, Sweden, 2023) and currently postdoctoral researcher at DynFluid.
 
-Anyone else interested in contributing is obviously most welcomed!
+Contributions are more than welcomed ! More information can be found in the following pages:
+
+- [Guidelines](https://github.com/nekStab/LightKrylov/blob/main/CONTRIBUTING.md)
+- [Issues](https://github.com/nekStab/LightKrylov/issues)
+- [Workflow](https://github.com/nekStab/LightKrylov/blob/main/WORKFLOW.md)
+- [Style guide](https://github.com/nekStab/LightKrylov/blob/main/STYLE_GUIDE.md)
+- [Code of conduct](https://github.com/nekStab/LightKrylov/blob/main/CODE_OF_CONDUCT.md)
+- [Licence](https://github.com/nekStab/LightKrylov/blob/main/LICENSE)
 
 ## Acknowledgment
 
