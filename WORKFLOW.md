@@ -10,7 +10,7 @@ experienced contributors will help it through all 5 steps.
 
 1. **Idea**: You have an idea or a proposal. Open an [issue](https://github.com/nekStab/LightKrylov/issues) to discuss it. This is on the level of "is there interest in having this procedure in LightKrylov?" The goal of this step is to find out if the community is interested in having this functionality as part of LightKrylov.
 
-2. **API**: When there seems to be significant interest in the proposal (vast
+2. **API**: When there seems to be significant interest in the proposal (a vast
    majority of participants think it is a good idea), move on to discuss the
    specific API. It's OK to propose the API off the bat if you already have an
    idea for it. This step is exploratory and its goal is to find out what the
@@ -18,7 +18,7 @@ experienced contributors will help it through all 5 steps.
 
 3. **Specification**: Discuss the API and iterate. When there is vast majority
    approval for the API, move on to implement it and submit a PR. Small PRs are
-   always better than large.  It is OK to implement only a few functions of a
+   always better than large ones. It is OK to implement only a few functions of a
    new module, and continue work on the others in a later PR. All new
    functionality goes into an "experimental" namespace
    (`version: experimental`). As part of the PR, when submitting a new
