@@ -41,7 +41,7 @@ Before opening a bug report:
 
 1. Check if the issue has already been reported
    ([issues](https://github.com/fortran-lang/stdlib/issues)).
-2. Check if it is still an issue or it has been fixed?
+2. Check if it is still an issue or it has been fixed.
    Try to reproduce it with the latest version from the default branch.
 3. Isolate the problem and create a minimal test case.
 
@@ -50,7 +50,7 @@ Please be as detailed as possible:
 
 1. Which version of *LightKrylov* are you using?
    Which compiler version are you using?
-   Which platform and architecture are you on?
+   Which platform and architecture are you running on?
    Please be specific.
 2. What are the steps to reproduce the issue?
 3. What is the expected outcome?
@@ -69,6 +69,7 @@ Please provide as many details and context as possible. If applicable, include a
 mocked-up snippet of what the output or behavior would look like with this
 feature implemented. “Crazy,” out-of-the-box ideas are especially welcome.
 It is quite possible we have not considered such solutions yet.
+
 
 ## Workflow
 
