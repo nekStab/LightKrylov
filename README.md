@@ -58,7 +58,7 @@ Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab
 
 | [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Laplace operator**]() | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
 | :---------------------: | :----------------------: | :--------------------: |
-|       ADD FIGURE        |        ADD FIGURE        | ADD FIGURE |
+| ![](imgs/example_GL.png) | ADD FIGURE | ![](imgs/example_Roessler.png) |
 
 ## Installation
 
