@@ -10,6 +10,12 @@
 [![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStan/LightKrylov)
 [![last-commit](https://img.shields.io/github/last-commit/loiseaujc/quadprog)](https://github.com/loiseaujc/quadprog/commits/main)
 
+| **Documentation** | [link](https://nekstab.github.io/LightKrylov/index.html) |
+|:-------------:|:----:|
+| **Contact**   | [jean-christophe.loiseau@ensam.eu](mailto:jean-christophe.loiseau@ensam.eu)    |
+
+## Description
+
 Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
