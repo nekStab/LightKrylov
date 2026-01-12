@@ -10,6 +10,18 @@
 [![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStan/LightKrylov)
 [![last-commit](https://img.shields.io/github/last-commit/loiseaujc/quadprog)](https://github.com/loiseaujc/quadprog/commits/main)
 
+| **Documentation** | [link](https://nekstab.github.io/LightKrylov/index.html) |
+|:-------------:|:----:|
+| **Contact**   | [jean-christophe.loiseau@ensam.eu](mailto:jean-christophe.loiseau@ensam.eu)    |
+
+**Scope :** `LightKrylov` is a modern Fortran package for linear algebra based on Krylov methods. It is primarily intended for applications where:
+
+- The notion of a vector $x$ cannot be easily represented as a standard rank-1 array, e.g. the state vector in fluid dynamics is often split between multiple multidimensional arrays each representing a different state variable (density, velocity components, temperature, etc).
+
+- The matrix $A$ is not readibily available but its application onto a vector ($A x$) is easily computed using a dedicated function. A typical example would the matrix exponential operator whose application is typically evaluated via time-integration or Krylov exponential methods.
+
+## Description
+
 Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 
 1. Eigenvalue Decomposition
@@ -44,15 +56,15 @@ This was made possible thanks to [`fypp`](https://github.com/aradi/fypp), a pyth
 ### Examples
 
 Some examples can be found in the `example` folder. These include:
-- [Ginzburg-Landau]() : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
+- [Ginzburg-Landau](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
 - [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
-- [Roessler system]() : Computation of an unstable periodic orbit embedded in the strange attractor of the system along with an OTD analysis of this orbit.
+- [Roessler system](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) : Computation of an unstable periodic orbit embedded in the strange attractor of the system along with an OTD analysis of this orbit.
 
 Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
 
-| [**Ginzburg-Landau**]() | [**Laplace operator**]() | [**Roesler system**]() |
+| [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Laplace operator**]() | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
 | :---------------------: | :----------------------: | :--------------------: |
-|       ADD FIGURE        |        ADD FIGURE        | ADD FIGURE |
+| ![](imgs/example_GL.png) | ADD FIGURE | ![](imgs/example_Roessler.png) |
 
 ## Installation
 
@@ -133,14 +145,19 @@ For more details, please refer to each of the examples.
 
 ## Contributing
 
-### Current developers
-
 `LightKrylov` is currently developed and maintained by a team of three:
 - [Jean-Christophe Loiseau](https://loiseaujc.github.io/) : Assistant Professor of Applied maths and Fluid dynamics at [DynFluid](https://dynfluid.ensam.eu/), Arts et Métiers Institute of Technology, Paris, France.
 - [Ricardo Frantz](https://github.com/ricardofrantz) : PhD in Fluid dynamics (Arts et Métiers, France, 2022) and currently postdoctoral researcher at DynFluid.
 - [Simon Kern](https://github.com/Simkern/) : PhD in Fluid dynamics (KTH, Sweden, 2023) and currently postdoctoral researcher at DynFluid.
 
-Anyone else interested in contributing is obviously most welcomed!
+Contributions are more than welcomed ! More information can be found in the following pages:
+
+- [Guidelines](https://github.com/nekStab/LightKrylov/blob/main/CONTRIBUTING.md)
+- [Issues](https://github.com/nekStab/LightKrylov/issues)
+- [Workflow](https://github.com/nekStab/LightKrylov/blob/main/WORKFLOW.md)
+- [Style guide](https://github.com/nekStab/LightKrylov/blob/main/STYLE_GUIDE.md)
+- [Code of conduct](https://github.com/nekStab/LightKrylov/blob/main/CODE_OF_CONDUCT.md)
+- [Licence](https://github.com/nekStab/LightKrylov/blob/main/LICENSE)
 
 ## Acknowledgment
 
