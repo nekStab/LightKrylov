@@ -52,7 +52,7 @@ Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab
 
 | [**Ginzburg-Landau**]() | [**Laplace operator**]() | [**Roesler system**]() |
 | :---------------------: | :----------------------: | :--------------------: |
-|       ADD FIGURE        |        ADD FIGURE        | ADD FIGURE |
+| ![](imgs/example_GL.png) | ADD FIGURE | ![](imgs/example_Roessler.png) |
 
 ## Installation
 
