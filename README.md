@@ -14,6 +14,12 @@
 |:-------------:|:----:|
 | **Contact**   | [jean-christophe.loiseau@ensam.eu](mailto:jean-christophe.loiseau@ensam.eu)    |
 
+**Scope :** `LightKrylov` is a modern Fortran package for linear algebra based on Krylov methods. It is primarily intended for applications where:
+
+- The notion of a vector $x$ cannot be easily represented as a standard rank-1 array, e.g. the state vector in fluid dynamics is often split between multiple multidimensional arrays each representing a different state variable (density, velocity components, temperature, etc).
+
+- The matrix $A$ is not readibily available but its application onto a vector ($A x$) is easily computed using a dedicated function. A typical example would the matrix exponential operator whose application is typically evaluated via time-integration or Krylov exponential methods.
+
 ## Description
 
 Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
