@@ -23,7 +23,7 @@ css: ./bootstrap.min.css
 ---
 
 @warning
-   This API documentation for the `LightKrylov` package is build from the source code in the `main` branch and does not track the current development in `dev` or any other branches.
+   This API documentation for the `LightKrylov` package is built from the source code in the `main` branch and does not track the current development in `dev` or any other branches.
    If you use another branch, please refer to the in-code documentation.
    Use the navigation bar at the top of the screen to browse `modules`, `procedures`, `source files`, etc.
 @endwarning
