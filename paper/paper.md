@@ -32,7 +32,7 @@ bibliography: paper.bib
 Direct solvers for linear algebraic systems scale cubically in the problem's dimension, rapidly becoming intractable for large-scale problems, while sparse factorization may still require quadratic storage due to fill-in.
 Krylov techniques [@krylov-1931] avoid these costs by needing only a routine that computes a matrix-vector product, iteratively building a subspace from which the solution is obtained, see @ipsen-1998, @saad-2003 and @frantz-2023.
 [`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package providing a suite of such Krylov methods along with an easy-to-use high level API based on `abstract` types.
-It is primarily intended for applications where the linear operator of interest is only available implicitly via a matrix-vector subroutine and enables users to maximally re-use existing components of their code base (including parallelization), thus requiring a minimal set of changes without sacrificing computational performances.
+It is primarily intended for applications where the linear operator of interest is only available implicitly via a matrix-vector subroutine and enables users to maximally re-use existing components of their code base (including parallelisation), thus requiring a minimal set of changes without sacrificing computational performance.
 
 # Statement of need
 
