@@ -29,10 +29,10 @@ bibliography: paper.bib
 
 # Summary
 
-[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package providing a collection of Krylov methods for large-scale linear algebra.
-Direct methods tend to have a computational cost scaling as $\mathcal{O}(n^3)$ making them impractical for large-scale problems.
-Even when $A$ is sparse, computing matrix factorizations can incur an $\mathcal{O}(n^2)$ storage cost in the worst case by introducing fill-in.
-In contrast, Krylov methods only need a function computing the matrix-vector product $u \leftarrow Av$ (or $u \leftarrow A^H v$) to iteratively construct a *Krylov subspace* [@krylov-1931] from which the solutions can be extracted, see @ipsen-1998, @saad-2003 and @frantz-2023.
+Direct solvers for linear algebraic systems scale cubically in the problem's dimension, rapidly becoming intractable for large-scale problems, while sparse factorization may still require quadratic storage due to fill-in.
+Krylov techniques [@krylov-1931] avoid these costs by needing only a routine that computes a matrix-vector product, iteratively building a subspace from which the solution is obtained, see @ipsen-1998, @saad-2003 and @frantz-2023.
+[`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package providing a suite of such Krylov methods along with an easy-to-use high level API based on `abstract` types.
+It is primarily intended for applications where the linear operator of interest is only available implicitly via a matrix-vector subroutine and enables users to maximally re-use existing components of their code base (including parallelization), thus requiring a minimal set of changes without sacrificing computational performances.
 
 # Statement of need
 
