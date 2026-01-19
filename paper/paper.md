@@ -44,10 +44,8 @@ It is primarily intended for applications where the linear operator of interest 
 - **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalization for Hermitian ones.
 - **SVD -** Golub-Kahan bidiagonalization.
 
-Libraries exposing more methods exist in other languages, e.g., `Krylov.jl` [@montoison-2023] or `PETSc` [@petsc-web-page].
-Integrating these into existing Fortran codes can however present challenges (e.g. dependency management).
-In contrast, `LightKrylov` is a pure Fortran alternative, compliant with the 2018 standard, and requiring only the community-led Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/), as an dependency.
-Finally, its build process relies on the Fortran package manager `fpm`, facilitating its integration with the modern Fortran ecosystem.
+It is a pure Fortran package, compliant with the 2018 standard, and requiring only the community-led Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/) as dependency.
+Moreover, its build process relies on the Fortran package manager `fpm`, facilitating its integration with the modern Fortran ecosystem.
 
 ## A focus on abstract linear operators and abstract vectors
 
@@ -85,6 +83,17 @@ Abstract linear operators are defined similarly, with two type-bound procedures 
 Using `abstract` types enables us to focus on the high-level implementation of the different algorithms while leaving the performance-critical details to the users.
 In addition, `LightKrylov` exposes abstract types for preconditioners, as well as a Newton-GMRES solver for nonlinear systems.
 After extending these `abstract` types for their application, one can solve linear systems or compute eigenvalues as easily as `call gmres(A, b, x, info)` or `call eigs(A, V, lambda, residuals, info)`.
+
+## High-level comparison with other libraries
+
+`PETSc` [@petsc-web-page] is a widely used library for large-scale linear algebra problems, especially those resulting from PDE discretization.
+While it offers more than Krylov methods, its many data structures and complex build process can make integration difficult when only linear solvers are needed.
+
+`LightKrylov` is thus closer to `Krylov.jl` [@montoison-2023] in Julia: a minimal package with a high level of abstraction specialised for Krylov methods only.
+While the latter offers a broader collection of methods, we are actively working to bridge the gap.
+Additionally, calling Julia code from Fortran remains a delicate process, burdened by the *two-language problem*.
+In that regard, the fact that `LightKrylov` is written in pure, standard‑compliant Fortran makes it an ideal candidate for integration into existing Fortran codebases.
+Moreover, its high level of abstraction enables users to re-use existing components of their codebase (including parallelisation), requiring only minimal changes while preserving computational performance.
 
 # Performance in a production-ready open-source codebase
 
