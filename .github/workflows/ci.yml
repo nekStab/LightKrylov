@@ -19,8 +19,6 @@ jobs:
         include:
           - os: ubuntu-22.04
             toolchain: {compiler: intel-classic, version: '2021.10'}
-          - os: ubuntu-latest
-            toolchain: {compiler: ifx, version: '2025.2.1'}
         exclude:
           - os: macos-14
             toolchain: {compiler: intel, version: '2024.1'}
