@@ -8,27 +8,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain:
+          - {compiler: gcc, version: 10}
+          - {compiler: gcc, version: 11}
+          - {compiler: gcc, version: 12}
+          - {compiler: gcc, version: 13}
+          - {compiler: gcc, version: 14}
+          - {compiler: gcc, version: 15}
+          - {compiler: intel, version: '2025.0'}
+          - {compiler: intel-classic, version: '2021.10'}
+          - {compiler: nvidia-hpc, version: '25.1'}
+        exclude:
           - os: ubuntu-latest
-            toolchain: {compiler: gcc, version: 12, flags: ['-cpp -O3 -march=native -mtune=native']}
-          - os: ubuntu-latest
-            toolchain: {compiler: gcc, version: 13, flags: ['-cpp -O3 -march=native -mtune=native']}
-          - os: ubuntu-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', flags: ['-fpp -O0 -g']}
-          # - os: ubuntu-latest
-          #   toolchain: {compiler: intel, version: '2024.1', flags: ['-fpp -O0 -g']}
-          # - os: ubuntu-latest
-          #   toolchain: {compiler: nvidia-hpc, version: '24.1', flags: ['-Mpreprocess -Ofast']}
+            toolchain: {compiler: gcc, version: 15}
+          - os: macos-latest
+            toolchain: {compiler: intel}
+          - os: macos-latest
+            toolchain: {compiler: intel-classic}
+          - os: macos-latest
+            toolchain: {compiler: nvidia-hpc}
+          - os: macos-latest
+            toolchain: {compiler: gcc, version: 10}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 13, flags: ['-cpp -O3 -march=native -mtune=native']}
-          # - os: windows-latest
-          #   toolchain: {compiler: intel-classic, version: '2021.10', flags: ["/fpp /O3"]}
-          # - os: windows-latest
-          #   toolchain: {compiler: intel, version: '2024.1', flags: ["/fpp /O3"]}
-          # - os: macos-14
-          #   toolchain: {compiler: gcc, version: 13, flags: ['-cpp -O3 -march=native -mtune=native']}
-          # - os: macos-12
-          #   toolchain: {compiler: intel-classic, version: '2021.10', flags: ['-fpp -O3 -xhost']}
+            toolchain: {compiler: nvidia-hpc}
+          - os: windows-latest
+            toolchain: {compiler: gcc, version: 10} # Fail to compile stdlib_blas_level1.f90:123:38
+          - os: windows-latest
+            toolchain: {compiler: intel-classic} # Fail to build. Mixing ifort and gfortran?
 
     steps:
       - name: Checkout code
@@ -41,9 +48,9 @@ jobs:
           version: ${{ matrix.toolchain.version }}
 
       - name: Setup Fortran Package Manager
-        uses: fortran-lang/setup-fpm@v7
+        uses: fortran-lang/setup-fpm@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: |
-          fpm test --flag "${{ join(matrix.toolchain.flags, ' ') }}"
+          fpm test --compiler ${{ matrix.compiler }} --profile debug --verbose
