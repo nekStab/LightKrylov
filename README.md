@@ -62,7 +62,7 @@ Some examples can be found in the `example` folder. These include:
 
 Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
 
-| [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Laplace operator**]() | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
+| [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Poisson equation**](https://github.com/nekStab/LightKrylov_examples/tree/main/poisson) | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
 | :---------------------: | :----------------------: | :--------------------: |
 | ![](imgs/example_GL.png) | ADD FIGURE | ![](imgs/example_Roessler.png) |
 
