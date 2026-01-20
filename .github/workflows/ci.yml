@@ -8,27 +8,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-14]
+        toolchain:
+          - {compiler: gcc, version: 10}
+          - {compiler: gcc, version: 11}
+          - {compiler: gcc, version: 12}
+          - {compiler: gcc, version: 13}
+          - {compiler: gcc, version: 14}
+          - {compiler: intel, version: '2024.1'}
         include:
+          - os: ubuntu-22.04
+            toolchain: {compiler: intel-classic, version: '2021.10'}
           - os: ubuntu-latest
-            toolchain: {compiler: gcc, version: 12, flags: ['-cpp -O3 -march=native -mtune=native']}
-          - os: ubuntu-latest
-            toolchain: {compiler: gcc, version: 13, flags: ['-cpp -O3 -march=native -mtune=native']}
-          - os: ubuntu-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', flags: ['-fpp -O0 -g']}
-          # - os: ubuntu-latest
-          #   toolchain: {compiler: intel, version: '2024.1', flags: ['-fpp -O0 -g']}
-          # - os: ubuntu-latest
-          #   toolchain: {compiler: nvidia-hpc, version: '24.1', flags: ['-Mpreprocess -Ofast']}
-          - os: windows-latest
-            toolchain: {compiler: gcc, version: 13, flags: ['-cpp -O3 -march=native -mtune=native']}
-          # - os: windows-latest
-          #   toolchain: {compiler: intel-classic, version: '2021.10', flags: ["/fpp /O3"]}
-          # - os: windows-latest
-          #   toolchain: {compiler: intel, version: '2024.1', flags: ["/fpp /O3"]}
-          # - os: macos-14
-          #   toolchain: {compiler: gcc, version: 13, flags: ['-cpp -O3 -march=native -mtune=native']}
-          # - os: macos-12
-          #   toolchain: {compiler: intel-classic, version: '2021.10', flags: ['-fpp -O3 -xhost']}
+            toolchain: {compiler: ifx, version: '2025.2.1'}
+        exclude:
+          - os: macos-14
+            toolchain: {compiler: intel, version: '2024.1'}
+          - os: macos-14
+            toolchain: {compiler: gcc, version: 10}
 
     steps:
       - name: Checkout code
@@ -41,9 +38,9 @@ jobs:
           version: ${{ matrix.toolchain.version }}
 
       - name: Setup Fortran Package Manager
-        uses: fortran-lang/setup-fpm@v7
+        uses: fortran-lang/setup-fpm@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: |
-          fpm test --flag "${{ join(matrix.toolchain.flags, ' ') }}"
+          fpm test --compiler ${{ matrix.compiler }} --profile debug --verbose
