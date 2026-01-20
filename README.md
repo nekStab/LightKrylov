@@ -90,10 +90,15 @@ gh repo clone nekStab/LightKrylov
 All other dependencies are directly handled by the Fortran Package Manage `fpm`.
 To date, the tested compilers include:
 
-- `gfortran 12` (Linux)
-- `gfortran 13` (Linux, Windows, MacOS)
-- `ifort` (Linux)
-- `ifx` (Linux)
+- `gfortran 10` (Linux, Windows)
+- `gfortran 11` (Linux, macOS, Windows)
+- `gfortran 12` (Linux, macOS, Windows)
+- `gfortran 13` (Linux, macOS, Windows)
+- `gfortran 14` (Linux, macOS, Windows)
+- `gfortran 15` (macOS, Windows)
+- `ifort 2021.10` (Linux, macOS, Windows)
+- `ifx 2025.0` (Linux, Windows)
+- `nivdia-hpc 25.1` (Linux)
 
 ### Building with `fpm`
 
