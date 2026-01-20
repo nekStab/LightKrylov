@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="./favicon.png">
+
+    <title> LightKrylov </title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="./css/fontawesome.min.css" rel="stylesheet">
+    <link href="./css/brands.min.css" rel="stylesheet">
+    <link href="./css/regular.min.css" rel="stylesheet">
+    <link href="./css/solid.min.css" rel="stylesheet">
+    <link href="./css/v4-font-face.min.css" rel="stylesheet">
+    <link href="./css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="./css/local.css" rel="stylesheet">
+    <link href="./css/pygments.css" rel="stylesheet">
+      <link href="./css/user.css" rel="stylesheet">
+    <script src="./js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="./index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="./lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="./lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="./lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="./lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="./lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="./search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <!-- Main component for a primary marketing message or call to action -->
+    <div class="p-5 mb-4 bg-light border rounded-3" id="jumbotron">
+      <p>Lightweight implementation of Krylov methods using modern Fortran.</p>
+        <p> Find us on&hellip;</p>
+      <p>
+        <a class="btn btn-lg btn-primary" href="https://github.com/nekStab/LightKrylov" role="button">GitHub</a>
+        
+        
+        
+        <a class="btn btn-lg btn-primary" href="https://nekstab.github.io/LightKrylov/" role="button">The Web</a>
+      </p>
+    </div>
+
+      <div class="row" id='text'>
+        <div class=col-md-8>
+          <h1>LightKrylov</h1>
+          <div class="alert alert-warning">
+<p class="alert-title h4">Warning</p>
+<p>This API documentation for the <code>LightKrylov</code> package is built from the source code in the <code>main</code> branch and does not track the current development in <code>dev</code> or any other branches.
+   If you use another branch, please refer to the in-code documentation.
+   Use the navigation bar at the top of the screen to browse <code>modules</code>, <code>procedures</code>, <code>source files</code>, etc.</p>
+</div>
+<p>This is the main API documentation landing page generated by <a href="https://github.com/Fortran-FOSS-Programmers/ford#readme">FORD</a>. This documentation is released under the <a href="https://creativecommons.org/licenses/by-sa/4.0/"><code>CC-BY-SA</code></a> license while the <code>LightKrylov</code> source code is distribution under the <a href="https://opensource.org/license/bsd-3-clause"><code>BSD-3 Clause</code></a> one.</p>
+<h2 id="scope">Scope</h2>
+<p>The goal of <code>LightKrylov</code> is to provide a lightweight implementation of many standard Krylov techniques using modern <code>Fortran</code> features, including: </p>
+<ul>
+<li>Linear solvers for <script type="math/tex"> \mathbf{Ax} = \mathbf{b} </script>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Conjugate_gradient_method"><code>cg</code></a> when <script type="math/tex"> \mathbf{A} </script> is a symmetric (hermitian) positive definite matrix.</li>
+<li><a href="https://en.wikipedia.org/wiki/Generalized_minimal_residual_method"><code>gmres</code></a> when <script type="math/tex"> \mathbf{A} </script> is a non-symmetric square linear operator.</li>
+</ul>
+</li>
+<li>Krylov-based matrix factorizations<ul>
+<li><code>arnoldi</code> - Construct an upper Hessenberg matrix <script type="math/tex"> \mathbf{H} </script> and an orthonormal (unitary) basis <script type="math/tex"> \mathbf{X} </script> capturing the dominant eigenspace of a square non-symmetric matrix <script type="math/tex"> \mathbf{A} </script> using the <a href="https://en.wikipedia.org/wiki/Arnoldi_iteration"><code>Arnoldi</code></a> iterative process.</li>
+<li><code>lanczos</code> - Construct a symmetric (hermitian) tridiagonal matrix <script type="math/tex"> \mathbf{T} </script> and an orthonormal (unitary) basis <script type="math/tex"> \mathbf{X} </script> capturing the dominant eigenspace of a symmetric (hermitian) linear operator <script type="math/tex"> \mathbf{A} </script> using the <a href="https://en.wikipedia.org/wiki/Lanczos_algorithm"><code>Lanczos</code></a> iterative process.</li>
+<li><code>bidiagonalization</code> - Construct a bidiagonal matrix <script type="math/tex"> \mathbf{B} </script> and orthonormal bases <script type="math/tex"> \mathbf{U} </script> and <script type="math/tex"> \mathbf{V} </script> for the dominant column (resp. row) span of a general linear operator <script type="math/tex"> \mathbf{A} </script> using the  <a href="https://en.wikipedia.org/wiki/Bidiagonalization"><code>Lanczos bidiagonalization</code></a> iterative process.</li>
+</ul>
+</li>
+<li>Eigenvalue solvers for <script type="math/tex"> \mathbf{Ax} = \lambda \mathbf{x} </script>
+<ul>
+<li><code>eigs</code> to compute the largest eigenvalues and associated eigenvectors of a general square linear operator <script type="math/tex"> \mathbf{A} </script> using the <a href="https://en.wikipedia.org/wiki/Arnoldi_iteration"><code>Arnoldi</code></a> iterative process.</li>
+<li><code>eighs</code> to compute the largest eigenvalues and associated eigenvectors of a symmetric (hermitian) linear operator <script type="math/tex"> \mathbf{A} </script> using the <a href="https://en.wikipedia.org/wiki/Lanczos_algorithm"><code>Lanczos</code></a> iterative process.</li>
+</ul>
+</li>
+<li>Singular value decomposition <script type="math/tex"> \mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^H </script>
+<ul>
+<li><code>svds</code> to compute the leading singular triplets of a general linear operator <script type="math/tex"> \mathbf{A} </script> using the <a href="https://en.wikipedia.org/wiki/Bidiagonalization"><code>Lanczos bidiagonalization</code></a> iterative process.</li>
+</ul>
+</li>
+<li>Solving a system of nonlinear equations <script type="math/tex"> F(\mathbf{x}) = \mathbf{0} </script>
+<ul>
+<li><code>newton</code> to find the solution to <script type="math/tex"> F(\mathbf{x}) = \mathbf{0} </script> using a Newton-Krylov solver with optimal step size found by a simple bisection method.</li>
+</ul>
+</li>
+</ul>
+<p>While similar and more feature-complete packages exist (e.g. <a href="https://www.arpack.org">Arpack</a>, <a href="https://slepc.upv.es/">SLEPC</a> or <a href="https://trilinos.github.io/">Trilinos</a>), the use of <code>abstract_type</code> in <code>LightKrylov</code> and its nearly non-existant list of dependencies makes it far easier to incorporate into an existing code base. Preliminary benchmark results moreover show that it is on par with <code>Arpack</code> in terms of accuracy and computational performances.</p>
+<h2 id="acknowledgment">Acknowledgment</h2>
+<p>The development of <code>LightKrylov</code> is part of an on-going research project funded by <a href="https://anr.fr/en/">Agence Nationale pour la Recherche</a> (ANR) under the grant agreement ANR-22-CE46-0008. The project started in January 2023 and will run until December 2026.
+We are also very grateful to the <a href="https://fortran-lang.org/">fortran-lang</a> community and the maintainers of <a href="https://github.com/fortran-lang/stdlib"><code>stdlib</code></a>.</p>
+<h2 id="related-projects">Related projects</h2>
+<p><code>LightKrylov</code> is the base package of our ecosystem. If you like it, you may also be interested in:</p>
+<ul>
+<li><a href="https://github.com/nekStab/LightROM"><code>LightROM</code></a> : a lightweight Fortran package providing a set of functions for reduced-order modeling, control and estimation of large-scale linear time invariant dynamical systems.</li>
+<li><a href="https://github.com/nekStab/neklab"><code>neklab</code></a> : a bifurcation and stability analysis toolbox based on <code>LightKrylov</code> for the massively parallel spectral element solver <a href="https://github.com/Nek5000/Nek5000"><code>Nek5000</code></a>.</li>
+</ul>
+        </div>
+          <div class="col-md-4">
+            <div class="card card-body bg-light">
+              <h2 class="card-title">Developer Info</h2>
+              <h4 class="card-text">Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz</h4>
+              <p class="card-text"></p>
+                <div class="text-center"><div class="btn-group" role="group">
+                    
+                    <a class="btn btn-lg btn-primary" href="https://github.com/nekStab/LightKrylov"><i class="fa fa-github fa-lg"></i></a>
+                    
+                    
+                    
+                    
+                    
+                    
+                </div></div>
+            </div>
+          </div>
+      </div>
+        <div class="row">
+          <hr>
+          <div class="col-xs-6 col-sm-3">
+            <div>
+              <h3>Source Files</h3>
+              <ul><li><a href='sourcefile/abstractlinops.f90.html'>AbstractLinops.f90</a></li><li><a href='sourcefile/abstractsystems.f90.html'>AbstractSystems.f90</a></li><li><a href='sourcefile/abstractvectors.f90.html'>AbstractVectors.f90</a></li><li><a href='sourcefile/arnoldi.f90.html'>arnoldi.f90</a></li><li><a href='sourcefile/basekrylov.f90.html'>BaseKrylov.f90</a></li><li><a href='sourcefile/cg.f90.html'>CG.f90</a></li><li><a href='sourcefile/constants.f90.html'>Constants.f90</a></li><li><a href='sourcefile/eighs.f90.html'>eighs.f90</a></li><li><a href='sourcefile/expmlib.f90.html'>ExpmLib.f90</a></li><li><a href='sourcefile/fgmres.f90.html'>fgmres.f90</a></li></ul>
+            </div>
+            <div>
+              <ul>
+                <li><a href="./lists/files.html"><em>All source files&hellip;</em></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-xs-6 col-sm-3">
+            <div>
+              <h3>Modules</h3>
+              <ul><li><a href='module/lightkrylov.html'>LightKrylov</a></li><li><a href='module/lightkrylov_abstractlinops.html'>LightKrylov_AbstractLinops</a></li><li><a href='module/lightkrylov_abstractsystems.html'>LightKrylov_AbstractSystems</a></li><li><a href='module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></li><li><a href='module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></li><li><a href='module/lightkrylov_constants.html'>LightKrylov_Constants</a></li><li><a href='module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></li><li><a href='module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></li><li><a href='module/lightkrylov_logger.html'>LightKrylov_Logger</a></li><li><a href='module/lightkrylov_newtonkrylov.html'>LightKrylov_NewtonKrylov</a></li></ul>
+            </div>
+            <div>
+              <ul>
+                <li><a href="./lists/modules.html"><em>All modules&hellip;</em></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-xs-6 col-sm-3">
+            <div>
+              <h3>Procedures</h3>
+              <ul><li><a href='interface/adjoint.html'>adjoint</a></li><li><a href='interface/apply_givens_rotation.html'>apply_givens_rotation</a></li><li><a href='interface/arnoldi.html'>arnoldi</a></li><li><a href='interface/assert_shape.html'>assert_shape</a></li><li><a href='interface/axpby_basis.html'>axpby_basis</a></li><li><a href='interface/bidiagonalization.html'>bidiagonalization</a></li><li><a href='interface/cg.html'>cg</a></li><li><a href='interface/check_allocation.html'>check_allocation</a></li><li><a href='proc/check_info.html'>check_info</a></li><li><a href='proc/comm_close.html'>comm_close</a></li></ul>
+            </div>
+            <div>
+              <ul>
+                <li><a href="./lists/procedures.html"><em>All procedures&hellip;</em></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-xs-6 col-sm-3">
+            <div>
+              <h3>Derived Types</h3>
+              <ul><li><a href='type/abstract_expta_linop_cdp.html'>abstract_exptA_linop_cdp</a></li><li><a href='type/abstract_expta_linop_csp.html'>abstract_exptA_linop_csp</a></li><li><a href='type/abstract_expta_linop_rdp.html'>abstract_exptA_linop_rdp</a></li><li><a href='type/abstract_expta_linop_rsp.html'>abstract_exptA_linop_rsp</a></li><li><a href='type/abstract_hermitian_linop_cdp.html'>abstract_hermitian_linop_cdp</a></li><li><a href='type/abstract_hermitian_linop_csp.html'>abstract_hermitian_linop_csp</a></li><li><a href='type/abstract_jacobian_linop_cdp.html'>abstract_jacobian_linop_cdp</a></li><li><a href='type/abstract_jacobian_linop_csp.html'>abstract_jacobian_linop_csp</a></li><li><a href='type/abstract_jacobian_linop_rdp.html'>abstract_jacobian_linop_rdp</a></li><li><a href='type/abstract_jacobian_linop_rsp.html'>abstract_jacobian_linop_rsp</a></li></ul>
+            </div>
+            <div>
+              <ul>
+                <li><a href="./lists/types.html"><em>All derived types&hellip;</em></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>
