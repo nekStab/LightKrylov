@@ -97,7 +97,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
     end type linop_rsp
     interface linop_rsp
-        pure module function construct_linop_rsp(data) result(A)
+        module function construct_linop_rsp(data) result(A)
             implicit none(type, external)
             real(sp), dimension(test_size, test_size), intent(in) :: data
             type(linop_rsp) :: A
@@ -112,7 +112,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => sdp_matvec_rsp
     end type spd_linop_rsp
     interface spd_linop_rsp
-        pure module function construct_spd_linop_rsp(data) result(A)
+        module function construct_spd_linop_rsp(data) result(A)
             implicit none(type, external)
             real(sp), dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_rsp) :: A
@@ -127,7 +127,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
     end type linop_rdp
     interface linop_rdp
-        pure module function construct_linop_rdp(data) result(A)
+        module function construct_linop_rdp(data) result(A)
             implicit none(type, external)
             real(dp), dimension(test_size, test_size), intent(in) :: data
             type(linop_rdp) :: A
@@ -142,7 +142,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => sdp_matvec_rdp
     end type spd_linop_rdp
     interface spd_linop_rdp
-        pure module function construct_spd_linop_rdp(data) result(A)
+        module function construct_spd_linop_rdp(data) result(A)
             implicit none(type, external)
             real(dp), dimension(test_size, test_size), intent(in) :: data
             type(spd_linop_rdp) :: A
@@ -157,7 +157,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_csp
     end type linop_csp
     interface linop_csp
-        pure module function construct_linop_csp(data) result(A)
+        module function construct_linop_csp(data) result(A)
             implicit none(type, external)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
             type(linop_csp) :: A
@@ -172,7 +172,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => hermitian_matvec_csp
     end type hermitian_linop_csp
     interface hermitian_linop_csp
-        pure module function construct_hermitian_linop_csp(data) result(A)
+        module function construct_hermitian_linop_csp(data) result(A)
             implicit none(type, external)
             complex(sp), dimension(test_size, test_size), intent(in) :: data
             type(hermitian_linop_csp) :: A
@@ -186,7 +186,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_cdp
     end type linop_cdp
     interface linop_cdp
-        pure module function construct_linop_cdp(data) result(A)
+        module function construct_linop_cdp(data) result(A)
             implicit none(type, external)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
             type(linop_cdp) :: A
@@ -201,7 +201,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
     end type hermitian_linop_cdp
     interface hermitian_linop_cdp
-        pure module function construct_hermitian_linop_cdp(data) result(A)
+        module function construct_hermitian_linop_cdp(data) result(A)
             implicit none(type, external)
             complex(dp), dimension(test_size, test_size), intent(in) :: data
             type(hermitian_linop_cdp) :: A
