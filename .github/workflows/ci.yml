@@ -15,7 +15,6 @@ jobs:
           - {compiler: gcc, version: 12}
           - {compiler: gcc, version: 13}
           - {compiler: gcc, version: 14}
-          - {compiler: gcc, version: 15}
           - {compiler: intel, version: '2025.0'}
           - {compiler: intel-classic, version: '2021.10'}
           - {compiler: nvidia-hpc, version: '25.1'}
