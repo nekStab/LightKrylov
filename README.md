@@ -55,9 +55,9 @@ This was made possible thanks to [`fypp`](https://github.com/aradi/fypp), a pyth
 
 ### Examples
 
-Some examples can be found in the `example` folder. These include:
+Some examples can be found in the `example` folder or the dedicated [`LightKrylov_examples`](https://github.com/nekStab/LightKrylov_examples) repository. These include:
 - [Ginzburg-Landau](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
-- [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
+- [Poisson equation](https://github.com/nekStab/LightKrylov_examples/tree/main/poisson)) : MPI-based solver for the Poisson equation on the unit-square.
 - [Roessler system](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) : Computation of an unstable periodic orbit embedded in the strange attractor of the system along with an OTD analysis of this orbit.
 
 Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
