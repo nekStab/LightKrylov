@@ -7,8 +7,8 @@
 [![GitHub release](https://img.shields.io/github/release/nekStab/LightKrylov.svg)](https://github.com/nekStab/LightKrylov/releases/latest)
 [![Build Status](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml/badge.svg)](https://github.com/nekStab/LightKrylov/actions)
 [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) 
-[![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStan/LightKrylov)
-[![last-commit](https://img.shields.io/github/last-commit/loiseaujc/quadprog)](https://github.com/loiseaujc/quadprog/commits/main)
+[![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStab/LightKrylov)
+[![last-commit](https://img.shields.io/github/last-commit/nekStab/LightKrylov)](https://github.com/nekStab/neklab/commits/main)
 
 | **Documentation** | [link](https://nekstab.github.io/LightKrylov/index.html) |
 |:-------------:|:----:|
