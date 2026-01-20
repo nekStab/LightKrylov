@@ -32,6 +32,10 @@ jobs:
             toolchain: {compiler: gcc, version: 10}
           - os: windows-latest
             toolchain: {compiler: nvidia-hpc}
+          - os: windows-latest
+            toolchain: {compiler: gcc, version: 10} # Fail to compile stdlib_blas_level1.f90:123:38
+          - os: windows-latest
+            toolchain: {compiler: intel-classic} # Fail to build. Mixing ifort and gfortran?
 
     steps:
       - name: Checkout code
