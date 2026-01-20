@@ -98,7 +98,7 @@ To date, the tested compilers include:
 - `gfortran 15` (macOS, Windows)
 - `ifort 2021.10` (Linux, macOS, Windows)
 - `ifx 2025.0` (Linux, Windows)
-- `nivdia-hpc 25.1` (Linux)
+- `nvidia-hpc 25.1` (Linux)
 
 ### Building with `fpm`
 
