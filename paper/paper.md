@@ -125,6 +125,6 @@ Ongoing development efforts include:
 
 ### Acknowledgements
 
-We acknowledge the financial support of the French National Agency for Research (ANR) through the ANR-33-CE46-0008-CONMAN grant agreement. We also thank the [fortran-lang](https://fortran-lang.org/) community for the development of [`stdlib`](https://stdlib.fortran-lang.org/), and in particular Frederico Perini, Jeremie Vandenplas, and Jose Alvez for their work on the `stdlib_linalg` module.
+We acknowledge the financial support of the French National Agency for Research (ANR) through the ANR-33-CE46-0008-CONMAN grant agreement. We also thank the [fortran-lang](https://fortran-lang.org/) community for the development of [`stdlib`](https://stdlib.fortran-lang.org/), and in particular [Frederico Perini](https://github.com/perazz), [Jeremie Vandenplas](https://github.com/jvdp1), and [José Alvez](https://github.com/jalvesz) for their work on the `stdlib_linalg` module.
 
 # References
