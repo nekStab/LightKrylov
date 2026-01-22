@@ -167,7 +167,7 @@ Contributions are more than welcomed ! More information can be found in the foll
 ## Acknowledgment
 
 The development of `LightKrylov` is part of an on-going research project funded by [Agence Nationale pour la Recherche](https://anr.fr/en/) (ANR) under the grant agreement ANR-22-CE46-0008. The project started in January 2023 and will run until December 2026.
-We are also very grateful to the [fortran-lang](https://fortran-lang.org/) community and the maintainers of [`stdlib`](https://github.com/fortran-lang/stdlib), in particular to @perazz, @jalvesz and @jvdp1 for their awesome work on the `stdlib_linalg` module which greatly simplified the developlement of `LightKrylov`.
+We are also very grateful to the [fortran-lang](https://fortran-lang.org/) community and the maintainers of [`stdlib`](https://github.com/fortran-lang/stdlib), in particular to [@perazz](https://github.com/perazz), [@jalvesz](https://github.com/jalvesz) and [@jvdp1](https://github.com/jvdp1) for their awesome work on the `stdlib_linalg` module which greatly simplified the developlement of `LightKrylov`.
 
 ### Related projects
 
