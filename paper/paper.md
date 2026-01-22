@@ -41,8 +41,8 @@ It is primarily intended for applications where the linear operator of interest 
 `LightKrylov` provides Fortran users with SciPy-inspired interfaces to widely used Krylov techniques, including:
 
 - **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRES [@saad:fgmres:siam].
-- **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalization for Hermitian ones.
-- **SVD -** Golub-Kahan bidiagonalization.
+- **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalisation for Hermitian ones.
+- **SVD -** Golub-Kahan bidiagonalisation.
 
 It is a pure Fortran package, compliant with the 2018 standard, and requiring only the community-led Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/) [@stdlib:ieee] as dependency.
 Moreover, its build process relies on the Fortran package manager `fpm`, facilitating its integration with the modern Fortran ecosystem.
@@ -86,8 +86,8 @@ After extending these `abstract` types for their application, one can solve line
 
 ## High-level comparison with other libraries
 
-`PETSc` [@petsc-web-page] is a widely used library for large-scale linear algebra problems, especially those resulting from PDE discretization.
-While it offers more than Krylov methods, its many data structures and complex build process can make integration difficult when only linear solvers are needed.
+`PETSc` [@petsc-web-page] is a widely used library for large-scale linear algebra problems, especially those resulting from PDE discretisation.
+While it offers more than Krylov methods, its many data structures and build process can make integration difficult into an already existing large code base when only linear solvers are needed.
 
 `LightKrylov` is thus closer to `Krylov.jl` [@montoison-2023] in Julia: a minimal package with a high level of abstraction specialised for Krylov methods only.
 While the latter offers a broader collection of methods, we are actively working to bridge the gap.
@@ -102,11 +102,11 @@ Moreover, its high level of abstraction enables users to re-use existing compone
 ## Hydrodynamic stability of an unstable fixed point of the nonlinear Navier-Stokes equations
 
 Using the two-dimensional flow past a circular cylinder at Reynolds number of 100, we showcase the efficient integration of `LightKrylov` and `Nek5000` and validate the results with algorithms provided by the [`KTH Framework`](https://github.com/KTH-Nek5000/KTH_Framework) toolbox [@kth-framework] based on the same solver.
-Discretization of the governing equations leads to systems with approximately 175,000 degrees of freedom.
+Discretisation of the governing equations leads to systems with approximately 175,000 degrees of freedom.
 All computations were run in parallel on 12 Intel Core Ultra 7 processors and the numerical settings are identical for both libraries.
 
 The unstable fixed point of the nonlinear Navier-Stokes equations is computed using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver and the selected frequency damping implementation from `KTH Framework` .
-Likewise, the leading eigenpair of the corresponding linearized Navier-Stokes operator is computed using `LightKrylov`'s implementation of the Krylov-Schur algorithm and the `KTH Framework`'s wrapper for `ARPACK` [@lehoucq:arpack:siam].
+Likewise, the leading eigenpair of the corresponding linearised Navier-Stokes operator is computed using `LightKrylov`'s implementation of the Krylov-Schur algorithm and the `KTH Framework`'s wrapper for `ARPACK` [@lehoucq:arpack:siam].
 
 A visual comparison is provided in \autoref{fig:timings} showing excellent agreement.
 The table in the lower-right panel of \autoref{fig:timings} summarizes the wall-clock times of the `neklab` computations. Isolating the intrinsic cost of the algorithms in `LightKrylov` from the cost of the calls to LAPACK and the linear and nonlinear Navier-Stokes solvers (`matvec` and `response`, respectively) shows that extended `abstract` types and object-oriented programming in Fortran incurs a negligible computational overhead for such large-scale applications.
