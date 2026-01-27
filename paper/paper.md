@@ -79,7 +79,7 @@ abstract interface
 end interface
 ```
 mimicking the signature of the (extended) BLAS-1 subroutine `axpby`.
-Abstract linear operators are defined similarly, with two type-bound procedures required to implement the matrix-vector and transpose matrix-vector product.
+Abstract linear operators are defined similarly, with two type-bound procedures required to implement the matrix-vector and transpose (or Hermitian) matrix-vector product.
 Using `abstract` types enables us to focus on the high-level implementation of the different algorithms while leaving the performance-critical details to the users.
 In addition, `LightKrylov` exposes abstract types for preconditioners, as well as a Newton-GMRES solver for nonlinear systems.
 After extending these `abstract` types for their application, one can solve linear systems or compute eigenvalues as easily as `call gmres(A, b, x, info)` or `call eigs(A, V, lambda, residuals, info)`.
@@ -106,7 +106,7 @@ Using the two-dimensional flow past a circular cylinder at Reynolds number of 10
 Discretisation of the governing equations leads to systems with approximately 175,000 degrees of freedom.
 All computations were run in parallel on 12 Intel Core Ultra 7 processors and the numerical settings are identical for both libraries.
 
-The unstable fixed point of the nonlinear Navier-Stokes equations is computed using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver and the selected frequency damping implementation from `KTH Framework` .
+The unstable fixed point of the nonlinear Navier-Stokes equations is computed using both `LightKrylov`'s *time-stepper*-based Newton-GMRES solver and the selective frequency damping implementation from `KTH Framework` .
 Likewise, the leading eigenpair of the corresponding linearised Navier-Stokes operator is computed using `LightKrylov`'s implementation of the Krylov-Schur algorithm and the `KTH Framework`'s wrapper for `ARPACK` [@lehoucq:arpack:siam].
 
 A visual comparison is provided in \autoref{fig:timings} showing excellent agreement.
