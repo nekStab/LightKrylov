@@ -86,8 +86,9 @@ After extending these `abstract` types for their application, one can solve line
 
 ## High-level comparison with other libraries
 
-`PETSc` [@petsc-web-page] is a widely used library for large-scale linear algebra problems, especially those resulting from PDE discretisation.
-While it offers more than Krylov methods, its many data structures and build process can make integration difficult into an already existing large code base when only linear solvers are needed.
+`PETSc` [@petsc-web-page] is a widely used library for large-scale linear algebra problems, especially those resulting from discretizations of partial differential equations.
+It can be installed using various package managers (conda, apt, Homebrew, spack, etc) and binding to several different languages exist (including C, Fortran, Python, Rust or Julia).
+Yet, while it offers more than Krylov methods, its many data structures can make integration difficult into an already existing large code base when only linear solvers are needed.
 
 `LightKrylov` is thus closer to `Krylov.jl` [@montoison-2023] in Julia: a minimal package with a high level of abstraction specialised for Krylov methods only.
 While the latter offers a broader collection of methods, we are actively working to bridge the gap.
