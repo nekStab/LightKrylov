@@ -44,7 +44,7 @@ It is primarily intended for applications where the linear operator of interest 
 - **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalisation for Hermitian ones.
 - **SVD -** Golub-Kahan bidiagonalisation.
 
-It is a pure Fortran package, compliant with the 2018 standard, and requiring only the community-led Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/) [@stdlib:ieee,@stdlib:zenodo] as dependency.
+It is a pure Fortran package, compliant with the 2018 standard, and requiring only the community-led Fortran standard library [`stdlib`](https://stdlib.fortran-lang.org/) [@stdlib:ieee; @stdlib:zenodo] as dependency.
 Moreover, its build process relies on the Fortran package manager `fpm`, facilitating its integration with the modern Fortran ecosystem.
 
 ## A focus on abstract linear operators and abstract vectors
