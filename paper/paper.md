@@ -117,12 +117,7 @@ The table in the lower-right panel of \autoref{fig:timings} summarizes the wall-
 # Perspectives
 
 Despite being in its early development stage, `LightKrylov` has already been used in production runs on dozens of processors. It has also been interfaced with [`neko`](https://github.com/ExtremeFLOW/neko), a modernized implementation of `Nek5000` running on GPUs, and is currently being interfaced with [`dNami`](https://github.com/dNamiLab/dNami), a high-performance source code generator for hyperbolic partial differential equations.
-
-Ongoing development efforts include:
-
-- **Build system:** `LightKrylov` relies on the Fortran package manager `fpm` for its build. While it ensures nice integration into the modern Fortran ecosystem, it also limits its usage to codes built using `fpm`. A build system based on `CMake` for easier integration into non-`fpm` codes is in development.
-- **Krylov processes:** `LightKrylov` currently provides implementations for three of the most important Krylov processes. Future releases will include the non-Hermitian Lanczos and two-sided Arnoldi factorizations, as well as the Saunders-Simon-Yip process [@ssy-krylov].
-- **Iterative solvers:** The integration of new Krylov processes will enable us to provide an extended list of solvers, including `MINRES`, `CGNE`, `LSQR`, and `LSMR`.
+Current development efforts include a `Cmake` build system for easier integration into non-`fpm` codes and the implementation of the Saunders-Simon-Yip Krylov process [@ssy-krylov] for solving saddle point problems ubiquitous in convex optimization.
 
 ### Acknowledgements
 
