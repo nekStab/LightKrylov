@@ -30,7 +30,7 @@ bibliography: paper.bib
 # Summary
 
 Direct solvers for linear algebraic systems scale cubically in the problem's dimension, rapidly becoming intractable for large-scale problems, while sparse factorization may still require quadratic storage due to fill-in.
-Krylov techniques [@krylov-1931] avoid these costs by needing only a routine that computes a matrix-vector product, iteratively building a subspace from which the solution is obtained, see @ipsen-1998, @saad-2003 and @frantz-2023.
+Krylov techniques [@krylov-1931] avoid these costs by needing only a routine that computes a matrix-vector product, iteratively building a subspace from which the solution is obtained, see @ipsen-1998, @saad-2003, and @frantz-2023.
 [`LightKrylov`](https://github.com/nekStab/LightKrylov) is a Fortran package providing a suite of such Krylov methods along with an easy-to-use high level API based on `abstract` types.
 It is primarily intended for applications where the linear operator of interest is only available implicitly via a matrix-vector subroutine and enables users to maximally re-use existing components of their code base (including parallelisation), thus requiring a minimal set of changes without sacrificing computational performance.
 
@@ -40,7 +40,7 @@ It is primarily intended for applications where the linear operator of interest 
 
 `LightKrylov` provides Fortran users with SciPy-inspired interfaces to widely used Krylov techniques, including:
 
-- **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES) and Flexible GMRES [@saad:fgmres:siam].
+- **Linear systems -** Conjugate Gradient (CG), Generalized Minimal Residual method (GMRES), and Flexible GMRES [@saad:fgmres:siam].
 - **Spectral decomposition -** Arnoldi method (with Krylov-Schur restart) for non-Hermitian operators, Lanczos tridiagonalisation for Hermitian ones.
 - **SVD -** Golub-Kahan bidiagonalisation.
 
@@ -87,7 +87,7 @@ After extending these `abstract` types for their application, one can solve line
 ## High-level comparison with other libraries
 
 `PETSc` [@petsc-web-page] is a widely used library for large-scale linear algebra problems, especially those resulting from discretizations of partial differential equations.
-It can be installed using various package managers (conda, apt, Homebrew, spack, etc) and bindings for several different languages exist (including C, Fortran, Python, Rust or Julia).
+It can be installed using various package managers (conda, apt, Homebrew, spack, etc.) and bindings for several different languages exist (including C, Fortran, Python, Rust, and Julia).
 Yet, while it offers more than Krylov methods, its many data structures can make integration difficult into an already existing large code base when only linear solvers are needed.
 
 `LightKrylov` is thus closer to `Krylov.jl` [@montoison-2023] in Julia: a minimal package with a high level of abstraction specialised for Krylov methods only.
