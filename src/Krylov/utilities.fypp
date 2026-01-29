@@ -47,6 +47,22 @@ contains
         endif
     end procedure initialize_krylov_subspace_${type[0]}$${kind}$
     #:endfor
+
+    !-------------------------------------------------------
+    !-----     Initialize random orthonormal basis     -----
+    !-------------------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure initialize_random_orthonormal_basis_${type[0]}$${kind}$
+        integer :: p
+
+        ! Fill with random data
+        call rand_basis(X)
+
+        ! Orthonormalize
+        call orthonormalize_basis(X)
+    end procedure initialize_random_orthonormal_basis_${type[0]}$${kind}$
+    #:endfor
    
     !----------------------------------------
     !-----     Orthonormalize basis     -----

@@ -47,6 +47,7 @@ module LightKrylov_BaseKrylov
     public :: permcols, invperm
 
     public :: initialize_krylov_subspace
+    public :: initialize_random_orthonormal_basis
     public :: krylov_schur
 
     !------------------------------------
@@ -504,14 +505,38 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `X0` (*optional*) :   Collection of vectors which will form the first few
         !!                          Krylov vectors. Note that `X0` need not be an orthonormal
-        !!                          basis as this subroutine includes a `call qr(X0)`. It is an
-        !!                          optional `intent(in)` argument.
+        !!                          basis as this subroutine includes a `call orthonormalize_basis(X0)`.
+        !!                          It is an optional `intent(in)` argument.
         #:for kind, type in RC_KINDS_TYPES
         module subroutine initialize_krylov_subspace_${type[0]}$${kind}$(X, X0)
             implicit none(type, external)
             class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
             class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: X0(:)
         end subroutine initialize_krylov_subspace_${type[0]}$${kind}$
+
+        #:endfor
+    end interface
+
+    interface initialize_random_orthonormal_basis
+        !!  ### Description
+        !!
+        !!  Utility function to initialize a random orthonormal basis.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call initialize_random_orthonormal_basis(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  - `X`   :   Array of vectors that needs to be initialized with random orthonormal vectors.
+        !!              It is an `intent(inout)` argument.
+        #:for kind, type in RC_KINDS_TYPES
+        module subroutine initialize_random_orthonormal_basis_${type[0]}$${kind}$(X)
+            implicit none(type, external)
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+        end subroutine initialize_random_orthonormal_basis_${type[0]}$${kind}$
 
         #:endfor
     end interface
