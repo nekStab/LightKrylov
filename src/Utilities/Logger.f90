@@ -685,6 +685,9 @@ contains
             write (*, *)
             write (*, *) 'A fatal error was encountered. Aborting calculation as per user directive.'
             write (*, *)
+            if (logger_is_active) then
+                write (*,*) 'Details on the error have been written to the lightkrylov logfile.'
+            end if
             STOP 1
          end if
       end if
