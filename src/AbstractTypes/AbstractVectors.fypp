@@ -35,6 +35,7 @@ module LightKrylov_AbstractVectors
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
     !! - `copy_basis(out, from)`            : Copy a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
+    !!                                        NOTE: The resulting vectors do not form an orthonormal basis. For this purpose use the utility function `initialize_random_orthonormal_basis`.
 
     use stdlib_optval, only: optval
     use stdlib_linalg_blas, only: scal, axpy, dot, dotc
