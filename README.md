@@ -9,6 +9,7 @@
 [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) 
 [![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStab/LightKrylov)
 [![last-commit](https://img.shields.io/github/last-commit/nekStab/LightKrylov)](https://github.com/nekStab/neklab/commits/main)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18412137.svg)](https://doi.org/10.5281/zenodo.18412137)
 
 | **Documentation** | [link](https://nekstab.github.io/LightKrylov/index.html) |
 |:-------------:|:----:|
