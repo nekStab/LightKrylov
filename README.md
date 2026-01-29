@@ -64,7 +64,7 @@ Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab
 
 | [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Poisson equation**](https://github.com/nekStab/LightKrylov_examples/tree/main/poisson) | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
 | :---------------------: | :----------------------: | :--------------------: |
-| ![](imgs/example_GL.png) | ADD FIGURE | ![](imgs/example_Roessler.png) |
+| ![](imgs/example_GL.png) | ![](imgs/poisson_spy.png) | ![](imgs/example_Roessler.png) |
 
 ## Installation
 
