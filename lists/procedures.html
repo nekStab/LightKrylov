@@ -1,0 +1,704 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>All Procedures &ndash; LightKrylov
+</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../css/brands.min.css" rel="stylesheet">
+    <link href="../css/regular.min.css" rel="stylesheet">
+    <link href="../css/solid.min.css" rel="stylesheet">
+    <link href="../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../css/local.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+      <link href="../css/user.css" rel="stylesheet">
+    <script src="../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12" id='text'>
+			 <h1>Procedures</h1>
+			 <table class="table table-striped">
+			 <thead><tr><th>Procedure</th><th>Location</th><th>Procedure Type</th><th>Description</th></tr></thead>
+			 <tbody>
+			   <tr>
+                 <td><a href='../interface/adjoint.html'>adjoint</a></td>
+                 <td><a href='../module/lightkrylov_abstractlinops.html'>LightKrylov_AbstractLinops</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/apply_givens_rotation.html'>apply_givens_rotation</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/arnoldi.html'>arnoldi</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a square linear operator <script type="math/tex"> A </script>, find matrices <script type="math/tex"> X </script> and <script type="math/tex"> H </script> such that</p><a href="../interface/arnoldi.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/assert_shape.html'>assert_shape</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td><p>This interface provides methods to assert tha thte shape of its input vector or
+matrix is as expected. It throws an error if not.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/axpby_basis.html'>axpby_basis</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>In-place addition of two arrays of extended <code>abstract_vector</code>.</p><a href="../interface/axpby_basis.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/bidiagonalization.html'>bidiagonalization</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a general linear operator <script type="math/tex"> A </script>, find matrices <script type="math/tex"> U </script>, <script type="math/tex"> V </script> and
+<script type="math/tex"> B </script> such that</p><a href="../interface/bidiagonalization.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/cg.html'>cg</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a symmetric (positive definite) matrix <script type="math/tex"> A </script>, solves the linear system</p><a href="../interface/cg.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/check_allocation.html'>check_allocation</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/check_info.html'>check_info</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/comm_close.html'>comm_close</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/comm_setup.html'>comm_setup</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/constant_tol_dp.html'>constant_tol_dp</a></td>
+                 <td><a href='../module/lightkrylov_newtonkrylov.html'>LightKrylov_NewtonKrylov</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Constant tolerance scheduler for the Newton iteration</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/constant_tol_sp.html'>constant_tol_sp</a></td>
+                 <td><a href='../module/lightkrylov_newtonkrylov.html'>LightKrylov_NewtonKrylov</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Constant tolerance scheduler for the Newton iteration</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/copy.html'>copy</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>This interface provides methods to copy an array <code>X</code> of <code>abstract_vector</code> into
+another array <code>Y</code>. Note that <code>Y</code> needs to be pre-allocated.</p><a href="../interface/copy.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/dense_linop.html'>dense_linop</a></td>
+                 <td><a href='../module/lightkrylov_abstractlinops.html'>LightKrylov_AbstractLinops</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/dense_vector.html'>dense_vector</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/double_gram_schmidt_step.html'>double_gram_schmidt_step</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given an array <script type="math/tex"> X </script> of <code>abstract_vector</code> and an <code>abstract_vector</code> 
+(or array of <code>abstract_vectors</code>) <script type="math/tex"> y </script>, this subroutine returns a modified 
+vector <script type="math/tex"> y </script> orthogonal to all columns of <script type="math/tex"> X </script>, i.e.</p><a href="../interface/double_gram_schmidt_step.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/dynamic_tol_dp.html'>dynamic_tol_dp</a></td>
+                 <td><a href='../module/lightkrylov_newtonkrylov.html'>LightKrylov_NewtonKrylov</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/dynamic_tol_sp.html'>dynamic_tol_sp</a></td>
+                 <td><a href='../module/lightkrylov_newtonkrylov.html'>LightKrylov_NewtonKrylov</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/eig.html'>eig</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td><p>Computes the eigenvalue decomposition of a general square matrix.</p><a href="../interface/eig.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/eighs.html'>eighs</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Computes the leading eigenpairs of a symmetric operator <script type="math/tex">A</script> using the 
+Lanczos iterative process. Given a square linear operator <script type="math/tex">A</script>, it finds
+the leading eigvalues and eigvectors such that:</p><a href="../interface/eighs.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/eigs.html'>eigs</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Computes the leading eigenpairs of a square linear operator <script type="math/tex">A</script>
+using the Arnoldi iterative process. Given a square linear operator <script type="math/tex">A</script>, it finds
+the leading eigenvalues and eigenvectors such that:</p><a href="../interface/eigs.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/fgmres.html'>fgmres</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Solve a square linear system of equations</p><a href="../interface/fgmres.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/get_comm_size.html'>get_comm_size</a></td>
+                 <td><a href='../module/lightkrylov_constants.html'>LightKrylov_Constants</a></td>
+                 <td>Function</td>
+                 <td><p>Utility function to get the dimension of the communicator known to <code>LightKrylov</code>.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/get_data.html'>get_data</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/get_err_str.html'>get_err_str</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/get_rank.html'>get_rank</a></td>
+                 <td><a href='../module/lightkrylov_constants.html'>LightKrylov_Constants</a></td>
+                 <td>Function</td>
+                 <td><p>Utility function to get the rank of the current MPI process.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/get_state_cdp.html'>get_state_cdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/get_state_csp.html'>get_state_csp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/get_state_rdp.html'>get_state_rdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/get_state_rsp.html'>get_state_rsp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/givens_rotation.html'>givens_rotation</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/gmres.html'>gmres</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Solve a square linear system of equations</p><a href="../interface/gmres.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/gram.html'>Gram</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>Compute the Gram matrix <script type="math/tex"> \mathbf{G} = \mathbf{X}^H \mathbf{X} </script>.</p><a href="../interface/gram.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/greetings.html'>greetings</a></td>
+                 <td><a href='../module/lightkrylov.html'>LightKrylov</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/hermitian_linop_cdp.html'>hermitian_linop_cdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/hermitian_linop_csp.html'>hermitian_linop_csp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/init_rand.html'>init_rand</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/initialize_krylov_subspace.html'>initialize_krylov_subspace</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Utility function to initialize a basis for a Krylov subspace.</p><a href="../interface/initialize_krylov_subspace.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/initialize_random_orthonormal_basis.html'>initialize_random_orthonormal_basis</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Utility function to initialize a random orthonormal basis.</p><a href="../interface/initialize_random_orthonormal_basis.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/innerprod.html'>innerprod</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>Compute the inner product vector <script type="math/tex"> \mathbf{v} = \mathbf{X}^H \mathbf{y} </script> or matrix
+<script type="math/tex"> \mathbf{M} = \mathbf{X}^H \mathbf{Y} </script>.</p><a href="../interface/innerprod.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/invperm.html'>invperm</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a permutation vector <script type="math/tex"> p </script>, this function computes the vector
+representation of the inverse permutation matrix.</p><a href="../interface/invperm.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/io_rank.html'>io_rank</a></td>
+                 <td><a href='../module/lightkrylov_constants.html'>LightKrylov_Constants</a></td>
+                 <td>Function</td>
+                 <td><p>Utility function to determine whether the current MPI process can do I/O.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/is_orthonormal.html'>is_orthonormal</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Utility function returning a logical <code>.true.</code> if the set of vectors stored in <script type="math/tex"> X </script> form
+an orthonormal set of vectors and <code>.false.</code> otherwise.</p><a href="../interface/is_orthonormal.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/kexpm.html'>kexpm</a></td>
+                 <td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></td>
+                 <td>Interface</td>
+                 <td><p>This interface provides methods to evaluate the matrix-vector product
+<script type="math/tex"> c = \exp(\tau A) b </script> based on the Arnoldi method.</p><a href="../interface/kexpm.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/krylov_expta.html'>krylov_exptA</a></td>
+                 <td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></td>
+                 <td>Interface</td>
+                 <td><p>Utility function to evaluate the matrix-exponential times vector.</p><a href="../interface/krylov_expta.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/krylov_expta_cdp.html'>krylov_exptA_cdp</a></td>
+                 <td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+on a vector that conforms to the <code>abstract_exptA_cdp</code> interface.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/krylov_expta_csp.html'>krylov_exptA_csp</a></td>
+                 <td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+on a vector that conforms to the <code>abstract_exptA_csp</code> interface.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/krylov_expta_rdp.html'>krylov_exptA_rdp</a></td>
+                 <td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+on a vector that conforms to the <code>abstract_exptA_rdp</code> interface.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/krylov_expta_rsp.html'>krylov_exptA_rsp</a></td>
+                 <td><a href='../module/lightkrylov_expmlib.html'>LightKrylov_ExpmLib</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+on a vector that conforms to the <code>abstract_exptA_rsp</code> interface.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/krylov_schur.html'>krylov_schur</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a partial Krylov decomposition</p><a href="../interface/krylov_schur.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/lanczos.html'>lanczos</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a symmetric or Hermitian linear operator <script type="math/tex"> A </script>, find matrices <script type="math/tex"> X </script> and
+<script type="math/tex"> T </script> such that</p><a href="../interface/lanczos.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/linear_combination.html'>linear_combination</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>Given a set of extended <code>abstract_vectors</code> and coefficients, return the corresponding
+linear combinations.</p><a href="../interface/linear_combination.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/linop_cdp.html'>linop_cdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/linop_csp.html'>linop_csp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/linop_rdp.html'>linop_rdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/linop_rsp.html'>linop_rsp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/log2.html'>log2</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td><p>Utility function to compute the base-2 logarithm of a real number.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/log_debug.html'>log_debug</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/log_error.html'>log_error</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/log_information.html'>log_information</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/log_message.html'>log_message</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/log_warning.html'>log_warning</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/logger_setup.html'>logger_setup</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Wrapper to set up MPI if needed and initialize log files</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/newton.html'>newton</a></td>
+                 <td><a href='../module/lightkrylov_newtonkrylov.html'>LightKrylov_NewtonKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Implements the simple Newton-Krylov method for finding roots (fixed points) of a 
+nonlinear vector-valued function <script type="math/tex"> F(\mathbf{X}) </script>, i.e. solutions <script type="math/tex"> \mathbf{X}^* </script> 
+such that <script type="math/tex"> F(\mathbf{X}^*) - \mathbf{X}^* = \mathbf{0} </script> starting from an 
+initial guess via successive solution increments based on local linearization 
+<script type="math/tex"> \mathbf{J}_\mathbf{X} </script> (the Jacobian) of the nonlinear function in the 
+vicinity of the current solution.</p><a href="../interface/newton.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/ordschur.html'>ordschur</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td><p>Given the Schur factorization and basis of a matrix, reorders it to have the selected
+eigenvalues in the upper left block.</p><a href="../interface/ordschur.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/orthogonalize_against_basis.html'>orthogonalize_against_basis</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/orthonormalize_basis.html'>orthonormalize_basis</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given an array <script type="math/tex"> X </script> of vectors, it computes an orthonormal basis for its
+column-span using the <code>double_gram_schmidt</code> process. All computations are done
+in-place.</p><a href="../interface/orthonormalize_basis.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/permcols.html'>permcols</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given an array <script type="math/tex"> X </script> and a permutation vector <script type="math/tex"> p </script>, this function computes
+<em>in-place</em> the column-permuted matrix</p><a href="../interface/permcols.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/put_data.html'>put_data</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/qr.html'>qr</a></td>
+                 <td><a href='../module/lightkrylov_basekrylov.html'>LightKrylov_BaseKrylov</a></td>
+                 <td>Interface</td>
+                 <td><p>Given an array <script type="math/tex"> X </script> of types derived from <code>abstract_vector</code>, it computes the
+<em>in-place</em> QR factorization of <script type="math/tex"> X </script>, i.e.</p><a href="../interface/qr.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/rand_basis.html'>rand_basis</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>This interface provides methods to create an array <code>X</code> of random <code>abstract_vector</code>.
+It is a simple wrapper around <code>X(i)%rand(ifnorm)</code>.</p><a href="../interface/rand_basis.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/roessler_analytical_fp_cdp.html'>roessler_analytical_fp_cdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/roessler_analytical_fp_csp.html'>roessler_analytical_fp_csp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/roessler_analytical_fp_rdp.html'>roessler_analytical_fp_rdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/roessler_analytical_fp_rsp.html'>roessler_analytical_fp_rsp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/save_eigenspectrum.html'>save_eigenspectrum</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Utility function to save the eigenspectrum computed from the Arnoldi factorization.
+It outpost a .npy file.</p><a href="../interface/save_eigenspectrum.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/set_comm_size.html'>set_comm_size</a></td>
+                 <td><a href='../module/lightkrylov_constants.html'>LightKrylov_Constants</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Utility function to inform <code>LightKrylov</code> of the MPI-communicator's dimension.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/set_io_rank.html'>set_io_rank</a></td>
+                 <td><a href='../module/lightkrylov_constants.html'>LightKrylov_Constants</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Utility function to set the rank of the process doing I/O.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/set_rank.html'>set_rank</a></td>
+                 <td><a href='../module/lightkrylov_constants.html'>LightKrylov_Constants</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Utility function to set the rank of an MPI process.</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/spd_linop_rdp.html'>spd_linop_rdp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/spd_linop_rsp.html'>spd_linop_rsp</a></td>
+                 <td><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></td>
+                 <td>Interface</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/sqrtm.html'>sqrtm</a></td>
+                 <td><a href='../module/lightkrylov_utils.html'>LightKrylov_Utils</a></td>
+                 <td>Interface</td>
+                 <td><p>Computes the non-negative square root of a symmetric positive definite matrix
+using its singular value decomposition.</p><a href="../interface/sqrtm.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/stop_error.html'>stop_error</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/svds.html'>svds</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Interface</td>
+                 <td><p>Computes the leading singular triplets of an arbitrary linear operator <script type="math/tex">A</script>
+using the Lanczos iterative process. Given a linear operator <script type="math/tex">A</script>, it finds
+the leading singular values and singular vectors such that:</p><a href="../interface/svds.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/time_lightkrylov.html'>time_lightkrylov</a></td>
+                 <td><a href='../module/lightkrylov_timing.html'>LightKrylov_Timing</a></td>
+                 <td>Function</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/type_error.html'>type_error</a></td>
+                 <td><a href='../module/lightkrylov_logger.html'>LightKrylov_Logger</a></td>
+                 <td>Subroutine</td>
+                 <td></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/write_results_cdp.html'>write_results_cdp</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Prints the intermediate results of iterative eigenvalue/singular value decompositions</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/write_results_csp.html'>write_results_csp</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Prints the intermediate results of iterative eigenvalue/singular value decompositions</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/write_results_rdp.html'>write_results_rdp</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Prints the intermediate results of iterative eigenvalue/singular value decompositions</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../proc/write_results_rsp.html'>write_results_rsp</a></td>
+                 <td><a href='../module/lightkrylov_iterativesolvers.html'>LightKrylov_IterativeSolvers</a></td>
+                 <td>Subroutine</td>
+                 <td><p>Prints the intermediate results of iterative eigenvalue/singular value decompositions</p></td>
+               </tr>
+			   <tr>
+                 <td><a href='../interface/zero_basis.html'>zero_basis</a></td>
+                 <td><a href='../module/lightkrylov_abstractvectors.html'>LightKrylov_AbstractVectors</a></td>
+                 <td>Interface</td>
+                 <td><p>This interface provides methods to zero-out a collection of <code>abstract_vector</code> <code>X</code>.
+It is a simple wrapper around <code>X(i)%zero()</code>.</p><a href="../interface/zero_basis.html" class="pull-right"><emph>Read more&hellip;</emph></a></td>
+               </tr>
+			 </tbody></table>
+             
+        </div>
+      </div>
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>
