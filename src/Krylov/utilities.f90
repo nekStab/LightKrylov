@@ -107,6 +107,47 @@ contains
             call orthonormalize_basis(X(:p))
         endif
     end procedure initialize_krylov_subspace_cdp
+
+    !-------------------------------------------------------
+    !-----     Initialize random orthonormal basis     -----
+    !-------------------------------------------------------
+
+    module procedure initialize_random_orthonormal_basis_rsp
+        integer :: p
+
+        ! Fill with random data
+        call rand_basis(X)
+
+        ! Orthonormalize
+        call orthonormalize_basis(X)
+    end procedure initialize_random_orthonormal_basis_rsp
+    module procedure initialize_random_orthonormal_basis_rdp
+        integer :: p
+
+        ! Fill with random data
+        call rand_basis(X)
+
+        ! Orthonormalize
+        call orthonormalize_basis(X)
+    end procedure initialize_random_orthonormal_basis_rdp
+    module procedure initialize_random_orthonormal_basis_csp
+        integer :: p
+
+        ! Fill with random data
+        call rand_basis(X)
+
+        ! Orthonormalize
+        call orthonormalize_basis(X)
+    end procedure initialize_random_orthonormal_basis_csp
+    module procedure initialize_random_orthonormal_basis_cdp
+        integer :: p
+
+        ! Fill with random data
+        call rand_basis(X)
+
+        ! Orthonormalize
+        call orthonormalize_basis(X)
+    end procedure initialize_random_orthonormal_basis_cdp
    
     !----------------------------------------
     !-----     Orthonormalize basis     -----

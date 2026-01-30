@@ -90,6 +90,7 @@ module LightKrylov
     public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: initialize_random_orthonormal_basis
     public :: orthogonalize_against_basis
     public :: orthonormalize_basis
     public :: bidiagonalization

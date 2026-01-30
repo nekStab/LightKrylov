@@ -45,6 +45,7 @@ module LightKrylov_BaseKrylov
     public :: permcols, invperm
 
     public :: initialize_krylov_subspace
+    public :: initialize_random_orthonormal_basis
     public :: krylov_schur
 
     !------------------------------------
@@ -764,8 +765,8 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `X0` (*optional*) :   Collection of vectors which will form the first few
         !!                          Krylov vectors. Note that `X0` need not be an orthonormal
-        !!                          basis as this subroutine includes a `call qr(X0)`. It is an
-        !!                          optional `intent(in)` argument.
+        !!                          basis as this subroutine includes a `call orthonormalize_basis(X0)`.
+        !!                          It is an optional `intent(in)` argument.
         module subroutine initialize_krylov_subspace_rsp(X, X0)
             implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -789,6 +790,43 @@ module LightKrylov_BaseKrylov
             class(abstract_vector_cdp), intent(inout) :: X(:)
             class(abstract_vector_cdp), optional, intent(in) :: X0(:)
         end subroutine initialize_krylov_subspace_cdp
+
+    end interface
+
+    interface initialize_random_orthonormal_basis
+        !!  ### Description
+        !!
+        !!  Utility function to initialize a random orthonormal basis.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call initialize_random_orthonormal_basis(X)
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  - `X`   :   Array of vectors that needs to be initialized with random orthonormal vectors.
+        !!              It is an `intent(inout)` argument.
+        module subroutine initialize_random_orthonormal_basis_rsp(X)
+            implicit none(type, external)
+            class(abstract_vector_rsp), intent(inout) :: X(:)
+        end subroutine initialize_random_orthonormal_basis_rsp
+
+        module subroutine initialize_random_orthonormal_basis_rdp(X)
+            implicit none(type, external)
+            class(abstract_vector_rdp), intent(inout) :: X(:)
+        end subroutine initialize_random_orthonormal_basis_rdp
+
+        module subroutine initialize_random_orthonormal_basis_csp(X)
+            implicit none(type, external)
+            class(abstract_vector_csp), intent(inout) :: X(:)
+        end subroutine initialize_random_orthonormal_basis_csp
+
+        module subroutine initialize_random_orthonormal_basis_cdp(X)
+            implicit none(type, external)
+            class(abstract_vector_cdp), intent(inout) :: X(:)
+        end subroutine initialize_random_orthonormal_basis_cdp
 
     end interface
 
