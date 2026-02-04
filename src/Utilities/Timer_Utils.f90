@@ -369,7 +369,7 @@ contains
       ! internal
       integer :: i, n
       n = size(self%etime_data)
-      allocate(timed(n,4), source=zero_rdp)
+      allocate(timed(n,4))
       allocate(countd(n))
       do i = 1, n
          timed(i, :) = [ self%etime_data(i), self%etmin_data(i), self%etmax_data(i), self%etavg_data(i) ]
