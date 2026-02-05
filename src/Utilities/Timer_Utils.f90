@@ -17,7 +17,7 @@ module LightKrylov_Timer_Utils
       !! The timing information in gathered for each timer independently. The individual
       !! timers are gathered into groups (relevant only for timing output) and managed
       !! by a central watch that is derived from  the `abstract_watch` type. The
-      !! individual timers are rarely user independently but all timing actions are
+      !! individual timers are rarely used independently but all timing actions are
       !! typically performed via procedures in the central timer.
       !!
       !! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers
@@ -65,6 +65,8 @@ module LightKrylov_Timer_Utils
       !! Getter routine to access self%etime only.
       procedure, pass(self), public :: get_data => get_timer_data
       !! Getter routine to access to all local data: etime, counts, etime_max, etime_min, etime_pause.
+      procedure, pass(self), public :: get_data_save => get_timer_data_save
+      !! Getter routine to access to global data.
       procedure, pass(self), public :: print_info => print_timer_info
       !! Print timing data.
       procedure, pass(self), public :: save_timer_data
@@ -138,12 +140,15 @@ module LightKrylov_Timer_Utils
       procedure, pass(self), public :: reset => reset_timer_by_name
       procedure, pass(self), public :: get_time => get_timer_etime_by_name
       procedure, pass(self), public :: get_data => get_timer_data_by_name
+      procedure, pass(self), public :: get_data_save => get_timer_data_save_by_name
       procedure, pass(self), public :: print_info => print_timer_info_by_name
       ! Global manipulation routines.
       procedure, pass(self), public :: reset_all
       !! Reset all timers in watch.
       procedure, pass(self), public :: enumerate
       !! Print summary of registered timers and their current status.
+      procedure, pass(self), public :: get_called
+      !! Get the number and names of timer called (locally or globally)
       procedure, pass(self), public :: initialize
       !! Set up private timers, flags and counters. Switch on timing.
       procedure, pass(self), public :: finalize
@@ -353,8 +358,27 @@ contains
       if (restart_timer) call self%start()
    end subroutine get_timer_data
 
+   subroutine get_timer_data_save(self,timed,countd)
+      !! Type-bound to lightkrylov_timer: Getter routine to return the timer data.
+      !! Note: If it is running, the timer is NOT stopped.
+      class(lightkrylov_timer), intent(inout) :: self
+      real(dp), allocatable, intent(out) :: timed(:,:)
+      !! time information
+      integer, allocatable, intent(out) :: countd(:)
+      !! Count information
+      ! internal
+      integer :: i, n
+      n = size(self%etime_data)
+      allocate(timed(n,4))
+      allocate(countd(n))
+      do i = 1, n
+         timed(i, :) = [ self%etime_data(i), self%etmin_data(i), self%etmax_data(i), self%etavg_data(i) ]
+      end do
+      countd = self%count_data
+   end subroutine get_timer_data_save
+
    subroutine print_timer_info(self)
-      !! Type-bound to lightkrylov_timer: Compute spimple statistics and print timing information to screen.
+      !! Type-bound to lightkrylov_timer: Compute simple statistics and print timing information to screen.
       class(lightkrylov_timer), intent(inout) :: self
       ! internal
       character(len=128) :: msg
@@ -626,6 +650,28 @@ contains
       end if
    end subroutine get_timer_data_by_name
 
+   subroutine get_timer_data_save_by_name(self,name,timed,countd)
+      !! Type-bound to abstract_watch: Getter routine to return the timer data referenced by name.
+      !! Notes: Wrapper of the corresponding routine from lightkrylov_timer.
+      !!        If it is running, the timer is NOT stopped.
+      class(abstract_watch), intent(inout) :: self
+      character(len=*), intent(in) :: name
+      real(dp), allocatable, intent(out) :: timed(:,:)
+      !! time information
+      integer, allocatable, intent(out) :: countd(:)
+      !! Count information
+      ! internal
+      integer :: id
+      character(len=128) :: tname
+      tname = to_lower(name)
+      id = self%get_timer_id(tname)
+      if (id == 0) then
+         call timer_not_found(tname, 'get_timer_data_save_by_name')
+      else
+         call self%timers(id)%get_data_save(timed, countd)
+      end if
+   end subroutine get_timer_data_save_by_name
+
    subroutine print_timer_info_by_name(self, name)
       !! Type-bound to abstract_watch: Print timing information for timer referenced by name.
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer.
@@ -699,6 +745,54 @@ contains
          end do
       end if
    end subroutine enumerate
+
+   subroutine get_called(self, n_called, names, only_user, check_global)
+      !! Type-bound to abstract_watch: Get number and names of called timers
+      class(abstract_watch), intent(inout) :: self
+      !! Watch
+      integer, intent(out) :: n_called
+      !! number of claled times
+      character(len=128), allocatable, intent(out) :: names(:)
+      !! names of called timers
+      logical, optional, intent(in) :: only_user
+      !! Check only for user defined timers? Default: .false.
+      logical, optional, intent(in) :: check_global
+      !! Check for global call? Default: .false.
+      ! internal
+      character(len=*), parameter :: this_procedure = 'get_called'
+      logical :: only_user_, check_global_
+      integer :: i, istart, iend
+      integer :: lcount, gcount, count
+      integer, dimension(:), allocatable :: ic
+      character(len=128) :: msg
+      only_user_    = optval(only_user,    .false.)
+      check_global_ = optval(check_global, .false.)
+
+      ! find number of called timers
+      n_called = 0
+      istart = 1
+      if (only_user_) istart = self%private_count + 1
+      iend = self%timer_count
+
+      do i = istart, iend
+         call self%timers(i)%get_data(lcount=lcount, gcount=gcount)
+         count = merge(lcount, gcount, check_global_)
+         if (lcount > 0) then
+            if (n_called == 0) then
+               allocate(ic(1)); ic(1) = i
+            else
+               ic = [ ic, i ]
+            end if
+            n_called = n_called + 1
+         end if
+      end do
+      allocate(names(n_called))
+      do i = 1, n_called
+         names(i) = self%timers(ic(i))%name
+      end do
+      write (msg, '(A,I0,A)') 'Found a total of ', n_called, ' timers that have been called at least once.'
+      call log_information(msg, this_module, this_procedure)
+   end subroutine get_called
 
    subroutine initialize(self)
       !! Initialize global watch within LightKrylov and define private system timers.
