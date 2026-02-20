@@ -57,6 +57,7 @@ contains
       !! log unit identifier
 
       ! internals
+      character(len=*), parameter :: this_procedure = 'logger_setup'
       character(len=:), allocatable :: logfile_
       integer                       :: nio_
       integer                       :: log_level_
@@ -77,31 +78,34 @@ contains
 
       ! Flush log units
       if (close_old_) call reset_log_units()
-
-      ! set log level
-      call logger%configure(level=log_level_, time_stamp=log_timestamp_)
-
-      ! set up LightKrylov log file
-      call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
-      if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', module=this_module, procedure='logger_setup')
-
+      
       ! Set up comms
       call comm_setup()
 
       ! Set I/O rank
       if (nio_ /= 0) call set_io_rank(nio_)
 
-      ! log to stdout
-      if (log_stdout_) then
-         call logger%add_log_unit(unit=6, stat=stat)
-         if (stat /= 0) call stop_error('Unable to add stdout to logger.', module=this_module, procedure='logger_setup')
+      if (io_rank()) then
+         ! set log level
+         call logger%configure(level=log_level_, time_stamp=log_timestamp_)
+
+         ! set up LightKrylov log file
+         call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
+         if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', this_module, this_procedure)
+
+
+         ! log to stdout
+         if (log_stdout_) then
+            call logger%add_log_unit(unit=6, stat=stat)
+            if (stat /= 0) call stop_error('Unable to add stdout to logger.', this_module, this_procedure)
+         end if
+
+         ! mark that logger is active
+         logger_is_active = .true.
+
+         ! return unit if requested
+         if (present(iunit)) iunit = iunit_
       end if
-
-      ! mark that logger is active
-      logger_is_active = .true.
-
-      ! return unit if requested
-      if (present(iunit)) iunit = iunit_
    end subroutine logger_setup
 
    subroutine log_message(msg, module, procedure, flush_log)
