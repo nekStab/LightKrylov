@@ -277,13 +277,13 @@ contains
       print_info = optval(verbose, .false.)
       if (self%running) then
          write (msg, '(A)') 'Timer "'//trim(self%name)//'" is curently running. Timer not reset.'
-         call logger%log_message(msg, this_module, 'reset_timer')
+         call log_message(msg, this_module, 'reset_timer')
       else
          write (msg, '(A,L1,3X,A,L1)') 'soft reset: ', save_data, 'flush timers: ', flush_timer
          if (print_info) then
-            call logger%log_message(msg, this_module, self%name)
+            call log_message(msg, this_module, self%name)
          else
-            call logger%log_debug(msg, this_module, self%name)
+            call log_debug(msg, this_module, self%name)
          end if
          if (save_data .and. .not. flush_timer) then
             if (self%local_count > 0) then
@@ -382,10 +382,10 @@ contains
       class(lightkrylov_timer), intent(inout) :: self
       ! internal
       character(len=128) :: msg
-      call logger%log_message('#########        Timer info        ##########', this_module)
+      call log_message('#########        Timer info        ##########', this_module)
       if (self%count == 0) then
          write (msg, '(A)') 'No timing data available for "'//trim(self%name)//'": Timer not called.'
-         call logger%log_message(msg, this_module)
+         call log_message(msg, this_module)
       else
          call print_summary_header('Summary', self%name)
          if (.not. self%is_finalized) then
@@ -413,7 +413,7 @@ contains
       self%is_finalized = .true.
       if (.not. silent) then
          write (msg, '(*(A))') trim(self%name), ' finalization complete.'
-         call logger%log_message(msg, this_module)
+         call log_message(msg, this_module)
          call self%print_info()
       end if
    end subroutine finalize_timer
@@ -445,7 +445,7 @@ contains
          if (self%user_mode) self%user_count = self%user_count + 1
       end if
       write (msg, '(A,I0)') 'Timer "'//trim(tname)//'" added: timer_count: ', self%timer_count
-      call logger%log_debug(msg, this_module)
+      call log_debug(msg, this_module)
       if (present(count)) count = self%timer_count
       if (start_) call self%start(tname)
    end subroutine add_timer
@@ -465,7 +465,7 @@ contains
       if (id == 0) call timer_not_found(tname, 'remove_timer')
       if (id <= self%private_count) then
          write (msg, '(A)') 'Cannot remove private timer "'//trim(tname)//'". Do nothing.'
-         call logger%log_message(msg, this_module, 'remove_timer')
+         call log_message(msg, this_module, 'remove_timer')
       else
          self%timer_count = self%timer_count - 1
          allocate (new_timers(self%timer_count))
@@ -474,7 +474,7 @@ contains
          deallocate (self%timers)
          self%timers = new_timers
          write (msg, '(A,I0)') 'Timer "'//trim(tname)//'" removed: timer_count: ', self%timer_count
-         call logger%log_debug(msg, this_module, 'remove_timer')
+         call log_debug(msg, this_module, 'remove_timer')
       end if
       if (present(count)) count = self%timer_count
    end subroutine remove_timer
@@ -509,7 +509,7 @@ contains
          self%group_count = self%group_count + 1
       end if
       write (msg, '(A,I0)') 'Timer group "'//trim(gname)//'" added: group_count: ', self%group_count
-      call logger%log_debug(msg, this_module)
+      call log_debug(msg, this_module)
       if (present(count)) count = self%group_count
    end subroutine add_group
 
@@ -559,7 +559,7 @@ contains
       id = self%get_timer_id(tname)
       if (id == 0) call timer_not_found(tname, 'start_timer_by_name')
       call self%timers(id)%start()
-      call logger%log_debug('Timer "'//trim(tname)//'" started.', this_module, self%name)
+      call log_debug('Timer "'//trim(tname)//'" started.', this_module, self%name)
    end subroutine start_timer_by_name
 
    subroutine stop_timer_by_name(self, name)
@@ -574,7 +574,7 @@ contains
       id = self%get_timer_id(tname)
       if (id == 0) call timer_not_found(tname, 'stop_timer_by_name')
       call self%timers(id)%stop()
-      call logger%log_debug('Timer "'//trim(tname)//'" stopped.', this_module, self%name)
+      call log_debug('Timer "'//trim(tname)//'" stopped.', this_module, self%name)
    end subroutine stop_timer_by_name
 
    subroutine pause_timer_by_name(self, name)
@@ -589,7 +589,7 @@ contains
       id = self%get_timer_id(tname)
       if (id == 0) call timer_not_found(tname, 'pause_timer_by_name')
       call self%timers(id)%pause()
-      call logger%log_debug('Timer "'//trim(tname)//'" paused.', this_module, self%name)
+      call log_debug('Timer "'//trim(tname)//'" paused.', this_module, self%name)
    end subroutine pause_timer_by_name
 
    subroutine reset_timer_by_name(self, name, soft, clean)
@@ -707,9 +707,9 @@ contains
       end do
       write (msg, '(A,2(A,I0))') 'All timers reset: ', 'private: ', self%private_count, &
             & ', user: ', self%user_count
-      call logger%log_message(msg, this_module, self%name)
+      call log_message(msg, this_module, self%name)
       write (msg, '(A,L,3X,A,L)') 'soft reset: ', soft_, 'flush timers: ', clean_
-      call logger%log_message(msg, this_module, self%name)
+      call log_message(msg, this_module, self%name)
    end subroutine reset_all
 
    subroutine enumerate(self, only_user)
@@ -724,23 +724,23 @@ contains
       fmt_e = '(2X,I3,A50," :",3(1X,I0))'
       only_user_ = optval(only_user, .false.)
       if (.not. only_user_) then
-         call logger%log_message('Registered timers: all', this_module, self%name)
+         call log_message('Registered timers: all', this_module, self%name)
          do i = 1, self%group_count
-            call logger%log_message(trim(self%groups(i)%name)//":", this_module)
+            call log_message(trim(self%groups(i)%name)//":", this_module)
             do j = self%groups(i)%istart, self%groups(i)%iend
                associate (t => self%timers(j))
                   write (msg, fmt_e) j, trim(t%name), t%count, t%local_count, t%reset_count
-                  call logger%log_message(msg, this_module)
+                  call log_message(msg, this_module)
                end associate
             end do
          end do
       end if
       if (self%user_count > 0) then
-         call logger%log_message('Registered timers: user', this_module, self%name)
+         call log_message('Registered timers: user', this_module, self%name)
          do i = self%private_count + 1, self%timer_count
             associate (t => self%timers(i))
                write (msg, fmt_e) i, trim(t%name), t%count, t%local_count, t%reset_count
-               call logger%log_message(msg, this_module)
+               call log_message(msg, this_module)
             end associate
          end do
       end if
@@ -804,26 +804,26 @@ contains
          call self%set_private_timers_and_name()
          self%private_count = self%timer_count
          write (msg, '(2(I0,A))') self%private_count, ' private timers registered in ', self%group_count, ' groups:'
-         call logger%log_information(msg, this_module, self%name)
+         call log_information(msg, this_module, self%name)
          do i = 1, self%group_count
             count = self%groups(i)%iend - self%groups(i)%istart + 1
             write (msg, '(3X,A20," : ",I3," timers.")') self%groups(i)%name, count
-            call logger%log_information(msg, this_module, self%name)
+            call log_information(msg, this_module, self%name)
          end do
          self%is_initialized = .true.
       else
          ! If the system timers have already been defined, we want to flush the data.
          call self%reset_all(soft=.false.)
          write (msg, '(3X,I4,A)') self%private_count, ' private timers registered and fully reset.'
-         call logger%log_information(msg, this_module, self%name)
+         call log_information(msg, this_module, self%name)
          if (self%user_count > 0) then
             write (msg, '(3X,I4,A)') self%user_count, ' user defined timers registered and fully reset.'
-            call logger%log_information(msg, this_module, self%name)
+            call log_information(msg, this_module, self%name)
          end if
       end if
       ! All subsequent timers that are added are user defined.
       self%user_mode = .true.
-      call logger%log_message('Private timer initialization complete.', this_module, self%name)
+      call log_message('Private timer initialization complete.', this_module, self%name)
    end subroutine initialize
 
    subroutine finalize(self, write_to_file)
@@ -854,15 +854,15 @@ contains
          end do
       end do
       ic_user = icalled
-      call logger%log_message('Timer finalization complete.', this_module, self%name)
-      call logger%log_message('#########   Global timer summary   ##########', this_module)
-      call logger%log_message('Overview:', this_module, self%name)
+      call log_message('Timer finalization complete.', this_module, self%name)
+      call log_message('#########   Global timer summary   ##########', this_module)
+      call log_message('Overview:', this_module, self%name)
       write (msg, '(2X,A60,I5)') 'Total active timers:', self%timer_count
-      call logger%log_message(msg, this_module)
+      call log_message(msg, this_module)
       write (msg, '(2X,A60,I5)') 'User defined:', self%user_count
-      call logger%log_message(msg, this_module)
+      call log_message(msg, this_module)
       write (msg, '(2X,A60,I5)') 'Called timers:', sum(ic) + ic_user
-      call logger%log_message(msg, this_module)
+      call log_message(msg, this_module)
       do i = 1, self%group_count
          if (ic(i) > 0) then
             associate (g => self%groups(i))
@@ -893,10 +893,10 @@ contains
       character(len=*), intent(in) :: watch_name
       ! internal
       character(len=128) :: msg
-      call logger%log_message(trim(section_name)//':', this_module, watch_name)
+      call log_message(trim(section_name)//':', this_module, watch_name)
       write (msg, fmt_h) 'name', 'calls', 'total (s)', 'avg (s)', 'min (s)', 'max (s)'
-      call logger%log_message(msg, this_module)
-      call logger%log_message('_____________________________________________', this_module)
+      call log_message(msg, this_module)
+      call log_message('_____________________________________________', this_module)
    end subroutine print_summary_header
 
    subroutine print_summary(t)
@@ -919,12 +919,12 @@ contains
       end do
       if (count == 1) then
          write (msg, fmt_1) trim(t%name), 'total', count, t%etime_data(1), '-', '-', '-'
-         call logger%log_message(msg, this_module)
+         call log_message(msg, this_module)
       else if (count > 1) then
          etime = sum(t%etime_data)
          etavg = sum(t%etavg_data)/count2
          write (msg, fmt_t) trim(t%name), 'total', count, etime, etavg, etmin, etmax
-         call logger%log_message(msg, this_module)
+         call log_message(msg, this_module)
          if (t%reset_count > 1) then
             do i = 1, t%reset_count
                etime = t%etime_data(i)
@@ -937,7 +937,7 @@ contains
                else
                   write (msg, fmt_n) 'reset', i, count, 'not called'
                end if
-               call logger%log_message(msg, this_module)
+               call log_message(msg, this_module)
             end do
          end if
       end if
