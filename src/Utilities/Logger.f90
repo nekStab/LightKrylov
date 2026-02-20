@@ -76,16 +76,16 @@ contains
       log_timestamp_ = optval(log_timestamp, .true.)
       close_old_ = optval(close_old, .true.)
 
-      ! Flush log units
-      if (close_old_) call reset_log_units()
+      ! Set I/O rank
+      if (nio_ /= 0) call set_io_rank(nio_)
       
       ! Set up comms
       call comm_setup()
-
-      ! Set I/O rank
-      if (nio_ /= 0) call set_io_rank(nio_)
-
+      
       if (io_rank()) then
+         ! Flush log units
+         if (close_old_) call reset_log_units()
+
          ! set log level
          call logger%configure(level=log_level_, time_stamp=log_timestamp_)
 
@@ -121,8 +121,10 @@ contains
       logical :: flush_
       flush_ = optval(flush_log, .true.)
       if (logger_is_active) then
-         call logger%log_message(msg, module=module, procedure=procedure)
-         if (flush_) call flush_log_units()
+         if (io_rank()) then
+            call logger%log_message(msg, module=module, procedure=procedure)
+            if (flush_) call flush_log_units()
+         end if
       else
          print '(A)', msg
       end if
@@ -141,8 +143,10 @@ contains
       logical :: flush_
       flush_ = optval(flush_log, .true.)
       if (logger_is_active) then
-         call logger%log_information(msg, module=module, procedure=procedure)
-         if (flush_) call flush_log_units()
+         if (io_rank()) then
+            call logger%log_information(msg, module=module, procedure=procedure)
+            if (flush_) call flush_log_units()
+         end if
       else
          print '("INFO: ",A)', msg
       end if
@@ -156,8 +160,10 @@ contains
       character(len=*), optional, intent(in)  :: procedure
       !! The name of the procedure in which the call happens
       if (logger_is_active) then
-         call logger%log_warning(msg, module=module, procedure=procedure)
-         call flush_log_units()
+         if (io_rank())  then
+            call logger%log_warning(msg, module=module, procedure=procedure)
+            call flush_log_units()
+         end if
       else
          print '("WARN: ",A)', msg
       end if
@@ -175,8 +181,10 @@ contains
       character(len=*), optional, intent(in)  :: errmsg
       !! error message
       if (logger_is_active) then
-         call logger%log_error(msg, module=module, procedure=procedure, stat=stat, errmsg=errmsg)
-         call flush_log_units()
+         if (io_rank()) then
+            call logger%log_error(msg, module=module, procedure=procedure, stat=stat, errmsg=errmsg)
+            call flush_log_units()
+         end if
       else
          print '(A,": ",A)', msg, errmsg
       end if
@@ -190,8 +198,10 @@ contains
       character(len=*), optional, intent(in)  :: procedure
       !! The name of the procedure in which the call happens
       if (logger_is_active) then
-         call logger%log_debug(msg, module=module, procedure=procedure)
-         call flush_log_units()
+         if (io_rank()) then
+            call logger%log_debug(msg, module=module, procedure=procedure)
+            call flush_log_units()
+         end if
       else
          print '("DEBUG: ",A)', msg
       end if
@@ -200,27 +210,31 @@ contains
    subroutine flush_log_units()
       integer, allocatable :: current_log_units(:)
       integer :: i
-      ! get current units
-      call logger%configuration(log_units=current_log_units)
-      do i = 1, size(current_log_units)
-         call flush (current_log_units(i))
-      end do
+      if (io_rank()) then
+         ! get current units
+         call logger%configuration(log_units=current_log_units)
+         do i = 1, size(current_log_units)
+            call flush (current_log_units(i))
+         end do
+      end if
    end subroutine flush_log_units
 
    subroutine reset_log_units()
       integer, allocatable :: current_log_units(:)
       integer :: i, iunit
-      ! get current units
-      call logger%configuration(log_units=current_log_units)
-      ! close all existing units (except stdout if it is included)
-      do i = 1, size(current_log_units)
-         iunit = current_log_units(i)
-         if (iunit == 6) then
-            call logger%remove_log_unit(unit=iunit)
-         else
-            call logger%remove_log_unit(unit=iunit, close_unit=.true.)
-         end if
-      end do
+      if (io_rank()) then
+         ! get current units
+         call logger%configuration(log_units=current_log_units)
+         ! close all existing units (except stdout if it is included)
+         do i = 1, size(current_log_units)
+            iunit = current_log_units(i)
+            if (iunit == 6) then
+               call logger%remove_log_unit(unit=iunit)
+            else
+               call logger%remove_log_unit(unit=iunit, close_unit=.true.)
+            end if
+         end do
+      end if
    end subroutine reset_log_units
 
    subroutine comm_setup()
@@ -233,16 +247,16 @@ contains
       ! check if MPI has already been initialized and if not, initialize
       call MPI_Initialized(mpi_is_initialized, ierr)
       if (.not. mpi_is_initialized) then
-         call logger%log_message('Set up parallel run with MPI.', this_module, this_procedure)
+         if (io_rank()) call logger%log_message('Set up parallel run with MPI.', this_module, this_procedure)
          call MPI_Init(ierr)
          if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", this_module, this_procedure)
       else
-         call logger%log_message('MPI already initialized.', this_module, this_procedure)
+         if (io_rank()) call logger%log_message('MPI already initialized.', this_module, this_procedure)
       end if
       call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr); call set_rank(nid)
       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr); call set_comm_size(comm_size)
       write (msg, '(A,I0,A,I0)') 'IO rank = ', nid, ', comm_size = ', comm_size
-      call logger%log_message(trim(msg), this_module, this_procedure)
+      if (io_rank()) call logger%log_message(trim(msg), this_module, this_procedure)
 #else
       write (msg, '(A)') 'Setup serial run'
       call set_rank(0)
