@@ -323,69 +323,73 @@ contains
 
         ! Check for lucky convergence.
         if (rnorm < target_tol) then
+
             write(msg,'(2(A,E11.4))') 'rnorm= ', rnorm, ', target= ', target_tol
             call log_warning(msg, this_module, this_procedure)
             write(msg,'(A)') 'Initial guess is a fixed point to tolerance!'
             call log_warning(msg, this_module, this_procedure)
             newton_meta%converged = .true.
             newton_meta%input_is_fixed_point = .true.
-        end if
 
-        call log_information('Starting Newton iteration ...', this_module, this_procedure)
-        ! Newton iteration
-        newton: do i = 1, maxiter
+        else
 
-            ! Set dynamic tolerances for Newton iteration and linear solves.
-            call tolerance_scheduler(tol, target_tol, rnorm, i, info)
-            write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
-            call log_message(msg, this_module, this_procedure)
+            call log_information('Starting Newton iteration ...', this_module, this_procedure)
+            ! Newton iteration
+            newton: do i = 1, maxiter
 
-            ! Define the Jacobian
-            sys%jacobian%X = X
-            
-            ! Solve the linear system using GMRES.
-            call residual%chsgn(); call increment%zero()
-            call solver(sys%jacobian, residual, increment, info, atol=tol, &
-                & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
-            call check_info(info, 'linear_solver', this_module, this_procedure)
+                ! Set dynamic tolerances for Newton iteration and linear solves.
+                call tolerance_scheduler(tol, target_tol, rnorm, i, info)
+                write(msg,"(A,I0,3(A,E11.4))") 'Start step ', i, ': rnorm= ', rnorm, ', tol= ', tol, ', target= ', target_tol
+                call log_message(msg, this_module, this_procedure)
 
-            ! Update the solution and overwrite X0
-            if (opts%ifbisect) then
-                call increment_bisection_${type[0]}$${kind}$(X, sys, increment, rnorm, tol, maxstep_bisection)
-            else
-                call X%add(increment)
-            endif
+                ! Define the Jacobian
+                sys%jacobian%X = X
+                
+                ! Solve the linear system using GMRES.
+                call residual%chsgn(); call increment%zero()
+                call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                    & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
+                call check_info(info, 'linear_solver', this_module, this_procedure)
 
-            ! Evaluate new residual
-            call sys%eval(X, residual, tol)
-            rnorm = residual%norm()
+                ! Update the solution and overwrite X0
+                if (opts%ifbisect) then
+                    call increment_bisection_${type[0]}$${kind}$(X, sys, increment, rnorm, tol, maxstep_bisection)
+                else
+                    call X%add(increment)
+                endif
 
-            ! Save metadata.
-            newton_meta%n_iter = newton_meta%n_iter + 1
-            call newton_meta%record(rnorm, tol)
-
-            ! Check for convergence.
-            if (rnorm < tol) then
-                if (tol >= target_tol .and. tol < 100.0_${kind}$*target_tol) then
-                ! the tolerances are not at the target, check the accurate residual
-                call sys%eval(X, residual, target_tol)
+                ! Evaluate new residual
+                call sys%eval(X, residual, tol)
                 rnorm = residual%norm()
 
-                if (rnorm < target_tol) then
-                    write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
-                    call log_message(msg, this_module, this_procedure)
-                    ! Save metadata
-                    call newton_meta%record(rnorm, target_tol)
-                    newton_meta%converged = .true.
-                    exit newton
-                else
-                    write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue iteration.'
-                    call log_warning(msg, this_module, this_procedure)
-                end if
-                end if
-            end if
+                ! Save metadata.
+                newton_meta%n_iter = newton_meta%n_iter + 1
+                call newton_meta%record(rnorm, tol)
 
-        enddo newton
+                ! Check for convergence.
+                if (rnorm < tol) then
+                    if (tol >= target_tol .and. tol < 100.0_${kind}$*target_tol) then
+                        ! the tolerances are not at the target, check the accurate residual
+                        call sys%eval(X, residual, target_tol)
+                        rnorm = residual%norm()
+
+                        if (rnorm < target_tol) then
+                            write(msg,'(A,I0,A)') 'Newton iteration converged after ',i,' iterations.'
+                            call log_message(msg, this_module, this_procedure)
+                            ! Save metadata
+                            call newton_meta%record(rnorm, target_tol)
+                            newton_meta%converged = .true.
+                            exit newton
+                        else
+                            write(msg,'(A)') 'Dynamic tolerance but not target tolerance reached. Continue.'
+                            call log_warning(msg, this_module, this_procedure)
+                        end if
+                    end if
+                end if
+
+            enddo newton
+
+        end if ! lucky convergence
 
         if (.not.newton_meta%converged) then
             write(msg,'(A,I0,A)') 'Newton iteration did not converge within', maxiter, 'steps.'
