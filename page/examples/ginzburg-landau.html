@@ -1,0 +1,396 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../../favicon.png">
+
+    <title>Ginzburg-Landau &ndash; LightKrylov</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../../css/brands.min.css" rel="stylesheet">
+    <link href="../../css/regular.min.css" rel="stylesheet">
+    <link href="../../css/solid.min.css" rel="stylesheet">
+    <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../../css/local.css" rel="stylesheet">
+    <link href="../../css/pygments.css" rel="stylesheet">
+      <link href="../../css/user.css" rel="stylesheet">
+    <script src="../../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <div class="row">
+    <h1>Ginzburg-Landau</h1>
+    <div class="container p-2 mb-4 bg-light border rounded-3">
+      <div class="row align-items-center justify-content-between">
+        <div class="col">
+          <ul class="list-inline" style="margin-bottom:0px; display:inline">
+          </ul>
+        </div>
+        <div class="col">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-end mb-0">
+                <li class="breadcrumb-item"><a href='../index.html'>Overview</a></li>
+                <li class="breadcrumb-item"><a href='index.html'>Examples</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Ginzburg-Landau</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+      <div class="col-3">
+        <div class="card card-body bg-light" id="sidebar-toc">
+          <ul class="nav flex-column align-items">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html">Overview</a>
+            </li>
+          </ul>
+          <hr>
+          <nav class="nav nav-pills flex-column">
+              <a class="nav-link" href="index.html">Examples</a>
+                <nav class="nav nav-pills flex-column">
+                                <a class="nav-link active disabled" href="ginzburg-landau.html">Ginzburg-Landau</a>
+              <a class="nav-link" href="roessler.html">Roessler system</a>
+
+                </nav>
+          </nav>
+        </div>
+      </div>
+
+    <div class="col-9" id='text'>
+      <h1 id="leading-eigenpairs-of-the-linearized-ginzburg-landau-equation"><strong>Leading eigenpairs of the linearized Ginzburg-Landau equation</strong></h1>
+<p>The linearized complex Ginzburg-Landau equation is a one-dimensional partial differential equation of convection-diffusion type.
+It is given by
+<script type="math/tex; mode=display">
+\dfrac{\partial u}{\partial t} = \left( -\nu \dfrac{\partial}{\partial x} + \gamma \dfrac{\partial^2}{\partial x^2} + \mu(x) \right) u.
+</script>
+The spatial domain considered is formaly infinite, hence there are no boundary conditions.
+Yet, the complex-valued solution <script type="math/tex">u(x, t)</script> is required to remain finite as <script type="math/tex">x \to \pm \infty</script>.
+The complex convective velocity is defined as <script type="math/tex">\nu = U + 2i c_u</script>, while the complex diffusion parameter is <script type="math/tex">\gamma = 1 + i c_d</script>.
+The spatially varying parameter <script type="math/tex">\mu(x)</script> is defined as
+<script type="math/tex; mode=display">
+\mu(x) = \left( \mu_0 - c_u^2 \right) + \mu_2 \dfrac{x^2}{2}.
+</script>
+In the region given by
+<script type="math/tex; mode=display">
+-\sqrt{-2 \left( \mu_0 - c_u^2 \right)/2 } \leq x \leq \sqrt{-2 \left( \mu_0 - c_u^2 \right)/2 }
+</script>
+perturbations are spatially amplified.
+Outside of this region, they are exponentially attenuated.
+This simple partial differential equation has been extensively used in the hydrodynamic stability community as a model for spatially developing flows, as well as a prototypical example for reduced-order modeling and controller design.
+For more details, interested readers are refered to [<a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.60.25">1</a>, <a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.78.4387">2</a>, <a href="https://www.annualreviews.org/content/journals/10.1146/annurev.fluid.37.061903.175810">3</a>, <a href="https://epubs.siam.org/doi/10.1137/100787350">4</a>] and references therein.
+Here, we use this seemingly simple test case to illustrate how one can compute the leading eigenpairs of this linear operator with <code>LightKrylov</code> using a <em>time-stepper</em> approach.</p>
+<p><strong>Time-stepping and eigenvalue analysis -</strong> Suppose the equations have been discretized in space such that we now consider the finite-dimensional continuous-time linear time invariant dynamical system
+<script type="math/tex; mode=display">
+\dot{\mathbf{x}} = \mathbf{Ax},
+</script>
+where <script type="math/tex">\mathbf{x} \in \mathbb{C}^n</script> is the state vector of the system, and <script type="math/tex">\mathbf{A} \in \mathbb{C}^{n \times n}</script> its dynamics matrix.
+When studying the linear stability of such systems, one is often interested in the eigenvalues of <script type="math/tex">\mathbf{A}</script> having small real parts (i.e. in the vicinity of the imaginary axis).
+While direct solvers such as <code>QZ</code> can be used when the dimension <code>n</code> is relatively small, one often needs to turn to iterative solvers for large-scale systems.
+Unfortunately, techniques such as the Arnoldi iteration tend to converge first the eigenvalues having the largest magnitude.
+In order to overcome this limitation, a possibly remedy is to use a <em>shift-invert</em> strategy.
+Such a strategy however requires the inversion of a possibly very ill-conditioned linear system at each iteration.
+Another alternative, pioneered by <a href="https://blog.espci.fr/laurette/">Laurette Tuckerman</a>, is to consider the following eigenvalue problem
+<script type="math/tex; mode=display">
+\exp(\tau \mathbf{A}) \mathbf{v}_i = \mu_i \mathbf{v}_i,
+</script>
+where <script type="math/tex">\mathbf{v}_i</script> is an eigenvector of both <script type="math/tex">\mathbf{A}</script> and <script type="math/tex">\exp(\tau \mathbf{A})</script> and the eigenvalues <script type="math/tex">\mu_i</script> are related to those of <script type="math/tex">\mathbf{A}</script> via a simple logarithmic transformation.
+Such a reformulation of the problem is advantageous for two main reasons:</p>
+<ul>
+<li>The eigenvalues of <script type="math/tex"> \mathbf{A} </script> close to the imaginary axis get mapped along the unit-circle while those with very negative real parts get mapped close to zero. As a consequence, in the transformed complex plane, the eigenvalues of interest become the outer-most ones of the exponential matrix and thus the first to converge when using an iterative procedure.</li>
+<li>When using an interative procedure, only the matrix-vector product is needed. For a matrix exponential, this product can be easily and efficiently computed using a standard time-integration scheme. Consequently, it requires only a minimal set of modifications to adapt an existing simulation code for it to perform linear stability analyses.</li>
+</ul>
+<p>Over the past two decades, this time-stepper approach to stability analysis has been instrumental in the field of hydrodynamic stability analysis.
+For more details, please refer to [5, 6, 7, 8, 9].</p>
+<h2 id="computing-the-leading-eigenpairs-of-the-ginzburg-landau-equation-via-time-stepping"><strong>Computing the leading eigenpairs of the Ginzburg-Landau equation via time-stepping</strong></h2>
+<div class="alert alert-info">
+<p class="alert-title h4">Note</p>
+<p>Owing to the small size of the problem, computing the leading eigenpairs of the linearized Ginzburg-Landau operator using a time-stepper approach is not the recommended way to proceed. The code is only used for illustratory purposes.</p>
+</div>
+<p>The performance-critical part in a time-stepper approach for eigenvalue computation is the evaluation of the exponential matrix <script type="math/tex">\exp(\tau \mathbf{A})</script> applied to a given vector <script type="math/tex">\mathbf{x}</script>.
+Note that the exponential matrix does not have to be computed using classical dens elinear algebra.
+Instead, the <script type="math/tex">\mathbf{y} = \exp(\tau \mathbf{A}) \mathbf{x} </script> can be computed by simply time-marching the linearized equations.</p>
+<p><strong>Numerical setup -</strong> The computational domain consider is <script type="math/tex">-100 \leq x \leq 100</script> along with homogeneous Dirichlet boundary conditions. This domain is large enough such that finite-length effects are negligible.
+The spatial derivatives are discretized using second-order accurate finite differences on a uniform grid. The routine below then uses the Runge-Kutta class provided by <a href="https://github.com/jacobwilliams/rklib"><code>rklib</code></a> to implement the right-hand side of the linearized discretized system.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">subroutine </span><span class="n">rhs</span><span class="p">(</span><span class="n">me</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">)</span>
+<span class="w">    </span><span class="c">! Time-integrator.</span>
+<span class="w">    </span><span class="k">class</span><span class="p">(</span><span class="n">rk_class</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">inout</span><span class="p">)</span><span class="w">           </span><span class="kd">::</span><span class="w"> </span><span class="n">me</span>
+<span class="w">    </span><span class="c">! Current time.</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w">                </span><span class="kd">::</span><span class="w"> </span><span class="n">t</span>
+<span class="w">    </span><span class="c">! State vector.</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w">  </span><span class="kd">::</span><span class="w"> </span><span class="n">x</span>
+<span class="w">    </span><span class="c">! Time-derivative.</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">f</span>
+
+<span class="w">    </span><span class="c">! Internal variables.</span>
+<span class="w">    </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">i</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">u</span><span class="p">,</span><span class="w"> </span><span class="n">du</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">dv</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">)</span><span class="w">                </span><span class="kd">::</span><span class="w"> </span><span class="n">d2u</span><span class="p">,</span><span class="w"> </span><span class="n">d2v</span><span class="p">,</span><span class="w"> </span><span class="n">cu</span><span class="p">,</span><span class="w"> </span><span class="n">cv</span>
+
+<span class="w">    </span><span class="c">! Sets the internal variables.</span>
+<span class="w">    </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="n">nx</span><span class="p">);</span><span class="w"> </span><span class="n">du</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span>
+<span class="w">    </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">dv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span>
+
+<span class="w">    </span><span class="c">!---------------------------------------------------</span>
+<span class="w">    </span><span class="c">!-----     Linear Ginzburg Landau Equation     -----</span>
+<span class="w">    </span><span class="c">!---------------------------------------------------</span>
+
+<span class="w">    </span><span class="c">! Left most boundary points.</span>
+<span class="w">    </span><span class="n">cu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">u</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dx</span><span class="p">);</span><span class="w"> </span><span class="n">cv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">v</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dx</span><span class="p">)</span>
+<span class="w">    </span><span class="n">du</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="kt">real</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cu</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cv</span><span class="p">)</span><span class="w"> </span><span class="c">! Convective term.</span>
+<span class="w">    </span><span class="n">dv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="nb">aimag</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cu</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cv</span><span class="p">)</span><span class="w"> </span><span class="c">! Convective term.</span>
+
+<span class="w">    </span><span class="n">d2u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">u</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">u</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">d2v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">v</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span>
+<span class="w">    </span><span class="n">du</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2u</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2v</span><span class="w"> </span><span class="c">! Diffusion term.</span>
+<span class="w">    </span><span class="n">dv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2u</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2v</span><span class="w"> </span><span class="c">! Diffusion term.</span>
+
+<span class="w">    </span><span class="n">du</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">u</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="c">! Non-parallel term.</span>
+<span class="w">    </span><span class="n">dv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">v</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="c">! Non-parallel term.</span>
+
+<span class="w">    </span><span class="c">! Interior nodes.</span>
+<span class="w">    </span><span class="k">do </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">nx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="c">! Convective term.</span>
+<span class="w">        </span><span class="n">cu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">u</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">u</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dx</span><span class="p">)</span>
+<span class="w">        </span><span class="n">cv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">v</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dx</span><span class="p">)</span>
+<span class="w">        </span><span class="n">du</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="kt">real</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cu</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cv</span><span class="p">)</span>
+<span class="w">        </span><span class="n">dv</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="nb">aimag</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cu</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cv</span><span class="p">)</span>
+
+<span class="w">        </span><span class="c">! Diffusion term.</span>
+<span class="w">        </span><span class="n">d2u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">u</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">u</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">u</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span>
+<span class="w">        </span><span class="n">d2v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">v</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">v</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span>
+<span class="w">        </span><span class="n">du</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2u</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2v</span>
+<span class="w">        </span><span class="n">dv</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2u</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2v</span>
+
+<span class="w">        </span><span class="c">! Non-parallel term.</span>
+<span class="w">        </span><span class="n">du</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">u</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="w">        </span><span class="n">dv</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">v</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="w">    </span><span class="k">end do</span>
+
+<span class="w">    </span><span class="c">! Right most boundary points.</span>
+<span class="w">    </span><span class="n">cu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">u</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dx</span><span class="p">);</span><span class="w"> </span><span class="n">cv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">v</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dx</span><span class="p">)</span>
+<span class="w">    </span><span class="n">du</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="kt">real</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cu</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cv</span><span class="p">)</span><span class="w"> </span><span class="c">! Convective term.</span>
+<span class="w">    </span><span class="n">dv</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="nb">aimag</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cu</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">*</span><span class="n">cv</span><span class="p">)</span><span class="w"> </span><span class="c">! Convective term.</span>
+
+<span class="w">    </span><span class="n">d2u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">u</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">u</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">d2v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">v</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">v</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span>
+<span class="w">    </span><span class="n">du</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2u</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2v</span><span class="w"> </span><span class="c">! Diffusion term.</span>
+<span class="w">    </span><span class="n">dv</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">aimag</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2u</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">d2v</span><span class="w"> </span><span class="c">! Diffusion term.</span>
+
+<span class="w">    </span><span class="n">du</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="o">*</span><span class="n">u</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="c">! Non-parallel term.</span>
+<span class="w">    </span><span class="n">dv</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="o">*</span><span class="n">v</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="c">! Non-parallel term.</span>
+
+<span class="w">    </span><span class="c">! Copy results to the output array.</span>
+<span class="w">    </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">du</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dv</span>
+<span class="k">end subroutine </span><span class="n">rhs</span>
+</code></pre></div>
+
+<p>It can then be embeded into another subroutine having the interface required for the definition of an abstract linear operator (see <a href="../../module/lightkrylov_abstractlinops.html">LightKrylov_AbstractLinops</a> for more details).
+The definition the <code>state_vector</code> derived-type extended from <code>abstract_vector_cdp</code> is not presented here for the sake of conciseness.
+It amounts to a simple wrapper around the standard Fortran rank-1 arrays.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">subroutine </span><span class="n">direct_solver</span><span class="p">(</span><span class="n">self</span><span class="p">,</span><span class="w"> </span><span class="n">vec_in</span><span class="p">,</span><span class="w"> </span><span class="n">vec_out</span><span class="p">)</span>
+<span class="w">    </span><span class="c">! Linear Operator.</span>
+<span class="w">    </span><span class="k">class</span><span class="p">(</span><span class="n">exponential_prop</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">inout</span><span class="p">)</span><span class="w">  </span><span class="kd">::</span><span class="w"> </span><span class="n">self</span>
+<span class="w">    </span><span class="c">! Input vector.</span>
+<span class="w">    </span><span class="k">class</span><span class="p">(</span><span class="n">abstract_vector_cdp</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w">  </span><span class="kd">::</span><span class="w"> </span><span class="n">vec_in</span>
+<span class="w">    </span><span class="c">! Output vector.</span>
+<span class="w">    </span><span class="k">class</span><span class="p">(</span><span class="n">abstract_vector_cdp</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">vec_out</span>
+
+<span class="w">    </span><span class="c">! Time-integrator.</span>
+<span class="w">    </span><span class="k">type</span><span class="p">(</span><span class="n">rks54_class</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">prop</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">)</span><span class="w">     </span><span class="kd">::</span><span class="w"> </span><span class="n">dt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0_dp</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">)</span><span class="w">     </span><span class="kd">::</span><span class="w"> </span><span class="n">state_ic</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">nx</span><span class="p">),</span><span class="w"> </span><span class="n">state_fc</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">nx</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">select type</span><span class="w"> </span><span class="p">(</span><span class="n">vec_in</span><span class="p">)</span>
+<span class="w">    </span><span class="k">type is</span><span class="w"> </span><span class="p">(</span><span class="n">state_vector</span><span class="p">)</span>
+<span class="w">        </span><span class="k">select type</span><span class="w"> </span><span class="p">(</span><span class="n">vec_out</span><span class="p">)</span>
+<span class="w">        </span><span class="k">type is</span><span class="w"> </span><span class="p">(</span><span class="n">state_vector</span><span class="p">)</span>
+<span class="w">            </span><span class="c">! Get state vector.</span>
+<span class="w">            </span><span class="n">state_ic</span><span class="p">(:</span><span class="n">nx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vec_in</span><span class="p">%</span><span class="n">state</span><span class="p">%</span><span class="n">re</span>
+<span class="w">            </span><span class="n">state_ic</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">:)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vec_in</span><span class="p">%</span><span class="n">state</span><span class="p">%</span><span class="n">im</span>
+<span class="w">            </span><span class="c">! Initialize propagator.</span>
+<span class="w">            </span><span class="k">call </span><span class="n">prop</span><span class="p">%</span><span class="n">initialize</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">nx</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="o">=</span><span class="n">rhs</span><span class="p">)</span>
+<span class="w">            </span><span class="c">! Integrate forward in time.</span>
+<span class="w">            </span><span class="k">call </span><span class="n">prop</span><span class="p">%</span><span class="n">integrate</span><span class="p">(</span><span class="mf">0.0_dp</span><span class="p">,</span><span class="w"> </span><span class="n">state_ic</span><span class="p">,</span><span class="w"> </span><span class="n">dt</span><span class="p">,</span><span class="w"> </span><span class="n">self</span><span class="p">%</span><span class="n">tau</span><span class="p">,</span><span class="w"> </span><span class="n">state_fc</span><span class="p">)</span>
+<span class="w">            </span><span class="c">! Pass-back the state vector.</span>
+<span class="w">            </span><span class="n">vec_out</span><span class="p">%</span><span class="n">state</span><span class="p">%</span><span class="n">re</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state_fc</span><span class="p">(:</span><span class="n">nx</span><span class="p">)</span>
+<span class="w">            </span><span class="n">vec_out</span><span class="p">%</span><span class="n">state</span><span class="p">%</span><span class="n">im</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state_fc</span><span class="p">(</span><span class="n">nx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">:)</span>
+<span class="w">        </span><span class="k">end select</span>
+<span class="k">    end select</span>
+<span class="k">end subroutine </span><span class="n">direct_solver</span>
+</code></pre></div>
+
+<p>Provided a similar set of routines have been implemented for the adjoint system, one can then extend the <code>abstract_linop_cdp</code> type to define the exponential propagator as illustrated below.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">type</span><span class="p">,</span><span class="w"> </span><span class="k">extends</span><span class="p">(</span><span class="n">abstract_linop_cdp</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">exponential_prop</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">tau</span><span class="w"> </span><span class="c">! Integration time.</span>
+<span class="k">contains</span>
+<span class="k">    private</span>
+<span class="k">    procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">matvec</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">direct_solver</span>
+<span class="w">    </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">rmatvec</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">adjoint_solver</span>
+<span class="k">end type </span><span class="n">exponential_prop</span>
+</code></pre></div>
+
+<p>This is pretty much everything you need to implement in order to benefit from the iterative eigenvalue and singular value solvers provided by <code>LightKrylov</code>.
+The Fortran program below uses the derived-types we've just defined and pass them to <a href="../../interface/eigs.html">eigs</a> in order to compute the leading eigenpairs of the linearized Ginzburg-Landau operator.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">program </span><span class="n">demo</span>
+<span class="w">    </span><span class="k">use </span><span class="n">stdlib_io_npy</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="p">:</span><span class="w"> </span><span class="n">save_npy</span>
+<span class="w">    </span><span class="k">use </span><span class="n">LightKrylov</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="p">:</span><span class="w"> </span><span class="n">wp</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">dp</span>
+<span class="w">    </span><span class="k">use </span><span class="n">LightKrylov</span>
+<span class="w">    </span><span class="k">use </span><span class="n">Ginzburg_Landau</span>
+<span class="w">    </span><span class="k">implicit none</span>
+
+<span class="w">    </span><span class="c">!&gt; Exponential propagator.</span>
+<span class="w">    </span><span class="k">type</span><span class="p">(</span><span class="n">exponential_prop</span><span class="p">),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">A</span>
+<span class="w">    </span><span class="c">!&gt; Sampling time.</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">wp</span><span class="p">),</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">tau</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.1_wp</span>
+
+<span class="w">    </span><span class="c">!&gt; Number of eigenvalues we wish to converge.</span>
+<span class="w">    </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">nev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span>
+<span class="w">    </span><span class="c">!&gt; Krylov subspace.</span>
+<span class="w">    </span><span class="k">type</span><span class="p">(</span><span class="n">state_vector</span><span class="p">),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">X</span><span class="p">(:)</span>
+<span class="w">    </span><span class="c">!&gt; Eigenvalues.</span>
+<span class="w">    </span><span class="kt">complex</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">wp</span><span class="p">),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">lambda</span><span class="p">(:)</span>
+<span class="w">    </span><span class="c">!&gt; Residual.</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="n">wp</span><span class="p">),</span><span class="w"> </span><span class="k">allocatable</span><span class="w">    </span><span class="kd">::</span><span class="w"> </span><span class="n">residuals</span><span class="p">(:)</span>
+<span class="w">    </span><span class="c">!&gt; Information flag.</span>
+<span class="w">    </span><span class="kt">integer</span><span class="w">          </span><span class="kd">::</span><span class="w"> </span><span class="n">info</span>
+
+<span class="w">    </span><span class="c">!&gt; Miscellaneous.</span>
+<span class="w">    </span><span class="kt">integer</span><span class="w">       </span><span class="kd">::</span><span class="w"> </span><span class="n">i</span>
+<span class="w">    </span><span class="kt">complex</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">eigenvectors</span><span class="p">(</span><span class="n">nx</span><span class="p">,</span><span class="w"> </span><span class="n">nev</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c">!&gt; Initialize physical parameters.</span>
+<span class="w">    </span><span class="k">call </span><span class="n">initialize_parameters</span><span class="p">()</span>
+
+<span class="w">    </span><span class="c">!&gt; Initialize exponential propagator.</span>
+<span class="w">    </span><span class="n">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exponential_prop</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c">!&gt; Initialize Krylov subspace.</span>
+<span class="w">    </span><span class="k">allocate</span><span class="w"> </span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="n">nev</span><span class="p">));</span><span class="w"> </span><span class="k">call </span><span class="n">zero_basis</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c">!&gt; Call to LightKrylov.</span>
+<span class="w">    </span><span class="k">call </span><span class="n">eigs</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="n">lambda</span><span class="p">,</span><span class="w"> </span><span class="n">residuals</span><span class="p">,</span><span class="w"> </span><span class="n">info</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c">!&gt; Transform eigenspectrum from unit-disk to standard complex plane.</span>
+<span class="w">    </span><span class="n">lambda</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">log</span><span class="p">(</span><span class="n">lambda</span><span class="p">)</span><span class="o">/</span><span class="n">tau</span>
+
+<span class="w">    </span><span class="c">!&gt; Extract the leading eigenvectors from the Krylov basis into a standard array.</span>
+<span class="w">    </span><span class="k">do </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">nev</span>
+<span class="w">        </span><span class="n">eigenvectors</span><span class="p">(:,</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">X</span><span class="p">(</span><span class="n">i</span><span class="p">)%</span><span class="n">state</span>
+<span class="w">    </span><span class="k">end do</span>
+
+<span class="w">    </span><span class="c">!&gt; Save eigenvalues and eigenvectors to disk.</span>
+<span class="w">    </span><span class="k">call </span><span class="n">save_eigenspectrum</span><span class="p">(</span><span class="n">lambda</span><span class="p">,</span><span class="w"> </span><span class="n">residuals</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;example/ginzburg_landau/eigenspectrum.npy&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="k">call </span><span class="n">save_npy</span><span class="p">(</span><span class="s2">&quot;example/ginzburg_landau/eigenvectors.npy&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">eigenvectors</span><span class="p">)</span>
+<span class="k">end program </span><span class="n">demo</span>
+</code></pre></div>
+
+<p>From the root directory of <code>LightKrylov</code>, you can run this example by typing the following command:</p>
+<div class="codehilite"><pre><span></span><code>fpm<span class="w"> </span>run<span class="w"> </span>--example<span class="w"> </span>Ginzburg-Landau
+</code></pre></div>
+
+<p>Then <code>python eigenplots.py</code> in the <code>example/ginzburg-landau</code> directory will produce the following figure depicting the eigenspectrum and leading eigenvector of the discretized linearized Ginzburg-Landau operator.</p>
+<div style="text-align:center;">
+    <img src="ginzburg_landau_modal_analysis.png" style="width:80%;">
+    </br>
+    <b>Figure:</b> Left panel depicts the eigenspectrum computed with `LightKrylov` and compares against the analytical expressions. The branch splitting observed for very stable eigenvalues result from the discretization of the operator. Right panel depicts the real and imaginary parts of the leading eigenvector.
+</div>
+
+<h2 id="references"><strong>References</strong></h2>
+<p>[1] J.-M. Chomaz, P. Huerre and L. G. Redekopp. <a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.60.25"><em>Bifurcations to local and global modes in spatially developping flows</em></a>. Phys. Rev. Lett., 60 (25), 1988.</p>
+<p>[2] C. Cossu and J.-M. Chomaz. <a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.78.4387"><em>Global measures of local convective instabilities</em></a>. Phys. Rev. Lett., 78 (4387), 1997.</p>
+<p>[3] J.-M. Chomaz. <a href="https://www.annualreviews.org/content/journals/10.1146/annurev.fluid.37.061903.175810"><em>Global instabilities in spatially developing flow: non-normality and nonlinearity</em></a>. Ann. Rev. Fluid Mech., 37 (357-392), 2005.</p>
+<p>[4] M. Ilak, S. Bagheri, L. Brandt, C. W. Rowley, and D. S. Henningson. <a href="https://epubs.siam.org/doi/10.1137/100787350"><em>Model reduction of the nonlinear complex Ginzburg-Landau equation</em></a>. SIAM Journal on Applied Dynamical Sysmte, 9 (4), 2010.</p>
+<p>[5] W. S. Edward, L. S. Tuckerman, R. A. Friesner and D. C. Sorensen. <a href="https://www.sciencedirect.com/science/article/pii/S0021999184710072">*Krylov methods for the incompressible Navier-Stokes equations</a>. Journal of Computational Physics, 110 (1), 1994.</p>
+<p>[6] Tuckerman, Laurette S., and Dwight Barkley. <em>Bifurcation analysis for timesteppers.</em> Numerical methods for bifurcation problems and large-scale dynamical systems, 2000.</p>
+<p>[7] S. Bagheri, E. Akervik, L. Brandt, and D. S. Henningson. <a href="https://arc.aiaa.org/doi/abs/10.2514/1.41365"><em>Matrix-free methods for stability and control of boundary layers</em></a>. AIAA Journal, 47 (5), 2009.</p>
+<p>[8] J.-Ch. Loiseau, J.-Ch. Robinet, S. Cherubini and E. Leriche. <a href="https://www.cambridge.org/core/journals/journal-of-fluid-mechanics/article/abs/investigation-of-the-roughnessinduced-transition-global-stability-analyses-and-direct-numerical-simulations/0D62A95BD1FD2D2C664A8EDABCFAFC46"><em>Investigation of the roughness-induced transition: global stability analyses and direct numerical similations</em></a>. Journal of Fluid Mechanics, 2014.</p>
+<p>[9] R. A. S. Frantz, J.-Ch. Loiseau and J.-Ch. Robinet. <a href="https://asmedigitalcollection.asme.org/appliedmechanicsreviews/article-abstract/75/3/030802/1156502/Krylov-Methods-for-Large-Scale-Dynamical-Systems"><em>Krylov methods for large-scale dynamical systems: applications in fluid dynamics</em></a>. Applied Mechanics Review, 75 (3), 2023.</p>
+    </div>
+  </div>
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>

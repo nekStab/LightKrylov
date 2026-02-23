@@ -1,0 +1,1081 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>LightKrylov_Logger &ndash; LightKrylov</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../css/brands.min.css" rel="stylesheet">
+    <link href="../css/regular.min.css" rel="stylesheet">
+    <link href="../css/solid.min.css" rel="stylesheet">
+    <link href="../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../css/local.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+      <link href="../css/user.css" rel="stylesheet">
+    <script src="../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <div class="row">
+    <h1>LightKrylov_Logger
+      <small>Module</small>
+      
+    </h1>
+      <div class="container p-2 mb-4 bg-light border rounded-3">
+    <div class="row align-items-center justify-content-between" id="info-bar">
+      <div class="col">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li class="list-inline-item" id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+            <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
+              <a data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
+                 title=" 3.8% of total for modules and submodules.">546 statements</a>
+            </li>
+
+            <li class="list-inline-item" id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/Logger.f90"> Source File</a>
+            </li>
+        </ul>
+      </div>
+      <div class="col">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb justify-content-end mb-0">
+                <li class="breadcrumb-item"><a href='../sourcefile/logger.f90.html'>Logger.f90</a></li>
+            <li class="breadcrumb-item active" aria-current="page">LightKrylov_Logger</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Enable Bootstrap tooltips
+    (function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })();
+  </script>
+
+  </div>
+
+  <div class="row">
+    <div class="col-md-3">
+        <div id="sidebar">
+      <h3>Contents</h3>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#subs-0"
+         aria-expanded="false" aria-controls="subs-0">
+         <h4 class="card-header bg-primary text-white">Subroutines</h4>
+      </a>
+      <div id="subs-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-check_info">check_info</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-comm_close">comm_close</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-comm_setup">comm_setup</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-log_debug">log_debug</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-log_error">log_error</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-log_information">log_information</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-log_message">log_message</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-log_warning">log_warning</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-logger_setup">logger_setup</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-stop_error">stop_error</a>
+            <a class="list-group-item" href="../module/lightkrylov_logger.html#proc-type_error">type_error</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+
+
+  </div>
+
+    </div>
+
+    <div class="col-md-9" id='text'>
+      
+<br>          <div class="card mb-4">
+      <h3 class="card-header card-title bg-light">Uses</h3>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <ul class="list-inline">
+                  <li class="list-inline-item">stdlib_ascii</li>
+                  <li class="list-inline-item">stdlib_logger</li>
+                  <li class="list-inline-item"><a href='http://www.mpi-forum.org/docs/mpi-3.1/mpi31-report/node409.htm'>mpi_f08</a></li>
+                  <li class="list-inline-item">stdlib_optval</li>
+                  <li class="list-inline-item"><a href='lightkrylov_constants.html'>LightKrylov_Constants</a></li>
+                  <li class="list-inline-item">stdlib_strings</li>
+              </ul>
+            </li>
+        </ul>
+      </div>
+    </div>
+
+      
+      <br>
+
+
+
+
+
+
+
+
+        <section>
+          <h2>Subroutines</h2>
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-check_info"></span> <h3>public  subroutine <a href='../proc/check_info.html'>check_info</a>(info, origin, module, procedure, info_msg)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-info~57"></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info</strong></td>
+            <td>
+<p>Informaion flag</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-origin"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>origin</strong></td>
+            <td>
+<p>The name of the subroutine from which the flag originates</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~8"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~8"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-info_msg"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>info_msg</strong></td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-comm_close"></span> <h3>public  subroutine <a href='../proc/comm_close.html'>comm_close</a>()  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+    <em>None</em>
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-comm_setup"></span> <h3>public  subroutine <a href='../proc/comm_setup.html'>comm_setup</a>()  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+    <em>None</em>
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-log_debug"></span> <h3>public  subroutine <a href='../proc/log_debug.html'>log_debug</a>(msg, module, procedure)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-msg~38"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>Log message to print</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~5"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~5"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-log_error"></span> <h3>public  subroutine <a href='../proc/log_error.html'>log_error</a>(msg, module, procedure, stat, errmsg)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-msg~37"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>Log message to print</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~4"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~4"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-stat~2"></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>stat</strong></td>
+            <td>
+<p>status message</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-errmsg~26"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>errmsg</strong></td>
+            <td>
+<p>error message</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-log_information"></span> <h3>public  subroutine <a href='../proc/log_information.html'>log_information</a>(msg, module, procedure, flush_log)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-msg~35"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>Log message to print</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~2"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~2"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-flush_log~2"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>flush_log</strong></td>
+            <td>
+<p>Flush the I/O buffer?</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-log_message"></span> <h3>public  subroutine <a href='../proc/log_message.html'>log_message</a>(msg, module, procedure, flush_log)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-msg~34"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>Log message to print</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-flush_log"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>flush_log</strong></td>
+            <td>
+<p>Flush the I/O buffer?</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-log_warning"></span> <h3>public  subroutine <a href='../proc/log_warning.html'>log_warning</a>(msg, module, procedure)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-msg~36"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>Log message to print</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~3"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~3"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-logger_setup"></span> <h3>public  subroutine <a href='../proc/logger_setup.html'>logger_setup</a>(logfile, nio, log_level, log_stdout, log_timestamp, close_old, iunit)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Wrapper to set up MPI if needed and initialize log files</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-logfile"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>logfile</strong></td>
+            <td>
+<p>name of the dedicated LightKrylov logfile</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-nio~2"></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>nio</strong></td>
+            <td>
+<p>I/O rank for logging</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-log_level"></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>log_level</strong></td>
+            <td>
+<p>set logging level
+0   : all_level
+10  : debug_level
+20  : information_level
+30  : warning_level
+40  : error_level
+100 : none_level</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-log_stdout"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>log_stdout</strong></td>
+            <td>
+<p>duplicate log messages to stdout?</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-log_timestamp"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>log_timestamp</strong></td>
+            <td>
+<p>add timestamp to log messages</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-close_old"></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>close_old</strong></td>
+            <td>
+<p>close previously opened logfiles (if present?) - stdout is not closed</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-iunit"></span>
+              integer,
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>iunit</strong></td>
+            <td>
+<p>log unit identifier</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-stop_error"></span> <h3>public  subroutine <a href='../proc/stop_error.html'>stop_error</a>(msg, module, procedure)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-msg~41"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>msg</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~6"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~6"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-type_error"></span> <h3>public  subroutine <a href='../proc/type_error.html'>type_error</a>(var, type, intent, module, procedure)  
+</h3></div>
+    <div class="card-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-var"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>var</strong></td>
+            <td>
+<p>Name of the variable</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-type"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>type</strong></td>
+            <td>
+<p>Required type of the variable</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-intent"></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>intent</strong></td>
+            <td>
+<p>Intent of the argument within the caller</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-module~7"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>module</strong></td>
+            <td>
+<p>The name of the module in which the call happens</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-procedure~7"></span>
+              character(len=*),
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+<p>The name of the procedure in which the call happens</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+        </section>
+        <br>
+
+
+
+    </div>
+  </div>
+
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>

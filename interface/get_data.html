@@ -1,0 +1,858 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>get_data &ndash; LightKrylov</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../css/brands.min.css" rel="stylesheet">
+    <link href="../css/regular.min.css" rel="stylesheet">
+    <link href="../css/solid.min.css" rel="stylesheet">
+    <link href="../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../css/local.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+      <link href="../css/user.css" rel="stylesheet">
+    <script src="../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <div class="row">
+    <h1>get_data
+      <small>Interface</small>
+      
+    </h1>
+      <div class="container p-2 mb-4 bg-light border rounded-3">
+    <div class="row align-items-center justify-content-between" id="info-bar">
+      <div class="col">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li class="list-inline-item" id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+            <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
+              <a data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
+                 title="<p> 0.6% of total for procedures.</p>Including implementation: 86 statements,  4.0% of total for procedures.">14 statements</a>
+            </li>
+
+            <li class="list-inline-item" id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/TestUtils.f90"> Source File</a>
+            </li>
+        </ul>
+      </div>
+      <div class="col">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb justify-content-end mb-0">
+                <li class="breadcrumb-item"><a href='../sourcefile/testutils.f90.html'>TestUtils.f90</a></li>
+                <li class="breadcrumb-item"><a href='../module/lightkrylov_testutils.html'>LightKrylov_TestUtils</a></li>
+            <li class="breadcrumb-item active" aria-current="page">get_data</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Enable Bootstrap tooltips
+    (function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })();
+  </script>
+
+  </div>
+
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+        <div id="sidebar">
+      <h3>Contents</h3>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#modprocs-0"
+         aria-expanded="false" aria-controls="modprocs-0">
+         <h4 class="card-header bg-primary text-white">Module Procedures</h4>
+      </a>
+      <div id="modprocs-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_rsp">get_data_vec_rsp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_basis_rsp">get_data_vec_basis_rsp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_linop_rsp">get_data_linop_rsp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_rdp">get_data_vec_rdp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_basis_rdp">get_data_vec_basis_rdp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_linop_rdp">get_data_linop_rdp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_csp">get_data_vec_csp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_basis_csp">get_data_vec_basis_csp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_linop_csp">get_data_linop_csp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_cdp">get_data_vec_cdp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_vec_basis_cdp">get_data_vec_basis_cdp</a>
+            <a class="list-group-item" href="../interface/get_data.html#moduleprocedure-get_data_linop_cdp">get_data_linop_cdp</a>
+        </div>
+      </div>
+    </div>
+
+  
+
+
+  </div>
+
+    </div>
+
+    <div class="col-md-9" id='text'>
+      <h2>public interface get_data</h2>
+      
+
+
+
+        <h2>Module Procedures</h2>
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_rsp"></span> <h3>private  subroutine get_data_vec_rsp(vec_out, vec_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_out~77"></span>
+              real(kind=sp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_in~77"></span>
+              type(<a href='../type/vector_rsp.html'>vector_rsp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_basis_rsp"></span> <h3>private  subroutine get_data_vec_basis_rsp(basis_out, basis_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_out"></span>
+              real(kind=sp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_in"></span>
+              type(<a href='../type/vector_rsp.html'>vector_rsp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_in</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_linop_rsp"></span> <h3>private  subroutine get_data_linop_rsp(mat_out, linop_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-mat_out"></span>
+              real(kind=sp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>mat_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-linop_in"></span>
+              type(<a href='../type/linop_rsp.html'>linop_rsp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>linop_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_rdp"></span> <h3>private  subroutine get_data_vec_rdp(vec_out, vec_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_out~78"></span>
+              real(kind=dp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_in~78"></span>
+              type(<a href='../type/vector_rdp.html'>vector_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_basis_rdp"></span> <h3>private  subroutine get_data_vec_basis_rdp(basis_out, basis_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_out~2"></span>
+              real(kind=dp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_in~2"></span>
+              type(<a href='../type/vector_rdp.html'>vector_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_in</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_linop_rdp"></span> <h3>private  subroutine get_data_linop_rdp(mat_out, linop_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-mat_out~2"></span>
+              real(kind=dp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>mat_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-linop_in~2"></span>
+              type(<a href='../type/linop_rdp.html'>linop_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>linop_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_csp"></span> <h3>private  subroutine get_data_vec_csp(vec_out, vec_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_out~79"></span>
+              complex(kind=sp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_in~79"></span>
+              type(<a href='../type/vector_csp.html'>vector_csp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_basis_csp"></span> <h3>private  subroutine get_data_vec_basis_csp(basis_out, basis_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_out~3"></span>
+              complex(kind=sp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_in~3"></span>
+              type(<a href='../type/vector_csp.html'>vector_csp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_in</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_linop_csp"></span> <h3>private  subroutine get_data_linop_csp(mat_out, linop_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-mat_out~3"></span>
+              complex(kind=sp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>mat_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-linop_in~3"></span>
+              type(<a href='../type/linop_csp.html'>linop_csp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>linop_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_cdp"></span> <h3>private  subroutine get_data_vec_cdp(vec_out, vec_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_out~80"></span>
+              complex(kind=dp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-vec_in~80"></span>
+              type(<a href='../type/vector_cdp.html'>vector_cdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_vec_basis_cdp"></span> <h3>private  subroutine get_data_vec_basis_cdp(basis_out, basis_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_out~4"></span>
+              complex(kind=dp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-basis_in~4"></span>
+              type(<a href='../type/vector_cdp.html'>vector_cdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>basis_in</strong>(:)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+            <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_data_linop_cdp"></span> <h3>private  subroutine get_data_linop_cdp(mat_out, linop_in)  
+</h3></div>
+    <div class="card-body">
+        
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-mat_out~4"></span>
+              complex(kind=dp),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>mat_out</strong>(:,:)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-linop_in~4"></span>
+              type(<a href='../type/linop_cdp.html'>linop_cdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>linop_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+</div>
+  </div>
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>

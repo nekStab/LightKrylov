@@ -1,0 +1,1121 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>abstract_jacobian_linop_rdp &ndash; LightKrylov </title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../css/brands.min.css" rel="stylesheet">
+    <link href="../css/regular.min.css" rel="stylesheet">
+    <link href="../css/solid.min.css" rel="stylesheet">
+    <link href="../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../css/local.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+      <link href="../css/user.css" rel="stylesheet">
+    <script src="../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <div class="row">
+    <h1>abstract_jacobian_linop_rdp
+      <small>Derived Type</small>
+      
+    </h1>
+      <div class="container p-2 mb-4 bg-light border rounded-3">
+    <div class="row align-items-center justify-content-between" id="info-bar">
+      <div class="col">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li class="list-inline-item" id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+            <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
+              <a data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
+                 title="<p> 0.5% of total for derived types.</p>Including implementation: 110 statements,  1.1% of total for derived types.">4 statements</a>
+            </li>
+
+            <li class="list-inline-item" id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/AbstractSystems.f90"> Source File</a>
+            </li>
+        </ul>
+      </div>
+      <div class="col">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb justify-content-end mb-0">
+                <li class="breadcrumb-item"><a href='../sourcefile/abstractsystems.f90.html'>AbstractSystems.f90</a></li>
+                <li class="breadcrumb-item"><a href='../module/lightkrylov_abstractsystems.html'>LightKrylov_AbstractSystems</a></li>
+            <li class="breadcrumb-item active" aria-current="page">abstract_jacobian_linop_rdp</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Enable Bootstrap tooltips
+    (function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })();
+  </script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+      <div id="sidebar">
+      <h3>Contents</h3>
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#vars-0"
+         aria-expanded="false" aria-controls="vars-0">
+         <h4 class="card-header bg-primary text-white">Variables</h4>
+      </a>
+      <div id="vars-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#variable-x~98">X</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#variable-matvec_timer">matvec_timer</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#variable-rmatvec_timer">rmatvec_timer</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#boundprocs-0"
+         aria-expanded="false" aria-controls="boundprocs-0">
+         <h4 class="card-header bg-primary text-white">Type-Bound Procedures</h4>
+      </a>
+      <div id="boundprocs-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-apply_matvec~2">apply_matvec</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-apply_rmatvec~2">apply_rmatvec</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-finalize_timer~2">finalize_timer</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-get_counter">get_counter</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-matvec~3">matvec</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-print_timer_info~2">print_timer_info</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-reset_counter">reset_counter</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-reset_timer~3">reset_timer</a>
+            <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#boundprocedure-rmatvec~3">rmatvec</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+    <div class="card card-primary">
+      <div class="card-header text-left"><h3 class="card-title">Source Code</h3></div>
+      <div class="list-group">
+        <a class="list-group-item" href="../type/abstract_jacobian_linop_rdp.html#src">abstract_jacobian_linop_rdp</a>
+      </div>
+    </div>
+
+
+  </div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+      <h2 id="type-def-statement">
+        type, public, abstract, extends(<a href='abstract_linop_rdp.html'>abstract_linop_rdp</a>) :: abstract_jacobian_linop_rdp</h2>
+    <p>Abstract type for the local linearization of the system around the state X.
+This type is intended for use within the abstract_system type.</p>
+    <br>
+
+    <section>
+    <h2>Components</h2>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Visibility</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+<th></th><th scope="col">Initial</th>        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-x~98"></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+              <td>public,</td>
+            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>X</strong></td>
+                <td></td>
+                <td></td>
+            <td>
+                <p>System state around which the equatons are linearized.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-matvec_timer"></span>
+              type(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>matvec_timer</strong></td>
+<td> =</td>
+                <td>lightkrylov_timer(&#39;matvec timer&#39;)</td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rmatvec_timer"></span>
+              type(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>rmatvec_timer</strong></td>
+<td> =</td>
+                <td>lightkrylov_timer(&#39;rmatvec timer&#39;)</td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    </section>
+    <br>
+    
+
+
+      <section>
+        <h2>Type-Bound Procedures</h2>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-apply_matvec~2"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>apply_matvec</strong> => apply_matvec_rdp
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Wrapper for matvec including the counter increment</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine apply_matvec_rdp(self, vec_in, vec_out)  
+</h3>
+
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop_rdp.html'>abstract_linop_rdp</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-apply_rmatvec~2"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>apply_rmatvec</strong> => apply_rmatvec_rdp
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Wrapper for rmatvec including the counter increment</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine apply_rmatvec_rdp(self, vec_in, vec_out)  
+</h3>
+
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop_rdp.html'>abstract_linop_rdp</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-finalize_timer~2"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>finalize_timer</strong> => finalize_linop_timer
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Finalize timers and print complete history_info</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine finalize_linop_timer(self)  
+</h3>
+
+  <p>Finalize the matvec/rmatvec timers
+Note: Wrapper of the corresponding routine from lightkrylov_timer</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-get_counter"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>get_counter</strong>
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Return matvec/rmatvec counter value</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private pure function get_counter(self, trans) result(count)  
+</h3>
+
+  <p>Getter function for the number of matvec calls</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>trans</strong></td>
+            <td>
+                <p>matvec or rmatvec?</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>integer</small>
+    </h4>
+    
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-matvec~3"></span>
+      <h3>
+          procedure(abstract_matvec_rdp), public, deferred, pass(self) ::
+  <strong>matvec</strong>
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Procedure to compute the matrix-vector product <script type="math/tex"> \mathbf{y} = \mathbf{Ax} </script>.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+     subroutine abstract_matvec_rdp(self, vec_in, vec_out)  
+<small>Prototype</small></h3>
+
+  <p>Interface for the matrix-vector product.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop_rdp.html'>abstract_linop_rdp</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Linear operator <script type="math/tex">\mathbf{A}</script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                <p>Vector to be multiplied by <script type="math/tex">\mathbf{A}</script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong></td>
+            <td>
+                <p>Result of the matrix-vector product.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-print_timer_info~2"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>print_timer_info</strong>
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Print current timing data</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine print_timer_info(self, trans)  
+</h3>
+
+  <p>Getter routine to print the current timing information for matvec/rmatvec
+Note: Wrapper of the corresponding routine from lightkrylov_timer</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>trans</strong></td>
+            <td>
+                <p>matvec or rmatvec?</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-reset_counter"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>reset_counter</strong>
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Reset matvec/rmatvec counter</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine reset_counter(self, trans, procedure, counter, reset_timer, soft_reset, clean_timer)  
+</h3>
+
+  <p>Setter routine to reset the matvec counter and reset timers</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>trans</strong></td>
+            <td>
+                <p>matvec or rmatvec?</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              character(len=*),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>procedure</strong></td>
+            <td>
+                <p>name of the caller routine</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>counter</strong></td>
+            <td>
+                <p>optional flag to reset to an integer other than zero.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>reset_timer</strong></td>
+            <td>
+                <p>optional flag to reset also the timers</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>soft_reset</strong></td>
+            <td>
+                <p>optional flag to choose whether to save previous timing data (default: .true.)</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>clean_timer</strong></td>
+            <td>
+                <p>optional flag to choose whether to fully reset the timer (default: .false.)</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-reset_timer~3"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>reset_timer</strong> => reset_linop_timer
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Reset current timing data</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine reset_linop_timer(self, trans, soft, clean)  
+</h3>
+
+  <p>Setter routine to reset the matvec/rmatvec timers
+Note: Wrapper of the corresponding routine from lightkrylov_timer</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop.html'>abstract_linop</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>trans</strong></td>
+            <td>
+                <p>matvec or rmatvec?</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>soft</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>clean</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-rmatvec~3"></span>
+      <h3>
+          procedure(abstract_matvec_rdp), public, deferred, pass(self) ::
+  <strong>rmatvec</strong>
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Procedure to compute the reversed matrix-vector product <script type="math/tex"> \mathbf{y} = \mathbf{A}^H \mathbf{x} </script>.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+     subroutine abstract_matvec_rdp(self, vec_in, vec_out)  
+<small>Prototype</small></h3>
+
+  <p>Interface for the matrix-vector product.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_linop_rdp.html'>abstract_linop_rdp</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                <p>Linear operator <script type="math/tex">\mathbf{A}</script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_in</strong></td>
+            <td>
+                <p>Vector to be multiplied by <script type="math/tex">\mathbf{A}</script>.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='abstract_vector_rdp.html'>abstract_vector_rdp</a>),
+            </td>
+<td>intent(out)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>vec_out</strong></td>
+            <td>
+                <p>Result of the matrix-vector product.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+      </section>
+
+    <section>
+    <h3><span class="anchor" id="src"></span>Source Code</h3>
+    <div class="hl codehilite"><pre><span></span><span class="w">    </span><span class="k">type</span><span class="p">,</span><span class="w"> </span><span class="k">abstract</span><span class="p">,</span><span class="w"> </span><span class="k">extends</span><span class="p">(</span><span class="n">abstract_linop_rdp</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">abstract_jacobian_linop_rdp</span>
+<span class="w">        </span><span class="c">!! Abstract type for the local linearization of the system around the state X.</span>
+<span class="w">        </span><span class="c">!! This type is intended for use within the abstract_system type.</span>
+<span class="w">        </span><span class="k">class</span><span class="p">(</span><span class="n">abstract_vector_rdp</span><span class="p">),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">X</span>
+<span class="w">        </span><span class="c">!! System state around which the equatons are linearized.</span>
+<span class="w">    </span><span class="k">contains</span>
+<span class="k">    end type </span><span class="n">abstract_jacobian_linop_rdp</span>
+</pre></div>
+
+    </section>
+    
+    </div>
+  </div>
+
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>

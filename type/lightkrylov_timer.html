@@ -1,0 +1,1138 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>lightkrylov_timer &ndash; LightKrylov </title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../css/brands.min.css" rel="stylesheet">
+    <link href="../css/regular.min.css" rel="stylesheet">
+    <link href="../css/solid.min.css" rel="stylesheet">
+    <link href="../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../css/local.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+      <link href="../css/user.css" rel="stylesheet">
+    <script src="../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <div class="row">
+    <h1>lightkrylov_timer
+      <small>Derived Type</small>
+      
+    </h1>
+      <div class="container p-2 mb-4 bg-light border rounded-3">
+    <div class="row align-items-center justify-content-between" id="info-bar">
+      <div class="col">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li class="list-inline-item" id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+            <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
+              <a data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
+                 title="<p> 3.6% of total for derived types.</p>Including implementation: 231 statements,  2.4% of total for derived types.">31 statements</a>
+            </li>
+
+            <li class="list-inline-item" id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/Timer_Utils.f90"> Source File</a>
+            </li>
+        </ul>
+      </div>
+      <div class="col">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb justify-content-end mb-0">
+                <li class="breadcrumb-item"><a href='../sourcefile/timer_utils.f90.html'>Timer_Utils.f90</a></li>
+                <li class="breadcrumb-item"><a href='../module/lightkrylov_timer_utils.html'>LightKrylov_Timer_Utils</a></li>
+            <li class="breadcrumb-item active" aria-current="page">lightkrylov_timer</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Enable Bootstrap tooltips
+    (function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })();
+  </script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+      <div id="sidebar">
+      <h3>Contents</h3>
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#vars-0"
+         aria-expanded="false" aria-controls="vars-0">
+         <h4 class="card-header bg-primary text-white">Variables</h4>
+      </a>
+      <div id="vars-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#variable-name">name</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#boundprocs-0"
+         aria-expanded="false" aria-controls="boundprocs-0">
+         <h4 class="card-header bg-primary text-white">Type-Bound Procedures</h4>
+      </a>
+      <div id="boundprocs-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-finalize">finalize</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-get_data">get_data</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-get_data_save">get_data_save</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-get_time">get_time</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-pause">pause</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-print_info">print_info</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-reset~3">reset</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-save_timer_data">save_timer_data</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-start">start</a>
+            <a class="list-group-item" href="../type/lightkrylov_timer.html#boundprocedure-stop">stop</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+    <div class="card card-primary">
+      <div class="card-header text-left"><h3 class="card-title">Source Code</h3></div>
+      <div class="list-group">
+        <a class="list-group-item" href="../type/lightkrylov_timer.html#src">lightkrylov_timer</a>
+      </div>
+    </div>
+
+
+  </div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+      <h2 id="type-def-statement">
+        type, public :: lightkrylov_timer</h2>
+    <p>Individual timer.
+Atomic timer that is associated to a particular 'event' by name which may be a
+procedure or a user-defined string at instantiation.</p>
+<p>The timing information in gathered for each timer independently. The individual
+timers are gathered into groups (relevant only for timing output) and managed
+by a central watch that is derived from  the <code>abstract_watch</code> type. The
+individual timers are rarely used independently but all timing actions are
+typically performed via procedures in the central timer.</p>
+<p>A notable exception are the <code>matvec</code>/<code>rmatvec</code> as well as <code>reponse</code> timers
+associated with the types <code>abstract_linop</code> and <code>abstract_system</code>, respectively,
+which are managed via their parent types and the corresponding type-bound
+procedures only.</p>
+    <br>
+
+    <section>
+    <h2>Components</h2>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Visibility</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+<th></th><th scope="col">Initial</th>        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-name"></span>
+              character(len=128),
+            </td>
+              <td>public</td>
+            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>name</strong></td>
+<td> =</td>
+                <td>&#39;default_timer&#39;</td>
+            <td>
+                <p>Timer name.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    </section>
+    <br>
+    
+
+
+      <section>
+        <h2>Type-Bound Procedures</h2>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-finalize"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>finalize</strong> => finalize_timer
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Aggregate data and prepare summary.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine finalize_timer(self, if_silent)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Prepare timer summary.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>if_silent</strong></td>
+            <td>
+                <p>No output</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-get_data"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>get_data</strong> => get_timer_data
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Getter routine to access to all local data: etime, counts, etime_max, etime_min, etime_pause.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine get_timer_data(self, restart, etime, etmin, etmax, etimp, lcount, rcount, gcount)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Getter routine to return the timer data.
+Note: If it is running, the timer is stopped.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>restart</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=dp),
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>etime</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=dp),
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>etmin</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=dp),
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>etmax</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=dp),
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>etimp</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>lcount</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>rcount</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>gcount</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-get_data_save"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>get_data_save</strong> => get_timer_data_save
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Getter routine to access to global data.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine get_timer_data_save(self, timed, countd)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Getter routine to return the timer data.
+Note: If it is running, the timer is NOT stopped.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=dp),
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>timed</strong>(:,:)</td>
+            <td>
+                <p>time information</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(out),</td>
+              <td></td>            <td>
+              allocatable
+            </td>
+            <td>::</td>
+            <td><strong>countd</strong>(:)</td>
+            <td>
+                <p>Count information</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-get_time"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>get_time</strong> => get_timer_etime
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Getter routine to access self%etime only.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  function get_timer_etime(self, restart) result(etime)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Getter routine to return the current timer etime.
+Note: If it is running, the timer is stopped.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>restart</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=dp)</small>
+    </h4>
+    
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-pause"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>pause</strong> => pause_timer
+        
+      </h3>
+    </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine pause_timer(self)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Pause timer.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-print_info"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>print_info</strong> => print_timer_info
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Print timing data.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine print_timer_info(self)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Compute simple statistics and print timing information to screen.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-reset~3"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>reset</strong> => reset_timer
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Reset timing data (soft/hard, clear/save data).</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine reset_timer(self, soft, clean, verbose)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Reset timer.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>soft</strong></td>
+            <td>
+                <p>Save timing data and reset only if data was collected (i.e. timer was called), default = .true.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>clean</strong></td>
+            <td>
+                <p>Flush timing data as well as previously saved timing data, default = .false.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              logical,
+            </td>
+<td>intent(in),</td>
+              <td>optional</td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>verbose</strong></td>
+            <td>
+                <p>Always print information about the reset process.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-save_timer_data"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>save_timer_data</strong>
+        
+      </h3>
+    </div>
+        <div class="card-body">
+          
+          <p>Transfer timing data to arrays.</p>
+        </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine save_timer_data(self)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Save current timing information.
+Note: This is done irrespective of the call/run status of the timer.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-start"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>start</strong> => start_timer
+        
+      </h3>
+    </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine start_timer(self)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Start timer.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+          <div class="row">
+              <div class="card mt-3">
+    <div class="card-header codesum">
+      <span class="anchor" id="boundprocedure-stop"></span>
+      <h3>
+          procedure, public, pass(self) ::
+  <strong>stop</strong> => stop_timer
+        
+      </h3>
+    </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+                    <h3>
+    private  subroutine stop_timer(self)  
+</h3>
+
+  <p>Type-bound to lightkrylov_timer: Stop timer.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              class(<a href='lightkrylov_timer.html'>lightkrylov_timer</a>),
+            </td>
+<td>intent(inout)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>self</strong></td>
+            <td>
+                
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+          </li>
+      </ul>
+  </div>
+
+          </div>
+      </section>
+
+    <section>
+    <h3><span class="anchor" id="src"></span>Source Code</h3>
+    <div class="hl codehilite"><pre><span></span><span class="w">   </span><span class="k">type</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">lightkrylov_timer</span>
+<span class="w">      </span><span class="c">!! Individual timer.</span>
+<span class="w">      </span><span class="c">!! Atomic timer that is associated to a particular &#39;event&#39; by name which may be a</span>
+<span class="w">      </span><span class="c">!! procedure or a user-defined string at instantiation.</span>
+<span class="w">      </span><span class="c">!!</span>
+<span class="w">      </span><span class="c">!! The timing information in gathered for each timer independently. The individual</span>
+<span class="w">      </span><span class="c">!! timers are gathered into groups (relevant only for timing output) and managed</span>
+<span class="w">      </span><span class="c">!! by a central watch that is derived from  the `abstract_watch` type. The</span>
+<span class="w">      </span><span class="c">!! individual timers are rarely used independently but all timing actions are</span>
+<span class="w">      </span><span class="c">!! typically performed via procedures in the central timer.</span>
+<span class="w">      </span><span class="c">!!</span>
+<span class="w">      </span><span class="c">!! A notable exception are the `matvec`/`rmatvec` as well as `reponse` timers</span>
+<span class="w">      </span><span class="c">!! associated with the types `abstract_linop` and `abstract_system`, respectively,</span>
+<span class="w">      </span><span class="c">!! which are managed via their parent types and the corresponding type-bound</span>
+<span class="w">      </span><span class="c">!! procedures only.</span>
+<span class="w">      </span><span class="k">private</span>
+<span class="k">      </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">128</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;default_timer&#39;</span>
+<span class="w">      </span><span class="c">!! Timer name.</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="nb">etime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span>
+<span class="w">      </span><span class="c">!! Elapsed time since reset.</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etime_pause</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span>
+<span class="w">      </span><span class="c">!! Elapsed time up until most recent pause.</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">start_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span>
+<span class="w">      </span><span class="c">!! Start time for comparison.</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etime_max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_dp</span>
+<span class="w">      </span><span class="c">!! Maximum elapsed time since reset.</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etime_min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">huge</span><span class="p">(</span><span class="mf">1.0_dp</span><span class="p">)</span>
+<span class="w">      </span><span class="c">!! Minimum elapsed time since reset.</span>
+<span class="w">      </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">local_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="c">!! Call counter since reset.</span>
+<span class="w">      </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">reset_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="c">!! Reset counter.</span>
+<span class="w">      </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="nb">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="c">!! Global counter (only reset when data is flushed).</span>
+<span class="w">      </span><span class="kt">logical</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">running</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<span class="w">      </span><span class="c">!! Protection against repeated starts.</span>
+<span class="w">      </span><span class="kt">logical</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">is_finalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<span class="w">      </span><span class="c">!! Switch for printing.</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etime_data</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etavg_data</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etmin_data</span>
+<span class="w">      </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">etmax_data</span>
+<span class="w">      </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">allocatable</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">count_data</span>
+<span class="w">   </span><span class="k">contains</span>
+<span class="k">      private</span>
+<span class="k">      procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">start_timer</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="k">stop</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">stop_timer</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="k">pause</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">pause_timer</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">reset_timer</span>
+<span class="w">      </span><span class="c">!! Reset timing data (soft/hard, clear/save data).</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">finalize</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">finalize_timer</span>
+<span class="w">      </span><span class="c">!! Aggregate data and prepare summary.</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">get_time</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">get_timer_etime</span>
+<span class="w">      </span><span class="c">!! Getter routine to access self%etime only.</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">get_data</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">get_timer_data</span>
+<span class="w">      </span><span class="c">!! Getter routine to access to all local data: etime, counts, etime_max, etime_min, etime_pause.</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">get_data_save</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">get_timer_data_save</span>
+<span class="w">      </span><span class="c">!! Getter routine to access to global data.</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">print_info</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">print_timer_info</span>
+<span class="w">      </span><span class="c">!! Print timing data.</span>
+<span class="w">      </span><span class="k">procedure</span><span class="p">,</span><span class="w"> </span><span class="k">pass</span><span class="p">(</span><span class="n">self</span><span class="p">),</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">save_timer_data</span>
+<span class="w">      </span><span class="c">!! Transfer timing data to arrays.</span>
+<span class="w">   </span><span class="k">end type </span><span class="n">lightkrylov_timer</span>
+</pre></div>
+
+    </section>
+    
+    </div>
+  </div>
+
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>
