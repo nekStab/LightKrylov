@@ -490,10 +490,10 @@ module LightKrylov_BaseKrylov
         !! Linear operator to be factorized.
         class(abstract_vector_rsp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
-        !! be set to the starting Krylov vector b (with unit norm).
+        !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_rsp), intent(inout) :: V(:)
         !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
-        !! be set to the starting Krylov vector c (with unit norm).
+        !! be set to the starting Krylov vector c (non-normalized).
         real(sp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
         integer, intent(out) :: info
@@ -511,10 +511,10 @@ module LightKrylov_BaseKrylov
         !! Linear operator to be factorized.
         class(abstract_vector_rdp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
-        !! be set to the starting Krylov vector b (with unit norm).
+        !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_rdp), intent(inout) :: V(:)
         !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
-        !! be set to the starting Krylov vector c (with unit norm).
+        !! be set to the starting Krylov vector c (non-normalized).
         real(dp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
         integer, intent(out) :: info
@@ -532,10 +532,10 @@ module LightKrylov_BaseKrylov
         !! Linear operator to be factorized.
         class(abstract_vector_csp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
-        !! be set to the starting Krylov vector b (with unit norm).
+        !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_csp), intent(inout) :: V(:)
         !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
-        !! be set to the starting Krylov vector c (with unit norm).
+        !! be set to the starting Krylov vector c (non-normalized).
         complex(sp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
         integer, intent(out) :: info
@@ -553,10 +553,10 @@ module LightKrylov_BaseKrylov
         !! Linear operator to be factorized.
         class(abstract_vector_cdp), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
-        !! be set to the starting Krylov vector b (with unit norm).
+        !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_cdp), intent(inout) :: V(:)
         !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
-        !! be set to the starting Krylov vector c (with unit norm).
+        !! be set to the starting Krylov vector c (non-normalized).
         complex(dp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
         integer, intent(out) :: info

@@ -341,10 +341,10 @@ module LightKrylov_BaseKrylov
         !! Linear operator to be factorized.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
         !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
-        !! be set to the starting Krylov vector b (with unit norm).
+        !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: V(:)
         !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
-        !! be set to the starting Krylov vector c (with unit norm).
+        !! be set to the starting Krylov vector c (non-normalized).
         ${type}$, intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
         integer, intent(out) :: info

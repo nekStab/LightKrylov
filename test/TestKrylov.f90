@@ -2,7 +2,7 @@ module TestKrylov
     ! Fortran Standard Library.
     use iso_fortran_env, only: output_unit
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye
+    use stdlib_linalg, only: eye, hermitian
     use stdlib_stats, only: median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -14,6 +14,7 @@ module TestKrylov
     ! Test Utilities
     use LightKrylov_TestUtils
     use TestUtils
+    use stdlib_io_npy, only: save_npy
 
     implicit none (type, external)
 
@@ -26,21 +27,25 @@ module TestKrylov
     public :: collect_arnoldi_rsp_testsuite
     public :: collect_lanczos_bidiag_rsp_testsuite
     public :: collect_lanczos_tridiag_rsp_testsuite
+    public :: collect_ssy_tridiag_rsp_testsuite
 
     public :: collect_qr_rdp_testsuite
     public :: collect_arnoldi_rdp_testsuite
     public :: collect_lanczos_bidiag_rdp_testsuite
     public :: collect_lanczos_tridiag_rdp_testsuite
+    public :: collect_ssy_tridiag_rdp_testsuite
 
     public :: collect_qr_csp_testsuite
     public :: collect_arnoldi_csp_testsuite
     public :: collect_lanczos_bidiag_csp_testsuite
     public :: collect_lanczos_tridiag_csp_testsuite
+    public :: collect_ssy_tridiag_csp_testsuite
 
     public :: collect_qr_cdp_testsuite
     public :: collect_arnoldi_cdp_testsuite
     public :: collect_lanczos_bidiag_cdp_testsuite
     public :: collect_lanczos_tridiag_cdp_testsuite
+    public :: collect_ssy_tridiag_cdp_testsuite
 
 
 contains
@@ -1844,4 +1849,341 @@ contains
         return
     end subroutine test_lanczos_tridiag_factorization_cdp
 
+
+    !-----------------------------------------------------------------------------------------
+    !-----     DEFINITION OF THE UNIT TESTS FOR SAUNDER-SIMON-YIP TRIDIAGONALIZATION     -----
+    !-----------------------------------------------------------------------------------------
+
+    subroutine collect_ssy_tridiag_rsp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Saunder-Simon-Yip Tridiagonalization", test_ssy_tridiag_factorization_rsp) &
+            ]
+
+        return
+    end subroutine collect_ssy_tridiag_rsp_testsuite
+
+     subroutine test_ssy_tridiag_factorization_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(linop_rsp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rsp), allocatable :: U(:), V(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        real(sp), allocatable :: T(:, :)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(sp), allocatable :: Udata(:, :), Vdata(:, :)
+        real(sp), allocatable :: G(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize tridiagonal matrix.
+        allocate(T(kdim+1, kdim+1)) ; T = zero_rsp
+
+        ! Initialize operator.
+        A = linop_rsp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(U(kdim+1)); call zero_basis(U); call U(1)%rand(ifnorm = .false.)
+        allocate(V(kdim+1)); call zero_basis(V); call V(1)%rand(ifnorm = .false.)
+
+        ! Saunders-Simon-Yip tridiagonalization.
+        call ssy(A, U, V, T, info, tol=atol_sp)
+        call check_info(info, "ssy", module=this_module_long, &
+                        procedure="test_ssy_tridiag_factorization_rsp")
+
+        ! Orthogonality of the column-span basis.
+        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rsp', &
+                                 & info='Orthonomality', eq='U.H @ U = I', context=msg)
+
+        ! Orthogonality of the row-span basis.
+        G = Gram(V(:kdim))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rsp', &
+                                 & info='Orthonomality', eq='V.H @ V = I', context=msg)
+
+        ! Check correctness.
+        allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
+
+        ! Infinity-norm check.
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, T(:kdim+1, :kdim))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rsp', &
+                                 & info='Factorization', eq='A @ V = U_ @ T_', context=msg)
+
+        err = maxval(abs(matmul(hermitian(A%data), Udata(:, :kdim)) - matmul(Vdata, hermitian(T(:kdim, :kdim+1)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rsp', &
+                                 & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
+        return
+    end subroutine test_ssy_tridiag_factorization_rsp
+
+   
+    subroutine collect_ssy_tridiag_rdp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Saunder-Simon-Yip Tridiagonalization", test_ssy_tridiag_factorization_rdp) &
+            ]
+
+        return
+    end subroutine collect_ssy_tridiag_rdp_testsuite
+
+     subroutine test_ssy_tridiag_factorization_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(linop_rdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rdp), allocatable :: U(:), V(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        real(dp), allocatable :: T(:, :)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        real(dp), allocatable :: Udata(:, :), Vdata(:, :)
+        real(dp), allocatable :: G(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize tridiagonal matrix.
+        allocate(T(kdim+1, kdim+1)) ; T = zero_rdp
+
+        ! Initialize operator.
+        A = linop_rdp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(U(kdim+1)); call zero_basis(U); call U(1)%rand(ifnorm = .false.)
+        allocate(V(kdim+1)); call zero_basis(V); call V(1)%rand(ifnorm = .false.)
+
+        ! Saunders-Simon-Yip tridiagonalization.
+        call ssy(A, U, V, T, info, tol=atol_dp)
+        call check_info(info, "ssy", module=this_module_long, &
+                        procedure="test_ssy_tridiag_factorization_rdp")
+
+        ! Orthogonality of the column-span basis.
+        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rdp', &
+                                 & info='Orthonomality', eq='U.H @ U = I', context=msg)
+
+        ! Orthogonality of the row-span basis.
+        G = Gram(V(:kdim))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rdp', &
+                                 & info='Orthonomality', eq='V.H @ V = I', context=msg)
+
+        ! Check correctness.
+        allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
+
+        ! Infinity-norm check.
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, T(:kdim+1, :kdim))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rdp', &
+                                 & info='Factorization', eq='A @ V = U_ @ T_', context=msg)
+
+        err = maxval(abs(matmul(hermitian(A%data), Udata(:, :kdim)) - matmul(Vdata, hermitian(T(:kdim, :kdim+1)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_rdp', &
+                                 & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
+        return
+    end subroutine test_ssy_tridiag_factorization_rdp
+
+   
+    subroutine collect_ssy_tridiag_csp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Saunder-Simon-Yip Tridiagonalization", test_ssy_tridiag_factorization_csp) &
+            ]
+
+        return
+    end subroutine collect_ssy_tridiag_csp_testsuite
+
+     subroutine test_ssy_tridiag_factorization_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(linop_csp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_csp), allocatable :: U(:), V(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        complex(sp), allocatable :: T(:, :)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        complex(sp), allocatable :: Udata(:, :), Vdata(:, :)
+        complex(sp), allocatable :: G(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize tridiagonal matrix.
+        allocate(T(kdim+1, kdim+1)) ; T = zero_csp
+
+        ! Initialize operator.
+        A = linop_csp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(U(kdim+1)); call zero_basis(U); call U(1)%rand(ifnorm = .false.)
+        allocate(V(kdim+1)); call zero_basis(V); call V(1)%rand(ifnorm = .false.)
+
+        ! Saunders-Simon-Yip tridiagonalization.
+        call ssy(A, U, V, T, info, tol=atol_sp)
+        call check_info(info, "ssy", module=this_module_long, &
+                        procedure="test_ssy_tridiag_factorization_csp")
+
+        ! Orthogonality of the column-span basis.
+        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_csp', &
+                                 & info='Orthonomality', eq='U.H @ U = I', context=msg)
+
+        ! Orthogonality of the row-span basis.
+        G = Gram(V(:kdim))
+        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_csp', &
+                                 & info='Orthonomality', eq='V.H @ V = I', context=msg)
+
+        ! Check correctness.
+        allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
+
+        ! Infinity-norm check.
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, T(:kdim+1, :kdim))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_csp', &
+                                 & info='Factorization', eq='A @ V = U_ @ T_', context=msg)
+
+        err = maxval(abs(matmul(hermitian(A%data), Udata(:, :kdim)) - matmul(Vdata, hermitian(T(:kdim, :kdim+1)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_ssy_tridiag_factorization_csp', &
+                                 & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
+        return
+    end subroutine test_ssy_tridiag_factorization_csp
+
+   
+    subroutine collect_ssy_tridiag_cdp_testsuite(testsuite)
+        ! Collection of unit tests.
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+
+        testsuite = [ &
+             new_unittest("Saunder-Simon-Yip Tridiagonalization", test_ssy_tridiag_factorization_cdp) &
+            ]
+
+        return
+    end subroutine collect_ssy_tridiag_cdp_testsuite
+
+     subroutine test_ssy_tridiag_factorization_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test matrix.
+        type(linop_cdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_cdp), allocatable :: U(:), V(:)
+        ! Krylov subspace dimension.
+        integer, parameter :: kdim = test_size
+        ! Tridiagonal matrix.
+        complex(dp), allocatable :: T(:, :)
+        ! Information flag.
+        integer :: info
+
+        ! Internal variables.
+        complex(dp), allocatable :: Udata(:, :), Vdata(:, :)
+        complex(dp), allocatable :: G(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize tridiagonal matrix.
+        allocate(T(kdim+1, kdim+1)) ; T = zero_cdp
+
+        ! Initialize operator.
+        A = linop_cdp()
+        call init_rand(A)
+
+        ! Initialize Krylov subspace.
+        allocate(U(kdim+1)); call zero_basis(U); call U(1)%rand(ifnorm = .false.)
+        allocate(V(kdim+1)); call zero_basis(V); call V(1)%rand(ifnorm = .false.)
+
+        ! Saunders-Simon-Yip tridiagonalization.
+        call ssy(A, U, V, T, info, tol=atol_dp)
+        call check_info(info, "ssy", module=this_module_long, &
+                        procedure="test_ssy_tridiag_factorization_cdp")
+
+        ! Orthogonality of the column-span basis.
+        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_cdp', &
+                                 & info='Orthonomality', eq='U.H @ U = I', context=msg)
+
+        ! Orthogonality of the row-span basis.
+        G = Gram(V(:kdim))
+        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_cdp', &
+                                 & info='Orthonomality', eq='V.H @ V = I', context=msg)
+
+        ! Check correctness.
+        allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
+        allocate(Vdata(test_size, kdim+1)) ; call get_data(Vdata, V)
+
+        ! Infinity-norm check.
+        err = maxval(abs(matmul(A%data, Vdata(:, :kdim)) - matmul(Udata, T(:kdim+1, :kdim))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_cdp', &
+                                 & info='Factorization', eq='A @ V = U_ @ T_', context=msg)
+
+        err = maxval(abs(matmul(hermitian(A%data), Udata(:, :kdim)) - matmul(Vdata, hermitian(T(:kdim, :kdim+1)))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_ssy_tridiag_factorization_cdp', &
+                                 & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
+        return
+    end subroutine test_ssy_tridiag_factorization_cdp
+
+   
 end module TestKrylov

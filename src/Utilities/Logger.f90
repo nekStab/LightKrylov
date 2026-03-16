@@ -79,14 +79,14 @@ contains
 
       ! Set up comms
       call comm_setup()
-      
+
       ! Set I/O rank
       if (nio_ /= 0) call set_io_rank(nio_)
       if (io_rank()) then
          write (msg, '(A,I0,A,I0)') 'IO rank = ', get_rank()
          call logger%log_message(trim(msg), this_module, this_procedure)
       end if
-      
+
       if (io_rank()) then
          ! Flush log units
          if (close_old_) call reset_log_units()
@@ -97,7 +97,6 @@ contains
          ! set up LightKrylov log file
          call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
          if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', this_module, this_procedure)
-
 
          ! log to stdout
          if (log_stdout_) then
@@ -258,11 +257,11 @@ contains
 
       call MPI_Comm_rank(MPI_COMM_WORLD, rank_local, ierr)
       call MPI_Comm_size(MPI_COMM_WORLD, size_local, ierr)
-      
+
       call set_rank(rank_local)
       call set_comm_size(size_local)
 
-      if (rank_local==0) then
+      if (rank_local == 0) then
          call logger%log_message('Setup parallel run', this_module, this_procedure)
          write (msg, '(A,I0,A,I0)') 'comm_size = ', size_local
          call logger%log_message(trim(msg), this_module, this_procedure)
@@ -581,6 +580,16 @@ contains
                call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
                ierr = -1
             end if
+         else if (trim(to_lower(origin)) == 'ssy') then
+            ! ssy_tridiagonalization
+            if (info > 0) then
+               write (msg, '(A, I0, A)') 'Saunders-Simon-Yop Tridiagonalisation: Invariant subspace found after ', info, 'steps.'
+               call log_debug(trim(msg), module=module, procedure=procedure)
+            else
+               write (msg, '(A)') "Undocumented error. "//trim(str)
+               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
             !
             !   LightKrylov_IterativeSolvers
             !
@@ -620,7 +629,7 @@ contains
                write (msg, '(A,I0,A)') 'GMRES iteration converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
             else if (info < 0) then
-               write(msg,'(A,I0,A)') 'Maximum number of GMRES iterations reached (', abs(info), &
+               write (msg, '(A,I0,A)') 'Maximum number of GMRES iterations reached (', abs(info), &
                            & '). Solution tolerance not achieved.'
                call log_message(trim(msg), module=module, procedure=procedure)
             else
@@ -644,7 +653,7 @@ contains
                write (msg, '(A,I0,A)') 'CG iteration converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
             else if (info < 0) then
-               write(msg,'(A,I0,A)') 'Maximum number of CG iterations reached (', abs(info), &
+               write (msg, '(A,I0,A)') 'Maximum number of CG iterations reached (', abs(info), &
                            & '). Solution tolerance not achieved.'
                call log_message(trim(msg), module=module, procedure=procedure)
             else
@@ -658,7 +667,7 @@ contains
                write (msg, '(A,I0,A)') 'The linear solver converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
             else if (info < 0) then
-               write(msg,'(A,I0,A)') 'Maximum number of iterations reached (', abs(info), &
+               write (msg, '(A,I0,A)') 'Maximum number of iterations reached (', abs(info), &
                            & '). Solution tolerance not achieved.'
                call log_message(trim(msg), module=module, procedure=procedure)
             else
@@ -713,7 +722,7 @@ contains
             write (*, *) 'A fatal error was encountered. Aborting calculation as per user directive.'
             write (*, *)
             if (logger_is_active) then
-                write (*,*) 'Details on the error have been written to the lightkrylov logfile.'
+               write (*, *) 'Details on the error have been written to the lightkrylov logfile.'
             end if
             STOP 1
          end if
