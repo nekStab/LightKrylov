@@ -37,6 +37,7 @@ module LightKrylov_BaseKrylov
     public :: arnoldi
     public :: bidiagonalization
     public :: lanczos
+    public :: ssy
 
     !----- Utility functions ------
     public :: qr
@@ -329,6 +330,33 @@ module LightKrylov_BaseKrylov
         end subroutine lanczos_bidiagonalization_${type[0]}$${kind}$
 
         #:endfor
+    end interface
+
+
+    interface ssy
+    #:for kind, type in RC_KINDS_TYPES
+    module subroutine ssy_${type[0]}$${kind}$(A, U, V, T, info, kstart, kend, tol)
+        implicit none (type, external)
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+        !! Linear operator to be factorized.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
+        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+        !! be set to the starting Krylov vector b (with unit norm).
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: V(:)
+        !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
+        !! be set to the starting Krylov vector c (with unit norm).
+        ${type}$, intent(inout) :: T(:, :)
+        !! Tridiagonal matrix.
+        integer, intent(out) :: info
+        !! Information flag.
+        integer, optional, intent(in) :: kstart
+        !! Starting index for the SSY factorization (default 1)
+        integer, optional, intent(in) :: kend
+        !! Final index for the SSY factorization (default size(U)).
+        real(${kind}$), optional, intent(in) :: tol
+        !! Tolerance to determine whether invariant subspaces have been computed or not.
+    end subroutine ssy_${type[0]}$${kind}$
+    #:endfor
     end interface
 
     !-------------------------------------
