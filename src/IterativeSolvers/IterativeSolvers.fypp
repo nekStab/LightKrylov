@@ -800,17 +800,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  `fname` : Name of the file to save the eigenspectrum. It is an `intent(in)` argument.
         #:for kind, type in RC_KINDS_TYPES
-        module subroutine save_eigenspectrum_${type[0]}$${kind}$(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            ${type}$, intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(${kind}$), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_${type[0]}$${kind}$
-
+        module procedure save_eigenspectrum_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -951,7 +941,15 @@ contains
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
-    module procedure save_eigenspectrum_${type[0]}$${kind}$
+    subroutine save_eigenspectrum_${type[0]}$${kind}$(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        ${type}$, intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(${kind}$), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         #:if type[0] == "c"
         real(${kind}$) :: array(size(lambda), 3)
@@ -962,7 +960,7 @@ contains
         #:endif
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_${type[0]}$${kind}$
+    end subroutine save_eigenspectrum_${type[0]}$${kind}$
 
     #:endfor
 

@@ -1091,7 +1091,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1192,7 +1192,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1293,7 +1293,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1394,7 +1394,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then

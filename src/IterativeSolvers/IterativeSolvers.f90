@@ -1540,50 +1540,10 @@ module LightKrylov_IterativeSolvers
         !!                      eigenvalues. It is an `intent(in)` argument.
         !!
         !!  `fname` : Name of the file to save the eigenspectrum. It is an `intent(in)` argument.
-        module subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            real(sp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(sp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_rsp
-
-        module subroutine save_eigenspectrum_rdp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            real(dp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(dp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_rdp
-
-        module subroutine save_eigenspectrum_csp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            complex(sp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(sp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_csp
-
-        module subroutine save_eigenspectrum_cdp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            complex(dp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(dp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_cdp
-
+        module procedure save_eigenspectrum_rsp
+        module procedure save_eigenspectrum_rdp
+        module procedure save_eigenspectrum_csp
+        module procedure save_eigenspectrum_cdp
     end interface
 
     interface eigs
@@ -1835,37 +1795,69 @@ contains
     end function compute_residual_cdp
 
 
-    module procedure save_eigenspectrum_rsp
+    subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        real(sp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(sp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(sp) :: array(size(lambda), 2)
         array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_rsp
+    end subroutine save_eigenspectrum_rsp
 
-    module procedure save_eigenspectrum_rdp
+    subroutine save_eigenspectrum_rdp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        real(dp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(dp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(dp) :: array(size(lambda), 2)
         array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_rdp
+    end subroutine save_eigenspectrum_rdp
 
-    module procedure save_eigenspectrum_csp
+    subroutine save_eigenspectrum_csp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        complex(sp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(sp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(sp) :: array(size(lambda), 3)
         array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_csp
+    end subroutine save_eigenspectrum_csp
 
-    module procedure save_eigenspectrum_cdp
+    subroutine save_eigenspectrum_cdp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        complex(dp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(dp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(dp) :: array(size(lambda), 3)
         array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_cdp
+    end subroutine save_eigenspectrum_cdp
 
 
     !---------------------------------------------------
