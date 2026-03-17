@@ -43,7 +43,7 @@ contains
                     exit
                 endif
 
-                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpah[k]*v[k]
+                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpha[k]*v[k]
                 call A%rmatvec(U(k), V(k+1))
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false.)
                 ! if (k > 1) call V(k+1)%axpby(-T(k, k-1), V(k-1), one_rsp)
@@ -102,7 +102,7 @@ contains
                     exit
                 endif
 
-                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpah[k]*v[k]
+                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpha[k]*v[k]
                 call A%rmatvec(U(k), V(k+1))
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false.)
                 ! if (k > 1) call V(k+1)%axpby(-T(k, k-1), V(k-1), one_rdp)
@@ -161,7 +161,7 @@ contains
                     exit
                 endif
 
-                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpah[k]*v[k]
+                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpha[k]*v[k]
                 call A%rmatvec(U(k), V(k+1))
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false.)
                 ! if (k > 1) call V(k+1)%axpby(-T(k, k-1), V(k-1), one_csp)
@@ -220,7 +220,7 @@ contains
                     exit
                 endif
 
-                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpah[k]*v[k]
+                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpha[k]*v[k]
                 call A%rmatvec(U(k), V(k+1))
                 call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false.)
                 ! if (k > 1) call V(k+1)%axpby(-T(k, k-1), V(k-1), one_cdp)
