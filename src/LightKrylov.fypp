@@ -60,7 +60,7 @@ module LightKrylov
     public :: zero_basis
     public :: copy
     public :: rand_basis
-    
+
     ! AbstractLinops exports.
     public :: abstract_linop
     #:for kind, type in RC_KINDS_TYPES
@@ -84,7 +84,7 @@ module LightKrylov
     public :: abstract_system_${type[0]}$${kind}$
     public :: abstract_jacobian_linop_${type[0]}$${kind}$
     #:endfor
-    
+
     ! BaseKrylov exports.
     public :: qr
     public :: permcols, invperm

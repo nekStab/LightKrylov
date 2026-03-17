@@ -9,9 +9,7 @@ module LightKrylov_TestUtils
     use LightKrylov
     use LightKrylov_Logger
     use LightKrylov_Constants
-    
     implicit none(type, external)
-    
     private
 
     character(len=*), parameter :: this_module      = 'LK_TUtils'
@@ -292,7 +290,7 @@ contains
         logical :: normalized
         ${type}$ :: mu(test_size), var(test_size)
         ${type}$ :: alpha
- 
+
         mu = 0.0_${kind}$
         #:if type[0] == "r"
         var = 1.0_${kind}$
@@ -300,7 +298,7 @@ contains
         var = cmplx(1.0_${kind}$, 1.0_${kind}$, kind=${kind}$)
         #:endif
         self%data = normal(mu, var)
- 
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -524,7 +522,7 @@ contains
     !---------------------------------------------------
     !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
     !---------------------------------------------------
- 
+
     #:for kind in REAL_KINDS
     subroutine zero_state_r${kind}$(self)
         class(state_vector_r${kind}$), intent(inout) :: self
@@ -532,7 +530,7 @@ contains
         self%y = 0.0_${kind}$
         self%z = 0.0_${kind}$
     end subroutine zero_state_r${kind}$
-  
+
     real(${kind}$) function dot_state_r${kind}$(self, vec) result(alpha)
         class(state_vector_r${kind}$)   , intent(in) :: self
         class(abstract_vector_r${kind}$), intent(in) :: vec
@@ -543,7 +541,7 @@ contains
             call type_error('vec','state_vector_${type[0]}$${kind}$','IN',this_module,'dot_state_r${kind}$')
         end select
     end function dot_state_r${kind}$
-  
+
     subroutine scal_state_r${kind}$(self, alpha)
         class(state_vector_r${kind}$), intent(inout) :: self
         real(${kind}$)               , intent(in)    :: alpha
@@ -551,7 +549,7 @@ contains
         self%y = self%y * alpha
         self%z = self%z * alpha
     end subroutine scal_state_r${kind}$
-  
+
     subroutine axpby_state_r${kind}$(alpha, vec, beta, self)
         class(state_vector_r${kind}$)   , intent(inout) :: self
         class(abstract_vector_r${kind}$), intent(in)    :: vec
@@ -565,25 +563,25 @@ contains
             call type_error('vec','state_vector_${type[0]}$${kind}$','IN',this_module,'axpby_state_r${kind}$')
         end select
     end subroutine axpby_state_r${kind}$
-  
+
     integer function get_size_state_r${kind}$(self) result(N)
         class(state_vector_r${kind}$), intent(in) :: self
         N = 3
     end function get_size_state_r${kind}$
-  
+
     subroutine rand_state_r${kind}$(self, ifnorm)
         class(state_vector_r${kind}$), intent(inout) :: self
         logical, optional,   intent(in)        :: ifnorm
         logical :: normalized
         real(${kind}$) :: mu, var
         real(${kind}$) :: alpha
-    
+
         mu = zero_r${kind}$
         var = one_r${kind}$
         self%x = normal(mu, var)
         self%y = normal(mu, var)
         self%z = normal(mu, var)
-    
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -661,12 +659,12 @@ contains
         class(abstract_vector_r${kind}$), intent(out) :: vec_out
         ! internal
         real(${kind}$) :: X, Y, Z
-        
+
         call get_state_r${kind}$(self%X, X, Y, Z)
         select type(vec_in)
         type is(state_vector_r${kind}$)
             select type(vec_out)
-            type is(state_vector_r${kind}$) 
+            type is(state_vector_r${kind}$)
 
                 vec_out%x =  vec_in%y + vec_in%z*Z
                 vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
@@ -701,7 +699,7 @@ contains
     !----------------------------------------------------------------
     !-----     COMPLEXIFIED ROESSLER SYSTEM TYPE DEFINITION     -----
     !----------------------------------------------------------------
- 
+
     #:for kind in REAL_KINDS
     subroutine zero_state_c${kind}$(self)
         class(state_vector_c${kind}$), intent(inout) :: self
@@ -709,7 +707,7 @@ contains
         self%y = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
         self%z = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
     end subroutine zero_state_c${kind}$
-  
+
     complex(${kind}$) function dot_state_c${kind}$(self, vec) result(alpha)
         class(state_vector_c${kind}$)   , intent(in) :: self
         class(abstract_vector_c${kind}$), intent(in) :: vec
@@ -720,7 +718,7 @@ contains
             call type_error('vec','state_vector_c${kind}$','IN',this_module,'dot_state_c${kind}$')
         end select
     end function dot_state_c${kind}$
-  
+
     subroutine scal_state_c${kind}$(self, alpha)
         class(state_vector_c${kind}$), intent(inout) :: self
         complex(${kind}$)            , intent(in)    :: alpha
@@ -728,7 +726,7 @@ contains
         self%y = self%y * alpha
         self%z = self%z * alpha
     end subroutine scal_state_c${kind}$
-  
+
     subroutine axpby_state_c${kind}$(alpha, vec, beta, self)
         class(state_vector_c${kind}$)   , intent(inout) :: self
         class(abstract_vector_c${kind}$), intent(in)    :: vec
@@ -742,25 +740,25 @@ contains
             call type_error('vec','state_vector_c${kind}$','IN',this_module,'axpby_state_c${kind}$')
         end select
     end subroutine axpby_state_c${kind}$
-  
+
     integer function get_size_state_c${kind}$(self) result(N)
         class(state_vector_c${kind}$), intent(in) :: self
         N = 3
     end function get_size_state_c${kind}$
-  
+
     subroutine rand_state_c${kind}$(self, ifnorm)
         class(state_vector_c${kind}$), intent(inout) :: self
         logical, optional,   intent(in)        :: ifnorm
         logical :: normalized
         real(${kind}$) :: mu, var
         real(${kind}$) :: alpha
-    
+
         mu = zero_r${kind}$
         var = one_r${kind}$
         self%x = cmplx(normal(mu, var), normal(mu,var), kind=${kind}$)
         self%y = cmplx(normal(mu, var), normal(mu,var), kind=${kind}$)
         self%z = cmplx(normal(mu, var), normal(mu,var), kind=${kind}$)
-    
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -840,13 +838,13 @@ contains
         class(abstract_vector_c${kind}$), intent(out) :: vec_out
 
         real(${kind}$) :: X, Y, Z
-        
+
         call get_state_c${kind}$(self%X, X, Y, Z)
 
         select type(vec_in)
         type is(state_vector_c${kind}$)
             select type(vec_out)
-            type is(state_vector_c${kind}$) 
+            type is(state_vector_c${kind}$)
 
                 vec_out%x =  vec_in%y + one_im_c${kind}$*vec_in%z*Z
                 vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
