@@ -583,7 +583,7 @@ contains
          else if (trim(to_lower(origin)) == 'ssy') then
             ! ssy_tridiagonalization
             if (info > 0) then
-               write (msg, '(A, I0, A)') 'Saunders-Simon-Yop Tridiagonalisation: Invariant subspace found after ', info, 'steps.'
+               write (msg, '(A, I0, A)') 'Saunders-Simon-Yip Tridiagonalisation: Invariant subspace found after ', info, 'steps.'
                call log_debug(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
