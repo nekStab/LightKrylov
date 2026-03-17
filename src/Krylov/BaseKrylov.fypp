@@ -365,7 +365,7 @@ module LightKrylov_BaseKrylov
         !!
         !!  - The operator \(A\) only needs to be accessed through matrix-vector products.
         !!  - Constructs an orthonormal basis for the Krylov subspace \(\mathcal{K} = \left( b, AA^\top b, \cdots \right)\).
-        !!  - Constructs an orthonormal basis for the Krylov subspace \( \mathcal{K} = \left( c, A^\top A c, \cdots, \right)\).
+        !!  - Constructs an orthonormal basis for the Krylov subspace \(\mathcal{K} = \left( c, A^\top A c, \cdots, \right)\).
         !!  - Constructs a tridiagonal matrix \( T \) such that \( U^\top A V = T \).
         !!  - Checks for convergence and invariant subspaces.
         !!
@@ -388,12 +388,12 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `U`   :   Arrays of types derived from one the base types provided by the `AbstractVectors`
         !!              module. It needs to be consistent with the type of `A`. On entry, `U(1) = b`.
-        !!              On exit, it contains an orthonormal basis for \(\mathcal{K} = \left( b, AA^\top b, \cdots \right)\).
+        !!              On exit, it contains an orthonormal basis for \(\mathcal{K} = \left(b, A A^\top b, \cdots \right)\).
         !!              It is an `intent(inout)` argument.
         !!
         !!  - `V`   :   Arrays of types derived from one the base types provided by the `AbstractVectors`
         !!              module. It needs to be consistent with the type o f`A`. On entry, `V(1) = c`.
-        !!              On exit, it contains an orthonormal basis for \(\mathcal{K}=\left(c, A^\top Ac, \cdots \right)\).
+        !!              On exit, it contains an orthonormal basis for \(\mathcal{K} = \left(c, A^\top A c, \cdots \right)\).
         !!              It is an `intent(inout)` argument.
         !!
         !!  - `T`   :   `real` or `complex` rank-2 array. On exit, it contains the \((k+1) \times (k+1)\)
