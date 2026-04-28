@@ -18,7 +18,7 @@ module LightKrylov_AbstractVectors
     !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
     !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
     !!
-    !! Once these type-bound procedures have been implemented by the user, they will automatically 
+    !! Once these type-bound procedures have been implemented by the user, they will automatically
     !! be used to define:
     !!
     !! - vector addition    :   `add(self, vec) = axpby(1, vec, 1, self)`
@@ -62,7 +62,7 @@ module LightKrylov_AbstractVectors
         !!  ### Description
         !!
         !!  This interface provides methods for computing the inner products between a basis
-        !!  of `real` or `complex` vectors \( \mathbf{X} \) and a single vector 
+        !!  of `real` or `complex` vectors \( \mathbf{X} \) and a single vector
         !!  \( \mathbf{y} \) or another basis \( \mathbf{Y} \). Depending on the case, it
         !!  returns a one-dimensional array \( \mathbf{v} \) or a two-dimensional array
         !!  \( \mathbf{M} \) with the same type as \( \mathbf{X} \).
@@ -112,7 +112,7 @@ module LightKrylov_AbstractVectors
         !!
         !!  ### Description
         !!
-        !!  This interface provides methods for computing the Gram matrix associated to a basis of 
+        !!  This interface provides methods for computing the Gram matrix associated to a basis of
         !!  `abstract_vector` \( \mathbf{X} \).
         !!
         !!  ### Example
@@ -182,7 +182,7 @@ module LightKrylov_AbstractVectors
 
     interface axpby_basis
         !!  In-place addition of two arrays of extended `abstract_vector`.
-        !!  
+        !!
         !!  ### Description
         !!
         !!  This interface provides methods to add in-place two arrays of
@@ -921,7 +921,7 @@ contains
     !--------------------------------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
     !--------------------------------------------------------------------------------
-    
+
     function initialize_dense_vector_from_array_rsp(x) result(vec)
         implicit none(type, external)
         real(sp), intent(in) :: x(:)
@@ -1262,7 +1262,7 @@ contains
         n = size(self%data)
     end function dense_get_size_cdp
 
-    
+
     !--------------------------------------
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
@@ -1315,7 +1315,7 @@ contains
         ! Internal variables.
         integer :: i, j, iostat
         character(len=100) :: errmsg
-    
+
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
@@ -1476,7 +1476,7 @@ contains
         ! Internal variables.
         integer :: i, j, iostat
         character(len=100) :: errmsg
-    
+
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
@@ -1637,7 +1637,7 @@ contains
         ! Internal variables.
         integer :: i, j, iostat
         character(len=100) :: errmsg
-    
+
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
@@ -1798,7 +1798,7 @@ contains
         ! Internal variables.
         integer :: i, j, iostat
         character(len=100) :: errmsg
-    
+
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
