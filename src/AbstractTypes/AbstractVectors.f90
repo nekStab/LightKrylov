@@ -1481,7 +1481,6 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                print *, u%norm(), tol
                 success = merge(.true., .false., u%norm() <= tol)
                 if (.not. success) exit verification
             end block addition_distributivity
@@ -1818,7 +1817,6 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                print *, u%norm(), tol
                 success = merge(.true., .false., u%norm() <= tol)
                 if (.not. success) exit verification
             end block addition_distributivity
@@ -2155,7 +2153,6 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                print *, u%norm(), tol
                 success = merge(.true., .false., u%norm() <= tol)
                 if (.not. success) exit verification
             end block addition_distributivity
@@ -2500,7 +2497,6 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                print *, u%norm(), tol
                 success = merge(.true., .false., u%norm() <= tol)
                 if (.not. success) exit verification
             end block addition_distributivity
