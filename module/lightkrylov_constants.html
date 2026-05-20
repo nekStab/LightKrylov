@@ -1,0 +1,723 @@
+<!-- -*- mode: jinja2 -*- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="Lightweight implementation of Krylov methods using modern Fortran.">
+    <meta name="author" content="Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>LightKrylov_Constants &ndash; LightKrylov</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link href="../css/fontawesome.min.css" rel="stylesheet">
+    <link href="../css/brands.min.css" rel="stylesheet">
+    <link href="../css/regular.min.css" rel="stylesheet">
+    <link href="../css/solid.min.css" rel="stylesheet">
+    <link href="../css/v4-font-face.min.css" rel="stylesheet">
+    <link href="../css/v4-shims.min.css" rel="stylesheet">
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { equationNumbers: { autoNumber: "AMS" } }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async
+            integrity="sha256-DViIOMYdwlM/axqoGDPeUyf0urLoHMN4QACBKyB58Uw=" crossorigin="anonymous"></script>
+    <!-- Other scripts and stylesheets -->
+    <link href="../css/local.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+      <link href="../css/user.css" rel="stylesheet">
+    <script src="../js/svg-pan-zoom.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="container-fluid mb-sm-4 mb-xl-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="../index.html">LightKrylov </a>
+          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
+                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon">
+          </button>
+
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="../page/index.html">Overview</a></li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../lists/files.html">Source Files</a>
+                  </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/modules.html">Modules</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/absint.html">Abstract Interfaces</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../lists/types.html">Derived Types</a>
+                </li>
+            </ul>
+              <div class="d-flex align-items-end flex-grow-1">
+                <form action="../search.html" role="search" class="ms-auto">
+                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+                </form>
+              </div>
+          </div><!--/.nav-collapse -->
+        </div>
+      </nav>
+    </div>
+
+    <div class="container">
+  <div class="row">
+    <h1>LightKrylov_Constants
+      <small>Module</small>
+      
+    </h1>
+      <div class="container p-2 mb-4 bg-light border rounded-3">
+    <div class="row align-items-center justify-content-between" id="info-bar">
+      <div class="col">
+        <ul class="list-inline" style="margin-bottom:0px;display:inline">
+            <li class="list-inline-item" id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a></li>
+
+            <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
+              <a data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
+                 title=" 0.4% of total for modules and submodules.">57 statements</a>
+            </li>
+
+            <li class="list-inline-item" id="source-file">
+              <i class="fa fa-code"></i>
+              <a href="../src/Constants.f90"> Source File</a>
+            </li>
+        </ul>
+      </div>
+      <div class="col">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb justify-content-end mb-0">
+                <li class="breadcrumb-item"><a href='../sourcefile/constants.f90.html'>Constants.f90</a></li>
+            <li class="breadcrumb-item active" aria-current="page">LightKrylov_Constants</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Enable Bootstrap tooltips
+    (function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })();
+  </script>
+
+  </div>
+
+  <div class="row">
+    <div class="col-md-3">
+        <div id="sidebar">
+      <h3>Contents</h3>
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#vars-0"
+         aria-expanded="false" aria-controls="vars-0">
+         <h4 class="card-header bg-primary text-white">Variables</h4>
+      </a>
+      <div id="vars-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-atol_dp">atol_dp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-atol_sp">atol_sp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-dp">dp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-one_cdp">one_cdp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-one_csp">one_csp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-one_im_cdp">one_im_cdp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-one_im_csp">one_im_csp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-one_rdp">one_rdp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-one_rsp">one_rsp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-rtol_dp">rtol_dp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-rtol_sp">rtol_sp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-sp">sp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-zero_cdp">zero_cdp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-zero_csp">zero_csp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-zero_rdp">zero_rdp</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#variable-zero_rsp">zero_rsp</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#funcs-0"
+         aria-expanded="false" aria-controls="funcs-0">
+         <h4 class="card-header bg-primary text-white">Functions</h4>
+      </a>
+      <div id="funcs-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#proc-get_comm_size">get_comm_size</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#proc-get_rank">get_rank</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#proc-io_rank">io_rank</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="card mb-4">
+      <a data-bs-toggle="collapse" href="#subs-0"
+         aria-expanded="false" aria-controls="subs-0">
+         <h4 class="card-header bg-primary text-white">Subroutines</h4>
+      </a>
+      <div id="subs-0" class="collapse">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#proc-set_comm_size">set_comm_size</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#proc-set_io_rank">set_io_rank</a>
+            <a class="list-group-item" href="../module/lightkrylov_constants.html#proc-set_rank">set_rank</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+
+
+  </div>
+
+    </div>
+
+    <div class="col-md-9" id='text'>
+      <p>This module defines a list of simple constants used throughout <code>LightKrylov</code>.
+It also provides some utility functions related to let <code>LightKrylov</code> be aware
+of any MPI-related information (e.g. rank of the current MPI process, dimension
+of the MPI communicator, etc).</p>
+      
+      
+      <br>
+
+
+        <section>
+          <h2>Variables</h2>
+            <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Visibility</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+<th></th><th scope="col">Initial</th>        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-atol_dp"></span>
+              real(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>atol_dp</strong></td>
+<td> =</td>
+                <td>10.0_dp**(-precision(1.0_dp))</td>
+            <td>
+                <p>Absolute tolerance for double precision computations.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-atol_sp"></span>
+              real(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>atol_sp</strong></td>
+<td> =</td>
+                <td>10.0_sp**(-precision(1.0_sp))</td>
+            <td>
+                <p>Absolute tolerance for single precision computations.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-dp"></span>
+              integer,
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>dp</strong></td>
+<td> =</td>
+                <td>selected_real_kind(15, 307)</td>
+            <td>
+                <p>Double precision data type.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-one_cdp"></span>
+              complex(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>one_cdp</strong></td>
+<td> =</td>
+                <td>cmplx(1.0_dp, 0.0_dp, kind=dp)</td>
+            <td>
+                <p>Complex-valued double precision one.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-one_csp"></span>
+              complex(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>one_csp</strong></td>
+<td> =</td>
+                <td>cmplx(1.0_sp, 0.0_sp, kind=sp)</td>
+            <td>
+                <p>Complex-valued single precision one.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-one_im_cdp"></span>
+              complex(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>one_im_cdp</strong></td>
+<td> =</td>
+                <td>cmplx(0.0_dp, 1.0_dp, kind=dp)</td>
+            <td>
+                <p>Complex-valued double precision imaginary unit.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-one_im_csp"></span>
+              complex(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>one_im_csp</strong></td>
+<td> =</td>
+                <td>cmplx(0.0_sp, 1.0_sp, kind=sp)</td>
+            <td>
+                <p>Complex-valued single precision imaginary unit.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-one_rdp"></span>
+              real(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>one_rdp</strong></td>
+<td> =</td>
+                <td>1.0_dp</td>
+            <td>
+                <p>Real-valued double precision one.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-one_rsp"></span>
+              real(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>one_rsp</strong></td>
+<td> =</td>
+                <td>1.0_sp</td>
+            <td>
+                <p>Real-valued single precision one.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rtol_dp"></span>
+              real(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>rtol_dp</strong></td>
+<td> =</td>
+                <td>sqrt(atol_dp)</td>
+            <td>
+                <p>Relative tolerance for double precision computations.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rtol_sp"></span>
+              real(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>rtol_sp</strong></td>
+<td> =</td>
+                <td>sqrt(atol_sp)</td>
+            <td>
+                <p>Relative tolerance for single precision computations.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-sp"></span>
+              integer,
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>sp</strong></td>
+<td> =</td>
+                <td>selected_real_kind(6, 37)</td>
+            <td>
+                <p>Single precision data type.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-zero_cdp"></span>
+              complex(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>zero_cdp</strong></td>
+<td> =</td>
+                <td>cmplx(0.0_dp, 0.0_dp, kind=dp)</td>
+            <td>
+                <p>Complex-valued double precision zero.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-zero_csp"></span>
+              complex(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>zero_csp</strong></td>
+<td> =</td>
+                <td>cmplx(0.0_sp, 0.0_sp, kind=sp)</td>
+            <td>
+                <p>Complex-value single precision zero.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-zero_rdp"></span>
+              real(kind=dp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>zero_rdp</strong></td>
+<td> =</td>
+                <td>0.0_dp</td>
+            <td>
+                <p>Real-valued double precision zero.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-zero_rsp"></span>
+              real(kind=sp),
+            </td>
+              <td>public,</td>
+            <td>
+parameter               
+            </td>
+            <td>::</td>
+            <td><strong>zero_rsp</strong></td>
+<td> =</td>
+                <td>0.0_sp</td>
+            <td>
+                <p>Real-valued single precision zero.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+        </section>
+        <br>
+
+
+
+
+
+        <section>
+          <h2>Functions</h2>
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_comm_size"></span> <h3>public pure function <a href='../proc/get_comm_size.html'>get_comm_size</a>() result(c_size)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Utility function to get the dimension of the communicator known to <code>LightKrylov</code>.</p>
+
+  <h4>Arguments</h4>
+    <em>None</em>
+    <h4>
+    Return Value
+    <small>integer</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-get_rank"></span> <h3>public pure function <a href='../proc/get_rank.html'>get_rank</a>() result(rank)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Utility function to get the rank of the current MPI process.</p>
+
+  <h4>Arguments</h4>
+    <em>None</em>
+    <h4>
+    Return Value
+    <small>integer</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-io_rank"></span> <h3>public pure function <a href='../proc/io_rank.html'>io_rank</a>() result(is_io)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Utility function to determine whether the current MPI process can do I/O.</p>
+
+  <h4>Arguments</h4>
+    <em>None</em>
+    <h4>
+    Return Value
+    <small>logical</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+        </section>
+        <br>
+
+        <section>
+          <h2>Subroutines</h2>
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-set_comm_size"></span> <h3>public  subroutine <a href='../proc/set_comm_size.html'>set_comm_size</a>(c_size)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Utility function to inform <code>LightKrylov</code> of the MPI-communicator's dimension.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-c_size"></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>c_size</strong></td>
+            <td>
+<p>Dimension of the MPI communicator.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-set_io_rank"></span> <h3>public  subroutine <a href='../proc/set_io_rank.html'>set_io_rank</a>(rk)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Utility function to set the rank of the process doing I/O.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rk"></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>rk</strong></td>
+            <td>
+<p>Desired rank for the IO process.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+              <div class="card">
+    <div class="card-header codesum"><span class="anchor" id="proc-set_rank"></span> <h3>public  subroutine <a href='../proc/set_rank.html'>set_rank</a>(rank)  
+</h3></div>
+    <div class="card-body">
+          
+  <p>Utility function to set the rank of an MPI process.</p>
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" id="variable-rank"></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>rank</strong></td>
+            <td>
+<p>Desired rank identification.</p>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+    </div>
+  </div>
+
+        </section>
+        <br>
+
+
+
+    </div>
+  </div>
+
+      <hr>
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+        <div class="row justify-content-between">
+          <div class="col">
+            <p>
+              LightKrylov
+ was developed by Jean-Christophe Loiseau, Simon Kern, and Ricardo Frantz<br>              &copy; 2026 <a rel="license" href="http://www.freebsd.org/copyright/freebsd-doc-license.html">FreeBSD Documentation License</a>
+</p>
+          </div>
+          <div class="col">
+            <p class="text-end">
+              Documentation generated by
+              <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+            </p>
+          </div>
+        </div>
+        <br>
+      </div> <!-- /container -->
+    </footer>
+  </body>
+</html>
