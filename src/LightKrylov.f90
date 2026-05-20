@@ -125,6 +125,7 @@ module LightKrylov
     public :: bidiagonalization
     public :: lanczos
     public :: krylov_schur
+    public :: ssy
 
     ! IterativeSolvers exports.
     public :: abstract_precond_rsp

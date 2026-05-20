@@ -1,0 +1,67 @@
+#:include "../../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+submodule (lightkrylov_basekrylov) ssy_method
+    implicit none (type, external)
+contains
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure ssy_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = "ssy_${type[0]}$${kind}$"
+        character(len=100) :: errmsg
+        integer :: k_start, k_end, i, k
+        real(${kind}$) :: tolerance
+        ${type}$ :: alpha, beta, gamma
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        associate(kdim => size(U)-1)
+
+            ! Deals with optional arguments.
+            k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+            tolerance = optval(tol, atol_${kind}$)
+
+            ! Saunders-Simon-Yip tridiagonalization.
+            if (k_start == 1) then
+                beta = U(1)%norm()
+                call U(1)%scal(one_${type[0]}$${kind}$ / beta)
+
+                gamma = V(1)%norm()
+                call V(1)%scal(one_${type[0]}$${kind}$ / gamma)
+            endif
+
+            do k = k_start, k_end
+                ! Compute q = A @ v[k] - gamma[k]*u[k-1]
+                call A%matvec(V(k), U(k+1))
+                if (k > 1) call U(k+1)%axpby(-gamma, U(k-1), one_${type[0]}$${kind}$)
+
+                ! Compute alpha[k] = dot(u[k], q)
+                alpha = U(k)%dot(U(k+1))
+                T(k, k) = alpha
+
+                ! Compute beta[k+1] * u[k+1] = q - alpha[k]*u[k]
+                call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
+                beta = U(k+1)%norm() ; T(k+1, k) = beta
+                if (abs(beta) > tolerance) then
+                    call U(k+1)%scal(one_${type[0]}$${kind}$ / beta)
+                else
+                    info = k
+                    exit
+                endif
+
+                ! Compute gamma[k+1]*v[k+1] = hermitian(A) @ u[k] - beta[k]*v[k-1] - alpha[k]*v[k]
+                call A%rmatvec(U(k), V(k+1))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false.)
+                ! if (k > 1) call V(k+1)%axpby(-T(k, k-1), V(k-1), one_${type[0]}$${kind}$)
+                ! call V(k+1)%axpby(-T(k, k), V(k), one_${type[0]}$${kind}$)
+                gamma = V(k+1)%norm() ; T(k, k+1) = gamma
+                if (abs(gamma) > tolerance) then
+                    call V(k+1)%scal(one_${type[0]}$${kind}$ / gamma)
+                else
+                    info = k
+                    exit
+                endif
+            enddo
+
+        end associate
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure ssy_${type[0]}$${kind}$
+    #:endfor
+end submodule ssy_method

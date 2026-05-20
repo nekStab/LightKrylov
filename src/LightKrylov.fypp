@@ -97,6 +97,7 @@ module LightKrylov
     public :: bidiagonalization
     public :: lanczos
     public :: krylov_schur
+    public :: ssy
 
     ! IterativeSolvers exports.
     #:for kind, type in RC_KINDS_TYPES
