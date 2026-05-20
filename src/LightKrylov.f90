@@ -66,6 +66,7 @@ module LightKrylov
     public :: zero_basis
     public :: copy
     public :: rand_basis
+    public :: verify_vector_axioms
 
     ! AbstractLinops exports.
     public :: abstract_linop

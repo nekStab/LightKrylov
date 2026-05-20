@@ -54,6 +54,7 @@ module LightKrylov_AbstractVectors
     public :: zero_basis
     public :: copy
     public :: rand_basis
+    public :: verify_vector_axioms
 
     interface innerprod
         !!  Compute the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{y} \) or matrix
@@ -283,6 +284,14 @@ module LightKrylov_AbstractVectors
         module procedure rand_basis_csp
         module procedure rand_basis_cdp
     end interface
+
+    interface verify_vector_axioms
+        module procedure verify_vector_axioms_rsp
+        module procedure verify_vector_axioms_rdp
+        module procedure verify_vector_axioms_csp
+        module procedure verify_vector_axioms_cdp
+    end interface
+
 
     type, abstract, public :: abstract_vector
         !!  Base abstract type from which all other types of vectors used in `LightKrylov`
@@ -1428,6 +1437,181 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
 
+
+    logical function verify_vector_axioms_rsp(x, ntrials, tolerance) result(success)
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(in) :: x
+        !! Derived-type whose implementation needs to be tested.
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(sp), optional, intent(in) :: tolerance
+
+        integer :: ntrials_, i
+        real(sp) :: tol
+
+        !> Deals with optional argument.
+        ntrials_ = optval(ntrials, 100)
+        tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-----------------------------------
+            !-----     VECTOR ADDITION     -----
+            !-----------------------------------
+
+            addition_distributivity: block
+                class(abstract_vector_rsp), allocatable :: u, v, w
+                class(abstract_vector_rsp), allocatable :: wrk1, wrk2
+
+                !> Generate random vectors.
+                allocate(u, v, w, wrk1, wrk2, source=x)
+                call u%rand()
+                call v%rand()
+                call w%rand()
+
+                !> Check distributivity.
+                wrk1 = v
+                wrk2 = v
+                call wrk1%add(w)    ! v + w
+                call wrk2%add(u)    ! u + v
+
+                call u%add(wrk1)    ! u + (v + w)
+                call w%add(wrk2)    ! (u + v) + w
+
+                call u%sub(w)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_distributivity
+
+            addition_commutativity: block
+                class(abstract_vector_rsp), allocatable :: u, v, w
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand()
+                call v%rand()
+                w = v
+
+                !> Check commutativity.
+                call v%add(u)
+                call u%add(w)
+
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_commutativity
+
+            addition_zero: block
+                class(abstract_vector_rsp), allocatable :: u, v, z
+
+                !> Generate random vector.
+                allocate(u, v, z, source=x)
+                v = u
+                call z%zero()
+
+                !> Check zero element.
+                call u%add(z)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_zero
+
+            additive_inverse: block
+                class(abstract_vector_rsp), allocatable :: u, v
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block additive_inverse
+
+            !-----------------------------------------
+            !-----     SCALAR MULTIPLICATION     -----
+            !-----------------------------------------
+            scaling_identity: block
+                class(abstract_vector_rsp), allocatable :: u, v
+                real(sp), parameter :: one = 1.0_sp
+
+                !> Generate random vector.
+                allocate(u, v, source=x)
+                call u%rand()
+                v = u
+                !> Check identity.
+                call v%scal(one)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_identity
+
+            scaling_compatibility: block
+                class(abstract_vector_rsp), allocatable :: u, v
+                real(sp) :: a, b
+                call random_number(a)
+                call random_number(b)
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand(ifnorm=.true.)
+                v = u
+
+                !> Check associativity.
+                call v%scal(b)
+                call v%scal(a)
+                call u%scal(a*b)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_compatibility
+
+            scaling_distributivity: block
+                class(abstract_vector_rsp), allocatable :: u, v, w
+                real(sp) :: a
+                call random_number(a)
+
+                !> Generate random vectors.
+                allocate(u, v, w, source=x)
+                call u%rand()
+                call v%rand()
+                w = u
+
+                !> Check distributivity.
+                call w%add(v)
+                call w%scal(a)
+
+                call u%scal(a)
+                call v%scal(a)
+                call v%add(u)
+
+                call v%sub(w)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity
+
+            scaling_distributivity_bis: block
+                class(abstract_vector_rsp), allocatable :: u, v
+                real(sp) :: a, b
+                call random_number(a)
+                call random_number(b)
+
+                !> Generate random vector.
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+
+                !> Check distributivity.
+                call v%axpby(a, u, b)
+                call u%scal(a+b)
+
+                call v%sub(u)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity_bis
+        enddo verification
+    end function verify_vector_axioms_rsp
+
     subroutine linear_combination_vector_rdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1588,6 +1772,181 @@ contains
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
+
+
+    logical function verify_vector_axioms_rdp(x, ntrials, tolerance) result(success)
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(in) :: x
+        !! Derived-type whose implementation needs to be tested.
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(dp), optional, intent(in) :: tolerance
+
+        integer :: ntrials_, i
+        real(dp) :: tol
+
+        !> Deals with optional argument.
+        ntrials_ = optval(ntrials, 100)
+        tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-----------------------------------
+            !-----     VECTOR ADDITION     -----
+            !-----------------------------------
+
+            addition_distributivity: block
+                class(abstract_vector_rdp), allocatable :: u, v, w
+                class(abstract_vector_rdp), allocatable :: wrk1, wrk2
+
+                !> Generate random vectors.
+                allocate(u, v, w, wrk1, wrk2, source=x)
+                call u%rand()
+                call v%rand()
+                call w%rand()
+
+                !> Check distributivity.
+                wrk1 = v
+                wrk2 = v
+                call wrk1%add(w)    ! v + w
+                call wrk2%add(u)    ! u + v
+
+                call u%add(wrk1)    ! u + (v + w)
+                call w%add(wrk2)    ! (u + v) + w
+
+                call u%sub(w)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_distributivity
+
+            addition_commutativity: block
+                class(abstract_vector_rdp), allocatable :: u, v, w
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand()
+                call v%rand()
+                w = v
+
+                !> Check commutativity.
+                call v%add(u)
+                call u%add(w)
+
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_commutativity
+
+            addition_zero: block
+                class(abstract_vector_rdp), allocatable :: u, v, z
+
+                !> Generate random vector.
+                allocate(u, v, z, source=x)
+                v = u
+                call z%zero()
+
+                !> Check zero element.
+                call u%add(z)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_zero
+
+            additive_inverse: block
+                class(abstract_vector_rdp), allocatable :: u, v
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block additive_inverse
+
+            !-----------------------------------------
+            !-----     SCALAR MULTIPLICATION     -----
+            !-----------------------------------------
+            scaling_identity: block
+                class(abstract_vector_rdp), allocatable :: u, v
+                real(dp), parameter :: one = 1.0_dp
+
+                !> Generate random vector.
+                allocate(u, v, source=x)
+                call u%rand()
+                v = u
+                !> Check identity.
+                call v%scal(one)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_identity
+
+            scaling_compatibility: block
+                class(abstract_vector_rdp), allocatable :: u, v
+                real(dp) :: a, b
+                call random_number(a)
+                call random_number(b)
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand(ifnorm=.true.)
+                v = u
+
+                !> Check associativity.
+                call v%scal(b)
+                call v%scal(a)
+                call u%scal(a*b)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_compatibility
+
+            scaling_distributivity: block
+                class(abstract_vector_rdp), allocatable :: u, v, w
+                real(dp) :: a
+                call random_number(a)
+
+                !> Generate random vectors.
+                allocate(u, v, w, source=x)
+                call u%rand()
+                call v%rand()
+                w = u
+
+                !> Check distributivity.
+                call w%add(v)
+                call w%scal(a)
+
+                call u%scal(a)
+                call v%scal(a)
+                call v%add(u)
+
+                call v%sub(w)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity
+
+            scaling_distributivity_bis: block
+                class(abstract_vector_rdp), allocatable :: u, v
+                real(dp) :: a, b
+                call random_number(a)
+                call random_number(b)
+
+                !> Generate random vector.
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+
+                !> Check distributivity.
+                call v%axpby(a, u, b)
+                call u%scal(a+b)
+
+                call v%sub(u)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity_bis
+        enddo verification
+    end function verify_vector_axioms_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
@@ -1750,6 +2109,189 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
 
+
+    logical function verify_vector_axioms_csp(x, ntrials, tolerance) result(success)
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(in) :: x
+        !! Derived-type whose implementation needs to be tested.
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(sp), optional, intent(in) :: tolerance
+
+        integer :: ntrials_, i
+        real(sp) :: tol
+
+        !> Deals with optional argument.
+        ntrials_ = optval(ntrials, 100)
+        tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-----------------------------------
+            !-----     VECTOR ADDITION     -----
+            !-----------------------------------
+
+            addition_distributivity: block
+                class(abstract_vector_csp), allocatable :: u, v, w
+                class(abstract_vector_csp), allocatable :: wrk1, wrk2
+
+                !> Generate random vectors.
+                allocate(u, v, w, wrk1, wrk2, source=x)
+                call u%rand()
+                call v%rand()
+                call w%rand()
+
+                !> Check distributivity.
+                wrk1 = v
+                wrk2 = v
+                call wrk1%add(w)    ! v + w
+                call wrk2%add(u)    ! u + v
+
+                call u%add(wrk1)    ! u + (v + w)
+                call w%add(wrk2)    ! (u + v) + w
+
+                call u%sub(w)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_distributivity
+
+            addition_commutativity: block
+                class(abstract_vector_csp), allocatable :: u, v, w
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand()
+                call v%rand()
+                w = v
+
+                !> Check commutativity.
+                call v%add(u)
+                call u%add(w)
+
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_commutativity
+
+            addition_zero: block
+                class(abstract_vector_csp), allocatable :: u, v, z
+
+                !> Generate random vector.
+                allocate(u, v, z, source=x)
+                v = u
+                call z%zero()
+
+                !> Check zero element.
+                call u%add(z)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_zero
+
+            additive_inverse: block
+                class(abstract_vector_csp), allocatable :: u, v
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block additive_inverse
+
+            !-----------------------------------------
+            !-----     SCALAR MULTIPLICATION     -----
+            !-----------------------------------------
+            scaling_identity: block
+                class(abstract_vector_csp), allocatable :: u, v
+                complex(sp), parameter :: one = 1.0_sp
+
+                !> Generate random vector.
+                allocate(u, v, source=x)
+                call u%rand()
+                v = u
+                !> Check identity.
+                call v%scal(one)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_identity
+
+            scaling_compatibility: block
+                class(abstract_vector_csp), allocatable :: u, v
+                complex(sp) :: a, b
+                real(sp) :: c(2)
+                call random_number(c)
+                a = cmplx(c(1), c(2), kind=sp)
+                call random_number(c)
+                b = cmplx(c(1), c(2), kind=sp)
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand(ifnorm=.true.)
+                v = u
+
+                !> Check associativity.
+                call v%scal(b)
+                call v%scal(a)
+                call u%scal(a*b)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_compatibility
+
+            scaling_distributivity: block
+                class(abstract_vector_csp), allocatable :: u, v, w
+                complex(sp) :: a
+                real(sp) :: b(2)
+                call random_number(b)
+                a = cmplx(b(1), b(2), kind=sp)
+
+                !> Generate random vectors.
+                allocate(u, v, w, source=x)
+                call u%rand()
+                call v%rand()
+                w = u
+
+                !> Check distributivity.
+                call w%add(v)
+                call w%scal(a)
+
+                call u%scal(a)
+                call v%scal(a)
+                call v%add(u)
+
+                call v%sub(w)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity
+
+            scaling_distributivity_bis: block
+                class(abstract_vector_csp), allocatable :: u, v
+                complex(sp) :: a, b
+                real(sp) :: c(2)
+                call random_number(c)
+                a = cmplx(c(1), c(2), kind=sp)
+                call random_number(c)
+                b = cmplx(c(1), c(2), kind=sp)
+
+                !> Generate random vector.
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+
+                !> Check distributivity.
+                call v%axpby(a, u, b)
+                call u%scal(a+b)
+
+                call v%sub(u)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity_bis
+        enddo verification
+    end function verify_vector_axioms_csp
+
     subroutine linear_combination_vector_cdp(y, X, v)
         !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
@@ -1910,5 +2452,188 @@ contains
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
+
+
+    logical function verify_vector_axioms_cdp(x, ntrials, tolerance) result(success)
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(in) :: x
+        !! Derived-type whose implementation needs to be tested.
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(dp), optional, intent(in) :: tolerance
+
+        integer :: ntrials_, i
+        real(dp) :: tol
+
+        !> Deals with optional argument.
+        ntrials_ = optval(ntrials, 100)
+        tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-----------------------------------
+            !-----     VECTOR ADDITION     -----
+            !-----------------------------------
+
+            addition_distributivity: block
+                class(abstract_vector_cdp), allocatable :: u, v, w
+                class(abstract_vector_cdp), allocatable :: wrk1, wrk2
+
+                !> Generate random vectors.
+                allocate(u, v, w, wrk1, wrk2, source=x)
+                call u%rand()
+                call v%rand()
+                call w%rand()
+
+                !> Check distributivity.
+                wrk1 = v
+                wrk2 = v
+                call wrk1%add(w)    ! v + w
+                call wrk2%add(u)    ! u + v
+
+                call u%add(wrk1)    ! u + (v + w)
+                call w%add(wrk2)    ! (u + v) + w
+
+                call u%sub(w)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_distributivity
+
+            addition_commutativity: block
+                class(abstract_vector_cdp), allocatable :: u, v, w
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand()
+                call v%rand()
+                w = v
+
+                !> Check commutativity.
+                call v%add(u)
+                call u%add(w)
+
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_commutativity
+
+            addition_zero: block
+                class(abstract_vector_cdp), allocatable :: u, v, z
+
+                !> Generate random vector.
+                allocate(u, v, z, source=x)
+                v = u
+                call z%zero()
+
+                !> Check zero element.
+                call u%add(z)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_zero
+
+            additive_inverse: block
+                class(abstract_vector_cdp), allocatable :: u, v
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block additive_inverse
+
+            !-----------------------------------------
+            !-----     SCALAR MULTIPLICATION     -----
+            !-----------------------------------------
+            scaling_identity: block
+                class(abstract_vector_cdp), allocatable :: u, v
+                complex(dp), parameter :: one = 1.0_dp
+
+                !> Generate random vector.
+                allocate(u, v, source=x)
+                call u%rand()
+                v = u
+                !> Check identity.
+                call v%scal(one)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_identity
+
+            scaling_compatibility: block
+                class(abstract_vector_cdp), allocatable :: u, v
+                complex(dp) :: a, b
+                real(dp) :: c(2)
+                call random_number(c)
+                a = cmplx(c(1), c(2), kind=dp)
+                call random_number(c)
+                b = cmplx(c(1), c(2), kind=dp)
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand(ifnorm=.true.)
+                v = u
+
+                !> Check associativity.
+                call v%scal(b)
+                call v%scal(a)
+                call u%scal(a*b)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_compatibility
+
+            scaling_distributivity: block
+                class(abstract_vector_cdp), allocatable :: u, v, w
+                complex(dp) :: a
+                real(dp) :: b(2)
+                call random_number(b)
+                a = cmplx(b(1), b(2), kind=dp)
+
+                !> Generate random vectors.
+                allocate(u, v, w, source=x)
+                call u%rand()
+                call v%rand()
+                w = u
+
+                !> Check distributivity.
+                call w%add(v)
+                call w%scal(a)
+
+                call u%scal(a)
+                call v%scal(a)
+                call v%add(u)
+
+                call v%sub(w)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity
+
+            scaling_distributivity_bis: block
+                class(abstract_vector_cdp), allocatable :: u, v
+                complex(dp) :: a, b
+                real(dp) :: c(2)
+                call random_number(c)
+                a = cmplx(c(1), c(2), kind=dp)
+                call random_number(c)
+                b = cmplx(c(1), c(2), kind=dp)
+
+                !> Generate random vector.
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+
+                !> Check distributivity.
+                call v%axpby(a, u, b)
+                call u%scal(a+b)
+
+                call v%sub(u)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity_bis
+        enddo verification
+    end function verify_vector_axioms_cdp
 
 end module LightKrylov_AbstractVectors
