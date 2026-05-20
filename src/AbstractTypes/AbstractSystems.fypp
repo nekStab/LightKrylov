@@ -62,7 +62,7 @@ module LightKrylov_AbstractSystems
     contains
         private
         procedure(abstract_eval_${type[0]}$${kind}$), pass(self), deferred, public :: response
-        !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        !! Procedure to evaluate the system residual \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
         ! Wrapper including counter increment
         procedure, pass(self), public :: eval => eval_${type[0]}$${kind}$
         !! Wrapper for response including the counter increment

@@ -59,7 +59,7 @@ module LightKrylov_AbstractSystems
     contains
         private
         procedure(abstract_eval_rsp), pass(self), deferred, public :: response
-        !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        !! Procedure to evaluate the system residual \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
         ! Wrapper including counter increment
         procedure, pass(self), public :: eval => eval_rsp
         !! Wrapper for response including the counter increment
@@ -104,7 +104,7 @@ module LightKrylov_AbstractSystems
     contains
         private
         procedure(abstract_eval_rdp), pass(self), deferred, public :: response
-        !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        !! Procedure to evaluate the system residual \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
         ! Wrapper including counter increment
         procedure, pass(self), public :: eval => eval_rdp
         !! Wrapper for response including the counter increment
@@ -149,7 +149,7 @@ module LightKrylov_AbstractSystems
     contains
         private
         procedure(abstract_eval_csp), pass(self), deferred, public :: response
-        !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        !! Procedure to evaluate the system residual \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
         ! Wrapper including counter increment
         procedure, pass(self), public :: eval => eval_csp
         !! Wrapper for response including the counter increment
@@ -194,7 +194,7 @@ module LightKrylov_AbstractSystems
     contains
         private
         procedure(abstract_eval_cdp), pass(self), deferred, public :: response
-        !! Procedure to evaluate the system response \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
+        !! Procedure to evaluate the system residual \( \mathbf{Y} = \mathbf{F}(\mathbf{X}) \).
         ! Wrapper including counter increment
         procedure, pass(self), public :: eval => eval_cdp
         !! Wrapper for response including the counter increment
