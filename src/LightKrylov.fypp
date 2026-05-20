@@ -85,7 +85,7 @@ module LightKrylov
     public :: abstract_system_${type[0]}$${kind}$
     public :: abstract_jacobian_linop_${type[0]}$${kind}$
     #:endfor
-    
+
     ! BaseKrylov exports.
     public :: qr
     public :: permcols, invperm

@@ -17,7 +17,7 @@ contains
 
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
-  
+
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
         call log_message(msg, this_module, this_procedure)
@@ -42,7 +42,7 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-    end procedure
+    end procedure print_gmres_sp
 
     module procedure reset_gmres_sp
         self%n_iter = 0
@@ -51,7 +51,7 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-    end procedure
+    end procedure reset_gmres_sp
 
     module procedure print_gmres_dp
         ! internals
@@ -62,7 +62,7 @@ contains
 
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
-  
+
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
         call log_message(msg, this_module, this_procedure)
@@ -87,7 +87,7 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-    end procedure
+    end procedure print_gmres_dp
 
     module procedure reset_gmres_dp
         self%n_iter = 0
@@ -96,7 +96,7 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-    end procedure
+    end procedure reset_gmres_dp
 
     !----------------------------------------------------
     !-----     GMRES SOLVERS FOR ABSTRACT TYPES     -----
@@ -153,7 +153,7 @@ contains
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
-        allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg) 
+        allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -183,7 +183,7 @@ contains
             call V(1)%scal(one_rsp/beta)
             c = 0.0_sp ; s = 0.0_sp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
@@ -204,7 +204,8 @@ contains
                     call A%apply_matvec(wrk, V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -219,7 +220,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
@@ -249,7 +250,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_sp) call v(1)%scal(one_rsp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_sp) call v(1)%scal(one_rsp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -263,7 +265,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                gmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -290,7 +292,7 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure gmres_rsp
 
     module procedure gmres_rdp
        ! Options.
@@ -343,7 +345,7 @@ contains
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
-        allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg) 
+        allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -373,7 +375,7 @@ contains
             call V(1)%scal(one_rdp/beta)
             c = 0.0_dp ; s = 0.0_dp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
@@ -394,7 +396,8 @@ contains
                     call A%apply_matvec(wrk, V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -409,7 +412,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
@@ -439,7 +442,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_dp) call v(1)%scal(one_rdp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_dp) call v(1)%scal(one_rdp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -453,7 +457,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                gmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -480,7 +484,7 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure gmres_rdp
 
     module procedure gmres_csp
        ! Options.
@@ -533,7 +537,7 @@ contains
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
-        allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg) 
+        allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -563,7 +567,7 @@ contains
             call V(1)%scal(one_csp/beta)
             c = 0.0_sp ; s = 0.0_sp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
@@ -584,7 +588,8 @@ contains
                     call A%apply_matvec(wrk, V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -599,7 +604,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
@@ -629,7 +634,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_sp) call v(1)%scal(one_csp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_sp) call v(1)%scal(one_csp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -643,7 +649,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                gmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -670,7 +676,7 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure gmres_csp
 
     module procedure gmres_cdp
        ! Options.
@@ -723,7 +729,7 @@ contains
         allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         call zero_basis(V)
-        allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg) 
+        allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         allocate(e(kdim+1), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -753,7 +759,7 @@ contains
             call V(1)%scal(one_cdp/beta)
             c = 0.0_dp ; s = 0.0_dp
             if (gmres_meta%n_outer == 0) then
-               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg) 
+               allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
                write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
@@ -774,7 +780,8 @@ contains
                     call A%apply_matvec(wrk, V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
                 H(k+1, k) = V(k+1)%norm()
@@ -789,7 +796,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 gmres_meta%n_iter  = gmres_meta%n_iter + 1
                 gmres_meta%n_inner = gmres_meta%n_inner + 1
@@ -819,7 +826,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_dp) call v(1)%scal(one_cdp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_dp) call v(1)%scal(one_cdp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -833,7 +841,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                gmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -860,7 +868,7 @@ contains
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure gmres_cdp
 
 
     module procedure dense_gmres_rsp
@@ -874,8 +882,7 @@ contains
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
-    
+    end procedure dense_gmres_rsp
     module procedure dense_gmres_rdp
     type(dense_vector_rdp) :: b_, x_
     type(dense_linop_rdp)  :: A_
@@ -887,8 +894,7 @@ contains
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
-    
+    end procedure dense_gmres_rdp
     module procedure dense_gmres_csp
     type(dense_vector_csp) :: b_, x_
     type(dense_linop_csp)  :: A_
@@ -900,8 +906,7 @@ contains
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
-    
+    end procedure dense_gmres_csp
     module procedure dense_gmres_cdp
     type(dense_vector_cdp) :: b_, x_
     type(dense_linop_cdp)  :: A_
@@ -913,6 +918,5 @@ contains
     call gmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
-    
-end submodule
+    end procedure dense_gmres_cdp
+end submodule gmres_solver

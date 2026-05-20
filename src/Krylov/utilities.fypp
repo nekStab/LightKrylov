@@ -63,7 +63,7 @@ contains
         call orthonormalize_basis(X)
     end procedure initialize_random_orthonormal_basis_${type[0]}$${kind}$
     #:endfor
-   
+
     !----------------------------------------
     !-----     Orthonormalize basis     -----
     !----------------------------------------

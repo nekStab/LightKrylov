@@ -7,9 +7,7 @@ module LightKrylov_TestUtils
     use LightKrylov
     use LightKrylov_Logger
     use LightKrylov_Constants
-    
     implicit none(type, external)
-    
     private
 
     character(len=*), parameter :: this_module      = 'LK_TUtils'
@@ -97,11 +95,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_rsp
     end type linop_rsp
     interface linop_rsp
-        module function construct_linop_rsp(data) result(A)
-            implicit none(type, external)
-            real(sp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_rsp) :: A
-        end function construct_linop_rsp
+        module procedure construct_linop_rsp
     end interface
 
     type, extends(abstract_sym_linop_rsp), public :: spd_linop_rsp
@@ -112,11 +106,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => sdp_matvec_rsp
     end type spd_linop_rsp
     interface spd_linop_rsp
-        module function construct_spd_linop_rsp(data) result(A)
-            implicit none(type, external)
-            real(sp), dimension(test_size, test_size), intent(in) :: data
-            type(spd_linop_rsp) :: A
-        end function construct_spd_linop_rsp
+        module procedure construct_spd_linop_rsp
     end interface
 
     type, extends(abstract_linop_rdp), public :: linop_rdp
@@ -127,11 +117,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_rdp
     end type linop_rdp
     interface linop_rdp
-        module function construct_linop_rdp(data) result(A)
-            implicit none(type, external)
-            real(dp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_rdp) :: A
-        end function construct_linop_rdp
+        module procedure construct_linop_rdp
     end interface
 
     type, extends(abstract_sym_linop_rdp), public :: spd_linop_rdp
@@ -142,11 +128,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => sdp_matvec_rdp
     end type spd_linop_rdp
     interface spd_linop_rdp
-        module function construct_spd_linop_rdp(data) result(A)
-            implicit none(type, external)
-            real(dp), dimension(test_size, test_size), intent(in) :: data
-            type(spd_linop_rdp) :: A
-        end function construct_spd_linop_rdp
+        module procedure construct_spd_linop_rdp
     end interface
 
     type, extends(abstract_linop_csp), public :: linop_csp
@@ -157,11 +139,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_csp
     end type linop_csp
     interface linop_csp
-        module function construct_linop_csp(data) result(A)
-            implicit none(type, external)
-            complex(sp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_csp) :: A
-        end function construct_linop_csp
+        module procedure construct_linop_csp
     end interface
 
     type, extends(abstract_hermitian_linop_csp), public :: hermitian_linop_csp
@@ -172,11 +150,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => hermitian_matvec_csp
     end type hermitian_linop_csp
     interface hermitian_linop_csp
-        module function construct_hermitian_linop_csp(data) result(A)
-            implicit none(type, external)
-            complex(sp), dimension(test_size, test_size), intent(in) :: data
-            type(hermitian_linop_csp) :: A
-        end function construct_hermitian_linop_csp
+        module procedure construct_hermitian_linop_csp
     end interface
     type, extends(abstract_linop_cdp), public :: linop_cdp
         complex(dp), dimension(test_size, test_size) :: data = zero_cdp
@@ -186,11 +160,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => rmatvec_cdp
     end type linop_cdp
     interface linop_cdp
-        module function construct_linop_cdp(data) result(A)
-            implicit none(type, external)
-            complex(dp), dimension(test_size, test_size), intent(in) :: data
-            type(linop_cdp) :: A
-        end function construct_linop_cdp
+        module procedure construct_linop_cdp
     end interface
 
     type, extends(abstract_hermitian_linop_cdp), public :: hermitian_linop_cdp
@@ -201,11 +171,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: rmatvec => hermitian_matvec_cdp
     end type hermitian_linop_cdp
     interface hermitian_linop_cdp
-        module function construct_hermitian_linop_cdp(data) result(A)
-            implicit none(type, external)
-            complex(dp), dimension(test_size, test_size), intent(in) :: data
-            type(hermitian_linop_cdp) :: A
-        end function construct_hermitian_linop_cdp
+        module procedure construct_hermitian_linop_cdp
     end interface
 
     ! ROESSLER SYSTEM
@@ -386,34 +352,58 @@ contains
     !-----     CONSTRUCTORS     -----
     !--------------------------------
 
-    module procedure construct_linop_rsp
-    A%data = data
-    end procedure construct_linop_rsp
+    function construct_linop_rsp(data) result(A)
+        implicit none(type, external)
+        real(sp), dimension(test_size, test_size), intent(in) :: data
+        type(linop_rsp) :: A
+        A%data = data
+    end function construct_linop_rsp
 
-    module procedure construct_spd_linop_rsp
-    A%data = data
-    end procedure construct_spd_linop_rsp
-    module procedure construct_linop_rdp
-    A%data = data
-    end procedure construct_linop_rdp
+    function construct_spd_linop_rsp(data) result(A)
+        implicit none(type, external)
+        real(sp), dimension(test_size, test_size), intent(in) :: data
+        type(spd_linop_rsp) :: A
+        A%data = data
+    end function construct_spd_linop_rsp
+    function construct_linop_rdp(data) result(A)
+        implicit none(type, external)
+        real(dp), dimension(test_size, test_size), intent(in) :: data
+        type(linop_rdp) :: A
+        A%data = data
+    end function construct_linop_rdp
 
-    module procedure construct_spd_linop_rdp
-    A%data = data
-    end procedure construct_spd_linop_rdp
-    module procedure construct_linop_csp
-    A%data = data
-    end procedure construct_linop_csp
+    function construct_spd_linop_rdp(data) result(A)
+        implicit none(type, external)
+        real(dp), dimension(test_size, test_size), intent(in) :: data
+        type(spd_linop_rdp) :: A
+        A%data = data
+    end function construct_spd_linop_rdp
+    function construct_linop_csp(data) result(A)
+        implicit none(type, external)
+        complex(sp), dimension(test_size, test_size), intent(in) :: data
+        type(linop_csp) :: A
+        A%data = data
+    end function construct_linop_csp
 
-    module procedure construct_hermitian_linop_csp
-    A%data = data
-    end procedure construct_hermitian_linop_csp
-    module procedure construct_linop_cdp
-    A%data = data
-    end procedure construct_linop_cdp
+    function construct_hermitian_linop_csp(data) result(A)
+        implicit none(type, external)
+        complex(sp), dimension(test_size, test_size), intent(in) :: data
+        type(hermitian_linop_csp) :: A
+        A%data = data
+    end function construct_hermitian_linop_csp
+    function construct_linop_cdp(data) result(A)
+        implicit none(type, external)
+        complex(dp), dimension(test_size, test_size), intent(in) :: data
+        type(linop_cdp) :: A
+        A%data = data
+    end function construct_linop_cdp
 
-    module procedure construct_hermitian_linop_cdp
-    A%data = data
-    end procedure construct_hermitian_linop_cdp
+    function construct_hermitian_linop_cdp(data) result(A)
+        implicit none(type, external)
+        complex(dp), dimension(test_size, test_size), intent(in) :: data
+        type(hermitian_linop_cdp) :: A
+        A%data = data
+    end function construct_hermitian_linop_cdp
 
     !----------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST VECTORS     -----
@@ -465,11 +455,11 @@ contains
         logical :: normalized
         real(sp) :: mu(test_size), var(test_size)
         real(sp) :: alpha
- 
+
         mu = 0.0_sp
         var = 1.0_sp
         self%data = normal(mu, var)
- 
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -523,11 +513,11 @@ contains
         logical :: normalized
         real(dp) :: mu(test_size), var(test_size)
         real(dp) :: alpha
- 
+
         mu = 0.0_dp
         var = 1.0_dp
         self%data = normal(mu, var)
- 
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -581,11 +571,11 @@ contains
         logical :: normalized
         complex(sp) :: mu(test_size), var(test_size)
         complex(sp) :: alpha
- 
+
         mu = 0.0_sp
         var = cmplx(1.0_sp, 1.0_sp, kind=sp)
         self%data = normal(mu, var)
- 
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -639,11 +629,11 @@ contains
         logical :: normalized
         complex(dp) :: mu(test_size), var(test_size)
         complex(dp) :: alpha
- 
+
         mu = 0.0_dp
         var = cmplx(1.0_dp, 1.0_dp, kind=dp)
         self%data = normal(mu, var)
- 
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -1235,14 +1225,14 @@ contains
     !---------------------------------------------------
     !-----     ROESSLER SYSTEM TYPE DEFINITION     -----
     !---------------------------------------------------
- 
+
     subroutine zero_state_rsp(self)
         class(state_vector_rsp), intent(inout) :: self
         self%x = 0.0_sp
         self%y = 0.0_sp
         self%z = 0.0_sp
     end subroutine zero_state_rsp
-  
+
     real(sp) function dot_state_rsp(self, vec) result(alpha)
         class(state_vector_rsp)   , intent(in) :: self
         class(abstract_vector_rsp), intent(in) :: vec
@@ -1253,7 +1243,7 @@ contains
             call type_error('vec','state_vector_rsp','IN',this_module,'dot_state_rsp')
         end select
     end function dot_state_rsp
-  
+
     subroutine scal_state_rsp(self, alpha)
         class(state_vector_rsp), intent(inout) :: self
         real(sp)               , intent(in)    :: alpha
@@ -1261,7 +1251,7 @@ contains
         self%y = self%y * alpha
         self%z = self%z * alpha
     end subroutine scal_state_rsp
-  
+
     subroutine axpby_state_rsp(alpha, vec, beta, self)
         class(state_vector_rsp)   , intent(inout) :: self
         class(abstract_vector_rsp), intent(in)    :: vec
@@ -1275,25 +1265,25 @@ contains
             call type_error('vec','state_vector_rsp','IN',this_module,'axpby_state_rsp')
         end select
     end subroutine axpby_state_rsp
-  
+
     integer function get_size_state_rsp(self) result(N)
         class(state_vector_rsp), intent(in) :: self
         N = 3
     end function get_size_state_rsp
-  
+
     subroutine rand_state_rsp(self, ifnorm)
         class(state_vector_rsp), intent(inout) :: self
         logical, optional,   intent(in)        :: ifnorm
         logical :: normalized
         real(sp) :: mu, var
         real(sp) :: alpha
-    
+
         mu = zero_rsp
         var = one_rsp
         self%x = normal(mu, var)
         self%y = normal(mu, var)
         self%z = normal(mu, var)
-    
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -1307,7 +1297,7 @@ contains
         self%y = 0.0_dp
         self%z = 0.0_dp
     end subroutine zero_state_rdp
-  
+
     real(dp) function dot_state_rdp(self, vec) result(alpha)
         class(state_vector_rdp)   , intent(in) :: self
         class(abstract_vector_rdp), intent(in) :: vec
@@ -1318,7 +1308,7 @@ contains
             call type_error('vec','state_vector_rdp','IN',this_module,'dot_state_rdp')
         end select
     end function dot_state_rdp
-  
+
     subroutine scal_state_rdp(self, alpha)
         class(state_vector_rdp), intent(inout) :: self
         real(dp)               , intent(in)    :: alpha
@@ -1326,7 +1316,7 @@ contains
         self%y = self%y * alpha
         self%z = self%z * alpha
     end subroutine scal_state_rdp
-  
+
     subroutine axpby_state_rdp(alpha, vec, beta, self)
         class(state_vector_rdp)   , intent(inout) :: self
         class(abstract_vector_rdp), intent(in)    :: vec
@@ -1340,25 +1330,25 @@ contains
             call type_error('vec','state_vector_rdp','IN',this_module,'axpby_state_rdp')
         end select
     end subroutine axpby_state_rdp
-  
+
     integer function get_size_state_rdp(self) result(N)
         class(state_vector_rdp), intent(in) :: self
         N = 3
     end function get_size_state_rdp
-  
+
     subroutine rand_state_rdp(self, ifnorm)
         class(state_vector_rdp), intent(inout) :: self
         logical, optional,   intent(in)        :: ifnorm
         logical :: normalized
         real(dp) :: mu, var
         real(dp) :: alpha
-    
+
         mu = zero_rdp
         var = one_rdp
         self%x = normal(mu, var)
         self%y = normal(mu, var)
         self%z = normal(mu, var)
-    
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -1434,12 +1424,12 @@ contains
         class(abstract_vector_rsp), intent(out) :: vec_out
         ! internal
         real(sp) :: X, Y, Z
-        
+
         call get_state_rsp(self%X, X, Y, Z)
         select type(vec_in)
         type is(state_vector_rsp)
             select type(vec_out)
-            type is(state_vector_rsp) 
+            type is(state_vector_rsp)
 
                 vec_out%x =  vec_in%y + vec_in%z*Z
                 vec_out%y = -vec_in%x + a_sp*vec_in%y
@@ -1536,12 +1526,12 @@ contains
         class(abstract_vector_rdp), intent(out) :: vec_out
         ! internal
         real(dp) :: X, Y, Z
-        
+
         call get_state_rdp(self%X, X, Y, Z)
         select type(vec_in)
         type is(state_vector_rdp)
             select type(vec_out)
-            type is(state_vector_rdp) 
+            type is(state_vector_rdp)
 
                 vec_out%x =  vec_in%y + vec_in%z*Z
                 vec_out%y = -vec_in%x + a_dp*vec_in%y
@@ -1575,14 +1565,14 @@ contains
     !----------------------------------------------------------------
     !-----     COMPLEXIFIED ROESSLER SYSTEM TYPE DEFINITION     -----
     !----------------------------------------------------------------
- 
+
     subroutine zero_state_csp(self)
         class(state_vector_csp), intent(inout) :: self
         self%x = cmplx(0.0_sp, 0.0_sp, kind=sp)
         self%y = cmplx(0.0_sp, 0.0_sp, kind=sp)
         self%z = cmplx(0.0_sp, 0.0_sp, kind=sp)
     end subroutine zero_state_csp
-  
+
     complex(sp) function dot_state_csp(self, vec) result(alpha)
         class(state_vector_csp)   , intent(in) :: self
         class(abstract_vector_csp), intent(in) :: vec
@@ -1593,7 +1583,7 @@ contains
             call type_error('vec','state_vector_csp','IN',this_module,'dot_state_csp')
         end select
     end function dot_state_csp
-  
+
     subroutine scal_state_csp(self, alpha)
         class(state_vector_csp), intent(inout) :: self
         complex(sp)            , intent(in)    :: alpha
@@ -1601,7 +1591,7 @@ contains
         self%y = self%y * alpha
         self%z = self%z * alpha
     end subroutine scal_state_csp
-  
+
     subroutine axpby_state_csp(alpha, vec, beta, self)
         class(state_vector_csp)   , intent(inout) :: self
         class(abstract_vector_csp), intent(in)    :: vec
@@ -1615,25 +1605,25 @@ contains
             call type_error('vec','state_vector_csp','IN',this_module,'axpby_state_csp')
         end select
     end subroutine axpby_state_csp
-  
+
     integer function get_size_state_csp(self) result(N)
         class(state_vector_csp), intent(in) :: self
         N = 3
     end function get_size_state_csp
-  
+
     subroutine rand_state_csp(self, ifnorm)
         class(state_vector_csp), intent(inout) :: self
         logical, optional,   intent(in)        :: ifnorm
         logical :: normalized
         real(sp) :: mu, var
         real(sp) :: alpha
-    
+
         mu = zero_rsp
         var = one_rsp
         self%x = cmplx(normal(mu, var), normal(mu,var), kind=sp)
         self%y = cmplx(normal(mu, var), normal(mu,var), kind=sp)
         self%z = cmplx(normal(mu, var), normal(mu,var), kind=sp)
-    
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -1647,7 +1637,7 @@ contains
         self%y = cmplx(0.0_dp, 0.0_dp, kind=dp)
         self%z = cmplx(0.0_dp, 0.0_dp, kind=dp)
     end subroutine zero_state_cdp
-  
+
     complex(dp) function dot_state_cdp(self, vec) result(alpha)
         class(state_vector_cdp)   , intent(in) :: self
         class(abstract_vector_cdp), intent(in) :: vec
@@ -1658,7 +1648,7 @@ contains
             call type_error('vec','state_vector_cdp','IN',this_module,'dot_state_cdp')
         end select
     end function dot_state_cdp
-  
+
     subroutine scal_state_cdp(self, alpha)
         class(state_vector_cdp), intent(inout) :: self
         complex(dp)            , intent(in)    :: alpha
@@ -1666,7 +1656,7 @@ contains
         self%y = self%y * alpha
         self%z = self%z * alpha
     end subroutine scal_state_cdp
-  
+
     subroutine axpby_state_cdp(alpha, vec, beta, self)
         class(state_vector_cdp)   , intent(inout) :: self
         class(abstract_vector_cdp), intent(in)    :: vec
@@ -1680,25 +1670,25 @@ contains
             call type_error('vec','state_vector_cdp','IN',this_module,'axpby_state_cdp')
         end select
     end subroutine axpby_state_cdp
-  
+
     integer function get_size_state_cdp(self) result(N)
         class(state_vector_cdp), intent(in) :: self
         N = 3
     end function get_size_state_cdp
-  
+
     subroutine rand_state_cdp(self, ifnorm)
         class(state_vector_cdp), intent(inout) :: self
         logical, optional,   intent(in)        :: ifnorm
         logical :: normalized
         real(dp) :: mu, var
         real(dp) :: alpha
-    
+
         mu = zero_rdp
         var = one_rdp
         self%x = cmplx(normal(mu, var), normal(mu,var), kind=dp)
         self%y = cmplx(normal(mu, var), normal(mu,var), kind=dp)
         self%z = cmplx(normal(mu, var), normal(mu,var), kind=dp)
-    
+
         normalized = optval(ifnorm, .false.)
         if (normalized) then
             alpha = self%norm()
@@ -1776,13 +1766,13 @@ contains
         class(abstract_vector_csp), intent(out) :: vec_out
 
         real(sp) :: X, Y, Z
-        
+
         call get_state_csp(self%X, X, Y, Z)
 
         select type(vec_in)
         type is(state_vector_csp)
             select type(vec_out)
-            type is(state_vector_csp) 
+            type is(state_vector_csp)
 
                 vec_out%x =  vec_in%y + one_im_csp*vec_in%z*Z
                 vec_out%y = -vec_in%x + a_sp*vec_in%y
@@ -1881,13 +1871,13 @@ contains
         class(abstract_vector_cdp), intent(out) :: vec_out
 
         real(dp) :: X, Y, Z
-        
+
         call get_state_cdp(self%X, X, Y, Z)
 
         select type(vec_in)
         type is(state_vector_cdp)
             select type(vec_out)
-            type is(state_vector_cdp) 
+            type is(state_vector_cdp)
 
                 vec_out%x =  vec_in%y + one_im_cdp*vec_in%z*Z
                 vec_out%y = -vec_in%x + a_dp*vec_in%y

@@ -91,7 +91,7 @@ contains
     !---------------------------------------------------------------
     !-----     Getter/Setter routines for abstract_systems     -----
     !---------------------------------------------------------------
- 
+
     pure integer function get_eval_counter(self) result(count)
         !! Getter function for the number of system evaluations.
         implicit none(type, external)

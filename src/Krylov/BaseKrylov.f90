@@ -6,7 +6,8 @@ module LightKrylov_BaseKrylov
     !!  - `arnoldi(A, X, H, info)`: Arnoldi factorization for general square matrices.
     !!  - `lanczos(A, X, H, info)`: Lanczos factorization for general symmetric/hermitian matrices.
     !!  - `bidiagonalization(A, U, V, B)`: Lanczos bidiagonalization for arbitrary matrices.
-    !!  - `qr(X, R, perm, info)`: QR factorization (with and without column pivoting) of an array of `abstract_vector`.
+    !!  - `qr(X, R, perm, info)`: QR factorization (with and without column pivoting) of an array
+    !!    of `abstract_vector`.
 
 
     !--------------------------------------------
@@ -27,7 +28,7 @@ module LightKrylov_BaseKrylov
 
     implicit none(type, external)
     private
-    
+
     character(len=*), parameter :: this_module      = 'LK_BKrylov'
     character(len=*), parameter :: this_module_long = 'LightKrylov_BaseKrylov'
 
@@ -101,7 +102,7 @@ module LightKrylov_BaseKrylov
         !!          `intent(inout)` argument.
         !!
         !!  -`info` :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!              `info` > 0, the Arnoldi factorization experienced a lucky breakdown. 
+        !!              `info` > 0, the Arnoldi factorization experienced a lucky breakdown.
         !!              The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
         !!              dimension `info`.
         !!
@@ -110,12 +111,12 @@ module LightKrylov_BaseKrylov
         !!                              optional `intent(in)` argument.
         !!
         !!  - `kend` (*optional*)   :   `integer` value determining the index of the last Arnoldi step
-        !!                              to be computed. It is an optional `intent(in)` argument. 
+        !!                              to be computed. It is an optional `intent(in)` argument.
         !!                              By default, `kend = size(X) - 1`.
         !!
         !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered
         !!                              to be \( A \)-invariant. It is an optional `intent(in)` argument.
-        !!                              By default `tol = atol_sp` or `tol = atol_rp` depending on the 
+        !!                              By default `tol = atol_sp` or `tol = atol_rp` depending on the
         !!                              kind of `A`.
         !!
         !!  - `transpose` (*optional*)  :   `logical` flag determining whether the Arnoldi factorization
@@ -123,7 +124,7 @@ module LightKrylov_BaseKrylov
         !!                                  argument. Default `transpose = .false.`
         !!
         !!  - `blksize` (*optional*)    :   `integer` value determining the dimension of a block for the
-        !!                                  block Arnoldi factorization. It is an optional `intent(in)` 
+        !!                                  block Arnoldi factorization. It is an optional `intent(in)`
         !!                                  argument. Default is `blksize=1`.
         module subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
             implicit none(type, external)
@@ -248,7 +249,7 @@ module LightKrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  - `A`   :   Symmetric or Hermitian linear operator derived from one the base types 
+        !!  - `A`   :   Symmetric or Hermitian linear operator derived from one the base types
         !!              provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  - `X`   :   Array of types derived from one the base types provided by the `AbstractVectors`
@@ -262,7 +263,7 @@ module LightKrylov_BaseKrylov
         !!              `intent(inout)` argument.
         !!
         !!  - `info`    :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!                  `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!                  `info` > 0, the Lanczos factorization experienced a lucky breakdown.
         !!                  The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
         !!                  dimension `info`.
         !!
@@ -271,12 +272,12 @@ module LightKrylov_BaseKrylov
         !!                              By default, `kstart = 1`.
         !!
         !!  - `kend` (*optional*)   :   `integer` value determining the index of the last Lanczos step
-        !!                              to be computed. It is an optional `intent(in)` argument. 
+        !!                              to be computed. It is an optional `intent(in)` argument.
         !!                              By default, `kend = size(X) - 1`.
         !!
         !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered
         !!                              to be \( A \)-invariant. It is an optional `intent(in)` argument.
-        !!                              By default `tol = atol_sp` or `tol = atol_rp` depending on the 
+        !!                              By default `tol = atol_sp` or `tol = atol_rp` depending on the
         !!                              kind of `A`.
         module subroutine lanczos_tridiagonalization_rsp(A, X, T, info, kstart, kend, tol)
             implicit none(type, external)
@@ -350,7 +351,7 @@ module LightKrylov_BaseKrylov
         !!
         !!  **References**
         !!
-        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization." 
+        !!  - R. M. Larsen. "Lanczos bidiagonalization with partial reorthogonalization."
         !!    Technical Report, 1998. [(PDF)](http://sun.stanford.edu/~rmunk/PROPACK/paper.pdf)
         !!
         !!  ### Syntax
@@ -361,47 +362,47 @@ module LightKrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  - `A`   :   Linear operator derived from one the base types provided by the 
+        !!  - `A`   :   Linear operator derived from one the base types provided by the
         !!              `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  - `U`   :   Array of types derived from one the base types provided by the `AbstractVectors`
         !!              module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!              the computed Krylov vectors for the column span of `A`. The first entry `U(1)` 
-        !!              is the starting vector for the Lanczos factorization. Additionally, the 
-        !!              maximum number of Lanczos steps is equal to `size(X) - 1`. 
+        !!              the computed Krylov vectors for the column span of `A`. The first entry `U(1)`
+        !!              is the starting vector for the Lanczos factorization. Additionally, the
+        !!              maximum number of Lanczos steps is equal to `size(X) - 1`.
         !!              It is an `intent(inout)` argument.
         !!
         !!  - `V`   :   Array of types derived from one the base types provided by the `AbstractVectors`
         !!              module. It needs to be consistent with the type of `A`. On exit, it contains the
-        !!              the computed Krylov vectors for the row span of `A`. It is an `intent(inout)` 
+        !!              the computed Krylov vectors for the row span of `A`. It is an `intent(inout)`
         !!              argument.
         !!
         !!  - `B`   :   `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!              bidiagonal matrix computed from the Lanczos factorization. It is an `intent(inout)` 
+        !!              bidiagonal matrix computed from the Lanczos factorization. It is an `intent(inout)`
         !!              argument.
         !!
         !!  - `info`    :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
-        !!                  `info` > 0, the Lanczos factorization experienced a lucky breakdown. 
+        !!                  `info` > 0, the Lanczos factorization experienced a lucky breakdown.
         !!
         !!  - `kstart` (*optional*) :   `integer` value determining the index of the first Lanczos
         !!                              step to be computed. It is an optional `intent(in)` argument.
         !!                              By default, `kstart = 1`.
         !!
         !!  - `kend` (*optional*)   :   `integer` value determining the index of the last Lanczos step
-        !!                              to be computed. It is an optional `intent(in)` argument. 
+        !!                              to be computed. It is an optional `intent(in)` argument.
         !!                              By default, `kend = size(X) - 1`.
         !!
         !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered
         !!                              to be \( A \)-invariant. It is an optional `intent(in)` argument.
-        !!                              By default `tol = atol_sp` or `tol = atol_rp` depending on the 
+        !!                              By default `tol = atol_sp` or `tol = atol_rp` depending on the
         !!                              kind of `A`.
         module subroutine lanczos_bidiagonalization_rsp(A, U, V, B, info, kstart, kend, tol)
             implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_rsp), intent(inout) :: U(:)
-            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-            !! the starting Krylov vector.
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+            !! be set to the starting Krylov vector.
             class(abstract_vector_rsp), intent(inout) :: V(:)
             !! Orthonormal basis for the row span of \(\mathbf{A}\).
             real(sp), intent(inout) :: B(:, :)
@@ -421,8 +422,8 @@ module LightKrylov_BaseKrylov
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_rdp), intent(inout) :: U(:)
-            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-            !! the starting Krylov vector.
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+            !! be set to the starting Krylov vector.
             class(abstract_vector_rdp), intent(inout) :: V(:)
             !! Orthonormal basis for the row span of \(\mathbf{A}\).
             real(dp), intent(inout) :: B(:, :)
@@ -442,8 +443,8 @@ module LightKrylov_BaseKrylov
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_csp), intent(inout) :: U(:)
-            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-            !! the starting Krylov vector.
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+            !! be set to the starting Krylov vector.
             class(abstract_vector_csp), intent(inout) :: V(:)
             !! Orthonormal basis for the row span of \(\mathbf{A}\).
             complex(sp), intent(inout) :: B(:, :)
@@ -463,8 +464,8 @@ module LightKrylov_BaseKrylov
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be factorized.
             class(abstract_vector_cdp), intent(inout) :: U(:)
-            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to be set to
-            !! the starting Krylov vector.
+            !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+            !! be set to the starting Krylov vector.
             class(abstract_vector_cdp), intent(inout) :: V(:)
             !! Orthonormal basis for the row span of \(\mathbf{A}\).
             complex(dp), intent(inout) :: B(:, :)
@@ -538,7 +539,7 @@ module LightKrylov_BaseKrylov
         !!  - `info`    :   `integer` information flag.
         !!
         !!  - `tol` (*optional*)    :   Numerical tolerance to determine whether two vectors are colinear
-        !!                              or not. It is an optional `intent(in)` argument. Default `tol = atol_sp` or 
+        !!                              or not. It is an optional `intent(in)` argument. Default `tol = atol_sp` or
         !!                              `tol = atol_dp`.
         module subroutine qr_no_pivoting_rsp(Q, R, info, tol)
             implicit none(type, external)
@@ -671,7 +672,7 @@ module LightKrylov_BaseKrylov
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
         end subroutine permcols_basis_rsp
- 
+
         module subroutine permcols_array_rsp(Q, perm)
             implicit none(type, external)
             real(sp), intent(inout) :: Q(:, :)
@@ -685,7 +686,7 @@ module LightKrylov_BaseKrylov
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
         end subroutine permcols_basis_rdp
- 
+
         module subroutine permcols_array_rdp(Q, perm)
             implicit none(type, external)
             real(dp), intent(inout) :: Q(:, :)
@@ -699,7 +700,7 @@ module LightKrylov_BaseKrylov
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
         end subroutine permcols_basis_csp
- 
+
         module subroutine permcols_array_csp(Q, perm)
             implicit none(type, external)
             complex(sp), intent(inout) :: Q(:, :)
@@ -713,7 +714,7 @@ module LightKrylov_BaseKrylov
             !! Basis vectors to be permuted.
             integer, intent(in) :: perm(:)
         end subroutine permcols_basis_cdp
- 
+
         module subroutine permcols_array_cdp(Q, perm)
             implicit none(type, external)
             complex(dp), intent(inout) :: Q(:, :)
@@ -723,7 +724,7 @@ module LightKrylov_BaseKrylov
 
     end interface
 
-    interface 
+    interface
         !!  ### Description
         !!
         !!  Given a permutation vector \( p \), this function computes the vector
@@ -1045,8 +1046,8 @@ module LightKrylov_BaseKrylov
     interface double_gram_schmidt_step
         !!  ### Description
         !!
-        !!  Given an array \( X \) of `abstract_vector` and an `abstract_vector` 
-        !!  (or array of `abstract_vectors`) \( y \), this subroutine returns a modified 
+        !!  Given an array \( X \) of `abstract_vector` and an `abstract_vector`
+        !!  (or array of `abstract_vectors`) \( y \), this subroutine returns a modified
         !!  vector \( y \) orthogonal to all columns of \( X \), i.e.
         !!
         !!  \[
@@ -1054,8 +1055,8 @@ module LightKrylov_BaseKrylov
         !!  \]
         !!
         !!  using a double Gram-Schmidt process. On exit, \( y \) is orthogonal to \( X \) but
-        !!  does not have unit norm. Note moreover that \( X \) is assumed to be an orthonormal 
-        !!  set of vectors. The function can also return the projection coefficients 
+        !!  does not have unit norm. Note moreover that \( X \) is assumed to be an orthonormal
+        !!  set of vectors. The function can also return the projection coefficients
         !!  \( \beta = X^H y \).
         !!
         !!  ### Syntax
@@ -1071,17 +1072,17 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `X`   :   Array of `abstract_vector` against which \( y \) needs to be orthogonalized.
         !!              Note the function assumes that \( X \) is an orthonormal set of vectors, i.e.
-        !!              \( X^H X = I \). If it this is not the case, the result is meaningless. 
+        !!              \( X^H X = I \). If it this is not the case, the result is meaningless.
         !!              It is an `intent(in)` argument.
         !!
         !!  - `info`    :   `integer` Information flag.
         !!
-        !!  - `if_chk_orthonormal` (*optional*) :   `logical` flag to check whether 
-        !!                                          \( X \) is an orthonormal set of vectors or not. 
+        !!  - `if_chk_orthonormal` (*optional*) :   `logical` flag to check whether
+        !!                                          \( X \) is an orthonormal set of vectors or not.
         !!                                          If the orthonormality returns `.false.`, the function raises
-        !!                                          an error. Note that this check is computationally expensive 
+        !!                                          an error. Note that this check is computationally expensive
         !!                                          and should be disabled in production unless required
-        !!                                          for better performance. Is is an optional `intent(in)` 
+        !!                                          for better performance. Is is an optional `intent(in)`
         !!                                          argument. Default `.true.`.
         !!
         !!  - `beta` (*optional*)   :   `real` or `complex` array containing the coefficients \( \beta = X^H y \).
@@ -1241,7 +1242,7 @@ module LightKrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  - `n`   :   Number of selected eigenvalues moved to the upper left-block of the 
+        !!  - `n`   :   Number of selected eigenvalues moved to the upper left-block of the
         !!              Schur matrix. It is an `intent(out)` argument.
         !!
         !!  - `X`   :   On entry, array of `abstract_vector` computed using the Arnoldi process.
@@ -1300,7 +1301,7 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_sp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
-        
+
         ! Schur-related.
         real(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(sp) :: eigvals(size(H, 2))
@@ -1309,7 +1310,7 @@ contains
         integer :: kdim
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-       
+
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
@@ -1326,7 +1327,7 @@ contains
         block
         real(sp) :: b(size(H, 2))
         class(abstract_vector_rsp), allocatable :: Xwrk(:)
-        
+
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
         call copy(X(:n), Xwrk(:n))
@@ -1354,7 +1355,7 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_dp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
-        
+
         ! Schur-related.
         real(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(dp) :: eigvals(size(H, 2))
@@ -1363,7 +1364,7 @@ contains
         integer :: kdim
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-       
+
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
@@ -1380,7 +1381,7 @@ contains
         block
         real(dp) :: b(size(H, 2))
         class(abstract_vector_rdp), allocatable :: Xwrk(:)
-        
+
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
         call copy(X(:n), Xwrk(:n))
@@ -1408,7 +1409,7 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_sp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
-        
+
         ! Schur-related.
         complex(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(sp) :: eigvals(size(H, 2))
@@ -1417,7 +1418,7 @@ contains
         integer :: kdim
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-       
+
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
@@ -1434,7 +1435,7 @@ contains
         block
         complex(sp) :: b(size(H, 2))
         class(abstract_vector_csp), allocatable :: Xwrk(:)
-        
+
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
         call copy(X(:n), Xwrk(:n))
@@ -1462,7 +1463,7 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_dp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
-        
+
         ! Schur-related.
         complex(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
         complex(dp) :: eigvals(size(H, 2))
@@ -1471,7 +1472,7 @@ contains
         integer :: kdim
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-       
+
         ! Krylov subspace dimension.
         kdim = size(X)-1
 
@@ -1488,7 +1489,7 @@ contains
         block
         complex(dp) :: b(size(H, 2))
         class(abstract_vector_cdp), allocatable :: Xwrk(:)
-        
+
         ! Update the Krylov basis.
         call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
         call copy(X(:n), Xwrk(:n))

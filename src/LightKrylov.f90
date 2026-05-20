@@ -113,7 +113,7 @@ module LightKrylov
     public :: abstract_jacobian_linop_csp
     public :: abstract_system_cdp
     public :: abstract_jacobian_linop_cdp
-    
+
     ! BaseKrylov exports.
     public :: qr
     public :: permcols, invperm

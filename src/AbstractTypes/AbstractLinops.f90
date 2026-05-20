@@ -2,7 +2,7 @@ module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
-    !!  
+    !!
     !!  - `matvec(self, vec_in, vec_out)`   :   Computes the matrix-vector product.
     !!  - `rmatvec(self, vec_in, vec_out)   :   Computes the transpose matrix-vector product.
     !!
@@ -100,8 +100,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract real(sp) exponential propagator with kind=sp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_rsp), public :: abstract_exptA_linop_rsp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -169,8 +169,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract real(dp) exponential propagator with kind=dp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_rdp), public :: abstract_exptA_linop_rdp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -238,8 +238,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract complex(sp) exponential propagator with kind=sp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_csp), public :: abstract_exptA_linop_csp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -307,8 +307,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract complex(dp) exponential propagator with kind=dp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_cdp), public :: abstract_exptA_linop_cdp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -638,7 +638,7 @@ module LightKrylov_AbstractLinops
         module procedure initialize_dense_linop_from_array_cdp
     end interface
     public :: dense_linop
-   
+
 contains
 
     !--------------------------------------------------------------
@@ -676,7 +676,7 @@ contains
       !! optional flag to choose whether to fully reset the timer (default: .false.)
       ! internals
       integer :: counter_, count_old
-      logical :: reset_timer_ 
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
@@ -772,7 +772,7 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -824,7 +824,7 @@ contains
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -876,7 +876,7 @@ contains
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -929,7 +929,7 @@ contains
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -1644,7 +1644,7 @@ contains
         end select
     end subroutine dense_rmatvec_cdp
 
-    
+
     function initialize_dense_linop_from_array_rsp(A) result(linop)
         implicit none(type, external)
         real(sp), intent(in) :: A(:, :)
