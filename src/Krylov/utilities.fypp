@@ -98,4 +98,63 @@ contains
     end procedure is_orthonormal_${type[0]}$${kind}$
 
     #:endfor
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure biorthonormalize_bases_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_${type[0]}$${kind}$'
+        !! SVD workspace
+        integer                     :: n, m, ns, i, info_, nretain
+        ${type}$, allocatable       :: M(:,:), U(:,:), VT(:,:)
+        real(${kind}$), allocatable :: S(:)
+        real(${kind}$)              :: tol_
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! handle optional tol
+        tol_ = optval(tol, atol_${kind}$)
+        n = size(X)
+        m = size(Y)
+        ns = min(n, m)
+        allocate(M(n, m), S(ns), U(n, ns), VT(ns, m))
+
+        ! compute SVD of inner product matrix
+        M = innerprod(Y, X)
+        call svd(M, S, U, VT)
+
+        ! determine how many singular values are above relative tolerance
+        nretain = 0
+        do i = 1, ns
+            if (S(i) / S(1) > tol_) then
+                nretain = nretain + 1
+            end if
+        end do
+
+        info_ = 0
+        if (nretain == 0) info_ = -1
+        call check_info(info, 'biorthonormalize_bases', this_module, this_procedure)
+
+        ! renormalize retained singular values
+        do i = 1, nretain
+            S(i) = one_r${kind}$ / sqrt(S(i))
+        end do
+        ! zero out truncated part
+        S(nretain+1:) = zero_r${kind}$
+
+        ! apply symmetric transformation in-place
+        block
+            class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+            call linear_combination(Xwrk, X, matmul(transpose(VT), diag(S)))
+            call copy(X, Xwrk)
+            call linear_combination(Xwrk, Y, matmul(U, diag(S)))
+            call copy(Y, Xwrk)
+        end block
+
+        info_ = nretain
+
+        if (present(info)) info = merge(nretain, info_, info_ == 0)
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+    end procedure biorthonormalize_bases_${type[0]}$${kind}$
+
+    #:endfor
 end submodule krylov_utilities
