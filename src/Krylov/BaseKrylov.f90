@@ -14,7 +14,7 @@ module LightKrylov_BaseKrylov
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, schur, norm, mnorm, svd
+    use stdlib_linalg, only: eye, schur, norm, mnorm, svd, diag
 
     !-------------------------------
     !-----     LightKrylov     -----
@@ -1059,12 +1059,17 @@ module LightKrylov_BaseKrylov
         !!
         !!  ### Arguments
         !!
-        !!  - `X`     :   Array of `abstract_vector` to biorthonormalize. It is an `intent(inout)` argument.
-        !!  - `Y`     :   Array of `abstract_vector`  to biorthonormalize. It is an `intent(inout)` argument.
-        !!  - `tol`   :   (Optional) Relative tolerance for SVD truncation. Defaults to 
-        !!                absolute tolerance. It is an `intent(in)` argument.
-        !!  - `info`  :   (Optional) Integer flag. Returns the number of retained singular
-        !!                vectors, or a negative value on error. It is an `intent(out)` argument.
+        !!  - `X`     :   Array of `abstract_vector` to biorthonormalize. 
+        !!                It is an `intent(inout)` argument.
+        !!  - `Y`     :   Array of `abstract_vector`  to biorthonormalize. 
+        !!                It is an `intent(inout)` argument.
+        !!  - `tol`  (*optional*)  :  Relative tolerance for SVD truncation. Defaults to absolute tolerance. 
+        !!                            It is an `intent(in)` argument.
+        !!  - `info` (*optional*)  :  Integer flag. Returns the number of retained singular vectors, 
+        !!                            or a negative value on error. It is an `intent(out)` argument.
+        !!  @warning
+        !!      This function performs standard symmetric biorthonormalization and will return an error if the bases are not of the same size.
+        !!  @endwarning
         module subroutine biorthonormalize_bases_rsp(X, Y, tol, info)
             !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
             implicit none(type, external)

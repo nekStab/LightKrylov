@@ -245,31 +245,39 @@ contains
         end if
     end procedure is_orthonormal_cdp
 
+    !----------------------------------------------
+    !-----     Biorthonormalize two bases     -----
+    !----------------------------------------------
 
     module procedure biorthonormalize_bases_rsp
-        character(len=*), parameter :: this_procedure = 'biorthonormalize_basis_rsp'
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rsp'
         !! SVD workspace
-        integer                     :: n, m, ns, i, info_, nretain
+        integer                     :: n, i, info_, nretain
         real(sp), allocatable       :: M(:,:), U(:,:), VT(:,:)
         real(sp), allocatable :: S(:)
         real(sp)              :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
-        n = size(X)
-        m = size(Y)
-        ns = min(n, m)
-        allocate(M(n, m), S(ns), U(n, ns), VT(ns, m))
 
+        n = size(X)
+        
         ! compute SVD of inner product matrix
         M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
         ! determine how many singular values are above relative tolerance
         nretain = 0
-        do i = 1, ns
+        do i = 1, n
             if (S(i) / S(1) > tol_) then
                 nretain = nretain + 1
             end if
@@ -277,7 +285,7 @@ contains
 
         info_ = 0
         if (nretain == 0) info_ = -1
-        call check_info(info, 'biorthonormalize_bases', this_module, this_procedure)
+        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
 
         ! renormalize retained singular values
         do i = 1, nretain
@@ -303,29 +311,34 @@ contains
     end procedure biorthonormalize_bases_rsp
 
     module procedure biorthonormalize_bases_rdp
-        character(len=*), parameter :: this_procedure = 'biorthonormalize_basis_rdp'
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rdp'
         !! SVD workspace
-        integer                     :: n, m, ns, i, info_, nretain
+        integer                     :: n, i, info_, nretain
         real(dp), allocatable       :: M(:,:), U(:,:), VT(:,:)
         real(dp), allocatable :: S(:)
         real(dp)              :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
-        n = size(X)
-        m = size(Y)
-        ns = min(n, m)
-        allocate(M(n, m), S(ns), U(n, ns), VT(ns, m))
 
+        n = size(X)
+        
         ! compute SVD of inner product matrix
         M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
         ! determine how many singular values are above relative tolerance
         nretain = 0
-        do i = 1, ns
+        do i = 1, n
             if (S(i) / S(1) > tol_) then
                 nretain = nretain + 1
             end if
@@ -333,7 +346,7 @@ contains
 
         info_ = 0
         if (nretain == 0) info_ = -1
-        call check_info(info, 'biorthonormalize_bases', this_module, this_procedure)
+        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
 
         ! renormalize retained singular values
         do i = 1, nretain
@@ -359,29 +372,34 @@ contains
     end procedure biorthonormalize_bases_rdp
 
     module procedure biorthonormalize_bases_csp
-        character(len=*), parameter :: this_procedure = 'biorthonormalize_basis_csp'
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_csp'
         !! SVD workspace
-        integer                     :: n, m, ns, i, info_, nretain
+        integer                     :: n, i, info_, nretain
         complex(sp), allocatable       :: M(:,:), U(:,:), VT(:,:)
         real(sp), allocatable :: S(:)
         real(sp)              :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
-        n = size(X)
-        m = size(Y)
-        ns = min(n, m)
-        allocate(M(n, m), S(ns), U(n, ns), VT(ns, m))
 
+        n = size(X)
+        
         ! compute SVD of inner product matrix
         M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
         ! determine how many singular values are above relative tolerance
         nretain = 0
-        do i = 1, ns
+        do i = 1, n
             if (S(i) / S(1) > tol_) then
                 nretain = nretain + 1
             end if
@@ -389,7 +407,7 @@ contains
 
         info_ = 0
         if (nretain == 0) info_ = -1
-        call check_info(info, 'biorthonormalize_bases', this_module, this_procedure)
+        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
 
         ! renormalize retained singular values
         do i = 1, nretain
@@ -415,29 +433,34 @@ contains
     end procedure biorthonormalize_bases_csp
 
     module procedure biorthonormalize_bases_cdp
-        character(len=*), parameter :: this_procedure = 'biorthonormalize_basis_cdp'
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_cdp'
         !! SVD workspace
-        integer                     :: n, m, ns, i, info_, nretain
+        integer                     :: n, i, info_, nretain
         complex(dp), allocatable       :: M(:,:), U(:,:), VT(:,:)
         real(dp), allocatable :: S(:)
         real(dp)              :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
-        n = size(X)
-        m = size(Y)
-        ns = min(n, m)
-        allocate(M(n, m), S(ns), U(n, ns), VT(ns, m))
 
+        n = size(X)
+        
         ! compute SVD of inner product matrix
         M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
         ! determine how many singular values are above relative tolerance
         nretain = 0
-        do i = 1, ns
+        do i = 1, n
             if (S(i) / S(1) > tol_) then
                 nretain = nretain + 1
             end if
@@ -445,7 +468,7 @@ contains
 
         info_ = 0
         if (nretain == 0) info_ = -1
-        call check_info(info, 'biorthonormalize_bases', this_module, this_procedure)
+        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
 
         ! renormalize retained singular values
         do i = 1, nretain

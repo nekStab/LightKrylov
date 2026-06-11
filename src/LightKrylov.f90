@@ -122,6 +122,7 @@ module LightKrylov
     public :: initialize_random_orthonormal_basis
     public :: orthogonalize_against_basis
     public :: orthonormalize_basis
+    public :: biorthonormalize_bases
     public :: bidiagonalization
     public :: lanczos
     public :: krylov_schur

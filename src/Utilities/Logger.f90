@@ -558,6 +558,22 @@ contains
                               stat=info, errmsg=trim(msg))
                ierr = -1
             end if
+         else if (trim(to_lower(origin)) == 'biorthonormalize_bases') then
+            ! symmetric biorthogonalization
+            if (info > 0) then
+               write (msg, '(I0,A)') info, ' columns retained after SVD.'
+               call log_debug(trim(msg), module=module, procedure=procedure)
+            else if (info == -1) then
+               write (msg, '(A)') "All singular values are below tolerance. Abort."
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else
+               write (msg, '(A)') "Undocumented error. "//trim(str)
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
          else if (trim(to_lower(origin)) == 'qr') then
             ! qr
             if (info > 0) then
