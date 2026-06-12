@@ -301,7 +301,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
@@ -320,7 +320,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
@@ -339,7 +339,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
@@ -358,7 +358,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()

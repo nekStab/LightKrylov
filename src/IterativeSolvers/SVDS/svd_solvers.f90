@@ -78,7 +78,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Uwrk)
+        call init_like(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -88,7 +88,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Vwrk)
+        call init_like(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -137,7 +137,7 @@ contains
 
         ! Singular vectors.
         k = min(k, kdim_) ; info = k
-        call init_basis(U) ; call init_basis(V)
+        call init_like(U, Uwrk(1)) ; call init_like(V, Vwrk(1))
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
@@ -179,7 +179,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Uwrk)
+        call init_like(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -189,7 +189,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Vwrk)
+        call init_like(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -238,7 +238,7 @@ contains
 
         ! Singular vectors.
         k = min(k, kdim_) ; info = k
-        call init_basis(U) ; call init_basis(V)
+        call init_like(U, Uwrk(1)) ; call init_like(V, Vwrk(1))
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
@@ -280,7 +280,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Uwrk)
+        call init_like(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -290,7 +290,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Vwrk)
+        call init_like(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -339,7 +339,7 @@ contains
 
         ! Singular vectors.
         k = min(k, kdim_) ; info = k
-        call init_basis(U) ; call init_basis(V)
+        call init_like(U, Uwrk(1)) ; call init_like(V, Vwrk(1))
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k
@@ -381,7 +381,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Uwrk)
+        call init_like(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -391,7 +391,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Vwrk)
+        call init_like(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -440,7 +440,7 @@ contains
 
         ! Singular vectors.
         k = min(k, kdim_) ; info = k
-        call init_basis(U) ; call init_basis(V)
+        call init_like(U, Uwrk(1)) ; call init_like(V, Vwrk(1))
         call zero_basis(U) ; call zero_basis(V)
         do i = 1, nsv
             do j = 1, k

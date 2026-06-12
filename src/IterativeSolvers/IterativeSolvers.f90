@@ -1924,7 +1924,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2014,7 +2014,7 @@ contains
         end block
 
         ! Construct eigenvectors.
-        call init_basis(X)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
@@ -2094,7 +2094,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2184,7 +2184,7 @@ contains
         end block
 
         ! Construct eigenvectors.
-        call init_basis(X)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
@@ -2263,7 +2263,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2344,7 +2344,7 @@ contains
         end block
 
         ! Construct eigenvectors.
-        call init_basis(X)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
@@ -2423,7 +2423,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2504,7 +2504,7 @@ contains
         end block
 
         ! Construct eigenvectors.
-        call init_basis(X)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k

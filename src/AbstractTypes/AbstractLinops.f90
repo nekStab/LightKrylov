@@ -759,7 +759,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -778,7 +778,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -796,7 +796,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -814,7 +814,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -833,7 +833,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -851,7 +851,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -869,7 +869,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -888,7 +888,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -906,7 +906,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -925,7 +925,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -944,7 +944,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -962,7 +962,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
-        call vec_out%init()
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()

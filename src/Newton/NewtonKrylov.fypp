@@ -305,11 +305,11 @@ contains
         maxstep_bisection = opts%maxstep_bisection
         allocate(residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call residual%init()
+        call init_like(residual, X)
         call residual%zero()
         allocate(increment,mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call increment%init()
+        call init_like(increment, X)
         call increment%zero()
         ! Initialize metadata & reset eval counter
         newton_meta = newton_${kind}$_metadata()
@@ -351,6 +351,7 @@ contains
                 endif
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
+                call init_like(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -459,8 +460,8 @@ contains
 
         allocate(Xin, residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call Xin%init()
-        call residual%init()
+        call init_like(Xin, X)
+        call init_like(residual, X)
         call residual%zero()
         step    = one_${type[0]}$${kind}$
         invphi  = (sqrt(5.0_${kind}$) - 1.0_${kind}$)/2.0_${kind}$  ! 1 / phi

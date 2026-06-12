@@ -185,7 +185,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_${type[0]}$${kind}$")
-        call Qwrk%init()
+        call init_like(Qwrk, Q(1))
         allocate(Rwrk(max(1, n)), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_${type[0]}$${kind}$")
 

@@ -233,14 +233,14 @@ contains
         allocate(X(nk+1), Xwrk, &
                  mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call Xwrk%init()
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
-        call c%init()
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_sp) then
             ! Input is zero => Output is zero.
@@ -357,14 +357,14 @@ contains
         allocate(X(p*(nk+1)), Cwrk(p), &
                  mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call init_basis(Cwrk)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
         allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, B(1))
         call copy(Xwrk, B)
-        call init_basis(C)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -513,14 +513,14 @@ contains
         allocate(X(nk+1), Xwrk, &
                  mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call Xwrk%init()
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
-        call c%init()
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_dp) then
             ! Input is zero => Output is zero.
@@ -637,14 +637,14 @@ contains
         allocate(X(p*(nk+1)), Cwrk(p), &
                  mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call init_basis(Cwrk)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
         allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, B(1))
         call copy(Xwrk, B)
-        call init_basis(C)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -793,14 +793,14 @@ contains
         allocate(X(nk+1), Xwrk, &
                  mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call Xwrk%init()
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
-        call c%init()
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_sp) then
             ! Input is zero => Output is zero.
@@ -917,14 +917,14 @@ contains
         allocate(X(p*(nk+1)), Cwrk(p), &
                  mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call init_basis(Cwrk)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
         allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, B(1))
         call copy(Xwrk, B)
-        call init_basis(C)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -1073,14 +1073,14 @@ contains
         allocate(X(nk+1), Xwrk, &
                  mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call Xwrk%init()
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
-        call c%init()
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_dp) then
             ! Input is zero => Output is zero.
@@ -1197,14 +1197,14 @@ contains
         allocate(X(p*(nk+1)), Cwrk(p), &
                  mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(X)
-        call init_basis(Cwrk)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
         allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_basis(Xwrk)
+        call init_like(Xwrk, B(1))
         call copy(Xwrk, B)
-        call init_basis(C)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))

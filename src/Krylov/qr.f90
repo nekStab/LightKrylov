@@ -568,7 +568,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
-        call Qwrk%init()
+        call init_like(Qwrk, Q(1))
         allocate(Rwrk(max(1, n)), source=zero_rsp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
 
@@ -598,7 +598,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
-        call Qwrk%init()
+        call init_like(Qwrk, Q(1))
         allocate(Rwrk(max(1, n)), source=zero_rdp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
 
@@ -628,7 +628,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
-        call Qwrk%init()
+        call init_like(Qwrk, Q(1))
         allocate(Rwrk(max(1, n)), source=zero_csp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
 
@@ -658,7 +658,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
-        call Qwrk%init()
+        call init_like(Qwrk, Q(1))
         allocate(Rwrk(max(1, n)), source=zero_cdp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
 
