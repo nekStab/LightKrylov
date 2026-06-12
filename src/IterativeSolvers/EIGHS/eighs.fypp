@@ -129,8 +129,4 @@ contains
     end procedure eighs_${type[0]}$${kind}$
 
     #:endfor
-<<<<<<< HEAD
-end submodule
-=======
 end submodule hermitian_eigensolvers
->>>>>>> main
