@@ -468,7 +468,7 @@ contains
                 endif
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
-                call init_like(sys%jacobian%X, X)
+                call copy(sys%jacobian%X, X)
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
                 call solver(sys%jacobian, residual, increment, info, atol=tol, &
@@ -650,7 +650,7 @@ contains
                 endif
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
-                call init_like(sys%jacobian%X, X)
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -833,7 +833,7 @@ contains
                 endif
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
-                call init_like(sys%jacobian%X, X)
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -1016,7 +1016,7 @@ contains
                 endif
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
-                call init_like(sys%jacobian%X, X)
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
