@@ -527,10 +527,16 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
+        #:if type[0] != "r"
+        real(${kind}$), allocatable :: y(:, :)
+        #:endif
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_${type[0]}$${kind}$")
+        endif
         #:if type[0] == "r"
         call random_number(self%data)
         #:else
-        real(${kind}$), allocatable :: y(:, :)
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_${type[0]}$${kind}$")
         call random_number(y)

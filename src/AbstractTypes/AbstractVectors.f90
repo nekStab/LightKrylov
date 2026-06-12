@@ -995,6 +995,10 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_rsp")
+        endif
         call random_number(self%data)
     end subroutine dense_rand_rsp
 
@@ -1078,6 +1082,10 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_rdp")
+        endif
         call random_number(self%data)
     end subroutine dense_rand_rdp
 
@@ -1162,6 +1170,10 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         real(sp), allocatable :: y(:, :)
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_csp")
+        endif
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_csp")
         call random_number(y)
@@ -1249,6 +1261,10 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         real(dp), allocatable :: y(:, :)
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_cdp")
+        endif
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_cdp")
         call random_number(y)
