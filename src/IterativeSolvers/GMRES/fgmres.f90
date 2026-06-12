@@ -18,7 +18,7 @@ contains
 
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
-  
+
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
         call log_message(msg, this_module, this_procedure)
@@ -43,7 +43,7 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-    end procedure
+    end procedure print_fgmres_sp
 
     module procedure reset_fgmres_sp
         self%n_iter = 0
@@ -52,7 +52,8 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-    end procedure
+    end procedure reset_fgmres_sp
+
 
     module procedure print_fgmres_dp
         ! internals
@@ -63,7 +64,7 @@ contains
 
         ifreset   = optval(reset_counters, .false.)
         ifverbose = optval(verbose, .false.)
-  
+
         write(msg,'(A30,I6,"  (",I6,"/",I3,")")') padr('Iterations   (inner/outer): ', 30), &
                   & self%n_iter, self%n_inner, self%n_outer
         call log_message(msg, this_module, this_procedure)
@@ -88,7 +89,7 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-    end procedure
+    end procedure print_fgmres_dp
 
     module procedure reset_fgmres_dp
         self%n_iter = 0
@@ -97,7 +98,8 @@ contains
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-    end procedure
+    end procedure reset_fgmres_dp
+
 
     !-------------------------------------------------------------
     !-----     FLEXIBLE GMRES SOLVERS FOR ABSTRACT TYPES     -----
@@ -199,7 +201,8 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                call copy(Z(k), V(k))
+                if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -211,10 +214,11 @@ contains
                     call A%apply_matvec(Z(k), V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() 
+                H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rsp / H(k+1, k))
 
                 !-----------------------------------------
@@ -226,7 +230,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
                 fgmres_meta%n_inner = fgmres_meta%n_inner + 1
@@ -256,7 +260,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_sp) call v(1)%scal(one_rsp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_sp) call v(1)%scal(one_rsp / beta)
 
             ! Save metadata.
             fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -270,7 +275,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                fgmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -301,7 +306,7 @@ contains
         call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure fgmres_rsp
 
     module procedure fgmres_rdp
        ! Options.
@@ -399,7 +404,8 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                call copy(Z(k), V(k))
+                if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -411,10 +417,11 @@ contains
                     call A%apply_matvec(Z(k), V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() 
+                H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_rdp / H(k+1, k))
 
                 !-----------------------------------------
@@ -426,7 +433,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
                 fgmres_meta%n_inner = fgmres_meta%n_inner + 1
@@ -456,7 +463,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_dp) call v(1)%scal(one_rdp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_dp) call v(1)%scal(one_rdp / beta)
 
             ! Save metadata.
             fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -470,7 +478,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                fgmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -501,7 +509,7 @@ contains
         call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure fgmres_rdp
 
     module procedure fgmres_csp
        ! Options.
@@ -599,7 +607,8 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                call copy(Z(k), V(k))
+                if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -611,10 +620,11 @@ contains
                     call A%apply_matvec(Z(k), V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() 
+                H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_csp / H(k+1, k))
 
                 !-----------------------------------------
@@ -626,7 +636,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
                 fgmres_meta%n_inner = fgmres_meta%n_inner + 1
@@ -656,7 +666,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_sp) call v(1)%scal(one_csp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_sp) call v(1)%scal(one_csp / beta)
 
             ! Save metadata.
             fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -670,7 +681,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                fgmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -701,7 +712,7 @@ contains
         call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure fgmres_csp
 
     module procedure fgmres_cdp
        ! Options.
@@ -799,7 +810,8 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                call copy(Z(k), V(k)) ; if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
+                call copy(Z(k), V(k))
+                if (ifprecond) call preconditioner%apply(Z(k), k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -811,10 +823,11 @@ contains
                     call A%apply_matvec(Z(k), V(k+1))
                 endif
                 !> Orthogonalization + Hessenberg update.
-                call double_gram_schmidt_step(V(k+1), V(:k), info, if_chk_orthonormal=.false., beta=H(:k, k))
+                call double_gram_schmidt_step(V(k+1), V(:k), info, &
+                                              if_chk_orthonormal=.false., beta=H(:k, k))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
                 !> Update Hessenberg matrix and normalize residual Krylov vector.
-                H(k+1, k) = V(k+1)%norm() 
+                H(k+1, k) = V(k+1)%norm()
                 if (abs(H(k+1, k)) > tol) call V(k+1)%scal(one_cdp / H(k+1, k))
 
                 !-----------------------------------------
@@ -826,7 +839,7 @@ contains
                 e(k+1) = -s(k)*e(k) ; e(k) = c(k)*e(k)
                 !> Least-squares residual.
                 beta = abs(e(k+1))
- 
+
                 ! Save metadata.
                 fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
                 fgmres_meta%n_inner = fgmres_meta%n_inner + 1
@@ -856,7 +869,8 @@ contains
             call v(1)%sub(b) ; call v(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm() ; if (abs(beta) > 0.0_dp) call v(1)%scal(one_cdp / beta)
+            beta = v(1)%norm()
+            if (abs(beta) > 0.0_dp) call v(1)%scal(one_cdp / beta)
 
             ! Save metadata.
             fgmres_meta%n_iter  = fgmres_meta%n_iter + 1
@@ -870,7 +884,7 @@ contains
             ! Exit gmres if desired accuracy is reached.
             if (abs(beta) < tol) then
                fgmres_meta%converged = .true.
-               exit 
+               exit
             end if
         enddo
         end associate
@@ -901,7 +915,7 @@ contains
         call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure fgmres_cdp
 
 
     module procedure dense_fgmres_rsp
@@ -915,7 +929,7 @@ contains
     call fgmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
+    end procedure dense_fgmres_rsp
 
     module procedure dense_fgmres_rdp
     type(dense_vector_rdp) :: b_, x_
@@ -928,7 +942,7 @@ contains
     call fgmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
+    end procedure dense_fgmres_rdp
 
     module procedure dense_fgmres_csp
     type(dense_vector_csp) :: b_, x_
@@ -941,7 +955,7 @@ contains
     call fgmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
+    end procedure dense_fgmres_csp
 
     module procedure dense_fgmres_cdp
     type(dense_vector_cdp) :: b_, x_
@@ -954,6 +968,6 @@ contains
     call fgmres(A_, b_, x_, info, rtol, atol, preconditioner, options, transpose, meta)
     ! Extract solution.
     x = x_%data
-    end procedure
+    end procedure dense_fgmres_cdp
 
-end submodule
+end submodule fgmres_solver

@@ -148,7 +148,8 @@ contains
         call free_basis(Vwrk)
         call free_basis(Uwrk)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure svds_rsp
+
 
     module procedure svds_rdp
         ! Left and right Krylov subspaces.
@@ -248,7 +249,8 @@ contains
         call free_basis(Vwrk)
         call free_basis(Uwrk)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure svds_rdp
+
 
     module procedure svds_csp
         ! Left and right Krylov subspaces.
@@ -348,7 +350,8 @@ contains
         call free_basis(Vwrk)
         call free_basis(Uwrk)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure svds_csp
+
 
     module procedure svds_cdp
         ! Left and right Krylov subspaces.
@@ -448,6 +451,7 @@ contains
         call free_basis(Vwrk)
         call free_basis(Uwrk)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure svds_cdp
 
-end submodule
+
+end submodule svds_solver

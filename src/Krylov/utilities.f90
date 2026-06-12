@@ -148,7 +148,7 @@ contains
         ! Orthonormalize
         call orthonormalize_basis(X)
     end procedure initialize_random_orthonormal_basis_cdp
-   
+
     !----------------------------------------
     !-----     Orthonormalize basis     -----
     !----------------------------------------

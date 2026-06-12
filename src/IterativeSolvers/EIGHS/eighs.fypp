@@ -126,7 +126,11 @@ contains
         call free_basis(Xwrk)
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure eighs_${type[0]}$${kind}$
 
     #:endfor
+<<<<<<< HEAD
 end submodule
+=======
+end submodule hermitian_eigensolvers
+>>>>>>> main

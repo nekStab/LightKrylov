@@ -3,7 +3,7 @@ module LightKrylov_ExpmLib
     !!  using Krylov methods.
 
     ! Iso Fortran.
-    use iso_fortran_env, only: output_unit
+    use, intrinsic :: iso_fortran_env, only: output_unit
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
@@ -19,7 +19,7 @@ module LightKrylov_ExpmLib
 
     implicit none(type, external)
     private
-    
+
     character(len=*), parameter :: this_module      = 'LK_ExpmLib'
     character(len=*), parameter :: this_module_long = 'LightKrylov_ExpmLib'
 
@@ -221,7 +221,7 @@ contains
         logical :: transpose
         integer :: nsteps, iostat
         character(len=256) :: msg
-    
+
         ! Deals with optional args.
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
@@ -342,7 +342,7 @@ contains
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
-        
+
         info = 0
 
         ! Allocate arrays.
@@ -439,7 +439,7 @@ contains
     end subroutine kexpm_mat_rsp
 
     subroutine krylov_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
-        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_rsp` interface.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: vec_out
@@ -501,7 +501,7 @@ contains
         logical :: transpose
         integer :: nsteps, iostat
         character(len=256) :: msg
-    
+
         ! Deals with optional args.
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
@@ -622,7 +622,7 @@ contains
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
-        
+
         info = 0
 
         ! Allocate arrays.
@@ -719,7 +719,7 @@ contains
     end subroutine kexpm_mat_rdp
 
     subroutine krylov_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
-        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_rdp` interface.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: vec_out
@@ -781,7 +781,7 @@ contains
         logical :: transpose
         integer :: nsteps, iostat
         character(len=256) :: msg
-    
+
         ! Deals with optional args.
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
@@ -902,7 +902,7 @@ contains
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
-        
+
         info = 0
 
         ! Allocate arrays.
@@ -999,7 +999,7 @@ contains
     end subroutine kexpm_mat_csp
 
     subroutine krylov_exptA_csp(vec_out, A, vec_in, tau, info, trans)
-        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_csp` interface.
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: vec_out
@@ -1061,7 +1061,7 @@ contains
         logical :: transpose
         integer :: nsteps, iostat
         character(len=256) :: msg
-    
+
         ! Deals with optional args.
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
@@ -1182,7 +1182,7 @@ contains
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
-        
+
         info = 0
 
         ! Allocate arrays.
@@ -1279,7 +1279,7 @@ contains
     end subroutine kexpm_mat_cdp
 
     subroutine krylov_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
-        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_cdp` interface.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: vec_out

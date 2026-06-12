@@ -76,8 +76,8 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-        info = 0 ; kdim = size(Q) ; R = zero_rsp 
-        
+        info = 0 ; kdim = size(Q) ; R = zero_rsp
+
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_sp)
 
@@ -106,7 +106,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
+                                             this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
@@ -147,8 +148,8 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-        info = 0 ; kdim = size(Q) ; R = zero_rdp 
-        
+        info = 0 ; kdim = size(Q) ; R = zero_rdp
+
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_dp)
 
@@ -177,7 +178,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
+                                             this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
@@ -218,8 +220,8 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-        info = 0 ; kdim = size(Q) ; R = zero_rsp 
-        
+        info = 0 ; kdim = size(Q) ; R = zero_rsp
+
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_sp)
 
@@ -248,7 +250,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
+                                                  this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
@@ -289,8 +292,8 @@ contains
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
-        info = 0 ; kdim = size(Q) ; R = zero_rdp 
-        
+        info = 0 ; kdim = size(Q) ; R = zero_rdp
+
         ! Deals with the optional arguments.
         tolerance = optval(tol, atol_dp)
 
@@ -319,7 +322,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
+                                                  this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
@@ -371,13 +375,15 @@ contains
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                                              if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-            end if        
+            end if
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
+                                             this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -417,13 +423,15 @@ contains
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                                              if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-            end if        
+            end if
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
+                                             this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -463,13 +471,15 @@ contains
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                                              if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-            end if        
+            end if
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
+                                                  this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -509,13 +519,15 @@ contains
         do j = 1, size(Q)
             if (j > 1) then
                 ! Double Gram-Schmidt orthogonalization
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false., beta = R(:j-1,j))
+                call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                                              if_chk_orthonormal=.false., beta = R(:j-1,j))
                 call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-            end if        
+            end if
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', this_module, this_procedure)
+            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
+                                                  this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -564,7 +576,7 @@ contains
         call copy(Qwrk, Q(j))
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
-        
+
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
@@ -573,7 +585,7 @@ contains
         endif
         call Qwrk%free()
     end procedure swap_columns_rsp
-    
+
     module procedure swap_columns_rdp
         class(abstract_vector_rdp), allocatable :: Qwrk
         real(dp), allocatable :: Rwrk(:)
@@ -594,7 +606,7 @@ contains
         call copy(Qwrk, Q(j))
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
-        
+
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
@@ -603,7 +615,7 @@ contains
         endif
         call Qwrk%free()
     end procedure swap_columns_rdp
-    
+
     module procedure swap_columns_csp
         class(abstract_vector_csp), allocatable :: Qwrk
         complex(sp), allocatable :: Rwrk(:)
@@ -624,7 +636,7 @@ contains
         call copy(Qwrk, Q(j))
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
-        
+
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
@@ -633,7 +645,7 @@ contains
         endif
         call Qwrk%free()
     end procedure swap_columns_csp
-    
+
     module procedure swap_columns_cdp
         class(abstract_vector_cdp), allocatable :: Qwrk
         complex(dp), allocatable :: Rwrk(:)
@@ -654,7 +666,7 @@ contains
         call copy(Qwrk, Q(j))
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
-        
+
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
@@ -663,5 +675,5 @@ contains
         endif
         call Qwrk%free()
     end procedure swap_columns_cdp
-    
+
 end submodule qr_solvers

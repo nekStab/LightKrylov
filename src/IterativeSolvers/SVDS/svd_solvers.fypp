@@ -123,7 +123,8 @@ contains
         call free_basis(Vwrk)
         call free_basis(Uwrk)
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure svds_${type[0]}$${kind}$
+
 
     #:endfor
-end submodule
+end submodule svds_solver

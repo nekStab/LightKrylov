@@ -41,10 +41,23 @@ contains
                     new_unittest("Vector scale", test_vector_${type[0]}$${kind}$_scal)     , &
                     new_unittest("Vector addition", test_vector_${type[0]}$${kind}$_add)   , &
                     new_unittest("Vector subtraction", test_vector_${type[0]}$${kind}$_sub), &
-                    new_unittest("Vector dot product", test_vector_${type[0]}$${kind}$_dot)  &
+                    new_unittest("Vector dot product", test_vector_${type[0]}$${kind}$_dot), &
+                    new_unittest("Vector space axioms", test_vector_axioms_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_vector_${type[0]}$${kind}$_testsuite
+
+    subroutine test_vector_axioms_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$) :: x
+        ${type}$ :: x_(n)
+        logical :: success
+        ! Initialize vector.
+        x_ = 0.0_${kind}$ ; x = dense_vector(x_)
+        success = verify_vector_axioms(x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_vector_axioms_${type[0]}$${kind}$', eq='Vector space axioms')
+    end subroutine test_vector_axioms_${type[0]}$${kind}$
 
     subroutine test_vector_${type[0]}$${kind}$_norm(error)
         ! Error type to be returned.

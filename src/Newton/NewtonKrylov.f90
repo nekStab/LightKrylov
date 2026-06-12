@@ -34,7 +34,7 @@ module LightKrylov_NewtonKrylov
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
     end type newton_sp_opts
-    
+
     type, extends(abstract_opts), public :: newton_dp_opts
         !! Options for Newton-Krylov fixed-point iteration.
         integer :: maxiter = 100
@@ -47,7 +47,7 @@ module LightKrylov_NewtonKrylov
         logical :: if_print_metadata = .false.
         !! Print interation metadata on exit (default = .false.)
     end type newton_dp_opts
-    
+
 
     type, extends(abstract_metadata), public :: newton_sp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
@@ -71,7 +71,7 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: reset => reset_newton_sp
         procedure, pass(self), public :: record => record_data_sp
     end type newton_sp_metadata
-   
+
     type, extends(abstract_metadata), public :: newton_dp_metadata
         !! Metadata for Newton-Krylov fixed-point iteration.
         integer :: n_iter = 0
@@ -94,74 +94,74 @@ module LightKrylov_NewtonKrylov
         procedure, pass(self), public :: reset => reset_newton_dp
         procedure, pass(self), public :: record => record_data_dp
     end type newton_dp_metadata
-   
+
 
 
 
     interface newton
-        !! Implements the simple Newton-Krylov method for finding roots (fixed points) of a 
-        !! nonlinear vector-valued function \( F(\mathbf{X}) \), i.e. solutions \( \mathbf{X}^* \) 
-        !! such that \( F(\mathbf{X}^*) - \mathbf{X}^* = \mathbf{0} \) starting from an 
-        !! initial guess via successive solution increments based on local linearization 
-        !! \( \mathbf{J}_\mathbf{X} \) (the Jacobian) of the nonlinear function in the 
+        !! Implements the simple Newton-Krylov method for finding roots (fixed points) of a
+        !! nonlinear vector-valued function \( F(\mathbf{X}) \), i.e. solutions \( \mathbf{X}^* \)
+        !! such that \( F(\mathbf{X}^*) - \mathbf{X}^* = \mathbf{0} \) starting from an
+        !! initial guess via successive solution increments based on local linearization
+        !! \( \mathbf{J}_\mathbf{X} \) (the Jacobian) of the nonlinear function in the
         !! vicinity of the current solution.
         !!
         !! **Algorthmic Features**
         !!
-        !! - At iteration \(k\), the standard Newton step \( \mathbf{\delta x}_k\) is 
+        !! - At iteration \(k\), the standard Newton step \( \mathbf{\delta x}_k\) is
         !!   computed as the solution of the linear system
-        !!   
-        !! $$ \mathbf{J}_\mathbf{X_k} \mathbf{\delta x}_k = \mathbf{r}_k $$
         !!
-        !!   where \( \mathbf{r}_k = -F(\mathbf{X}_k) \) is the residual of the nonlinear 
+        !! \[ \mathbf{J}_\mathbf{X_k} \mathbf{\delta x}_k = \mathbf{r}_k \]
+        !!
+        !!   where \( \mathbf{r}_k = -F(\mathbf{X}_k) \) is the residual of the nonlinear
         !!   function. The new guess for the fixed point is then given by:
         !!
-        !! $$ \mathbf{X}_{k+1} = \mathbf{X}_k + \alpha \mathbf{\delta x}_k$$
+        !! \[ \mathbf{X}_{k+1} = \mathbf{X}_k + \alpha \mathbf{\delta x}_k\]
         !!
-        !!   where \( \alpha \in \left( 0, 1 \right] \) parametrizes the step length. The 
+        !!   where \( \alpha \in \left( 0, 1 \right] \) parametrizes the step length. The
         !!   standard Newton algorithm sets \( \alpha = 1 \).
         !!
-        !! - The Jacobian is never assembled and the linear system is solved using one of 
+        !! - The Jacobian is never assembled and the linear system is solved using one of
         !!   the available iterative solvers.
-        !! - When the residual norm does not decrease during iteration indicating that the 
-        !!   linearization is not a very accurate model of the function's behaviour, which 
-        !!   often happens during the initial iterations, a 1D step bisection method based 
-        !!   on the golden ratio is implemented to dampen the step and improve convergence 
+        !! - When the residual norm does not decrease during iteration indicating that the
+        !!   linearization is not a very accurate model of the function's behaviour, which
+        !!   often happens during the initial iterations, a 1D step bisection method based
+        !!   on the golden ratio is implemented to dampen the step and improve convergence
         !!   of the method.
-        !! - The implementation allows for dynamic tolerances (also known as inexact Newton), 
-        !!   where the approximation for the residual and the linear system can be solved 
+        !! - The implementation allows for dynamic tolerances (also known as inexact Newton),
+        !!   where the approximation for the residual and the linear system can be solved
         !!   with relaxed tolerances to reduce overall time to solution.
-        !! - The method is suitable to both fixed points and periodic orbits via the choice 
-        !!   of residual and corresponding Jacobian matrix. In the case of unforced periodic 
+        !! - The method is suitable to both fixed points and periodic orbits via the choice
+        !!   of residual and corresponding Jacobian matrix. In the case of unforced periodic
         !!   orbits, the period is itself an unknown that must be included in the iteration.
         !!
         !! **Advantages**
         !!
-        !! - The iterative solution of the linear systems has a comparatively low storage 
+        !! - The iterative solution of the linear systems has a comparatively low storage
         !!   footprint.
-        !! - If the Newton iteration converges, the convergence is formally asymptotically 
-        !!   of second order. Using dynamic tolerances and line searches slightly reduce 
+        !! - If the Newton iteration converges, the convergence is formally asymptotically
+        !!   of second order. Using dynamic tolerances and line searches slightly reduce
         !!   this convergence rate in exchange for a larger convergence region.
-        !! 
+        !!
         !! **Limitations**
         !!
-        !! - The method is not guaranteed to converge if the initial guess is too far from 
-        !!   the fixed point. If the Newton iteration diverges even with step bisection, 
-        !!   the best suggestion is to find a better initial guess. If this is not feasible, 
-        !!   some alternatives to improve the convergence of the Newton iteration are possible 
-        !!   (but not implemented to date), including various line search algorithms and trust 
+        !! - The method is not guaranteed to converge if the initial guess is too far from
+        !!   the fixed point. If the Newton iteration diverges even with step bisection,
+        !!   the best suggestion is to find a better initial guess. If this is not feasible,
+        !!   some alternatives to improve the convergence of the Newton iteration are possible
+        !!   (but not implemented to date), including various line search algorithms and trust
         !!   region methods (doglog, double dogleg, hookstep, ...).
         !!
         !! **References**
         !!
-        !! - Sánchez, J., Net, M., Garcıa-Archilla, B., & Simó, C. (2004). "Newton–Krylov 
-        !!   continuation of periodic orbits for Navier–Stokes flows". Journal of Computational 
+        !! - Sánchez, J., Net, M., Garcıa-Archilla, B., & Simó, C. (2004). "Newton–Krylov
+        !!   continuation of periodic orbits for Navier–Stokes flows". Journal of Computational
         !!   Physics, 201(1), 13-33.
-        !! - Viswanath, D. (2007). "Recurrent motions within plane Couette turbulence". 
-        !!   Journal of Fluid Mechanics, 580, 339-358. 
-        !! - Duguet, Y., Pringle, C. C. T., Kerswell, R. R. (2008). "Relative periodic orbits 
+        !! - Viswanath, D. (2007). "Recurrent motions within plane Couette turbulence".
+        !!   Journal of Fluid Mechanics, 580, 339-358.
+        !! - Duguet, Y., Pringle, C. C. T., Kerswell, R. R. (2008). "Relative periodic orbits
         !!   in transitional pipe flow". Physics  of Fluids, 20(11), 114102.
-        !! - Frantz, R. A., Loiseau, J. C., & Robinet, J. C. (2023). "Krylov methods for 
+        !! - Frantz, R. A., Loiseau, J. C., & Robinet, J. C. (2023). "Krylov methods for
         !!   large-scale dynamical systems: Application in fluid dynamics". Applied Mechanics
         !!   Reviews, 75(3), 030802.
         module procedure newton_rsp
@@ -396,9 +396,9 @@ contains
         integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_sp_metadata) :: newton_meta
         character(len=256) :: msg
-        
+
         if (time_lightkrylov()) call timer%start(this_procedure)
-        
+
         ! Newton-solver tolerance
         target_rtol = optval(rtol, rtol_sp)
         target_atol = optval(atol, atol_sp)
@@ -417,7 +417,7 @@ contains
         endif
 
         ! Initialisation
-        info = 0 
+        info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
         allocate(residual, mold=X, stat=iostat, errmsg=msg)
@@ -469,8 +469,6 @@ contains
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
                 call init_like(sys%jacobian%X, X)
-                call copy(sys%jacobian%X, X)
-                
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
                 call solver(sys%jacobian, residual, increment, info, atol=tol, &
@@ -580,9 +578,9 @@ contains
         integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_dp_metadata) :: newton_meta
         character(len=256) :: msg
-        
+
         if (time_lightkrylov()) call timer%start(this_procedure)
-        
+
         ! Newton-solver tolerance
         target_rtol = optval(rtol, rtol_dp)
         target_atol = optval(atol, atol_dp)
@@ -601,7 +599,7 @@ contains
         endif
 
         ! Initialisation
-        info = 0 
+        info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
         allocate(residual, mold=X, stat=iostat, errmsg=msg)
@@ -653,8 +651,7 @@ contains
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
                 call init_like(sys%jacobian%X, X)
-                call copy(sys%jacobian%X, X)
-                
+
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
                 call solver(sys%jacobian, residual, increment, info, atol=tol, &
@@ -764,9 +761,9 @@ contains
         integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_sp_metadata) :: newton_meta
         character(len=256) :: msg
-        
+
         if (time_lightkrylov()) call timer%start(this_procedure)
-        
+
         ! Newton-solver tolerance
         target_rtol = optval(rtol, rtol_sp)
         target_atol = optval(atol, atol_sp)
@@ -785,7 +782,7 @@ contains
         endif
 
         ! Initialisation
-        info = 0 
+        info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
         allocate(residual, mold=X, stat=iostat, errmsg=msg)
@@ -837,8 +834,7 @@ contains
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
                 call init_like(sys%jacobian%X, X)
-                call copy(sys%jacobian%X, X)
-                
+
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
                 call solver(sys%jacobian, residual, increment, info, atol=tol, &
@@ -948,9 +944,9 @@ contains
         integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_dp_metadata) :: newton_meta
         character(len=256) :: msg
-        
+
         if (time_lightkrylov()) call timer%start(this_procedure)
-        
+
         ! Newton-solver tolerance
         target_rtol = optval(rtol, rtol_dp)
         target_atol = optval(atol, atol_dp)
@@ -969,7 +965,7 @@ contains
         endif
 
         ! Initialisation
-        info = 0 
+        info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
         allocate(residual, mold=X, stat=iostat, errmsg=msg)
@@ -1021,8 +1017,7 @@ contains
                 allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
                 call check_allocation(iostat, msg, this_module, this_procedure)
                 call init_like(sys%jacobian%X, X)
-                call copy(sys%jacobian%X, X)
-                
+
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
                 call solver(sys%jacobian, residual, increment, info, atol=tol, &
@@ -1098,7 +1093,7 @@ contains
 
 
     subroutine increment_bisection_rsp(X, sys, increment, rold, tol, maxstep)
-        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
+        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in
         !! order to maximally reduce the residual at each iteration.
         class(abstract_vector_rsp), intent(inout) :: X
         !! Current system state to be updated
@@ -1110,7 +1105,8 @@ contains
         !! Residual of the current system state to determine improvement
         real(sp),                   intent(in)    :: tol
         integer,                    intent(in)    :: maxstep
-        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
+        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation
+        !! of the nonlinear function
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_rsp'
@@ -1137,7 +1133,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1158,7 +1154,7 @@ contains
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
-                alpha(3:4) = alpha(2:3)           
+                alpha(3:4) = alpha(2:3)
                 ! residuals
                 ! r1 is kept
                 res(3:4) = res(2:3)
@@ -1203,7 +1199,7 @@ contains
     end subroutine increment_bisection_rsp
 
     subroutine increment_bisection_rdp(X, sys, increment, rold, tol, maxstep)
-        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
+        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in
         !! order to maximally reduce the residual at each iteration.
         class(abstract_vector_rdp), intent(inout) :: X
         !! Current system state to be updated
@@ -1215,7 +1211,8 @@ contains
         !! Residual of the current system state to determine improvement
         real(dp),                   intent(in)    :: tol
         integer,                    intent(in)    :: maxstep
-        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
+        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation
+        !! of the nonlinear function
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_rdp'
@@ -1242,7 +1239,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1263,7 +1260,7 @@ contains
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
-                alpha(3:4) = alpha(2:3)           
+                alpha(3:4) = alpha(2:3)
                 ! residuals
                 ! r1 is kept
                 res(3:4) = res(2:3)
@@ -1308,7 +1305,7 @@ contains
     end subroutine increment_bisection_rdp
 
     subroutine increment_bisection_csp(X, sys, increment, rold, tol, maxstep)
-        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
+        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in
         !! order to maximally reduce the residual at each iteration.
         class(abstract_vector_csp), intent(inout) :: X
         !! Current system state to be updated
@@ -1320,7 +1317,8 @@ contains
         !! Residual of the current system state to determine improvement
         real(sp),                   intent(in)    :: tol
         integer,                    intent(in)    :: maxstep
-        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
+        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation
+        !! of the nonlinear function
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_csp'
@@ -1347,7 +1345,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1368,7 +1366,7 @@ contains
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
-                alpha(3:4) = alpha(2:3)           
+                alpha(3:4) = alpha(2:3)
                 ! residuals
                 ! r1 is kept
                 res(3:4) = res(2:3)
@@ -1413,7 +1411,7 @@ contains
     end subroutine increment_bisection_csp
 
     subroutine increment_bisection_cdp(X, sys, increment, rold, tol, maxstep)
-        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in 
+        !! Classic 1D bisection method based on the golden ratio to damped the Newton step in
         !! order to maximally reduce the residual at each iteration.
         class(abstract_vector_cdp), intent(inout) :: X
         !! Current system state to be updated
@@ -1425,7 +1423,8 @@ contains
         !! Residual of the current system state to determine improvement
         real(dp),                   intent(in)    :: tol
         integer,                    intent(in)    :: maxstep
-        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation of the nonlinear function
+        !! Maximum number of bisection steps. Each additional bisection step requires an evaluation
+        !! of the nonlinear function
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_cdp'
@@ -1452,7 +1451,7 @@ contains
         ! evaluate residual norm
         call sys%eval(X, residual, tol)
         res(4) = residual%norm()
-        write(msg,'(*(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
+        write(msg,'(2(A,E11.4),A)') 'res_old= ', res(1), ', res_new= ', res(4), ' (full step)'
         call log_information(msg, this_module, this_procedure)
 
         if (res(4) > rold) then
@@ -1473,7 +1472,7 @@ contains
                 if (res(2) < res(3)) then
                 ! alphas
                 ! a1 is kept
-                alpha(3:4) = alpha(2:3)           
+                alpha(3:4) = alpha(2:3)
                 ! residuals
                 ! r1 is kept
                 res(3:4) = res(2:3)
@@ -1549,7 +1548,8 @@ contains
     end subroutine constant_tol_sp
 
     subroutine dynamic_tol_sp(tol, target_tol, rnorm, iter, info)
-        !! Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol
+        !! Dynamic tolerance scheduler for the Newton iteration setting tol based on
+        !! the current residual tol
         real(sp), intent(out) :: tol
         !! Tolerance to be used
         real(sp), intent(in) :: target_tol
@@ -1570,7 +1570,7 @@ contains
             write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
             call log_warning(msg, this_module, this_procedure)
         end if
-        
+
         tol_old = tol
         tol = max(0.1*rnorm, target_tol_)
 
@@ -1618,7 +1618,8 @@ contains
     end subroutine constant_tol_dp
 
     subroutine dynamic_tol_dp(tol, target_tol, rnorm, iter, info)
-        !! Dynamic tolerance scheduler for the Newton iteration setting tol based on the current residual tol
+        !! Dynamic tolerance scheduler for the Newton iteration setting tol based on
+        !! the current residual tol
         real(dp), intent(out) :: tol
         !! Tolerance to be used
         real(dp), intent(in) :: target_tol
@@ -1639,7 +1640,7 @@ contains
             write(msg,'(A,E9.2)') 'Input target tolerance below atol! Resetting target to atol= ', target_tol_
             call log_warning(msg, this_module, this_procedure)
         end if
-        
+
         tol_old = tol
         tol = max(0.1*rnorm, target_tol_)
 

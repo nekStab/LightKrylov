@@ -68,7 +68,8 @@ module LightKrylov
     public :: free_basis
     public :: copy
     public :: rand_basis
-    
+    public :: verify_vector_axioms
+
     ! AbstractLinops exports.
     public :: abstract_linop
     public :: abstract_linop_rsp
@@ -114,7 +115,7 @@ module LightKrylov
     public :: abstract_jacobian_linop_csp
     public :: abstract_system_cdp
     public :: abstract_jacobian_linop_cdp
-    
+
     ! BaseKrylov exports.
     public :: qr
     public :: permcols, invperm

@@ -67,7 +67,7 @@ contains
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
-        lwork = #{if type[0] == "c"}# 2*n #{else}# 4*n #{endif}#
+        lwork = #{if type[0] == "c"}# 2*n#{else}# 4*n#{endif}#
 
         ! Eigendecomposition.
         #:if type[0] == "c"
