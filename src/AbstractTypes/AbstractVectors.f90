@@ -1541,14 +1541,17 @@ contains
                 class(abstract_vector_rsp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
+                call init_like(w, x)
                 call u%rand()
                 call v%rand()
                 call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -1557,6 +1560,11 @@ contains
 
                 call u%sub(w)
                 success = merge(.true., .false., u%norm() <= tol)
+                call wrk2%free()
+                call wrk1%free()
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_distributivity
 
@@ -1564,10 +1572,12 @@ contains
                 class(abstract_vector_rsp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = v
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
@@ -1575,6 +1585,9 @@ contains
 
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_commutativity
 
@@ -1582,24 +1595,32 @@ contains
                 class(abstract_vector_rsp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
+                allocate(u, v, z, mold=x)
+                call copy(u, x)
+                call copy(v, u)
+                call init_like(z, x)
                 call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call z%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_rsp), allocatable :: u, v
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block additive_inverse
 
@@ -1611,13 +1632,16 @@ contains
                 real(sp), parameter :: one = 1.0_sp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_identity
 
@@ -1628,9 +1652,10 @@ contains
                 call random_number(b)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand(ifnorm=.true.)
-                v = u
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
@@ -1638,6 +1663,8 @@ contains
                 call u%scal(a*b)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_compatibility
 
@@ -1647,10 +1674,12 @@ contains
                 call random_number(a)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = u
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -1662,6 +1691,9 @@ contains
 
                 call v%sub(w)
                 success = merge(.true., .false., v%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity
 
@@ -1672,9 +1704,10 @@ contains
                 call random_number(b)
 
                 !> Generate random vector.
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
@@ -1682,6 +1715,8 @@ contains
 
                 call v%sub(u)
                 success = merge(.true., .false., v%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity_bis
         enddo verification
@@ -1913,14 +1948,17 @@ contains
                 class(abstract_vector_rdp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
+                call init_like(w, x)
                 call u%rand()
                 call v%rand()
                 call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -1929,6 +1967,11 @@ contains
 
                 call u%sub(w)
                 success = merge(.true., .false., u%norm() <= tol)
+                call wrk2%free()
+                call wrk1%free()
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_distributivity
 
@@ -1936,10 +1979,12 @@ contains
                 class(abstract_vector_rdp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = v
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
@@ -1947,6 +1992,9 @@ contains
 
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_commutativity
 
@@ -1954,24 +2002,32 @@ contains
                 class(abstract_vector_rdp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
+                allocate(u, v, z, mold=x)
+                call copy(u, x)
+                call copy(v, u)
+                call init_like(z, x)
                 call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call z%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_rdp), allocatable :: u, v
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block additive_inverse
 
@@ -1983,13 +2039,16 @@ contains
                 real(dp), parameter :: one = 1.0_dp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_identity
 
@@ -2000,9 +2059,10 @@ contains
                 call random_number(b)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand(ifnorm=.true.)
-                v = u
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
@@ -2010,6 +2070,8 @@ contains
                 call u%scal(a*b)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_compatibility
 
@@ -2019,10 +2081,12 @@ contains
                 call random_number(a)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = u
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -2034,6 +2098,9 @@ contains
 
                 call v%sub(w)
                 success = merge(.true., .false., v%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity
 
@@ -2044,9 +2111,10 @@ contains
                 call random_number(b)
 
                 !> Generate random vector.
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
@@ -2054,6 +2122,8 @@ contains
 
                 call v%sub(u)
                 success = merge(.true., .false., v%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity_bis
         enddo verification
@@ -2285,14 +2355,17 @@ contains
                 class(abstract_vector_csp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
+                call init_like(w, x)
                 call u%rand()
                 call v%rand()
                 call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -2301,6 +2374,11 @@ contains
 
                 call u%sub(w)
                 success = merge(.true., .false., u%norm() <= tol)
+                call wrk2%free()
+                call wrk1%free()
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_distributivity
 
@@ -2308,10 +2386,12 @@ contains
                 class(abstract_vector_csp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = v
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
@@ -2319,6 +2399,9 @@ contains
 
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_commutativity
 
@@ -2326,24 +2409,32 @@ contains
                 class(abstract_vector_csp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
+                allocate(u, v, z, mold=x)
+                call copy(u, x)
+                call copy(v, u)
+                call init_like(z, x)
                 call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call z%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_csp), allocatable :: u, v
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block additive_inverse
 
@@ -2355,13 +2446,16 @@ contains
                 complex(sp), parameter :: one = 1.0_sp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_identity
 
@@ -2375,9 +2469,10 @@ contains
                 b = cmplx(c(1), c(2), kind=sp)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand(ifnorm=.true.)
-                v = u
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
@@ -2385,6 +2480,8 @@ contains
                 call u%scal(a*b)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_compatibility
 
@@ -2396,10 +2493,12 @@ contains
                 a = cmplx(b(1), b(2), kind=sp)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = u
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -2411,6 +2510,9 @@ contains
 
                 call v%sub(w)
                 success = merge(.true., .false., v%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity
 
@@ -2424,9 +2526,10 @@ contains
                 b = cmplx(c(1), c(2), kind=sp)
 
                 !> Generate random vector.
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
@@ -2434,6 +2537,8 @@ contains
 
                 call v%sub(u)
                 success = merge(.true., .false., v%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity_bis
         enddo verification
@@ -2665,14 +2770,17 @@ contains
                 class(abstract_vector_cdp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
+                call init_like(w, x)
                 call u%rand()
                 call v%rand()
                 call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -2681,6 +2789,11 @@ contains
 
                 call u%sub(w)
                 success = merge(.true., .false., u%norm() <= tol)
+                call wrk2%free()
+                call wrk1%free()
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_distributivity
 
@@ -2688,10 +2801,12 @@ contains
                 class(abstract_vector_cdp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = v
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
@@ -2699,6 +2814,9 @@ contains
 
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_commutativity
 
@@ -2706,24 +2824,32 @@ contains
                 class(abstract_vector_cdp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
+                allocate(u, v, z, mold=x)
+                call copy(u, x)
+                call copy(v, u)
+                call init_like(z, x)
                 call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call z%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_cdp), allocatable :: u, v
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block additive_inverse
 
@@ -2735,13 +2861,16 @@ contains
                 complex(dp), parameter :: one = 1.0_dp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_identity
 
@@ -2755,9 +2884,10 @@ contains
                 b = cmplx(c(1), c(2), kind=dp)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand(ifnorm=.true.)
-                v = u
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
@@ -2765,6 +2895,8 @@ contains
                 call u%scal(a*b)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_compatibility
 
@@ -2776,10 +2908,12 @@ contains
                 a = cmplx(b(1), b(2), kind=dp)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = u
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -2791,6 +2925,9 @@ contains
 
                 call v%sub(w)
                 success = merge(.true., .false., v%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity
 
@@ -2804,9 +2941,10 @@ contains
                 b = cmplx(c(1), c(2), kind=dp)
 
                 !> Generate random vector.
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
@@ -2814,6 +2952,8 @@ contains
 
                 call v%sub(u)
                 success = merge(.true., .false., v%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity_bis
         enddo verification
