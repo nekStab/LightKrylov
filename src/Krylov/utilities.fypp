@@ -106,7 +106,7 @@ contains
     module procedure biorthonormalize_bases_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_${type[0]}$${kind}$'
         !! SVD workspace
-        integer  :: n, i, info_, nretain
+        integer  :: n, info_, nretain
         ${type}$, allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(${kind}$), allocatable :: S(:)
         real(${kind}$) :: tol_

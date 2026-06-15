@@ -252,7 +252,7 @@ contains
     module procedure biorthonormalize_bases_rsp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rsp'
         !! SVD workspace
-        integer  :: n, i, info_, nretain
+        integer  :: n, info_, nretain
         real(sp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(sp), allocatable :: S(:)
         real(sp) :: tol_
@@ -301,7 +301,7 @@ contains
     module procedure biorthonormalize_bases_rdp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rdp'
         !! SVD workspace
-        integer  :: n, i, info_, nretain
+        integer  :: n, info_, nretain
         real(dp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(dp), allocatable :: S(:)
         real(dp) :: tol_
@@ -350,7 +350,7 @@ contains
     module procedure biorthonormalize_bases_csp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_csp'
         !! SVD workspace
-        integer  :: n, i, info_, nretain
+        integer  :: n, info_, nretain
         complex(sp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(sp), allocatable :: S(:)
         real(sp) :: tol_
@@ -399,7 +399,7 @@ contains
     module procedure biorthonormalize_bases_cdp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_cdp'
         !! SVD workspace
-        integer  :: n, i, info_, nretain
+        integer  :: n, info_, nretain
         complex(dp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(dp), allocatable :: S(:)
         real(dp) :: tol_
