@@ -1,5 +1,5 @@
 module LightKrylov_Logger
-#ifdef MPI
+#ifdef LIGHTKRYLOV_MPI
    use mpi_f08
 #endif
    ! Fortran Standard Library
@@ -246,7 +246,7 @@ contains
       ! internal
       character(len=*), parameter :: this_procedure = 'comm_setup'
       character(len=128) :: msg
-#ifdef MPI
+#ifdef LIGHTKRYLOV_MPI
       integer :: ierr, rank_local, size_local
       logical :: mpi_is_initialized
 
@@ -277,7 +277,7 @@ contains
 
    subroutine comm_close()
       integer :: ierr
-#ifdef MPI
+#ifdef LIGHTKRYLOV_MPI
       character(len=128) :: msg
       ! Finalize MPI
       call MPI_Finalize(ierr)
