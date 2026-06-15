@@ -14,7 +14,7 @@ module LightKrylov_BaseKrylov
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, schur, norm, mnorm, svd, diag
+    use stdlib_linalg, only: eye, schur, norm, mnorm, svd, diag, hermitian
 
     !-------------------------------
     !-----     LightKrylov     -----

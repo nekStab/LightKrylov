@@ -139,7 +139,11 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+            #:if type[0] == "r"
             call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            #:else
+            call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
+            #:endif
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
