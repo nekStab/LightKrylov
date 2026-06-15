@@ -252,10 +252,10 @@ contains
     module procedure biorthonormalize_bases_rsp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rsp'
         !! SVD workspace
-        integer                     :: n, i, info_, nretain
-        real(sp), allocatable       :: M(:,:), U(:,:), VT(:,:)
+        integer  :: n, i, info_, nretain
+        real(sp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(sp), allocatable :: S(:)
-        real(sp)              :: tol_
+        real(sp) :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
@@ -275,37 +275,25 @@ contains
         allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
-        ! determine how many singular values are above relative tolerance
-        nretain = 0
-        do i = 1, n
-            if (S(i) / S(1) > tol_) then
-                nretain = nretain + 1
-            end if
-        end do
-
-        info_ = 0
-        if (nretain == 0) info_ = -1
-        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
-
-        ! renormalize retained singular values
-        do i = 1, nretain
-            S(i) = one_rsp / sqrt(S(i))
-        end do
-        ! zero out truncated part
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rsp / sqrt(S(:nretain))
         S(nretain+1:) = zero_rsp
 
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_rsp), allocatable :: Xwrk(:)
-            call linear_combination(Xwrk, X, matmul(transpose(VT), diag(S)))
-            call copy(X, Xwrk)
-            call linear_combination(Xwrk, Y, matmul(U, diag(S)))
-            call copy(Y, Xwrk)
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
         end block
 
-        info_ = nretain
-
-        if (present(info)) info = merge(nretain, info_, info_ == 0)
+        if (present(info)) info = nretain
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
     end procedure biorthonormalize_bases_rsp
@@ -313,10 +301,10 @@ contains
     module procedure biorthonormalize_bases_rdp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rdp'
         !! SVD workspace
-        integer                     :: n, i, info_, nretain
-        real(dp), allocatable       :: M(:,:), U(:,:), VT(:,:)
+        integer  :: n, i, info_, nretain
+        real(dp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(dp), allocatable :: S(:)
-        real(dp)              :: tol_
+        real(dp) :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
@@ -336,37 +324,25 @@ contains
         allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
-        ! determine how many singular values are above relative tolerance
-        nretain = 0
-        do i = 1, n
-            if (S(i) / S(1) > tol_) then
-                nretain = nretain + 1
-            end if
-        end do
-
-        info_ = 0
-        if (nretain == 0) info_ = -1
-        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
-
-        ! renormalize retained singular values
-        do i = 1, nretain
-            S(i) = one_rdp / sqrt(S(i))
-        end do
-        ! zero out truncated part
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rdp / sqrt(S(:nretain))
         S(nretain+1:) = zero_rdp
 
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_rdp), allocatable :: Xwrk(:)
-            call linear_combination(Xwrk, X, matmul(transpose(VT), diag(S)))
-            call copy(X, Xwrk)
-            call linear_combination(Xwrk, Y, matmul(U, diag(S)))
-            call copy(Y, Xwrk)
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
         end block
 
-        info_ = nretain
-
-        if (present(info)) info = merge(nretain, info_, info_ == 0)
+        if (present(info)) info = nretain
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
     end procedure biorthonormalize_bases_rdp
@@ -374,10 +350,10 @@ contains
     module procedure biorthonormalize_bases_csp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_csp'
         !! SVD workspace
-        integer                     :: n, i, info_, nretain
-        complex(sp), allocatable       :: M(:,:), U(:,:), VT(:,:)
+        integer  :: n, i, info_, nretain
+        complex(sp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(sp), allocatable :: S(:)
-        real(sp)              :: tol_
+        real(sp) :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
@@ -397,37 +373,25 @@ contains
         allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
-        ! determine how many singular values are above relative tolerance
-        nretain = 0
-        do i = 1, n
-            if (S(i) / S(1) > tol_) then
-                nretain = nretain + 1
-            end if
-        end do
-
-        info_ = 0
-        if (nretain == 0) info_ = -1
-        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
-
-        ! renormalize retained singular values
-        do i = 1, nretain
-            S(i) = one_rsp / sqrt(S(i))
-        end do
-        ! zero out truncated part
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rsp / sqrt(S(:nretain))
         S(nretain+1:) = zero_rsp
 
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_csp), allocatable :: Xwrk(:)
-            call linear_combination(Xwrk, X, matmul(transpose(VT), diag(S)))
-            call copy(X, Xwrk)
-            call linear_combination(Xwrk, Y, matmul(U, diag(S)))
-            call copy(Y, Xwrk)
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
         end block
 
-        info_ = nretain
-
-        if (present(info)) info = merge(nretain, info_, info_ == 0)
+        if (present(info)) info = nretain
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
     end procedure biorthonormalize_bases_csp
@@ -435,10 +399,10 @@ contains
     module procedure biorthonormalize_bases_cdp
         character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_cdp'
         !! SVD workspace
-        integer                     :: n, i, info_, nretain
-        complex(dp), allocatable       :: M(:,:), U(:,:), VT(:,:)
+        integer  :: n, i, info_, nretain
+        complex(dp), allocatable  :: M(:,:), U(:,:), VT(:,:)
         real(dp), allocatable :: S(:)
-        real(dp)              :: tol_
+        real(dp) :: tol_
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
@@ -458,37 +422,25 @@ contains
         allocate(S(n), U(n, n), VT(n, n))
         call svd(M, S, U, VT)
 
-        ! determine how many singular values are above relative tolerance
-        nretain = 0
-        do i = 1, n
-            if (S(i) / S(1) > tol_) then
-                nretain = nretain + 1
-            end if
-        end do
-
-        info_ = 0
-        if (nretain == 0) info_ = -1
-        call check_info(info_, 'biorthonormalize_bases', this_module, this_procedure)
-
-        ! renormalize retained singular values
-        do i = 1, nretain
-            S(i) = one_rdp / sqrt(S(i))
-        end do
-        ! zero out truncated part
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rdp / sqrt(S(:nretain))
         S(nretain+1:) = zero_rdp
 
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_cdp), allocatable :: Xwrk(:)
-            call linear_combination(Xwrk, X, matmul(transpose(VT), diag(S)))
-            call copy(X, Xwrk)
-            call linear_combination(Xwrk, Y, matmul(U, diag(S)))
-            call copy(Y, Xwrk)
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
         end block
 
-        info_ = nretain
-
-        if (present(info)) info = merge(nretain, info_, info_ == 0)
+        if (present(info)) info = nretain
         if (time_lightkrylov()) call timer%stop(this_procedure)
 
     end procedure biorthonormalize_bases_cdp
