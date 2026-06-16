@@ -267,7 +267,6 @@ contains
 
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
-
         n = size(X)
         
         ! compute SVD of inner product matrix
@@ -316,7 +315,6 @@ contains
 
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
-
         n = size(X)
         
         ! compute SVD of inner product matrix
@@ -365,7 +363,6 @@ contains
 
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
-
         n = size(X)
         
         ! compute SVD of inner product matrix
@@ -414,7 +411,6 @@ contains
 
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
-
         n = size(X)
         
         ! compute SVD of inner product matrix

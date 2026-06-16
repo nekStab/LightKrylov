@@ -593,11 +593,7 @@ contains
 
         ! Check biorthonormality: Y.H @ X = I
         G = innerprod(Y, X)
-        #:if type[0] == 'r'
-            #:set eye_expr = 'eye(kdim, mold=1.0_' + kind + ')'
-        #:else
-            #:set eye_expr = 'eye(kdim, mold=(1.0_' + kind + ', 0.0_' + kind + '))'
-        #:endif
+        err = maxval(abs(G - eye(info, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_biorthonormalize_bases_${type[0]}$${kind}$', &
@@ -642,11 +638,7 @@ contains
 
         ! Check biorthonormality of the retained subspace.
         G = innerprod(Y(:info), X(:info))
-        #:if type[0] == 'r'
-            #:set eye_expr = 'eye(kdim, mold=1.0_' + kind + ')'
-        #:else
-            #:set eye_expr = 'eye(kdim, mold=(1.0_' + kind + ', 0.0_' + kind + '))'
-        #:endif
+        err = maxval(abs(G - eye(info, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_biorthonormalize_bases_rank_deficient_${type[0]}$${kind}$', &

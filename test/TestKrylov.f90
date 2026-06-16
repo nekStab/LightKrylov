@@ -1925,6 +1925,7 @@ contains
 
         ! Check biorthonormality: Y.H @ X = I
         G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_biorthonormalize_bases_rsp', &
@@ -1969,6 +1970,7 @@ contains
 
         ! Check biorthonormality of the retained subspace.
         G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_biorthonormalize_bases_rank_deficient_rsp', &
@@ -2048,6 +2050,7 @@ contains
 
         ! Check biorthonormality: Y.H @ X = I
         G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_biorthonormalize_bases_rdp', &
@@ -2092,6 +2095,7 @@ contains
 
         ! Check biorthonormality of the retained subspace.
         G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_biorthonormalize_bases_rank_deficient_rdp', &
@@ -2171,6 +2175,7 @@ contains
 
         ! Check biorthonormality: Y.H @ X = I
         G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_biorthonormalize_bases_csp', &
@@ -2215,6 +2220,7 @@ contains
 
         ! Check biorthonormality of the retained subspace.
         G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
         call check_test(error, 'test_biorthonormalize_bases_rank_deficient_csp', &
@@ -2294,6 +2300,7 @@ contains
 
         ! Check biorthonormality: Y.H @ X = I
         G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_biorthonormalize_bases_cdp', &
@@ -2338,6 +2345,7 @@ contains
 
         ! Check biorthonormality of the retained subspace.
         G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
         call check_test(error, 'test_biorthonormalize_bases_rank_deficient_cdp', &

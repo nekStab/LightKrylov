@@ -121,7 +121,6 @@ contains
 
         ! handle optional tol
         tol_ = optval(tol, atol_${kind}$)
-
         n = size(X)
         
         ! compute SVD of inner product matrix
