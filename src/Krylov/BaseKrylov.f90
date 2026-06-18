@@ -14,7 +14,7 @@ module LightKrylov_BaseKrylov
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
     use stdlib_optval, only: optval
-    use stdlib_linalg, only: eye, schur, norm, mnorm
+    use stdlib_linalg, only: eye, schur, norm, mnorm, svd, diag, hermitian
 
     !-------------------------------
     !-----     LightKrylov     -----
@@ -43,6 +43,7 @@ module LightKrylov_BaseKrylov
     public :: is_orthonormal
     public :: orthonormalize_basis
     public :: orthogonalize_against_basis
+    public :: biorthonormalize_bases
     public :: permcols, invperm
 
     public :: initialize_krylov_subspace
@@ -1042,6 +1043,82 @@ module LightKrylov_BaseKrylov
         end subroutine orthogonalize_basis_against_basis_cdp
 
     end interface
+
+    interface biorthonormalize_bases
+        !!  ### Description
+        !!
+        !!  Given two Krylov bases \( X \) and \( Y \), computes a symmetrically
+        !!  biorthonormalized basis for their column-spans using a symmetric SVD-based
+        !!  biorthogonalization. All computations are done in-place.
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call biorthonormalize_bases(X, Y [, tol] [, info])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  - `X`     :   Array of `abstract_vector` to biorthonormalize. 
+        !!                It is an `intent(inout)` argument.
+        !!  - `Y`     :   Array of `abstract_vector`  to biorthonormalize. 
+        !!                It is an `intent(inout)` argument.
+        !!  - `tol`  (*optional*)  :  Relative tolerance for SVD truncation. Defaults to absolute tolerance. 
+        !!                            It is an `intent(in)` argument.
+        !!  - `info` (*optional*)  :  Integer flag. Returns the number of retained singular vectors, 
+        !!                            or a negative value on error. It is an `intent(out)` argument.
+        !!  @warning
+        !!      This function performs standard symmetric biorthonormalization and will return an error if the bases are not of the same size.
+        !!  @endwarning
+        module subroutine biorthonormalize_bases_rsp(X, Y, tol, info)
+            !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
+            implicit none(type, external)
+            class(abstract_vector_rsp), intent(inout) :: X(:)
+            !! First basis to biorthonormalize.
+            class(abstract_vector_rsp), intent(inout) :: Y(:)
+            !! Second basis to biorthonormalize.
+            real(sp), optional, intent(in) :: tol
+            !! Relative tolerance for SVD truncation (default: abs tolerance).
+            integer, optional, intent(out) :: info
+            !! Number of retained singular vectors, or negative on error.
+        end subroutine biorthonormalize_bases_rsp
+        module subroutine biorthonormalize_bases_rdp(X, Y, tol, info)
+            !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
+            implicit none(type, external)
+            class(abstract_vector_rdp), intent(inout) :: X(:)
+            !! First basis to biorthonormalize.
+            class(abstract_vector_rdp), intent(inout) :: Y(:)
+            !! Second basis to biorthonormalize.
+            real(dp), optional, intent(in) :: tol
+            !! Relative tolerance for SVD truncation (default: abs tolerance).
+            integer, optional, intent(out) :: info
+            !! Number of retained singular vectors, or negative on error.
+        end subroutine biorthonormalize_bases_rdp
+        module subroutine biorthonormalize_bases_csp(X, Y, tol, info)
+            !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
+            implicit none(type, external)
+            class(abstract_vector_csp), intent(inout) :: X(:)
+            !! First basis to biorthonormalize.
+            class(abstract_vector_csp), intent(inout) :: Y(:)
+            !! Second basis to biorthonormalize.
+            real(sp), optional, intent(in) :: tol
+            !! Relative tolerance for SVD truncation (default: abs tolerance).
+            integer, optional, intent(out) :: info
+            !! Number of retained singular vectors, or negative on error.
+        end subroutine biorthonormalize_bases_csp
+        module subroutine biorthonormalize_bases_cdp(X, Y, tol, info)
+            !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
+            implicit none(type, external)
+            class(abstract_vector_cdp), intent(inout) :: X(:)
+            !! First basis to biorthonormalize.
+            class(abstract_vector_cdp), intent(inout) :: Y(:)
+            !! Second basis to biorthonormalize.
+            real(dp), optional, intent(in) :: tol
+            !! Relative tolerance for SVD truncation (default: abs tolerance).
+            integer, optional, intent(out) :: info
+            !! Number of retained singular vectors, or negative on error.
+        end subroutine biorthonormalize_bases_cdp
+    end interface biorthonormalize_bases
 
     interface double_gram_schmidt_step
         !!  ### Description

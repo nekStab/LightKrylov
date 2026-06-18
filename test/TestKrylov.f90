@@ -26,21 +26,25 @@ module TestKrylov
     public :: collect_arnoldi_rsp_testsuite
     public :: collect_lanczos_bidiag_rsp_testsuite
     public :: collect_lanczos_tridiag_rsp_testsuite
+    public :: collect_krylov_utilities_rsp_testsuite
 
     public :: collect_qr_rdp_testsuite
     public :: collect_arnoldi_rdp_testsuite
     public :: collect_lanczos_bidiag_rdp_testsuite
     public :: collect_lanczos_tridiag_rdp_testsuite
+    public :: collect_krylov_utilities_rdp_testsuite
 
     public :: collect_qr_csp_testsuite
     public :: collect_arnoldi_csp_testsuite
     public :: collect_lanczos_bidiag_csp_testsuite
     public :: collect_lanczos_tridiag_csp_testsuite
+    public :: collect_krylov_utilities_csp_testsuite
 
     public :: collect_qr_cdp_testsuite
     public :: collect_arnoldi_cdp_testsuite
     public :: collect_lanczos_bidiag_cdp_testsuite
     public :: collect_lanczos_tridiag_cdp_testsuite
+    public :: collect_krylov_utilities_cdp_testsuite
 
 
 contains
@@ -1843,5 +1847,510 @@ contains
 
         return
     end subroutine test_lanczos_tridiag_factorization_cdp
+
+
+    !-----------------------------------------------------------------------
+    !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS FOR UTILITIES     -----
+    !-----------------------------------------------------------------------
+
+    subroutine collect_krylov_utilities_rsp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+            new_unittest("Orthonormalize basis", test_orthonormalize_basis_rsp), &
+            new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_rsp), &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_rsp) &
+        ]
+        return
+    end subroutine collect_krylov_utilities_rsp_testsuite
+
+    !-------------------------------------------------
+    !-----     TEST ORTHONORMALIZE_BASIS          -----
+    !-------------------------------------------------
+
+    subroutine test_orthonormalize_basis_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_rsp), allocatable :: X(:)
+        ! Gram matrix.
+        real(sp), allocatable :: G(:,:)
+        ! Miscellaneous.
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random basis.
+        allocate(X(kdim)); call init_rand(X)
+
+        ! Orthonormalize in-place.
+        call orthonormalize_basis(X)
+
+        ! Check orthonormality via Gram matrix.
+        G = Gram(X)
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_orthonormalize_basis_rsp', &
+            & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        return
+    end subroutine test_orthonormalize_basis_rsp
+
+    !-------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES        -----
+    !-------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_rsp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        real(sp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random bases.
+        allocate(X(kdim), Y(kdim))
+        call init_rand(X); call init_rand(Y)
+
+        ! Biorthonormalize in-place.
+        call biorthonormalize_bases(X, Y, info=info)
+        call check_info(info, 'biorthonormalize_bases', &
+            & module=this_module_long, &
+            & procedure='test_biorthonormalize_bases_rsp')
+
+        ! Check biorthonormality: Y.H @ X = I
+        G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_biorthonormalize_bases_rsp', &
+            & info='Biorthonormality', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_rsp
+
+    !-----------------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES RANK DEFICIENT  -----
+    !-----------------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_rank_deficient_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        integer, parameter :: rank = test_size / 2
+        type(vector_rsp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        real(sp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(sp) :: err
+        character(len=256) :: msg
+        integer :: i
+
+        ! Build rank-deficient bases: last kdim-rank vectors are linear combinations
+        ! of the first rank vectors.
+        allocate(X(kdim), Y(kdim))
+        call zero_basis(X); call zero_basis(Y)
+        call init_rand(X(:rank)); call init_rand(Y(:rank))
+
+        ! Biorthonormalize: should detect rank deficiency and return nretain < kdim.
+        call biorthonormalize_bases(X, Y, tol=atol_sp, info=info)
+
+        ! info should equal rank (number of non-negligible singular values).
+        call check(error, info == rank)
+        call get_err_str(msg, "retained rank: ", real(info, sp))
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_rsp', &
+            & info='Rank detection', eq='nretain == rank', context=msg)
+
+        ! Check biorthonormality of the retained subspace.
+        G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_rsp', &
+            & info='Retained subspace biorth.', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_rank_deficient_rsp
+
+    subroutine collect_krylov_utilities_rdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+            new_unittest("Orthonormalize basis", test_orthonormalize_basis_rdp), &
+            new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_rdp), &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_rdp) &
+        ]
+        return
+    end subroutine collect_krylov_utilities_rdp_testsuite
+
+    !-------------------------------------------------
+    !-----     TEST ORTHONORMALIZE_BASIS          -----
+    !-------------------------------------------------
+
+    subroutine test_orthonormalize_basis_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_rdp), allocatable :: X(:)
+        ! Gram matrix.
+        real(dp), allocatable :: G(:,:)
+        ! Miscellaneous.
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random basis.
+        allocate(X(kdim)); call init_rand(X)
+
+        ! Orthonormalize in-place.
+        call orthonormalize_basis(X)
+
+        ! Check orthonormality via Gram matrix.
+        G = Gram(X)
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_orthonormalize_basis_rdp', &
+            & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        return
+    end subroutine test_orthonormalize_basis_rdp
+
+    !-------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES        -----
+    !-------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_rdp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        real(dp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random bases.
+        allocate(X(kdim), Y(kdim))
+        call init_rand(X); call init_rand(Y)
+
+        ! Biorthonormalize in-place.
+        call biorthonormalize_bases(X, Y, info=info)
+        call check_info(info, 'biorthonormalize_bases', &
+            & module=this_module_long, &
+            & procedure='test_biorthonormalize_bases_rdp')
+
+        ! Check biorthonormality: Y.H @ X = I
+        G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_biorthonormalize_bases_rdp', &
+            & info='Biorthonormality', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_rdp
+
+    !-----------------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES RANK DEFICIENT  -----
+    !-----------------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_rank_deficient_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        integer, parameter :: rank = test_size / 2
+        type(vector_rdp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        real(dp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(dp) :: err
+        character(len=256) :: msg
+        integer :: i
+
+        ! Build rank-deficient bases: last kdim-rank vectors are linear combinations
+        ! of the first rank vectors.
+        allocate(X(kdim), Y(kdim))
+        call zero_basis(X); call zero_basis(Y)
+        call init_rand(X(:rank)); call init_rand(Y(:rank))
+
+        ! Biorthonormalize: should detect rank deficiency and return nretain < kdim.
+        call biorthonormalize_bases(X, Y, tol=atol_dp, info=info)
+
+        ! info should equal rank (number of non-negligible singular values).
+        call check(error, info == rank)
+        call get_err_str(msg, "retained rank: ", real(info, dp))
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_rdp', &
+            & info='Rank detection', eq='nretain == rank', context=msg)
+
+        ! Check biorthonormality of the retained subspace.
+        G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_rdp', &
+            & info='Retained subspace biorth.', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_rank_deficient_rdp
+
+    subroutine collect_krylov_utilities_csp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+            new_unittest("Orthonormalize basis", test_orthonormalize_basis_csp), &
+            new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_csp), &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_csp) &
+        ]
+        return
+    end subroutine collect_krylov_utilities_csp_testsuite
+
+    !-------------------------------------------------
+    !-----     TEST ORTHONORMALIZE_BASIS          -----
+    !-------------------------------------------------
+
+    subroutine test_orthonormalize_basis_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_csp), allocatable :: X(:)
+        ! Gram matrix.
+        complex(sp), allocatable :: G(:,:)
+        ! Miscellaneous.
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random basis.
+        allocate(X(kdim)); call init_rand(X)
+
+        ! Orthonormalize in-place.
+        call orthonormalize_basis(X)
+
+        ! Check orthonormality via Gram matrix.
+        G = Gram(X)
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_orthonormalize_basis_csp', &
+            & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        return
+    end subroutine test_orthonormalize_basis_csp
+
+    !-------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES        -----
+    !-------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_csp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        complex(sp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random bases.
+        allocate(X(kdim), Y(kdim))
+        call init_rand(X); call init_rand(Y)
+
+        ! Biorthonormalize in-place.
+        call biorthonormalize_bases(X, Y, info=info)
+        call check_info(info, 'biorthonormalize_bases', &
+            & module=this_module_long, &
+            & procedure='test_biorthonormalize_bases_csp')
+
+        ! Check biorthonormality: Y.H @ X = I
+        G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_biorthonormalize_bases_csp', &
+            & info='Biorthonormality', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_csp
+
+    !-----------------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES RANK DEFICIENT  -----
+    !-----------------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_rank_deficient_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        integer, parameter :: rank = test_size / 2
+        type(vector_csp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        complex(sp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(sp) :: err
+        character(len=256) :: msg
+        integer :: i
+
+        ! Build rank-deficient bases: last kdim-rank vectors are linear combinations
+        ! of the first rank vectors.
+        allocate(X(kdim), Y(kdim))
+        call zero_basis(X); call zero_basis(Y)
+        call init_rand(X(:rank)); call init_rand(Y(:rank))
+
+        ! Biorthonormalize: should detect rank deficiency and return nretain < kdim.
+        call biorthonormalize_bases(X, Y, tol=atol_sp, info=info)
+
+        ! info should equal rank (number of non-negligible singular values).
+        call check(error, info == rank)
+        call get_err_str(msg, "retained rank: ", real(info, sp))
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_csp', &
+            & info='Rank detection', eq='nretain == rank', context=msg)
+
+        ! Check biorthonormality of the retained subspace.
+        G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_csp', &
+            & info='Retained subspace biorth.', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_rank_deficient_csp
+
+    subroutine collect_krylov_utilities_cdp_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+            new_unittest("Orthonormalize basis", test_orthonormalize_basis_cdp), &
+            new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_cdp), &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_cdp) &
+        ]
+        return
+    end subroutine collect_krylov_utilities_cdp_testsuite
+
+    !-------------------------------------------------
+    !-----     TEST ORTHONORMALIZE_BASIS          -----
+    !-------------------------------------------------
+
+    subroutine test_orthonormalize_basis_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_cdp), allocatable :: X(:)
+        ! Gram matrix.
+        complex(dp), allocatable :: G(:,:)
+        ! Miscellaneous.
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random basis.
+        allocate(X(kdim)); call init_rand(X)
+
+        ! Orthonormalize in-place.
+        call orthonormalize_basis(X)
+
+        ! Check orthonormality via Gram matrix.
+        G = Gram(X)
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_orthonormalize_basis_cdp', &
+            & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        return
+    end subroutine test_orthonormalize_basis_cdp
+
+    !-------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES        -----
+    !-------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        type(vector_cdp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        complex(dp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize random bases.
+        allocate(X(kdim), Y(kdim))
+        call init_rand(X); call init_rand(Y)
+
+        ! Biorthonormalize in-place.
+        call biorthonormalize_bases(X, Y, info=info)
+        call check_info(info, 'biorthonormalize_bases', &
+            & module=this_module_long, &
+            & procedure='test_biorthonormalize_bases_cdp')
+
+        ! Check biorthonormality: Y.H @ X = I
+        G = innerprod(Y, X)
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_biorthonormalize_bases_cdp', &
+            & info='Biorthonormality', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_cdp
+
+    !-----------------------------------------------------------
+    !-----     TEST BIORTHONORMALIZE_BASES RANK DEFICIENT  -----
+    !-----------------------------------------------------------
+
+    subroutine test_biorthonormalize_bases_rank_deficient_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        integer, parameter :: kdim = test_size
+        integer, parameter :: rank = test_size / 2
+        type(vector_cdp), allocatable :: X(:), Y(:)
+        ! Cross-Gram matrix.
+        complex(dp), allocatable :: G(:,:)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(dp) :: err
+        character(len=256) :: msg
+        integer :: i
+
+        ! Build rank-deficient bases: last kdim-rank vectors are linear combinations
+        ! of the first rank vectors.
+        allocate(X(kdim), Y(kdim))
+        call zero_basis(X); call zero_basis(Y)
+        call init_rand(X(:rank)); call init_rand(Y(:rank))
+
+        ! Biorthonormalize: should detect rank deficiency and return nretain < kdim.
+        call biorthonormalize_bases(X, Y, tol=atol_dp, info=info)
+
+        ! info should equal rank (number of non-negligible singular values).
+        call check(error, info == rank)
+        call get_err_str(msg, "retained rank: ", real(info, dp))
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_cdp', &
+            & info='Rank detection', eq='nretain == rank', context=msg)
+
+        ! Check biorthonormality of the retained subspace.
+        G = innerprod(Y(:info), X(:info))
+        err = maxval(abs(G - eye(info, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_biorthonormalize_bases_rank_deficient_cdp', &
+            & info='Retained subspace biorth.', eq='Y.H @ X = I', context=msg)
+        return
+    end subroutine test_biorthonormalize_bases_rank_deficient_cdp
 
 end module TestKrylov

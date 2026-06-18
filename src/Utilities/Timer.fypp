@@ -73,7 +73,7 @@ contains
 
       #:set LAPACK           = { 'name': 'LAPACK','routines': [ 'eig', 'eigh', 'svd', 'trsen' ], 'expand': False }
       #:set Utils            = { 'name': 'Utils',            'routines': [ 'sqrtm', 'expm', ], 'expand': True }
-      #:set BaseKrylov       = {'name': 'BaseKrylov',       'routines': [ 'qr_with_pivoting', 'qr_no_pivoting', 'orthonormalize_basis','orthogonalize_vector_against_basis','orthogonalize_basis_against_basis','dgs_vector_against_basis','dgs_basis_against_basis','arnoldi','lanczos_bidiagonalization','lanczos_tridiagonalization','krylov_schur'], 'expand': True }
+      #:set BaseKrylov       = { 'name': 'BaseKrylov',       'routines': [ 'qr_with_pivoting', 'qr_no_pivoting', 'orthonormalize_basis','orthogonalize_vector_against_basis','orthogonalize_basis_against_basis','biorthonormalize_bases','dgs_vector_against_basis','dgs_basis_against_basis','arnoldi','lanczos_bidiagonalization','lanczos_tridiagonalization','krylov_schur'], 'expand': True }
       #:set IterativeSolvers = { 'name': 'IterativeSolvers', 'routines': [ 'eigs', 'eighs', 'svds', 'gmres', 'fgmres', 'cg' ], 'expand': True }
       #:set Newton           = { 'name': 'NewtonKrylov',     'routines': [ 'newton' ], 'expand': True }
       #:set groups = [ LAPACK, Utils, BaseKrylov, IterativeSolvers, Newton ]
