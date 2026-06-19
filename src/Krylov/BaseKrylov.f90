@@ -412,7 +412,7 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             !! Starting index for the Lanczos factorization (default 1).
             integer, optional, intent(in) :: kend
-            !! Final index for the Lanczos factorization (default 1).
+            !! Final index for the Lanczos factorization (default size(U) - 1).
             real(sp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
         end subroutine lanczos_bidiagonalization_rsp
@@ -433,7 +433,7 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             !! Starting index for the Lanczos factorization (default 1).
             integer, optional, intent(in) :: kend
-            !! Final index for the Lanczos factorization (default 1).
+            !! Final index for the Lanczos factorization (default size(U) - 1).
             real(dp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
         end subroutine lanczos_bidiagonalization_rdp
@@ -454,7 +454,7 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             !! Starting index for the Lanczos factorization (default 1).
             integer, optional, intent(in) :: kend
-            !! Final index for the Lanczos factorization (default 1).
+            !! Final index for the Lanczos factorization (default size(U) - 1).
             real(sp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
         end subroutine lanczos_bidiagonalization_csp
@@ -475,7 +475,7 @@ module LightKrylov_BaseKrylov
             integer, optional, intent(in) :: kstart
             !! Starting index for the Lanczos factorization (default 1).
             integer, optional, intent(in) :: kend
-            !! Final index for the Lanczos factorization (default 1).
+            !! Final index for the Lanczos factorization (default size(U) - 1).
             real(dp), optional, intent(in) :: tol
             !! Tolerance to determine whether invariant subspaces have been computed or not.
         end subroutine lanczos_bidiagonalization_cdp
@@ -484,15 +484,92 @@ module LightKrylov_BaseKrylov
 
 
     interface ssy
+        !! ### Description
+        !!
+        !!  Given a linear operator \( A \) with full column rank and the associated saddle-point problem
+        !!
+        !!  \[
+        !!      \begin{bmatrix}
+        !!          I & A \\
+        !!          A^\top &
+        !!      \end{bmatrix}
+        !!      \begin{bmatrix}
+        !!          x \\ y
+        !!      \end{bmatrix}
+        !!      =
+        !!      \begin{bmatrix}
+        !!          b \\ c
+        !!      \end{bmatrix},
+        !!  \]
+        !!
+        !!  the Saunders-Simon-Yip factorization computes orthonormal bases \( U \) and \( V \) for the column-span
+        !!  and of \( AA^\top \) and \( A^\top A \), respectively, and a tridiagonal matrix \( T \) such that
+        !!
+        !!  \[
+        !!      U^\top A V = T.
+        !!  \]
+        !!
+        !!  with \( \beta u_1 = b \) and \( \gamma v_1 = c \).
+        !!
+        !!  **Algorithmic Features**
+        !!
+        !!  - The operator \(A\) only needs to be accessed through matrix-vector products.
+        !!  - Constructs an orthonormal basis for the Krylov subspace \(\mathcal{K} = \left( b, AA^\top b, \cdots \right)\).
+        !!  - Constructs an orthonormal basis for the Krylov subspace \(\mathcal{K} = \left( c, A^\top A c, \cdots, \right)\).
+        !!  - Constructs a tridiagonal matrix \( T \) such that \( U^\top A V = T \).
+        !!  - Checks for convergence and invariant subspaces.
+        !!
+        !!  **References**
+        !!
+        !!  - A. Buttari, D. Orban, D. Ruiz, and D. Titly-Peloquin. "A tridiagonalization method for
+        !!   symmetric saddle-point systems". SIAM Journal on Scientific Computing, 41(5), 2019.
+        !!  [(PDF)](https://hal.science/hal-02343661/file/A_Tridiagonalization_Method_for_Symmetric_Saddle_Point_and_Quasi_Definite_Systems_.pdf)
+        !!
+        !!  ### Syntax
+        !!
+        !!  ```fortran
+        !!      call ssy(A, U, V, T, info [, kstart] [, kend] [, tol])
+        !!  ```
+        !!
+        !!  ### Arguments
+        !!
+        !!  - `A`   :   Linear operator derived from one the base types provided by the
+        !!              `AbstractLinops` module. It is an `intent(inout)` argument.
+        !!
+        !!  - `U`   :   Arrays of types derived from one the base types provided by the `AbstractVectors`
+        !!              module. It needs to be consistent with the type of `A`. On entry, `U(1) = b`.
+        !!              On exit, it contains an orthonormal basis for \(\mathcal{K} = \left(b, A A^\top b, \cdots \right)\).
+        !!              It is an `intent(inout)` argument.
+        !!
+        !!  - `V`   :   Arrays of types derived from one the base types provided by the `AbstractVectors`
+        !!              module. It needs to be consistent with the type o f`A`. On entry, `V(1) = c`.
+        !!              On exit, it contains an orthonormal basis for \(\mathcal{K} = \left(c, A^\top A c, \cdots \right)\).
+        !!              It is an `intent(inout)` argument.
+        !!
+        !!  - `T`   :   `real` or `complex` rank-2 array. On exit, it contains the \((k+1) \times (k+1)\)
+        !!              tridiagonal matrix computed from the SSY factorization. It is an `intent(inout)` argument.
+        !!
+        !!  - `info`    :   `integer` variable. It is the `LightKrylov` information flag. On exit, if `info > 0`
+        !!                  the SSY process experienced a lucky breakdown.
+        !!
+        !!  - `kstart` (*optional*) :   `integer` value determining the index of the first SSY step to be
+        !!                              computed. It is an optional `intent(in)` argument. By default, `kstart = 1`.
+        !!
+        !!  - `kend` (*optional*)   :   `integer` value determining the index of the last SSY step to be computed.
+        !!                              It is an optional `intent(in)` argument. By default, `kend = size(U) - 1`.
+        !!
+        !!  - `tol` (*optional*)    :   Numerical tolerance below which a subspace is considered to be \(A\)-invariant.
+        !!                              It is an optional `intent(in)` argument. By default `tol = atol_sp` or
+        !!                              `tol = atol_dp` depending on the kind of `A`.
     module subroutine ssy_rsp(A, U, V, T, info, kstart, kend, tol)
         implicit none (type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rsp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+        !! Orthonormal basis for the span of \(AA^\top\). On entry, `U(1)` needs to
         !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_rsp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
+        !! Orthonormal basis for the row span of \(A^\top A\). On entry, `V(1)` needs to
         !! be set to the starting Krylov vector c (non-normalized).
         real(sp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
@@ -501,7 +578,7 @@ module LightKrylov_BaseKrylov
         integer, optional, intent(in) :: kstart
         !! Starting index for the SSY factorization (default 1)
         integer, optional, intent(in) :: kend
-        !! Final index for the SSY factorization (default size(U)).
+        !! Final index for the SSY factorization (default size(U)-1).
         real(sp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
     end subroutine ssy_rsp
@@ -510,10 +587,10 @@ module LightKrylov_BaseKrylov
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_rdp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+        !! Orthonormal basis for the span of \(AA^\top\). On entry, `U(1)` needs to
         !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_rdp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
+        !! Orthonormal basis for the row span of \(A^\top A\). On entry, `V(1)` needs to
         !! be set to the starting Krylov vector c (non-normalized).
         real(dp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
@@ -522,7 +599,7 @@ module LightKrylov_BaseKrylov
         integer, optional, intent(in) :: kstart
         !! Starting index for the SSY factorization (default 1)
         integer, optional, intent(in) :: kend
-        !! Final index for the SSY factorization (default size(U)).
+        !! Final index for the SSY factorization (default size(U)-1).
         real(dp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
     end subroutine ssy_rdp
@@ -531,10 +608,10 @@ module LightKrylov_BaseKrylov
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_csp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+        !! Orthonormal basis for the span of \(AA^\top\). On entry, `U(1)` needs to
         !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_csp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
+        !! Orthonormal basis for the row span of \(A^\top A\). On entry, `V(1)` needs to
         !! be set to the starting Krylov vector c (non-normalized).
         complex(sp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
@@ -543,7 +620,7 @@ module LightKrylov_BaseKrylov
         integer, optional, intent(in) :: kstart
         !! Starting index for the SSY factorization (default 1)
         integer, optional, intent(in) :: kend
-        !! Final index for the SSY factorization (default size(U)).
+        !! Final index for the SSY factorization (default size(U)-1).
         real(sp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
     end subroutine ssy_csp
@@ -552,10 +629,10 @@ module LightKrylov_BaseKrylov
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be factorized.
         class(abstract_vector_cdp), intent(inout) :: U(:)
-        !! Orthonormal basis for the column span of \(\mathbf{A}\). On entry, `U(1)` needs to
+        !! Orthonormal basis for the span of \(AA^\top\). On entry, `U(1)` needs to
         !! be set to the starting Krylov vector b (non-normalized).
         class(abstract_vector_cdp), intent(inout) :: V(:)
-        !! Orthonormal basis for the row span of \(\mathbf{A}\). On entry, `V(1)` needs to
+        !! Orthonormal basis for the row span of \(A^\top A\). On entry, `V(1)` needs to
         !! be set to the starting Krylov vector c (non-normalized).
         complex(dp), intent(inout) :: T(:, :)
         !! Tridiagonal matrix.
@@ -564,7 +641,7 @@ module LightKrylov_BaseKrylov
         integer, optional, intent(in) :: kstart
         !! Starting index for the SSY factorization (default 1)
         integer, optional, intent(in) :: kend
-        !! Final index for the SSY factorization (default size(U)).
+        !! Final index for the SSY factorization (default size(U)-1).
         real(dp), optional, intent(in) :: tol
         !! Tolerance to determine whether invariant subspaces have been computed or not.
     end subroutine ssy_cdp
