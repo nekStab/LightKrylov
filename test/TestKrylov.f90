@@ -1939,8 +1939,6 @@ contains
                                  & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
         return
     end subroutine test_ssy_tridiag_factorization_rsp
-
-   
     subroutine collect_ssy_tridiag_rdp_testsuite(testsuite)
         ! Collection of unit tests.
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -2022,8 +2020,6 @@ contains
                                  & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
         return
     end subroutine test_ssy_tridiag_factorization_rdp
-
-   
     subroutine collect_ssy_tridiag_csp_testsuite(testsuite)
         ! Collection of unit tests.
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -2105,8 +2101,6 @@ contains
                                  & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
         return
     end subroutine test_ssy_tridiag_factorization_csp
-
-   
     subroutine collect_ssy_tridiag_cdp_testsuite(testsuite)
         ! Collection of unit tests.
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
@@ -2188,7 +2182,6 @@ contains
                                  & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
         return
     end subroutine test_ssy_tridiag_factorization_cdp
-
    
     !-----------------------------------------------------------------------
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS FOR UTILITIES     -----

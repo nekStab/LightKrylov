@@ -604,8 +604,8 @@ contains
                                  & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
         return
     end subroutine test_ssy_tridiag_factorization_${type[0]}$${kind}$
+    #:endfor
 
-   
     !-----------------------------------------------------------------------
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS FOR UTILITIES     -----
     !-----------------------------------------------------------------------
