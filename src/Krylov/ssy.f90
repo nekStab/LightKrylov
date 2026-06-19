@@ -6,7 +6,7 @@ contains
         character(len=100) :: errmsg
         integer :: k_start, k_end, i, k
         real(sp) :: tolerance
-        real(sp) :: alpha, beta, gamma
+        real(sp) :: beta, gamma
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         associate(kdim => size(U)-1)
@@ -30,8 +30,7 @@ contains
                 if (k > 1) call U(k+1)%axpby(-gamma, U(k-1), one_rsp)
 
                 ! Compute alpha[k] = dot(u[k], q)
-                alpha = U(k)%dot(U(k+1))
-                T(k, k) = alpha
+                T(k, k) = U(k)%dot(U(k+1))
 
                 ! Compute beta[k+1] * u[k+1] = q - alpha[k]*u[k]
                 call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -65,7 +64,7 @@ contains
         character(len=100) :: errmsg
         integer :: k_start, k_end, i, k
         real(dp) :: tolerance
-        real(dp) :: alpha, beta, gamma
+        real(dp) :: beta, gamma
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         associate(kdim => size(U)-1)
@@ -89,8 +88,7 @@ contains
                 if (k > 1) call U(k+1)%axpby(-gamma, U(k-1), one_rdp)
 
                 ! Compute alpha[k] = dot(u[k], q)
-                alpha = U(k)%dot(U(k+1))
-                T(k, k) = alpha
+                T(k, k) = U(k)%dot(U(k+1))
 
                 ! Compute beta[k+1] * u[k+1] = q - alpha[k]*u[k]
                 call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -124,7 +122,7 @@ contains
         character(len=100) :: errmsg
         integer :: k_start, k_end, i, k
         real(sp) :: tolerance
-        complex(sp) :: alpha, beta, gamma
+        complex(sp) :: beta, gamma
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         associate(kdim => size(U)-1)
@@ -148,8 +146,7 @@ contains
                 if (k > 1) call U(k+1)%axpby(-gamma, U(k-1), one_csp)
 
                 ! Compute alpha[k] = dot(u[k], q)
-                alpha = U(k)%dot(U(k+1))
-                T(k, k) = alpha
+                T(k, k) = U(k)%dot(U(k+1))
 
                 ! Compute beta[k+1] * u[k+1] = q - alpha[k]*u[k]
                 call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
@@ -183,7 +180,7 @@ contains
         character(len=100) :: errmsg
         integer :: k_start, k_end, i, k
         real(dp) :: tolerance
-        complex(dp) :: alpha, beta, gamma
+        complex(dp) :: beta, gamma
 
         if (time_lightkrylov()) call timer%start(this_procedure)
         associate(kdim => size(U)-1)
@@ -207,8 +204,7 @@ contains
                 if (k > 1) call U(k+1)%axpby(-gamma, U(k-1), one_cdp)
 
                 ! Compute alpha[k] = dot(u[k], q)
-                alpha = U(k)%dot(U(k+1))
-                T(k, k) = alpha
+                T(k, k) = U(k)%dot(U(k+1))
 
                 ! Compute beta[k+1] * u[k+1] = q - alpha[k]*u[k]
                 call double_gram_schmidt_step(U(k+1), U(:k), info, if_chk_orthonormal=.false.)
