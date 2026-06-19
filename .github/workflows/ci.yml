@@ -16,7 +16,6 @@ jobs:
           - {compiler: gcc, version: 13}
           - {compiler: gcc, version: 14}
           - {compiler: gcc, version: 15}
-          - {compiler: intel, version: '2025.0'}
           - {compiler: intel-classic, version: '2021.10'}
           - {compiler: nvidia-hpc, version: '25.1'}
         exclude:
@@ -36,6 +35,8 @@ jobs:
             toolchain: {compiler: gcc, version: 10} # Fail to compile stdlib_blas_level1.f90:123:38
           - os: windows-latest
             toolchain: {compiler: intel-classic} # Fail to build. Mixing ifort and gfortran?
+          - os: windows-latest
+            toolchain: {compiler: intel, version: '2025.0'} # Fail to build: failing to find #include <corecrt.h>. Could be fixed by overriding icx for this runner?
 
     steps:
       - name: Checkout code

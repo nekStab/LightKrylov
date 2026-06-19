@@ -63,7 +63,7 @@ contains
         call orthonormalize_basis(X)
     end procedure initialize_random_orthonormal_basis_${type[0]}$${kind}$
     #:endfor
-   
+
     !----------------------------------------
     !-----     Orthonormalize basis     -----
     !----------------------------------------
@@ -96,6 +96,64 @@ contains
             ortho = .false.
         end if
     end procedure is_orthonormal_${type[0]}$${kind}$
+
+    #:endfor
+    !----------------------------------------------
+    !-----     Biorthonormalize two bases     -----
+    !----------------------------------------------
+
+    #:for kind, type in RC_KINDS_TYPES
+    module procedure biorthonormalize_bases_${type[0]}$${kind}$
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_${type[0]}$${kind}$'
+        !! SVD workspace
+        integer  :: n, info_, nretain
+        ${type}$, allocatable  :: M(:,:), U(:,:), VT(:,:)
+        real(${kind}$), allocatable :: S(:)
+        real(${kind}$) :: tol_
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
+        ! handle optional tol
+        tol_ = optval(tol, atol_${kind}$)
+        n = size(X)
+        
+        ! compute SVD of inner product matrix
+        M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
+        call svd(M, S, U, VT)
+
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_r${kind}$ / sqrt(S(:nretain))
+        S(nretain+1:) = zero_r${kind}$
+
+        ! apply symmetric transformation in-place
+        block
+            class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+            #:if type[0] == "r"
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            #:else
+            call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
+            #:endif
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
+        end block
+
+        if (present(info)) info = nretain
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+    end procedure biorthonormalize_bases_${type[0]}$${kind}$
 
     #:endfor
 end submodule krylov_utilities

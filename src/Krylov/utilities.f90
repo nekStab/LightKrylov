@@ -148,7 +148,7 @@ contains
         ! Orthonormalize
         call orthonormalize_basis(X)
     end procedure initialize_random_orthonormal_basis_cdp
-   
+
     !----------------------------------------
     !-----     Orthonormalize basis     -----
     !----------------------------------------
@@ -244,5 +244,201 @@ contains
             ortho = .false.
         end if
     end procedure is_orthonormal_cdp
+
+    !----------------------------------------------
+    !-----     Biorthonormalize two bases     -----
+    !----------------------------------------------
+
+    module procedure biorthonormalize_bases_rsp
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rsp'
+        !! SVD workspace
+        integer  :: n, info_, nretain
+        real(sp), allocatable  :: M(:,:), U(:,:), VT(:,:)
+        real(sp), allocatable :: S(:)
+        real(sp) :: tol_
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
+        ! handle optional tol
+        tol_ = optval(tol, atol_sp)
+        n = size(X)
+        
+        ! compute SVD of inner product matrix
+        M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
+        call svd(M, S, U, VT)
+
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rsp / sqrt(S(:nretain))
+        S(nretain+1:) = zero_rsp
+
+        ! apply symmetric transformation in-place
+        block
+            class(abstract_vector_rsp), allocatable :: Xwrk(:)
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
+        end block
+
+        if (present(info)) info = nretain
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+    end procedure biorthonormalize_bases_rsp
+
+    module procedure biorthonormalize_bases_rdp
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_rdp'
+        !! SVD workspace
+        integer  :: n, info_, nretain
+        real(dp), allocatable  :: M(:,:), U(:,:), VT(:,:)
+        real(dp), allocatable :: S(:)
+        real(dp) :: tol_
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
+        ! handle optional tol
+        tol_ = optval(tol, atol_dp)
+        n = size(X)
+        
+        ! compute SVD of inner product matrix
+        M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
+        call svd(M, S, U, VT)
+
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rdp / sqrt(S(:nretain))
+        S(nretain+1:) = zero_rdp
+
+        ! apply symmetric transformation in-place
+        block
+            class(abstract_vector_rdp), allocatable :: Xwrk(:)
+            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
+        end block
+
+        if (present(info)) info = nretain
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+    end procedure biorthonormalize_bases_rdp
+
+    module procedure biorthonormalize_bases_csp
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_csp'
+        !! SVD workspace
+        integer  :: n, info_, nretain
+        complex(sp), allocatable  :: M(:,:), U(:,:), VT(:,:)
+        real(sp), allocatable :: S(:)
+        real(sp) :: tol_
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
+        ! handle optional tol
+        tol_ = optval(tol, atol_sp)
+        n = size(X)
+        
+        ! compute SVD of inner product matrix
+        M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
+        call svd(M, S, U, VT)
+
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rsp / sqrt(S(:nretain))
+        S(nretain+1:) = zero_rsp
+
+        ! apply symmetric transformation in-place
+        block
+            class(abstract_vector_csp), allocatable :: Xwrk(:)
+            call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
+        end block
+
+        if (present(info)) info = nretain
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+    end procedure biorthonormalize_bases_csp
+
+    module procedure biorthonormalize_bases_cdp
+        character(len=*), parameter :: this_procedure = 'biorthonormalize_bases_cdp'
+        !! SVD workspace
+        integer  :: n, info_, nretain
+        complex(dp), allocatable  :: M(:,:), U(:,:), VT(:,:)
+        real(dp), allocatable :: S(:)
+        real(dp) :: tol_
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Check sizes.
+        if (size(X) /= size(Y)) then
+            call stop_error("Krylov bases X and Y have different sizes.", &
+                              & this_module, this_procedure)
+        endif
+
+        ! handle optional tol
+        tol_ = optval(tol, atol_dp)
+        n = size(X)
+        
+        ! compute SVD of inner product matrix
+        M = innerprod(Y, X)
+        allocate(S(n), U(n, n), VT(n, n))
+        call svd(M, S, U, VT)
+
+        ! count + renormalize retained singular values; zero the rest
+        nretain = count(S / S(1) > tol_)
+        call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
+            & this_module, this_procedure)
+        S(:nretain) = one_rdp / sqrt(S(:nretain))
+        S(nretain+1:) = zero_rdp
+
+        ! apply symmetric transformation in-place
+        block
+            class(abstract_vector_cdp), allocatable :: Xwrk(:)
+            call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
+            call copy(X(:nretain), Xwrk)
+            call zero_basis(X(nretain+1:))
+            call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
+            call copy(Y(:nretain), Xwrk)
+            call zero_basis(Y(nretain+1:))
+        end block
+
+        if (present(info)) info = nretain
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+
+    end procedure biorthonormalize_bases_cdp
 
 end submodule krylov_utilities

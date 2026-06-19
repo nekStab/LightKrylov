@@ -20,7 +20,7 @@ module LightKrylov_AbstractVectors
     !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
     !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
     !!
-    !! Once these type-bound procedures have been implemented by the user, they will automatically 
+    !! Once these type-bound procedures have been implemented by the user, they will automatically
     !! be used to define:
     !!
     !! - vector addition    :   `add(self, vec) = axpby(1, vec, 1, self)`
@@ -56,6 +56,7 @@ module LightKrylov_AbstractVectors
     public :: zero_basis
     public :: copy
     public :: rand_basis
+    public :: verify_vector_axioms
 
     interface innerprod
         !!  Compute the inner product vector \( \mathbf{v} = \mathbf{X}^H \mathbf{y} \) or matrix
@@ -64,7 +65,7 @@ module LightKrylov_AbstractVectors
         !!  ### Description
         !!
         !!  This interface provides methods for computing the inner products between a basis
-        !!  of `real` or `complex` vectors \( \mathbf{X} \) and a single vector 
+        !!  of `real` or `complex` vectors \( \mathbf{X} \) and a single vector
         !!  \( \mathbf{y} \) or another basis \( \mathbf{Y} \). Depending on the case, it
         !!  returns a one-dimensional array \( \mathbf{v} \) or a two-dimensional array
         !!  \( \mathbf{M} \) with the same type as \( \mathbf{X} \).
@@ -110,7 +111,7 @@ module LightKrylov_AbstractVectors
         !!
         !!  ### Description
         !!
-        !!  This interface provides methods for computing the Gram matrix associated to a basis of 
+        !!  This interface provides methods for computing the Gram matrix associated to a basis of
         !!  `abstract_vector` \( \mathbf{X} \).
         !!
         !!  ### Example
@@ -175,7 +176,7 @@ module LightKrylov_AbstractVectors
 
     interface axpby_basis
         !!  In-place addition of two arrays of extended `abstract_vector`.
-        !!  
+        !!
         !!  ### Description
         !!
         !!  This interface provides methods to add in-place two arrays of
@@ -269,6 +270,13 @@ module LightKrylov_AbstractVectors
         module procedure rand_basis_${type[0]}$${kind}$
         #:endfor
     end interface
+
+    interface verify_vector_axioms
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure verify_vector_axioms_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
 
     type, abstract, public :: abstract_vector
         !!  Base abstract type from which all other types of vectors used in `LightKrylov`
@@ -456,7 +464,7 @@ contains
     !--------------------------------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR THE CONVENIENCE DENSE VECTOR TYPES     -----
     !--------------------------------------------------------------------------------
-    
+
     #:for kind, type in RC_KINDS_TYPES
     function initialize_dense_vector_from_array_${type[0]}$${kind}$(x) result(vec)
         implicit none(type, external)
@@ -554,7 +562,7 @@ contains
     end function dense_get_size_${type[0]}$${kind}$
 
     #:endfor
-    
+
     !--------------------------------------
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
@@ -608,7 +616,7 @@ contains
         ! Internal variables.
         integer :: i, j, iostat
         character(len=100) :: errmsg
-    
+
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
@@ -720,6 +728,203 @@ contains
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_${type[0]}$${kind}$
+
+
+    logical function verify_vector_axioms_${type[0]}$${kind}$(x, ntrials, tolerance) result(success)
+        implicit none(type, external)
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: x
+        !! Derived-type whose implementation needs to be tested.
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(${kind}$), optional, intent(in) :: tolerance
+
+        integer :: ntrials_, i
+        real(${kind}$) :: tol
+
+        !> Deals with optional argument.
+        ntrials_ = optval(ntrials, 100)
+        tol = optval(tolerance, 10.0_${kind}$**(-(precision(1.0_${kind}$)-1)))
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-----------------------------------
+            !-----     VECTOR ADDITION     -----
+            !-----------------------------------
+
+            addition_distributivity: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk1, wrk2
+
+                !> Generate random vectors.
+                allocate(u, v, w, wrk1, wrk2, source=x)
+                call u%rand()
+                call v%rand()
+                call w%rand()
+
+                !> Check distributivity.
+                wrk1 = v
+                wrk2 = v
+                call wrk1%add(w)    ! v + w
+                call wrk2%add(u)    ! u + v
+
+                call u%add(wrk1)    ! u + (v + w)
+                call w%add(wrk2)    ! (u + v) + w
+
+                call u%sub(w)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_distributivity
+
+            addition_commutativity: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand()
+                call v%rand()
+                w = v
+
+                !> Check commutativity.
+                call v%add(u)
+                call u%add(w)
+
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_commutativity
+
+            addition_zero: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, z
+
+                !> Generate random vector.
+                allocate(u, v, z, source=x)
+                v = u
+                call z%zero()
+
+                !> Check zero element.
+                call u%add(z)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block addition_zero
+
+            additive_inverse: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block additive_inverse
+
+            !-----------------------------------------
+            !-----     SCALAR MULTIPLICATION     -----
+            !-----------------------------------------
+            scaling_identity: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
+                ${type}$, parameter :: one = 1.0_${kind}$
+
+                !> Generate random vector.
+                allocate(u, v, source=x)
+                call u%rand()
+                v = u
+                !> Check identity.
+                call v%scal(one)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_identity
+
+            scaling_compatibility: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
+                ${type}$ :: a, b
+                #:if type.startswith('complex')
+                real(${kind}$) :: c(2)
+                call random_number(c)
+                a = cmplx(c(1), c(2), kind=${kind}$)
+                call random_number(c)
+                b = cmplx(c(1), c(2), kind=${kind}$)
+                #:else
+                call random_number(a)
+                call random_number(b)
+                #:endif
+
+                !> Generate random vectors.
+                allocate(u, v, source=x)
+                call u%rand(ifnorm=.true.)
+                v = u
+
+                !> Check associativity.
+                call v%scal(b)
+                call v%scal(a)
+                call u%scal(a*b)
+                call u%sub(v)
+                success = merge(.true., .false., u%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_compatibility
+
+            scaling_distributivity: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
+                ${type}$ :: a
+                #:if type.startswith('complex')
+                real(${kind}$) :: b(2)
+                call random_number(b)
+                a = cmplx(b(1), b(2), kind=${kind}$)
+                #:else
+                call random_number(a)
+                #:endif
+
+                !> Generate random vectors.
+                allocate(u, v, w, source=x)
+                call u%rand()
+                call v%rand()
+                w = u
+
+                !> Check distributivity.
+                call w%add(v)
+                call w%scal(a)
+
+                call u%scal(a)
+                call v%scal(a)
+                call v%add(u)
+
+                call v%sub(w)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity
+
+            scaling_distributivity_bis: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
+                ${type}$ :: a, b
+                #:if type.startswith('complex')
+                real(${kind}$) :: c(2)
+                call random_number(c)
+                a = cmplx(c(1), c(2), kind=${kind}$)
+                call random_number(c)
+                b = cmplx(c(1), c(2), kind=${kind}$)
+                #:else
+                call random_number(a)
+                call random_number(b)
+                #:endif
+
+                !> Generate random vector.
+                allocate(u, source=x)
+                call u%rand()
+                v = u
+
+                !> Check distributivity.
+                call v%axpby(a, u, b)
+                call u%scal(a+b)
+
+                call v%sub(u)
+                success = merge(.true., .false., v%norm() <= tol)
+                if (.not. success) exit verification
+            end block scaling_distributivity_bis
+        enddo verification
+    end function verify_vector_axioms_${type[0]}$${kind}$
 
     #:endfor
 end module LightKrylov_AbstractVectors

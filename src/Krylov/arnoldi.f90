@@ -1,7 +1,7 @@
 submodule (lightkrylov_basekrylov) arnoldi_method
     implicit none(type, external)
 contains
-    
+
     module procedure arnoldi_rsp
         character(len=*), parameter :: this_procedure = 'arnoldi_rsp'
         integer :: k_start, k_end, p
@@ -44,7 +44,8 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                          if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
@@ -113,7 +114,8 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                          if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
@@ -182,7 +184,8 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                          if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.
@@ -251,7 +254,8 @@ contains
             endif
 
             ! Update Hessenberg matrix via batch double Gram-Schmidt step.
-            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+            call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                          if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
             call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
 
             ! Orthogonalize current blk vectors.

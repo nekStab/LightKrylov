@@ -8,7 +8,8 @@ module Ginzburg_Landau
    use stdlib_math, only: linspace
    ! use stdlib_intrinsics, only: dot_product => stdlib_dot_product
    use stdlib_optval, only: optval
-   implicit none
+   implicit none(type, external)
+   private
 
    character(len=*), parameter, private :: this_module = 'Ginzburg_Landau'
 
@@ -60,17 +61,17 @@ module Ginzburg_Landau
    end type exponential_prop
 
    interface exponential_prop
-      module function construct_exptA(tau) result(A)
-         real(kind=dp), intent(in) :: tau
-         type(exponential_prop) :: A
-      end function
+      module procedure construct_exptA
    end interface
 
 contains
 
-   module procedure construct_exptA
-   A%tau = tau
-   end procedure
+   function construct_exptA(tau) result(A)
+      implicit none(type, external)
+      real(kind=dp), intent(in) :: tau
+      type(exponential_prop) :: A
+      A%tau = tau
+   end function construct_exptA
 
    !========================================================================
    !========================================================================
@@ -85,7 +86,7 @@ contains
    !--------------------------------------------------------------
 
    subroutine initialize_parameters()
-      implicit none
+      implicit none(type, external)
       ! Mesh array.
       real(kind=dp), allocatable :: x(:)
 
@@ -265,9 +266,10 @@ contains
 
       ! Time-integrator.
       type(rks54_class) :: prop
-      real(kind=dp)     :: dt = 1.0_dp
+      real(kind=dp)     :: dt
       real(kind=dp)     :: state_ic(2*nx), state_fc(2*nx)
 
+      dt = 1.0_dp
       select type (vec_in)
       type is (state_vector)
          select type (vec_out)
@@ -300,9 +302,10 @@ contains
 
       ! Time-integrator.
       type(rks54_class) :: prop
-      real(kind=dp)     :: dt = 1.0_dp
+      real(kind=dp)     :: dt
       real(kind=dp)     :: state_ic(2*nx), state_fc(2*nx)
 
+      dt = 1.0_dp
       select type (vec_in)
       type is (state_vector)
          select type (vec_out)

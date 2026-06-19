@@ -40,14 +40,14 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-    end procedure 
+    end procedure print_cg_sp
 
     module procedure reset_cg_sp
         self%n_iter = 0
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-    end procedure
+    end procedure reset_cg_sp
 
     module procedure print_cg_dp
         character(len=*), parameter :: this_procedure = 'print_cg_dp'
@@ -82,14 +82,14 @@ contains
             call log_message('Status: NOT CONVERGED', this_module, this_procedure)
         end if
         if (ifreset) call self%reset()
-    end procedure 
+    end procedure print_cg_dp
 
     module procedure reset_cg_dp
         self%n_iter = 0
         self%converged = .false.
         self%info = 0
         if (allocated(self%res)) deallocate(self%res)
-    end procedure
+    end procedure reset_cg_dp
 
     !-------------------------------------------------
     !-----     CG SOLVERS FOR ABSTRACT TYPES     -----
@@ -226,7 +226,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure cg_rsp
 
     module procedure cg_rdp
         ! Options.
@@ -359,7 +359,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure cg_rdp
 
     module procedure cg_csp
         ! Options.
@@ -492,7 +492,7 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure cg_csp
 
     module procedure cg_cdp
         ! Options.
@@ -625,7 +625,6 @@ contains
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure cg_cdp
 
-end submodule
-
+end submodule cg_solver

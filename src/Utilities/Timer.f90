@@ -18,7 +18,7 @@ module LightKrylov_Timing
 
    character(len=*), parameter :: this_module      = 'LK_Timer'
    character(len=*), parameter :: this_module_long = 'LightKrylov_Timer'
-   logical :: if_time = .false. 
+   logical :: if_time = .false.
 
    !----------------------------------
    !-----     Public exports     -----
@@ -44,7 +44,7 @@ contains
    end function time_lightkrylov
 
    subroutine set_lightkrylov_timer_switch(value)
-      logical, intent(in) :: value     
+      logical, intent(in) :: value
       if (if_time .neqv. value) then
          if_time = value
          if (if_time) then
@@ -54,7 +54,7 @@ contains
          end if
       else
          call log_debug('LightKrylov timing switched unchanged.', module=this_module)
-      end if      
+      end if
    end subroutine set_lightkrylov_timer_switch
 
    !--------------------------------------------------------------
@@ -99,6 +99,7 @@ contains
       call self%add_timer('orthonormalize_basis_rsp')
       call self%add_timer('orthogonalize_vector_against_basis_rsp')
       call self%add_timer('orthogonalize_basis_against_basis_rsp')
+      call self%add_timer('biorthonormalize_bases_rsp')
       call self%add_timer('dgs_vector_against_basis_rsp')
       call self%add_timer('dgs_basis_against_basis_rsp')
       call self%add_timer('arnoldi_rsp')
@@ -111,6 +112,7 @@ contains
       call self%add_timer('orthonormalize_basis_rdp')
       call self%add_timer('orthogonalize_vector_against_basis_rdp')
       call self%add_timer('orthogonalize_basis_against_basis_rdp')
+      call self%add_timer('biorthonormalize_bases_rdp')
       call self%add_timer('dgs_vector_against_basis_rdp')
       call self%add_timer('dgs_basis_against_basis_rdp')
       call self%add_timer('arnoldi_rdp')
@@ -123,6 +125,7 @@ contains
       call self%add_timer('orthonormalize_basis_csp')
       call self%add_timer('orthogonalize_vector_against_basis_csp')
       call self%add_timer('orthogonalize_basis_against_basis_csp')
+      call self%add_timer('biorthonormalize_bases_csp')
       call self%add_timer('dgs_vector_against_basis_csp')
       call self%add_timer('dgs_basis_against_basis_csp')
       call self%add_timer('arnoldi_csp')
@@ -135,6 +138,7 @@ contains
       call self%add_timer('orthonormalize_basis_cdp')
       call self%add_timer('orthogonalize_vector_against_basis_cdp')
       call self%add_timer('orthogonalize_basis_against_basis_cdp')
+      call self%add_timer('biorthonormalize_bases_cdp')
       call self%add_timer('dgs_vector_against_basis_cdp')
       call self%add_timer('dgs_basis_against_basis_cdp')
       call self%add_timer('arnoldi_cdp')

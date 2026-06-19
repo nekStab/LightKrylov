@@ -5,7 +5,7 @@ module LightKrylov_ExpmLib
     !!  using Krylov methods.
 
     ! Iso Fortran.
-    use iso_fortran_env, only: output_unit
+    use, intrinsic :: iso_fortran_env, only: output_unit
 
     ! Fortran standard library.
     use stdlib_optval, only: optval
@@ -21,7 +21,7 @@ module LightKrylov_ExpmLib
 
     implicit none(type, external)
     private
-    
+
     character(len=*), parameter :: this_module      = 'LK_ExpmLib'
     character(len=*), parameter :: this_module_long = 'LightKrylov_ExpmLib'
 
@@ -159,7 +159,7 @@ contains
         logical :: transpose
         integer :: nsteps, iostat
         character(len=256) :: msg
-    
+
         ! Deals with optional args.
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
@@ -274,7 +274,7 @@ contains
         transpose = optval(trans, .false.)
         nsteps    = optval(kdim, kmax)
         nk        = nsteps*p
-        
+
         info = 0
 
         ! Allocate arrays.
@@ -363,7 +363,7 @@ contains
     end subroutine kexpm_mat_${type[0]}$${kind}$
 
     subroutine krylov_exptA_${type[0]}$${kind}$(vec_out, A, vec_in, tau, info, trans)
-        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator 
+        !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_${type[0]}$${kind}$` interface.
         implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
