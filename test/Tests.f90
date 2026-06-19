@@ -43,6 +43,7 @@ program Tester
                 new_testsuite("Real Arnoldi (sp) Test Suite", collect_arnoldi_rsp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_rsp_testsuite), &
                 new_testsuite("Real Lanczos tridiagonalization (sp) Test Suite", collect_lanczos_tridiag_rsp_testsuite), &
+                new_testsuite("Real Saunders-Simon-Yip tridiagonalization (sp) Test Suite", collect_ssy_tridiag_rsp_testsuite), &
                 new_testsuite("Real Krylov Utilities (sp) Test Suite", collect_krylov_utilities_rsp_testsuite), &
                 new_testsuite("Real EVP (sp) Test Suite", collect_eig_rsp_testsuite), &
                 new_testsuite("Real SVD (sp) Test Suite", collect_svd_rsp_testsuite), &
@@ -89,6 +90,7 @@ program Tester
                 new_testsuite("Real Arnoldi (dp) Test Suite", collect_arnoldi_rdp_testsuite), &
                 new_testsuite("Real Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_rdp_testsuite), &
                 new_testsuite("Real Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_rdp_testsuite), &
+                new_testsuite("Real Saunders-Simon-Yip tridiagonalization (dp) Test Suite", collect_ssy_tridiag_rdp_testsuite), &
                 new_testsuite("Real Krylov Utilities (dp) Test Suite", collect_krylov_utilities_rdp_testsuite), &
                 new_testsuite("Real EVP (dp) Test Suite", collect_eig_rdp_testsuite), &
                 new_testsuite("Real SVD (dp) Test Suite", collect_svd_rdp_testsuite), &
@@ -136,6 +138,7 @@ program Tester
                 new_testsuite("Complex Arnoldi (sp) Test Suite", collect_arnoldi_csp_testsuite), &
                 ! new_testsuite("Complex Lanczos bidiagonalization (sp) Test Suite", collect_lanczos_bidiag_csp_testsuite), &
                 new_testsuite("Complex Lanczos tridiagonalization (sp) Test Suite", collect_lanczos_tridiag_csp_testsuite), &
+                new_testsuite("Complex Saunders-Simon-Yip tridiagonalization (sp) Test Suite", collect_ssy_tridiag_csp_testsuite), &
                 new_testsuite("Complex Krylov Utilities (sp) Test Suite", collect_krylov_utilities_csp_testsuite), &
                 new_testsuite("Complex EVP (sp) Test Suite", collect_eig_csp_testsuite), &
                 new_testsuite("Complex SVD (dp) Test Suite", collect_svd_csp_testsuite), &
@@ -182,6 +185,7 @@ program Tester
                 new_testsuite("Complex Arnoldi (dp) Test Suite", collect_arnoldi_cdp_testsuite), &
                 ! new_testsuite("Complex Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_cdp_testsuite), &
                 new_testsuite("Complex Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_cdp_testsuite), &
+                new_testsuite("Complex Saunders-Simon-Yip tridiagonalization (dp) Test Suite", collect_ssy_tridiag_cdp_testsuite), &
                 new_testsuite("Complex Krylov Utilities (dp) Test Suite", collect_krylov_utilities_csp_testsuite), &
                 new_testsuite("Complex EVP (dp) Test Suite", collect_eig_cdp_testsuite), &
                 new_testsuite("Complex SVD (dp) Test Suite", collect_svd_cdp_testsuite), &

@@ -106,6 +106,7 @@ contains
       call self%add_timer('lanczos_bidiagonalization_rsp')
       call self%add_timer('lanczos_tridiagonalization_rsp')
       call self%add_timer('krylov_schur_rsp')
+      call self%add_timer('ssy_rsp')
       ! rdp
       call self%add_timer('qr_with_pivoting_rdp')
       call self%add_timer('qr_no_pivoting_rdp')
@@ -119,6 +120,7 @@ contains
       call self%add_timer('lanczos_bidiagonalization_rdp')
       call self%add_timer('lanczos_tridiagonalization_rdp')
       call self%add_timer('krylov_schur_rdp')
+      call self%add_timer('ssy_rdp')
       ! csp
       call self%add_timer('qr_with_pivoting_csp')
       call self%add_timer('qr_no_pivoting_csp')
@@ -132,6 +134,7 @@ contains
       call self%add_timer('lanczos_bidiagonalization_csp')
       call self%add_timer('lanczos_tridiagonalization_csp')
       call self%add_timer('krylov_schur_csp')
+      call self%add_timer('ssy_csp')
       ! cdp
       call self%add_timer('qr_with_pivoting_cdp')
       call self%add_timer('qr_no_pivoting_cdp')
@@ -144,7 +147,8 @@ contains
       call self%add_timer('arnoldi_cdp')
       call self%add_timer('lanczos_bidiagonalization_cdp')
       call self%add_timer('lanczos_tridiagonalization_cdp')
-      call self%add_timer('krylov_schur_cdp', count=iend)
+      call self%add_timer('krylov_schur_cdp')
+      call self%add_timer('ssy_cdp', count=iend)
       ! Define BaseKrylov group
       call self%add_group('BaseKrylov', istart=istart, iend=iend)
 
