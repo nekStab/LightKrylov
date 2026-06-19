@@ -2182,7 +2182,7 @@ contains
                                  & info='Factorization', eq='A.H @ U = V_ @ T_.H', context=msg)
         return
     end subroutine test_ssy_tridiag_factorization_cdp
-   
+
     !-----------------------------------------------------------------------
     !-----     DEFINITIONS OF THE VARIOUS UNIT TESTS FOR UTILITIES     -----
     !-----------------------------------------------------------------------
