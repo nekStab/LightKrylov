@@ -422,30 +422,35 @@ contains
    !  Type-bound procedures for abstract_watch type
    !--------------------------------------------------------------
 
-   subroutine add_timer(self, name, start, count)
+   subroutine add_timer(self, name, start, ignore_error, count)
       !! Type-bound to abstract_watch: Add timer to watch and optionally start it immediately.
       !! Note: The new timer name must be unique.
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       logical, optional, intent(in) :: start
+      logical, optional, intent(in) :: ignore_error
       integer, optional, intent(out) :: count
       ! internal
-      logical :: start_
+      logical :: start_, ignore_error_
       character(len=128) :: msg, tname
-      start_ = optval(start, .false.)
+      start_        = optval(start, .false.)
+      ignore_error_ = optval(ignore_error, .true.)
       tname = to_lower(name)
       if (self%timer_count == 0) then
          allocate (self%timers(1))
          self%timers(1) = lightkrylov_timer(tname)
          self%timer_count = 1
       else
-         if (self%get_timer_id(name) > 0) call element_exists(tname, 'Timer', 'add_timer')
-         self%timers = [self%timers, lightkrylov_timer(tname)]
-         self%timer_count = self%timer_count + 1
-         if (self%user_mode) self%user_count = self%user_count + 1
+         if (self%get_timer_id(name) > 0) then
+            call element_exists(tname, 'Timer', 'add_timer', ignore_error_)
+         else
+            self%timers = [self%timers, lightkrylov_timer(tname)]
+            self%timer_count = self%timer_count + 1
+            if (self%user_mode) self%user_count = self%user_count + 1
+            write (msg, '(A,I0)') 'Timer "'//trim(tname)//'" added: timer_count: ', self%timer_count
+            call log_debug(msg, this_module)
+         end if
       end if
-      write (msg, '(A,I0)') 'Timer "'//trim(tname)//'" added: timer_count: ', self%timer_count
-      call log_debug(msg, this_module)
       if (present(count)) count = self%timer_count
       if (start_) call self%start(tname)
    end subroutine add_timer
@@ -479,17 +484,20 @@ contains
       if (present(count)) count = self%timer_count
    end subroutine remove_timer
 
-   subroutine add_group(self, name, istart, iend, count)
+   subroutine add_group(self, name, istart, iend, ignore_error, count)
       !! Type-bound to abstract_watch: Add timer group to watch.
       !! Note: The new group name must be unique. This is a quick hack and should be done better.
       class(abstract_watch), intent(inout) :: self
       character(len=*), intent(in) :: name
       integer, intent(in) :: istart
       integer, intent(in) :: iend
+      logical, optional, intent(in) :: ignore_error
       integer, optional, intent(out) :: count
       ! internal
       character(len=*), parameter :: this_procedure = 'add_group'
       character(len=128) :: msg, gname
+      logical :: ignore_error_
+      ignore_error_ = optval(ignore_error, .true.)
       ! Sanity checks
       if (istart < 1 .or. iend < 1) then
          call stop_error('Inconsistent input for istart, iend.', this_module, this_procedure)
@@ -504,12 +512,15 @@ contains
          self%groups(1) = lightkrylov_timer_group(name=gname, istart=istart, iend=iend)
          self%group_count = 1
       else
-         if (self%get_group_id(name) > 0) call element_exists(gname, 'Group', this_module)
-         self%groups = [self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend)]
-         self%group_count = self%group_count + 1
+         if (self%get_group_id(name) > 0) then
+            call element_exists(gname, 'Group', this_module, ignore_error_)
+         else
+            self%groups = [self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend)]
+            self%group_count = self%group_count + 1
+            write (msg, '(A,I0)') 'Timer group "'//trim(gname)//'" added: group_count: ', self%group_count
+            call log_debug(msg, this_module)
+         end if
       end if
-      write (msg, '(A,I0)') 'Timer group "'//trim(gname)//'" added: group_count: ', self%group_count
-      call log_debug(msg, this_module)
       if (present(count)) count = self%group_count
    end subroutine add_group
 
@@ -953,11 +964,21 @@ contains
       call stop_error('Timer "'//trim(name)//'" not found!', this_module, procedure)
    end subroutine timer_not_found
 
-   subroutine element_exists(name, element, procedure)
+   subroutine element_exists(name, element, procedure, ignore)
       character(len=*), intent(in) :: name
       character(len=*), intent(in) :: element
       character(len=*), optional, intent(in) :: procedure
-      call stop_error(trim(element)//' "'//trim(name)//'" already defined!', this_module, procedure)
+      logical, optional, intent(in) :: ignore
+      ! internal
+      character(len=128) :: msg
+      logical :: message_only
+      message_only = optval(ignore, .true.)
+      msg = trim(element)//' "'//trim(name)//'" already defined!'
+      if (message_only) then
+        call log_message(msg//' Skip.', this_module, procedure)
+      else
+        call stop_error(msg, this_module, procedure)
+      end if
    end subroutine element_exists
 
 end module LightKrylov_Timer_Utils
