@@ -47,6 +47,7 @@ module Roessler_OTD
       procedure, pass(self), public :: axpby => axpby_p
       procedure, pass(self), public :: rand => rand_p
       procedure, pass(self), public :: get_size => get_size_p
+      procedure, pass(self), public :: init_like => init_like_p
    end type pos_vector
 
 contains
@@ -128,6 +129,19 @@ contains
          call self%scal(1.0_dp/alpha)
       end if
    end subroutine rand_p
+
+   subroutine init_like_p(self, mold)
+      class(pos_vector), intent(inout) :: self
+      class(abstract_vector_rdp), intent(in) :: mold
+      ! pos_vector has no allocatable storage.
+      select type (mold)
+      type is (pos_vector)
+         ! Fixed-size type: nothing to allocate.
+         self%is_initialized = .true.
+      class default
+         call type_error('mold','pos_vector','IN',this_module,'init_like_p')
+      end select
+  end subroutine init_like_p
 
    subroutine OTD_rhs(me, t, x, f)
       ! Time-integrator.

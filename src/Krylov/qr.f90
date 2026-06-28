@@ -568,6 +568,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
+        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_rsp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
 
@@ -582,6 +583,9 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
+
+        ! Cleanup.
+        call Qwrk%free()
     end procedure swap_columns_rsp
 
     module procedure swap_columns_rdp
@@ -596,6 +600,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
+        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_rdp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
 
@@ -610,6 +615,9 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
+
+        ! Cleanup.
+        call Qwrk%free()
     end procedure swap_columns_rdp
 
     module procedure swap_columns_csp
@@ -624,6 +632,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
+        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_csp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
 
@@ -638,6 +647,9 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
+
+        ! Cleanup.
+        call Qwrk%free()
     end procedure swap_columns_csp
 
     module procedure swap_columns_cdp
@@ -652,6 +664,7 @@ contains
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
+        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_cdp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
 
@@ -666,6 +679,9 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
+
+        ! Cleanup.
+        call Qwrk%free()
     end procedure swap_columns_cdp
 
 end submodule qr_solvers

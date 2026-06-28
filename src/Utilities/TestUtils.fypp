@@ -43,6 +43,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: axpby => axpby_${type[0]}$${kind}$
         procedure, pass(self), public :: rand => rand_${type[0]}$${kind}$
         procedure, pass(self), public :: get_size => get_size_${type[0]}$${kind}$
+        procedure, pass(self), public :: init_like => init_like_${type[0]}$${kind}$
     end type vector_${type[0]}$${kind}$
 
     #:endfor
@@ -119,6 +120,7 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: axpby => axpby_state_r${kind}$
        procedure, pass(self), public :: rand => rand_state_r${kind}$
        procedure, pass(self), public :: get_size => get_size_state_r${kind}$
+       procedure, pass(self), public :: init_like => init_like_state_r${kind}$
     end type state_vector_r${kind}$
 
     type, extends(abstract_system_r${kind}$), public :: roessler_r${kind}$
@@ -150,6 +152,7 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: axpby => axpby_state_c${kind}$
        procedure, pass(self), public :: rand => rand_state_c${kind}$
        procedure, pass(self), public :: get_size => get_size_state_c${kind}$
+       procedure, pass(self), public :: init_like => init_like_state_c${kind}$
     end type state_vector_c${kind}$
 
     type, extends(abstract_system_c${kind}$), public :: roessler_c${kind}$
@@ -299,6 +302,19 @@ contains
         endif
     end subroutine rand_${type[0]}$${kind}$
 
+    subroutine init_like_${type[0]}$${kind}$(self, mold)
+        implicit none(type, external)
+        class(vector_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: mold
+        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (vector_${type[0]}$${kind}$)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','vector_${type[0]}$${kind}$','IN',this_module,'init_like_state_c${kind}$')
+        end select
+    end subroutine init_like_${type[0]}$${kind}$
+
     #:endfor
     !---------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST LINOPS     -----
@@ -307,8 +323,8 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     subroutine matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
         class(linop_${type[0]}$${kind}$), intent(inout)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)    :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -326,8 +342,8 @@ contains
 
     subroutine rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
         class(linop_${type[0]}$${kind}$), intent(inout)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)    :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -346,8 +362,8 @@ contains
     #:if type[0] == "r"
     subroutine sdp_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
         class(spd_linop_${type[0]}$${kind}$), intent(inout)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)    :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -365,8 +381,8 @@ contains
     #:else
     subroutine hermitian_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
         class(hermitian_linop_${type[0]}$${kind}$), intent(inout)  :: self
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)  :: vec_in
-        class(abstract_vector_${type[0]}$${kind}$)       , intent(out) :: vec_out
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(in)    :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_${type[0]}$${kind}$)
             select type(vec_out)
@@ -582,13 +598,26 @@ contains
         endif
     end subroutine rand_state_r${kind}$
 
+    subroutine init_like_state_r${kind}$(self, mold)
+        implicit none(type, external)
+        class(state_vector_r${kind}$), intent(inout) :: self
+        class(abstract_vector_r${kind}$), intent(in) :: mold
+        !! Nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (state_vector_r${kind}$)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','state_vector_r${kind}$','IN',this_module,'init_like_state_r${kind}$')
+        end select
+    end subroutine init_like_state_r${kind}$
+
     #:endfor
 
     #:for kind in REAL_KINDS
     subroutine eval_roessler_r${kind}$(self, vec_in, vec_out, atol)
         class(roessler_r${kind}$),            intent(inout)  :: self
-        class(abstract_vector_r${kind}$), intent(in)  :: vec_in
-        class(abstract_vector_r${kind}$), intent(out) :: vec_out
+        class(abstract_vector_r${kind}$), intent(in)    :: vec_in
+        class(abstract_vector_r${kind}$), intent(inout) :: vec_out
         real(${kind}$),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -623,8 +652,8 @@ contains
 
     subroutine lin_roessler_r${kind}$(self, vec_in, vec_out)
         class(jacobian_r${kind}$),            intent(inout)  :: self
-        class(abstract_vector_r${kind}$), intent(in)  :: vec_in
-        class(abstract_vector_r${kind}$), intent(out) :: vec_out
+        class(abstract_vector_r${kind}$), intent(in)    :: vec_in
+        class(abstract_vector_r${kind}$), intent(inout) :: vec_out
         ! internal
         real(${kind}$) :: X, Y, Z
 
@@ -648,8 +677,8 @@ contains
 
     subroutine adj_lin_roessler_r${kind}$(self, vec_in, vec_out)
         class(jacobian_r${kind}$),            intent(inout)  :: self
-        class(abstract_vector_r${kind}$), intent(in)  :: vec_in
-        class(abstract_vector_r${kind}$), intent(out) :: vec_out
+        class(abstract_vector_r${kind}$), intent(in)    :: vec_in
+        class(abstract_vector_r${kind}$), intent(inout) :: vec_out
         ! internal
         real(${kind}$) :: X, Y, Z
 
@@ -759,13 +788,26 @@ contains
         endif
     end subroutine rand_state_c${kind}$
 
+    subroutine init_like_state_c${kind}$(self, mold)
+        implicit none(type, external)
+        class(state_vector_c${kind}$), intent(inout) :: self
+        class(abstract_vector_c${kind}$), intent(in) :: mold
+        !! Nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (state_vector_c${kind}$)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','state_vector_c${kind}$','IN',this_module,'init_like_state_c${kind}$')
+        end select
+    end subroutine init_like_state_c${kind}$
+
     #:endfor
 
     #:for kind in REAL_KINDS
     subroutine eval_roessler_c${kind}$(self, vec_in, vec_out, atol)
         class(roessler_c${kind}$),            intent(inout)  :: self
-        class(abstract_vector_c${kind}$), intent(in)  :: vec_in
-        class(abstract_vector_c${kind}$), intent(out) :: vec_out
+        class(abstract_vector_c${kind}$), intent(in)    :: vec_in
+        class(abstract_vector_c${kind}$), intent(inout) :: vec_out
         real(${kind}$),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -801,8 +843,8 @@ contains
 
     subroutine lin_roessler_c${kind}$(self, vec_in, vec_out)
         class(jacobian_c${kind}$),            intent(inout)  :: self
-        class(abstract_vector_c${kind}$), intent(in)  :: vec_in
-        class(abstract_vector_c${kind}$), intent(out) :: vec_out
+        class(abstract_vector_c${kind}$), intent(in)    :: vec_in
+        class(abstract_vector_c${kind}$), intent(inout) :: vec_out
 
         real(${kind}$) :: X, Y, Z
 
@@ -827,8 +869,8 @@ contains
 
     subroutine adj_lin_roessler_c${kind}$(self, vec_in, vec_out)
         class(jacobian_c${kind}$),            intent(inout)  :: self
-        class(abstract_vector_c${kind}$), intent(in)  :: vec_in
-        class(abstract_vector_c${kind}$), intent(out) :: vec_out
+        class(abstract_vector_c${kind}$), intent(in)    :: vec_in
+        class(abstract_vector_c${kind}$), intent(inout) :: vec_out
 
         real(${kind}$) :: X, Y, Z
 

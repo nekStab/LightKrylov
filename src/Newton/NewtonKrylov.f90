@@ -420,12 +420,22 @@ contains
         info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        ! local variables
+        allocate(residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%init_like(X)
         call residual%zero()
-        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        allocate(increment,mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%init_like(X)
         call increment%zero()
+        ! inout arguments
+        if (.not. allocated(sys%jacobian%X)) then
+            allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call sys%jacobian%X%init_like(X)
+        end if
+
         ! Initialize metadata & reset eval counter
         newton_meta = newton_sp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -460,7 +470,7 @@ contains
                 call log_message(msg, this_module, this_procedure)
 
                 ! Define the Jacobian
-                sys%jacobian%X = X
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -593,12 +603,22 @@ contains
         info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        ! local variables
+        allocate(residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%init_like(X)
         call residual%zero()
-        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        allocate(increment,mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%init_like(X)
         call increment%zero()
+        ! inout arguments
+        if (.not. allocated(sys%jacobian%X)) then
+            allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call sys%jacobian%X%init_like(X)
+        end if
+
         ! Initialize metadata & reset eval counter
         newton_meta = newton_dp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -633,7 +653,7 @@ contains
                 call log_message(msg, this_module, this_procedure)
 
                 ! Define the Jacobian
-                sys%jacobian%X = X
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -766,12 +786,22 @@ contains
         info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        ! local variables
+        allocate(residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%init_like(X)
         call residual%zero()
-        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        allocate(increment,mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%init_like(X)
         call increment%zero()
+        ! inout arguments
+        if (.not. allocated(sys%jacobian%X)) then
+            allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call sys%jacobian%X%init_like(X)
+        end if
+
         ! Initialize metadata & reset eval counter
         newton_meta = newton_sp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -806,7 +836,7 @@ contains
                 call log_message(msg, this_module, this_procedure)
 
                 ! Define the Jacobian
-                sys%jacobian%X = X
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -939,12 +969,22 @@ contains
         info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        allocate(residual, source=X, stat=iostat, errmsg=msg)
+        ! local variables
+        allocate(residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call residual%init_like(X)
         call residual%zero()
-        allocate(increment,source=X, stat=iostat, errmsg=msg)
+        allocate(increment,mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call increment%init_like(X)
         call increment%zero()
+        ! inout arguments
+        if (.not. allocated(sys%jacobian%X)) then
+            allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call sys%jacobian%X%init_like(X)
+        end if
+
         ! Initialize metadata & reset eval counter
         newton_meta = newton_dp_metadata()
         call sys%reset_eval_counter('newton%init')
@@ -979,7 +1019,7 @@ contains
                 call log_message(msg, this_module, this_procedure)
 
                 ! Define the Jacobian
-                sys%jacobian%X = X
+                call copy(sys%jacobian%X, X)
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
@@ -1078,8 +1118,10 @@ contains
         class(abstract_vector_rsp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        allocate(Xin, residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call copy(Xin, X)
+        call residual%init_like(X)
         call residual%zero()
         step    = one_rsp
         invphi  = (sqrt(5.0_sp) - 1.0_sp)/2.0_sp  ! 1 / phi
@@ -1179,8 +1221,10 @@ contains
         class(abstract_vector_rdp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        allocate(Xin, residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call copy(Xin, X)
+        call residual%init_like(X)
         call residual%zero()
         step    = one_rdp
         invphi  = (sqrt(5.0_dp) - 1.0_dp)/2.0_dp  ! 1 / phi
@@ -1280,8 +1324,10 @@ contains
         class(abstract_vector_csp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        allocate(Xin, residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call copy(Xin, X)
+        call residual%init_like(X)
         call residual%zero()
         step    = one_csp
         invphi  = (sqrt(5.0_sp) - 1.0_sp)/2.0_sp  ! 1 / phi
@@ -1381,8 +1427,10 @@ contains
         class(abstract_vector_cdp), allocatable :: Xin, residual
         character(len=256) :: msg
 
-        allocate(Xin, residual, source=X, stat=iostat, errmsg=msg)
+        allocate(Xin, residual, mold=X, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call copy(Xin, X)
+        call residual%init_like(X)
         call residual%zero()
         step    = one_cdp
         invphi  = (sqrt(5.0_dp) - 1.0_dp)/2.0_dp  ! 1 / phi

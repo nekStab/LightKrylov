@@ -661,11 +661,11 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
-            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: U(:)
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: U(:)
             !! Leading left singular vectors.
-            real(${kind}$), allocatable, intent(out) :: S(:)
+            real(${kind}$), allocatable, intent(inout) :: S(:)
             !! Leading singular values.
-            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: V(:)
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: V(:)
             !! Leading right singular vectors.
             real(${kind}$), allocatable, intent(out) :: residuals(:)
             !! Residuals associated to each Ritz eigenpair.
@@ -753,7 +753,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(inout) :: A
             #:endif
             !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
+            class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
             !! Leading eigevectors of \( \mathbf{A} \).
             real(${kind}$), allocatable, intent(out) :: eigvals(:)
             !! Leading eigenvalues of \( \mathbf{A} \).
@@ -973,7 +973,7 @@ contains
         implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
         complex(${kind}$), allocatable, intent(out) :: eigvals(:)
         !! Leading eigenvalues of \(\mathbf{A}\).
@@ -1029,8 +1029,9 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -1054,7 +1055,7 @@ contains
         kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
-           arnoldi_factorization: do k = kstart, kdim_
+            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', this_module, this_procedure)
@@ -1124,13 +1125,16 @@ contains
         end block
 
         ! Construct eigenvectors.
+        call zero_basis(X)
         do i = 1, nev
-            call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_${type[0]}$${kind}$)
             enddo
         enddo
 
+        ! Cleanup.
+        call free_basis(Xwrk)
+        
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains

@@ -10,7 +10,15 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure permcols_basis_${type[0]}$${kind}$
-        call copy(Q, Q(perm))
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk(:)
+        integer :: i
+        allocate(Qwrk(size(Q)), mold=Q(1))
+        call init_like_basis(Qwrk, Q(1))
+        do i = 1, size(Q)
+            call copy(Qwrk(i), Q(perm(i)))
+        end do
+        call copy(Q, Qwrk)
+        call free_basis(Qwrk)
     end procedure permcols_basis_${type[0]}$${kind}$
 
     module procedure permcols_array_${type[0]}$${kind}$

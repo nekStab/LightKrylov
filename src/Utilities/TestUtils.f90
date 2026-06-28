@@ -44,6 +44,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: axpby => axpby_rsp
         procedure, pass(self), public :: rand => rand_rsp
         procedure, pass(self), public :: get_size => get_size_rsp
+        procedure, pass(self), public :: init_like => init_like_rsp
     end type vector_rsp
 
     type, extends(abstract_vector_rdp), public :: vector_rdp
@@ -56,6 +57,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: axpby => axpby_rdp
         procedure, pass(self), public :: rand => rand_rdp
         procedure, pass(self), public :: get_size => get_size_rdp
+        procedure, pass(self), public :: init_like => init_like_rdp
     end type vector_rdp
 
     type, extends(abstract_vector_csp), public :: vector_csp
@@ -68,6 +70,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: axpby => axpby_csp
         procedure, pass(self), public :: rand => rand_csp
         procedure, pass(self), public :: get_size => get_size_csp
+        procedure, pass(self), public :: init_like => init_like_csp
     end type vector_csp
 
     type, extends(abstract_vector_cdp), public :: vector_cdp
@@ -80,6 +83,7 @@ module LightKrylov_TestUtils
         procedure, pass(self), public :: axpby => axpby_cdp
         procedure, pass(self), public :: rand => rand_cdp
         procedure, pass(self), public :: get_size => get_size_cdp
+        procedure, pass(self), public :: init_like => init_like_cdp
     end type vector_cdp
 
 
@@ -192,6 +196,7 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: axpby => axpby_state_rsp
        procedure, pass(self), public :: rand => rand_state_rsp
        procedure, pass(self), public :: get_size => get_size_state_rsp
+       procedure, pass(self), public :: init_like => init_like_state_rsp
     end type state_vector_rsp
 
     type, extends(abstract_system_rsp), public :: roessler_rsp
@@ -222,6 +227,7 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: axpby => axpby_state_rdp
        procedure, pass(self), public :: rand => rand_state_rdp
        procedure, pass(self), public :: get_size => get_size_state_rdp
+       procedure, pass(self), public :: init_like => init_like_state_rdp
     end type state_vector_rdp
 
     type, extends(abstract_system_rdp), public :: roessler_rdp
@@ -251,6 +257,7 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: axpby => axpby_state_csp
        procedure, pass(self), public :: rand => rand_state_csp
        procedure, pass(self), public :: get_size => get_size_state_csp
+       procedure, pass(self), public :: init_like => init_like_state_csp
     end type state_vector_csp
 
     type, extends(abstract_system_csp), public :: roessler_csp
@@ -277,6 +284,7 @@ module LightKrylov_TestUtils
        procedure, pass(self), public :: axpby => axpby_state_cdp
        procedure, pass(self), public :: rand => rand_state_cdp
        procedure, pass(self), public :: get_size => get_size_state_cdp
+       procedure, pass(self), public :: init_like => init_like_state_cdp
     end type state_vector_cdp
 
     type, extends(abstract_system_cdp), public :: roessler_cdp
@@ -467,6 +475,19 @@ contains
         endif
     end subroutine rand_rsp
 
+    subroutine init_like_rsp(self, mold)
+        implicit none(type, external)
+        class(vector_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: mold
+        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (vector_rsp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','vector_rsp','IN',this_module,'init_like_state_csp')
+        end select
+    end subroutine init_like_rsp
+
     subroutine init_zero_rdp(self)
         class(vector_rdp), intent(inout) :: self
         self%data = 0.0_dp
@@ -524,6 +545,19 @@ contains
             call self%scal(1.0_dp/alpha)
         endif
     end subroutine rand_rdp
+
+    subroutine init_like_rdp(self, mold)
+        implicit none(type, external)
+        class(vector_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: mold
+        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (vector_rdp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','vector_rdp','IN',this_module,'init_like_state_cdp')
+        end select
+    end subroutine init_like_rdp
 
     subroutine init_zero_csp(self)
         class(vector_csp), intent(inout) :: self
@@ -583,6 +617,19 @@ contains
         endif
     end subroutine rand_csp
 
+    subroutine init_like_csp(self, mold)
+        implicit none(type, external)
+        class(vector_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: mold
+        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (vector_csp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','vector_csp','IN',this_module,'init_like_state_csp')
+        end select
+    end subroutine init_like_csp
+
     subroutine init_zero_cdp(self)
         class(vector_cdp), intent(inout) :: self
         self%data = 0.0_dp
@@ -641,14 +688,27 @@ contains
         endif
     end subroutine rand_cdp
 
+    subroutine init_like_cdp(self, mold)
+        implicit none(type, external)
+        class(vector_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: mold
+        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (vector_cdp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','vector_cdp','IN',this_module,'init_like_state_cdp')
+        end select
+    end subroutine init_like_cdp
+
     !---------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR TEST LINOPS     -----
     !---------------------------------------------------------
 
     subroutine matvec_rsp(self, vec_in, vec_out)
         class(linop_rsp), intent(inout)  :: self
-        class(abstract_vector_rsp)       , intent(in)  :: vec_in
-        class(abstract_vector_rsp)       , intent(out) :: vec_out
+        class(abstract_vector_rsp)       , intent(in)    :: vec_in
+        class(abstract_vector_rsp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rsp)
             select type(vec_out)
@@ -666,8 +726,8 @@ contains
 
     subroutine rmatvec_rsp(self, vec_in, vec_out)
         class(linop_rsp), intent(inout)  :: self
-        class(abstract_vector_rsp)       , intent(in)  :: vec_in
-        class(abstract_vector_rsp)       , intent(out) :: vec_out
+        class(abstract_vector_rsp)       , intent(in)    :: vec_in
+        class(abstract_vector_rsp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rsp)
             select type(vec_out)
@@ -685,8 +745,8 @@ contains
 
     subroutine sdp_matvec_rsp(self, vec_in, vec_out)
         class(spd_linop_rsp), intent(inout)  :: self
-        class(abstract_vector_rsp)       , intent(in)  :: vec_in
-        class(abstract_vector_rsp)       , intent(out) :: vec_out
+        class(abstract_vector_rsp)       , intent(in)    :: vec_in
+        class(abstract_vector_rsp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rsp)
             select type(vec_out)
@@ -704,8 +764,8 @@ contains
 
     subroutine matvec_rdp(self, vec_in, vec_out)
         class(linop_rdp), intent(inout)  :: self
-        class(abstract_vector_rdp)       , intent(in)  :: vec_in
-        class(abstract_vector_rdp)       , intent(out) :: vec_out
+        class(abstract_vector_rdp)       , intent(in)    :: vec_in
+        class(abstract_vector_rdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -723,8 +783,8 @@ contains
 
     subroutine rmatvec_rdp(self, vec_in, vec_out)
         class(linop_rdp), intent(inout)  :: self
-        class(abstract_vector_rdp)       , intent(in)  :: vec_in
-        class(abstract_vector_rdp)       , intent(out) :: vec_out
+        class(abstract_vector_rdp)       , intent(in)    :: vec_in
+        class(abstract_vector_rdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -742,8 +802,8 @@ contains
 
     subroutine sdp_matvec_rdp(self, vec_in, vec_out)
         class(spd_linop_rdp), intent(inout)  :: self
-        class(abstract_vector_rdp)       , intent(in)  :: vec_in
-        class(abstract_vector_rdp)       , intent(out) :: vec_out
+        class(abstract_vector_rdp)       , intent(in)    :: vec_in
+        class(abstract_vector_rdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -761,8 +821,8 @@ contains
 
     subroutine matvec_csp(self, vec_in, vec_out)
         class(linop_csp), intent(inout)  :: self
-        class(abstract_vector_csp)       , intent(in)  :: vec_in
-        class(abstract_vector_csp)       , intent(out) :: vec_out
+        class(abstract_vector_csp)       , intent(in)    :: vec_in
+        class(abstract_vector_csp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_csp)
             select type(vec_out)
@@ -780,8 +840,8 @@ contains
 
     subroutine rmatvec_csp(self, vec_in, vec_out)
         class(linop_csp), intent(inout)  :: self
-        class(abstract_vector_csp)       , intent(in)  :: vec_in
-        class(abstract_vector_csp)       , intent(out) :: vec_out
+        class(abstract_vector_csp)       , intent(in)    :: vec_in
+        class(abstract_vector_csp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_csp)
             select type(vec_out)
@@ -799,8 +859,8 @@ contains
 
     subroutine hermitian_matvec_csp(self, vec_in, vec_out)
         class(hermitian_linop_csp), intent(inout)  :: self
-        class(abstract_vector_csp)       , intent(in)  :: vec_in
-        class(abstract_vector_csp)       , intent(out) :: vec_out
+        class(abstract_vector_csp)       , intent(in)    :: vec_in
+        class(abstract_vector_csp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_csp)
             select type(vec_out)
@@ -818,8 +878,8 @@ contains
 
     subroutine matvec_cdp(self, vec_in, vec_out)
         class(linop_cdp), intent(inout)  :: self
-        class(abstract_vector_cdp)       , intent(in)  :: vec_in
-        class(abstract_vector_cdp)       , intent(out) :: vec_out
+        class(abstract_vector_cdp)       , intent(in)    :: vec_in
+        class(abstract_vector_cdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_cdp)
             select type(vec_out)
@@ -837,8 +897,8 @@ contains
 
     subroutine rmatvec_cdp(self, vec_in, vec_out)
         class(linop_cdp), intent(inout)  :: self
-        class(abstract_vector_cdp)       , intent(in)  :: vec_in
-        class(abstract_vector_cdp)       , intent(out) :: vec_out
+        class(abstract_vector_cdp)       , intent(in)    :: vec_in
+        class(abstract_vector_cdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_cdp)
             select type(vec_out)
@@ -856,8 +916,8 @@ contains
 
     subroutine hermitian_matvec_cdp(self, vec_in, vec_out)
         class(hermitian_linop_cdp), intent(inout)  :: self
-        class(abstract_vector_cdp)       , intent(in)  :: vec_in
-        class(abstract_vector_cdp)       , intent(out) :: vec_out
+        class(abstract_vector_cdp)       , intent(in)    :: vec_in
+        class(abstract_vector_cdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_cdp)
             select type(vec_out)
@@ -1291,6 +1351,19 @@ contains
         endif
     end subroutine rand_state_rsp
 
+    subroutine init_like_state_rsp(self, mold)
+        implicit none(type, external)
+        class(state_vector_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: mold
+        !! Nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (state_vector_rsp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','state_vector_rsp','IN',this_module,'init_like_state_rsp')
+        end select
+    end subroutine init_like_state_rsp
+
     subroutine zero_state_rdp(self)
         class(state_vector_rdp), intent(inout) :: self
         self%x = 0.0_dp
@@ -1356,11 +1429,24 @@ contains
         endif
     end subroutine rand_state_rdp
 
+    subroutine init_like_state_rdp(self, mold)
+        implicit none(type, external)
+        class(state_vector_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: mold
+        !! Nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (state_vector_rdp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','state_vector_rdp','IN',this_module,'init_like_state_rdp')
+        end select
+    end subroutine init_like_state_rdp
+
 
     subroutine eval_roessler_rsp(self, vec_in, vec_out, atol)
         class(roessler_rsp),            intent(inout)  :: self
-        class(abstract_vector_rsp), intent(in)  :: vec_in
-        class(abstract_vector_rsp), intent(out) :: vec_out
+        class(abstract_vector_rsp), intent(in)    :: vec_in
+        class(abstract_vector_rsp), intent(inout) :: vec_out
         real(sp),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -1395,8 +1481,8 @@ contains
 
     subroutine lin_roessler_rsp(self, vec_in, vec_out)
         class(jacobian_rsp),            intent(inout)  :: self
-        class(abstract_vector_rsp), intent(in)  :: vec_in
-        class(abstract_vector_rsp), intent(out) :: vec_out
+        class(abstract_vector_rsp), intent(in)    :: vec_in
+        class(abstract_vector_rsp), intent(inout) :: vec_out
         ! internal
         real(sp) :: X, Y, Z
 
@@ -1420,8 +1506,8 @@ contains
 
     subroutine adj_lin_roessler_rsp(self, vec_in, vec_out)
         class(jacobian_rsp),            intent(inout)  :: self
-        class(abstract_vector_rsp), intent(in)  :: vec_in
-        class(abstract_vector_rsp), intent(out) :: vec_out
+        class(abstract_vector_rsp), intent(in)    :: vec_in
+        class(abstract_vector_rsp), intent(inout) :: vec_out
         ! internal
         real(sp) :: X, Y, Z
 
@@ -1461,8 +1547,8 @@ contains
 
     subroutine eval_roessler_rdp(self, vec_in, vec_out, atol)
         class(roessler_rdp),            intent(inout)  :: self
-        class(abstract_vector_rdp), intent(in)  :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(in)    :: vec_in
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         real(dp),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -1497,8 +1583,8 @@ contains
 
     subroutine lin_roessler_rdp(self, vec_in, vec_out)
         class(jacobian_rdp),            intent(inout)  :: self
-        class(abstract_vector_rdp), intent(in)  :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(in)    :: vec_in
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         real(dp) :: X, Y, Z
 
@@ -1522,8 +1608,8 @@ contains
 
     subroutine adj_lin_roessler_rdp(self, vec_in, vec_out)
         class(jacobian_rdp),            intent(inout)  :: self
-        class(abstract_vector_rdp), intent(in)  :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(in)    :: vec_in
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         real(dp) :: X, Y, Z
 
@@ -1631,6 +1717,19 @@ contains
         endif
     end subroutine rand_state_csp
 
+    subroutine init_like_state_csp(self, mold)
+        implicit none(type, external)
+        class(state_vector_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: mold
+        !! Nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (state_vector_csp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','state_vector_csp','IN',this_module,'init_like_state_csp')
+        end select
+    end subroutine init_like_state_csp
+
     subroutine zero_state_cdp(self)
         class(state_vector_cdp), intent(inout) :: self
         self%x = cmplx(0.0_dp, 0.0_dp, kind=dp)
@@ -1696,11 +1795,24 @@ contains
         endif
     end subroutine rand_state_cdp
 
+    subroutine init_like_state_cdp(self, mold)
+        implicit none(type, external)
+        class(state_vector_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: mold
+        !! Nothing to allocate; just mark initialized.
+        select type (mold)
+        type is (state_vector_cdp)
+            self%is_initialized = .true.
+        class default
+            call type_error('mold','state_vector_cdp','IN',this_module,'init_like_state_cdp')
+        end select
+    end subroutine init_like_state_cdp
+
 
     subroutine eval_roessler_csp(self, vec_in, vec_out, atol)
         class(roessler_csp),            intent(inout)  :: self
-        class(abstract_vector_csp), intent(in)  :: vec_in
-        class(abstract_vector_csp), intent(out) :: vec_out
+        class(abstract_vector_csp), intent(in)    :: vec_in
+        class(abstract_vector_csp), intent(inout) :: vec_out
         real(sp),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -1736,8 +1848,8 @@ contains
 
     subroutine lin_roessler_csp(self, vec_in, vec_out)
         class(jacobian_csp),            intent(inout)  :: self
-        class(abstract_vector_csp), intent(in)  :: vec_in
-        class(abstract_vector_csp), intent(out) :: vec_out
+        class(abstract_vector_csp), intent(in)    :: vec_in
+        class(abstract_vector_csp), intent(inout) :: vec_out
 
         real(sp) :: X, Y, Z
 
@@ -1762,8 +1874,8 @@ contains
 
     subroutine adj_lin_roessler_csp(self, vec_in, vec_out)
         class(jacobian_csp),            intent(inout)  :: self
-        class(abstract_vector_csp), intent(in)  :: vec_in
-        class(abstract_vector_csp), intent(out) :: vec_out
+        class(abstract_vector_csp), intent(in)    :: vec_in
+        class(abstract_vector_csp), intent(inout) :: vec_out
 
         real(sp) :: X, Y, Z
 
@@ -1804,8 +1916,8 @@ contains
 
     subroutine eval_roessler_cdp(self, vec_in, vec_out, atol)
         class(roessler_cdp),            intent(inout)  :: self
-        class(abstract_vector_cdp), intent(in)  :: vec_in
-        class(abstract_vector_cdp), intent(out) :: vec_out
+        class(abstract_vector_cdp), intent(in)    :: vec_in
+        class(abstract_vector_cdp), intent(inout) :: vec_out
         real(dp),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -1841,8 +1953,8 @@ contains
 
     subroutine lin_roessler_cdp(self, vec_in, vec_out)
         class(jacobian_cdp),            intent(inout)  :: self
-        class(abstract_vector_cdp), intent(in)  :: vec_in
-        class(abstract_vector_cdp), intent(out) :: vec_out
+        class(abstract_vector_cdp), intent(in)    :: vec_in
+        class(abstract_vector_cdp), intent(inout) :: vec_out
 
         real(dp) :: X, Y, Z
 
@@ -1867,8 +1979,8 @@ contains
 
     subroutine adj_lin_roessler_cdp(self, vec_in, vec_out)
         class(jacobian_cdp),            intent(inout)  :: self
-        class(abstract_vector_cdp), intent(in)  :: vec_in
-        class(abstract_vector_cdp), intent(out) :: vec_out
+        class(abstract_vector_cdp), intent(in)    :: vec_in
+        class(abstract_vector_cdp), intent(inout) :: vec_out
 
         real(dp) :: X, Y, Z
 

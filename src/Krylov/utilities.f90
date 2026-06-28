@@ -7,28 +7,60 @@ contains
     !----------------------------------------
 
     module procedure permcols_basis_rsp
-        call copy(Q, Q(perm))
+        class(abstract_vector_rsp), allocatable :: Qwrk(:)
+        integer :: i
+        allocate(Qwrk(size(Q)), mold=Q(1))
+        call init_like_basis(Qwrk, Q(1))
+        do i = 1, size(Q)
+            call copy(Qwrk(i), Q(perm(i)))
+        end do
+        call copy(Q, Qwrk)
+        call free_basis(Qwrk)
     end procedure permcols_basis_rsp
 
     module procedure permcols_array_rsp
         Q = Q(:, perm)
     end procedure permcols_array_rsp
     module procedure permcols_basis_rdp
-        call copy(Q, Q(perm))
+        class(abstract_vector_rdp), allocatable :: Qwrk(:)
+        integer :: i
+        allocate(Qwrk(size(Q)), mold=Q(1))
+        call init_like_basis(Qwrk, Q(1))
+        do i = 1, size(Q)
+            call copy(Qwrk(i), Q(perm(i)))
+        end do
+        call copy(Q, Qwrk)
+        call free_basis(Qwrk)
     end procedure permcols_basis_rdp
 
     module procedure permcols_array_rdp
         Q = Q(:, perm)
     end procedure permcols_array_rdp
     module procedure permcols_basis_csp
-        call copy(Q, Q(perm))
+        class(abstract_vector_csp), allocatable :: Qwrk(:)
+        integer :: i
+        allocate(Qwrk(size(Q)), mold=Q(1))
+        call init_like_basis(Qwrk, Q(1))
+        do i = 1, size(Q)
+            call copy(Qwrk(i), Q(perm(i)))
+        end do
+        call copy(Q, Qwrk)
+        call free_basis(Qwrk)
     end procedure permcols_basis_csp
 
     module procedure permcols_array_csp
         Q = Q(:, perm)
     end procedure permcols_array_csp
     module procedure permcols_basis_cdp
-        call copy(Q, Q(perm))
+        class(abstract_vector_cdp), allocatable :: Qwrk(:)
+        integer :: i
+        allocate(Qwrk(size(Q)), mold=Q(1))
+        call init_like_basis(Qwrk, Q(1))
+        do i = 1, size(Q)
+            call copy(Qwrk(i), Q(perm(i)))
+        end do
+        call copy(Q, Qwrk)
+        call free_basis(Qwrk)
     end procedure permcols_basis_cdp
 
     module procedure permcols_array_cdp

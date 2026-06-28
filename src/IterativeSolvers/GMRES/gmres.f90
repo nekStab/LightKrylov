@@ -124,7 +124,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rsp'
         integer :: k, iostat
-        class(abstract_vector_rsp), allocatable :: dx, wrk
+        class(abstract_vector_rsp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -147,11 +147,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%init_like(b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -192,7 +194,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -238,20 +240,25 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            call linear_combination(dx, V(:k), e(:k))
-            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
+            block
+                class(abstract_vector_rsp), allocatable :: dx
+                call linear_combination(dx, V(:k), e(:k))
+                if (ifprecond) call preconditioner%apply(dx)
+                call x%add(dx)
+                call dx%free()
+            end block
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%apply_rmatvec(x, v(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%apply_matvec(x, v(1))
+                call A%apply_matvec(x, V(1))
             endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            call V(1)%sub(b) ; call V(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm()
-            if (abs(beta) > 0.0_sp) call v(1)%scal(one_rsp / beta)
+            beta = V(1)%norm()
+            if (abs(beta) > 0.0_sp) call V(1)%scal(one_rsp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -290,6 +297,10 @@ contains
             end select
         end if
 
+        ! Cleanup
+        call wrk%free()
+        call free_basis(V)
+
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_rsp
@@ -316,7 +327,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_rdp'
         integer :: k, iostat
-        class(abstract_vector_rdp), allocatable :: dx, wrk
+        class(abstract_vector_rdp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -339,11 +350,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%init_like(b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -384,7 +397,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -430,20 +443,25 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            call linear_combination(dx, V(:k), e(:k))
-            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
+            block
+                class(abstract_vector_rdp), allocatable :: dx
+                call linear_combination(dx, V(:k), e(:k))
+                if (ifprecond) call preconditioner%apply(dx)
+                call x%add(dx)
+                call dx%free()
+            end block
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%apply_rmatvec(x, v(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%apply_matvec(x, v(1))
+                call A%apply_matvec(x, V(1))
             endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            call V(1)%sub(b) ; call V(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm()
-            if (abs(beta) > 0.0_dp) call v(1)%scal(one_rdp / beta)
+            beta = V(1)%norm()
+            if (abs(beta) > 0.0_dp) call V(1)%scal(one_rdp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -482,6 +500,10 @@ contains
             end select
         end if
 
+        ! Cleanup
+        call wrk%free()
+        call free_basis(V)
+
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_rdp
@@ -508,7 +530,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_csp'
         integer :: k, iostat
-        class(abstract_vector_csp), allocatable :: dx, wrk
+        class(abstract_vector_csp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -531,11 +553,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%init_like(b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -576,7 +600,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -622,20 +646,25 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            call linear_combination(dx, V(:k), e(:k))
-            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
+            block
+                class(abstract_vector_csp), allocatable :: dx
+                call linear_combination(dx, V(:k), e(:k))
+                if (ifprecond) call preconditioner%apply(dx)
+                call x%add(dx)
+                call dx%free()
+            end block
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%apply_rmatvec(x, v(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%apply_matvec(x, v(1))
+                call A%apply_matvec(x, V(1))
             endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            call V(1)%sub(b) ; call V(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm()
-            if (abs(beta) > 0.0_sp) call v(1)%scal(one_csp / beta)
+            beta = V(1)%norm()
+            if (abs(beta) > 0.0_sp) call V(1)%scal(one_csp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -674,6 +703,10 @@ contains
             end select
         end if
 
+        ! Cleanup
+        call wrk%free()
+        call free_basis(V)
+
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_csp
@@ -700,7 +733,7 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_cdp'
         integer :: k, iostat
-        class(abstract_vector_cdp), allocatable :: dx, wrk
+        class(abstract_vector_cdp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -723,11 +756,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call wrk%init_like(b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -768,7 +803,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -814,20 +849,25 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            call linear_combination(dx, V(:k), e(:k))
-            if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
+            block
+                class(abstract_vector_cdp), allocatable :: dx
+                call linear_combination(dx, V(:k), e(:k))
+                if (ifprecond) call preconditioner%apply(dx)
+                call x%add(dx)
+                call dx%free()
+            end block
 
             ! Recompute residual for sanity check.
             if (trans) then
-                call A%apply_rmatvec(x, v(1))
+                call A%apply_rmatvec(x, V(1))
             else
-                call A%apply_matvec(x, v(1))
+                call A%apply_matvec(x, V(1))
             endif
-            call v(1)%sub(b) ; call v(1)%chsgn()
+            call V(1)%sub(b) ; call V(1)%chsgn()
 
             ! Initialize new starting Krylov vector if needed.
-            beta = v(1)%norm()
-            if (abs(beta) > 0.0_dp) call v(1)%scal(one_cdp / beta)
+            beta = V(1)%norm()
+            if (abs(beta) > 0.0_dp) call V(1)%scal(one_cdp / beta)
 
             ! Save metadata.
             gmres_meta%n_iter  = gmres_meta%n_iter + 1
@@ -865,6 +905,10 @@ contains
                 call type_error('meta','gmres_dp_metadata','OUT',this_module,this_procedure)
             end select
         end if
+
+        ! Cleanup
+        call wrk%free()
+        call free_basis(V)
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)

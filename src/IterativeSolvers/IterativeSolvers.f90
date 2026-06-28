@@ -1274,11 +1274,11 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
-            class(abstract_vector_rsp), intent(out) :: U(:)
+            class(abstract_vector_rsp), intent(inout) :: U(:)
             !! Leading left singular vectors.
-            real(sp), allocatable, intent(out) :: S(:)
+            real(sp), allocatable, intent(inout) :: S(:)
             !! Leading singular values.
-            class(abstract_vector_rsp), intent(out) :: V(:)
+            class(abstract_vector_rsp), intent(inout) :: V(:)
             !! Leading right singular vectors.
             real(sp), allocatable, intent(out) :: residuals(:)
             !! Residuals associated to each Ritz eigenpair.
@@ -1297,11 +1297,11 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
-            class(abstract_vector_rdp), intent(out) :: U(:)
+            class(abstract_vector_rdp), intent(inout) :: U(:)
             !! Leading left singular vectors.
-            real(dp), allocatable, intent(out) :: S(:)
+            real(dp), allocatable, intent(inout) :: S(:)
             !! Leading singular values.
-            class(abstract_vector_rdp), intent(out) :: V(:)
+            class(abstract_vector_rdp), intent(inout) :: V(:)
             !! Leading right singular vectors.
             real(dp), allocatable, intent(out) :: residuals(:)
             !! Residuals associated to each Ritz eigenpair.
@@ -1320,11 +1320,11 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
-            class(abstract_vector_csp), intent(out) :: U(:)
+            class(abstract_vector_csp), intent(inout) :: U(:)
             !! Leading left singular vectors.
-            real(sp), allocatable, intent(out) :: S(:)
+            real(sp), allocatable, intent(inout) :: S(:)
             !! Leading singular values.
-            class(abstract_vector_csp), intent(out) :: V(:)
+            class(abstract_vector_csp), intent(inout) :: V(:)
             !! Leading right singular vectors.
             real(sp), allocatable, intent(out) :: residuals(:)
             !! Residuals associated to each Ritz eigenpair.
@@ -1343,11 +1343,11 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
-            class(abstract_vector_cdp), intent(out) :: U(:)
+            class(abstract_vector_cdp), intent(inout) :: U(:)
             !! Leading left singular vectors.
-            real(dp), allocatable, intent(out) :: S(:)
+            real(dp), allocatable, intent(inout) :: S(:)
             !! Leading singular values.
-            class(abstract_vector_cdp), intent(out) :: V(:)
+            class(abstract_vector_cdp), intent(inout) :: V(:)
             !! Leading right singular vectors.
             real(dp), allocatable, intent(out) :: residuals(:)
             !! Residuals associated to each Ritz eigenpair.
@@ -1429,7 +1429,7 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_rsp), intent(out) :: X(:)
+            class(abstract_vector_rsp), intent(inout) :: X(:)
             !! Leading eigevectors of \( \mathbf{A} \).
             real(sp), allocatable, intent(out) :: eigvals(:)
             !! Leading eigenvalues of \( \mathbf{A} \).
@@ -1451,7 +1451,7 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_rdp), intent(out) :: X(:)
+            class(abstract_vector_rdp), intent(inout) :: X(:)
             !! Leading eigevectors of \( \mathbf{A} \).
             real(dp), allocatable, intent(out) :: eigvals(:)
             !! Leading eigenvalues of \( \mathbf{A} \).
@@ -1473,7 +1473,7 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_csp), intent(out) :: X(:)
+            class(abstract_vector_csp), intent(inout) :: X(:)
             !! Leading eigevectors of \( \mathbf{A} \).
             real(sp), allocatable, intent(out) :: eigvals(:)
             !! Leading eigenvalues of \( \mathbf{A} \).
@@ -1495,7 +1495,7 @@ module LightKrylov_IterativeSolvers
             implicit none(type, external)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
-            class(abstract_vector_cdp), intent(out) :: X(:)
+            class(abstract_vector_cdp), intent(inout) :: X(:)
             !! Leading eigevectors of \( \mathbf{A} \).
             real(dp), allocatable, intent(out) :: eigvals(:)
             !! Leading eigenvalues of \( \mathbf{A} \).
@@ -1868,7 +1868,7 @@ contains
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_rsp), intent(out) :: X(:)
+        class(abstract_vector_rsp), intent(inout) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
         complex(sp), allocatable, intent(out) :: eigvals(:)
         !! Leading eigenvalues of \(\mathbf{A}\).
@@ -1922,8 +1922,9 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -1947,7 +1948,7 @@ contains
         kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
-           arnoldi_factorization: do k = kstart, kdim_
+            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', this_module, this_procedure)
@@ -2013,13 +2014,16 @@ contains
         end block
 
         ! Construct eigenvectors.
+        call zero_basis(X)
         do i = 1, nev
-            call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rsp)
             enddo
         enddo
 
+        ! Cleanup.
+        call free_basis(Xwrk)
+        
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
@@ -2035,7 +2039,7 @@ contains
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_rdp), intent(out) :: X(:)
+        class(abstract_vector_rdp), intent(inout) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
         complex(dp), allocatable, intent(out) :: eigvals(:)
         !! Leading eigenvalues of \(\mathbf{A}\).
@@ -2089,8 +2093,9 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2114,7 +2119,7 @@ contains
         kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
-           arnoldi_factorization: do k = kstart, kdim_
+            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', this_module, this_procedure)
@@ -2180,13 +2185,16 @@ contains
         end block
 
         ! Construct eigenvectors.
+        call zero_basis(X)
         do i = 1, nev
-            call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rdp)
             enddo
         enddo
 
+        ! Cleanup.
+        call free_basis(Xwrk)
+        
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
@@ -2202,7 +2210,7 @@ contains
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_csp), intent(out) :: X(:)
+        class(abstract_vector_csp), intent(inout) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
         complex(sp), allocatable, intent(out) :: eigvals(:)
         !! Leading eigenvalues of \(\mathbf{A}\).
@@ -2255,8 +2263,9 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2280,7 +2289,7 @@ contains
         kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
-           arnoldi_factorization: do k = kstart, kdim_
+            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', this_module, this_procedure)
@@ -2337,13 +2346,16 @@ contains
         end block
 
         ! Construct eigenvectors.
+        call zero_basis(X)
         do i = 1, nev
-            call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_csp)
             enddo
         enddo
 
+        ! Cleanup.
+        call free_basis(Xwrk)
+        
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains
@@ -2359,7 +2371,7 @@ contains
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_cdp), intent(out) :: X(:)
+        class(abstract_vector_cdp), intent(inout) :: X(:)
         !! Leading eigenvectors of \(\mathbf{A}\).
         complex(dp), allocatable, intent(out) :: eigvals(:)
         !! Leading eigenvalues of \(\mathbf{A}\).
@@ -2412,8 +2424,9 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
+        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Xwrk, X(1))
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2437,7 +2450,7 @@ contains
         kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
         krylovschur: do while (conv < nev)
 
-           arnoldi_factorization: do k = kstart, kdim_
+            arnoldi_factorization: do k = kstart, kdim_
                 ! Arnoldi step.
                 call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
                 call check_info(info, 'arnoldi', this_module, this_procedure)
@@ -2494,13 +2507,16 @@ contains
         end block
 
         ! Construct eigenvectors.
+        call zero_basis(X)
         do i = 1, nev
-            call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_cdp)
             enddo
         enddo
 
+        ! Cleanup.
+        call free_basis(Xwrk)
+        
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
     contains

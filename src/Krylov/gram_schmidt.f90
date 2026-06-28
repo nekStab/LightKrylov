@@ -423,6 +423,7 @@ contains
             class(abstract_vector_rsp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -469,6 +470,7 @@ contains
             class(abstract_vector_rsp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_rsp, proj, one_rsp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then
@@ -512,6 +514,7 @@ contains
             class(abstract_vector_rdp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -558,6 +561,7 @@ contains
             class(abstract_vector_rdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_rdp, proj, one_rdp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then
@@ -601,6 +605,7 @@ contains
             class(abstract_vector_csp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -647,6 +652,7 @@ contains
             class(abstract_vector_csp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_csp, proj, one_csp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then
@@ -690,6 +696,7 @@ contains
             class(abstract_vector_cdp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -736,6 +743,7 @@ contains
             class(abstract_vector_cdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_cdp, proj, one_cdp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then

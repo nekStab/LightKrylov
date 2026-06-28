@@ -17,6 +17,7 @@ module LightKrylov_AbstractVectors
     !! - `axpby(alpha, vec, beta, self) :   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
     !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
     !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
+    !! - `init_like(mold)`              :   A subroutine to initialise the vector after allocation to match the size and structure of the mold.
     !!
     !! Once these type-bound procedures have been implemented by the user, they will automatically
     !! be used to define:
@@ -31,7 +32,9 @@ module LightKrylov_AbstractVectors
     !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
     !! - `axpby_basis(alpha, X, beta, Y)`   : In-place computation of \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where `X` and `Y` are arrays of `abstract_vector`.
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
-    !! - `copy_basis(out, from)`            : Copy a collection of `abstract_vectors`.
+    !! - `copy_basis(out, from)`            : Copy a collection of `abstract_vectors`. `out` must be pre-allocated.
+    !! - `init_like_basis(out, mold)`       : Initialize size and structure of a collection of `abstract_vectors` based on mold.
+    !! - `free_basis()         `            : Free the memory of a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
     !! @warning
     !! The resulting vectors do not form an orthonormal basis. For this purpose use the utility function `initialize_random_orthonormal_basis`.
@@ -54,6 +57,8 @@ module LightKrylov_AbstractVectors
     public :: zero_basis
     public :: copy
     public :: rand_basis
+    public :: init_like_basis
+    public :: free_basis
     public :: verify_vector_axioms
 
     interface innerprod
@@ -239,7 +244,8 @@ module LightKrylov_AbstractVectors
 
     interface copy
         !!  This interface provides methods to copy an array `X` of `abstract_vector` into
-        !!  another array `Y`. Note that `Y` needs to be pre-allocated.
+        !!  another array `Y`. Note that `Y` needs to be pre-allocated. 
+        !!  Internally, copy will run Y(i)%init_like(X(1)) to ensure that Y is conformant with X.
         !!
         !!  ### Example
         !!
@@ -285,6 +291,53 @@ module LightKrylov_AbstractVectors
         module procedure rand_basis_cdp
     end interface
 
+    interface init_like_basis
+        !!  This interface provides methods to initialize an array `X` of `abstract_vector` 
+        !!  based on the shape of another array `mold` of `abstract_vector`.
+        !!  It is a simple wrapper around `X(i)%init_like(y)`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```fortran
+        !!      type(my_real_vector), dimension(10), allocatable :: X
+        !!      type(my_real_vector) :: mold
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      allocate(X, mold) ; call init_like_basis(X, mold)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
+        module procedure init_like_basis_rsp
+        module procedure init_like_basis_rdp
+        module procedure init_like_basis_csp
+        module procedure init_like_basis_cdp
+    end interface
+
+    interface free_basis
+        !!  This interface provides methods to free the memory of an array `X` of `abstract_vector`.
+        !!  It is a simple wrapper around `X(i)%free()`.
+        !!
+        !!  ### Example
+        !!
+        !!  ```fortran
+        !!      type(my_real_vector), dimension(10), allocatable :: X
+        !!      type(my_real_vector) :: mold
+        !!
+        !!      allocate(X, mold) ; call init_like_basis(X, mold)
+        !!
+        !!      ! ... Your code ...
+        !!
+        !!      call free_basis(X)
+        !!
+        !!      ! ... Your code ...
+        !!  ```
+        module procedure free_basis_rsp
+        module procedure free_basis_rdp
+        module procedure free_basis_csp
+        module procedure free_basis_cdp
+    end interface
+
     interface verify_vector_axioms
         module procedure verify_vector_axioms_rsp
         module procedure verify_vector_axioms_rdp
@@ -300,6 +353,8 @@ module LightKrylov_AbstractVectors
         !!  @warning
         !!  Users should not extend this abstract class to define their own types.
         !!  @endwarning
+        logical :: is_initialized = .false.
+        logical :: owns_data      = .true.
     end type abstract_vector
 
     !----------------------------------------------------------------------------
@@ -323,6 +378,18 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_rsp`.
         procedure(abstract_get_size_rsp), pass(self), deferred, public :: get_size
         !! Return size of specific abstract vector
+        procedure(abstract_init_like_rsp), pass(self), deferred, public :: init_like
+        !! Shapes `self` like `mold`: allocates if unallocated, no-op if already conformant,
+        !! releases and reallocates if the shape differs. Sole guaranteed allocator for
+        !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
+        !! buffers are allocated/reshaped/released.
+        procedure, pass(self), public :: free => free_rsp
+        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
+        !! freed vector. The default is a no-op, correct for types whose storage is a managed
+        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
+        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
+        !! end-of-use call and any `final` backstop never double-release.
         procedure, pass(self), public :: norm => norm_rsp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rsp
@@ -392,6 +459,28 @@ module LightKrylov_AbstractVectors
             !! Size of the vector
         end function abstract_get_size_rsp
 
+        subroutine abstract_init_like_rsp(self, mold)
+            !! Abstract interface to shape `self` like `mold`.
+            !!
+            !! Contract — the implementation must leave `self` shaped like `mold`, handling
+            !! three cases:
+            !!
+            !! - `self` unallocated            : allocate internal storage from `mold`'s shape.
+            !! - `self` allocated, conformant  : no-op (cheap fast path; do not reallocate).
+            !! - `self` allocated, nonconformant: release prior storage, then reallocate.
+            !!
+            !! Must be idempotent. This is the sole guaranteed allocator used by type-agnostic
+            !! algorithms, which call it immediately after `allocate(self, mold=...)`. For types
+            !! holding unmanaged resources (e.g. device buffers), this routine owns their
+            !! allocation, reshaping, and release.
+            import abstract_vector_rsp
+            implicit none(type, external)
+            class(abstract_vector_rsp), intent(inout) :: self
+            !! Vector to be shaped.
+            class(abstract_vector_rsp), intent(in) :: mold
+            !! Vector whose shape `self` should match.
+        end subroutine abstract_init_like_rsp
+
     end interface
 
     !----------------------------------------------------------------------------
@@ -415,6 +504,18 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_rdp`.
         procedure(abstract_get_size_rdp), pass(self), deferred, public :: get_size
         !! Return size of specific abstract vector
+        procedure(abstract_init_like_rdp), pass(self), deferred, public :: init_like
+        !! Shapes `self` like `mold`: allocates if unallocated, no-op if already conformant,
+        !! releases and reallocates if the shape differs. Sole guaranteed allocator for
+        !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
+        !! buffers are allocated/reshaped/released.
+        procedure, pass(self), public :: free => free_rdp
+        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
+        !! freed vector. The default is a no-op, correct for types whose storage is a managed
+        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
+        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
+        !! end-of-use call and any `final` backstop never double-release.
         procedure, pass(self), public :: norm => norm_rdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rdp
@@ -484,6 +585,28 @@ module LightKrylov_AbstractVectors
             !! Size of the vector
         end function abstract_get_size_rdp
 
+        subroutine abstract_init_like_rdp(self, mold)
+            !! Abstract interface to shape `self` like `mold`.
+            !!
+            !! Contract — the implementation must leave `self` shaped like `mold`, handling
+            !! three cases:
+            !!
+            !! - `self` unallocated            : allocate internal storage from `mold`'s shape.
+            !! - `self` allocated, conformant  : no-op (cheap fast path; do not reallocate).
+            !! - `self` allocated, nonconformant: release prior storage, then reallocate.
+            !!
+            !! Must be idempotent. This is the sole guaranteed allocator used by type-agnostic
+            !! algorithms, which call it immediately after `allocate(self, mold=...)`. For types
+            !! holding unmanaged resources (e.g. device buffers), this routine owns their
+            !! allocation, reshaping, and release.
+            import abstract_vector_rdp
+            implicit none(type, external)
+            class(abstract_vector_rdp), intent(inout) :: self
+            !! Vector to be shaped.
+            class(abstract_vector_rdp), intent(in) :: mold
+            !! Vector whose shape `self` should match.
+        end subroutine abstract_init_like_rdp
+
     end interface
 
     !----------------------------------------------------------------------------
@@ -507,6 +630,18 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_csp`.
         procedure(abstract_get_size_csp), pass(self), deferred, public :: get_size
         !! Return size of specific abstract vector
+        procedure(abstract_init_like_csp), pass(self), deferred, public :: init_like
+        !! Shapes `self` like `mold`: allocates if unallocated, no-op if already conformant,
+        !! releases and reallocates if the shape differs. Sole guaranteed allocator for
+        !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
+        !! buffers are allocated/reshaped/released.
+        procedure, pass(self), public :: free => free_csp
+        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
+        !! freed vector. The default is a no-op, correct for types whose storage is a managed
+        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
+        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
+        !! end-of-use call and any `final` backstop never double-release.
         procedure, pass(self), public :: norm => norm_csp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_csp
@@ -576,6 +711,28 @@ module LightKrylov_AbstractVectors
             !! Size of the vector
         end function abstract_get_size_csp
 
+        subroutine abstract_init_like_csp(self, mold)
+            !! Abstract interface to shape `self` like `mold`.
+            !!
+            !! Contract — the implementation must leave `self` shaped like `mold`, handling
+            !! three cases:
+            !!
+            !! - `self` unallocated            : allocate internal storage from `mold`'s shape.
+            !! - `self` allocated, conformant  : no-op (cheap fast path; do not reallocate).
+            !! - `self` allocated, nonconformant: release prior storage, then reallocate.
+            !!
+            !! Must be idempotent. This is the sole guaranteed allocator used by type-agnostic
+            !! algorithms, which call it immediately after `allocate(self, mold=...)`. For types
+            !! holding unmanaged resources (e.g. device buffers), this routine owns their
+            !! allocation, reshaping, and release.
+            import abstract_vector_csp
+            implicit none(type, external)
+            class(abstract_vector_csp), intent(inout) :: self
+            !! Vector to be shaped.
+            class(abstract_vector_csp), intent(in) :: mold
+            !! Vector whose shape `self` should match.
+        end subroutine abstract_init_like_csp
+
     end interface
 
     !----------------------------------------------------------------------------
@@ -599,6 +756,18 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_cdp`.
         procedure(abstract_get_size_cdp), pass(self), deferred, public :: get_size
         !! Return size of specific abstract vector
+        procedure(abstract_init_like_cdp), pass(self), deferred, public :: init_like
+        !! Shapes `self` like `mold`: allocates if unallocated, no-op if already conformant,
+        !! releases and reallocates if the shape differs. Sole guaranteed allocator for
+        !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
+        !! buffers are allocated/reshaped/released.
+        procedure, pass(self), public :: free => free_cdp
+        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
+        !! freed vector. The default is a no-op, correct for types whose storage is a managed
+        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
+        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
+        !! end-of-use call and any `final` backstop never double-release.
         procedure, pass(self), public :: norm => norm_cdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_cdp
@@ -668,6 +837,28 @@ module LightKrylov_AbstractVectors
             !! Size of the vector
         end function abstract_get_size_cdp
 
+        subroutine abstract_init_like_cdp(self, mold)
+            !! Abstract interface to shape `self` like `mold`.
+            !!
+            !! Contract — the implementation must leave `self` shaped like `mold`, handling
+            !! three cases:
+            !!
+            !! - `self` unallocated            : allocate internal storage from `mold`'s shape.
+            !! - `self` allocated, conformant  : no-op (cheap fast path; do not reallocate).
+            !! - `self` allocated, nonconformant: release prior storage, then reallocate.
+            !!
+            !! Must be idempotent. This is the sole guaranteed allocator used by type-agnostic
+            !! algorithms, which call it immediately after `allocate(self, mold=...)`. For types
+            !! holding unmanaged resources (e.g. device buffers), this routine owns their
+            !! allocation, reshaping, and release.
+            import abstract_vector_cdp
+            implicit none(type, external)
+            class(abstract_vector_cdp), intent(inout) :: self
+            !! Vector to be shaped.
+            class(abstract_vector_cdp), intent(in) :: mold
+            !! Vector whose shape `self` should match.
+        end subroutine abstract_init_like_cdp
+
     end interface
 
 
@@ -692,6 +883,8 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_rsp`.
         procedure, pass(self), public :: get_size => dense_get_size_rsp
         !! Return size of specific abstract vector
+        procedure, pass(self), public :: init_like => dense_init_like_rsp
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
     end type dense_vector_rsp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
@@ -714,6 +907,8 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_rdp`.
         procedure, pass(self), public :: get_size => dense_get_size_rdp
         !! Return size of specific abstract vector
+        procedure, pass(self), public :: init_like => dense_init_like_rdp
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
     end type dense_vector_rdp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
@@ -736,6 +931,8 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_csp`.
         procedure, pass(self), public :: get_size => dense_get_size_csp
         !! Return size of specific abstract vector
+        procedure, pass(self), public :: init_like => dense_init_like_csp
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
     end type dense_vector_csp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
@@ -758,6 +955,8 @@ module LightKrylov_AbstractVectors
         !! Computes the dot product between two `abstract_vector_cdp`.
         procedure, pass(self), public :: get_size => dense_get_size_cdp
         !! Return size of specific abstract vector
+        procedure, pass(self), public :: init_like => dense_init_like_cdp
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
     end type dense_vector_cdp
 
     interface dense_vector
@@ -812,6 +1011,16 @@ contains
         call self%scal(-one_rsp)
     end subroutine chsgn_rsp
 
+    subroutine free_rsp(self)
+        implicit none(type, external)
+        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
+        !! allocatable, which is released automatically on deallocation / scope exit. Types
+        !! holding unmanaged resources override this to release them, guarded for idempotency.
+        !! Clears the `is_initialized` flag so that the action is terminal.
+        class(abstract_vector_rsp), intent(inout) :: self
+        self%is_initialized = .false.
+    end subroutine free_rsp
+
     function norm_rdp(self) result(alpha)
         implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
@@ -849,6 +1058,16 @@ contains
         !! Vector whose entries need to change sign.
         call self%scal(-one_rdp)
     end subroutine chsgn_rdp
+
+    subroutine free_rdp(self)
+        implicit none(type, external)
+        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
+        !! allocatable, which is released automatically on deallocation / scope exit. Types
+        !! holding unmanaged resources override this to release them, guarded for idempotency.
+        !! Clears the `is_initialized` flag so that the action is terminal.
+        class(abstract_vector_rdp), intent(inout) :: self
+        self%is_initialized = .false.
+    end subroutine free_rdp
 
     function norm_csp(self) result(alpha)
         implicit none(type, external)
@@ -888,6 +1107,16 @@ contains
         call self%scal(-one_csp)
     end subroutine chsgn_csp
 
+    subroutine free_csp(self)
+        implicit none(type, external)
+        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
+        !! allocatable, which is released automatically on deallocation / scope exit. Types
+        !! holding unmanaged resources override this to release them, guarded for idempotency.
+        !! Clears the `is_initialized` flag so that the action is terminal.
+        class(abstract_vector_csp), intent(inout) :: self
+        self%is_initialized = .false.
+    end subroutine free_csp
+
     function norm_cdp(self) result(alpha)
         implicit none(type, external)
         !! Compute the norm of an `abstract_vector`.
@@ -925,6 +1154,16 @@ contains
         !! Vector whose entries need to change sign.
         call self%scal(-one_cdp)
     end subroutine chsgn_cdp
+
+    subroutine free_cdp(self)
+        implicit none(type, external)
+        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
+        !! allocatable, which is released automatically on deallocation / scope exit. Types
+        !! holding unmanaged resources override this to release them, guarded for idempotency.
+        !! Clears the `is_initialized` flag so that the action is terminal.
+        class(abstract_vector_cdp), intent(inout) :: self
+        self%is_initialized = .false.
+    end subroutine free_cdp
 
 
     !--------------------------------------------------------------------------------
@@ -985,7 +1224,11 @@ contains
 
         select type (vec)
         type is(dense_vector_rsp)
-            if (beta /= zero_rsp) call self%scal(beta)
+            if (beta == zero_rsp) then
+                self%data = zero_rsp
+            else
+                call self%scal(beta)
+            end if
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call type_error('vec','dense_vector_rsp','IN',this_module,'dense_axpby_rsp')
@@ -1013,6 +1256,38 @@ contains
         integer :: n
         n = size(self%data)
     end function dense_get_size_rsp
+
+    subroutine dense_init_like_rsp(self, mold)
+        implicit none(type, external)
+        !! Shape `self` like `mold` (three cases: allocate / no-op / reallocate).
+        class(dense_vector_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in)  :: mold
+        integer :: m, iostat
+        character(len=100) :: errmsg
+
+        ! mold must be the same concrete type to read its size.
+        select type (mold)
+        type is (dense_vector_rsp)
+            m = mold%get_size()
+        class default
+            call type_error('mold','dense_vector_rsp','IN',this_module,'dense_init_like_rsp')
+        end select
+
+        if (.not. allocated(self%data)) then
+            ! Case 1: unallocated -> allocate.
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_rsp")
+        else if (size(self%data) /= m) then
+            ! Case 3: allocated but nonconformant -> release, reallocate.
+            deallocate(self%data)
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_rsp")
+        end if
+        ! Case 2: allocated and conformant -> fall through, no realloc.
+
+        self%n = m
+        self%is_initialized = .true.
+    end subroutine dense_init_like_rsp
 
     function initialize_dense_vector_from_array_rdp(x) result(vec)
         implicit none(type, external)
@@ -1068,7 +1343,11 @@ contains
 
         select type (vec)
         type is(dense_vector_rdp)
-            if (beta /= zero_rdp) call self%scal(beta)
+            if (beta == zero_rdp) then
+                self%data = zero_rdp
+            else
+                call self%scal(beta)
+            end if
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call type_error('vec','dense_vector_rdp','IN',this_module,'dense_axpby_rdp')
@@ -1096,6 +1375,38 @@ contains
         integer :: n
         n = size(self%data)
     end function dense_get_size_rdp
+
+    subroutine dense_init_like_rdp(self, mold)
+        implicit none(type, external)
+        !! Shape `self` like `mold` (three cases: allocate / no-op / reallocate).
+        class(dense_vector_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in)  :: mold
+        integer :: m, iostat
+        character(len=100) :: errmsg
+
+        ! mold must be the same concrete type to read its size.
+        select type (mold)
+        type is (dense_vector_rdp)
+            m = mold%get_size()
+        class default
+            call type_error('mold','dense_vector_rdp','IN',this_module,'dense_init_like_rdp')
+        end select
+
+        if (.not. allocated(self%data)) then
+            ! Case 1: unallocated -> allocate.
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_rdp")
+        else if (size(self%data) /= m) then
+            ! Case 3: allocated but nonconformant -> release, reallocate.
+            deallocate(self%data)
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_rdp")
+        end if
+        ! Case 2: allocated and conformant -> fall through, no realloc.
+
+        self%n = m
+        self%is_initialized = .true.
+    end subroutine dense_init_like_rdp
 
     function initialize_dense_vector_from_array_csp(x) result(vec)
         implicit none(type, external)
@@ -1155,7 +1466,11 @@ contains
 
         select type (vec)
         type is(dense_vector_csp)
-            if (beta /= zero_csp) call self%scal(beta)
+            if (beta == zero_csp) then
+                self%data = zero_csp
+            else
+                call self%scal(beta)
+            end if
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call type_error('vec','dense_vector_csp','IN',this_module,'dense_axpby_csp')
@@ -1183,6 +1498,38 @@ contains
         integer :: n
         n = size(self%data)
     end function dense_get_size_csp
+
+    subroutine dense_init_like_csp(self, mold)
+        implicit none(type, external)
+        !! Shape `self` like `mold` (three cases: allocate / no-op / reallocate).
+        class(dense_vector_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in)  :: mold
+        integer :: m, iostat
+        character(len=100) :: errmsg
+
+        ! mold must be the same concrete type to read its size.
+        select type (mold)
+        type is (dense_vector_csp)
+            m = mold%get_size()
+        class default
+            call type_error('mold','dense_vector_csp','IN',this_module,'dense_init_like_csp')
+        end select
+
+        if (.not. allocated(self%data)) then
+            ! Case 1: unallocated -> allocate.
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_csp")
+        else if (size(self%data) /= m) then
+            ! Case 3: allocated but nonconformant -> release, reallocate.
+            deallocate(self%data)
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_csp")
+        end if
+        ! Case 2: allocated and conformant -> fall through, no realloc.
+
+        self%n = m
+        self%is_initialized = .true.
+    end subroutine dense_init_like_csp
 
     function initialize_dense_vector_from_array_cdp(x) result(vec)
         implicit none(type, external)
@@ -1242,7 +1589,11 @@ contains
 
         select type (vec)
         type is(dense_vector_cdp)
-            if (beta /= zero_cdp) call self%scal(beta)
+            if (beta == zero_cdp) then
+                self%data = zero_cdp
+            else
+                call self%scal(beta)
+            end if
             call axpy(n, alpha, vec%data, 1, self%data, 1)
         class default
             call type_error('vec','dense_vector_cdp','IN',this_module,'dense_axpby_cdp')
@@ -1270,6 +1621,38 @@ contains
         integer :: n
         n = size(self%data)
     end function dense_get_size_cdp
+
+    subroutine dense_init_like_cdp(self, mold)
+        implicit none(type, external)
+        !! Shape `self` like `mold` (three cases: allocate / no-op / reallocate).
+        class(dense_vector_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in)  :: mold
+        integer :: m, iostat
+        character(len=100) :: errmsg
+
+        ! mold must be the same concrete type to read its size.
+        select type (mold)
+        type is (dense_vector_cdp)
+            m = mold%get_size()
+        class default
+            call type_error('mold','dense_vector_cdp','IN',this_module,'dense_init_like_cdp')
+        end select
+
+        if (.not. allocated(self%data)) then
+            ! Case 1: unallocated -> allocate.
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_cdp")
+        else if (size(self%data) /= m) then
+            ! Case 3: allocated but nonconformant -> release, reallocate.
+            deallocate(self%data)
+            allocate(self%data(m), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_init_like_cdp")
+        end if
+        ! Case 2: allocated and conformant -> fall through, no realloc.
+
+        self%n = m
+        self%is_initialized = .true.
+    end subroutine dense_init_like_cdp
 
 
     !--------------------------------------
@@ -1299,10 +1682,9 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) then
-            allocate(y, source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_rsp")
-        endif
+        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_rsp")
+        call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
@@ -1332,18 +1714,12 @@ contains
         endif
 
         ! Initialize output basis.
-        if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_rsp")
-        else
-            if (size(Y) /= size(B, 2)) then
-                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                                this_module, 'linear_combination_matrix_rsp')
-            endif
-        endif
+        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_rsp")
+        call init_like_basis(Y, X(1))
 
+        call zero_basis(Y)
         do j = 1, size(Y)
-            call Y(j)%zero()
             do i = 1, size(X)
                 call Y(j)%axpby(B(i, j), X(i), one_rsp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
@@ -1425,18 +1801,32 @@ contains
     impure elemental subroutine copy_vector_rsp(out, from)
         implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: from
-        class(abstract_vector_rsp), intent(out) :: out
+        class(abstract_vector_rsp), intent(inout) :: out
+        ! Reset output based on input.
+        call out%init_like(from)
         ! Copy array.
         call out%axpby(one_rsp, from, zero_rsp)
     end subroutine copy_vector_rsp
 
+    impure elemental subroutine init_like_basis_rsp(X, mold)
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(inout) :: X
+        class(abstract_vector_rsp), intent(in)    :: mold
+        call X%init_like(mold)
+    end subroutine init_like_basis_rsp
+
+    impure elemental subroutine free_basis_rsp(X)
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(inout) :: X
+        call X%free()
+    end subroutine free_basis_rsp
+    
     impure elemental subroutine rand_basis_rsp(X, ifnorm)
         implicit none(type, external)
         class(abstract_vector_rsp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
-
 
     logical function verify_vector_axioms_rsp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
@@ -1448,6 +1838,8 @@ contains
 
         integer :: ntrials_, i
         real(sp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -1466,14 +1858,14 @@ contains
                 class(abstract_vector_rsp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call w%init_like(x) ; call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -1481,51 +1873,93 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call wrk1%free() ; call wrk2%free()
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
                 call u%add(w)
 
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_rsp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                allocate(u, v, z, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                call z%init_like(x) ; call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call z%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_rsp), allocatable :: u, v
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -1536,14 +1970,24 @@ contains
                 real(sp), parameter :: one = 1.0_sp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                
                 call v%scal(one)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -1553,17 +1997,27 @@ contains
                 call random_number(b)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand(ifnorm=.true.)
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -1572,10 +2026,10 @@ contains
                 call random_number(a)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -1586,8 +2040,18 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -1597,19 +2061,62 @@ contains
                 call random_number(b)
 
                 !> Generate random vector.
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
                 call u%scal(a+b)
 
                 call v%sub(u)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !>  Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
+
+            mold_independence: block
+                !! guard for resource-sharing overrides (GPU), void for CPU applications.
+                class(abstract_vector_rsp), allocatable :: u
+                real(sp) :: xnorm
+
+                !> Generate random vector.
+                xnorm = x%norm()
+                allocate(u, mold=x)
+                call u%init_like(x) ; call u%rand()
+
+                ! x must be unaffected by operations on u (checking init_like compliance).
+                call u%scal(2*one_rsp)
+
+                !> Check correctness.
+                success = merge(.true., .false., abs(x%norm() - xnorm) <= tol)
+
+                ! Cleanup.
+                call u%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'mold_independence'
+                    exit verification
+                end if
+            end block mold_independence
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, 'verify_vector_axioms_rsp')
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, 'verify_vector_axioms_rsp')
+        end if
     end function verify_vector_axioms_rsp
 
     subroutine linear_combination_vector_rdp(y, X, v)
@@ -1635,10 +2142,9 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) then
-            allocate(y, source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_rdp")
-        endif
+        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_rdp")
+        call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
@@ -1668,18 +2174,12 @@ contains
         endif
 
         ! Initialize output basis.
-        if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_rdp")
-        else
-            if (size(Y) /= size(B, 2)) then
-                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                                this_module, 'linear_combination_matrix_rdp')
-            endif
-        endif
+        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_rdp")
+        call init_like_basis(Y, X(1))
 
+        call zero_basis(Y)
         do j = 1, size(Y)
-            call Y(j)%zero()
             do i = 1, size(X)
                 call Y(j)%axpby(B(i, j), X(i), one_rdp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
@@ -1761,18 +2261,32 @@ contains
     impure elemental subroutine copy_vector_rdp(out, from)
         implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: from
-        class(abstract_vector_rdp), intent(out) :: out
+        class(abstract_vector_rdp), intent(inout) :: out
+        ! Reset output based on input.
+        call out%init_like(from)
         ! Copy array.
         call out%axpby(one_rdp, from, zero_rdp)
     end subroutine copy_vector_rdp
 
+    impure elemental subroutine init_like_basis_rdp(X, mold)
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(inout) :: X
+        class(abstract_vector_rdp), intent(in)    :: mold
+        call X%init_like(mold)
+    end subroutine init_like_basis_rdp
+
+    impure elemental subroutine free_basis_rdp(X)
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(inout) :: X
+        call X%free()
+    end subroutine free_basis_rdp
+    
     impure elemental subroutine rand_basis_rdp(X, ifnorm)
         implicit none(type, external)
         class(abstract_vector_rdp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
-
 
     logical function verify_vector_axioms_rdp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
@@ -1784,6 +2298,8 @@ contains
 
         integer :: ntrials_, i
         real(dp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -1802,14 +2318,14 @@ contains
                 class(abstract_vector_rdp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call w%init_like(x) ; call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -1817,51 +2333,93 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call wrk1%free() ; call wrk2%free()
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
                 call u%add(w)
 
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_rdp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                allocate(u, v, z, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                call z%init_like(x) ; call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call z%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_rdp), allocatable :: u, v
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -1872,14 +2430,24 @@ contains
                 real(dp), parameter :: one = 1.0_dp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                
                 call v%scal(one)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -1889,17 +2457,27 @@ contains
                 call random_number(b)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand(ifnorm=.true.)
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -1908,10 +2486,10 @@ contains
                 call random_number(a)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -1922,8 +2500,18 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -1933,19 +2521,62 @@ contains
                 call random_number(b)
 
                 !> Generate random vector.
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
                 call u%scal(a+b)
 
                 call v%sub(u)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !>  Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
+
+            mold_independence: block
+                !! guard for resource-sharing overrides (GPU), void for CPU applications.
+                class(abstract_vector_rdp), allocatable :: u
+                real(dp) :: xnorm
+
+                !> Generate random vector.
+                xnorm = x%norm()
+                allocate(u, mold=x)
+                call u%init_like(x) ; call u%rand()
+
+                ! x must be unaffected by operations on u (checking init_like compliance).
+                call u%scal(2*one_rdp)
+
+                !> Check correctness.
+                success = merge(.true., .false., abs(x%norm() - xnorm) <= tol)
+
+                ! Cleanup.
+                call u%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'mold_independence'
+                    exit verification
+                end if
+            end block mold_independence
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, 'verify_vector_axioms_rdp')
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, 'verify_vector_axioms_rdp')
+        end if
     end function verify_vector_axioms_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
@@ -1971,10 +2602,9 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) then
-            allocate(y, source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_csp")
-        endif
+        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_csp")
+        call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
@@ -2004,18 +2634,12 @@ contains
         endif
 
         ! Initialize output basis.
-        if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_csp")
-        else
-            if (size(Y) /= size(B, 2)) then
-                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                                this_module, 'linear_combination_matrix_csp')
-            endif
-        endif
+        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_csp")
+        call init_like_basis(Y, X(1))
 
+        call zero_basis(Y)
         do j = 1, size(Y)
-            call Y(j)%zero()
             do i = 1, size(X)
                 call Y(j)%axpby(B(i, j), X(i), one_csp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
@@ -2097,18 +2721,32 @@ contains
     impure elemental subroutine copy_vector_csp(out, from)
         implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: from
-        class(abstract_vector_csp), intent(out) :: out
+        class(abstract_vector_csp), intent(inout) :: out
+        ! Reset output based on input.
+        call out%init_like(from)
         ! Copy array.
         call out%axpby(one_csp, from, zero_csp)
     end subroutine copy_vector_csp
 
+    impure elemental subroutine init_like_basis_csp(X, mold)
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(inout) :: X
+        class(abstract_vector_csp), intent(in)    :: mold
+        call X%init_like(mold)
+    end subroutine init_like_basis_csp
+
+    impure elemental subroutine free_basis_csp(X)
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(inout) :: X
+        call X%free()
+    end subroutine free_basis_csp
+    
     impure elemental subroutine rand_basis_csp(X, ifnorm)
         implicit none(type, external)
         class(abstract_vector_csp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
-
 
     logical function verify_vector_axioms_csp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
@@ -2120,6 +2758,8 @@ contains
 
         integer :: ntrials_, i
         real(sp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -2138,14 +2778,14 @@ contains
                 class(abstract_vector_csp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call w%init_like(x) ; call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -2153,51 +2793,93 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call wrk1%free() ; call wrk2%free()
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
                 call u%add(w)
 
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_csp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                allocate(u, v, z, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                call z%init_like(x) ; call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call z%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_csp), allocatable :: u, v
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -2208,14 +2890,24 @@ contains
                 complex(sp), parameter :: one = 1.0_sp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                
                 call v%scal(one)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -2228,17 +2920,27 @@ contains
                 b = cmplx(c(1), c(2), kind=sp)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand(ifnorm=.true.)
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -2249,10 +2951,10 @@ contains
                 a = cmplx(b(1), b(2), kind=sp)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -2263,8 +2965,18 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -2277,19 +2989,62 @@ contains
                 b = cmplx(c(1), c(2), kind=sp)
 
                 !> Generate random vector.
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
                 call u%scal(a+b)
 
                 call v%sub(u)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !>  Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
+
+            mold_independence: block
+                !! guard for resource-sharing overrides (GPU), void for CPU applications.
+                class(abstract_vector_csp), allocatable :: u
+                real(sp) :: xnorm
+
+                !> Generate random vector.
+                xnorm = x%norm()
+                allocate(u, mold=x)
+                call u%init_like(x) ; call u%rand()
+
+                ! x must be unaffected by operations on u (checking init_like compliance).
+                call u%scal(2*one_csp)
+
+                !> Check correctness.
+                success = merge(.true., .false., abs(x%norm() - xnorm) <= tol)
+
+                ! Cleanup.
+                call u%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'mold_independence'
+                    exit verification
+                end if
+            end block mold_independence
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, 'verify_vector_axioms_csp')
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, 'verify_vector_axioms_csp')
+        end if
     end function verify_vector_axioms_csp
 
     subroutine linear_combination_vector_cdp(y, X, v)
@@ -2315,10 +3070,9 @@ contains
         endif
 
         ! Initialize output vector.
-        if (.not. allocated(y)) then
-            allocate(y, source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_cdp")
-        endif
+        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_cdp")
+        call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
         do i = 1, size(X)
@@ -2348,18 +3102,12 @@ contains
         endif
 
         ! Initialize output basis.
-        if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), source=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_cdp")
-        else
-            if (size(Y) /= size(B, 2)) then
-                call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
-                                this_module, 'linear_combination_matrix_cdp')
-            endif
-        endif
+        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
+        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_cdp")
+        call init_like_basis(Y, X(1))
 
+        call zero_basis(Y)
         do j = 1, size(Y)
-            call Y(j)%zero()
             do i = 1, size(X)
                 call Y(j)%axpby(B(i, j), X(i), one_cdp) ! y(j) = B(i,j)*X(i) + y(j)
             enddo
@@ -2441,18 +3189,32 @@ contains
     impure elemental subroutine copy_vector_cdp(out, from)
         implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: from
-        class(abstract_vector_cdp), intent(out) :: out
+        class(abstract_vector_cdp), intent(inout) :: out
+        ! Reset output based on input.
+        call out%init_like(from)
         ! Copy array.
         call out%axpby(one_cdp, from, zero_cdp)
     end subroutine copy_vector_cdp
 
+    impure elemental subroutine init_like_basis_cdp(X, mold)
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(inout) :: X
+        class(abstract_vector_cdp), intent(in)    :: mold
+        call X%init_like(mold)
+    end subroutine init_like_basis_cdp
+
+    impure elemental subroutine free_basis_cdp(X)
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(inout) :: X
+        call X%free()
+    end subroutine free_basis_cdp
+    
     impure elemental subroutine rand_basis_cdp(X, ifnorm)
         implicit none(type, external)
         class(abstract_vector_cdp), intent(inout) :: X
         logical, optional, intent(in) :: ifnorm
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
-
 
     logical function verify_vector_axioms_cdp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
@@ -2464,6 +3226,8 @@ contains
 
         integer :: ntrials_, i
         real(dp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -2482,14 +3246,14 @@ contains
                 class(abstract_vector_cdp), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call w%init_like(x) ; call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -2497,51 +3261,93 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call wrk1%free() ; call wrk2%free()
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
                 call u%add(w)
 
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_cdp), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                allocate(u, v, z, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                call z%init_like(x) ; call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call z%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_cdp), allocatable :: u, v
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -2552,14 +3358,24 @@ contains
                 complex(dp), parameter :: one = 1.0_dp
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
+                
                 call v%scal(one)
                 call u%sub(v)
+
+                !> Check correctness
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -2572,17 +3388,27 @@ contains
                 b = cmplx(c(1), c(2), kind=dp)
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand(ifnorm=.true.)
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
+
+                !> Check correctness.
                 success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+                
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -2593,10 +3419,10 @@ contains
                 a = cmplx(b(1), b(2), kind=dp)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                allocate(u, v, w, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -2607,8 +3433,18 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call w%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -2621,19 +3457,62 @@ contains
                 b = cmplx(c(1), c(2), kind=dp)
 
                 !> Generate random vector.
-                allocate(u, source=x)
-                call u%rand()
-                v = u
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
                 call u%scal(a+b)
 
                 call v%sub(u)
+
+                !> Check correctness.
                 success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !>  Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
+
+            mold_independence: block
+                !! guard for resource-sharing overrides (GPU), void for CPU applications.
+                class(abstract_vector_cdp), allocatable :: u
+                real(dp) :: xnorm
+
+                !> Generate random vector.
+                xnorm = x%norm()
+                allocate(u, mold=x)
+                call u%init_like(x) ; call u%rand()
+
+                ! x must be unaffected by operations on u (checking init_like compliance).
+                call u%scal(2*one_cdp)
+
+                !> Check correctness.
+                success = merge(.true., .false., abs(x%norm() - xnorm) <= tol)
+
+                ! Cleanup.
+                call u%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'mold_independence'
+                    exit verification
+                end if
+            end block mold_independence
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, 'verify_vector_axioms_cdp')
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, 'verify_vector_axioms_cdp')
+        end if
     end function verify_vector_axioms_cdp
 
 end module LightKrylov_AbstractVectors

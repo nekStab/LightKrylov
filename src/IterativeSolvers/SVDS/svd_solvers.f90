@@ -78,6 +78,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -87,6 +88,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -142,6 +144,11 @@ contains
                 call V(i)%axpby(vmat(j, i), Vwrk(j), one_rsp)
             enddo
         enddo
+
+        ! Cleanup
+        call free_basis(Uwrk)
+        call free_basis(Vwrk)
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_rsp
 
@@ -174,6 +181,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -183,6 +191,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -238,6 +247,11 @@ contains
                 call V(i)%axpby(vmat(j, i), Vwrk(j), one_rdp)
             enddo
         enddo
+
+        ! Cleanup
+        call free_basis(Uwrk)
+        call free_basis(Vwrk)
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_rdp
 
@@ -270,6 +284,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -279,6 +294,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -334,6 +350,11 @@ contains
                 call V(i)%axpby(vmat(j, i), Vwrk(j), one_csp)
             enddo
         enddo
+
+        ! Cleanup
+        call free_basis(Uwrk)
+        call free_basis(Vwrk)
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_csp
 
@@ -366,6 +387,7 @@ contains
         ! Allocate working variables.
         allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Uwrk, U(1))
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -375,6 +397,7 @@ contains
         endif
         allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(Vwrk, V(1))
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -430,6 +453,11 @@ contains
                 call V(i)%axpby(vmat(j, i), Vwrk(j), one_cdp)
             enddo
         enddo
+
+        ! Cleanup
+        call free_basis(Uwrk)
+        call free_basis(Vwrk)
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_cdp
 

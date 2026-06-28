@@ -190,7 +190,7 @@ contains
     subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
-        class(abstract_vector_rsp), intent(out) :: c
+        class(abstract_vector_rsp), intent(inout) :: c
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: b
@@ -215,7 +215,6 @@ contains
         real(sp), allocatable :: H(:, :)
         ! Normaliztion & temporary arrays.
         real(sp), allocatable :: E(:, :)
-        class(abstract_vector_rsp), allocatable :: Xwrk
         real(sp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
@@ -229,13 +228,14 @@ contains
 
         info = 0
 
-        ! Allocate arrays.
-        allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+        ! Allocate & initialise arrays.
+        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
-                 source=zero_rsp, stat=iostat, errmsg=msg)
+        call init_like_basis(X, b)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        ! inout arguments
+        call c%init_like(b)
 
         ! Normalize input vector and initialize Krylov subspace.
         beta = b%norm()
@@ -268,10 +268,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
-                ! Project back into original space.
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_rsp, Xwrk, zero_rsp)
-
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
                 err_est = merge(0.0_sp, abs(E(kp, 1)*beta), info==k)
@@ -280,6 +276,14 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back into original space.
+            block
+                class(abstract_vector_rsp), allocatable :: Xwrk
+                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
+                call c%axpby(beta*one_rsp, Xwrk, zero_rsp)
+                call Xwrk%free()
+            end block
         endif
 
         if (err_est <= tol) then
@@ -291,12 +295,15 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        !> Cleanup.
+        call free_basis(X)
     end subroutine kexpm_vec_rsp
 
     subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
-        class(abstract_vector_rsp), intent(out) :: C(:)
+        class(abstract_vector_rsp), intent(inout) :: C(:)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rsp), intent(in) :: B(:)
@@ -322,7 +329,6 @@ contains
         ! Normalization & temporary arrays.
         real(sp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
-        class(abstract_vector_rsp), allocatable :: Xwrk(:), Cwrk(:)
         real(sp) :: err_est
         ! Optional arguments.
         logical :: transpose
@@ -344,33 +350,32 @@ contains
                  source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(perm(p), ptrans(p), &
-                 source=0, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(X, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        ! Initialize Krylov subspace.
+        call copy(X(:p), B)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
+        call qr(X(:p), R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
-            ! Input matrix is zero.
             call zero_basis(C)
+            ! Input matrix is zero.
             err_est = 0.0_sp ; k = 0 ; kpp = p
         else
-            call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_sp
+            H = 0.0_sp
 
             expm_arnoldi: do k = 1, nk
                 ! Set counters.
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_sp ; call zero_basis(Xwrk)
+                E = 0.0_sp
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -385,21 +390,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
-                ! Project back to original space.
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                    do j = 1, kpp
-                        call Xwrk(i)%axpby(E(j, i), X(j), one_rsp)
-                    enddo
-                enddo
-
-                do i = 1, p
-                    call C(i)%zero()
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_rsp)
-                    enddo
-                enddo
-
                 ! Cheap error estimate.
                 if (info == kp) then
                     ! Approximation is exact.
@@ -411,6 +401,19 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back to original space.
+            block
+                class(abstract_vector_rsp), allocatable :: Xwrk(:)
+                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
+                call zero_basis(C)
+                do i = 1, p
+                    do j = 1, p
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_rsp)
+                    enddo
+                enddo
+                call free_basis(Xwrk)
+            end block
         endif
 
         if (err_est <= tol) then
@@ -422,13 +425,16 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        ! Cleanup.
+        call free_basis(X)
     end subroutine kexpm_mat_rsp
 
     subroutine krylov_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
         !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_rsp` interface.
         implicit none(type, external)
-        class(abstract_vector_rsp), intent(out) :: vec_out
+        class(abstract_vector_rsp), intent(inout) :: vec_out
         !! Solution vector.
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator to be exponentiated.
@@ -456,7 +462,7 @@ contains
     subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
-        class(abstract_vector_rdp), intent(out) :: c
+        class(abstract_vector_rdp), intent(inout) :: c
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: b
@@ -481,7 +487,6 @@ contains
         real(dp), allocatable :: H(:, :)
         ! Normaliztion & temporary arrays.
         real(dp), allocatable :: E(:, :)
-        class(abstract_vector_rdp), allocatable :: Xwrk
         real(dp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
@@ -495,13 +500,14 @@ contains
 
         info = 0
 
-        ! Allocate arrays.
-        allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+        ! Allocate & initialise arrays.
+        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
-                 source=zero_rdp, stat=iostat, errmsg=msg)
+        call init_like_basis(X, b)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        ! inout arguments
+        call c%init_like(b)
 
         ! Normalize input vector and initialize Krylov subspace.
         beta = b%norm()
@@ -534,10 +540,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
-                ! Project back into original space.
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_rdp, Xwrk, zero_rdp)
-
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
                 err_est = merge(0.0_dp, abs(E(kp, 1)*beta), info==k)
@@ -546,6 +548,14 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back into original space.
+            block
+                class(abstract_vector_rdp), allocatable :: Xwrk
+                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
+                call c%axpby(beta*one_rdp, Xwrk, zero_rdp)
+                call Xwrk%free()
+            end block
         endif
 
         if (err_est <= tol) then
@@ -557,12 +567,15 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        !> Cleanup.
+        call free_basis(X)
     end subroutine kexpm_vec_rdp
 
     subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
-        class(abstract_vector_rdp), intent(out) :: C(:)
+        class(abstract_vector_rdp), intent(inout) :: C(:)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_rdp), intent(in) :: B(:)
@@ -588,7 +601,6 @@ contains
         ! Normalization & temporary arrays.
         real(dp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
-        class(abstract_vector_rdp), allocatable :: Xwrk(:), Cwrk(:)
         real(dp) :: err_est
         ! Optional arguments.
         logical :: transpose
@@ -610,33 +622,32 @@ contains
                  source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(perm(p), ptrans(p), &
-                 source=0, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(X, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        ! Initialize Krylov subspace.
+        call copy(X(:p), B)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
+        call qr(X(:p), R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
-            ! Input matrix is zero.
             call zero_basis(C)
+            ! Input matrix is zero.
             err_est = 0.0_dp ; k = 0 ; kpp = p
         else
-            call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_dp
+            H = 0.0_dp
 
             expm_arnoldi: do k = 1, nk
                 ! Set counters.
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_dp ; call zero_basis(Xwrk)
+                E = 0.0_dp
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -651,21 +662,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
-                ! Project back to original space.
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                    do j = 1, kpp
-                        call Xwrk(i)%axpby(E(j, i), X(j), one_rdp)
-                    enddo
-                enddo
-
-                do i = 1, p
-                    call C(i)%zero()
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_rdp)
-                    enddo
-                enddo
-
                 ! Cheap error estimate.
                 if (info == kp) then
                     ! Approximation is exact.
@@ -677,6 +673,19 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back to original space.
+            block
+                class(abstract_vector_rdp), allocatable :: Xwrk(:)
+                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
+                call zero_basis(C)
+                do i = 1, p
+                    do j = 1, p
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_rdp)
+                    enddo
+                enddo
+                call free_basis(Xwrk)
+            end block
         endif
 
         if (err_est <= tol) then
@@ -688,13 +697,16 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        ! Cleanup.
+        call free_basis(X)
     end subroutine kexpm_mat_rdp
 
     subroutine krylov_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
         !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_rdp` interface.
         implicit none(type, external)
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         !! Solution vector.
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
@@ -722,7 +734,7 @@ contains
     subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
-        class(abstract_vector_csp), intent(out) :: c
+        class(abstract_vector_csp), intent(inout) :: c
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: b
@@ -747,7 +759,6 @@ contains
         complex(sp), allocatable :: H(:, :)
         ! Normaliztion & temporary arrays.
         complex(sp), allocatable :: E(:, :)
-        class(abstract_vector_csp), allocatable :: Xwrk
         real(sp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
@@ -761,13 +772,14 @@ contains
 
         info = 0
 
-        ! Allocate arrays.
-        allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+        ! Allocate & initialise arrays.
+        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
-                 source=zero_csp, stat=iostat, errmsg=msg)
+        call init_like_basis(X, b)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        ! inout arguments
+        call c%init_like(b)
 
         ! Normalize input vector and initialize Krylov subspace.
         beta = b%norm()
@@ -800,10 +812,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
-                ! Project back into original space.
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_csp, Xwrk, zero_csp)
-
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
                 err_est = merge(0.0_sp, abs(E(kp, 1)*beta), info==k)
@@ -812,6 +820,14 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back into original space.
+            block
+                class(abstract_vector_csp), allocatable :: Xwrk
+                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
+                call c%axpby(beta*one_csp, Xwrk, zero_csp)
+                call Xwrk%free()
+            end block
         endif
 
         if (err_est <= tol) then
@@ -823,12 +839,15 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        !> Cleanup.
+        call free_basis(X)
     end subroutine kexpm_vec_csp
 
     subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
-        class(abstract_vector_csp), intent(out) :: C(:)
+        class(abstract_vector_csp), intent(inout) :: C(:)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_csp), intent(in) :: B(:)
@@ -854,7 +873,6 @@ contains
         ! Normalization & temporary arrays.
         complex(sp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
-        class(abstract_vector_csp), allocatable :: Xwrk(:), Cwrk(:)
         real(sp) :: err_est
         ! Optional arguments.
         logical :: transpose
@@ -876,33 +894,32 @@ contains
                  source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(perm(p), ptrans(p), &
-                 source=0, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(X, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        ! Initialize Krylov subspace.
+        call copy(X(:p), B)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
+        call qr(X(:p), R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
-            ! Input matrix is zero.
             call zero_basis(C)
+            ! Input matrix is zero.
             err_est = 0.0_sp ; k = 0 ; kpp = p
         else
-            call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_sp
+            H = 0.0_sp
 
             expm_arnoldi: do k = 1, nk
                 ! Set counters.
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_sp ; call zero_basis(Xwrk)
+                E = 0.0_sp
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -917,21 +934,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
-                ! Project back to original space.
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                    do j = 1, kpp
-                        call Xwrk(i)%axpby(E(j, i), X(j), one_csp)
-                    enddo
-                enddo
-
-                do i = 1, p
-                    call C(i)%zero()
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_csp)
-                    enddo
-                enddo
-
                 ! Cheap error estimate.
                 if (info == kp) then
                     ! Approximation is exact.
@@ -943,6 +945,19 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back to original space.
+            block
+                class(abstract_vector_csp), allocatable :: Xwrk(:)
+                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
+                call zero_basis(C)
+                do i = 1, p
+                    do j = 1, p
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_csp)
+                    enddo
+                enddo
+                call free_basis(Xwrk)
+            end block
         endif
 
         if (err_est <= tol) then
@@ -954,13 +969,16 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        ! Cleanup.
+        call free_basis(X)
     end subroutine kexpm_mat_csp
 
     subroutine krylov_exptA_csp(vec_out, A, vec_in, tau, info, trans)
         !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_csp` interface.
         implicit none(type, external)
-        class(abstract_vector_csp), intent(out) :: vec_out
+        class(abstract_vector_csp), intent(inout) :: vec_out
         !! Solution vector.
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator to be exponentiated.
@@ -988,7 +1006,7 @@ contains
     subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
-        class(abstract_vector_cdp), intent(out) :: c
+        class(abstract_vector_cdp), intent(inout) :: c
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: b
@@ -1013,7 +1031,6 @@ contains
         complex(dp), allocatable :: H(:, :)
         ! Normaliztion & temporary arrays.
         complex(dp), allocatable :: E(:, :)
-        class(abstract_vector_cdp), allocatable :: Xwrk
         real(dp) :: err_est, beta
         ! Optional arguments.
         logical :: transpose
@@ -1027,13 +1044,14 @@ contains
 
         info = 0
 
-        ! Allocate arrays.
-        allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+        ! Allocate & initialise arrays.
+        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
-                 source=zero_cdp, stat=iostat, errmsg=msg)
+        call init_like_basis(X, b)
+        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        ! inout arguments
+        call c%init_like(b)
 
         ! Normalize input vector and initialize Krylov subspace.
         beta = b%norm()
@@ -1066,10 +1084,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
-                ! Project back into original space.
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_cdp, Xwrk, zero_cdp)
-
                 ! Cheap error esimate (this actually is the magnitude of the included correction
                 ! and thus is very conservative).
                 err_est = merge(0.0_dp, abs(E(kp, 1)*beta), info==k)
@@ -1078,6 +1092,14 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back into original space.
+            block
+                class(abstract_vector_cdp), allocatable :: Xwrk
+                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
+                call c%axpby(beta*one_cdp, Xwrk, zero_cdp)
+                call Xwrk%free()
+            end block
         endif
 
         if (err_est <= tol) then
@@ -1089,12 +1111,15 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        !> Cleanup.
+        call free_basis(X)
     end subroutine kexpm_vec_cdp
 
     subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
-        class(abstract_vector_cdp), intent(out) :: C(:)
+        class(abstract_vector_cdp), intent(inout) :: C(:)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.
         class(abstract_vector_cdp), intent(in) :: B(:)
@@ -1120,7 +1145,6 @@ contains
         ! Normalization & temporary arrays.
         complex(dp), allocatable :: R(:, :), E(:, :)
         integer, allocatable :: perm(:), ptrans(:)
-        class(abstract_vector_cdp), allocatable :: Xwrk(:), Cwrk(:)
         real(dp) :: err_est
         ! Optional arguments.
         logical :: transpose
@@ -1142,33 +1166,32 @@ contains
                  source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(perm(p), ptrans(p), &
-                 source=0, stat=iostat, errmsg=msg)
+        allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like_basis(X, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        ! Initialize Krylov subspace.
+        call copy(X(:p), B)
 
         ! Normalize input matrix and initialize Krylov subspace.
-        call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
+        call qr(X(:p), R, perm, info) ; call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
-            ! Input matrix is zero.
             call zero_basis(C)
+            ! Input matrix is zero.
             err_est = 0.0_dp ; k = 0 ; kpp = p
         else
-            call initialize_krylov_subspace(X, Xwrk) ; H = 0.0_dp
+            H = 0.0_dp
 
             expm_arnoldi: do k = 1, nk
                 ! Set counters.
                 kpm = (k-1)*p ; kp = kpm + p ; kpp = kp + p
 
                 ! Reset working arrays.
-                E = 0.0_dp ; call zero_basis(Xwrk)
+                E = 0.0_dp
 
                 ! Compute the k-th step of the Arnoldi factorization.
                 call arnoldi(A, X, H, info, kstart=k, kend=k, transpose=transpose, blksize=p)
@@ -1183,21 +1206,6 @@ contains
                 ! Compute the (dense) matrix exponential of the extended Hessenberg matrix.
                 E(:kpp, :kpp) = expm(tau*H(:kpp, :kpp))
 
-                ! Project back to original space.
-                do i = 1, size(Xwrk)
-                    call Xwrk(i)%zero()
-                    do j = 1, kpp
-                        call Xwrk(i)%axpby(E(j, i), X(j), one_cdp)
-                    enddo
-                enddo
-
-                do i = 1, p
-                    call C(i)%zero()
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_cdp)
-                    enddo
-                enddo
-
                 ! Cheap error estimate.
                 if (info == kp) then
                     ! Approximation is exact.
@@ -1209,6 +1217,19 @@ contains
                 if (err_est <= tol) exit expm_arnoldi
 
             enddo expm_arnoldi
+
+            ! Project back to original space.
+            block
+                class(abstract_vector_cdp), allocatable :: Xwrk(:)
+                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
+                call zero_basis(C)
+                do i = 1, p
+                    do j = 1, p
+                        call C(i)%axpby(R(j, i), Xwrk(j), one_cdp)
+                    enddo
+                enddo
+                call free_basis(Xwrk)
+            end block
         endif
 
         if (err_est <= tol) then
@@ -1220,13 +1241,16 @@ contains
             call log_information(msg, this_module, this_procedure)
             info = -1
         endif
+
+        ! Cleanup.
+        call free_basis(X)
     end subroutine kexpm_mat_cdp
 
     subroutine krylov_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
         !! Wrapper for the Krylov-based evaluation of the action of the matrix exponential operator
         !! on a vector that conforms to the `abstract_exptA_cdp` interface.
         implicit none(type, external)
-        class(abstract_vector_cdp), intent(out) :: vec_out
+        class(abstract_vector_cdp), intent(inout) :: vec_out
         !! Solution vector.
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator to be exponentiated.

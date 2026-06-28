@@ -41,6 +41,7 @@ module Roessler
       procedure, pass(self), public :: axpby
       procedure, pass(self), public :: rand
       procedure, pass(self), public :: get_size
+      procedure, pass(self), public :: init_like
    end type state_vector
 
    !-------------------------------------------
@@ -152,6 +153,19 @@ contains
       end if
    end subroutine rand
 
+   subroutine init_like(self, mold)
+      class(state_vector), intent(inout) :: self
+      class(abstract_vector_rdp), intent(in) :: mold
+      ! state_vector has no allocatable storage.
+      select type (mold)
+      type is (state_vector)
+         ! Fixed-size type: nothing to allocate.
+         self%is_initialized = .true.
+      class default
+         call type_error('mold','state_vector','IN',this_module,'init_like')
+      end select
+ end subroutine init_like
+
    !===================================
    !===================================
    !=====                         =====
@@ -243,7 +257,7 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       ! Solver tolerances if needed
       real(dp), intent(in)  :: atol
 
@@ -285,7 +299,7 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
 
       ! Time-integrator.
       type(rks54_class)           :: combined_roessler
@@ -335,7 +349,7 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
 
       ! Time-integrator.
       type(rks54_class)           :: combined_roessler

@@ -962,20 +962,23 @@ contains
 
         ! Update the Hessenberg matrix and Krylov basis.
         block
-        ${type}$ :: b(size(H, 2))
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
+            ${type}$ :: b(size(H, 2))
+            class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
 
-        ! Update the Krylov basis.
-        call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-        call copy(X(:n), Xwrk(:n))
-        call copy(X(n+1), X(kdim+1))
-        call zero_basis(X(n+2:))
+            ! Update the Krylov basis.
+            call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
+            call copy(X(:n), Xwrk(:n))
+            call copy(X(n+1), X(kdim+1))
+            call zero_basis(X(n+2:))
 
-        ! Update the Hessenberg matrix.
-        b = matmul(H(kdim+1, :), Z)
-        H(n+1, :) = b
-        H(n+2:, :) = zero_${type[0]}$${kind}$
-        H(:, n+1:) = zero_${type[0]}$${kind}$
+            ! Update the Hessenberg matrix.
+            b = matmul(H(kdim+1, :), Z)
+            H(n+1, :) = b
+            H(n+2:, :) = zero_${type[0]}$${kind}$
+            H(:, n+1:) = zero_${type[0]}$${kind}$
+            
+            ! Cleanup.
+            call free_basis(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
