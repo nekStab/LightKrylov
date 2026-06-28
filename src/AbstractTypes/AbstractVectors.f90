@@ -17,7 +17,7 @@ module LightKrylov_AbstractVectors
     !! - `axpby(alpha, vec, beta, self) :   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
     !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
     !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
-    !! - `init_like(mold)`              :   A subroutine to initialise the vector after allocation to match the size and structure of the mold.
+    !! - `init_like(self, mold)`        :   A subroutine to initialize the vector after allocation to match the size and structure of the mold.
     !!
     !! Once these type-bound procedures have been implemented by the user, they will automatically
     !! be used to define:
