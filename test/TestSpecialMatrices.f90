@@ -50,7 +50,7 @@ contains
    subroutine matvec_rdp(self, vec_in, vec_out)
       class(AbstractPoisson2D), intent(inout) :: self
       class(abstract_vector_rdp), intent(in) :: vec_in
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
 
       select type (vec_in)
       type is (vector_rdp)
@@ -68,7 +68,7 @@ contains
    subroutine rmatvec_rdp(self, vec_in, vec_out)
       class(AbstractPoisson2D), intent(inout) :: self
       class(abstract_vector_rdp), intent(in) :: vec_in
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       call matvec_rdp(self, vec_in, vec_out)
    end subroutine rmatvec_rdp
 
