@@ -354,7 +354,11 @@ module LightKrylov_AbstractVectors
         !!  Users should not extend this abstract class to define their own types.
         !!  @endwarning
         logical :: is_initialized = .false.
+        !! Set by `init_like`, cleared by `free`. Bookkeeping only for the managed CPU types
+        !! here; used by unmanaged-resource (e.g. GPU) extensions to make `free` idempotent.
         logical :: owns_data      = .true.
+        !! `.false.` marks an alias/view so `free` won't release shared storage. For GPU/
+        !! resource-managing extensions; inert and untested for the CPU types shipped here.
     end type abstract_vector
 
     !----------------------------------------------------------------------------
