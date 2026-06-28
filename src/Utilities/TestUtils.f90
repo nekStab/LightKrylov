@@ -479,12 +479,12 @@ contains
         implicit none(type, external)
         class(vector_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: mold
-        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        !! Nothing to allocate; just mark initialized.
         select type (mold)
         type is (vector_rsp)
             self%is_initialized = .true.
         class default
-            call type_error('mold','vector_rsp','IN',this_module,'init_like_state_csp')
+            call type_error('mold','vector_rsp','IN',this_module,'init_like_rsp')
         end select
     end subroutine init_like_rsp
 
@@ -550,12 +550,12 @@ contains
         implicit none(type, external)
         class(vector_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: mold
-        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        !! Nothing to allocate; just mark initialized.
         select type (mold)
         type is (vector_rdp)
             self%is_initialized = .true.
         class default
-            call type_error('mold','vector_rdp','IN',this_module,'init_like_state_cdp')
+            call type_error('mold','vector_rdp','IN',this_module,'init_like_rdp')
         end select
     end subroutine init_like_rdp
 
@@ -621,12 +621,12 @@ contains
         implicit none(type, external)
         class(vector_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: mold
-        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        !! Nothing to allocate; just mark initialized.
         select type (mold)
         type is (vector_csp)
             self%is_initialized = .true.
         class default
-            call type_error('mold','vector_csp','IN',this_module,'init_like_state_csp')
+            call type_error('mold','vector_csp','IN',this_module,'init_like_csp')
         end select
     end subroutine init_like_csp
 
@@ -692,12 +692,12 @@ contains
         implicit none(type, external)
         class(vector_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: mold
-        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        !! Nothing to allocate; just mark initialized.
         select type (mold)
         type is (vector_cdp)
             self%is_initialized = .true.
         class default
-            call type_error('mold','vector_cdp','IN',this_module,'init_like_state_cdp')
+            call type_error('mold','vector_cdp','IN',this_module,'init_like_cdp')
         end select
     end subroutine init_like_cdp
 

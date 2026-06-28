@@ -306,12 +306,12 @@ contains
         implicit none(type, external)
         class(vector_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: mold
-        !! Fixed-size type (x, y, z) — nothing to allocate; just mark initialized.
+        !! Nothing to allocate; just mark initialized.
         select type (mold)
         type is (vector_${type[0]}$${kind}$)
             self%is_initialized = .true.
         class default
-            call type_error('mold','vector_${type[0]}$${kind}$','IN',this_module,'init_like_state_c${kind}$')
+            call type_error('mold','vector_${type[0]}$${kind}$','IN',this_module,'init_like_${type[0]}$${kind}$')
         end select
     end subroutine init_like_${type[0]}$${kind}$
 
@@ -547,7 +547,7 @@ contains
         type is(state_vector_r${kind}$)
             alpha = self%x*vec%x + self%y*vec%y + self%z*vec%z
         class default
-            call type_error('vec','state_vector_${type[0]}$${kind}$','IN',this_module,'dot_state_r${kind}$')
+            call type_error('vec','state_vector_r${kind}$','IN',this_module,'dot_state_r${kind}$')
         end select
     end function dot_state_r${kind}$
 
@@ -569,7 +569,7 @@ contains
             self%y = beta*self%y + alpha*vec%y
             self%z = beta*self%z + alpha*vec%z
         class default
-            call type_error('vec','state_vector_${type[0]}$${kind}$','IN',this_module,'axpby_state_r${kind}$')
+            call type_error('vec','state_vector_r${kind}$','IN',this_module,'axpby_state_r${kind}$')
         end select
     end subroutine axpby_state_r${kind}$
 
