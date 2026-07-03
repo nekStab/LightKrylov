@@ -54,4 +54,4 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: |
-          fpm test --compiler ${{ matrix.compiler }} --profile debug --verbose
+          fpm test --compiler ${{ matrix.toolchain.compiler }} --profile debug --verbose
