@@ -41,9 +41,6 @@ jobs:
           fpm run --profile debug --flag "${{ join(matrix.toolchain.flags, ' ') }}" --example Roessler
           fpm run --profile debug --flag "${{ join(matrix.toolchain.flags, ' ') }}" --example Ginzburg-Landau
 
-      - name: Debug build layout
-        run: find build -maxdepth 4 -type d
-
       - name: Create coverage report
         env:
             COV_DIR: build/coverage
