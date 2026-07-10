@@ -87,6 +87,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -143,12 +144,14 @@ contains
 
         ! Construct eigenvectors.
         k = min(k, kdim_)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rsp)
             enddo
         enddo
+        call free_basis(Xwrk)
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_rsp
@@ -186,6 +189,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -242,12 +246,14 @@ contains
 
         ! Construct eigenvectors.
         k = min(k, kdim_)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_rdp)
             enddo
         enddo
+        call free_basis(Xwrk)
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_rdp
@@ -285,6 +291,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -341,12 +348,14 @@ contains
 
         ! Construct eigenvectors.
         k = min(k, kdim_)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_csp)
             enddo
         enddo
+        call free_basis(Xwrk)
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_csp
@@ -384,6 +393,7 @@ contains
         ! Allocate working variables.
         allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, X(1))
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -440,12 +450,14 @@ contains
 
         ! Construct eigenvectors.
         k = min(k, kdim_)
+        call init_like(X, Xwrk(1))
         do i = 1, nev
             call X(i)%zero()
             do j = 1, k
                 call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_cdp)
             enddo
         enddo
+        call free_basis(Xwrk)
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_cdp

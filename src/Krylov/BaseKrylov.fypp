@@ -976,6 +976,7 @@ contains
         H(n+1, :) = b
         H(n+2:, :) = zero_${type[0]}$${kind}$
         H(:, n+1:) = zero_${type[0]}$${kind}$
+        call free_basis(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)

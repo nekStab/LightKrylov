@@ -705,7 +705,7 @@ contains
     subroutine matvec_rdp(self, vec_in, vec_out)
         class(linop_rdp), intent(inout)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
-        class(abstract_vector_rdp)       , intent(out) :: vec_out
+        class(abstract_vector_rdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -724,7 +724,7 @@ contains
     subroutine rmatvec_rdp(self, vec_in, vec_out)
         class(linop_rdp), intent(inout)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
-        class(abstract_vector_rdp)       , intent(out) :: vec_out
+        class(abstract_vector_rdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -743,7 +743,7 @@ contains
     subroutine sdp_matvec_rdp(self, vec_in, vec_out)
         class(spd_linop_rdp), intent(inout)  :: self
         class(abstract_vector_rdp)       , intent(in)  :: vec_in
-        class(abstract_vector_rdp)       , intent(out) :: vec_out
+        class(abstract_vector_rdp)       , intent(inout) :: vec_out
         select type(vec_in)
         type is(vector_rdp)
             select type(vec_out)
@@ -1462,7 +1462,7 @@ contains
     subroutine eval_roessler_rdp(self, vec_in, vec_out, atol)
         class(roessler_rdp),            intent(inout)  :: self
         class(abstract_vector_rdp), intent(in)  :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         real(dp),                    intent(in)  :: atol
 
         select type(vec_in)
@@ -1498,7 +1498,7 @@ contains
     subroutine lin_roessler_rdp(self, vec_in, vec_out)
         class(jacobian_rdp),            intent(inout)  :: self
         class(abstract_vector_rdp), intent(in)  :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         real(dp) :: X, Y, Z
 
@@ -1523,7 +1523,7 @@ contains
     subroutine adj_lin_roessler_rdp(self, vec_in, vec_out)
         class(jacobian_rdp),            intent(inout)  :: self
         class(abstract_vector_rdp), intent(in)  :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         real(dp) :: X, Y, Z
 

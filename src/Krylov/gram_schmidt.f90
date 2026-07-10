@@ -403,6 +403,12 @@ contains
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
+        if (size(X) == 0) then
+            if (present(beta)) beta = zero_rsp
+            if (time_lightkrylov()) call timer%stop(this_procedure)
+            return
+        end if
+
         ! check for zero vector
         if (y%norm() < atol_sp) info = 1
 
@@ -423,6 +429,7 @@ contains
             class(abstract_vector_rsp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -469,6 +476,7 @@ contains
             class(abstract_vector_rsp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_rsp, proj, one_rsp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then
@@ -492,6 +500,12 @@ contains
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
+        if (size(X) == 0) then
+            if (present(beta)) beta = zero_rdp
+            if (time_lightkrylov()) call timer%stop(this_procedure)
+            return
+        end if
+
         ! check for zero vector
         if (y%norm() < atol_dp) info = 1
 
@@ -512,6 +526,7 @@ contains
             class(abstract_vector_rdp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -558,6 +573,7 @@ contains
             class(abstract_vector_rdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_rdp, proj, one_rdp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then
@@ -581,6 +597,12 @@ contains
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
+        if (size(X) == 0) then
+            if (present(beta)) beta = zero_csp
+            if (time_lightkrylov()) call timer%stop(this_procedure)
+            return
+        end if
+
         ! check for zero vector
         if (y%norm() < atol_sp) info = 1
 
@@ -601,6 +623,7 @@ contains
             class(abstract_vector_csp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -647,6 +670,7 @@ contains
             class(abstract_vector_csp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_csp, proj, one_csp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then
@@ -670,6 +694,12 @@ contains
         ! optional input argument
         chk_X_orthonormality = optval(if_chk_orthonormal, .true.) ! default to true!
 
+        if (size(X) == 0) then
+            if (present(beta)) beta = zero_cdp
+            if (time_lightkrylov()) call timer%stop(this_procedure)
+            return
+        end if
+
         ! check for zero vector
         if (y%norm() < atol_dp) info = 1
 
@@ -690,6 +720,7 @@ contains
             class(abstract_vector_cdp), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -736,6 +767,7 @@ contains
             class(abstract_vector_cdp), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_cdp, proj, one_cdp, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then

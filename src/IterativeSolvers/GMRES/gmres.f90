@@ -147,11 +147,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -192,7 +194,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -238,6 +240,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
@@ -290,6 +293,9 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_rsp
@@ -339,11 +345,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -384,7 +392,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -430,6 +438,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
@@ -482,6 +491,9 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_rdp
@@ -531,11 +543,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -576,7 +590,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -622,6 +636,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
@@ -674,6 +689,9 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_csp
@@ -723,11 +741,13 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -768,7 +788,7 @@ contains
 
             gmres_iter: do k = 1, kdim
                 !> Preconditioner.
-                wrk = V(k) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
+                call copy(wrk, V(k)) ; if (ifprecond) call preconditioner%apply(wrk, k, beta, tol)
 
                 !-----------------------------------------
                 !-----     Arnoldi factorization     -----
@@ -814,6 +834,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, V(:k), e(:k))
             if (ifprecond) call preconditioner%apply(dx) ; call x%add(dx)
 
@@ -866,6 +887,9 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure gmres_cdp

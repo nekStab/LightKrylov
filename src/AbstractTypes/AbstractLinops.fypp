@@ -398,6 +398,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -416,6 +417,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -434,6 +436,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -452,6 +455,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -510,6 +514,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_matvec_${type[0]}$${kind}$")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -528,6 +533,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_matvec_${type[0]}$${kind}$
 
     subroutine axpby_rmatvec_${type[0]}$${kind}$(self, vec_in, vec_out)
@@ -544,6 +550,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_${type[0]}$${kind}$")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -562,6 +569,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_rmatvec_${type[0]}$${kind}$
 
     #:endfor
@@ -619,7 +627,7 @@ contains
                 ${type}$ :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_${type[0]}$${kind}$ ; beta = zero_${type[0]}$${kind}$
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -644,7 +652,7 @@ contains
                 ${type}$ :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_${type[0]}$${kind}$ ; beta = zero_${type[0]}$${kind}$
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 #:if type[0] == "r"
                 call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 #:else

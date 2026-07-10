@@ -231,13 +231,16 @@ contains
 
         ! Allocate arrays.
         allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+                 mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_sp) then
             ! Input is zero => Output is zero.
@@ -269,6 +272,7 @@ contains
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
+                if (allocated(Xwrk)) call Xwrk%free()
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
                 call c%axpby(beta*one_rsp, Xwrk, zero_rsp)
 
@@ -282,6 +286,8 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(X)
+        if (allocated(Xwrk)) call Xwrk%free()
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
@@ -349,11 +355,16 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+                 mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, B(1))
+        call copy(Xwrk, B)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -413,6 +424,9 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(Xwrk)
+        call free_basis(Cwrk)
+        call free_basis(X)
         if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
@@ -497,13 +511,16 @@ contains
 
         ! Allocate arrays.
         allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+                 mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_dp) then
             ! Input is zero => Output is zero.
@@ -535,6 +552,7 @@ contains
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
+                if (allocated(Xwrk)) call Xwrk%free()
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
                 call c%axpby(beta*one_rdp, Xwrk, zero_rdp)
 
@@ -548,6 +566,8 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(X)
+        if (allocated(Xwrk)) call Xwrk%free()
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
@@ -615,11 +635,16 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+                 mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, B(1))
+        call copy(Xwrk, B)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -679,6 +704,9 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(Xwrk)
+        call free_basis(Cwrk)
+        call free_basis(X)
         if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
@@ -763,13 +791,16 @@ contains
 
         ! Allocate arrays.
         allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+                 mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_sp) then
             ! Input is zero => Output is zero.
@@ -801,6 +832,7 @@ contains
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
+                if (allocated(Xwrk)) call Xwrk%free()
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
                 call c%axpby(beta*one_csp, Xwrk, zero_csp)
 
@@ -814,6 +846,8 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(X)
+        if (allocated(Xwrk)) call Xwrk%free()
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
@@ -881,11 +915,16 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+                 mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, B(1))
+        call copy(Xwrk, B)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -945,6 +984,9 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(Xwrk)
+        call free_basis(Cwrk)
+        call free_basis(X)
         if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol
@@ -1029,13 +1071,16 @@ contains
 
         ! Allocate arrays.
         allocate(X(nk+1), Xwrk, &
-                 source=b, stat=iostat, errmsg=msg)
+                 mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, b)
+        call init_like(Xwrk, b)
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), &
                  source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         ! Normalize input vector and initialize Krylov subspace.
+        call init_like(c, b)
         beta = b%norm()
         if (beta == 0.0_dp) then
             ! Input is zero => Output is zero.
@@ -1067,6 +1112,7 @@ contains
                 E(:kp, :kp) = expm(tau*H(:kp, :kp))
 
                 ! Project back into original space.
+                if (allocated(Xwrk)) call Xwrk%free()
                 call linear_combination(Xwrk, X(:kp), E(:kp, 1))
                 call c%axpby(beta*one_cdp, Xwrk, zero_cdp)
 
@@ -1080,6 +1126,8 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(X)
+        if (allocated(Xwrk)) call Xwrk%free()
         if (err_est <= tol) then
             info = kp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kp, ', err_est= ', err_est, ', tol= ', tol
@@ -1147,11 +1195,16 @@ contains
         call check_allocation(iostat, msg, this_module, this_procedure)
 
         allocate(X(p*(nk+1)), Cwrk(p), &
-                 source=B(1), stat=iostat, errmsg=msg)
+                 mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(X, B(1))
+        call init_like(Cwrk, B(1))
 
-        allocate(Xwrk(p), source=B, stat=iostat, errmsg=msg)
+        allocate(Xwrk(p), mold=B(1), stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Xwrk, B(1))
+        call copy(Xwrk, B)
+        call init_like(C, B(1))
 
         ! Normalize input matrix and initialize Krylov subspace.
         call qr(Xwrk, R, perm, info) ; call permcols(R, invperm(perm))
@@ -1211,6 +1264,9 @@ contains
             enddo expm_arnoldi
         endif
 
+        call free_basis(Xwrk)
+        call free_basis(Cwrk)
+        call free_basis(X)
         if (err_est <= tol) then
             info = kpp
             write(msg,'(A,I0,2(A,E9.2))') 'Converged. kp= ', kpp, ', err_est= ', err_est, ', tol= ', tol

@@ -120,7 +120,7 @@ module LightKrylov_AbstractSystems
             !! System
             class(abstract_vector_rdp), intent(in)  :: vec_in
             !! State
-            class(abstract_vector_rdp), intent(out) :: vec_out
+            class(abstract_vector_rdp), intent(inout) :: vec_out
             !! Response
             real(dp),                   intent(in)  :: atol
             !! Solver tolerance
@@ -301,6 +301,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
@@ -312,13 +313,14 @@ contains
         implicit none(type, external)
         class(abstract_system_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in)    :: vec_in
-        class(abstract_vector_rdp), intent(out)   :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         real(dp),                             intent(in)    :: atol
         ! internal
         character(len=128) :: msg
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
@@ -337,6 +339,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()
@@ -355,6 +358,7 @@ contains
         self%eval_counter = self%eval_counter + 1
         write(msg,'(I0,1X,A)') self%eval_counter, 'start'
         call log_debug(msg, this_module, 'response')
+        call init_like(vec_out, vec_in)
         call self%eval_timer%start()
         call self%response(vec_in, vec_out, atol)
         call self%eval_timer%stop()

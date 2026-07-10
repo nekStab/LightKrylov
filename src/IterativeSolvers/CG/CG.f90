@@ -126,12 +126,15 @@ contains
         ! Initialize vectors.
         allocate(r, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(r, b)
         call r%zero()
         allocate(p, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(p, b)
         call p%zero()
         allocate(Ap, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Ap, b)
         call Ap%zero()
 
          ! Initialize meta & reset matvec counter
@@ -141,16 +144,22 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
+        if (ifprecond) then
+            allocate(z, mold=r, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like(z, r)
+        endif
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Deal with the preconditioner (if available).
         if (ifprecond) then
-            z = r ; call preconditioner%apply(z) ; p = z
+            call copy(z, r) ; call preconditioner%apply(z) ; call copy(p, z)
             r_dot_r_old = r%dot(z)
         else
-            p = r ; r_dot_r_old = r%dot(r)
+            call copy(p, r) ; r_dot_r_old = r%dot(r)
         endif
 
         allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
@@ -168,7 +177,7 @@ contains
             call r%axpby(-alpha, Ap, one_rsp)
 
             if(ifprecond) then
-                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+                call copy(z, r) ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
             else
                 ! Compute new dot product of residual r_dot_r_new = r' * r.
                 r_dot_r_new = r%dot(r)
@@ -224,6 +233,10 @@ contains
             end select
         end if
 
+        if (allocated(z)) call z%free()
+        call Ap%free()
+        call p%free()
+        call r%free()
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure cg_rsp
@@ -259,12 +272,15 @@ contains
         ! Initialize vectors.
         allocate(r, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(r, b)
         call r%zero()
         allocate(p, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(p, b)
         call p%zero()
         allocate(Ap, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Ap, b)
         call Ap%zero()
 
          ! Initialize meta & reset matvec counter
@@ -274,16 +290,22 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
+        if (ifprecond) then
+            allocate(z, mold=r, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like(z, r)
+        endif
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Deal with the preconditioner (if available).
         if (ifprecond) then
-            z = r ; call preconditioner%apply(z) ; p = z
+            call copy(z, r) ; call preconditioner%apply(z) ; call copy(p, z)
             r_dot_r_old = r%dot(z)
         else
-            p = r ; r_dot_r_old = r%dot(r)
+            call copy(p, r) ; r_dot_r_old = r%dot(r)
         endif
 
         allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
@@ -301,7 +323,7 @@ contains
             call r%axpby(-alpha, Ap, one_rdp)
 
             if(ifprecond) then
-                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+                call copy(z, r) ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
             else
                 ! Compute new dot product of residual r_dot_r_new = r' * r.
                 r_dot_r_new = r%dot(r)
@@ -357,6 +379,10 @@ contains
             end select
         end if
 
+        if (allocated(z)) call z%free()
+        call Ap%free()
+        call p%free()
+        call r%free()
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure cg_rdp
@@ -392,12 +418,15 @@ contains
         ! Initialize vectors.
         allocate(r, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(r, b)
         call r%zero()
         allocate(p, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(p, b)
         call p%zero()
         allocate(Ap, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Ap, b)
         call Ap%zero()
 
          ! Initialize meta & reset matvec counter
@@ -407,16 +436,22 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
+        if (ifprecond) then
+            allocate(z, mold=r, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like(z, r)
+        endif
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Deal with the preconditioner (if available).
         if (ifprecond) then
-            z = r ; call preconditioner%apply(z) ; p = z
+            call copy(z, r) ; call preconditioner%apply(z) ; call copy(p, z)
             r_dot_r_old = r%dot(z)
         else
-            p = r ; r_dot_r_old = r%dot(r)
+            call copy(p, r) ; r_dot_r_old = r%dot(r)
         endif
 
         allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
@@ -434,7 +469,7 @@ contains
             call r%axpby(-alpha, Ap, one_csp)
 
             if(ifprecond) then
-                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+                call copy(z, r) ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
             else
                 ! Compute new dot product of residual r_dot_r_new = r' * r.
                 r_dot_r_new = r%dot(r)
@@ -490,6 +525,10 @@ contains
             end select
         end if
 
+        if (allocated(z)) call z%free()
+        call Ap%free()
+        call p%free()
+        call r%free()
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure cg_csp
@@ -525,12 +564,15 @@ contains
         ! Initialize vectors.
         allocate(r, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(r, b)
         call r%zero()
         allocate(p, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(p, b)
         call p%zero()
         allocate(Ap, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Ap, b)
         call Ap%zero()
 
          ! Initialize meta & reset matvec counter
@@ -540,16 +582,22 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
+        if (ifprecond) then
+            allocate(z, mold=r, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like(z, r)
+        endif
+
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
 
         ! Deal with the preconditioner (if available).
         if (ifprecond) then
-            z = r ; call preconditioner%apply(z) ; p = z
+            call copy(z, r) ; call preconditioner%apply(z) ; call copy(p, z)
             r_dot_r_old = r%dot(z)
         else
-            p = r ; r_dot_r_old = r%dot(r)
+            call copy(p, r) ; r_dot_r_old = r%dot(r)
         endif
 
         allocate(cg_meta%res(1), source=sqrt(abs(r_dot_r_old)), stat=iostat, errmsg=msg)
@@ -567,7 +615,7 @@ contains
             call r%axpby(-alpha, Ap, one_cdp)
 
             if(ifprecond) then
-                z = r ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
+                call copy(z, r) ; call preconditioner%apply(z) ; r_dot_r_new = r%dot(z)
             else
                 ! Compute new dot product of residual r_dot_r_new = r' * r.
                 r_dot_r_new = r%dot(r)
@@ -623,6 +671,10 @@ contains
             end select
         end if
 
+        if (allocated(z)) call z%free()
+        call Ap%free()
+        call p%free()
+        call r%free()
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure cg_cdp

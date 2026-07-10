@@ -150,14 +150,17 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
-        allocate(Z(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -245,6 +248,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, Z(:k), e(:k)) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -296,6 +300,10 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(Z)
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure fgmres_rsp
@@ -345,14 +353,17 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
-        allocate(Z(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -440,6 +451,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, Z(:k), e(:k)) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -491,6 +503,10 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(Z)
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure fgmres_rdp
@@ -540,14 +556,17 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
-        allocate(Z(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -635,6 +654,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, Z(:k), e(:k)) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -686,6 +706,10 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(Z)
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure fgmres_csp
@@ -735,14 +759,17 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, source=b, stat=iostat, errmsg=msg)
+        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(wrk, b)
         call wrk%zero()
-        allocate(V(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(V, b)
         call zero_basis(V)
-        allocate(Z(kdim+1), source=b, stat=iostat, errmsg=msg)
+        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
+        call init_like(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -830,6 +857,7 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
+            if (allocated(dx)) call dx%free()
             call linear_combination(dx, Z(:k), e(:k)) ; call x%add(dx)
 
             ! Recompute residual for sanity check.
@@ -881,6 +909,10 @@ contains
             end select
         end if
 
+        if (allocated(dx)) call dx%free()
+        call free_basis(Z)
+        call free_basis(V)
+        call wrk%free()
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure fgmres_cdp

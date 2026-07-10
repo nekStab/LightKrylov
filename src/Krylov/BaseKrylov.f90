@@ -1582,6 +1582,7 @@ contains
         H(n+1, :) = b
         H(n+2:, :) = zero_rsp
         H(:, n+1:) = zero_rsp
+        call free_basis(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -1636,6 +1637,7 @@ contains
         H(n+1, :) = b
         H(n+2:, :) = zero_rdp
         H(:, n+1:) = zero_rdp
+        call free_basis(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -1690,6 +1692,7 @@ contains
         H(n+1, :) = b
         H(n+2:, :) = zero_csp
         H(:, n+1:) = zero_csp
+        call free_basis(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -1744,6 +1747,7 @@ contains
         H(n+1, :) = b
         H(n+2:, :) = zero_cdp
         H(:, n+1:) = zero_cdp
+        call free_basis(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)

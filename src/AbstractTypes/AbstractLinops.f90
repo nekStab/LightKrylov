@@ -147,7 +147,7 @@ module LightKrylov_AbstractLinops
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_rdp), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_rdp), intent(out) :: vec_out
+            class(abstract_vector_rdp), intent(inout) :: vec_out
             !! Result of the matrix-vector product.
         end subroutine abstract_matvec_rdp
     end interface
@@ -543,7 +543,7 @@ module LightKrylov_AbstractLinops
             !! Linear operator \(\mathbf{A}\).
             class(abstract_vector_rdp), intent(in)  :: vec_in
             !! Vector to be multiplied by \(\mathbf{A}\).
-            class(abstract_vector_rdp), intent(out) :: vec_out
+            class(abstract_vector_rdp), intent(inout) :: vec_out
             !! Result of the matrix-vector product.
         end subroutine abstract_sym_matvec_rdp
     end interface
@@ -759,6 +759,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -777,6 +778,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -794,6 +796,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -805,12 +808,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -823,12 +827,13 @@ contains
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -840,12 +845,13 @@ contains
         implicit none(type, external)
         class(abstract_sym_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         ! internal
         character(len=128) :: msg
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -863,6 +869,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -881,6 +888,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -898,6 +906,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -916,6 +925,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -934,6 +944,7 @@ contains
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
         call log_debug(msg, this_module, 'rmatvec')
+        call init_like(vec_out, vec_in)
         call self%rmatvec_timer%start()
         call self%rmatvec(vec_in, vec_out)
         call self%rmatvec_timer%stop()
@@ -951,6 +962,7 @@ contains
         self%matvec_counter = self%matvec_counter + 1
         write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
         call log_debug(msg, this_module, 'matvec')
+        call init_like(vec_out, vec_in)
         call self%matvec_timer%start()
         call self%matvec(vec_in, vec_out)
         call self%matvec_timer%stop()
@@ -975,7 +987,7 @@ contains
         implicit none(type, external)
         class(Id_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         call copy(vec_out, vec_in)
     end subroutine id_matvec_rdp
     subroutine id_matvec_csp(self, vec_in, vec_out)
@@ -1012,7 +1024,7 @@ contains
         implicit none(type, external)
         class(scaled_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
     end subroutine scaled_matvec_rdp
 
@@ -1020,7 +1032,7 @@ contains
         implicit none(type, external)
         class(scaled_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out) ; call vec_out%scal(self%sigma)
     end subroutine scaled_rmatvec_rdp
     subroutine scaled_matvec_csp(self, vec_in, vec_out)
@@ -1068,6 +1080,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_matvec_rsp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1086,6 +1099,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_matvec_rsp
 
     subroutine axpby_rmatvec_rsp(self, vec_in, vec_out)
@@ -1102,6 +1116,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_rsp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1120,13 +1135,14 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_rmatvec_rsp
 
     subroutine axpby_matvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
         class(axpby_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
 
         ! Working array.
         class(abstract_vector_rdp), allocatable :: wrk
@@ -1136,6 +1152,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_matvec_rdp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1154,13 +1171,14 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_matvec_rdp
 
     subroutine axpby_rmatvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
         class(axpby_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
 
         ! Working array.
         class(abstract_vector_rdp), allocatable :: wrk
@@ -1170,6 +1188,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_rdp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1188,6 +1207,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_rmatvec_rdp
 
     subroutine axpby_matvec_csp(self, vec_in, vec_out)
@@ -1204,6 +1224,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_matvec_csp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1222,6 +1243,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_matvec_csp
 
     subroutine axpby_rmatvec_csp(self, vec_in, vec_out)
@@ -1238,6 +1260,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_csp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1256,6 +1279,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_rmatvec_csp
 
     subroutine axpby_matvec_cdp(self, vec_in, vec_out)
@@ -1272,6 +1296,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_matvec_cdp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1290,6 +1315,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_matvec_cdp
 
     subroutine axpby_rmatvec_cdp(self, vec_in, vec_out)
@@ -1306,6 +1332,7 @@ contains
         ! Allocate working array.
         allocate(wrk, mold=vec_in, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "axpby_rmatvec_cdp")
+        call init_like(wrk, vec_in)
         call wrk%zero()
 
         ! w = A @ x
@@ -1324,6 +1351,7 @@ contains
 
         ! y = alpha*w + beta*y
         call vec_out%axpby(self%alpha, wrk, self%beta)
+        call wrk%free()
     end subroutine axpby_rmatvec_cdp
 
 
@@ -1373,7 +1401,7 @@ contains
         implicit none(type, external)
         class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         call self%A%apply_rmatvec(vec_in, vec_out)
     end subroutine adjoint_matvec_rdp
 
@@ -1381,7 +1409,7 @@ contains
         implicit none(type, external)
         class(adjoint_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         call self%A%apply_matvec(vec_in, vec_out)
     end subroutine adjoint_rmatvec_rdp
 
@@ -1458,7 +1486,7 @@ contains
                 real(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rsp ; beta = zero_rsp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1483,7 +1511,7 @@ contains
                 real(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rsp ; beta = zero_rsp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1498,7 +1526,7 @@ contains
         implicit none(type, external)
         class(dense_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         select type(vec_in)
         type is(dense_vector_rdp)
             select type(vec_out)
@@ -1508,7 +1536,7 @@ contains
                 real(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rdp ; beta = zero_rdp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1523,7 +1551,7 @@ contains
         implicit none(type, external)
         class(dense_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
-        class(abstract_vector_rdp), intent(out) :: vec_out
+        class(abstract_vector_rdp), intent(inout) :: vec_out
         select type(vec_in)
         type is(dense_vector_rdp)
             select type(vec_out)
@@ -1533,7 +1561,7 @@ contains
                 real(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_rdp ; beta = zero_rdp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("T", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1558,7 +1586,7 @@ contains
                 complex(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_csp ; beta = zero_csp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1583,7 +1611,7 @@ contains
                 complex(sp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_csp ; beta = zero_csp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1608,7 +1636,7 @@ contains
                 complex(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_cdp ; beta = zero_cdp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("N", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default
@@ -1633,7 +1661,7 @@ contains
                 complex(dp) :: alpha, beta
                 m = size(self%data, 1) ; n = size(self%data, 2)
                 alpha = one_cdp ; beta = zero_cdp
-                vec_out = vec_in
+                call copy(vec_out, vec_in)
                 call gemv("C", m, n, alpha, self%data, m, vec_in%data, 1, beta, vec_out%data, 1)
                 end block
             class default

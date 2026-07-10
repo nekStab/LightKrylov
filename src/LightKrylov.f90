@@ -64,6 +64,8 @@ module LightKrylov
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
+    public :: init_basis
+    public :: free_basis
     public :: copy
     public :: rand_basis
     public :: verify_vector_axioms

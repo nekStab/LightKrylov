@@ -143,6 +143,7 @@ contains
             class(abstract_vector_${type[0]}$${kind}$), allocatable :: proj
             call linear_combination(proj, X, proj_coefficients)
             call y%sub(proj)
+            call proj%free()
         end block
 
         if (present(beta)) then
@@ -189,6 +190,7 @@ contains
             class(abstract_vector_${type[0]}$${kind}$), allocatable :: proj(:)
             call linear_combination(proj, X, proj_coefficients)
             call axpby_basis(-one_${type[0]}$${kind}$, proj, one_${type[0]}$${kind}$, Y)
+            call free_basis(proj)
         end block
 
         if (present(beta)) then

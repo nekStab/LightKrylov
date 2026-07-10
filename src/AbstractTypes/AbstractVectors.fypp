@@ -54,6 +54,9 @@ module LightKrylov_AbstractVectors
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
+    public :: init_basis
+    public :: init_like
+    public :: free_basis
     public :: copy
     public :: rand_basis
     public :: verify_vector_axioms
@@ -228,6 +231,24 @@ module LightKrylov_AbstractVectors
         #:endfor
     end interface
 
+    interface init_basis
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure init_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface init_like
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure init_like_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface free_basis
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure free_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
     interface copy
         !!  This interface provides methods to copy an array `X` of `abstract_vector` into
         !!  another array `Y`. Note that `Y` needs to be pre-allocated.
@@ -285,6 +306,11 @@ module LightKrylov_AbstractVectors
         !!  @warning
         !!  Users should not extend this abstract class to define their own types.
         !!  @endwarning
+    contains
+        procedure, pass(self), public :: init => init_abstract_vector
+        !! Hook called after allocating an `abstract_vector`.
+        procedure, pass(self), public :: free => free_abstract_vector
+        !! Hook called before deallocating an `abstract_vector`.
     end type abstract_vector
 
     #:for kind, type in RC_KINDS_TYPES
@@ -420,6 +446,16 @@ contains
     !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
     !-----------------------------------------------------------------------
 
+    subroutine init_abstract_vector(self)
+        implicit none(type, external)
+        class(abstract_vector), intent(inout) :: self
+    end subroutine init_abstract_vector
+
+    subroutine free_abstract_vector(self)
+        implicit none(type, external)
+        class(abstract_vector), intent(inout) :: self
+    end subroutine free_abstract_vector
+
     #:for kind, type in RC_KINDS_TYPES
     function norm_${type[0]}$${kind}$(self) result(alpha)
         implicit none(type, external)
@@ -491,10 +527,16 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
+        #:if type[0] != "r"
+        real(${kind}$), allocatable :: y(:, :)
+        #:endif
+        if(.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_${type[0]}$${kind}$")
+        endif
         #:if type[0] == "r"
         call random_number(self%data)
         #:else
-        real(${kind}$), allocatable :: y(:, :)
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_${type[0]}$${kind}$")
         call random_number(y)
@@ -592,8 +634,9 @@ contains
 
         ! Initialize output vector.
         if (.not. allocated(y)) then
-            allocate(y, source=X(1), stat=iostat, errmsg=errmsg)
+            allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_${type[0]}$${kind}$")
+            call init_like(y, X(1))
         endif
         call y%zero()
         ! Compute linear combination.
@@ -625,8 +668,9 @@ contains
 
         ! Initialize output basis.
         if (.not. allocated(Y)) then
-            allocate(Y(size(B, 2)), source=X(1), stat=iostat, errmsg=errmsg)
+            allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_${type[0]}$${kind}$")
+            call init_like(Y, X(1))
         else
             if (size(Y) /= size(B, 2)) then
                 call stop_error("Krylov basis Y and combination matrix B have incompatible sizes.", &
@@ -714,11 +758,45 @@ contains
         call X%zero()
     end subroutine zero_basis_${type[0]}$${kind}$
 
+    impure elemental subroutine init_basis_${type[0]}$${kind}$(X)
+        implicit none(type, external)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
+        call X%init()
+    end subroutine init_basis_${type[0]}$${kind}$
+
+    impure elemental subroutine init_like_${type[0]}$${kind}$(X, mold)
+        implicit none(type, external)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: mold
+        select type (X)
+        type is (dense_vector_${type[0]}$${kind}$)
+            select type (mold)
+            type is (dense_vector_${type[0]}$${kind}$)
+                if (allocated(mold%data)) then
+                    X%n = size(mold%data)
+                else
+                    X%n = mold%n
+                end if
+            class default
+            end select
+        class default
+        end select
+        call X%init()
+    end subroutine init_like_${type[0]}$${kind}$
+
+    impure elemental subroutine free_basis_${type[0]}$${kind}$(X)
+        implicit none(type, external)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
+        call X%free()
+    end subroutine free_basis_${type[0]}$${kind}$
+
     impure elemental subroutine copy_vector_${type[0]}$${kind}$(out, from)
         implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: out
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: out
         ! Copy array.
+        call init_like(out, from)
+        call out%zero()
         call out%axpby(one_${type[0]}$${kind}$, from, zero_${type[0]}$${kind}$)
     end subroutine copy_vector_${type[0]}$${kind}$
 
@@ -758,14 +836,17 @@ contains
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk1, wrk2
 
                 !> Generate random vectors.
-                allocate(u, v, w, wrk1, wrk2, source=x)
+                allocate(u, v, w, wrk1, wrk2, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
+                call init_like(w, x)
                 call u%rand()
                 call v%rand()
                 call w%rand()
 
                 !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
+                call copy(wrk1, v)
+                call copy(wrk2, v)
                 call wrk1%add(w)    ! v + w
                 call wrk2%add(u)    ! u + v
 
@@ -774,6 +855,11 @@ contains
 
                 call u%sub(w)
                 success = merge(.true., .false., u%norm() <= tol)
+                call wrk2%free()
+                call wrk1%free()
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_distributivity
 
@@ -781,10 +867,12 @@ contains
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = v
+                call copy(w, v)
 
                 !> Check commutativity.
                 call v%add(u)
@@ -792,6 +880,9 @@ contains
 
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_commutativity
 
@@ -799,24 +890,32 @@ contains
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, z
 
                 !> Generate random vector.
-                allocate(u, v, z, source=x)
-                v = u
+                allocate(u, v, z, mold=x)
+                call copy(u, x)
+                call copy(v, u)
+                call init_like(z, x)
                 call z%zero()
 
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call z%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block additive_inverse
 
@@ -828,13 +927,16 @@ contains
                 ${type}$, parameter :: one = 1.0_${kind}$
 
                 !> Generate random vector.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_identity
 
@@ -853,9 +955,10 @@ contains
                 #:endif
 
                 !> Generate random vectors.
-                allocate(u, v, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand(ifnorm=.true.)
-                v = u
+                call copy(v, u)
 
                 !> Check associativity.
                 call v%scal(b)
@@ -863,6 +966,8 @@ contains
                 call u%scal(a*b)
                 call u%sub(v)
                 success = merge(.true., .false., u%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_compatibility
 
@@ -878,10 +983,12 @@ contains
                 #:endif
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, w, mold=x)
+                call init_like(u, x)
+                call init_like(v, x)
                 call u%rand()
                 call v%rand()
-                w = u
+                call copy(w, u)
 
                 !> Check distributivity.
                 call w%add(v)
@@ -893,6 +1000,9 @@ contains
 
                 call v%sub(w)
                 success = merge(.true., .false., v%norm() <= tol)
+                call w%free()
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity
 
@@ -911,9 +1021,10 @@ contains
                 #:endif
 
                 !> Generate random vector.
-                allocate(u, source=x)
+                allocate(u, v, mold=x)
+                call init_like(u, x)
                 call u%rand()
-                v = u
+                call copy(v, u)
 
                 !> Check distributivity.
                 call v%axpby(a, u, b)
@@ -921,6 +1032,8 @@ contains
 
                 call v%sub(u)
                 success = merge(.true., .false., v%norm() <= tol)
+                call v%free()
+                call u%free()
                 if (.not. success) exit verification
             end block scaling_distributivity_bis
         enddo verification

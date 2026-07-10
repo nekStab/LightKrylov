@@ -190,7 +190,7 @@ contains
       ! Integration time for this step.
       real(dp), intent(in)     :: Tstep
       ! Output vector.
-      class(abstract_vector_rdp), intent(out)    :: vec_out(r)
+      class(abstract_vector_rdp), intent(inout)  :: vec_out(r)
       ! Fundamental solution matrix
       real(dp), intent(out)    :: FTLE_out(r)
 
@@ -229,7 +229,7 @@ contains
       ! Integration time.
       real(dp), intent(in)    :: Tend
       ! Output vector.
-      class(abstract_vector_rdp), intent(out)   :: vec_out(r)
+      class(abstract_vector_rdp), intent(inout) :: vec_out(r)
       ! Integration time for FLTEs
       real(dp), intent(in)    :: t_FTLE
       ! restart trajectory at t_FLTE?
@@ -312,7 +312,7 @@ contains
 
    subroutine set_pos(pos, vec_out)
       real(dp), dimension(npts), intent(in)  :: pos
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       select type (vec_out)
       type is (pos_vector)
          vec_out%x = pos(1)

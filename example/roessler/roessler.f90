@@ -243,7 +243,7 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       ! Solver tolerances if needed
       real(dp), intent(in)  :: atol
 
@@ -285,7 +285,7 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
 
       ! Time-integrator.
       type(rks54_class)           :: combined_roessler
@@ -335,7 +335,7 @@ contains
       ! Input vector.
       class(abstract_vector_rdp), intent(in)  :: vec_in
       ! Output vector.
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
 
       ! Time-integrator.
       type(rks54_class)           :: combined_roessler
@@ -398,7 +398,7 @@ contains
 
    subroutine set_position(pos, vec_out)
       real(dp), dimension(npts), intent(in)  :: pos
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       select type (vec_out)
       type is (state_vector)
          vec_out%x = pos(1)
@@ -411,7 +411,7 @@ contains
 
    subroutine compute_fdot(pos, vec_out)
       real(dp), dimension(npts), intent(in)  :: pos
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       ! internal
       real(dp), dimension(npts) :: wrk
       call vec_out%zero() ! ensure that the period shift vec_out%T is zero
