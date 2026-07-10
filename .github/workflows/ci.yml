@@ -29,6 +29,8 @@ jobs:
             toolchain: {compiler: nvidia-hpc}
           - os: macos-latest
             toolchain: {compiler: gcc, version: 10}
+          - os: macos-latest
+            toolchain: {compiler: gcc, version: 11}
           - os: windows-latest
             toolchain: {compiler: nvidia-hpc}
           - os: windows-latest
