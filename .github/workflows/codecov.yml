@@ -14,9 +14,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4.2.2
       
-      - uses: fortran-lang/setup-fortran@main
+      - uses: fortran-lang/setup-fortran@1.6.2
         id: setup-fortran
         with:
           compiler: ${{ matrix.toolchain.compiler }}
@@ -40,6 +40,9 @@ jobs:
         run: |
           fpm run --profile debug --flag "${{ join(matrix.toolchain.flags, ' ') }}" --example Roessler
           fpm run --profile debug --flag "${{ join(matrix.toolchain.flags, ' ') }}" --example Ginzburg-Landau
+
+      - name: Debug build layout
+        run: find build -maxdepth 4 -type d
 
       - name: Create coverage report
         env:
