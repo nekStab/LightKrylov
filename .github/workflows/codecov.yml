@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
       
-      - uses: fortran-lang/setup-fortran@1.6.2
+      - uses: fortran-lang/setup-fortran@v1.6.2
         id: setup-fortran
         with:
           compiler: ${{ matrix.toolchain.compiler }}
