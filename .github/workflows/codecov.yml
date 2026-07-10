@@ -42,6 +42,8 @@ jobs:
           fpm run --profile debug --flag "${{ join(matrix.toolchain.flags, ' ') }}" --example Ginzburg-Landau
 
       - name: Create coverage report
+        env:
+            COV_DIR: build/coverage
         run: |
           mkdir -p ${{ env.COV_DIR }}
           mv ./build/gfortran_*/*/* ${{ env.COV_DIR }}
@@ -52,8 +54,6 @@ jobs:
           # and relative-path pattern (example/**) because lcov 2.x requires ** for recursive matching
           # and the fpm build stores paths relative to the project root.
           # lcov --remove ${{ env.COV_DIR }}/coverage.info '*/example/*' 'example/**' --output-file ${{ env.COV_DIR }}/coverage.info --ignore-errors unused,mismatch,inconsistent
-          env:
-              COV_DIR: build/coverage
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
