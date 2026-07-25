@@ -1683,7 +1683,7 @@ contains
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_adjoint) result(success)
+    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1693,11 +1693,13 @@ contains
         !! Number of random samples generated for the tests.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
 
         integer :: ntrials_, i
-        logical :: test_adjoint_
+        logical :: test_zero_map_, test_adjoint_
         real(sp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -1707,6 +1709,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
 
         !> Run all tests to verify axioms.
@@ -1751,6 +1754,7 @@ contains
 
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
+                call u%rand()
                 call random_number(alpha)
 
                 !> Check homogeneity.
@@ -1774,22 +1778,24 @@ contains
             !-------------------------------------------
             !-----     ZERO MAPS TO ZERO           -----
             !-------------------------------------------
-            zero_to_zero: block
-                class(abstract_vector_rsp), allocatable :: u, Au
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_rsp), allocatable :: u, Au
 
-                !> Check that the zero vector is mapped to the zero vector.
-                allocate(u, Au, source=x)
-                call u%zero()
-                call A%apply_matvec(u, Au)
-                error_norm = Au%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'zero_to_zero'
-                    exit verification
-                end if
-            end block zero_to_zero
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
 
             !-------------------------------------------
             !-----     ADJOINT CONSISTENCY         -----
@@ -1835,7 +1841,7 @@ contains
 
     end function verify_linop_axioms_rsp
 
-    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_adjoint) result(success)
+    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1845,11 +1851,13 @@ contains
         !! Number of random samples generated for the tests.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
 
         integer :: ntrials_, i
-        logical :: test_adjoint_
+        logical :: test_zero_map_, test_adjoint_
         real(dp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -1859,6 +1867,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
 
         !> Run all tests to verify axioms.
@@ -1903,6 +1912,7 @@ contains
 
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
+                call u%rand()
                 call random_number(alpha)
 
                 !> Check homogeneity.
@@ -1926,22 +1936,24 @@ contains
             !-------------------------------------------
             !-----     ZERO MAPS TO ZERO           -----
             !-------------------------------------------
-            zero_to_zero: block
-                class(abstract_vector_rdp), allocatable :: u, Au
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_rdp), allocatable :: u, Au
 
-                !> Check that the zero vector is mapped to the zero vector.
-                allocate(u, Au, source=x)
-                call u%zero()
-                call A%apply_matvec(u, Au)
-                error_norm = Au%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'zero_to_zero'
-                    exit verification
-                end if
-            end block zero_to_zero
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
 
             !-------------------------------------------
             !-----     ADJOINT CONSISTENCY         -----
@@ -1987,7 +1999,7 @@ contains
 
     end function verify_linop_axioms_rdp
 
-    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_adjoint) result(success)
+    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1997,11 +2009,13 @@ contains
         !! Number of random samples generated for the tests.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
 
         integer :: ntrials_, i
-        logical :: test_adjoint_
+        logical :: test_zero_map_, test_adjoint_
         real(sp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -2011,6 +2025,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
 
         !> Run all tests to verify axioms.
@@ -2055,6 +2070,7 @@ contains
 
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
+                call u%rand()
                 alpha = cmplx(0.0_sp, 0.0_sp, kind=sp)
                 call random_number(alpha%re) ; call random_number(alpha%im)
 
@@ -2079,22 +2095,24 @@ contains
             !-------------------------------------------
             !-----     ZERO MAPS TO ZERO           -----
             !-------------------------------------------
-            zero_to_zero: block
-                class(abstract_vector_csp), allocatable :: u, Au
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_csp), allocatable :: u, Au
 
-                !> Check that the zero vector is mapped to the zero vector.
-                allocate(u, Au, source=x)
-                call u%zero()
-                call A%apply_matvec(u, Au)
-                error_norm = Au%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'zero_to_zero'
-                    exit verification
-                end if
-            end block zero_to_zero
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
 
             !-------------------------------------------
             !-----     ADJOINT CONSISTENCY         -----
@@ -2140,7 +2158,7 @@ contains
 
     end function verify_linop_axioms_csp
 
-    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_adjoint) result(success)
+    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2150,11 +2168,13 @@ contains
         !! Number of random samples generated for the tests.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
 
         integer :: ntrials_, i
-        logical :: test_adjoint_
+        logical :: test_zero_map_, test_adjoint_
         real(dp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -2164,6 +2184,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
 
         !> Run all tests to verify axioms.
@@ -2208,6 +2229,7 @@ contains
 
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
+                call u%rand()
                 alpha = cmplx(0.0_dp, 0.0_dp, kind=dp)
                 call random_number(alpha%re) ; call random_number(alpha%im)
 
@@ -2232,22 +2254,24 @@ contains
             !-------------------------------------------
             !-----     ZERO MAPS TO ZERO           -----
             !-------------------------------------------
-            zero_to_zero: block
-                class(abstract_vector_cdp), allocatable :: u, Au
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_cdp), allocatable :: u, Au
 
-                !> Check that the zero vector is mapped to the zero vector.
-                allocate(u, Au, source=x)
-                call u%zero()
-                call A%apply_matvec(u, Au)
-                error_norm = Au%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'zero_to_zero'
-                    exit verification
-                end if
-            end block zero_to_zero
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
 
             !-------------------------------------------
             !-----     ADJOINT CONSISTENCY         -----
