@@ -277,7 +277,6 @@ module LightKrylov_AbstractVectors
         #:endfor
     end interface
 
-
     type, abstract, public :: abstract_vector
         !!  Base abstract type from which all other types of vectors used in `LightKrylov`
         !!  are being derived from.
@@ -738,9 +737,9 @@ contains
         real(${kind}$), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
+        real(${kind}$) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
-        real(${kind}$) :: tol, error_norm
 
         character(len=*), parameter :: this_procedure = "verify_vector_axioms_${type[0]}$${kind}$"
 
@@ -755,7 +754,6 @@ contains
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
-
             addition_distributivity: block
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk1, wrk2
@@ -778,6 +776,7 @@ contains
                 call u%sub(w)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_distributivity'
@@ -801,6 +800,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_commutativity'
@@ -821,6 +821,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_zero'
@@ -830,11 +831,17 @@ contains
 
             additive_inverse: block
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
+
+                !> Generate random vector.
                 allocate(u, source=x)
                 call u%rand()
                 v = u
+
+                !> Check additive inverse.
                 call u%sub(v)
+                error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_inverse'
@@ -858,6 +865,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_identity'
@@ -891,6 +899,8 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_compatibility'
                     exit verification
@@ -925,6 +935,7 @@ contains
                 call v%sub(w)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity'
@@ -958,13 +969,16 @@ contains
                 call v%sub(u)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+                
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity_bis'
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
         enddo verification
+
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
             call log_message(msg, this_module, this_procedure)
@@ -974,6 +988,7 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
     end function verify_vector_axioms_${type[0]}$${kind}$
 
     #:endfor

@@ -292,7 +292,6 @@ module LightKrylov_AbstractVectors
         module procedure verify_vector_axioms_cdp
     end interface
 
-
     type, abstract, public :: abstract_vector
         !!  Base abstract type from which all other types of vectors used in `LightKrylov`
         !!  are being derived from.
@@ -1437,7 +1436,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
 
-
     logical function verify_vector_axioms_rsp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: x
@@ -1447,9 +1445,9 @@ contains
         real(sp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
+        real(sp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
-        real(sp) :: tol, error_norm
 
         character(len=*), parameter :: this_procedure = "verify_vector_axioms_rsp"
 
@@ -1464,7 +1462,6 @@ contains
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
-
             addition_distributivity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
                 class(abstract_vector_rsp), allocatable :: wrk1, wrk2
@@ -1487,6 +1484,7 @@ contains
                 call u%sub(w)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_distributivity'
@@ -1510,6 +1508,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_commutativity'
@@ -1530,6 +1529,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_zero'
@@ -1539,11 +1539,17 @@ contains
 
             additive_inverse: block
                 class(abstract_vector_rsp), allocatable :: u, v
+
+                !> Generate random vector.
                 allocate(u, source=x)
                 call u%rand()
                 v = u
+
+                !> Check additive inverse.
                 call u%sub(v)
+                error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_inverse'
@@ -1567,6 +1573,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_identity'
@@ -1592,6 +1599,8 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_compatibility'
                     exit verification
@@ -1620,6 +1629,7 @@ contains
                 call v%sub(w)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity'
@@ -1645,13 +1655,16 @@ contains
                 call v%sub(u)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+                
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity_bis'
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
         enddo verification
+
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
             call log_message(msg, this_module, this_procedure)
@@ -1661,6 +1674,7 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
     end function verify_vector_axioms_rsp
 
     subroutine linear_combination_vector_rdp(y, X, v)
@@ -1824,7 +1838,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
 
-
     logical function verify_vector_axioms_rdp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: x
@@ -1834,9 +1847,9 @@ contains
         real(dp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
+        real(dp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
-        real(dp) :: tol, error_norm
 
         character(len=*), parameter :: this_procedure = "verify_vector_axioms_rdp"
 
@@ -1851,7 +1864,6 @@ contains
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
-
             addition_distributivity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
                 class(abstract_vector_rdp), allocatable :: wrk1, wrk2
@@ -1874,6 +1886,7 @@ contains
                 call u%sub(w)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_distributivity'
@@ -1897,6 +1910,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_commutativity'
@@ -1917,6 +1931,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_zero'
@@ -1926,11 +1941,17 @@ contains
 
             additive_inverse: block
                 class(abstract_vector_rdp), allocatable :: u, v
+
+                !> Generate random vector.
                 allocate(u, source=x)
                 call u%rand()
                 v = u
+
+                !> Check additive inverse.
                 call u%sub(v)
+                error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_inverse'
@@ -1954,6 +1975,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_identity'
@@ -1979,6 +2001,8 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_compatibility'
                     exit verification
@@ -2007,6 +2031,7 @@ contains
                 call v%sub(w)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity'
@@ -2032,13 +2057,16 @@ contains
                 call v%sub(u)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+                
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity_bis'
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
         enddo verification
+
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
             call log_message(msg, this_module, this_procedure)
@@ -2048,6 +2076,7 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
     end function verify_vector_axioms_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
@@ -2211,7 +2240,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
 
-
     logical function verify_vector_axioms_csp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: x
@@ -2221,9 +2249,9 @@ contains
         real(sp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
+        real(sp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
-        real(sp) :: tol, error_norm
 
         character(len=*), parameter :: this_procedure = "verify_vector_axioms_csp"
 
@@ -2238,7 +2266,6 @@ contains
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
-
             addition_distributivity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
                 class(abstract_vector_csp), allocatable :: wrk1, wrk2
@@ -2261,6 +2288,7 @@ contains
                 call u%sub(w)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_distributivity'
@@ -2284,6 +2312,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_commutativity'
@@ -2304,6 +2333,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_zero'
@@ -2313,11 +2343,17 @@ contains
 
             additive_inverse: block
                 class(abstract_vector_csp), allocatable :: u, v
+
+                !> Generate random vector.
                 allocate(u, source=x)
                 call u%rand()
                 v = u
+
+                !> Check additive inverse.
                 call u%sub(v)
+                error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_inverse'
@@ -2341,6 +2377,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_identity'
@@ -2369,6 +2406,8 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_compatibility'
                     exit verification
@@ -2399,6 +2438,7 @@ contains
                 call v%sub(w)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity'
@@ -2427,13 +2467,16 @@ contains
                 call v%sub(u)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+                
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity_bis'
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
         enddo verification
+
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
             call log_message(msg, this_module, this_procedure)
@@ -2443,6 +2486,7 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
     end function verify_vector_axioms_csp
 
     subroutine linear_combination_vector_cdp(y, X, v)
@@ -2606,7 +2650,6 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
 
-
     logical function verify_vector_axioms_cdp(x, ntrials, tolerance) result(success)
         implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: x
@@ -2616,9 +2659,9 @@ contains
         real(dp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
+        real(dp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
-        real(dp) :: tol, error_norm
 
         character(len=*), parameter :: this_procedure = "verify_vector_axioms_cdp"
 
@@ -2633,7 +2676,6 @@ contains
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
-
             addition_distributivity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
                 class(abstract_vector_cdp), allocatable :: wrk1, wrk2
@@ -2656,6 +2698,7 @@ contains
                 call u%sub(w)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_distributivity'
@@ -2679,6 +2722,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'addition_commutativity'
@@ -2699,6 +2743,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_zero'
@@ -2708,11 +2753,17 @@ contains
 
             additive_inverse: block
                 class(abstract_vector_cdp), allocatable :: u, v
+
+                !> Generate random vector.
                 allocate(u, source=x)
                 call u%rand()
                 v = u
+
+                !> Check additive inverse.
                 call u%sub(v)
+                error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'additive_inverse'
@@ -2736,6 +2787,7 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_identity'
@@ -2764,6 +2816,8 @@ contains
                 call u%sub(v)
                 error_norm = u%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_compatibility'
                     exit verification
@@ -2794,6 +2848,7 @@ contains
                 call v%sub(w)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity'
@@ -2822,13 +2877,16 @@ contains
                 call v%sub(u)
                 error_norm = v%norm()
                 success = merge(.true., .false., error_norm <= tol)
+                
                 !> Exit if the test fails.
                 if (.not. success) then
                     failed_test = 'scaling_distributivity_bis'
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
         enddo verification
+
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
             call log_message(msg, this_module, this_procedure)
@@ -2838,6 +2896,7 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
     end function verify_vector_axioms_cdp
 
 end module LightKrylov_AbstractVectors
