@@ -1447,7 +1447,11 @@ contains
         real(sp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
-        real(sp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+        real(sp) :: tol, error_norm
+
+        character(len=*), parameter :: this_procedure = "verify_vector_axioms_rsp"
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -1481,8 +1485,13 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
@@ -1499,8 +1508,13 @@ contains
                 call u%add(w)
 
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
@@ -1514,8 +1528,13 @@ contains
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
@@ -1524,8 +1543,12 @@ contains
                 call u%rand()
                 v = u
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -1542,8 +1565,13 @@ contains
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -1562,8 +1590,12 @@ contains
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -1586,8 +1618,13 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -1606,10 +1643,24 @@ contains
                 call u%scal(a+b)
 
                 call v%sub(u)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_message(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
     end function verify_vector_axioms_rsp
 
     subroutine linear_combination_vector_rdp(y, X, v)
@@ -1783,7 +1834,11 @@ contains
         real(dp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
-        real(dp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+        real(dp) :: tol, error_norm
+
+        character(len=*), parameter :: this_procedure = "verify_vector_axioms_rdp"
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -1817,8 +1872,13 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
@@ -1835,8 +1895,13 @@ contains
                 call u%add(w)
 
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
@@ -1850,8 +1915,13 @@ contains
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
@@ -1860,8 +1930,12 @@ contains
                 call u%rand()
                 v = u
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -1878,8 +1952,13 @@ contains
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -1898,8 +1977,12 @@ contains
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -1922,8 +2005,13 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -1942,10 +2030,24 @@ contains
                 call u%scal(a+b)
 
                 call v%sub(u)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_message(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
     end function verify_vector_axioms_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
@@ -2119,7 +2221,11 @@ contains
         real(sp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
-        real(sp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+        real(sp) :: tol, error_norm
+
+        character(len=*), parameter :: this_procedure = "verify_vector_axioms_csp"
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -2153,8 +2259,13 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
@@ -2171,8 +2282,13 @@ contains
                 call u%add(w)
 
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
@@ -2186,8 +2302,13 @@ contains
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
@@ -2196,8 +2317,12 @@ contains
                 call u%rand()
                 v = u
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -2214,8 +2339,13 @@ contains
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -2237,8 +2367,12 @@ contains
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -2263,8 +2397,13 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -2286,10 +2425,24 @@ contains
                 call u%scal(a+b)
 
                 call v%sub(u)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_message(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
     end function verify_vector_axioms_csp
 
     subroutine linear_combination_vector_cdp(y, X, v)
@@ -2463,7 +2616,11 @@ contains
         real(dp), optional, intent(in) :: tolerance
 
         integer :: ntrials_, i
-        real(dp) :: tol
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+        real(dp) :: tol, error_norm
+
+        character(len=*), parameter :: this_procedure = "verify_vector_axioms_cdp"
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
@@ -2497,8 +2654,13 @@ contains
                 call w%add(wrk2)    ! (u + v) + w
 
                 call u%sub(w)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_distributivity'
+                    exit verification
+                end if
             end block addition_distributivity
 
             addition_commutativity: block
@@ -2515,8 +2677,13 @@ contains
                 call u%add(w)
 
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'addition_commutativity'
+                    exit verification
+                end if
             end block addition_commutativity
 
             addition_zero: block
@@ -2530,8 +2697,13 @@ contains
                 !> Check zero element.
                 call u%add(z)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_zero'
+                    exit verification
+                end if
             end block addition_zero
 
             additive_inverse: block
@@ -2540,8 +2712,12 @@ contains
                 call u%rand()
                 v = u
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'additive_inverse'
+                    exit verification
+                end if
             end block additive_inverse
 
             !-----------------------------------------
@@ -2558,8 +2734,13 @@ contains
                 !> Check identity.
                 call v%scal(one)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_identity'
+                    exit verification
+                end if
             end block scaling_identity
 
             scaling_compatibility: block
@@ -2581,8 +2762,12 @@ contains
                 call v%scal(a)
                 call u%scal(a*b)
                 call u%sub(v)
-                success = merge(.true., .false., u%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = u%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                if (.not. success) then
+                    failed_test = 'scaling_compatibility'
+                    exit verification
+                end if
             end block scaling_compatibility
 
             scaling_distributivity: block
@@ -2607,8 +2792,13 @@ contains
                 call v%add(u)
 
                 call v%sub(w)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity'
+                    exit verification
+                end if
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
@@ -2630,10 +2820,24 @@ contains
                 call u%scal(a+b)
 
                 call v%sub(u)
-                success = merge(.true., .false., v%norm() <= tol)
-                if (.not. success) exit verification
+                error_norm = v%norm()
+                success = merge(.true., .false., error_norm <= tol)
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'scaling_distributivity_bis'
+                    exit verification
+                end if
             end block scaling_distributivity_bis
         enddo verification
+        if (success) then
+            write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
+            call log_message(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
     end function verify_vector_axioms_cdp
 
 end module LightKrylov_AbstractVectors
