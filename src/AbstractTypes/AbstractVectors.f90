@@ -1667,7 +1667,7 @@ contains
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
-            call log_message(msg, this_module, this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
@@ -2069,7 +2069,7 @@ contains
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
-            call log_message(msg, this_module, this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
@@ -2479,7 +2479,7 @@ contains
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
-            call log_message(msg, this_module, this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
@@ -2889,7 +2889,7 @@ contains
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
-            call log_message(msg, this_module, this_procedure)
+            call log_information(msg, this_module, this_procedure)
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
