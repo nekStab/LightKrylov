@@ -103,6 +103,7 @@ module LightKrylov
     public :: dense_linop_cdp
     public :: abstract_hermitian_linop_cdp
     public :: adjoint
+    public :: verify_linop_axioms
 
     ! AbstractSystems exports.
     public :: abstract_system_rsp

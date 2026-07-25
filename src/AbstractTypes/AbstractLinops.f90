@@ -22,6 +22,8 @@ module LightKrylov_AbstractLinops
     character(len=*), parameter :: this_module      = 'LK_Linops'
     character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractLinops'
 
+    public :: verify_linop_axioms
+
     type, abstract, public :: abstract_linop
         !!  Base type to define an abstract linear operator. All other operator types defined
         !!  in `LightKrylov` derive from this fundamental one.
@@ -638,6 +640,13 @@ module LightKrylov_AbstractLinops
         module procedure initialize_dense_linop_from_array_cdp
     end interface
     public :: dense_linop
+
+    interface verify_linop_axioms
+        module procedure verify_linop_axioms_rsp
+        module procedure verify_linop_axioms_rdp
+        module procedure verify_linop_axioms_csp
+        module procedure verify_linop_axioms_cdp
+    end interface
 
 contains
 
@@ -1669,5 +1678,619 @@ contains
         type(dense_linop_cdp) :: linop
         linop%data = A
     end function initialize_dense_linop_from_array_cdp
+    
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
+
+    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_rsp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_rsp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_adjoint_
+        real(sp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_rsp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_rsp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_rsp), allocatable :: u, Au, Aau
+                real(sp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call random_number(alpha)
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            zero_to_zero: block
+                class(abstract_vector_rsp), allocatable :: u, Au
+
+                !> Check that the zero vector is mapped to the zero vector.
+                allocate(u, Au, source=x)
+                call u%zero()
+                call A%apply_matvec(u, Au)
+                error_norm = Au%norm()
+                success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'zero_to_zero'
+                    exit verification
+                end if
+            end block zero_to_zero
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_rsp), allocatable :: u, v, Au, Av
+                    real(sp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_rsp
+
+    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_rdp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_rdp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_adjoint_
+        real(dp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_rdp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_rdp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_rdp), allocatable :: u, Au, Aau
+                real(dp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call random_number(alpha)
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            zero_to_zero: block
+                class(abstract_vector_rdp), allocatable :: u, Au
+
+                !> Check that the zero vector is mapped to the zero vector.
+                allocate(u, Au, source=x)
+                call u%zero()
+                call A%apply_matvec(u, Au)
+                error_norm = Au%norm()
+                success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'zero_to_zero'
+                    exit verification
+                end if
+            end block zero_to_zero
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_rdp), allocatable :: u, v, Au, Av
+                    real(dp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_rdp
+
+    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_csp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_csp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_adjoint_
+        real(sp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_csp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_csp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_csp), allocatable :: u, Au, Aau
+                complex(sp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                alpha = cmplx(0.0_sp, 0.0_sp, kind=sp)
+                call random_number(alpha%re) ; call random_number(alpha%im)
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            zero_to_zero: block
+                class(abstract_vector_csp), allocatable :: u, Au
+
+                !> Check that the zero vector is mapped to the zero vector.
+                allocate(u, Au, source=x)
+                call u%zero()
+                call A%apply_matvec(u, Au)
+                error_norm = Au%norm()
+                success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'zero_to_zero'
+                    exit verification
+                end if
+            end block zero_to_zero
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_csp), allocatable :: u, v, Au, Av
+                    complex(sp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_csp
+
+    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_cdp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_cdp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_adjoint_
+        real(dp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_cdp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_cdp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_cdp), allocatable :: u, Au, Aau
+                complex(dp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                alpha = cmplx(0.0_dp, 0.0_dp, kind=dp)
+                call random_number(alpha%re) ; call random_number(alpha%im)
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            zero_to_zero: block
+                class(abstract_vector_cdp), allocatable :: u, Au
+
+                !> Check that the zero vector is mapped to the zero vector.
+                allocate(u, Au, source=x)
+                call u%zero()
+                call A%apply_matvec(u, Au)
+                error_norm = Au%norm()
+                success = merge(.true., .false., error_norm <= tol)
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'zero_to_zero'
+                    exit verification
+                end if
+            end block zero_to_zero
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_cdp), allocatable :: u, v, Au, Av
+                    complex(dp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_cdp
 
 end module LightKrylov_AbstractLinops
