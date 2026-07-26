@@ -1755,7 +1755,8 @@ contains
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
                 call u%rand()
-                call random_number(alpha)
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = (-1.0_sp)**i * (1.0_sp + real(i,sp))
 
                 !> Check homogeneity.
                 call A%apply_matvec(u, Au) ; call Au%scal(alpha)
@@ -1913,7 +1914,8 @@ contains
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
                 call u%rand()
-                call random_number(alpha)
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = (-1.0_dp)**i * (1.0_dp + real(i,dp))
 
                 !> Check homogeneity.
                 call A%apply_matvec(u, Au) ; call Au%scal(alpha)
@@ -2071,8 +2073,8 @@ contains
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
                 call u%rand()
-                alpha = cmplx(0.0_sp, 0.0_sp, kind=sp)
-                call random_number(alpha%re) ; call random_number(alpha%im)
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = cmplx(1.0_sp + real(i,sp), -0.5_sp*real(i,sp), sp)
 
                 !> Check homogeneity.
                 call A%apply_matvec(u, Au) ; call Au%scal(alpha)
@@ -2230,8 +2232,8 @@ contains
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
                 call u%rand()
-                alpha = cmplx(0.0_dp, 0.0_dp, kind=dp)
-                call random_number(alpha%re) ; call random_number(alpha%im)
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = cmplx(1.0_dp + real(i,dp), -0.5_dp*real(i,dp), dp)
 
                 !> Check homogeneity.
                 call A%apply_matvec(u, Au) ; call Au%scal(alpha)

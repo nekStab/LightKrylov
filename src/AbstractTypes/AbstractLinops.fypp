@@ -755,11 +755,11 @@ contains
                 !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
                 call u%rand()
+                !> generate the identical non-trivial alpha on all ranks
                 #:if type[0] == "c"
-                alpha = cmplx(0.0_${kind}$, 0.0_${kind}$, kind=${kind}$)
-                call random_number(alpha%re) ; call random_number(alpha%im)
+                alpha = cmplx(1.0_${kind}$ + real(i,${kind}$), -0.5_${kind}$*real(i,${kind}$), ${kind}$)
                 #:else
-                call random_number(alpha)
+                alpha = (-1.0_${kind}$)**i * (1.0_${kind}$ + real(i,${kind}$))
                 #:endif
 
                 !> Check homogeneity.
