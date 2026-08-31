@@ -45,18 +45,6 @@ contains
         return
     end subroutine collect_vector_rsp_testsuite
 
-    subroutine test_vector_axioms_rsp(error)
-        type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_rsp) :: x
-        real(sp) :: x_(n)
-        logical :: success
-        ! Initialize vector.
-        x_ = 0.0_sp ; x = dense_vector(x_)
-        success = verify_vector_axioms(x)
-        call check(error, success .eqv. .true.)
-        call check_test(error, 'test_vector_axioms_rsp', eq='Vector space axioms')
-    end subroutine test_vector_axioms_rsp
-
     subroutine test_vector_rsp_norm(error)
         ! Error type to be returned.
         type(error_type), allocatable, intent(out) :: error
@@ -171,6 +159,18 @@ contains
         return
     end subroutine test_vector_rsp_scal
 
+    subroutine test_vector_axioms_rsp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_rsp) :: x
+        real(sp) :: x_(n)
+        logical :: success
+        ! Initialize vector.
+        x_ = 0.0_sp ; x = dense_vector(x_)
+        success = verify_vector_axioms(x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_vector_axioms_rsp', eq='Vector space axioms')
+    end subroutine test_vector_axioms_rsp
+
     subroutine collect_vector_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -184,18 +184,6 @@ contains
                     ]
         return
     end subroutine collect_vector_rdp_testsuite
-
-    subroutine test_vector_axioms_rdp(error)
-        type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_rdp) :: x
-        real(dp) :: x_(n)
-        logical :: success
-        ! Initialize vector.
-        x_ = 0.0_dp ; x = dense_vector(x_)
-        success = verify_vector_axioms(x)
-        call check(error, success .eqv. .true.)
-        call check_test(error, 'test_vector_axioms_rdp', eq='Vector space axioms')
-    end subroutine test_vector_axioms_rdp
 
     subroutine test_vector_rdp_norm(error)
         ! Error type to be returned.
@@ -311,6 +299,18 @@ contains
         return
     end subroutine test_vector_rdp_scal
 
+    subroutine test_vector_axioms_rdp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_rdp) :: x
+        real(dp) :: x_(n)
+        logical :: success
+        ! Initialize vector.
+        x_ = 0.0_dp ; x = dense_vector(x_)
+        success = verify_vector_axioms(x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_vector_axioms_rdp', eq='Vector space axioms')
+    end subroutine test_vector_axioms_rdp
+
     subroutine collect_vector_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -324,18 +324,6 @@ contains
                     ]
         return
     end subroutine collect_vector_csp_testsuite
-
-    subroutine test_vector_axioms_csp(error)
-        type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_csp) :: x
-        complex(sp) :: x_(n)
-        logical :: success
-        ! Initialize vector.
-        x_ = 0.0_sp ; x = dense_vector(x_)
-        success = verify_vector_axioms(x)
-        call check(error, success .eqv. .true.)
-        call check_test(error, 'test_vector_axioms_csp', eq='Vector space axioms')
-    end subroutine test_vector_axioms_csp
 
     subroutine test_vector_csp_norm(error)
         ! Error type to be returned.
@@ -452,6 +440,18 @@ contains
         return
     end subroutine test_vector_csp_scal
 
+    subroutine test_vector_axioms_csp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_csp) :: x
+        complex(sp) :: x_(n)
+        logical :: success
+        ! Initialize vector.
+        x_ = 0.0_sp ; x = dense_vector(x_)
+        success = verify_vector_axioms(x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_vector_axioms_csp', eq='Vector space axioms')
+    end subroutine test_vector_axioms_csp
+
     subroutine collect_vector_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
@@ -465,18 +465,6 @@ contains
                     ]
         return
     end subroutine collect_vector_cdp_testsuite
-
-    subroutine test_vector_axioms_cdp(error)
-        type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_cdp) :: x
-        complex(dp) :: x_(n)
-        logical :: success
-        ! Initialize vector.
-        x_ = 0.0_dp ; x = dense_vector(x_)
-        success = verify_vector_axioms(x)
-        call check(error, success .eqv. .true.)
-        call check_test(error, 'test_vector_axioms_cdp', eq='Vector space axioms')
-    end subroutine test_vector_axioms_cdp
 
     subroutine test_vector_cdp_norm(error)
         ! Error type to be returned.
@@ -592,6 +580,18 @@ contains
 
         return
     end subroutine test_vector_cdp_scal
+
+    subroutine test_vector_axioms_cdp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_cdp) :: x
+        complex(dp) :: x_(n)
+        logical :: success
+        ! Initialize vector.
+        x_ = 0.0_dp ; x = dense_vector(x_)
+        success = verify_vector_axioms(x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_vector_axioms_cdp', eq='Vector space axioms')
+    end subroutine test_vector_axioms_cdp
 
 
 end module TestVectors

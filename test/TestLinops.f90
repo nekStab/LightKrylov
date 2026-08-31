@@ -36,9 +36,10 @@ contains
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_rsp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rsp),  &
-                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rsp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rsp) &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rsp), &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rsp), &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rsp), &
+                    new_unittest("Linear operator axioms", test_linop_axioms_rsp) &
                     ]
         return
     end subroutine collect_linop_rsp_testsuite
@@ -153,14 +154,31 @@ contains
        return
     end subroutine test_adjoint_rmatvec_rsp
 
+    subroutine test_linop_axioms_rsp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_linop_rsp) :: A
+        type(dense_vector_rsp) :: x
+        real(sp) :: x_(n)
+        logical :: success
+        ! Initialize matrix.
+        A = dense_linop_rsp() ; allocate(A%data(n, n))
+        call random_number(A%data)
+        ! Initialize mold vector.
+        x_ = 0.0_sp ; x = dense_vector(x_)
+        success = verify_linop_axioms(A, x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_linop_axioms_rsp', eq='Linear operator axioms')
+    end subroutine test_linop_axioms_rsp
+
     subroutine collect_linop_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_rdp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rdp),  &
-                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rdp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rdp) &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_rdp), &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_rdp), &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_rdp), &
+                    new_unittest("Linear operator axioms", test_linop_axioms_rdp) &
                     ]
         return
     end subroutine collect_linop_rdp_testsuite
@@ -275,14 +293,31 @@ contains
        return
     end subroutine test_adjoint_rmatvec_rdp
 
+    subroutine test_linop_axioms_rdp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_linop_rdp) :: A
+        type(dense_vector_rdp) :: x
+        real(dp) :: x_(n)
+        logical :: success
+        ! Initialize matrix.
+        A = dense_linop_rdp() ; allocate(A%data(n, n))
+        call random_number(A%data)
+        ! Initialize mold vector.
+        x_ = 0.0_dp ; x = dense_vector(x_)
+        success = verify_linop_axioms(A, x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_linop_axioms_rdp', eq='Linear operator axioms')
+    end subroutine test_linop_axioms_rdp
+
     subroutine collect_linop_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_csp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_csp),  &
-                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_csp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_csp) &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_csp), &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_csp), &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_csp), &
+                    new_unittest("Linear operator axioms", test_linop_axioms_csp) &
                     ]
         return
     end subroutine collect_linop_csp_testsuite
@@ -401,14 +436,32 @@ contains
        return
     end subroutine test_adjoint_rmatvec_csp
 
+    subroutine test_linop_axioms_csp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_linop_csp) :: A
+        type(dense_vector_csp) :: x
+        complex(sp) :: x_(n)
+        real(sp) :: Adata(n, n, 2)
+        logical :: success
+        ! Initialize matrix.
+        A = dense_linop_csp() ; allocate(A%data(n, n))
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        ! Initialize mold vector.
+        x_ = 0.0_sp ; x = dense_vector(x_)
+        success = verify_linop_axioms(A, x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_linop_axioms_csp', eq='Linear operator axioms')
+    end subroutine test_linop_axioms_csp
+
     subroutine collect_linop_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_cdp), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_cdp),  &
-                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_cdp),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_cdp) &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_cdp), &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_cdp), &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_cdp), &
+                    new_unittest("Linear operator axioms", test_linop_axioms_cdp) &
                     ]
         return
     end subroutine collect_linop_cdp_testsuite
@@ -526,6 +579,23 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_cdp
+
+    subroutine test_linop_axioms_cdp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_linop_cdp) :: A
+        type(dense_vector_cdp) :: x
+        complex(dp) :: x_(n)
+        real(dp) :: Adata(n, n, 2)
+        logical :: success
+        ! Initialize matrix.
+        A = dense_linop_cdp() ; allocate(A%data(n, n))
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        ! Initialize mold vector.
+        x_ = 0.0_dp ; x = dense_vector(x_)
+        success = verify_linop_axioms(A, x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_linop_axioms_cdp', eq='Linear operator axioms')
+    end subroutine test_linop_axioms_cdp
 
 end module TestLinops
 
