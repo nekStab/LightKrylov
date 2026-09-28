@@ -323,7 +323,7 @@ contains
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
-        nretain = count(S / S(1) > tol_)
+        nretain = count(S > tol_ * S(1))
         call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
             & this_module, this_procedure)
         S(:nretain) = one_rdp / sqrt(S(:nretain))
@@ -371,7 +371,7 @@ contains
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
-        nretain = count(S / S(1) > tol_)
+        nretain = count(S > tol_ * S(1))
         call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
             & this_module, this_procedure)
         S(:nretain) = one_rsp / sqrt(S(:nretain))
@@ -419,7 +419,7 @@ contains
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
-        nretain = count(S / S(1) > tol_)
+        nretain = count(S > tol_ * S(1))
         call check_info(merge(-1, 0, nretain == 0), 'biorthonormalize_bases', &
             & this_module, this_procedure)
         S(:nretain) = one_rdp / sqrt(S(:nretain))

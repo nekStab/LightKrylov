@@ -188,6 +188,7 @@ contains
 
         testsuite = [ &
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi restart", test_restarting_arnoldi_${type[0]}$${kind}$), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$) &
                     ]
@@ -211,7 +212,7 @@ contains
         ${type}$, allocatable :: G(:, :)
         real(${kind}$) :: err
         character(len=256) :: msg
-           
+
         ! Initialize linear operator.
         A = linop_${type[0]}$${kind}$() ; call init_rand(A)
         ! Initialize Krylov subspace.
@@ -231,7 +232,6 @@ contains
 
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -243,6 +243,60 @@ contains
 
         return
     end subroutine test_arnoldi_factorization_${type[0]}$${kind}$
+
+    subroutine test_restarting_arnoldi_${type[0]}$${kind}$(error)
+        ! Error type to be returned
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Krylov subspaces.
+        type(vector_${type[0]}$${kind}$), allocatable :: Xfull(:), Xrestart(:)
+        integer, parameter :: kdim = test_size, kstart = kdim/2
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: Hfull(:, :), Hrestart(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        ${type}$, allocatable :: Xfull_data(:, :), Xrestart_data(:, :)
+        ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$(); call init_rand(A)
+        ! Initialize Krylov subspace.
+        allocate(Xfull(kdim+1)); call zero_basis(Xfull); call Xfull(1)%rand(ifnorm=.true.)
+        allocate(Hfull(kdim+1, kdim), Hrestart(kdim+1, kdim), source=zero_${type[0]}$${kind}$)
+
+        ! Full Arnoldi factorization.
+        call arnoldi(A, Xfull, Hfull, info, tol=atol_${kind}$)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_${type[0]}$${kind}$')
+
+        ! Copy data for restart.
+        allocate(Xrestart(kdim+1)) ; call zero_basis(Xrestart)
+        call copy(Xrestart(:kstart), Xfull(:kstart))
+        Hrestart(:kstart, :kstart-1) = Hfull(:kstart, :kstart-1)
+
+        ! Restart Arnoldi factorization.
+        call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, tol=atol_${kind}$)
+
+        ! Compute inner product between the two bases.
+        G = innerprod(Xfull(:kdim), Xrestart(:kdim))
+        err = maxval(abs(G - eye(kdim, mold=1.0_${kind}$)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_restart_arnoldi_${type[0]}$${kind}$', &
+                                info='Restarting', eq='Xfull = Xrestart', context=msg)
+
+        ! Check Hessenberg matrices.
+        err = maxval(abs(Hfull - Hrestart))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_restart_arnoldi_${type[0]}$${kind}$', &
+                                info='Restarting', eq='Hfull = Hrestart', context=msg)
+
+        return
+    end subroutine test_restarting_arnoldi_${type[0]}$${kind}$
 
     subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$(error)
         ! Error type to be returned.
