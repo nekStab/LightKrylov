@@ -190,7 +190,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Arnoldi restart", test_restarting_arnoldi_${type[0]}$${kind}$), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
-            new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$) &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
@@ -247,6 +248,61 @@ contains
 
         return
     end subroutine test_arnoldi_factorization_${type[0]}$${kind}$
+
+    subroutine test_arnoldi_invalid_params_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        integer :: p
+
+        ! Common initialization for each case.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        allocate(H(kdim+1, kdim)) ; H = zero_${type[0]}$${kind}$
+        p = 1
+
+        ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
+        allocate(X(kdim+1)) ; call zero_basis(X)
+        call arnoldi(A, X, H, info, kstart=0, tol=atol_${kind}$)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid kstart (kstart < 1)', eq='info == -5', context='kstart=0')
+
+        call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_${kind}$)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid kstart (kstart > kend)', eq='info == -5', context='kstart > kend')
+
+        ! --- Case 2: k_end > kdim (info = -6) ---
+        call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_${kind}$)
+        call check(error, info == -6)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid kend (kend > kdim)', eq='info == -6', context='kend=kdim+1')
+
+        ! --- Case 3: tolerance < 0 (info = -7) ---
+        call arnoldi(A, X, H, info, tol=-1.0_${kind}$)
+        call check(error, info == -7)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid tolerance (tol < 0)', eq='info == -7', context='tol=-1.0')
+
+        ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
+        ! If kdim=20, size(X)=21. p=2 does not divide 21.
+        p = 2
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
+        call check(error, info == -9)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid blksize (mod(size(X), p) /= 0)', eq='info == -9', context='p=2')
+
+        return
+    end subroutine test_arnoldi_invalid_params_${type[0]}$${kind}$
 
     subroutine test_restarting_arnoldi_${type[0]}$${kind}$(error)
         ! Error type to be returned

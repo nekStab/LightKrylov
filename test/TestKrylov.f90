@@ -606,7 +606,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_rsp), &
             new_unittest("Arnoldi restart", test_restarting_arnoldi_rsp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rsp), &
-            new_unittest("Krylov-Schur factorization", test_krylov_schur_rsp) &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_rsp), &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_rsp) &
                     ]
         return
     end subroutine collect_arnoldi_rsp_testsuite
@@ -663,6 +664,63 @@ contains
 
         return
     end subroutine test_arnoldi_factorization_rsp
+
+    subroutine test_arnoldi_invalid_params_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_rsp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rsp), allocatable :: X(:)
+        ! Hessenberg matrix.
+        real(sp), allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        integer :: p
+
+        ! Common initialization for each case.
+        A = linop_rsp() ; call init_rand(A)
+        allocate(H(kdim+1, kdim)) ; H = zero_rsp
+        p = 1
+
+        ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
+        allocate(X(kdim+1)) ; call zero_basis(X)
+        call arnoldi(A, X, H, info, kstart=0, tol=atol_sp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_rsp', &
+                              & info='Invalid kstart (kstart < 1)', eq='info == -5', context='kstart=0')
+
+        call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_sp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_rsp', &
+                              & info='Invalid kstart (kstart > kend)', eq='info == -5', context='kstart > kend')
+
+        ! --- Case 2: k_end > kdim (info = -6) ---
+        call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_sp)
+        call check(error, info == -6)
+        call check_test(error, 'test_arnoldi_invalid_params_rsp', &
+                              & info='Invalid kend (kend > kdim)', eq='info == -6', context='kend=kdim+1')
+
+        ! --- Case 3: tolerance < 0 (info = -7) ---
+        call arnoldi(A, X, H, info, tol=-1.0_sp)
+        call check(error, info == -7)
+        call check_test(error, 'test_arnoldi_invalid_params_rsp', &
+                              & info='Invalid tolerance (tol < 0)', eq='info == -7', context='tol=-1.0')
+
+        ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
+        ! If kdim=20, size(X)=21. p=2 does not divide 21.
+        p = 2
+        print *, size(X), mod(size(X), p)
+    stop
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+        call check(error, info == -9)
+        call check_test(error, 'test_arnoldi_invalid_params_rsp', &
+                              & info='Invalid blksize (mod(size(X), p) /= 0)', eq='info == -9', context='p=2')
+
+        return
+    end subroutine test_arnoldi_invalid_params_rsp
 
     subroutine test_restarting_arnoldi_rsp(error)
         ! Error type to be returned
@@ -830,7 +888,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_rdp), &
             new_unittest("Arnoldi restart", test_restarting_arnoldi_rdp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rdp), &
-            new_unittest("Krylov-Schur factorization", test_krylov_schur_rdp) &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_rdp), &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_rdp) &
                     ]
         return
     end subroutine collect_arnoldi_rdp_testsuite
@@ -887,6 +946,63 @@ contains
 
         return
     end subroutine test_arnoldi_factorization_rdp
+
+    subroutine test_arnoldi_invalid_params_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_rdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_rdp), allocatable :: X(:)
+        ! Hessenberg matrix.
+        real(dp), allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        integer :: p
+
+        ! Common initialization for each case.
+        A = linop_rdp() ; call init_rand(A)
+        allocate(H(kdim+1, kdim)) ; H = zero_rdp
+        p = 1
+
+        ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
+        allocate(X(kdim+1)) ; call zero_basis(X)
+        call arnoldi(A, X, H, info, kstart=0, tol=atol_dp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_rdp', &
+                              & info='Invalid kstart (kstart < 1)', eq='info == -5', context='kstart=0')
+
+        call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_dp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_rdp', &
+                              & info='Invalid kstart (kstart > kend)', eq='info == -5', context='kstart > kend')
+
+        ! --- Case 2: k_end > kdim (info = -6) ---
+        call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_dp)
+        call check(error, info == -6)
+        call check_test(error, 'test_arnoldi_invalid_params_rdp', &
+                              & info='Invalid kend (kend > kdim)', eq='info == -6', context='kend=kdim+1')
+
+        ! --- Case 3: tolerance < 0 (info = -7) ---
+        call arnoldi(A, X, H, info, tol=-1.0_dp)
+        call check(error, info == -7)
+        call check_test(error, 'test_arnoldi_invalid_params_rdp', &
+                              & info='Invalid tolerance (tol < 0)', eq='info == -7', context='tol=-1.0')
+
+        ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
+        ! If kdim=20, size(X)=21. p=2 does not divide 21.
+        p = 2
+        print *, size(X), mod(size(X), p)
+    stop
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+        call check(error, info == -9)
+        call check_test(error, 'test_arnoldi_invalid_params_rdp', &
+                              & info='Invalid blksize (mod(size(X), p) /= 0)', eq='info == -9', context='p=2')
+
+        return
+    end subroutine test_arnoldi_invalid_params_rdp
 
     subroutine test_restarting_arnoldi_rdp(error)
         ! Error type to be returned
@@ -1054,7 +1170,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_csp), &
             new_unittest("Arnoldi restart", test_restarting_arnoldi_csp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_csp), &
-            new_unittest("Krylov-Schur factorization", test_krylov_schur_csp) &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_csp), &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_csp) &
                     ]
         return
     end subroutine collect_arnoldi_csp_testsuite
@@ -1111,6 +1228,63 @@ contains
 
         return
     end subroutine test_arnoldi_factorization_csp
+
+    subroutine test_arnoldi_invalid_params_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_csp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_csp), allocatable :: X(:)
+        ! Hessenberg matrix.
+        complex(sp), allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        integer :: p
+
+        ! Common initialization for each case.
+        A = linop_csp() ; call init_rand(A)
+        allocate(H(kdim+1, kdim)) ; H = zero_csp
+        p = 1
+
+        ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
+        allocate(X(kdim+1)) ; call zero_basis(X)
+        call arnoldi(A, X, H, info, kstart=0, tol=atol_sp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_csp', &
+                              & info='Invalid kstart (kstart < 1)', eq='info == -5', context='kstart=0')
+
+        call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_sp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_csp', &
+                              & info='Invalid kstart (kstart > kend)', eq='info == -5', context='kstart > kend')
+
+        ! --- Case 2: k_end > kdim (info = -6) ---
+        call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_sp)
+        call check(error, info == -6)
+        call check_test(error, 'test_arnoldi_invalid_params_csp', &
+                              & info='Invalid kend (kend > kdim)', eq='info == -6', context='kend=kdim+1')
+
+        ! --- Case 3: tolerance < 0 (info = -7) ---
+        call arnoldi(A, X, H, info, tol=-1.0_sp)
+        call check(error, info == -7)
+        call check_test(error, 'test_arnoldi_invalid_params_csp', &
+                              & info='Invalid tolerance (tol < 0)', eq='info == -7', context='tol=-1.0')
+
+        ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
+        ! If kdim=20, size(X)=21. p=2 does not divide 21.
+        p = 2
+        print *, size(X), mod(size(X), p)
+    stop
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+        call check(error, info == -9)
+        call check_test(error, 'test_arnoldi_invalid_params_csp', &
+                              & info='Invalid blksize (mod(size(X), p) /= 0)', eq='info == -9', context='p=2')
+
+        return
+    end subroutine test_arnoldi_invalid_params_csp
 
     subroutine test_restarting_arnoldi_csp(error)
         ! Error type to be returned
@@ -1278,7 +1452,8 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_cdp), &
             new_unittest("Arnoldi restart", test_restarting_arnoldi_cdp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_cdp), &
-            new_unittest("Krylov-Schur factorization", test_krylov_schur_cdp) &
+            new_unittest("Krylov-Schur factorization", test_krylov_schur_cdp), &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_cdp) &
                     ]
         return
     end subroutine collect_arnoldi_cdp_testsuite
@@ -1335,6 +1510,63 @@ contains
 
         return
     end subroutine test_arnoldi_factorization_cdp
+
+    subroutine test_arnoldi_invalid_params_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_cdp), allocatable :: A
+        ! Krylov subspace.
+        type(vector_cdp), allocatable :: X(:)
+        ! Hessenberg matrix.
+        complex(dp), allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        integer :: p
+
+        ! Common initialization for each case.
+        A = linop_cdp() ; call init_rand(A)
+        allocate(H(kdim+1, kdim)) ; H = zero_cdp
+        p = 1
+
+        ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
+        allocate(X(kdim+1)) ; call zero_basis(X)
+        call arnoldi(A, X, H, info, kstart=0, tol=atol_dp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_cdp', &
+                              & info='Invalid kstart (kstart < 1)', eq='info == -5', context='kstart=0')
+
+        call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_dp)
+        call check(error, info == -5)
+        call check_test(error, 'test_arnoldi_invalid_params_cdp', &
+                              & info='Invalid kstart (kstart > kend)', eq='info == -5', context='kstart > kend')
+
+        ! --- Case 2: k_end > kdim (info = -6) ---
+        call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_dp)
+        call check(error, info == -6)
+        call check_test(error, 'test_arnoldi_invalid_params_cdp', &
+                              & info='Invalid kend (kend > kdim)', eq='info == -6', context='kend=kdim+1')
+
+        ! --- Case 3: tolerance < 0 (info = -7) ---
+        call arnoldi(A, X, H, info, tol=-1.0_dp)
+        call check(error, info == -7)
+        call check_test(error, 'test_arnoldi_invalid_params_cdp', &
+                              & info='Invalid tolerance (tol < 0)', eq='info == -7', context='tol=-1.0')
+
+        ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
+        ! If kdim=20, size(X)=21. p=2 does not divide 21.
+        p = 2
+        print *, size(X), mod(size(X), p)
+    stop
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+        call check(error, info == -9)
+        call check_test(error, 'test_arnoldi_invalid_params_cdp', &
+                              & info='Invalid blksize (mod(size(X), p) /= 0)', eq='info == -9', context='p=2')
+
+        return
+    end subroutine test_arnoldi_invalid_params_cdp
 
     subroutine test_restarting_arnoldi_cdp(error)
         ! Error type to be returned
