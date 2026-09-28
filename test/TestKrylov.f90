@@ -2,7 +2,7 @@ module TestKrylov
     ! Fortran Standard Library.
     use iso_fortran_env, only: output_unit
     use stdlib_math, only: is_close, all_close
-    use stdlib_linalg, only: eye, hermitian
+    use stdlib_linalg, only: eye, hermitian, is_hessenberg
     use stdlib_stats, only: median
     ! Testdrive
     use testdrive, only: new_unittest, unittest_type, error_type, check
@@ -646,6 +646,11 @@ contains
         call check_test(error, 'test_arnoldi_factorization_rsp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
+        ! Check H is indeed Hessenberg.
+        call check(error, is_hessenberg(H, uplo='u'))
+        call check_test(error, 'test_arnoldi_factorization_rsp', &
+                               info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(X(:kdim))
@@ -865,6 +870,11 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_rdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
+
+        ! Check H is indeed Hessenberg.
+        call check(error, is_hessenberg(H, uplo='u'))
+        call check_test(error, 'test_arnoldi_factorization_rdp', &
+                               info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
 
 
         ! Compute Gram matrix associated to the Krylov basis.
@@ -1086,6 +1096,11 @@ contains
         call check_test(error, 'test_arnoldi_factorization_csp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
+        ! Check H is indeed Hessenberg.
+        call check(error, is_hessenberg(H, uplo='u'))
+        call check_test(error, 'test_arnoldi_factorization_csp', &
+                               info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
+
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(X(:kdim))
@@ -1305,6 +1320,11 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_arnoldi_factorization_cdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
+
+        ! Check H is indeed Hessenberg.
+        call check(error, is_hessenberg(H, uplo='u'))
+        call check_test(error, 'test_arnoldi_factorization_cdp', &
+                               info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
 
 
         ! Compute Gram matrix associated to the Krylov basis.
