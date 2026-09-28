@@ -191,7 +191,8 @@ contains
             new_unittest("Arnoldi restart", test_restarting_arnoldi_${type[0]}$${kind}$), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$), &
-            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_${type[0]}$${kind}$) &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
@@ -303,6 +304,85 @@ contains
 
         return
     end subroutine test_arnoldi_invalid_params_${type[0]}$${kind}$
+
+    subroutine test_arnoldi_shifted_matrix_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear operators.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(axpby_linop_${type[0]}$${kind}$), allocatable :: A_shift
+        ! Krylov subspaces.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:), X_shift(:)
+        ! Hessenberg matrices.
+        ${type}$, allocatable :: H(:, :), H_shift(:, :)
+        ! Information flags.
+        integer :: info, info_shift, i
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        ${type}$ :: sigma
+        #:if type.startswith('complex')
+        real(${kind}$) :: sigma_r, sigma_i
+        #:endif
+        ${type}$, allocatable :: G_basis(:, :)
+        ${type}$, allocatable :: H_diff(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! 1. Initialize linear operator A.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+
+        ! 2. Arnoldi factorization for A.
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
+        allocate(H(kdim+1, kdim)) ; H = zero_${type[0]}$${kind}$
+        call arnoldi(A, X, H, info, tol=atol_${kind}$)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_${type[0]}$${kind}$')
+
+        ! 3. Construct shifted operator A_shift = A + sigma*I.
+        #:if type.startswith('complex')
+        call random_number(sigma_r)
+        call random_number(sigma_i)
+        sigma = cmplx(sigma_r, sigma_i, kind=${kind}$)
+        #:else
+        call random_number(sigma)
+        #:endif
+        allocate(A_shift)
+        A_shift%A = A
+        A_shift%B = Id_${type[0]}$${kind}$()
+        A_shift%alpha = 1.0_${kind}$
+        A_shift%beta = sigma
+        A_shift%transA = .false.
+        A_shift%transB = .false.
+
+        ! 4. Arnoldi factorization for A_shift using the same starting vector.
+        allocate(X_shift(kdim+1)); call zero_basis(X_shift)
+        call copy(X_shift(1), X(1))
+        allocate(H_shift(kdim+1, kdim)) ; H_shift = zero_${type[0]}$${kind}$
+        call arnoldi(A_shift, X_shift, H_shift, info_shift, tol=atol_${kind}$)
+        call check_info(info_shift, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_${type[0]}$${kind}$')
+
+        ! 5. Verify that bases are the same.
+        G_basis = innerprod(X(:kdim), X_shift(:kdim))
+        err = maxval(abs(G_basis - eye(kdim, mold=1.0_${kind}$)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_arnoldi_shifted_matrix_${type[0]}$${kind}$', &
+                              & info='Basis Invariance', eq='X = X_shift', context=msg)
+
+        ! 6. Verify that H_shift = H + sigma*I.
+        allocate(H_diff(kdim+1, kdim))
+        H_diff = H_shift - H
+        do i = 1, kdim
+            H_diff(i, i) = H_diff(i, i) - sigma
+        end do
+        err = maxval(abs(H_diff))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_arnoldi_shifted_matrix_${type[0]}$${kind}$', &
+                              & info='Hessenberg Shift', eq='H_shift = H + sigma*I', context=msg)
+
+        return
+    end subroutine test_arnoldi_shifted_matrix_${type[0]}$${kind}$
+
 
     subroutine test_restarting_arnoldi_${type[0]}$${kind}$(error)
         ! Error type to be returned

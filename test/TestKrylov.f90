@@ -607,7 +607,8 @@ contains
             new_unittest("Arnoldi restart", test_restarting_arnoldi_rsp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rsp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_rsp), &
-            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_rsp) &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_rsp), &
+            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_rsp) &
                     ]
         return
     end subroutine collect_arnoldi_rsp_testsuite
@@ -712,8 +713,6 @@ contains
         ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
         ! If kdim=20, size(X)=21. p=2 does not divide 21.
         p = 2
-        print *, size(X), mod(size(X), p)
-    stop
         call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
         call check(error, info == -9)
         call check_test(error, 'test_arnoldi_invalid_params_rsp', &
@@ -721,6 +720,76 @@ contains
 
         return
     end subroutine test_arnoldi_invalid_params_rsp
+
+    subroutine test_arnoldi_shifted_matrix_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear operators.
+        type(linop_rsp), allocatable :: A
+        type(axpby_linop_rsp), allocatable :: A_shift
+        ! Krylov subspaces.
+        type(vector_rsp), allocatable :: X(:), X_shift(:)
+        ! Hessenberg matrices.
+        real(sp), allocatable :: H(:, :), H_shift(:, :)
+        ! Information flags.
+        integer :: info, info_shift, i
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        real(sp) :: sigma
+        real(sp), allocatable :: G_basis(:, :)
+        real(sp), allocatable :: H_diff(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! 1. Initialize linear operator A.
+        A = linop_rsp() ; call init_rand(A)
+
+        ! 2. Arnoldi factorization for A.
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
+        allocate(H(kdim+1, kdim)) ; H = zero_rsp
+        call arnoldi(A, X, H, info, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_rsp')
+
+        ! 3. Construct shifted operator A_shift = A + sigma*I.
+        call random_number(sigma)
+        allocate(A_shift)
+        A_shift%A = A
+        A_shift%B = Id_rsp()
+        A_shift%alpha = 1.0_sp
+        A_shift%beta = sigma
+        A_shift%transA = .false.
+        A_shift%transB = .false.
+
+        ! 4. Arnoldi factorization for A_shift using the same starting vector.
+        allocate(X_shift(kdim+1)); call zero_basis(X_shift)
+        call copy(X_shift(1), X(1))
+        allocate(H_shift(kdim+1, kdim)) ; H_shift = zero_rsp
+        call arnoldi(A_shift, X_shift, H_shift, info_shift, tol=atol_sp)
+        call check_info(info_shift, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_rsp')
+
+        ! 5. Verify that bases are the same.
+        G_basis = innerprod(X(:kdim), X_shift(:kdim))
+        err = maxval(abs(G_basis - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_rsp', &
+                              & info='Basis Invariance', eq='X = X_shift', context=msg)
+
+        ! 6. Verify that H_shift = H + sigma*I.
+        allocate(H_diff(kdim+1, kdim))
+        H_diff = H_shift - H
+        do i = 1, kdim
+            H_diff(i, i) = H_diff(i, i) - sigma
+        end do
+        err = maxval(abs(H_diff))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_rsp', &
+                              & info='Hessenberg Shift', eq='H_shift = H + sigma*I', context=msg)
+
+        return
+    end subroutine test_arnoldi_shifted_matrix_rsp
+
 
     subroutine test_restarting_arnoldi_rsp(error)
         ! Error type to be returned
@@ -889,7 +958,8 @@ contains
             new_unittest("Arnoldi restart", test_restarting_arnoldi_rdp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_rdp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_rdp), &
-            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_rdp) &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_rdp), &
+            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_rdp) &
                     ]
         return
     end subroutine collect_arnoldi_rdp_testsuite
@@ -994,8 +1064,6 @@ contains
         ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
         ! If kdim=20, size(X)=21. p=2 does not divide 21.
         p = 2
-        print *, size(X), mod(size(X), p)
-    stop
         call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
         call check(error, info == -9)
         call check_test(error, 'test_arnoldi_invalid_params_rdp', &
@@ -1003,6 +1071,76 @@ contains
 
         return
     end subroutine test_arnoldi_invalid_params_rdp
+
+    subroutine test_arnoldi_shifted_matrix_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear operators.
+        type(linop_rdp), allocatable :: A
+        type(axpby_linop_rdp), allocatable :: A_shift
+        ! Krylov subspaces.
+        type(vector_rdp), allocatable :: X(:), X_shift(:)
+        ! Hessenberg matrices.
+        real(dp), allocatable :: H(:, :), H_shift(:, :)
+        ! Information flags.
+        integer :: info, info_shift, i
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        real(dp) :: sigma
+        real(dp), allocatable :: G_basis(:, :)
+        real(dp), allocatable :: H_diff(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! 1. Initialize linear operator A.
+        A = linop_rdp() ; call init_rand(A)
+
+        ! 2. Arnoldi factorization for A.
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
+        allocate(H(kdim+1, kdim)) ; H = zero_rdp
+        call arnoldi(A, X, H, info, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_rdp')
+
+        ! 3. Construct shifted operator A_shift = A + sigma*I.
+        call random_number(sigma)
+        allocate(A_shift)
+        A_shift%A = A
+        A_shift%B = Id_rdp()
+        A_shift%alpha = 1.0_dp
+        A_shift%beta = sigma
+        A_shift%transA = .false.
+        A_shift%transB = .false.
+
+        ! 4. Arnoldi factorization for A_shift using the same starting vector.
+        allocate(X_shift(kdim+1)); call zero_basis(X_shift)
+        call copy(X_shift(1), X(1))
+        allocate(H_shift(kdim+1, kdim)) ; H_shift = zero_rdp
+        call arnoldi(A_shift, X_shift, H_shift, info_shift, tol=atol_dp)
+        call check_info(info_shift, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_rdp')
+
+        ! 5. Verify that bases are the same.
+        G_basis = innerprod(X(:kdim), X_shift(:kdim))
+        err = maxval(abs(G_basis - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_rdp', &
+                              & info='Basis Invariance', eq='X = X_shift', context=msg)
+
+        ! 6. Verify that H_shift = H + sigma*I.
+        allocate(H_diff(kdim+1, kdim))
+        H_diff = H_shift - H
+        do i = 1, kdim
+            H_diff(i, i) = H_diff(i, i) - sigma
+        end do
+        err = maxval(abs(H_diff))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_rdp', &
+                              & info='Hessenberg Shift', eq='H_shift = H + sigma*I', context=msg)
+
+        return
+    end subroutine test_arnoldi_shifted_matrix_rdp
+
 
     subroutine test_restarting_arnoldi_rdp(error)
         ! Error type to be returned
@@ -1171,7 +1309,8 @@ contains
             new_unittest("Arnoldi restart", test_restarting_arnoldi_csp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_csp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_csp), &
-            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_csp) &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_csp), &
+            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_csp) &
                     ]
         return
     end subroutine collect_arnoldi_csp_testsuite
@@ -1276,8 +1415,6 @@ contains
         ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
         ! If kdim=20, size(X)=21. p=2 does not divide 21.
         p = 2
-        print *, size(X), mod(size(X), p)
-    stop
         call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
         call check(error, info == -9)
         call check_test(error, 'test_arnoldi_invalid_params_csp', &
@@ -1285,6 +1422,79 @@ contains
 
         return
     end subroutine test_arnoldi_invalid_params_csp
+
+    subroutine test_arnoldi_shifted_matrix_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear operators.
+        type(linop_csp), allocatable :: A
+        type(axpby_linop_csp), allocatable :: A_shift
+        ! Krylov subspaces.
+        type(vector_csp), allocatable :: X(:), X_shift(:)
+        ! Hessenberg matrices.
+        complex(sp), allocatable :: H(:, :), H_shift(:, :)
+        ! Information flags.
+        integer :: info, info_shift, i
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        complex(sp) :: sigma
+        real(sp) :: sigma_r, sigma_i
+        complex(sp), allocatable :: G_basis(:, :)
+        complex(sp), allocatable :: H_diff(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! 1. Initialize linear operator A.
+        A = linop_csp() ; call init_rand(A)
+
+        ! 2. Arnoldi factorization for A.
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
+        allocate(H(kdim+1, kdim)) ; H = zero_csp
+        call arnoldi(A, X, H, info, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_csp')
+
+        ! 3. Construct shifted operator A_shift = A + sigma*I.
+        call random_number(sigma_r)
+        call random_number(sigma_i)
+        sigma = cmplx(sigma_r, sigma_i, kind=sp)
+        allocate(A_shift)
+        A_shift%A = A
+        A_shift%B = Id_csp()
+        A_shift%alpha = 1.0_sp
+        A_shift%beta = sigma
+        A_shift%transA = .false.
+        A_shift%transB = .false.
+
+        ! 4. Arnoldi factorization for A_shift using the same starting vector.
+        allocate(X_shift(kdim+1)); call zero_basis(X_shift)
+        call copy(X_shift(1), X(1))
+        allocate(H_shift(kdim+1, kdim)) ; H_shift = zero_csp
+        call arnoldi(A_shift, X_shift, H_shift, info_shift, tol=atol_sp)
+        call check_info(info_shift, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_csp')
+
+        ! 5. Verify that bases are the same.
+        G_basis = innerprod(X(:kdim), X_shift(:kdim))
+        err = maxval(abs(G_basis - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_csp', &
+                              & info='Basis Invariance', eq='X = X_shift', context=msg)
+
+        ! 6. Verify that H_shift = H + sigma*I.
+        allocate(H_diff(kdim+1, kdim))
+        H_diff = H_shift - H
+        do i = 1, kdim
+            H_diff(i, i) = H_diff(i, i) - sigma
+        end do
+        err = maxval(abs(H_diff))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_csp', &
+                              & info='Hessenberg Shift', eq='H_shift = H + sigma*I', context=msg)
+
+        return
+    end subroutine test_arnoldi_shifted_matrix_csp
+
 
     subroutine test_restarting_arnoldi_csp(error)
         ! Error type to be returned
@@ -1453,7 +1663,8 @@ contains
             new_unittest("Arnoldi restart", test_restarting_arnoldi_cdp), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_cdp), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_cdp), &
-            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_cdp) &
+            new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_cdp), &
+            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_cdp) &
                     ]
         return
     end subroutine collect_arnoldi_cdp_testsuite
@@ -1558,8 +1769,6 @@ contains
         ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
         ! If kdim=20, size(X)=21. p=2 does not divide 21.
         p = 2
-        print *, size(X), mod(size(X), p)
-    stop
         call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
         call check(error, info == -9)
         call check_test(error, 'test_arnoldi_invalid_params_cdp', &
@@ -1567,6 +1776,79 @@ contains
 
         return
     end subroutine test_arnoldi_invalid_params_cdp
+
+    subroutine test_arnoldi_shifted_matrix_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Linear operators.
+        type(linop_cdp), allocatable :: A
+        type(axpby_linop_cdp), allocatable :: A_shift
+        ! Krylov subspaces.
+        type(vector_cdp), allocatable :: X(:), X_shift(:)
+        ! Hessenberg matrices.
+        complex(dp), allocatable :: H(:, :), H_shift(:, :)
+        ! Information flags.
+        integer :: info, info_shift, i
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+        complex(dp) :: sigma
+        real(dp) :: sigma_r, sigma_i
+        complex(dp), allocatable :: G_basis(:, :)
+        complex(dp), allocatable :: H_diff(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! 1. Initialize linear operator A.
+        A = linop_cdp() ; call init_rand(A)
+
+        ! 2. Arnoldi factorization for A.
+        allocate(X(kdim+1)); call zero_basis(X); call X(1)%rand(ifnorm = .true.)
+        allocate(H(kdim+1, kdim)) ; H = zero_cdp
+        call arnoldi(A, X, H, info, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_cdp')
+
+        ! 3. Construct shifted operator A_shift = A + sigma*I.
+        call random_number(sigma_r)
+        call random_number(sigma_i)
+        sigma = cmplx(sigma_r, sigma_i, kind=dp)
+        allocate(A_shift)
+        A_shift%A = A
+        A_shift%B = Id_cdp()
+        A_shift%alpha = 1.0_dp
+        A_shift%beta = sigma
+        A_shift%transA = .false.
+        A_shift%transB = .false.
+
+        ! 4. Arnoldi factorization for A_shift using the same starting vector.
+        allocate(X_shift(kdim+1)); call zero_basis(X_shift)
+        call copy(X_shift(1), X(1))
+        allocate(H_shift(kdim+1, kdim)) ; H_shift = zero_cdp
+        call arnoldi(A_shift, X_shift, H_shift, info_shift, tol=atol_dp)
+        call check_info(info_shift, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_cdp')
+
+        ! 5. Verify that bases are the same.
+        G_basis = innerprod(X(:kdim), X_shift(:kdim))
+        err = maxval(abs(G_basis - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_cdp', &
+                              & info='Basis Invariance', eq='X = X_shift', context=msg)
+
+        ! 6. Verify that H_shift = H + sigma*I.
+        allocate(H_diff(kdim+1, kdim))
+        H_diff = H_shift - H
+        do i = 1, kdim
+            H_diff(i, i) = H_diff(i, i) - sigma
+        end do
+        err = maxval(abs(H_diff))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_arnoldi_shifted_matrix_cdp', &
+                              & info='Hessenberg Shift', eq='H_shift = H + sigma*I', context=msg)
+
+        return
+    end subroutine test_arnoldi_shifted_matrix_cdp
+
 
     subroutine test_restarting_arnoldi_cdp(error)
         ! Error type to be returned
