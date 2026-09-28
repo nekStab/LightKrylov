@@ -615,6 +615,10 @@ contains
                write (msg, '(A)') 'Arnoldi factorization: Parameter tol is invalid (negative).'
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
+            case (-9)
+               write (msg, '(A)') 'Arnoldi factorization: Krylov subspace dimension and blocksize are incommensurate.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
             case default
                write (msg, '(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, &

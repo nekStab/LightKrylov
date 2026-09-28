@@ -651,7 +651,6 @@ contains
         call check_test(error, 'test_arnoldi_factorization_rsp', &
                                info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
 
-
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(X(:kdim))
 
@@ -875,7 +874,6 @@ contains
         call check(error, is_hessenberg(H, uplo='u'))
         call check_test(error, 'test_arnoldi_factorization_rdp', &
                                info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
-
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(X(:kdim))
@@ -1101,7 +1099,6 @@ contains
         call check_test(error, 'test_arnoldi_factorization_csp', &
                                info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
 
-
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(X(:kdim))
 
@@ -1325,7 +1322,6 @@ contains
         call check(error, is_hessenberg(H, uplo='u'))
         call check_test(error, 'test_arnoldi_factorization_cdp', &
                                info='Upper Hessenberg', eq='Is H Hessenberg?', context=msg)
-
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(X(:kdim))

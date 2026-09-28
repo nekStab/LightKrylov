@@ -34,6 +34,8 @@ contains
             info = -6
         else if (tolerance < 0) then
             info = -7
+        else if (mod(size(X), p) /= 0) then
+            info = -9
         else
             info = 0
         endif
@@ -117,6 +119,8 @@ contains
             info = -6
         else if (tolerance < 0) then
             info = -7
+        else if (mod(size(X), p) /= 0) then
+            info = -9
         else
             info = 0
         endif
@@ -200,6 +204,8 @@ contains
             info = -6
         else if (tolerance < 0) then
             info = -7
+        else if (mod(size(X), p) /= 0) then
+            info = -9
         else
             info = 0
         endif
@@ -283,6 +289,8 @@ contains
             info = -6
         else if (tolerance < 0) then
             info = -7
+        else if (mod(size(X), p) /= 0) then
+            info = -9
         else
             info = 0
         endif
