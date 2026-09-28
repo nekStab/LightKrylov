@@ -192,7 +192,8 @@ contains
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$), &
             new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_${type[0]}$${kind}$), &
-            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_${type[0]}$${kind}$) &
+            new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi invariant subspace", test_arnoldi_invariant_subspace_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
@@ -542,6 +543,59 @@ contains
             selected = abs(eigvals) > median(abs(eigvals))
         end function select_eigs
     end subroutine test_krylov_schur_${type[0]}$${kind}$
+
+    subroutine test_arnoldi_invariant_subspace_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        ${type}$, allocatable :: Xdata(:, :), Adat(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+        integer :: k_inv, k_max
+
+        k_inv = 10
+        k_max = test_size
+        ! Create block lower triangular matrix.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        A%data(k_inv+1:, :k_inv) = zero_${type[0]}$${kind}$
+
+        ! Initial vector v1 must be in the invariant subspace
+        allocate(X(k_max+1))
+        call zero_basis(X)
+        call X(1)%rand(ifnorm=.false.)
+        X(1)%data(k_inv+1:) = zero_${type[0]}$${kind}$
+        err = X(1)%norm()
+        call X(1)%scal(one_${type[0]}$${kind}$/err)
+
+        allocate(H(k_max+1, k_max), source=zero_${type[0]}$${kind}$)
+        call arnoldi(A, X, H, info, tol=atol_${kind}$)
+
+        ! 1. Check if Arnoldi detected the invariant subspace dimension
+        call check(error, info == k_inv)
+        call check_test(error, 'test_arnoldi_invariant_subspace_${type[0]}$${kind}$', &
+                              & info='Subspace Dim', eq='info == k_inv', context='Invariant detection')
+
+        ! 2. Check AX_k = X_k H_k
+        allocate(Xdata(test_size, info))
+        call get_data(Xdata, X(:info))
+
+        err = maxval(abs(matmul(A%data, Xdata) - matmul(Xdata, H(1:info, 1:info))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_arnoldi_invariant_subspace_${type[0]}$${kind}$', &
+                              & info='Invariant Property', eq='A @ X = X @ H', context=msg)
+
+        return
+    end subroutine test_arnoldi_invariant_subspace_${type[0]}$${kind}$
+
 
     #:endfor
 
