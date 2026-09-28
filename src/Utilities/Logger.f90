@@ -599,15 +599,28 @@ contains
             end if
          else if (trim(to_lower(origin)) == 'arnoldi') then
             ! arnoldi
-            if (info > 0) then
+            select case (info)
+            case (0:)
                write (msg, '(A,I0,A)') 'Arnoldi factorization: Invariant subspace computed after ', info, ' iterations.'
                call log_debug(trim(msg), module=module, procedure=procedure)
-            else
+            case (-5)
+               write (msg, '(A)') 'Arnoldi factorization: Parameter kstart is invalid (either negative or larger than kend).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-6)
+               write (msg, '(A)') 'Arnoldi factorization: Parameter kend is invalid (either less than kstart or larger than kdim).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-7)
+               write (msg, '(A)') 'Arnoldi factorization: Parameter tol is invalid (negative).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case default
                write (msg, '(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
                ierr = -1
-            end if
+            end select
          else if (trim(to_lower(origin)) == 'bidiagonalization') then
             ! lanczos_bidiagonalization
             if (info > 0) then
