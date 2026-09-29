@@ -490,6 +490,8 @@ contains
         class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
+        real(${kind}$) :: alpha
+        logical :: normalize
         character(len=100) :: errmsg
         #:if type[0] == "r"
         call random_number(self%data)
@@ -500,6 +502,11 @@ contains
         call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
         #:endif
+        normalize = optval(ifnorm, .false.)
+        if (normalize) then
+            alpha = self%norm()
+            call self%scal(one_${type[0]}$${kind}$/alpha)
+        end if
     end subroutine dense_rand_${type[0]}$${kind}$
 
     subroutine dense_scal_${type[0]}$${kind}$(self, alpha)
