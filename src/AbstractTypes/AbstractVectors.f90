@@ -2031,7 +2031,7 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
-                G(j, i) = G(i, j)
+                G(j, i) = conjg(G(i, j))
             enddo
         enddo
     end function gram_matrix_csp
@@ -2375,7 +2375,7 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
-                G(j, i) = G(i, j)
+                G(j, i) = conjg(G(i, j))
             enddo
         enddo
     end function gram_matrix_cdp

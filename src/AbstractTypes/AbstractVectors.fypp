@@ -651,7 +651,11 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
+                #:if type[0] == "c"
+                G(j, i) = conjg(G(i, j))
+                #:else
                 G(j, i) = G(i, j)
+                #:endif
             enddo
         enddo
     end function gram_matrix_${type[0]}$${kind}$
