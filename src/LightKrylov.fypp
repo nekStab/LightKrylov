@@ -79,6 +79,7 @@ module LightKrylov
     #:endif
     #:endfor
     public :: adjoint
+    public :: verify_linop_axioms
 
     ! AbstractSystems exports.
     #:for kind, type in RC_KINDS_TYPES
