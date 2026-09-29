@@ -98,7 +98,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - x%data - y%data, 2) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_add', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_add
@@ -121,7 +121,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - (x%data - y%data), 2) < rtol_${kind}$)
-        call check_test(error, 'test_vector_${type[0]}$${kind}$_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_sub', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_${type[0]}$${kind}$_sub

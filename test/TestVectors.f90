@@ -96,7 +96,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - x%data - y%data, 2) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
+        call check_test(error, 'test_vector_rsp_add', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_rsp_add
@@ -119,7 +119,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - (x%data - y%data), 2) < rtol_sp)
-        call check_test(error, 'test_vector_rsp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
+        call check_test(error, 'test_vector_rsp_sub', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_rsp_sub
@@ -236,7 +236,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - x%data - y%data, 2) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
+        call check_test(error, 'test_vector_rdp_add', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_rdp_add
@@ -259,7 +259,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - (x%data - y%data), 2) < rtol_dp)
-        call check_test(error, 'test_vector_rdp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
+        call check_test(error, 'test_vector_rdp_sub', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_rdp_sub
@@ -376,7 +376,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - x%data - y%data, 2) < rtol_sp)
-        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
+        call check_test(error, 'test_vector_csp_add', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_csp_add
@@ -399,7 +399,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - (x%data - y%data), 2) < rtol_sp)
-        call check_test(error, 'test_vector_csp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
+        call check_test(error, 'test_vector_csp_sub', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_csp_sub
@@ -517,7 +517,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - x%data - y%data, 2) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, norm(z - (x+y), 2))')
+        call check_test(error, 'test_vector_cdp_add', eq='is_close(x%norm, norm(z - (x+y), 2))')
 
         return
     end subroutine test_vector_cdp_add
@@ -540,7 +540,7 @@ contains
 
         ! Check correctness.
         call check(error, norm(z%data - (x%data - y%data), 2) < rtol_dp)
-        call check_test(error, 'test_vector_cdp_norm', eq='is_close(x%norm, norm(z - (x-y), 2))')
+        call check_test(error, 'test_vector_cdp_sub', eq='is_close(x%norm, norm(z - (x-y), 2))')
 
         return
     end subroutine test_vector_cdp_sub
