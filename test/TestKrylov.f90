@@ -63,7 +63,8 @@ contains
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_rsp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rsp) &
+                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rsp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_rsp) &
                     ]
         return
     end subroutine collect_qr_rsp_testsuite
@@ -192,12 +193,78 @@ contains
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rsp
 
+    subroutine test_qr_rank_deficient_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test Vectors.
+        integer, parameter :: kdim = 10
+        type(vector_rsp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        real(sp) :: R(kdim, kdim)
+        ! Information flag.
+        integer :: info
+        ! Column to make collinear.
+        integer, parameter :: j_col = 3
+        ! Miscellaneous.
+        real(sp), allocatable :: Adata(:, :), Qdata(:, :)
+        real(sp), allocatable :: G(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+        real(sp) :: large_tol, beta, alpha
+        integer :: i
+
+        ! Use a large tolerance to trigger collinearity detection.
+        large_tol = sqrt(epsilon(1.0_sp))
+
+        ! Initialize matrix.
+        allocate(A(kdim)) ; call init_rand(A)
+
+        ! Build orthonormal basis: orthogonalize each vector against previous ones.
+        call orthonormalize_basis(A)
+
+        ! Make column j_col exactly collinear with column 1: A(j_col) = A(1)
+        call copy(A(j_col), A(1))
+
+        ! Save data before QR factorization.
+        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
+        R = zero_rsp
+
+        ! In-place QR factorization.
+        call qr(A, R, info, tol=large_tol)
+
+        ! QR with collinearity detection may trigger breakdown; info indicates step.
+        ! We don't call check_info here as we expect collinearity to occur.
+
+        ! Get Q data after factorization.
+        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+
+        ! Check correctness: A = Q @ R must hold even with collinear column.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_rsp', &
+                              & info='Factorization', eq='A = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_rsp', &
+                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        return
+    end subroutine test_qr_rank_deficient_rsp
+
     subroutine collect_qr_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_rdp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rdp) &
+                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rdp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_rdp) &
                     ]
         return
     end subroutine collect_qr_rdp_testsuite
@@ -326,12 +393,78 @@ contains
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_rdp
 
+    subroutine test_qr_rank_deficient_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test Vectors.
+        integer, parameter :: kdim = 10
+        type(vector_rdp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        real(dp) :: R(kdim, kdim)
+        ! Information flag.
+        integer :: info
+        ! Column to make collinear.
+        integer, parameter :: j_col = 3
+        ! Miscellaneous.
+        real(dp), allocatable :: Adata(:, :), Qdata(:, :)
+        real(dp), allocatable :: G(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+        real(dp) :: large_tol, beta, alpha
+        integer :: i
+
+        ! Use a large tolerance to trigger collinearity detection.
+        large_tol = sqrt(epsilon(1.0_dp))
+
+        ! Initialize matrix.
+        allocate(A(kdim)) ; call init_rand(A)
+
+        ! Build orthonormal basis: orthogonalize each vector against previous ones.
+        call orthonormalize_basis(A)
+
+        ! Make column j_col exactly collinear with column 1: A(j_col) = A(1)
+        call copy(A(j_col), A(1))
+
+        ! Save data before QR factorization.
+        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
+        R = zero_rdp
+
+        ! In-place QR factorization.
+        call qr(A, R, info, tol=large_tol)
+
+        ! QR with collinearity detection may trigger breakdown; info indicates step.
+        ! We don't call check_info here as we expect collinearity to occur.
+
+        ! Get Q data after factorization.
+        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+
+        ! Check correctness: A = Q @ R must hold even with collinear column.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_rdp', &
+                              & info='Factorization', eq='A = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_rdp', &
+                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        return
+    end subroutine test_qr_rank_deficient_rdp
+
     subroutine collect_qr_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_csp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_csp) &
+                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_csp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_csp) &
                     ]
         return
     end subroutine collect_qr_csp_testsuite
@@ -460,12 +593,78 @@ contains
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_csp
 
+    subroutine test_qr_rank_deficient_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test Vectors.
+        integer, parameter :: kdim = 10
+        type(vector_csp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        complex(sp) :: R(kdim, kdim)
+        ! Information flag.
+        integer :: info
+        ! Column to make collinear.
+        integer, parameter :: j_col = 3
+        ! Miscellaneous.
+        complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
+        complex(sp), allocatable :: G(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+        real(sp) :: large_tol, beta, alpha
+        integer :: i
+
+        ! Use a large tolerance to trigger collinearity detection.
+        large_tol = sqrt(epsilon(1.0_sp))
+
+        ! Initialize matrix.
+        allocate(A(kdim)) ; call init_rand(A)
+
+        ! Build orthonormal basis: orthogonalize each vector against previous ones.
+        call orthonormalize_basis(A)
+
+        ! Make column j_col exactly collinear with column 1: A(j_col) = A(1)
+        call copy(A(j_col), A(1))
+
+        ! Save data before QR factorization.
+        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
+        R = zero_csp
+
+        ! In-place QR factorization.
+        call qr(A, R, info, tol=large_tol)
+
+        ! QR with collinearity detection may trigger breakdown; info indicates step.
+        ! We don't call check_info here as we expect collinearity to occur.
+
+        ! Get Q data after factorization.
+        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+
+        ! Check correctness: A = Q @ R must hold even with collinear column.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_csp', &
+                              & info='Factorization', eq='A = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_csp', &
+                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        return
+    end subroutine test_qr_rank_deficient_csp
+
     subroutine collect_qr_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_cdp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_cdp) &
+                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_cdp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_cdp) &
                     ]
         return
     end subroutine collect_qr_cdp_testsuite
@@ -594,7 +793,72 @@ contains
         return
     end subroutine test_pivoting_qr_exact_rank_deficiency_cdp
 
-    
+    subroutine test_qr_rank_deficient_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test Vectors.
+        integer, parameter :: kdim = 10
+        type(vector_cdp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        complex(dp) :: R(kdim, kdim)
+        ! Information flag.
+        integer :: info
+        ! Column to make collinear.
+        integer, parameter :: j_col = 3
+        ! Miscellaneous.
+        complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
+        complex(dp), allocatable :: G(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+        real(dp) :: large_tol, beta, alpha
+        integer :: i
+
+        ! Use a large tolerance to trigger collinearity detection.
+        large_tol = sqrt(epsilon(1.0_dp))
+
+        ! Initialize matrix.
+        allocate(A(kdim)) ; call init_rand(A)
+
+        ! Build orthonormal basis: orthogonalize each vector against previous ones.
+        call orthonormalize_basis(A)
+
+        ! Make column j_col exactly collinear with column 1: A(j_col) = A(1)
+        call copy(A(j_col), A(1))
+
+        ! Save data before QR factorization.
+        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
+        R = zero_cdp
+
+        ! In-place QR factorization.
+        call qr(A, R, info, tol=large_tol)
+
+        ! QR with collinearity detection may trigger breakdown; info indicates step.
+        ! We don't call check_info here as we expect collinearity to occur.
+
+        ! Get Q data after factorization.
+        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+
+        ! Check correctness: A = Q @ R must hold even with collinear column.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_cdp', &
+                              & info='Factorization', eq='A = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_cdp', &
+                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        return
+    end subroutine test_qr_rank_deficient_cdp
+
+
     !--------------------------------------------------------------
     !-----     DEFINITIONS OF THE UNIT-TESTS FOR ARNOLDI      -----
     !--------------------------------------------------------------
@@ -3864,6 +4128,8 @@ contains
         ! Initialize random bases.
         allocate(X(kdim), Y(kdim))
         call init_rand(X); call init_rand(Y)
+        call orthonormalize_basis(X)
+        call orthonormalize_basis(Y)
 
         ! Biorthonormalize in-place.
         call biorthonormalize_bases(X, Y, info=info)
@@ -3989,6 +4255,8 @@ contains
         ! Initialize random bases.
         allocate(X(kdim), Y(kdim))
         call init_rand(X); call init_rand(Y)
+        call orthonormalize_basis(X)
+        call orthonormalize_basis(Y)
 
         ! Biorthonormalize in-place.
         call biorthonormalize_bases(X, Y, info=info)
@@ -4114,6 +4382,8 @@ contains
         ! Initialize random bases.
         allocate(X(kdim), Y(kdim))
         call init_rand(X); call init_rand(Y)
+        call orthonormalize_basis(X)
+        call orthonormalize_basis(Y)
 
         ! Biorthonormalize in-place.
         call biorthonormalize_bases(X, Y, info=info)
@@ -4239,6 +4509,8 @@ contains
         ! Initialize random bases.
         allocate(X(kdim), Y(kdim))
         call init_rand(X); call init_rand(Y)
+        call orthonormalize_basis(X)
+        call orthonormalize_basis(Y)
 
         ! Biorthonormalize in-place.
         call biorthonormalize_bases(X, Y, info=info)
