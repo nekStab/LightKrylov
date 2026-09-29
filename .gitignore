@@ -43,3 +43,6 @@ run_tests.sh
 # test/debug folder
 debug/
 *.css
+
+# claude stuff.
+.claude/
