@@ -190,6 +190,268 @@ contains
         call check_test(error, 'test_vector_axioms_${type[0]}$${kind}$', eq='Vector space axioms')
     end subroutine test_vector_axioms_${type[0]}$${kind}$
 
+    subroutine test_vector_${type[0]}$${kind}$_get_size(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$) :: x
+        ${type}$ :: x_(n)
+        ! Initialize vector.
+        x_ = 0.0_${kind}$ ; x = dense_vector(x_)
+        call check(error, x%get_size() == n)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_get_size', eq='x%get_size() == n')
+    end subroutine test_vector_${type[0]}$${kind}$_get_size
+
+   subroutine test_vector_${type[0]}$${kind}$_chsgn(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$) :: x, y
+        ${type}$ :: x_(n)
+        x = dense_vector(x_) ; call x%rand()
+        y = x
+        call x%chsgn()
+        call y%scal(-one_${type[0]}$${kind}$)
+        call check(error, norm(x%data - y%data, 2) < rtol_${kind}$)
+        call check_test(error, 'test_vector_${type[0]}$${kind}$_chsgn', eq='norm(x - (-y))')
+    end subroutine test_vector_${type[0]}$${kind}$_chsgn
+
+    subroutine test_linear_combination_vector_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: y
+        ${type}$ :: x_(n), v(5)
+        integer :: k, i
+        k = 5
+        allocate(X(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        #:if type[0] == "c"
+        call random_number(v%re)
+        call random_number(v%im)
+        #:else
+        call random_number(v)
+        #:endif
+        call linear_combination(y, X, v)
+        block
+            ${type}$ :: expected(n)
+            expected = zero_${type[0]}$${kind}$
+            do i = 1, k
+                expected = expected + v(i) * X(i)%data
+            end do
+            select type(y)
+            type is(dense_vector_${type[0]}$${kind}$)
+            call check(error, norm(y%data - expected, 2) < rtol_${kind}$)
+            end select
+        end block
+        call check_test(error, 'test_linear_combination_vector_${type[0]}$${kind}$', eq='y = Xv')
+    end subroutine test_linear_combination_vector_${type[0]}$${kind}$
+
+    subroutine test_linear_combination_matrix_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Y(:)
+        ${type}$ :: x_(n)
+        ${type}$, allocatable :: B(:,:)
+        integer :: k, m, i, j
+        k = 5 ; m = 3
+        allocate(X(k), B(k, m))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        #:if type[0] == "c"
+        call random_number(B%re)
+        call random_number(B%im)
+        #:else
+        call random_number(B)
+        #:endif
+        call linear_combination(Y, X, B)
+        block
+            ${type}$ :: expected(n, m)
+            expected = zero_${type[0]}$${kind}$
+            do j = 1, m
+                do i = 1, k
+                    expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
+                end do
+            end do
+            select type(Y)
+            type is (dense_vector_${type[0]}$${kind}$)
+            call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_${kind}$ .and. &
+                           norm(Y(m)%data - expected(:,m), 2) < rtol_${kind}$)
+            end select
+        end block
+        call check_test(error, 'test_linear_combination_matrix_${type[0]}$${kind}$', eq='Y = XB')
+    end subroutine test_linear_combination_matrix_${type[0]}$${kind}$
+
+    subroutine test_gram_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ${type}$ :: x_(n)
+        ${type}$, allocatable :: G(:,:)
+        integer :: k, i
+        k = 5
+        allocate(X(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        ! Orthonormalize X
+        call orthonormalize_basis(X)
+        G = Gram(X)
+        call check(error, norm(G - eye(k, mold=1.0_${kind}$), 2) < rtol_${kind}$)
+        call check_test(error, 'test_gram_${type[0]}$${kind}$', eq='Gram(X) = I')
+    end subroutine test_gram_${type[0]}$${kind}$
+
+    subroutine test_innerprod_vector_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:), y
+        ${type}$ :: x_(n)
+        ${type}$, allocatable :: v(:)
+        integer :: k, i
+        k = 5
+        allocate(X(k), y, v(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        y = dense_vector(x_)
+        call y%rand()
+        v = innerprod(X, y)
+        block
+            ${type}$ :: expected(k)
+            do i = 1, k
+                expected(i) = X(i)%dot(y)
+            end do
+            call check(error, norm(v - expected, 2) < rtol_${kind}$)
+        end block
+        call check_test(error, 'test_innerprod_vector_${type[0]}$${kind}$', eq='v = X.dot(y)')
+    end subroutine test_innerprod_vector_${type[0]}$${kind}$
+
+    subroutine test_innerprod_matrix_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:), Y(:)
+        ${type}$ :: x_(n)
+        ${type}$, allocatable :: M(:,:)
+        integer :: k, l, i, j
+        k = 5 ; l = 3
+        allocate(X(k), Y(l), M(k, l))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        do i = 1, l
+            Y(i) = dense_vector(x_)
+            call Y(i)%rand()
+        end do
+        M = innerprod(X, Y)
+        block
+            ${type}$ :: expected(k, l)
+            do j = 1, l
+                do i = 1, k
+                    expected(i, j) = X(i)%dot(Y(j))
+                end do
+            end do
+            call check(error, norm(M - expected, 2) < rtol_${kind}$)
+        end block
+        call check_test(error, 'test_innerprod_matrix_${type[0]}$${kind}$', eq='M = X.dot(Y)')
+    end subroutine test_innerprod_matrix_${type[0]}$${kind}$
+
+    subroutine test_axpby_basis_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:), Y(:), Y_orig(:)
+        ${type}$ :: x_(n), alpha, beta
+        integer :: k, i
+        k = 5
+        allocate(X(k), Y(k), Y_orig(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            Y(i) = dense_vector(x_)
+            Y_orig(i) = dense_vector(x_)
+            call X(i)%rand()
+            call Y(i)%rand()
+            call copy(Y(i), Y_orig(i))
+        end do
+        #:if type[0] == "c"
+        call random_number(alpha%re)
+        call random_number(alpha%im)
+        call random_number(beta%re)
+        call random_number(beta%im)
+        #:else
+        call random_number(alpha)
+        call random_number(beta)
+        #:endif
+        call axpby_basis(alpha, X, beta, Y)
+        do i = 1, k
+            call Y_orig(i)%axpby(alpha, X(i), beta)
+        end do
+        call check(error, norm(Y(1)%data - Y_orig(1)%data, 2) < rtol_${kind}$)
+        call check_test(error, 'test_axpby_basis_${type[0]}$${kind}$', eq='Y = alpha*X + beta*Y')
+    end subroutine test_axpby_basis_${type[0]}$${kind}$
+
+    subroutine test_zero_basis_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ${type}$ :: x_(n)
+        integer :: k, i
+        k = 5
+        allocate(X(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        call zero_basis(X)
+        call check(error, norm(X(1)%data, 2) <= atol_${kind}$)
+        call check_test(error, 'test_zero_basis_${type[0]}$${kind}$', eq='X == 0')
+    end subroutine test_zero_basis_${type[0]}$${kind}$
+
+    subroutine test_copy_basis_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:), Y(:)
+        ${type}$ :: x_(n)
+        integer :: k, i
+        k = 5
+        allocate(X(k), Y(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            Y(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        call copy(Y, X)
+        call check(error, norm(X(1)%data - Y(1)%data, 2) < rtol_${kind}$)
+        call check_test(error, 'test_copy_basis_${type[0]}$${kind}$', eq='Y == X')
+    end subroutine test_copy_basis_${type[0]}$${kind}$
+
+    subroutine test_rand_basis_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ${type}$ :: x_(n)
+        integer :: k, i
+        real(${kind}$) :: var1, var2
+        k = 5
+        allocate(X(k))
+        x_ = zero_${type[0]}$${kind}$
+        do i = 1, k
+            X(i) = dense_vector(x_)
+        end do
+        ! Test without normalization
+        call rand_basis(X, ifnorm=.false.)
+        var1 = sum(abs(X(1)%data))
+        call X(1)%rand()
+        var2 = sum(abs(X(2)%data))
+        call check(error, abs(var1 - var2) > 0.0_${kind}$ .or. abs(var1) > 0.0_${kind}$)
+        call check_test(error, 'test_rand_basis_${type[0]}$${kind}$', eq='rand vectors')
+        ! Test with normalization
+        call rand_basis(X, ifnorm=.true.)
+        call check(error, abs(X(1)%norm() - 1.0_${kind}$) < rtol_${kind}$)
+        call check_test(error, 'test_rand_basis_${type[0]}$${kind}$', eq='norm == 1')
+    end subroutine test_rand_basis_${type[0]}$${kind}$
     #:endfor
 
 end module TestVectors
