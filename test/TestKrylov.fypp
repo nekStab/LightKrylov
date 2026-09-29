@@ -190,10 +190,12 @@ contains
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Arnoldi restart", test_restart_arnoldi_${type[0]}$${kind}$), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
+            new_unittest("Block Arnoldi restart", test_block_arnoldi_restart_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$), &
             new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_${type[0]}$${kind}$), &
             new_unittest("Arnoldi shifted matrix", test_arnoldi_shifted_matrix_${type[0]}$${kind}$), &
-            new_unittest("Arnoldi invariant subspace", test_arnoldi_invariant_subspace_${type[0]}$${kind}$) &
+            new_unittest("Arnoldi invariant subspace", test_arnoldi_invariant_subspace_${type[0]}$${kind}$), &
+            new_unittest("Block Arnoldi invariant subspace", test_block_arnoldi_invariant_subspace_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_arnoldi_${type[0]}$${kind}$_testsuite
@@ -635,6 +637,127 @@ contains
 
         return
     end subroutine test_arnoldi_invariant_subspace_${type[0]}$${kind}$
+
+
+    subroutine test_block_arnoldi_restart_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Krylov subspaces.
+        type(vector_${type[0]}$${kind}$), allocatable :: Xfull(:), Xrestart(:), X0(:)
+        integer, parameter :: p = 2
+        integer :: kdim, kstart
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: Hfull(:, :), Hrestart(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        ${type}$, allocatable :: Xfull_data(:, :), Xrestart_data(:, :)
+        ${type}$, allocatable :: G(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize linear operator.
+        A = linop_${type[0]}$${kind}$(); call init_rand(A)
+
+        ! Block Arnoldi parameters.
+        kdim = test_size/p - 1
+        kstart = kdim/2
+
+        ! Initialize full block Krylov subspace.
+        allocate(Xfull(p*(kdim+1))) ; allocate(X0(p))
+        call init_rand(X0) ; call initialize_krylov_subspace(Xfull, X0)
+        allocate(Hfull(p*(kdim+1), p*kdim), source=zero_${type[0]}$${kind}$)
+        allocate(Hrestart(p*(kdim+1), p*kdim), source=zero_${type[0]}$${kind}$)
+
+        ! Full block Arnoldi factorization.
+        call arnoldi(A, Xfull, Hfull, info, blksize=p, tol=atol_${kind}$)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_restart_${type[0]}$${kind}$')
+
+        ! Copy data for restart.
+        allocate(Xrestart(p*(kdim+1))) ; call zero_basis(Xrestart)
+        call copy(Xrestart(:kstart*p), Xfull(:kstart*p))
+        Hrestart(:kstart*p, :kstart*p-1) = Hfull(:kstart*p, :kstart*p-1)
+
+        ! Restart block Arnoldi factorization.
+        call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, blksize=p, tol=atol_${kind}$)
+
+        ! Compute inner product between the two bases.
+        G = innerprod(Xfull(:p*kdim), Xrestart(:p*kdim))
+        err = maxval(abs(G - eye(p*kdim, mold=1.0_${kind}$)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_block_arnoldi_restart_${type[0]}$${kind}$', &
+                                info='Restart', eq='Xfull = Xrestart', context=msg)
+
+        ! Check Hessenberg matrices (compare the first kstart*p rows/cols).
+        err = maxval(abs(Hfull(:kstart*p+1, :kstart*p-1) - Hrestart(:kstart*p+1, :kstart*p-1)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_block_arnoldi_restart_${type[0]}$${kind}$', &
+                                info='Restart', eq='Hfull = Hrestart', context=msg)
+
+        return
+    end subroutine test_block_arnoldi_restart_${type[0]}$${kind}$
+
+
+    subroutine test_block_arnoldi_invariant_subspace_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:), X0(:)
+        integer, parameter :: p = 2
+        integer :: kdim, k_inv, i
+        ! Hessenberg matrix.
+        ${type}$, allocatable :: H(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        ${type}$, allocatable :: Xdata(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        k_inv = 2  ! Multiple of block size p=2
+        kdim = test_size/p - 1
+
+        ! Create block lower triangular matrix.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        A%data(k_inv+1:, :k_inv) = zero_${type[0]}$${kind}$
+
+        ! Initialize starting vectors confined to the invariant subspace.
+        allocate(X(p*(kdim+1))) ; allocate(X0(p))
+        call init_rand(X0)
+        ! Zero out the components outside the invariant subspace.
+        do i = 1, p
+            call X0(i)%rand(ifnorm=.false.)
+            X0(i)%data(k_inv+1:) = zero_${type[0]}$${kind}$
+        enddo
+        call initialize_krylov_subspace(X, X0)
+
+        allocate(H(p*(kdim+1), p*kdim), source=zero_${type[0]}$${kind}$)
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
+
+        ! 1. Check if block Arnoldi detected the invariant subspace dimension.
+        ! For block Arnoldi with p=2 and k_inv=2, we expect info = k_inv = 2.
+        call check(error, info == k_inv)
+        call check_test(error, 'test_block_arnoldi_invariant_subspace_${type[0]}$${kind}$', &
+                              & info='Subspace Dim', eq='info == k_inv', context='Invariant detection')
+
+        ! 2. Check A @ X = X @ H for the computed invariant subspace.
+        allocate(Xdata(test_size, info))
+        call get_data(Xdata, X(:info))
+
+        err = maxval(abs(matmul(A%data, Xdata) - matmul(Xdata, H(1:info, 1:info))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_block_arnoldi_invariant_subspace_${type[0]}$${kind}$', &
+                              & info='Invariant Property', eq='A @ X = X @ H', context=msg)
+
+        return
+    end subroutine test_block_arnoldi_invariant_subspace_${type[0]}$${kind}$
 
 
     #:endfor
