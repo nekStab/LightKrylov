@@ -45,7 +45,7 @@ contains
                     new_unittest("Vector get_size", test_vector_rsp_get_size), &
                     new_unittest("Vector chsgn", test_vector_rsp_chsgn), &
                     new_unittest("Linear combination vector", test_linear_combination_vector_rsp), &
-                    ! new_unittest("Linear combination matrix", test_linear_combination_matrix_rsp), &
+                    new_unittest("Linear combination matrix", test_linear_combination_matrix_rsp), &
                     new_unittest("Gram matrix", test_gram_rsp), &
                     new_unittest("Innerprod vector", test_innerprod_vector_rsp), &
                     new_unittest("Innerprod matrix", test_innerprod_matrix_rsp), &
@@ -206,7 +206,8 @@ contains
 
     subroutine test_linear_combination_vector_rsp(error)
         type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_rsp), allocatable :: X(:), y
+        type(dense_vector_rsp), allocatable :: X(:)
+        class(abstract_vector_rsp), allocatable :: y
         real(sp) :: x_(n), v(5)
         integer :: k, i
         k = 5
@@ -224,44 +225,46 @@ contains
             do i = 1, k
                 expected = expected + v(i) * X(i)%data
             end do
+            select type(y)
+            type is(dense_vector_rsp)
             call check(error, norm(y%data - expected, 2) < rtol_sp)
+            end select
         end block
         call check_test(error, 'test_linear_combination_vector_rsp', eq='y = Xv')
     end subroutine test_linear_combination_vector_rsp
 
-    ! subroutine test_linear_combination_matrix_rsp(error)
-    !     type(error_type), allocatable, intent(out) :: error
-    !     type(dense_vector_rsp), allocatable :: X(:), Y(:)
-    !     real(sp) :: x_(n)
-    !     real(sp), allocatable :: B(:,:)
-    !     integer :: k, m, i, j
-    !     k = 5 ; m = 3
-    !     allocate(X(k), Y(m), B(k, m))
-    !     x_ = zero_rsp
-    !     do i = 1, k
-    !         X(i) = dense_vector(x_)
-    !         call X(i)%rand()
-    !     end do
-    !     #:if type[0] == "c"
-    !     call random_number(B%re)
-    !     call random_number(B%im)
-    !     #:else
-    !     call random_number(B)
-    !     #:endif
-    !     call linear_combination(Y, X, B)
-    !     block
-    !         real(sp) :: expected(n, m)
-    !         expected = zero_rsp
-    !         do j = 1, m
-    !             do i = 1, k
-    !                 expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
-    !             end do
-    !         end do
-    !         call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_sp .and. &
-    !                        norm(Y(m)%data - expected(:,m), 2) < rtol_sp)
-    !     end block
-    !     call check_test(error, 'test_linear_combination_matrix_rsp', eq='Y = XB')
-    ! end subroutine test_linear_combination_matrix_rsp
+    subroutine test_linear_combination_matrix_rsp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_rsp), allocatable :: X(:)
+        class(abstract_vector_rsp), allocatable :: Y(:)
+        real(sp) :: x_(n)
+        real(sp), allocatable :: B(:,:)
+        integer :: k, m, i, j
+        k = 5 ; m = 3
+        allocate(X(k), B(k, m))
+        x_ = zero_rsp
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        call random_number(B)
+        call linear_combination(Y, X, B)
+        block
+            real(sp) :: expected(n, m)
+            expected = zero_rsp
+            do j = 1, m
+                do i = 1, k
+                    expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
+                end do
+            end do
+            select type(Y)
+            type is (dense_vector_rsp)
+            call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_sp .and. &
+                           norm(Y(m)%data - expected(:,m), 2) < rtol_sp)
+            end select
+        end block
+        call check_test(error, 'test_linear_combination_matrix_rsp', eq='Y = XB')
+    end subroutine test_linear_combination_matrix_rsp
 
     subroutine test_gram_rsp(error)
         type(error_type), allocatable, intent(out) :: error
@@ -438,7 +441,7 @@ contains
                     new_unittest("Vector get_size", test_vector_rdp_get_size), &
                     new_unittest("Vector chsgn", test_vector_rdp_chsgn), &
                     new_unittest("Linear combination vector", test_linear_combination_vector_rdp), &
-                    ! new_unittest("Linear combination matrix", test_linear_combination_matrix_rdp), &
+                    new_unittest("Linear combination matrix", test_linear_combination_matrix_rdp), &
                     new_unittest("Gram matrix", test_gram_rdp), &
                     new_unittest("Innerprod vector", test_innerprod_vector_rdp), &
                     new_unittest("Innerprod matrix", test_innerprod_matrix_rdp), &
@@ -599,7 +602,8 @@ contains
 
     subroutine test_linear_combination_vector_rdp(error)
         type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_rdp), allocatable :: X(:), y
+        type(dense_vector_rdp), allocatable :: X(:)
+        class(abstract_vector_rdp), allocatable :: y
         real(dp) :: x_(n), v(5)
         integer :: k, i
         k = 5
@@ -617,44 +621,46 @@ contains
             do i = 1, k
                 expected = expected + v(i) * X(i)%data
             end do
+            select type(y)
+            type is(dense_vector_rdp)
             call check(error, norm(y%data - expected, 2) < rtol_dp)
+            end select
         end block
         call check_test(error, 'test_linear_combination_vector_rdp', eq='y = Xv')
     end subroutine test_linear_combination_vector_rdp
 
-    ! subroutine test_linear_combination_matrix_rdp(error)
-    !     type(error_type), allocatable, intent(out) :: error
-    !     type(dense_vector_rdp), allocatable :: X(:), Y(:)
-    !     real(dp) :: x_(n)
-    !     real(dp), allocatable :: B(:,:)
-    !     integer :: k, m, i, j
-    !     k = 5 ; m = 3
-    !     allocate(X(k), Y(m), B(k, m))
-    !     x_ = zero_rdp
-    !     do i = 1, k
-    !         X(i) = dense_vector(x_)
-    !         call X(i)%rand()
-    !     end do
-    !     #:if type[0] == "c"
-    !     call random_number(B%re)
-    !     call random_number(B%im)
-    !     #:else
-    !     call random_number(B)
-    !     #:endif
-    !     call linear_combination(Y, X, B)
-    !     block
-    !         real(dp) :: expected(n, m)
-    !         expected = zero_rdp
-    !         do j = 1, m
-    !             do i = 1, k
-    !                 expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
-    !             end do
-    !         end do
-    !         call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_dp .and. &
-    !                        norm(Y(m)%data - expected(:,m), 2) < rtol_dp)
-    !     end block
-    !     call check_test(error, 'test_linear_combination_matrix_rdp', eq='Y = XB')
-    ! end subroutine test_linear_combination_matrix_rdp
+    subroutine test_linear_combination_matrix_rdp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_rdp), allocatable :: X(:)
+        class(abstract_vector_rdp), allocatable :: Y(:)
+        real(dp) :: x_(n)
+        real(dp), allocatable :: B(:,:)
+        integer :: k, m, i, j
+        k = 5 ; m = 3
+        allocate(X(k), B(k, m))
+        x_ = zero_rdp
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        call random_number(B)
+        call linear_combination(Y, X, B)
+        block
+            real(dp) :: expected(n, m)
+            expected = zero_rdp
+            do j = 1, m
+                do i = 1, k
+                    expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
+                end do
+            end do
+            select type(Y)
+            type is (dense_vector_rdp)
+            call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_dp .and. &
+                           norm(Y(m)%data - expected(:,m), 2) < rtol_dp)
+            end select
+        end block
+        call check_test(error, 'test_linear_combination_matrix_rdp', eq='Y = XB')
+    end subroutine test_linear_combination_matrix_rdp
 
     subroutine test_gram_rdp(error)
         type(error_type), allocatable, intent(out) :: error
@@ -831,7 +837,7 @@ contains
                     new_unittest("Vector get_size", test_vector_csp_get_size), &
                     new_unittest("Vector chsgn", test_vector_csp_chsgn), &
                     new_unittest("Linear combination vector", test_linear_combination_vector_csp), &
-                    ! new_unittest("Linear combination matrix", test_linear_combination_matrix_csp), &
+                    new_unittest("Linear combination matrix", test_linear_combination_matrix_csp), &
                     new_unittest("Gram matrix", test_gram_csp), &
                     new_unittest("Innerprod vector", test_innerprod_vector_csp), &
                     new_unittest("Innerprod matrix", test_innerprod_matrix_csp), &
@@ -993,7 +999,8 @@ contains
 
     subroutine test_linear_combination_vector_csp(error)
         type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_csp), allocatable :: X(:), y
+        type(dense_vector_csp), allocatable :: X(:)
+        class(abstract_vector_csp), allocatable :: y
         complex(sp) :: x_(n), v(5)
         integer :: k, i
         k = 5
@@ -1012,44 +1019,47 @@ contains
             do i = 1, k
                 expected = expected + v(i) * X(i)%data
             end do
+            select type(y)
+            type is(dense_vector_csp)
             call check(error, norm(y%data - expected, 2) < rtol_sp)
+            end select
         end block
         call check_test(error, 'test_linear_combination_vector_csp', eq='y = Xv')
     end subroutine test_linear_combination_vector_csp
 
-    ! subroutine test_linear_combination_matrix_csp(error)
-    !     type(error_type), allocatable, intent(out) :: error
-    !     type(dense_vector_csp), allocatable :: X(:), Y(:)
-    !     complex(sp) :: x_(n)
-    !     complex(sp), allocatable :: B(:,:)
-    !     integer :: k, m, i, j
-    !     k = 5 ; m = 3
-    !     allocate(X(k), Y(m), B(k, m))
-    !     x_ = zero_csp
-    !     do i = 1, k
-    !         X(i) = dense_vector(x_)
-    !         call X(i)%rand()
-    !     end do
-    !     #:if type[0] == "c"
-    !     call random_number(B%re)
-    !     call random_number(B%im)
-    !     #:else
-    !     call random_number(B)
-    !     #:endif
-    !     call linear_combination(Y, X, B)
-    !     block
-    !         complex(sp) :: expected(n, m)
-    !         expected = zero_csp
-    !         do j = 1, m
-    !             do i = 1, k
-    !                 expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
-    !             end do
-    !         end do
-    !         call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_sp .and. &
-    !                        norm(Y(m)%data - expected(:,m), 2) < rtol_sp)
-    !     end block
-    !     call check_test(error, 'test_linear_combination_matrix_csp', eq='Y = XB')
-    ! end subroutine test_linear_combination_matrix_csp
+    subroutine test_linear_combination_matrix_csp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_csp), allocatable :: X(:)
+        class(abstract_vector_csp), allocatable :: Y(:)
+        complex(sp) :: x_(n)
+        complex(sp), allocatable :: B(:,:)
+        integer :: k, m, i, j
+        k = 5 ; m = 3
+        allocate(X(k), B(k, m))
+        x_ = zero_csp
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        call random_number(B%re)
+        call random_number(B%im)
+        call linear_combination(Y, X, B)
+        block
+            complex(sp) :: expected(n, m)
+            expected = zero_csp
+            do j = 1, m
+                do i = 1, k
+                    expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
+                end do
+            end do
+            select type(Y)
+            type is (dense_vector_csp)
+            call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_sp .and. &
+                           norm(Y(m)%data - expected(:,m), 2) < rtol_sp)
+            end select
+        end block
+        call check_test(error, 'test_linear_combination_matrix_csp', eq='Y = XB')
+    end subroutine test_linear_combination_matrix_csp
 
     subroutine test_gram_csp(error)
         type(error_type), allocatable, intent(out) :: error
@@ -1228,7 +1238,7 @@ contains
                     new_unittest("Vector get_size", test_vector_cdp_get_size), &
                     new_unittest("Vector chsgn", test_vector_cdp_chsgn), &
                     new_unittest("Linear combination vector", test_linear_combination_vector_cdp), &
-                    ! new_unittest("Linear combination matrix", test_linear_combination_matrix_cdp), &
+                    new_unittest("Linear combination matrix", test_linear_combination_matrix_cdp), &
                     new_unittest("Gram matrix", test_gram_cdp), &
                     new_unittest("Innerprod vector", test_innerprod_vector_cdp), &
                     new_unittest("Innerprod matrix", test_innerprod_matrix_cdp), &
@@ -1390,7 +1400,8 @@ contains
 
     subroutine test_linear_combination_vector_cdp(error)
         type(error_type), allocatable, intent(out) :: error
-        type(dense_vector_cdp), allocatable :: X(:), y
+        type(dense_vector_cdp), allocatable :: X(:)
+        class(abstract_vector_cdp), allocatable :: y
         complex(dp) :: x_(n), v(5)
         integer :: k, i
         k = 5
@@ -1409,44 +1420,47 @@ contains
             do i = 1, k
                 expected = expected + v(i) * X(i)%data
             end do
+            select type(y)
+            type is(dense_vector_cdp)
             call check(error, norm(y%data - expected, 2) < rtol_dp)
+            end select
         end block
         call check_test(error, 'test_linear_combination_vector_cdp', eq='y = Xv')
     end subroutine test_linear_combination_vector_cdp
 
-    ! subroutine test_linear_combination_matrix_cdp(error)
-    !     type(error_type), allocatable, intent(out) :: error
-    !     type(dense_vector_cdp), allocatable :: X(:), Y(:)
-    !     complex(dp) :: x_(n)
-    !     complex(dp), allocatable :: B(:,:)
-    !     integer :: k, m, i, j
-    !     k = 5 ; m = 3
-    !     allocate(X(k), Y(m), B(k, m))
-    !     x_ = zero_cdp
-    !     do i = 1, k
-    !         X(i) = dense_vector(x_)
-    !         call X(i)%rand()
-    !     end do
-    !     #:if type[0] == "c"
-    !     call random_number(B%re)
-    !     call random_number(B%im)
-    !     #:else
-    !     call random_number(B)
-    !     #:endif
-    !     call linear_combination(Y, X, B)
-    !     block
-    !         complex(dp) :: expected(n, m)
-    !         expected = zero_cdp
-    !         do j = 1, m
-    !             do i = 1, k
-    !                 expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
-    !             end do
-    !         end do
-    !         call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_dp .and. &
-    !                        norm(Y(m)%data - expected(:,m), 2) < rtol_dp)
-    !     end block
-    !     call check_test(error, 'test_linear_combination_matrix_cdp', eq='Y = XB')
-    ! end subroutine test_linear_combination_matrix_cdp
+    subroutine test_linear_combination_matrix_cdp(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_vector_cdp), allocatable :: X(:)
+        class(abstract_vector_cdp), allocatable :: Y(:)
+        complex(dp) :: x_(n)
+        complex(dp), allocatable :: B(:,:)
+        integer :: k, m, i, j
+        k = 5 ; m = 3
+        allocate(X(k), B(k, m))
+        x_ = zero_cdp
+        do i = 1, k
+            X(i) = dense_vector(x_)
+            call X(i)%rand()
+        end do
+        call random_number(B%re)
+        call random_number(B%im)
+        call linear_combination(Y, X, B)
+        block
+            complex(dp) :: expected(n, m)
+            expected = zero_cdp
+            do j = 1, m
+                do i = 1, k
+                    expected(:, j) = expected(:, j) + B(i, j) * X(i)%data
+                end do
+            end do
+            select type(Y)
+            type is (dense_vector_cdp)
+            call check(error, norm(Y(1)%data - expected(:,1), 2) < rtol_dp .and. &
+                           norm(Y(m)%data - expected(:,m), 2) < rtol_dp)
+            end select
+        end block
+        call check_test(error, 'test_linear_combination_matrix_cdp', eq='Y = XB')
+    end subroutine test_linear_combination_matrix_cdp
 
     subroutine test_gram_cdp(error)
         type(error_type), allocatable, intent(out) :: error
