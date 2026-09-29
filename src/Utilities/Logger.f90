@@ -605,6 +605,8 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             case (-3)
                write (msg, '(A)') 'Arnoldi factorization: Hessenberg matrix has incorrect dimensions.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
             case (-5)
                write (msg, '(A)') 'Arnoldi factorization: Parameter kstart is invalid (either negative or larger than kend).'
                call log_error(origin, module=module, procedure=procedure, &
