@@ -24,7 +24,9 @@ contains
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((p <= 0) .or. (mod(size(X), p) /= 0)) then
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
             info = -9
         else
             ! Check dimensions.
@@ -112,7 +114,9 @@ contains
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((p <= 0) .or. (mod(size(X), p) /= 0)) then
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
             info = -9
         else
             ! Check dimensions.
@@ -200,7 +204,9 @@ contains
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((p <= 0) .or. (mod(size(X), p) /= 0)) then
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
             info = -9
         else
             ! Check dimensions.
@@ -288,7 +294,9 @@ contains
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((p <= 0) .or. (mod(size(X), p) /= 0)) then
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
             info = -9
         else
             ! Check dimensions.
