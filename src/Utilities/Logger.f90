@@ -603,6 +603,8 @@ contains
             case (0:)
                write (msg, '(A,I0,A)') 'Arnoldi factorization: Invariant subspace computed after ', info, ' iterations.'
                call log_debug(trim(msg), module=module, procedure=procedure)
+            case (-3)
+               write (msg, '(A)') 'Arnoldi factorization: Hessenberg matrix has incorrect dimensions.'
             case (-5)
                write (msg, '(A)') 'Arnoldi factorization: Parameter kstart is invalid (either negative or larger than kend).'
                call log_error(origin, module=module, procedure=procedure, &

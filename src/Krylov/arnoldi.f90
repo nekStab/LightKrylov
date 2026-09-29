@@ -1,4 +1,5 @@
 submodule (lightkrylov_basekrylov) arnoldi_method
+    use stdlib_linalg, only: svdvals
     implicit none(type, external)
 contains
 
@@ -14,33 +15,42 @@ contains
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
-        ! Deals with optional non-unity blksize and allocations.
+        ! Deals with optional non-unity blksize.
         p = optval(blksize, 1)
-        allocate(res(p), source=zero_rsp, stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "arnoldi_rsp")
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
 
         ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        k_start = optval(kstart, 1)
         tolerance = optval (tol, atol_sp)
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((k_start < 1) .or. (k_start > k_end)) then
-            info = -5
-        else if (k_end > kdim) then
-            info = -6
-        else if (tolerance < 0) then
-            info = -7
+        if (p <= 0) then
+            info = -9
         else if (mod(size(X), p) /= 0) then
             info = -9
         else
-            info = 0
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
         endif
 
         if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rsp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_rsp")
             ! Arnoldi factorization.
             blk_arnoldi: do k = k_start, k_end
                 ! Counters
@@ -66,12 +76,8 @@ contains
                 call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
                 call check_info(info, 'qr', this_module, this_procedure)
 
-                ! Extract residual norm (smallest diagonal element of H matrix).
-                res = zero_rsp
-                do i = 1, p
-                    res(i) = H(kp+i, kpm+i)
-                enddo
-                beta = minval(abs(res))
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
 
                 ! Exit Arnoldi loop if needed.
                 if (beta < tolerance) then
@@ -99,33 +105,42 @@ contains
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
-        ! Deals with optional non-unity blksize and allocations.
+        ! Deals with optional non-unity blksize.
         p = optval(blksize, 1)
-        allocate(res(p), source=zero_rdp, stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "arnoldi_rdp")
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
 
         ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        k_start = optval(kstart, 1)
         tolerance = optval (tol, atol_dp)
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((k_start < 1) .or. (k_start > k_end)) then
-            info = -5
-        else if (k_end > kdim) then
-            info = -6
-        else if (tolerance < 0) then
-            info = -7
+        if (p <= 0) then
+            info = -9
         else if (mod(size(X), p) /= 0) then
             info = -9
         else
-            info = 0
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
         endif
 
         if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rdp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_rdp")
             ! Arnoldi factorization.
             blk_arnoldi: do k = k_start, k_end
                 ! Counters
@@ -151,12 +166,8 @@ contains
                 call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
                 call check_info(info, 'qr', this_module, this_procedure)
 
-                ! Extract residual norm (smallest diagonal element of H matrix).
-                res = zero_rdp
-                do i = 1, p
-                    res(i) = H(kp+i, kpm+i)
-                enddo
-                beta = minval(abs(res))
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
 
                 ! Exit Arnoldi loop if needed.
                 if (beta < tolerance) then
@@ -184,33 +195,42 @@ contains
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
-        ! Deals with optional non-unity blksize and allocations.
+        ! Deals with optional non-unity blksize.
         p = optval(blksize, 1)
-        allocate(res(p), source=zero_rsp, stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "arnoldi_csp")
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
 
         ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        k_start = optval(kstart, 1)
         tolerance = optval (tol, atol_sp)
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((k_start < 1) .or. (k_start > k_end)) then
-            info = -5
-        else if (k_end > kdim) then
-            info = -6
-        else if (tolerance < 0) then
-            info = -7
+        if (p <= 0) then
+            info = -9
         else if (mod(size(X), p) /= 0) then
             info = -9
         else
-            info = 0
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
         endif
 
         if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rsp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_csp")
             ! Arnoldi factorization.
             blk_arnoldi: do k = k_start, k_end
                 ! Counters
@@ -236,12 +256,8 @@ contains
                 call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
                 call check_info(info, 'qr', this_module, this_procedure)
 
-                ! Extract residual norm (smallest diagonal element of H matrix).
-                res = zero_rsp
-                do i = 1, p
-                    res(i) = H(kp+i, kpm+i)
-                enddo
-                beta = minval(abs(res))
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
 
                 ! Exit Arnoldi loop if needed.
                 if (beta < tolerance) then
@@ -269,33 +285,42 @@ contains
 
         if (time_lightkrylov()) call timer%start(this_procedure)
 
-        ! Deals with optional non-unity blksize and allocations.
+        ! Deals with optional non-unity blksize.
         p = optval(blksize, 1)
-        allocate(res(p), source=zero_rdp, stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "arnoldi_cdp")
-
-        ! Check dimensions.
-        kdim = (size(X) - p) / p
 
         ! Deal with the other optional args.
-        k_start = optval(kstart, 1) ; k_end = optval(kend, kdim)
+        k_start = optval(kstart, 1)
         tolerance = optval (tol, atol_dp)
         trans     = optval(transpose, .false.)
 
         ! Sanity checks.
-        if ((k_start < 1) .or. (k_start > k_end)) then
-            info = -5
-        else if (k_end > kdim) then
-            info = -6
-        else if (tolerance < 0) then
-            info = -7
+        if (p <= 0) then
+            info = -9
         else if (mod(size(X), p) /= 0) then
             info = -9
         else
-            info = 0
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
         endif
 
         if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rdp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_cdp")
             ! Arnoldi factorization.
             blk_arnoldi: do k = k_start, k_end
                 ! Counters
@@ -321,12 +346,8 @@ contains
                 call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
                 call check_info(info, 'qr', this_module, this_procedure)
 
-                ! Extract residual norm (smallest diagonal element of H matrix).
-                res = zero_rdp
-                do i = 1, p
-                    res(i) = H(kp+i, kpm+i)
-                enddo
-                beta = minval(abs(res))
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
 
                 ! Exit Arnoldi loop if needed.
                 if (beta < tolerance) then

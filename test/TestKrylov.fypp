@@ -188,7 +188,7 @@ contains
 
         testsuite = [ &
             new_unittest("Arnoldi factorization", test_arnoldi_factorization_${type[0]}$${kind}$), &
-            new_unittest("Arnoldi restart", test_restarting_arnoldi_${type[0]}$${kind}$), &
+            new_unittest("Arnoldi restart", test_restart_arnoldi_${type[0]}$${kind}$), &
             new_unittest("Block Arnoldi factorization", test_block_arnoldi_factorization_${type[0]}$${kind}$), &
             new_unittest("Krylov-Schur factorization", test_krylov_schur_${type[0]}$${kind}$), &
             new_unittest("Arnoldi invalid parameters", test_arnoldi_invalid_params_${type[0]}$${kind}$), &
@@ -303,6 +303,46 @@ contains
         call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
                               & info='Invalid blksize (mod(size(X), p) /= 0)', eq='info == -9', context='p=2')
 
+        ! --- Case 5: blksize <= 0 (info = -9) ---
+        p = 0
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
+        call check(error, info == -9)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid blksize (blksize <= 0)', eq='info == -9', context='p=0')
+
+        ! --- Case 6: H has wrong first dimension (info = -3) ---
+        p = 1
+        deallocate(H)
+        allocate(H(kdim, kdim)) ; H = zero_${type[0]}$${kind}$
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
+        call check(error, info == -3)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid H shape (size(H,1) < size(X))', eq='info == -3', context='H(kdim,kdim)')
+
+        ! --- Case 7: H has wrong second dimension (info = -3) ---
+        deallocate(H)
+        allocate(H(kdim+1, kdim-1)) ; H = zero_${type[0]}$${kind}$
+        call arnoldi(A, X, H, info, blksize=p, tol=atol_${kind}$)
+        call check(error, info == -3)
+        call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                              & info='Invalid H shape (size(H,2) < p*kdim)', eq='info == -3', context='H(kdim+1,kdim-1)')
+
+        ! --- Case 8: block Arnoldi with too-small H (info = -3) ---
+        block
+            integer, parameter :: p_block = 2
+            integer, parameter :: kdim_block = test_size/2
+            type(vector_${type[0]}$${kind}$), allocatable :: X0(:)
+
+            deallocate(X, H)
+            allocate(X(p_block*(kdim_block+1))) ; allocate(X0(p_block))
+            call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
+            allocate(H(p_block*(kdim_block+1) - 1, p_block*kdim_block)) ; H = zero_${type[0]}$${kind}$
+            call arnoldi(A, X, H, info, blksize=p_block, tol=atol_${kind}$)
+            call check(error, info == -3)
+            call check_test(error, 'test_arnoldi_invalid_params_${type[0]}$${kind}$', &
+                                  & info='Invalid block H shape', eq='info == -3', context='block p=2')
+        end block
+
         return
     end subroutine test_arnoldi_invalid_params_${type[0]}$${kind}$
 
@@ -385,7 +425,7 @@ contains
     end subroutine test_arnoldi_shifted_matrix_${type[0]}$${kind}$
 
 
-    subroutine test_restarting_arnoldi_${type[0]}$${kind}$(error)
+    subroutine test_restart_arnoldi_${type[0]}$${kind}$(error)
         ! Error type to be returned
         type(error_type), allocatable, intent(out) :: error
         ! Test linear operator.
@@ -427,17 +467,17 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_restart_arnoldi_${type[0]}$${kind}$', &
-                                info='Restarting', eq='Xfull = Xrestart', context=msg)
+                                info='Restart', eq='Xfull = Xrestart', context=msg)
 
         ! Check Hessenberg matrices.
         err = maxval(abs(Hfull - Hrestart))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_restart_arnoldi_${type[0]}$${kind}$', &
-                                info='Restarting', eq='Hfull = Hrestart', context=msg)
+                                info='Restart', eq='Hfull = Hrestart', context=msg)
 
         return
-    end subroutine test_restarting_arnoldi_${type[0]}$${kind}$
+    end subroutine test_restart_arnoldi_${type[0]}$${kind}$
 
     subroutine test_block_arnoldi_factorization_${type[0]}$${kind}$(error)
         ! Error type to be returned.

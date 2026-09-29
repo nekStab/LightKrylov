@@ -106,7 +106,13 @@ module LightKrylov_BaseKrylov
         !!  -`info` :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
         !!              `info` > 0, the Arnoldi factorization experienced a lucky breakdown.
         !!              The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
-        !!              dimension `info`.
+        !!              dimension `info`. If `info` < 0, an input argument is illegal:
+        !!              `info = -3` indicates that `H` is not large enough: it must have
+        !!              leading dimensions at least `(size(X), p*kdim)` with
+        !!              `kdim = (size(X) - p) / p` and block size `p`;
+        !!              `info = -5` indicates an illegal `kstart`; `info = -6` an illegal `kend`;
+        !!              `info = -7` a negative tolerance; `info = -9` an illegal `blksize`
+        !!              (`blksize` \(\leq\) 0 or `size(X)` not divisible by `blksize`).
         !!
         !!  - `kstart` (*optional*) :   `integer` value determining the index of the first Arnoldi
         !!                              step to be computed. By default, `kstart = 1`. It is an
