@@ -1,12 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 #:def CHECK_NAN(beta, varname)
-  #:if type[0] == "r"
     if (isnan(${beta}$)) call stop_error('|' // ${varname}$ // '| = NaN detected! Abort', this_module, this_procedure)
-  #:else
-    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
-    if (isnan(abs(${beta}$))) call stop_error('|' // ${varname}$ // '| = NaN detected! Abort', this_module, this_procedure)
-  #:endif
 #:enddef
 submodule (lightkrylov_basekrylov) qr_solvers
     implicit none(type, external)
@@ -40,7 +35,8 @@ contains
     module procedure qr_with_pivoting_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_${type[0]}$${kind}$'
         real(${kind}$) :: tolerance
-        ${type}$ :: alpha, beta
+        real(${kind}$) :: alpha, beta
+        ${type}$ :: gamma
         integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(${kind}$)  :: Rii(size(Q))
@@ -66,7 +62,7 @@ contains
             beta = Q(j)%norm()
             @:CHECK_NAN(beta, "beta")
 
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 ! Store old value of beta.
                 alpha = beta
                 ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -90,9 +86,9 @@ contains
             ! Orthogonalize all columns against new vector and update Rii.
             Rii(j) = zero_r${kind}$
             do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(-beta, Q(j), one_${type[0]}$${kind}$)   ! Q(i) = Q(i) - beta*Q(j)
-                R(j, i) = beta
+                gamma = Q(j)%dot(Q(i))
+                call Q(i)%axpby(-gamma, Q(j), one_${type[0]}$${kind}$)   ! Q(i) = Q(i) - gamma*Q(j)
+                R(j, i) = gamma
                 Rii(i) = real(Q(i)%dot(Q(i)), kind=${kind}$)
             enddo
 
@@ -110,7 +106,8 @@ contains
     module procedure qr_no_pivoting_${type[0]}$${kind}$
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_${type[0]}$${kind}$'
         real(${kind}$) :: tolerance
-        ${type}$ :: beta
+        real(${kind}$) :: beta
+        ${type}$ :: gamma
         integer :: j
         logical :: flag
         character(len=128) :: msg
@@ -131,11 +128,11 @@ contains
             ! Check for breakdown.
             beta = Q(j)%norm()
             @:CHECK_NAN(beta, "beta")
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                     call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_r${kind}$

@@ -70,6 +70,7 @@ contains
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rsp'
         real(sp) :: tolerance
         real(sp) :: alpha, beta
+        real(sp) :: gamma
         integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(sp)  :: Rii(size(Q))
@@ -95,7 +96,7 @@ contains
             beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 ! Store old value of beta.
                 alpha = beta
                 ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -119,9 +120,9 @@ contains
             ! Orthogonalize all columns against new vector and update Rii.
             Rii(j) = zero_rsp
             do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(-beta, Q(j), one_rsp)   ! Q(i) = Q(i) - beta*Q(j)
-                R(j, i) = beta
+                gamma = Q(j)%dot(Q(i))
+                call Q(i)%axpby(-gamma, Q(j), one_rsp)   ! Q(i) = Q(i) - gamma*Q(j)
+                R(j, i) = gamma
                 Rii(i) = real(Q(i)%dot(Q(i)), kind=sp)
             enddo
 
@@ -133,6 +134,7 @@ contains
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rdp'
         real(dp) :: tolerance
         real(dp) :: alpha, beta
+        real(dp) :: gamma
         integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(dp)  :: Rii(size(Q))
@@ -158,7 +160,7 @@ contains
             beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 ! Store old value of beta.
                 alpha = beta
                 ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -182,9 +184,9 @@ contains
             ! Orthogonalize all columns against new vector and update Rii.
             Rii(j) = zero_rdp
             do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(-beta, Q(j), one_rdp)   ! Q(i) = Q(i) - beta*Q(j)
-                R(j, i) = beta
+                gamma = Q(j)%dot(Q(i))
+                call Q(i)%axpby(-gamma, Q(j), one_rdp)   ! Q(i) = Q(i) - gamma*Q(j)
+                R(j, i) = gamma
                 Rii(i) = real(Q(i)%dot(Q(i)), kind=dp)
             enddo
 
@@ -195,7 +197,8 @@ contains
     module procedure qr_with_pivoting_csp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_csp'
         real(sp) :: tolerance
-        complex(sp) :: alpha, beta
+        real(sp) :: alpha, beta
+        complex(sp) :: gamma
         integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(sp)  :: Rii(size(Q))
@@ -219,10 +222,9 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
-    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 ! Store old value of beta.
                 alpha = beta
                 ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -246,9 +248,9 @@ contains
             ! Orthogonalize all columns against new vector and update Rii.
             Rii(j) = zero_rsp
             do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(-beta, Q(j), one_csp)   ! Q(i) = Q(i) - beta*Q(j)
-                R(j, i) = beta
+                gamma = Q(j)%dot(Q(i))
+                call Q(i)%axpby(-gamma, Q(j), one_csp)   ! Q(i) = Q(i) - gamma*Q(j)
+                R(j, i) = gamma
                 Rii(i) = real(Q(i)%dot(Q(i)), kind=sp)
             enddo
 
@@ -259,7 +261,8 @@ contains
     module procedure qr_with_pivoting_cdp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_cdp'
         real(dp) :: tolerance
-        complex(dp) :: alpha, beta
+        real(dp) :: alpha, beta
+        complex(dp) :: gamma
         integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(dp)  :: Rii(size(Q))
@@ -283,10 +286,9 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
-    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 ! Store old value of beta.
                 alpha = beta
                 ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -310,9 +312,9 @@ contains
             ! Orthogonalize all columns against new vector and update Rii.
             Rii(j) = zero_rdp
             do i = j+1, kdim
-                beta = Q(j)%dot(Q(i))
-                call Q(i)%axpby(-beta, Q(j), one_cdp)   ! Q(i) = Q(i) - beta*Q(j)
-                R(j, i) = beta
+                gamma = Q(j)%dot(Q(i))
+                call Q(i)%axpby(-gamma, Q(j), one_cdp)   ! Q(i) = Q(i) - gamma*Q(j)
+                R(j, i) = gamma
                 Rii(i) = real(Q(i)%dot(Q(i)), kind=dp)
             enddo
 
@@ -329,6 +331,7 @@ contains
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_rsp'
         real(sp) :: tolerance
         real(sp) :: beta
+        real(sp) :: gamma
         integer :: j
         logical :: flag
         character(len=128) :: msg
@@ -349,11 +352,11 @@ contains
             ! Check for breakdown.
             beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                     call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rsp
@@ -376,6 +379,7 @@ contains
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_rdp'
         real(dp) :: tolerance
         real(dp) :: beta
+        real(dp) :: gamma
         integer :: j
         logical :: flag
         character(len=128) :: msg
@@ -396,11 +400,11 @@ contains
             ! Check for breakdown.
             beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-            if (abs(beta) < tolerance) then
+            if (beta < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                     call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rdp
@@ -422,7 +426,8 @@ contains
     module procedure qr_no_pivoting_csp
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_csp'
         real(sp) :: tolerance
-        complex(sp) :: beta
+        real(sp) :: beta
+        complex(sp) :: gamma
         integer :: j
         logical :: flag
         character(len=128) :: msg
@@ -442,13 +447,12 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
-    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-            if (abs(beta) < tolerance) then
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
+            if (beta < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                     call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rsp
@@ -470,7 +474,8 @@ contains
     module procedure qr_no_pivoting_cdp
         character(len=*), parameter :: this_procedure = 'qr_no_pivoting_cdp'
         real(dp) :: tolerance
-        complex(dp) :: beta
+        real(dp) :: beta
+        complex(dp) :: gamma
         integer :: j
         logical :: flag
         character(len=128) :: msg
@@ -490,13 +495,12 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
-    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-            if (abs(beta) < tolerance) then
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
+            if (beta < tolerance) then
                 if (.not.flag) then
                     flag = .true.
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', abs(beta)
+                    write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                     call log_information(msg, this_module, this_procedure)
                 end if
                 R(j, j) = zero_rdp
