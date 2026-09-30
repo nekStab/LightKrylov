@@ -36,7 +36,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             !! Vector basis whose i-th and j-th columns need swapping.
             complex(sp), intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
-            complex(sp), intent(inout) :: Rii(:)
+            real(sp), intent(inout) :: Rii(:)
             !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
             !! Permutation vector.
@@ -50,7 +50,7 @@ submodule (lightkrylov_basekrylov) qr_solvers
             !! Vector basis whose i-th and j-th columns need swapping.
             complex(dp), intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
-            complex(dp), intent(inout) :: Rii(:)
+            real(dp), intent(inout) :: Rii(:)
             !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
             !! Permutation vector.
@@ -69,8 +69,8 @@ contains
     module procedure qr_with_pivoting_rsp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rsp'
         real(sp) :: tolerance
-        real(sp) :: beta
-        integer :: idx, i, j, kdim
+        real(sp) :: alpha, beta
+        integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(sp)  :: Rii(size(Q))
         character(len=128) :: msg
@@ -84,53 +84,45 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
+            Rii(i) = real(Q(i)%dot(Q(i)), kind=sp)
         enddo
 
         qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                    beta = Q(i)%norm(); call Q(i)%scal(one_rsp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, this_module, this_procedure)
-                exit qr_step
-            endif
-
+            idxv = j - 1 + maxloc(Rii(j:kdim)) ; idx = idxv(1)
             call swap_columns(Q, R, Rii, perm, j, idx)
 
             ! Check for breakdown.
             beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
+
             if (abs(beta) < tolerance) then
+                ! Store old value of beta.
+                alpha = beta
+                ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
+                do i = j, kdim
+                    call Q(i)%rand()
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(:i-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
+                    endif
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_rsp / beta)
+                enddo
                 info = j
-                R(j, j) = zero_rsp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                call log_information(msg, this_module, this_procedure)
+                exit qr_step
             endif
-            ! Normalize column.
+
+            R(j, j) = beta
             call Q(j)%scal(one_rsp / beta)
 
-            ! Orthogonalize all columns against new vector.
+            ! Orthogonalize all columns against new vector and update Rii.
+            Rii(j) = zero_rsp
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(-beta, Q(j), one_rsp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rsp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
+                Rii(i) = real(Q(i)%dot(Q(i)), kind=sp)
             enddo
 
         enddo qr_step
@@ -140,8 +132,8 @@ contains
     module procedure qr_with_pivoting_rdp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_rdp'
         real(dp) :: tolerance
-        real(dp) :: beta
-        integer :: idx, i, j, kdim
+        real(dp) :: alpha, beta
+        integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
         real(dp)  :: Rii(size(Q))
         character(len=128) :: msg
@@ -155,53 +147,45 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
+            Rii(i) = real(Q(i)%dot(Q(i)), kind=dp)
         enddo
 
         qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                    beta = Q(i)%norm(); call Q(i)%scal(one_rdp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, this_module, this_procedure)
-                exit qr_step
-            endif
-
+            idxv = j - 1 + maxloc(Rii(j:kdim)) ; idx = idxv(1)
             call swap_columns(Q, R, Rii, perm, j, idx)
 
             ! Check for breakdown.
             beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
+
             if (abs(beta) < tolerance) then
+                ! Store old value of beta.
+                alpha = beta
+                ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
+                do i = j, kdim
+                    call Q(i)%rand()
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(:i-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
+                    endif
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_rdp / beta)
+                enddo
                 info = j
-                R(j, j) = zero_rdp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                call log_information(msg, this_module, this_procedure)
+                exit qr_step
             endif
-            ! Normalize column.
+
+            R(j, j) = beta
             call Q(j)%scal(one_rdp / beta)
 
-            ! Orthogonalize all columns against new vector.
+            ! Orthogonalize all columns against new vector and update Rii.
+            Rii(j) = zero_rdp
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(-beta, Q(j), one_rdp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rdp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
+                Rii(i) = real(Q(i)%dot(Q(i)), kind=dp)
             enddo
 
         enddo qr_step
@@ -211,10 +195,10 @@ contains
     module procedure qr_with_pivoting_csp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_csp'
         real(sp) :: tolerance
-        complex(sp) :: beta
-        integer :: idx, i, j, kdim
+        complex(sp) :: alpha, beta
+        integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
-        complex(sp)  :: Rii(size(Q))
+        real(sp)  :: Rii(size(Q))
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -226,54 +210,46 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
+            Rii(i) = real(Q(i)%dot(Q(i)), kind=sp)
         enddo
 
         qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                    beta = Q(i)%norm(); call Q(i)%scal(one_csp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, this_module, this_procedure)
-                exit qr_step
-            endif
-
+            idxv = j - 1 + maxloc(Rii(j:kdim)) ; idx = idxv(1)
             call swap_columns(Q, R, Rii, perm, j, idx)
 
             ! Check for breakdown.
             beta = Q(j)%norm()
     ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
     if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-            if (abs(beta) < tolerance) then
-                info = j
-                R(j, j) = zero_rsp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rsp / beta)
 
-            ! Orthogonalize all columns against new vector.
+            if (abs(beta) < tolerance) then
+                ! Store old value of beta.
+                alpha = beta
+                ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
+                do i = j, kdim
+                    call Q(i)%rand()
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(:i-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
+                    endif
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_csp / beta)
+                enddo
+                info = j
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                call log_information(msg, this_module, this_procedure)
+                exit qr_step
+            endif
+
+            R(j, j) = beta
+            call Q(j)%scal(one_csp / beta)
+
+            ! Orthogonalize all columns against new vector and update Rii.
+            Rii(j) = zero_rsp
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(-beta, Q(j), one_csp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rsp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
+                Rii(i) = real(Q(i)%dot(Q(i)), kind=sp)
             enddo
 
         enddo qr_step
@@ -283,10 +259,10 @@ contains
     module procedure qr_with_pivoting_cdp
         character(len=*), parameter :: this_procedure = 'qr_with_pivoting_cdp'
         real(dp) :: tolerance
-        complex(dp) :: beta
-        integer :: idx, i, j, kdim
+        complex(dp) :: alpha, beta
+        integer :: idx, i, j, kdim, ierr
         integer :: idxv(1)
-        complex(dp)  :: Rii(size(Q))
+        real(dp)  :: Rii(size(Q))
         character(len=128) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -298,54 +274,46 @@ contains
         ! Initialize diagonal entries.
         do i = 1, kdim
             perm(i) = i
-            Rii(i) = Q(i)%dot(Q(i))
+            Rii(i) = real(Q(i)%dot(Q(i)), kind=dp)
         enddo
 
         qr_step: do j = 1, kdim
-            idxv = maxloc(abs(Rii)) ; idx = idxv(1)
-            if (abs(Rii(idx)) < tolerance) then
-                do i = j, kdim
-                    call Q(i)%rand()
-                    call double_gram_schmidt_step(Q(i), Q(:i-1), info, if_chk_orthonormal=.false.)
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                    beta = Q(i)%norm(); call Q(i)%scal(one_cdp / beta)
-                enddo
-                info = j
-                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. R_ii= ', abs(Rii(idx))
-                call log_information(msg, this_module, this_procedure)
-                exit qr_step
-            endif
-
+            idxv = j - 1 + maxloc(Rii(j:kdim)) ; idx = idxv(1)
             call swap_columns(Q, R, Rii, perm, j, idx)
 
             ! Check for breakdown.
             beta = Q(j)%norm()
     ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
     if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-            if (abs(beta) < tolerance) then
-                info = j
-                R(j, j) = zero_rdp
-                call Q(j)%rand()
-                call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
-                beta = Q(j)%norm()
-            else
-                R(j, j) = beta
-            endif
-            ! Normalize column.
-            call Q(j)%scal(one_rdp / beta)
 
-            ! Orthogonalize all columns against new vector.
+            if (abs(beta) < tolerance) then
+                ! Store old value of beta.
+                alpha = beta
+                ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
+                do i = j, kdim
+                    call Q(i)%rand()
+                    if (i > 1) then
+                        call double_gram_schmidt_step(Q(i), Q(:i-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
+                    endif
+                    beta = Q(i)%norm() ; call Q(i)%scal(one_cdp / beta)
+                enddo
+                info = j
+                write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                call log_information(msg, this_module, this_procedure)
+                exit qr_step
+            endif
+
+            R(j, j) = beta
+            call Q(j)%scal(one_cdp / beta)
+
+            ! Orthogonalize all columns against new vector and update Rii.
+            Rii(j) = zero_rdp
             do i = j+1, kdim
                 beta = Q(j)%dot(Q(i))
                 call Q(i)%axpby(-beta, Q(j), one_cdp)   ! Q(i) = Q(i) - beta*Q(j)
                 R(j, i) = beta
-            enddo
-
-            ! Update Rii.
-            Rii(j) = zero_rdp
-            do i = j+1, kdim
-                Rii(i) = Rii(i) - R(j, i)**2
+                Rii(i) = real(Q(i)%dot(Q(i)), kind=dp)
             enddo
 
         enddo qr_step
@@ -494,7 +462,7 @@ contains
                 R(j, j) = beta
             endif
             ! Normalize column.
-            call Q(j)%scal(one_rsp / beta)
+            call Q(j)%scal(one_csp / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure qr_no_pivoting_csp
@@ -542,7 +510,7 @@ contains
                 R(j, j) = beta
             endif
             ! Normalize column.
-            call Q(j)%scal(one_rdp / beta)
+            call Q(j)%scal(one_cdp / beta)
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure qr_no_pivoting_cdp
@@ -572,7 +540,7 @@ contains
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
 
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
+        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = real(Rwrk(1), kind=sp)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
@@ -600,7 +568,7 @@ contains
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
 
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
+        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = real(Rwrk(1), kind=dp)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
@@ -628,7 +596,7 @@ contains
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
 
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
+        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = real(Rwrk(1), kind=sp)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
@@ -656,7 +624,7 @@ contains
         call copy(Q(j), Q(i))
         call copy(Q(i), Qwrk)
 
-        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
+        Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = real(Rwrk(1), kind=dp)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
 
         if (n > 0) then
