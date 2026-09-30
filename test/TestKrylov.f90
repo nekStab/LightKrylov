@@ -183,7 +183,6 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_rsp
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -235,8 +234,15 @@ contains
         ! In-place QR factorization.
         call qr(A, R, info, tol=large_tol)
 
-        ! QR with collinearity detection may trigger breakdown; info indicates step.
-        ! We don't call check_info here as we expect collinearity to occur.
+        ! Check correct column has been flagged.
+        call check(error, info == j_col)
+        call check_test(error, 'test_qr_rank_deficient_rsp', &
+                        info = 'Deficient column.', eq='info == 3', context=msg)
+
+        ! Check corresponding entry in R is zero.
+        call check(error, abs(R(j_col, j_col)) == 0)
+        call check_test(error, 'test_qr_rank_deficient_rsp', &
+                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
 
         ! Get Q data after factorization.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -358,6 +364,9 @@ contains
             call check_info(info, 'qr', module=this_module_long, &
                 & procedure='test_qr_single_vector_rsp')
 
+            ! Check perm(1) = 1.
+            call check(error, perm(1) == 1)
+
             ! Get Q data.
             call get_data(Qdata, A)
 
@@ -385,12 +394,17 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(sp) :: err
+        real(sp) :: err, scale(kdim)
         character(len=256) :: msg
         integer :: i
 
         ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim))
+        call random_number(scale)
+        do i = 1, kdim
+            call A(i)%rand(ifnorm=.true.)
+            call A(i)%scal(scale(i)*one_rsp)
+        enddo
         R = zero_rsp
 
         ! In-place QR with pivoting.
@@ -538,7 +552,6 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_rdp
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -590,8 +603,15 @@ contains
         ! In-place QR factorization.
         call qr(A, R, info, tol=large_tol)
 
-        ! QR with collinearity detection may trigger breakdown; info indicates step.
-        ! We don't call check_info here as we expect collinearity to occur.
+        ! Check correct column has been flagged.
+        call check(error, info == j_col)
+        call check_test(error, 'test_qr_rank_deficient_rdp', &
+                        info = 'Deficient column.', eq='info == 3', context=msg)
+
+        ! Check corresponding entry in R is zero.
+        call check(error, abs(R(j_col, j_col)) == 0)
+        call check_test(error, 'test_qr_rank_deficient_rdp', &
+                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
 
         ! Get Q data after factorization.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -713,6 +733,9 @@ contains
             call check_info(info, 'qr', module=this_module_long, &
                 & procedure='test_qr_single_vector_rdp')
 
+            ! Check perm(1) = 1.
+            call check(error, perm(1) == 1)
+
             ! Get Q data.
             call get_data(Qdata, A)
 
@@ -740,12 +763,17 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(dp) :: err
+        real(dp) :: err, scale(kdim)
         character(len=256) :: msg
         integer :: i
 
         ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim))
+        call random_number(scale)
+        do i = 1, kdim
+            call A(i)%rand(ifnorm=.true.)
+            call A(i)%scal(scale(i)*one_rdp)
+        enddo
         R = zero_rdp
 
         ! In-place QR with pivoting.
@@ -893,7 +921,6 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_csp
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -945,8 +972,15 @@ contains
         ! In-place QR factorization.
         call qr(A, R, info, tol=large_tol)
 
-        ! QR with collinearity detection may trigger breakdown; info indicates step.
-        ! We don't call check_info here as we expect collinearity to occur.
+        ! Check correct column has been flagged.
+        call check(error, info == j_col)
+        call check_test(error, 'test_qr_rank_deficient_csp', &
+                        info = 'Deficient column.', eq='info == 3', context=msg)
+
+        ! Check corresponding entry in R is zero.
+        call check(error, abs(R(j_col, j_col)) == 0)
+        call check_test(error, 'test_qr_rank_deficient_csp', &
+                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
 
         ! Get Q data after factorization.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -1068,6 +1102,9 @@ contains
             call check_info(info, 'qr', module=this_module_long, &
                 & procedure='test_qr_single_vector_csp')
 
+            ! Check perm(1) = 1.
+            call check(error, perm(1) == 1)
+
             ! Get Q data.
             call get_data(Qdata, A)
 
@@ -1095,12 +1132,17 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(sp) :: err
+        real(sp) :: err, scale(kdim)
         character(len=256) :: msg
         integer :: i
 
         ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim))
+        call random_number(scale)
+        do i = 1, kdim
+            call A(i)%rand(ifnorm=.true.)
+            call A(i)%scal(scale(i)*one_csp)
+        enddo
         R = zero_csp
 
         ! In-place QR with pivoting.
@@ -1248,7 +1290,6 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_cdp
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -1300,8 +1341,15 @@ contains
         ! In-place QR factorization.
         call qr(A, R, info, tol=large_tol)
 
-        ! QR with collinearity detection may trigger breakdown; info indicates step.
-        ! We don't call check_info here as we expect collinearity to occur.
+        ! Check correct column has been flagged.
+        call check(error, info == j_col)
+        call check_test(error, 'test_qr_rank_deficient_cdp', &
+                        info = 'Deficient column.', eq='info == 3', context=msg)
+
+        ! Check corresponding entry in R is zero.
+        call check(error, abs(R(j_col, j_col)) == 0)
+        call check_test(error, 'test_qr_rank_deficient_cdp', &
+                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
 
         ! Get Q data after factorization.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -1423,6 +1471,9 @@ contains
             call check_info(info, 'qr', module=this_module_long, &
                 & procedure='test_qr_single_vector_cdp')
 
+            ! Check perm(1) = 1.
+            call check(error, perm(1) == 1)
+
             ! Get Q data.
             call get_data(Qdata, A)
 
@@ -1450,12 +1501,17 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(dp) :: err
+        real(dp) :: err, scale(kdim)
         character(len=256) :: msg
         integer :: i
 
         ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim))
+        call random_number(scale)
+        do i = 1, kdim
+            call A(i)%rand(ifnorm=.true.)
+            call A(i)%scal(scale(i)*one_cdp)
+        enddo
         R = zero_cdp
 
         ! In-place QR with pivoting.

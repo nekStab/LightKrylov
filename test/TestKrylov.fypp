@@ -167,7 +167,6 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_${type[0]}$${kind}$
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -219,8 +218,15 @@ contains
         ! In-place QR factorization.
         call qr(A, R, info, tol=large_tol)
 
-        ! QR with collinearity detection may trigger breakdown; info indicates step.
-        ! We don't call check_info here as we expect collinearity to occur.
+        ! Check correct column has been flagged.
+        call check(error, info == j_col)
+        call check_test(error, 'test_qr_rank_deficient_${type[0]}$${kind}$', &
+                        info = 'Deficient column.', eq='info == 3', context=msg)
+
+        ! Check corresponding entry in R is zero.
+        call check(error, abs(R(j_col, j_col)) == 0)
+        call check_test(error, 'test_qr_rank_deficient_${type[0]}$${kind}$', &
+                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
 
         ! Get Q data after factorization.
         allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
@@ -342,6 +348,9 @@ contains
             call check_info(info, 'qr', module=this_module_long, &
                 & procedure='test_qr_single_vector_${type[0]}$${kind}$')
 
+            ! Check perm(1) = 1.
+            call check(error, perm(1) == 1)
+
             ! Get Q data.
             call get_data(Qdata, A)
 
@@ -369,12 +378,17 @@ contains
         ! Information flag.
         integer :: info
         ! Miscellaneous.
-        real(${kind}$) :: err
+        real(${kind}$) :: err, scale(kdim)
         character(len=256) :: msg
         integer :: i
 
         ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
+        allocate(A(kdim))
+        call random_number(scale)
+        do i = 1, kdim
+            call A(i)%rand(ifnorm=.true.)
+            call A(i)%scal(scale(i)*one_${type[0]}$${kind}$)
+        enddo
         R = zero_${type[0]}$${kind}$
 
         ! In-place QR with pivoting.

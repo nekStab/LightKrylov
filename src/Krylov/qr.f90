@@ -111,7 +111,7 @@ contains
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     ! Store old value of beta.
                     alpha = beta
                     ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -192,7 +192,7 @@ contains
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     ! Store old value of beta.
                     alpha = beta
                     ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -273,7 +273,7 @@ contains
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     ! Store old value of beta.
                     alpha = beta
                     ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -354,7 +354,7 @@ contains
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
 
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     ! Store old value of beta.
                     alpha = beta
                     ! Remaining columns are numerically in span(Q(1:j-1)): regenerate j..kdim.
@@ -400,7 +400,7 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         real(sp) :: gamma
-        integer :: j
+        integer :: j, ierr
         logical :: flag
         character(len=128) :: msg
 
@@ -427,15 +427,15 @@ contains
             do j = 1, size(Q)
                 if (j > 1) then
                     ! Double Gram-Schmidt orthogonalization
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, &
                                                   if_chk_orthonormal=.false., beta = R(:j-1,j))
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                    call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
 
                 ! Check for breakdown.
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     if (.not.flag) then
                         flag = .true.
                         info = j
@@ -445,8 +445,8 @@ contains
                     R(j, j) = zero_rsp
                     call Q(j)%rand()
                     if (j > 1) then
-                        call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                        call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                     end if
                     beta = Q(j)%norm()
                 else
@@ -465,7 +465,7 @@ contains
         real(dp) :: tolerance
         real(dp) :: beta
         real(dp) :: gamma
-        integer :: j
+        integer :: j, ierr
         logical :: flag
         character(len=128) :: msg
 
@@ -492,15 +492,15 @@ contains
             do j = 1, size(Q)
                 if (j > 1) then
                     ! Double Gram-Schmidt orthogonalization
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, &
                                                   if_chk_orthonormal=.false., beta = R(:j-1,j))
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                    call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
 
                 ! Check for breakdown.
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     if (.not.flag) then
                         flag = .true.
                         info = j
@@ -510,8 +510,8 @@ contains
                     R(j, j) = zero_rdp
                     call Q(j)%rand()
                     if (j > 1) then
-                        call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                        call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                     end if
                     beta = Q(j)%norm()
                 else
@@ -530,7 +530,7 @@ contains
         real(sp) :: tolerance
         real(sp) :: beta
         complex(sp) :: gamma
-        integer :: j
+        integer :: j, ierr
         logical :: flag
         character(len=128) :: msg
 
@@ -557,15 +557,15 @@ contains
             do j = 1, size(Q)
                 if (j > 1) then
                     ! Double Gram-Schmidt orthogonalization
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, &
                                                   if_chk_orthonormal=.false., beta = R(:j-1,j))
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                    call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
 
                 ! Check for breakdown.
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     if (.not.flag) then
                         flag = .true.
                         info = j
@@ -575,8 +575,8 @@ contains
                     R(j, j) = zero_rsp
                     call Q(j)%rand()
                     if (j > 1) then
-                        call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                        call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                     end if
                     beta = Q(j)%norm()
                 else
@@ -595,7 +595,7 @@ contains
         real(dp) :: tolerance
         real(dp) :: beta
         complex(dp) :: gamma
-        integer :: j
+        integer :: j, ierr
         logical :: flag
         character(len=128) :: msg
 
@@ -622,15 +622,15 @@ contains
             do j = 1, size(Q)
                 if (j > 1) then
                     ! Double Gram-Schmidt orthogonalization
-                    call double_gram_schmidt_step(Q(j), Q(:j-1), info, &
+                    call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, &
                                                   if_chk_orthonormal=.false., beta = R(:j-1,j))
-                    call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                    call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                 end if
 
                 ! Check for breakdown.
                 beta = Q(j)%norm()
     if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
-                if (beta < tolerance) then
+                if (beta <= tolerance) then
                     if (.not.flag) then
                         flag = .true.
                         info = j
@@ -640,8 +640,8 @@ contains
                     R(j, j) = zero_rdp
                     call Q(j)%rand()
                     if (j > 1) then
-                        call double_gram_schmidt_step(Q(j), Q(:j-1), info, if_chk_orthonormal=.false.)
-                        call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+                        call double_gram_schmidt_step(Q(j), Q(:j-1), ierr, if_chk_orthonormal=.false.)
+                        call check_info(ierr, 'double_gram_schmidt_step', this_module, this_procedure)
                     end if
                     beta = Q(j)%norm()
                 else
@@ -668,6 +668,9 @@ contains
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
+
+        ! Columns already in the correct order.
+        if (i == j) return
 
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
@@ -697,6 +700,9 @@ contains
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
+        ! Columns already in the correct order.
+        if (i == j) return
+
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
@@ -725,6 +731,9 @@ contains
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
+        ! Columns already in the correct order.
+        if (i == j) return
+
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
@@ -752,6 +761,9 @@ contains
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
+
+        ! Columns already in the correct order.
+        if (i == j) return
 
         ! Allocations.
         allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
