@@ -48,7 +48,8 @@ contains
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_${type[0]}$${kind}$), &
                         new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_${type[0]}$${kind}$) &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_${type[0]}$${kind}$), &
+                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_qr_${type[0]}$${kind}$_testsuite
@@ -241,6 +242,60 @@ contains
 
         return
     end subroutine test_qr_rank_deficient_${type[0]}$${kind}$
+
+    subroutine test_qr_invalid_inputs_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_${type[0]}$${kind}$), allocatable :: A(:)
+        ! Upper triangular matrix.
+        ${type}$ :: R(5, 5), Rsmall(4, 4)
+        ! Permutation vector (too small).
+        integer :: perm(5), perm_small(4)
+        ! Information flag.
+        integer :: info
+        character(len=256) :: msg
+
+        ! Test with empty set of vectors.
+        allocate(A(0))
+        call qr(A, R, info) ! Standard QR
+        call check(error, info == -1)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info)   ! Pivoting QR
+            call check(error, info == -1)
+        endif
+        call check_test(error, 'test_qr_invalid_input_${type[0]}$${kind}$', &
+                        info='size(Q) == 0', eq='info == -1', context=msg)
+
+        ! Test matrix R with inconsistent dimensions.
+        deallocate(A) ; allocate(A(5)) ; call init_rand(A)
+        call qr(A, Rsmall, info)    ! Standard QR
+        call check(error, info==-2)
+        if (.not. allocated(error)) then
+            call qr(A, Rsmall, perm, info)  ! Pivoting QR
+            call check(error, info==-2)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_${type[0]}$${kind}$', &
+                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+
+        ! Test perm too small on qr_with_pivoting.
+        call qr(A, R, perm_small, info, tol=atol_${kind}$)
+        call check(error, info == -3)
+        call check_test(error, 'test_qr_invalid_inputs_${type[0]}$${kind}$', &
+                              & info='Perm too small', eq='info == -3', context=msg)
+
+        ! Test negative tolerance.
+        call qr(A, R, info, tol=-1.0_${kind}$)  ! Standard QR
+        call check(error, info == -4)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info, tol=-1.0_${kind}$)    ! Pivoting QR
+            call check(error, info == -4)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_${type[0]}$${kind}$', &
+                              & info='Negative tolerance', eq='info == -4', context=msg)
+
+        return
+    end subroutine test_qr_invalid_inputs_${type[0]}$${kind}$
 
     #:endfor
 

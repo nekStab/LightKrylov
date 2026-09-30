@@ -96,9 +96,7 @@ contains
             info = 0
         endif
 
-        if (info /= 0) then
-            call check_info(info, 'qr_with_pivoting', this_module, this_procedure)
-        else
+        if (info == 0) then
             ! Initialize diagonal entries.
             do i = 1, kdim
                 perm(i) = i
@@ -179,9 +177,7 @@ contains
             info = 0
         endif
 
-        if (info /= 0) then
-            call check_info(info, 'qr_with_pivoting', this_module, this_procedure)
-        else
+        if (info == 0) then
             ! Initialize diagonal entries.
             do i = 1, kdim
                 perm(i) = i
@@ -262,9 +258,7 @@ contains
             info = 0
         endif
 
-        if (info /= 0) then
-            call check_info(info, 'qr_with_pivoting', this_module, this_procedure)
-        else
+        if (info == 0) then
             ! Initialize diagonal entries.
             do i = 1, kdim
                 perm(i) = i
@@ -345,9 +339,7 @@ contains
             info = 0
         endif
 
-        if (info /= 0) then
-            call check_info(info, 'qr_with_pivoting', this_module, this_procedure)
-        else
+        if (info == 0) then
             ! Initialize diagonal entries.
             do i = 1, kdim
                 perm(i) = i
@@ -427,9 +419,8 @@ contains
         else
             info = 0
         endif
-        if (info /= 0) then
-            call check_info(info, 'qr_no_pivoting', this_module, this_procedure)
-        else
+
+        if (info == 0) then
             flag = .false.
             R = zero_rsp
             beta = zero_rsp
@@ -493,9 +484,8 @@ contains
         else
             info = 0
         endif
-        if (info /= 0) then
-            call check_info(info, 'qr_no_pivoting', this_module, this_procedure)
-        else
+
+        if (info == 0) then
             flag = .false.
             R = zero_rdp
             beta = zero_rdp
@@ -559,9 +549,8 @@ contains
         else
             info = 0
         endif
-        if (info /= 0) then
-            call check_info(info, 'qr_no_pivoting', this_module, this_procedure)
-        else
+
+        if (info == 0) then
             flag = .false.
             R = zero_rsp
             beta = zero_rsp
@@ -625,9 +614,8 @@ contains
         else
             info = 0
         endif
-        if (info /= 0) then
-            call check_info(info, 'qr_no_pivoting', this_module, this_procedure)
-        else
+
+        if (info == 0) then
             flag = .false.
             R = zero_rdp
             beta = zero_rdp

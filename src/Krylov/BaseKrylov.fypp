@@ -527,7 +527,7 @@ module LightKrylov_BaseKrylov
             !! Array of `abstract_vector` to be orthogonalized.
             ${type}$, intent(out) :: R(:, :)
             !! Upper triangular matrix resulting from the QR factorization.
-            integer, intent(out) :: perm(size(Q))
+            integer, intent(out) :: perm(:)
             !! Permutation matrix.
             integer, intent(out) :: info
             !! Information flag.

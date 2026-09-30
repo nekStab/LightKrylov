@@ -64,7 +64,8 @@ contains
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_rsp), &
                         new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rsp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_rsp) &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_rsp), &
+                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_rsp) &
                     ]
         return
     end subroutine collect_qr_rsp_testsuite
@@ -258,13 +259,69 @@ contains
         return
     end subroutine test_qr_rank_deficient_rsp
 
+    subroutine test_qr_invalid_inputs_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_rsp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        real(sp) :: R(5, 5), Rsmall(4, 4)
+        ! Permutation vector (too small).
+        integer :: perm(5), perm_small(4)
+        ! Information flag.
+        integer :: info
+        character(len=256) :: msg
+
+        ! Test with empty set of vectors.
+        allocate(A(0))
+        call qr(A, R, info)
+        call check(error, info == -1)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info)
+            call check(error, info == -1)
+        endif
+        call check_test(error, 'test_qr_invalid_input_rsp', &
+                        info='size(Q) == 0', eq='info == -1', context=msg)
+        deallocate(A)
+
+        ! Test matrix R with inconsistent dimensions.
+        allocate(A(5)) ; call init_rand(A)
+        call qr(A, Rsmall, info)
+        call check(error, info==-2)
+        if (.not. allocated(error)) then
+            call qr(A, Rsmall, perm, info)
+            call check(error, info==-2)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_rsp', &
+                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+
+        ! Test perm too small on qr_with_pivoting.
+        call qr(A, R, perm_small, info, tol=atol_sp)
+        call check(error, info == -3)
+        call check_test(error, 'test_qr_invalid_inputs_rsp', &
+                              & info='Perm too small', eq='info == -3', context=msg)
+
+        ! Test negative tolerance.
+        call qr(A, R, info, tol=-1.0_sp)
+        call check(error, info == -4)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info, tol=-1.0_sp)
+            call check(error, info == -4)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_rsp', &
+                              & info='Negative tolerance', eq='info == -4', context=msg)
+
+        return
+    end subroutine test_qr_invalid_inputs_rsp
+
     subroutine collect_qr_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_rdp), &
                         new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rdp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_rdp) &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_rdp), &
+                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_rdp) &
                     ]
         return
     end subroutine collect_qr_rdp_testsuite
@@ -458,13 +515,69 @@ contains
         return
     end subroutine test_qr_rank_deficient_rdp
 
+    subroutine test_qr_invalid_inputs_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_rdp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        real(dp) :: R(5, 5), Rsmall(4, 4)
+        ! Permutation vector (too small).
+        integer :: perm(5), perm_small(4)
+        ! Information flag.
+        integer :: info
+        character(len=256) :: msg
+
+        ! Test with empty set of vectors.
+        allocate(A(0))
+        call qr(A, R, info)
+        call check(error, info == -1)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info)
+            call check(error, info == -1)
+        endif
+        call check_test(error, 'test_qr_invalid_input_rdp', &
+                        info='size(Q) == 0', eq='info == -1', context=msg)
+        deallocate(A)
+
+        ! Test matrix R with inconsistent dimensions.
+        allocate(A(5)) ; call init_rand(A)
+        call qr(A, Rsmall, info)
+        call check(error, info==-2)
+        if (.not. allocated(error)) then
+            call qr(A, Rsmall, perm, info)
+            call check(error, info==-2)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_rdp', &
+                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+
+        ! Test perm too small on qr_with_pivoting.
+        call qr(A, R, perm_small, info, tol=atol_dp)
+        call check(error, info == -3)
+        call check_test(error, 'test_qr_invalid_inputs_rdp', &
+                              & info='Perm too small', eq='info == -3', context=msg)
+
+        ! Test negative tolerance.
+        call qr(A, R, info, tol=-1.0_dp)
+        call check(error, info == -4)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info, tol=-1.0_dp)
+            call check(error, info == -4)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_rdp', &
+                              & info='Negative tolerance', eq='info == -4', context=msg)
+
+        return
+    end subroutine test_qr_invalid_inputs_rdp
+
     subroutine collect_qr_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_csp), &
                         new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_csp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_csp) &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_csp), &
+                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_csp) &
                     ]
         return
     end subroutine collect_qr_csp_testsuite
@@ -658,13 +771,69 @@ contains
         return
     end subroutine test_qr_rank_deficient_csp
 
+    subroutine test_qr_invalid_inputs_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_csp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        complex(sp) :: R(5, 5), Rsmall(4, 4)
+        ! Permutation vector (too small).
+        integer :: perm(5), perm_small(4)
+        ! Information flag.
+        integer :: info
+        character(len=256) :: msg
+
+        ! Test with empty set of vectors.
+        allocate(A(0))
+        call qr(A, R, info)
+        call check(error, info == -1)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info)
+            call check(error, info == -1)
+        endif
+        call check_test(error, 'test_qr_invalid_input_csp', &
+                        info='size(Q) == 0', eq='info == -1', context=msg)
+        deallocate(A)
+
+        ! Test matrix R with inconsistent dimensions.
+        allocate(A(5)) ; call init_rand(A)
+        call qr(A, Rsmall, info)
+        call check(error, info==-2)
+        if (.not. allocated(error)) then
+            call qr(A, Rsmall, perm, info)
+            call check(error, info==-2)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_csp', &
+                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+
+        ! Test perm too small on qr_with_pivoting.
+        call qr(A, R, perm_small, info, tol=atol_sp)
+        call check(error, info == -3)
+        call check_test(error, 'test_qr_invalid_inputs_csp', &
+                              & info='Perm too small', eq='info == -3', context=msg)
+
+        ! Test negative tolerance.
+        call qr(A, R, info, tol=-1.0_sp)
+        call check(error, info == -4)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info, tol=-1.0_sp)
+            call check(error, info == -4)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_csp', &
+                              & info='Negative tolerance', eq='info == -4', context=msg)
+
+        return
+    end subroutine test_qr_invalid_inputs_csp
+
     subroutine collect_qr_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
                         new_unittest("QR factorization", test_qr_factorization_cdp), &
                         new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_cdp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_cdp) &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_cdp), &
+                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_cdp) &
                     ]
         return
     end subroutine collect_qr_cdp_testsuite
@@ -857,6 +1026,61 @@ contains
 
         return
     end subroutine test_qr_rank_deficient_cdp
+
+    subroutine test_qr_invalid_inputs_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test vectors.
+        type(vector_cdp), allocatable :: A(:)
+        ! Upper triangular matrix.
+        complex(dp) :: R(5, 5), Rsmall(4, 4)
+        ! Permutation vector (too small).
+        integer :: perm(5), perm_small(4)
+        ! Information flag.
+        integer :: info
+        character(len=256) :: msg
+
+        ! Test with empty set of vectors.
+        allocate(A(0))
+        call qr(A, R, info)
+        call check(error, info == -1)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info)
+            call check(error, info == -1)
+        endif
+        call check_test(error, 'test_qr_invalid_input_cdp', &
+                        info='size(Q) == 0', eq='info == -1', context=msg)
+        deallocate(A)
+
+        ! Test matrix R with inconsistent dimensions.
+        allocate(A(5)) ; call init_rand(A)
+        call qr(A, Rsmall, info)
+        call check(error, info==-2)
+        if (.not. allocated(error)) then
+            call qr(A, Rsmall, perm, info)
+            call check(error, info==-2)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_cdp', &
+                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+
+        ! Test perm too small on qr_with_pivoting.
+        call qr(A, R, perm_small, info, tol=atol_dp)
+        call check(error, info == -3)
+        call check_test(error, 'test_qr_invalid_inputs_cdp', &
+                              & info='Perm too small', eq='info == -3', context=msg)
+
+        ! Test negative tolerance.
+        call qr(A, R, info, tol=-1.0_dp)
+        call check(error, info == -4)
+        if (.not. allocated(error)) then
+            call qr(A, R, perm, info, tol=-1.0_dp)
+            call check(error, info == -4)
+        endif
+        call check_test(error, 'test_qr_invalid_inputs_cdp', &
+                              & info='Negative tolerance', eq='info == -4', context=msg)
+
+        return
+    end subroutine test_qr_invalid_inputs_cdp
 
 
     !--------------------------------------------------------------
