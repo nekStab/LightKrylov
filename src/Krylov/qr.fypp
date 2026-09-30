@@ -1,5 +1,13 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+#:def CHECK_NAN(beta, varname)
+  #:if type[0] == "r"
+    if (isnan(${beta}$)) call stop_error('|' // ${varname}$ // '| = NaN detected! Abort', this_module, this_procedure)
+  #:else
+    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
+    if (isnan(abs(${beta}$))) call stop_error('|' // ${varname}$ // '| = NaN detected! Abort', this_module, this_procedure)
+  #:endif
+#:enddef
 submodule (lightkrylov_basekrylov) qr_solvers
     implicit none(type, external)
 
@@ -12,9 +20,9 @@ submodule (lightkrylov_basekrylov) qr_solvers
             ${type}$, intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
             ${type}$, intent(inout) :: Rii(:)
-            !! Diagonal entries of R.
+            !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
-            !! Column ordering.
+            !! Permutation vector.
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_${type[0]}$${kind}$
@@ -69,13 +77,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            #:if type[0] == "r"
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
-                                             this_module, this_procedure)
-            #:else
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
-                                                  this_module, this_procedure)
-            #:endif
+            @:CHECK_NAN(beta, "beta")
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_r${kind}$
@@ -136,13 +138,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            #:if type[0] == "r"
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
-                                             this_module, this_procedure)
-            #:else
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
-                                                  this_module, this_procedure)
-            #:endif
+            @:CHECK_NAN(beta, "beta")
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.

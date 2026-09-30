@@ -9,9 +9,9 @@ submodule (lightkrylov_basekrylov) qr_solvers
             real(sp), intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
             real(sp), intent(inout) :: Rii(:)
-            !! Diagonal entries of R.
+            !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
-            !! Column ordering.
+            !! Permutation vector.
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_rsp
@@ -23,9 +23,9 @@ submodule (lightkrylov_basekrylov) qr_solvers
             real(dp), intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
             real(dp), intent(inout) :: Rii(:)
-            !! Diagonal entries of R.
+            !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
-            !! Column ordering.
+            !! Permutation vector.
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_rdp
@@ -37,9 +37,9 @@ submodule (lightkrylov_basekrylov) qr_solvers
             complex(sp), intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
             complex(sp), intent(inout) :: Rii(:)
-            !! Diagonal entries of R.
+            !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
-            !! Column ordering.
+            !! Permutation vector.
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_csp
@@ -51,9 +51,9 @@ submodule (lightkrylov_basekrylov) qr_solvers
             complex(dp), intent(inout) :: R(:, :)
             !! Upper triangular matrix resulting from QR.
             complex(dp), intent(inout) :: Rii(:)
-            !! Diagonal entries of R.
+            !! Squared diagonal entries of R.
             integer, intent(inout) :: perm(:)
-            !! Column ordering.
+            !! Permutation vector.
             integer, intent(in) :: i, j
             !! Index of the columns to be swapped.
         end subroutine swap_columns_cdp
@@ -106,8 +106,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
-                                             this_module, this_procedure)
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
@@ -178,8 +177,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
-                                             this_module, this_procedure)
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
@@ -250,8 +248,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
-                                                  this_module, this_procedure)
+    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
+    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rsp
@@ -322,8 +320,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
-                                                  this_module, this_procedure)
+    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
+    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 info = j
                 R(j, j) = zero_rdp
@@ -382,8 +380,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
-                                             this_module, this_procedure)
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -430,8 +427,7 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(beta)) call stop_error('|beta| = NaN detected! Abort', &
-                                             this_module, this_procedure)
+    if (isnan(beta)) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -478,8 +474,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
-                                                  this_module, this_procedure)
+    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
+    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
@@ -526,8 +522,8 @@ contains
 
             ! Check for breakdown.
             beta = Q(j)%norm()
-            if (isnan(abs(beta))) call stop_error('|beta| = NaN detected! Abort', &
-                                                  this_module, this_procedure)
+    ! Note: isnan is not defined for complex types, so we use abs(beta) for complex.
+    if (isnan(abs(beta))) call stop_error('|' // "beta" // '| = NaN detected! Abort', this_module, this_procedure)
             if (abs(beta) < tolerance) then
                 if (.not.flag) then
                     flag = .true.
