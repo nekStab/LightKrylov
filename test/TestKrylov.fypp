@@ -49,7 +49,9 @@ contains
                         new_unittest("QR factorization", test_qr_factorization_${type[0]}$${kind}$), &
                         new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_${type[0]}$${kind}$), &
                         new_unittest("QR rank deficient", test_qr_rank_deficient_${type[0]}$${kind}$), &
-                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_${type[0]}$${kind}$) &
+                        new_unittest("QR invalid inputs", test_qr_invalid_inputs_${type[0]}$${kind}$), &
+                        new_unittest("QR single vector", test_qr_single_vector_${type[0]}$${kind}$), &
+                        new_unittest("Pivoting QR diagonal ordering", test_pivoting_qr_diagonal_ordering_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_qr_${type[0]}$${kind}$_testsuite
@@ -296,6 +298,104 @@ contains
 
         return
     end subroutine test_qr_invalid_inputs_${type[0]}$${kind}$
+
+    subroutine test_qr_single_vector_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test Vectors.
+        integer, parameter :: kdim = 1
+        type(vector_${type[0]}$${kind}$), allocatable :: A(:)
+        ! Upper triangular matrix.
+        ${type}$ :: R(kdim, kdim)
+        ! Information flag.
+        integer :: info, perm(kdim)
+        ! Miscellaneous.
+        ${type}$, allocatable :: Adata(:, :), Qdata(:, :)
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Initialize single vector.
+        allocate(A(kdim)) ; call init_rand(A)
+        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
+        R = zero_${type[0]}$${kind}$
+
+        ! In-place QR factorization.
+        call qr(A, R, info, tol=atol_${kind}$)
+        call check_info(info, 'qr', module=this_module_long, &
+            & procedure='test_qr_single_vector_${type[0]}$${kind}$')
+
+        ! Get Q data.
+        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+
+        ! Check correctness.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+
+        if (.not. allocated(error)) then    ! Pivoting QR.
+            ! Initialize single vector.
+            call init_rand(A) ; call get_data(Adata, A)
+            R = zero_${type[0]}$${kind}$
+
+            ! In-place QR factorization.
+            call qr(A, R, perm, info, tol=atol_${kind}$)
+            call check_info(info, 'qr', module=this_module_long, &
+                & procedure='test_qr_single_vector_${type[0]}$${kind}$')
+
+            ! Get Q data.
+            call get_data(Qdata, A)
+
+            ! Check correctness.
+            err = maxval(abs(Adata - matmul(Qdata, R)))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+        endif
+        call check_test(error, 'test_qr_single_vector_${type[0]}$${kind}$', &
+                              & info='Factorization', eq='A = Q @ R', context=msg)
+
+        return
+    end subroutine test_qr_single_vector_${type[0]}$${kind}$
+
+    subroutine test_pivoting_qr_diagonal_ordering_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test Vectors.
+        integer, parameter :: kdim = 10
+        type(vector_${type[0]}$${kind}$), allocatable :: A(:)
+        ! Upper triangular matrix.
+        ${type}$ :: R(kdim, kdim)
+        ! Permutation vector.
+        integer :: perm(kdim)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(${kind}$) :: err
+        character(len=256) :: msg
+        integer :: i
+
+        ! Initialize matrix.
+        allocate(A(kdim)) ; call init_rand(A)
+        R = zero_${type[0]}$${kind}$
+
+        ! In-place QR with pivoting.
+        call qr(A, R, perm, info, tol=atol_${kind}$)
+        call check_info(info, 'qr_pivot', module=this_module_long, &
+            & procedure='test_pivoting_qr_diagonal_ordering_${type[0]}$${kind}$')
+
+        ! Check that diagonal entries are non-increasing in magnitude.
+        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
+        do i = 1, kdim-1
+            err = abs(R(i+1, i+1)) - abs(R(i, i))
+            call check(error, err <= rtol_${kind}$)
+            if (allocated(error)) exit
+        end do
+        call get_err_str(msg, "max deviation: ", err)
+        call check_test(error, 'test_pivoting_qr_diagonal_ordering_${type[0]}$${kind}$', &
+                              & info='Diagonal ordering', &
+                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
+
+        return
+    end subroutine test_pivoting_qr_diagonal_ordering_${type[0]}$${kind}$
 
     #:endfor
 
